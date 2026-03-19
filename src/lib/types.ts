@@ -59,6 +59,9 @@ export interface DashboardConfig {
     title: string;
     showMonitor: boolean;
     totalSlots?: number;
+    tailscaleTailnet?: string;
+    tailscaleClientId?: string;
+    tailscaleClientSecret?: string;
   };
 }
 

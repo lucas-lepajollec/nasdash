@@ -17,6 +17,9 @@ export async function GET() {
       device.api.token = '********';
     }
   });
+  if (safeConfig.settings && safeConfig.settings.tailscaleClientSecret) {
+    safeConfig.settings.tailscaleClientSecret = '********';
+  }
 
   return NextResponse.json(safeConfig);
 }
@@ -157,6 +160,9 @@ export async function PUT(req: NextRequest) {
     if (body.title !== undefined) config.settings.title = body.title;
     if (body.showMonitor !== undefined) config.settings.showMonitor = body.showMonitor;
     if (body.totalSlots !== undefined) config.settings.totalSlots = body.totalSlots;
+    if (body.tailscaleTailnet !== undefined) config.settings.tailscaleTailnet = body.tailscaleTailnet;
+    if (body.tailscaleClientId !== undefined) config.settings.tailscaleClientId = body.tailscaleClientId;
+    if (body.tailscaleClientSecret !== undefined) config.settings.tailscaleClientSecret = body.tailscaleClientSecret;
     writeConfig(config);
     return NextResponse.json(config.settings);
   }
