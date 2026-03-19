@@ -83,7 +83,7 @@ export default function TailscaleStatus() {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
         <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale API</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale API</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="nd-edit-btn" onClick={saveConfig} style={{ color: 'var(--nd-green)' }} title="Sauvegarder">
               <Check size={12} />
@@ -122,7 +122,7 @@ export default function TailscaleStatus() {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
         <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--nd-text)' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale</span>
+          <span style={{ color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale</span>
           <button className="nd-edit-btn" onClick={() => setEditMode(true)} title="Configurer l'API Tailscale">
             <Pencil size={11} />
           </button>
@@ -138,7 +138,7 @@ export default function TailscaleStatus() {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
         <div className="nd-section-title" style={{ color: 'var(--nd-red)', display: 'flex', justifyContent: 'space-between' }}>
-          <span><AlertCircle size={12} /> Tailscale Error</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><AlertCircle size={12} /> Tailscale Error</span>
           <button className="nd-edit-btn" onClick={() => setEditMode(true)} title="Configurer l'API Tailscale">
             <Pencil size={11} />
           </button>
@@ -153,7 +153,7 @@ export default function TailscaleStatus() {
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
       <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale</span>
         <button className="nd-edit-btn" onClick={() => setEditMode(true)} title="Configurer l'API Tailscale">
           <Pencil size={11} />
         </button>
