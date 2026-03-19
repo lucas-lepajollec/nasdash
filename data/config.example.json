@@ -1,0 +1,76 @@
+{
+    "settings": {
+        "title": "MON HOME LAB",
+        "showMonitor": true,
+        "totalSlots": 10
+    },
+    "devices": [
+        {
+            "id": "demo-device-1",
+            "name": "App Exemple 1",
+            "host": "192.168.1.20",
+            "icon": "🏠",
+            "api": {
+                "type": "glances",
+                "url": "http://192.168.1.20:61208/api/3/all",
+                "token": "${GLANCES_APP1_AUTH}"
+            }
+        },
+        {
+            "id": "demo-device-2",
+            "name": "Proxmox Exemple",
+            "host": "proxmox",
+            "icon": "🖥️",
+            "stats": [],
+            "api": {
+                "type": "proxmox",
+                "url": "https://192.168.1.30:8006/api2/json/nodes/proxmox/status",
+                "ip": "192.168.1.30",
+                "port": "8006",
+                "username": "root@pam!example",
+                "nodeName": "proxmox",
+                "vmid": "",
+                "token": "${PVE_TOKEN_EXAMPLE}"
+            }
+        }
+    ],
+    "categories": [
+        {
+            "id": "category-1",
+            "title": "Catégorie Exemple 1",
+            "emoji": "🤖",
+            "order": 0,
+            "services": [
+                {
+                    "id": "service-1",
+                    "name": "Service Exemple 1",
+                    "logo": "/api/logos/logo.png",
+                    "localUrl": "http://192.168.1.10:3000",
+                    "tailscaleUrl": "http://100.100.100.100:3000"
+                },
+                {
+                    "id": "service-2",
+                    "name": "Service Exemple 2",
+                    "logo": "/api/logos/logo.png",
+                    "localUrl": "http://192.168.1.10:8080",
+                    "tailscaleUrl": "http://100.100.100.100:8080"
+                }
+            ]
+        },
+        {
+            "id": "category-2",
+            "title": "Catégorie Exemple 2",
+            "emoji": "🎬",
+            "order": 1,
+            "services": [
+                {
+                    "id": "service-3",
+                    "name": "Service Exemple 3",
+                    "logo": "/api/logos/logo.png",
+                    "localUrl": "http://192.168.1.20:8096",
+                    "tailscaleUrl": "http://100.100.100.101:8096"
+                }
+            ]
+        }
+    ]
+}

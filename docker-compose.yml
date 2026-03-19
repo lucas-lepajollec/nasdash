@@ -1,0 +1,14 @@
+services:
+  nasdash:
+    build: .
+    container_name: nasdash
+    ports:
+      - "2504:2504"
+    pid: "host"  # Required for systeminformation to read real host stats
+    volumes:
+      - ./data:/app/data  # Persistent config + uploaded logos
+    environment:
+      - NODE_ENV=production
+      - PORT=2504
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
