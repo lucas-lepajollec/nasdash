@@ -36,6 +36,7 @@ yarn-error.log*
 
 # Custom Data
 data/config.json
+data/.env
 data/logos/*
 !data/logos/.gitkeep
 

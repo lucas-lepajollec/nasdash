@@ -105,7 +105,7 @@ NasDash/
 │   ├── hooks/              # Custom React Hooks (SWR Fetchers, Config state sync)
 │   ├── lib/                # TypeScript Interfaces, utilities, server-side config parsers
 │   └── globals.css         # The core styling matrix
-├── .env                    # Secrets & Encrypted API Passwords (auto-managed by the UI!)
+├── .env                    # Global system variables (e.g. NEXT_PUBLIC_DASHBOARD_TITLE)
 ├── Dockerfile              # Multi-stage production standalone build
 └── docker-compose.yml      # Suggested Docker Compose layout
 ```

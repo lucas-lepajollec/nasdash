@@ -36,6 +36,16 @@ export function readConfig(): DashboardConfig {
   }
 
   if (needDefault || !configData) {
+    const examplePath = path.join(DATA_DIR, 'config.example.json');
+    if (fs.existsSync(examplePath)) {
+      try {
+        fs.copyFileSync(examplePath, CONFIG_PATH);
+        return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+      } catch (e) {
+        console.error('Erreur copie config.example.json', e);
+      }
+    }
+
     const defaultConfig = getDefaultConfig();
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
     return defaultConfig;
