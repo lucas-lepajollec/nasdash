@@ -7,8 +7,13 @@ const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const LOGOS_DIR = path.join(DATA_DIR, 'logos');
 
 export function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
+  console.log('Vérification du dossier data...');
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans /app/data. Vérifiez les droits (chmod 777) sur l\'hôte.', e);
+  }
 }
 
 export function readConfig(): DashboardConfig {
@@ -42,12 +47,16 @@ export function readConfig(): DashboardConfig {
         fs.copyFileSync(examplePath, CONFIG_PATH);
         return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
       } catch (e) {
-        console.error('Erreur copie config.example.json', e);
+        console.error('⚠️ ERREUR DE PERMISSION ou de lecture lors de la copie de config.example.json :', e);
       }
     }
 
     const defaultConfig = getDefaultConfig();
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
+    try {
+      fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
+    } catch (e) {
+      console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
+    }
     return defaultConfig;
   }
 
@@ -56,7 +65,11 @@ export function readConfig(): DashboardConfig {
 
 export function writeConfig(config: DashboardConfig) {
   ensureDataDir();
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+  try {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/config.json', e);
+  }
 }
 
 export function getLogosDir() {
