@@ -36,9 +36,9 @@ export default function StatsHud({ stats, categories }: StatsHudProps) {
     },
     {
       label: 'Disque',
-      value: `${stats.disk.percent}%`,
+      value: stats.disk && stats.disk[0] ? `${stats.disk[0].percent}%` : 'N/A',
       icon: <HardDrive size={18} />,
-      sub: `${stats.disk.used}/${stats.disk.total} GB`,
+      sub: stats.disk && stats.disk[0] ? `${stats.disk[0].used}/${stats.disk[0].total} GB` : '',
     },
     {
       label: 'Température',
