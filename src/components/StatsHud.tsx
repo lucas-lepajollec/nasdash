@@ -34,12 +34,17 @@ export default function StatsHud({ stats, categories }: StatsHudProps) {
       icon: <MemoryStick size={18} />,
       sub: `${stats.ram.percent}% utilisé`,
     },
-    {
-      label: 'Disque',
-      value: stats.disk && stats.disk[0] ? `${stats.disk[0].percent}%` : 'N/A',
+    ...((stats.disk && stats.disk.length > 0) ? stats.disk.map(d => ({
+      label: `Disque ${d.mount ? `(${d.mount})` : ''}`,
+      value: `${d.percent}%`,
       icon: <HardDrive size={18} />,
-      sub: stats.disk && stats.disk[0] ? `${stats.disk[0].used}/${stats.disk[0].total} GB` : '',
-    },
+      sub: `${d.used}/${d.total} GB`,
+    })) : [{
+      label: 'Disque',
+      value: 'N/A',
+      icon: <HardDrive size={18} />,
+      sub: '',
+    }]),
     {
       label: 'Température',
       value: stats.temp.main >= 0 ? `${stats.temp.main}°C` : 'N/A',
@@ -56,7 +61,7 @@ export default function StatsHud({ stats, categories }: StatsHudProps) {
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(4, 1fr)',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
       gap: 14,
       marginBottom: 28,
     }}>

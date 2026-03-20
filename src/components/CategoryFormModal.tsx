@@ -12,12 +12,22 @@ interface CategoryFormModalProps {
   secretMode: boolean;
 }
 
-const EMOJIS = ['🤖', '🎬', '☁️', '🌍', '💡', '🔗', '💾', '🐳', '🎮', '🌐', '📁', '🔧', '🛠️', '📊', '🎵', '🖥️', '🔒', '📡'];
+const EMOJI_CATEGORIES: Record<string, string[]> = {
+  'Tech': ['🤖', '🖥️', '💻', '⌨️', '🖱️', '📱', '⌚', '🔋', '🔌', '💾'],
+  'Cloud': ['☁️', '🌍', '🌐', '📡', '🛰️', '🔗', '🔒', '🔑', '🔐', '🛡️'],
+  'Médias': ['🎬', '🎮', '🎵', '🎧', '📺', '🎸', '🎹', '🎤', '🎭', '🎪'],
+  'Fichiers': ['📁', '📂', '📄', '📊', '📈', '📉', '🗂️', '🗃️', '💿', '📀'],
+  'Outils': ['🔧', '🛠️', '⚙️', '🔨', '🧰', '🔩', '⚡', '💡', '🔬', '🔭'],
+  'Dev': ['🐳', '🐙', '🦀', '🦊', '🐘', '🐍', '☕', '📦', '🚀', '🧪'],
+  'Maison': ['🏠', '🏡', '🏢', '🏭', '🏗️', '📶', '📟', '📠', '🖨️', '📷'],
+  'Divers': ['💼', '📋', '📌', '📍', '🏷️', '🔖', '🎯', '✨', '⭐', '🔔']
+};
 
 export default function CategoryFormModal({ category, onClose, onSave, onDelete, secretMode }: CategoryFormModalProps) {
   const [title, setTitle] = useState(category?.title || '');
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tech');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -48,8 +58,30 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
 
           <div>
             <label className="nd-label">Emoji</label>
+            {/* Category tabs */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+              {Object.keys(EMOJI_CATEGORIES).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  style={{
+                    fontSize: '0.65rem',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: selectedCategory === cat ? 'var(--nd-accent)' : 'var(--nd-bg-alt)',
+                    color: selectedCategory === cat ? 'var(--nd-bg)' : 'var(--nd-text-muted)',
+                    fontWeight: selectedCategory === cat ? 600 : 400,
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            {/* Emoji grid */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {EMOJIS.map((e) => (
+              {EMOJI_CATEGORIES[selectedCategory].map((e) => (
                 <button
                   key={e}
                   onClick={() => setEmoji(e)}

@@ -57,92 +57,29 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
       });
     };
 
-    if (device.api.type === 'homeassistant') {
-      const { token, mapping } = device.api;
-      if (!apiUrl || !token || !mapping) return NextResponse.json({ error: 'Configuration HA incomplète.' }, { status: 400 });
-
-      const stats = [];
-      const fetchSensor = async (sensorId: string) => {
-        try {
-          const res = await fetch(`${apiUrl}/api/states/${sensorId}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            signal: AbortSignal.timeout(3000) // 3s timeout
-          });
-          if (!res.ok) return null;
-          const data = await res.json();
-          return data.state;
-        } catch (err) {
-          return null;
-        }
-      };
-
-      // CPU
-      if (mapping.cpu) {
-        const val = await fetchSensor(mapping.cpu);
-        if (val !== null && !isNaN(parseFloat(val))) {
-          let tempStr = '';
-          const tempSensorName = mapping.temp || mapping['cpu-temp'] || mapping.cpu_temp;
-          if (tempSensorName) {
-            const tempVal = await fetchSensor(tempSensorName);
-            if (tempVal !== null && !isNaN(parseFloat(tempVal))) tempStr = ` ${parseFloat(tempVal)}°C`;
-          }
-          const p = parseFloat(val);
-          stats.push({ label: 'CPU', value: `${p.toFixed(1)}${val.toString().includes('.') || p <= 100 ? '%' : ''}${tempStr}`, percent: p <= 100 ? p : undefined, color: 'var(--nd-accent)' });
-        }
-      }
-
-      // RAM
-      if (mapping.ram) {
-        const val = await fetchSensor(mapping.ram);
-        if (val !== null && !isNaN(parseFloat(val))) {
-          const p = parseFloat(val);
-          stats.push({ label: 'RAM', value: `${p.toFixed(1)}${p <= 100 ? '%' : ' GB'}`, percent: p <= 100 ? p : undefined, color: 'var(--nd-green)' });
-        }
-      }
-
-      // Disks
-      if (mapping.disk) {
-        const disks = Array.isArray(mapping.disk) ? mapping.disk : [{ name: 'Stockage', sensor: mapping.disk }];
-        for (const d of disks) {
-          const val = await fetchSensor(d.sensor);
-          if (val !== null && !isNaN(parseFloat(val))) {
-            let tempStr = '';
-            if (d.tempSensor || mapping['disk-temp']) {
-              const tempVal = await fetchSensor(d.tempSensor || mapping['disk-temp']);
-              if (tempVal !== null && !isNaN(parseFloat(tempVal))) tempStr = ` ${parseFloat(tempVal)}°C`;
-            }
-            const p = parseFloat(val);
-            stats.push({ label: d.name || 'Stockage', value: `${p.toFixed(1)}${p <= 100 ? '%' : ' GB'}${tempStr}`, percent: p <= 100 ? p : undefined, color: 'var(--nd-orange)' });
-          }
-        }
-      }
-
-      // GPUs
-      if (mapping.gpu) {
-        const gpus = Array.isArray(mapping.gpu) ? mapping.gpu : [{ name: 'GPU', sensor: mapping.gpu }];
-        for (const g of gpus) {
-          const val = await fetchSensor(g.sensor);
-          if (val !== null && !isNaN(parseFloat(val))) {
-            let tempStr = '';
-            if (g.tempSensor) {
-              const tempVal = await fetchSensor(g.tempSensor);
-              if (tempVal !== null && !isNaN(parseFloat(tempVal))) tempStr = ` ${parseFloat(tempVal)}°C`;
-            }
-            const p = parseFloat(val);
-            stats.push({ label: g.name || 'GPU', value: `${p.toFixed(1)}%${tempStr}`, percent: p <= 100 ? p : undefined, color: 'var(--nd-purple)' });
-          }
-        }
-      }
-
-      if (stats.length === 0) {
-        return NextResponse.json({ error: 'Aucun capteur dynamique n\'a pu être lu.', isOffline: true }, { status: 503 });
-      }
-
-      return NextResponse.json(stats);
-    }
-
     if (device.api.type === 'glances') {
       if (!apiUrl) return NextResponse.json({ error: 'URL Glances manquante.' }, { status: 400 });
+
+      let baseUrl = apiUrl;
+      // Remove trailing slash if any
+      if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.slice(0, -1);
+      }
+
+      let fetchUrls: string[] = [];
+
+      if (baseUrl.endsWith('/all')) {
+        fetchUrls.push(baseUrl);
+      } else {
+        let base = baseUrl;
+        if (base.match(/\/api\/\d+$/)) {
+          base = base.substring(0, base.lastIndexOf('/api/'));
+        }
+        const endpoints = ['/api/5/all', '/api/4/all', '/api/3/all', '/api/2/all'];
+        for (const ep of endpoints) {
+          fetchUrls.push(`${base}${ep}`);
+        }
+      }
 
       try {
         const headers: Record<string, string> = {
@@ -151,16 +88,44 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         };
         if (device.api.token) {
           const authString = interpolateEnv(device.api.token);
-          const base64Credentials = typeof btoa === 'function'
-            ? btoa(authString)
-            : Buffer.from(authString).toString('base64');
-          headers['Authorization'] = `Basic ${base64Credentials}`;
+          if (authString.trim() !== '' && authString !== ':') {
+            const base64Credentials = typeof btoa === 'function'
+              ? btoa(authString)
+              : Buffer.from(authString).toString('base64');
+            headers['Authorization'] = `Basic ${base64Credentials}`;
+          }
         }
 
-        const res = await fetch(apiUrl, { headers, cache: 'no-store' });
-        if (!res.ok) {
-          console.error('🔴 ERREUR GLANCES HTTP:', res.status, res.statusText);
-          return NextResponse.json({ error: `Erreur serveur (${res.status})`, isOffline: true }, { status: 200 });
+        let res: Response | null = null;
+        let lastError: any = null;
+        let finalUrl = '';
+
+        for (const url of fetchUrls) {
+          console.log('🔗 URL GLANCES APPELÉE:', url);
+          try {
+            res = await fetch(url, { headers, cache: 'no-store' });
+            if (res.ok) {
+              finalUrl = url;
+              break; // Success, stop trying other URLs
+            }
+            if (res.status !== 404) {
+              // If it's 401 Unauthorized or something else, we probably hit the right endpoint but auth failed or server error
+              finalUrl = url;
+              break;
+            }
+          } catch (e) {
+            lastError = e;
+          }
+        }
+
+        if (!res || !res.ok) {
+          if (res) {
+            console.error('🔴 ERREUR GLANCES HTTP:', res.status, res.statusText);
+            return NextResponse.json({ error: `Erreur serveur (${res.status})`, isOffline: true }, { status: 200 });
+          } else {
+            console.error('🔴 ERREUR GLANCES FETCH:', lastError);
+            return NextResponse.json({ error: 'Impossible de joindre Glances', isOffline: true }, { status: 200 });
+          }
         }
 
         const text = await res.text();
@@ -168,7 +133,7 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         try {
           data = JSON.parse(text);
         } catch (e) {
-          console.error('🔴 GLANCES HTML REÇU (Au lieu de JSON) SUR:', apiUrl);
+          console.error('🔴 GLANCES HTML REÇU (Au lieu de JSON) SUR:', finalUrl);
           console.error('🔴 AUTH ENVOYÉE:', headers['Authorization']);
           console.error('🔴 DEBUT DU HTML:', text.substring(0, 50));
           throw new Error('Réponse invalide (HTML au lieu de JSON)');
@@ -204,20 +169,49 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         }
 
         if (data?.fs && Array.isArray(data.fs)) {
-          const rootDisk = data.fs.find((disk: any) => disk.mnt_point === '/');
-          const mainDisk = rootDisk || data.fs.find((disk: any) =>
-            !disk.mnt_point.startsWith('/snap') &&
-            !disk.mnt_point.startsWith('/run') &&
-            !disk.mnt_point.startsWith('/sys') &&
-            !disk.mnt_point.startsWith('/dev')
-          );
+          const excludeKeywords = ['boot', 'efi', 'overlay', 'tmpfs', 'docker'];
+          let filteredDisks = data.fs.filter((disk: any) => {
+            if (!disk.mnt_point) return false;
+            const lowerMnt = disk.mnt_point.toLowerCase();
+            return !excludeKeywords.some(kw => lowerMnt.includes(kw));
+          });
 
-          if (mainDisk) {
-            const totalGB = mainDisk.size ? (mainDisk.size / 1024 / 1024 / 1024).toFixed(0) + 'G' : '';
+          // Deduplicate by exact size
+          const uniqueDisks = new Map<number, any>();
+          for (const disk of filteredDisks) {
+            if (!disk.size) continue;
+            const existing = uniqueDisks.get(disk.size);
+            if (!existing || disk.mnt_point.length < existing.mnt_point.length) {
+              uniqueDisks.set(disk.size, disk);
+            }
+          }
+
+          let finalDisks = Array.from(uniqueDisks.values());
+          // NO LIMIT - return all valid disks
+
+          for (const disk of finalDisks) {
+            let totalStr = '';
+            if (disk.size) {
+              const gb = disk.size / 1024 / 1024 / 1024;
+              if (gb >= 1000) {
+                const tb = gb / 1000;
+                totalStr = tb.toFixed(1).replace('.', ',') + ' To';
+              } else {
+                totalStr = gb.toFixed(0) + ' Go';
+              }
+            }
+
+            // Keep only the last word after the last /
+            let displayName = disk.mnt_point;
+            if (displayName && displayName !== '/') {
+              const parts = displayName.split('/').filter(Boolean);
+              displayName = parts.pop() || displayName;
+            }
+
             stats.push({
-              label: `Disque (${mainDisk.mnt_point})`,
-              value: `${mainDisk.percent.toFixed(1)}% ${totalGB ? `(${totalGB})` : ''}${diskTemp}`,
-              percent: mainDisk.percent,
+              label: `Disque (${displayName})`,
+              value: `${disk.percent.toFixed(1)}% ${totalStr ? `(${totalStr})` : ''}${diskTemp}`,
+              percent: disk.percent,
               color: 'var(--nd-orange)'
             });
           }
@@ -273,8 +267,16 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
           } else {
             diskPercent = (diskUsed / diskTotal) * 100;
           }
-          const totalGB = (diskTotal / 1024 / 1024 / 1024).toFixed(0) + 'G';
-          stats.push({ label: 'Disque (Local)', value: `${diskPercent.toFixed(1)}% (${totalGB})`, percent: diskPercent, color: 'var(--nd-orange)' });
+          // Conversion intelligente identique à Glances
+          const gb = diskTotal / 1024 / 1024 / 1024;
+          let totalStr = '';
+          if (gb >= 1000) {
+            const tb = gb / 1000;
+            totalStr = tb.toFixed(1).replace('.', ',') + ' To';
+          } else {
+            totalStr = gb.toFixed(0) + ' Go';
+          }
+          stats.push({ label: 'Disque (Local)', value: `${diskPercent.toFixed(1)}% (${totalStr})`, percent: diskPercent, color: 'var(--nd-orange)' });
         }
 
         // Catch offline/shutdown VMs (CPU missing)

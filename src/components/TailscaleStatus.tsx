@@ -14,12 +14,15 @@ const getOsIcon = (os: string, hostname: string) => {
   return <Laptop size={12} color="#9ca3af" />;
 };
 
-export default function TailscaleStatus() {
+export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
   const [devices, setDevices] = useState<any[] | null>(null);
   const [error, setError] = useState(false);
   const [unconfigured, setUnconfigured] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+  const [localEditMode, setLocalEditMode] = useState(false);
+
+  // Use parent editMode if provided, otherwise use local state
+  const isEditMode = editMode !== undefined ? editMode : localEditMode;
 
   const [tailnet, setTailnet] = useState('');
   const [clientId, setClientId] = useState('');
@@ -67,7 +70,7 @@ export default function TailscaleStatus() {
         tailscaleClientSecret: clientSecret
       })
     });
-    setEditMode(false);
+    setLocalEditMode(false);
     fetchTS();
   };
 
@@ -79,16 +82,16 @@ export default function TailscaleStatus() {
     );
   }
 
-  if (editMode) {
+  if (isEditMode) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale API</span>
-          <div style={{ display: 'flex', gap: 6 }}>
+        <div className="nd-section-title">
+          <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale API
+          <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
             <button className="nd-edit-btn" onClick={saveConfig} style={{ color: 'var(--nd-green)' }} title="Sauvegarder">
               <Check size={12} />
             </button>
-            <button className="nd-edit-btn" onClick={() => setEditMode(false)} style={{ color: 'var(--nd-red)' }} title="Annuler">
+            <button className="nd-edit-btn" onClick={() => setLocalEditMode(false)} style={{ color: 'var(--nd-red)' }} title="Annuler">
               <X size={12} />
             </button>
           </div>
@@ -121,14 +124,19 @@ export default function TailscaleStatus() {
   if (unconfigured) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale</span>
-          <button className="nd-edit-btn" onClick={() => setEditMode(true)} title="Configurer l'API Tailscale">
-            <Pencil size={11} />
-          </button>
+        <div className="nd-section-title">
+          <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
+          {isEditMode && (
+            <button className="nd-edit-btn" onClick={() => setLocalEditMode(true)} title="Configurer l'API Tailscale" style={{ marginLeft: 'auto' }}>
+              <Pencil size={11} />
+            </button>
+          )}
         </div>
+        <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginBottom: 8 }}>
+          <Globe size={10} /> Dashboard Tailscale
+        </a>
         <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: '8px 4px' }}>
-          Configurez vos clés OAuth Tailscale pour voir vos appareils en ligne.
+          Tailscale n'est pas configuré. Passez en mode édition pour lier votre compte.
         </p>
       </div>
     );
@@ -137,12 +145,17 @@ export default function TailscaleStatus() {
   if (error) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title" style={{ color: 'var(--nd-red)', display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><AlertCircle size={12} /> Tailscale Error</span>
-          <button className="nd-edit-btn" onClick={() => setEditMode(true)} title="Configurer l'API Tailscale">
-            <Pencil size={11} />
-          </button>
+        <div className="nd-section-title" style={{ color: 'var(--nd-red)' }}>
+          <AlertCircle size={12} /> Tailscale Error
+          {isEditMode && (
+            <button className="nd-edit-btn" onClick={() => setLocalEditMode(true)} title="Configurer l'API Tailscale" style={{ marginLeft: 'auto', color: 'inherit' }}>
+              <Pencil size={11} />
+            </button>
+          )}
         </div>
+        <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginBottom: 8 }}>
+          <Globe size={10} /> Dashboard Tailscale
+        </a>
         <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: 4 }}>Démon indisponible ou configuration invalide</p>
       </div>
     );
@@ -152,12 +165,19 @@ export default function TailscaleStatus() {
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-      <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale</span>
-        <button className="nd-edit-btn" onClick={() => setEditMode(true)} title="Configurer l'API Tailscale">
-          <Pencil size={11} />
-        </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="nd-section-title" style={{ flex: 1 }}>
+          <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
+          {isEditMode && (
+            <button className="nd-edit-btn" onClick={() => setLocalEditMode(true)} title="Configurer l'API Tailscale" style={{ marginLeft: 'auto' }}>
+              <Pencil size={11} />
+            </button>
+          )}
+        </div>
       </div>
+      <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginBottom: 8 }}>
+        <Globe size={10} /> Dashboard Tailscale
+      </a>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {devices.map((device: any) => (
           <div key={device.id} className="nd-ts-device" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'default' }}>

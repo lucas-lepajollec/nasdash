@@ -6,9 +6,10 @@ import TailscaleStatus from './TailscaleStatus';
 
 interface RightSidebarProps {
   categories: Category[];
+  editMode?: boolean;
 }
 
-export default function RightSidebar({ categories }: RightSidebarProps) {
+export default function RightSidebar({ categories, editMode }: RightSidebarProps) {
   // Compute stats
   const serviceCount = categories.reduce((acc, c) => acc + c.services.length, 0);
   const categoryCount = categories.length;
@@ -60,7 +61,7 @@ export default function RightSidebar({ categories }: RightSidebarProps) {
         </div>
       </div>
 
-      <TailscaleStatus />
+      <TailscaleStatus editMode={editMode} />
     </aside>
   );
 }

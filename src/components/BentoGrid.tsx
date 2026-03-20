@@ -35,43 +35,8 @@ export interface BentoGridProps {
   onDeleteSlot: (slotId: number) => void;
 }
 
-const DroppableSlot = ({ slotId, category, editMode, children, onDeleteSlot }: any) => {
-  const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}`, data: { type: 'category-slot', slotId } });
-  if (!editMode && !category) return null;
-  if (editMode && !category) {
-    return (
-      <div ref={setNodeRef} style={{ height: 60, position: 'relative', border: isOver ? '2px dashed var(--nd-accent)' : '2px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text-dimmed)', fontSize: '0.75rem', fontWeight: 600, background: isOver ? 'var(--nd-accent-glow)' : 'transparent', transition: 'all 0.2s', margin: '0' }}>
-        <span>Emplacement vide</span>
-        <button 
-          className="nd-edit-btn nd-edit-btn-danger" 
-          onClick={(e) => { e.stopPropagation(); onDeleteSlot(slotId); }} 
-          style={{ position: 'absolute', right: 16, color: 'var(--nd-red)' }}>
-          <Trash2 size={11} />
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div ref={setNodeRef} style={{ position: 'relative', width: '100%', ...(isOver ? { outline: '2px dashed var(--nd-accent)', outlineOffset: 4, borderRadius: 'var(--nd-card-radius)' } : {}) }}>
-      {children}
-    </div>
-  );
-};
-
-export default function BentoGrid({
-  categories,
-  totalSlots,
-  editMode,
-  searchQuery,
-  showSecret,
-  onReorder,
-  onEditCategory,
-  onDeleteCategory,
-  onEditService,
-  onDeleteService,
-  onAddService,
-  onDeleteSlot,
-}: BentoGridProps) {
+// Internal component that uses DndContext
+const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showSecret, onReorder, onEditCategory, onDeleteCategory, onEditService, onDeleteService, onAddService, onDeleteSlot }: BentoGridProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -113,7 +78,7 @@ export default function BentoGrid({
         return c;
       });
 
-      newCategories.sort((a,b) => a.order - b.order);
+      newCategories.sort((a, b) => a.order - b.order);
       onReorder(newCategories);
       return;
     }
@@ -121,35 +86,35 @@ export default function BentoGrid({
     if (activeType === 'service') {
       const srv = active.data.current?.service as Service;
       const fromCatId = active.data.current?.categoryId as string;
-      
+
       let newCategories = JSON.parse(JSON.stringify(categories)) as Category[];
-      
+
       if (targetType === 'service-drop') {
         const targetSrvId = over.data.current?.serviceId;
         const toCatId = over.data.current?.categoryId;
-        
+
         const fromCat = newCategories.find(c => c.id === fromCatId)!;
         const toCat = newCategories.find(c => c.id === toCatId)!;
-        
+
         const oldIndex = fromCat.services.findIndex(s => s.id === srv.id);
         const newIndex = toCat.services.findIndex(s => s.id === targetSrvId);
-        
+
         const [movedSrv] = fromCat.services.splice(oldIndex, 1);
-        
+
         if (fromCatId === toCatId) {
           fromCat.services.splice(newIndex, 0, movedSrv);
         } else {
           toCat.services.splice(newIndex, 0, movedSrv);
         }
-        
+
       } else if (targetType === 'category-empty-drop') {
         const toCatId = over.data.current?.categoryId;
         if (fromCatId === toCatId) return; // Dropped on self
-        
+
         const fromCat = newCategories.find(c => c.id === fromCatId)!;
         const toCat = newCategories.find(c => c.id === toCatId)!;
         const fromSrvIndex = fromCat.services.findIndex(s => s.id === srv.id);
-        
+
         const [movedSrv] = fromCat.services.splice(fromSrvIndex, 1);
         toCat.services.push(movedSrv);
       }
@@ -187,28 +152,28 @@ export default function BentoGrid({
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          {columns.map((col, ci) => (
-            <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
-              {col.map((slot) => (
-                <DroppableSlot key={slot.id} slotId={slot.id} category={slot.category} editMode={editMode} onDeleteSlot={onDeleteSlot}>
-                  {slot.category && (
-                    <CategoryCard
-                      category={slot.category}
-                      editMode={editMode}
-                      searchQuery={searchQuery}
-                      onEditCategory={onEditCategory}
-                      onDeleteCategory={onDeleteCategory}
-                      onEditService={onEditService}
-                      onDeleteService={onDeleteService}
-                      onAddService={onAddService}
-                    />
-                  )}
-                </DroppableSlot>
-              ))}
-            </div>
-          ))}
-        </div>
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        {columns.map((col, ci) => (
+          <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+            {col.map((slot) => (
+              <DroppableSlot key={slot.id} slotId={slot.id} category={slot.category} editMode={editMode} onDeleteSlot={onDeleteSlot}>
+                {slot.category && (
+                  <CategoryCard
+                    category={slot.category}
+                    editMode={editMode}
+                    searchQuery={searchQuery}
+                    onEditCategory={onEditCategory}
+                    onDeleteCategory={onDeleteCategory}
+                    onEditService={onEditService}
+                    onDeleteService={onDeleteService}
+                    onAddService={onAddService}
+                  />
+                )}
+              </DroppableSlot>
+            ))}
+          </div>
+        ))}
+      </div>
       <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
         {activeCat ? (
           <div style={{ transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', borderRadius: 'var(--nd-card-radius)', opacity: 0.9 }}>
@@ -232,4 +197,31 @@ export default function BentoGrid({
       </DragOverlay>
     </DndContext>
   );
+};
+
+const DroppableSlot = ({ slotId, category, editMode, children, onDeleteSlot }: any) => {
+  const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}`, data: { type: 'category-slot', slotId } });
+  if (!editMode && !category) return null;
+  if (editMode && !category) {
+    return (
+      <div ref={setNodeRef} style={{ height: 60, position: 'relative', border: isOver ? '2px dashed var(--nd-accent)' : '2px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text-dimmed)', fontSize: '0.75rem', fontWeight: 600, background: isOver ? 'var(--nd-accent-glow)' : 'transparent', transition: 'all 0.2s', margin: '0' }}>
+        <span>Emplacement vide</span>
+        <button
+          className="nd-edit-btn nd-edit-btn-danger"
+          onClick={(e) => { e.stopPropagation(); onDeleteSlot(slotId); }}
+          style={{ position: 'absolute', right: 16, color: 'var(--nd-red)' }}>
+          <Trash2 size={11} />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div ref={setNodeRef} style={{ position: 'relative', width: '100%', ...(isOver ? { outline: '2px dashed var(--nd-accent)', outlineOffset: 4, borderRadius: 'var(--nd-card-radius)' } : {}) }}>
+      {children}
+    </div>
+  );
+};
+
+export default function BentoGrid(props: BentoGridProps) {
+  return <BentoGridWithDnd {...props} />;
 }

@@ -84,7 +84,18 @@ export async function POST(req: NextRequest) {
       };
 
       if (body.api.type === 'glances') {
-        newDevice.api.url = `http://${body.api.ip}:${body.api.port || 61208}/api/3/all`;
+        let baseUrl = body.api.ip;
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = `http://${baseUrl}`;
+        }
+        try {
+          const urlObj = new URL(baseUrl);
+          if (body.api.port) urlObj.port = body.api.port;
+          newDevice.api.url = urlObj.toString().replace(/\/$/, '');
+        } catch (e) {
+          newDevice.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
+        }
+
         if (body.api.username || body.api.password) {
           const authStr = `${body.api.username || ''}:${body.api.password || ''}`;
           newDevice.api.token = authStr;
@@ -127,6 +138,24 @@ export async function PUT(req: NextRequest) {
 
   if (type === 'reorder') {
     config.categories = body.categories;
+    writeConfig(config);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (type === 'reorderDevices') {
+    if (!config.devices) config.devices = [];
+
+    // Preserve sensitive tokens from existing devices
+    const newDevices = body.devices.map((newDevice: any) => {
+      const existingDevice = config.devices.find((d: any) => d.id === newDevice.id);
+      if (existingDevice && existingDevice.api?.token && newDevice.api?.token === '********') {
+        // Keep the original token if the new one is masked
+        newDevice.api.token = existingDevice.api.token;
+      }
+      return newDevice;
+    });
+
+    config.devices = newDevices;
     writeConfig(config);
     return NextResponse.json({ ok: true });
   }
@@ -179,14 +208,16 @@ export async function PUT(req: NextRequest) {
     if (body.api) {
       const oldApiObj: any = device.api || {};
       const isChangingPlatform = oldApiObj.type !== body.api.type;
-      const updatingCredentials = !!body.api.password;
+
+      // Check if username or password was specifically sent in the PUT request
+      const updatingCredentials = body.api.password !== undefined || body.api.username !== undefined;
 
       device.api = {
         type: body.api.type,
         url: '',
         ip: body.api.ip,
         port: body.api.port,
-        username: body.api.username || oldApiObj.username,
+        username: body.api.username !== undefined ? body.api.username : oldApiObj.username,
         nodeName: body.api.nodeName,
         vmid: body.api.vmid,
         vmType: body.api.vmType,
@@ -194,15 +225,30 @@ export async function PUT(req: NextRequest) {
       };
 
       if (body.api.type === 'glances') {
-        device.api.url = `http://${body.api.ip}:${body.api.port || 61208}/api/3/all`;
+        let baseUrl = body.api.ip;
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = `http://${baseUrl}`;
+        }
+        try {
+          const urlObj = new URL(baseUrl);
+          if (body.api.port) urlObj.port = body.api.port;
+          device.api.url = urlObj.toString().replace(/\/$/, '');
+        } catch (e) {
+          device.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
+        }
+
         if (updatingCredentials) {
-          const authStr = `${body.api.username || ''}:${body.api.password}`;
-          device.api.token = authStr;
+          if (body.api.username || body.api.password) {
+            const authStr = `${body.api.username || ''}:${body.api.password || ''}`;
+            device.api.token = authStr;
+          } else {
+            device.api.token = undefined; // Cleared
+          }
         }
       } else if (body.api.type === 'homeassistant') {
         device.api.url = `http://${body.api.ip}:${body.api.port || 8123}/api/states`;
         if (updatingCredentials) {
-          device.api.token = body.api.password;
+          device.api.token = body.api.password || undefined;
         }
       } else if (body.api.type === 'proxmox') {
         const baseUrl = `https://${body.api.ip}:${body.api.port || 8006}/api2/json/nodes/${body.api.nodeName || 'pve'}`;
@@ -212,8 +258,12 @@ export async function PUT(req: NextRequest) {
           device.api.url = `${baseUrl}/status`;
         }
         if (updatingCredentials) {
-          const fullToken = `${body.api.username}=${body.api.password}`;
-          device.api.token = fullToken;
+          if (body.api.username && body.api.password) {
+            const fullToken = `${body.api.username}=${body.api.password}`;
+            device.api.token = fullToken;
+          } else {
+            device.api.token = undefined; // Cleared
+          }
         }
       }
     }

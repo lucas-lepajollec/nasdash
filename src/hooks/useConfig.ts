@@ -97,14 +97,14 @@ export function useConfig() {
     if (!config) return;
     const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length);
     const newTotalSlots = Math.max(1, currentSlots - 1);
-    
+
     const newCategories = config.categories.map(c => {
       if (c.order > slotId) return { ...c, order: c.order - 1 };
       return c;
     });
 
-    setConfig(prev => prev ? { 
-      ...prev, 
+    setConfig(prev => prev ? {
+      ...prev,
       settings: { ...prev.settings, totalSlots: newTotalSlots },
       categories: newCategories
     } : prev);
@@ -129,6 +129,17 @@ export function useConfig() {
       body: JSON.stringify({ type: 'device', ...device }),
     });
     if (res.ok) await fetchConfig();
+  };
+
+  const reorderDevices = async (newDevices: Device[]) => {
+    if (!config) return;
+    setConfig(prev => prev ? { ...prev, devices: newDevices } : prev);
+    const res = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reorderDevices', devices: newDevices }),
+    });
+    if (!res.ok) await fetchConfig();
   };
 
   const updateDevice = async (id: string, updates: Partial<Device>) => {
@@ -169,6 +180,7 @@ export function useConfig() {
     addDevice,
     updateDevice,
     deleteDevice,
+    reorderDevices,
     uploadLogo,
   };
 }

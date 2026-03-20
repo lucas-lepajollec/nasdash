@@ -13,6 +13,8 @@ import DeviceFormModal from '@/components/DeviceFormModal';
 import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 
 export default function Dashboard() {
   const { stats, history } = useSystemStats();
@@ -31,6 +33,7 @@ export default function Dashboard() {
     addDevice,
     updateDevice,
     deleteDevice,
+    reorderDevices,
     uploadLogo,
   } = useConfig();
 
@@ -62,6 +65,52 @@ export default function Dashboard() {
       return next;
     });
   }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } })
+  );
+
+  const [activeDevice, setActiveDevice] = useState<Device | null>(null);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const activeId = event.active.id.toString();
+    if (activeId.startsWith('drag-device-')) {
+      const deviceId = activeId.replace('drag-device-', '');
+      const device = config?.devices?.find(d => d.id === deviceId);
+      if (device) setActiveDevice(device);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || !config?.devices) {
+      setActiveDevice(null);
+      return;
+    }
+
+    const activeId = active.id.toString();
+    const overId = over.id.toString();
+
+    // Device drag handling
+    if (activeId.startsWith('drag-device-') && overId.startsWith('drag-device-')) {
+      const activeDeviceId = activeId.replace('drag-device-', '');
+      const overDeviceId = overId.replace('drag-device-', '');
+
+      const oldIndex = config.devices.findIndex(d => d.id === activeDeviceId);
+      const newIndex = config.devices.findIndex(d => d.id === overDeviceId);
+
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+        setActiveDevice(null);
+        return;
+      }
+
+      const newDevices = arrayMove(config.devices, oldIndex, newIndex);
+      reorderDevices(newDevices);
+    }
+
+    setActiveDevice(null);
+  };
 
   // Service handlers
   const handleSaveService = async (data: {
@@ -152,47 +201,62 @@ export default function Dashboard() {
       />
 
       {/* 3-COLUMN LAYOUT */}
-      <div className="nd-layout">
-        {/* LEFT SIDEBAR — Devices */}
-        <LeftSidebar
-          devices={config.devices || []}
-          editMode={editMode}
-          onAddDevice={() => setDeviceModal({ open: true })}
-          onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
-          onDeleteDevice={handleDeleteDevice}
-        />
-
-        {/* CENTER — Service Grid + Monitor */}
-        <main className="nd-center">
-          <BentoGrid
-            categories={config.categories}
-            totalSlots={config.settings.totalSlots || Math.max(12, config.categories.length)}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="nd-layout">
+          {/* LEFT SIDEBAR — Devices */}
+          <LeftSidebar
+            devices={config.devices || []}
             editMode={editMode}
-            searchQuery={searchQuery}
-            showSecret={showSecret}
-            onReorder={saveCategories}
-            onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
-            onDeleteCategory={handleDeleteCategory}
-            onEditService={(svc) => setServiceModal({ open: true, service: svc })}
-            onDeleteService={handleDeleteService}
-            onAddService={(catId) => setServiceModal({ open: true, categoryId: catId })}
-            onDeleteSlot={removeSlot}
+            onAddDevice={() => setDeviceModal({ open: true })}
+            onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
+            onDeleteDevice={handleDeleteDevice}
+            onReorderDevices={reorderDevices}
           />
 
-          {config.settings.showMonitor && (
-            <SystemMonitor history={history} isDark={isDark} />
-          )}
+          {/* CENTER — Service Grid + Monitor */}
+          <main className="nd-center">
+            <BentoGrid
+              categories={config.categories}
+              totalSlots={config.settings.totalSlots || Math.max(12, config.categories.length)}
+              editMode={editMode}
+              searchQuery={searchQuery}
+              showSecret={showSecret}
+              onReorder={saveCategories}
+              onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
+              onDeleteCategory={handleDeleteCategory}
+              onEditService={(svc) => setServiceModal({ open: true, service: svc })}
+              onDeleteService={handleDeleteService}
+              onAddService={(catId) => setServiceModal({ open: true, categoryId: catId })}
+              onDeleteSlot={removeSlot}
+            />
 
-          <Footer
-            categories={config.categories}
-            showSecret={showSecret}
-            onToggleSecret={() => setShowSecret(prev => !prev)}
-          />
-        </main>
+            {config.settings.showMonitor && (
+              <SystemMonitor history={history} isDark={isDark} />
+            )}
 
-        {/* RIGHT SIDEBAR — Stats Overview + Tailscale */}
-        <RightSidebar categories={config.categories} />
-      </div>
+            <Footer
+              categories={config.categories}
+              showSecret={showSecret}
+              onToggleSecret={() => setShowSecret(prev => !prev)}
+            />
+          </main>
+
+          {/* RIGHT SIDEBAR — Stats Overview + Tailscale */}
+          <RightSidebar categories={config.categories} editMode={editMode} />
+        </div>
+        <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
+          {activeDevice ? (
+            <div style={{ transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', borderRadius: 'var(--nd-card-radius)', opacity: 0.9 }}>
+              <div className="nd-sidebar-card" style={{ padding: 10 }}>
+                <span style={{ fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span>{activeDevice.icon}</span>
+                  {activeDevice.name}
+                </span>
+              </div>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Modals */}
       {serviceModal.open && (

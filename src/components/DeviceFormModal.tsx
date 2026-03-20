@@ -30,7 +30,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
   useEffect(() => {
     if (!port) {
       if (apiType === 'glances') setPort('61208');
-      if (apiType === 'homeassistant') setPort('8123');
       if (apiType === 'proxmox') setPort('8006');
     }
   }, [apiType, port]);
@@ -120,7 +119,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
               }}
             >
               <option value="glances">Glances</option>
-              <option value="homeassistant">Home Assistant</option>
               <option value="proxmox">Proxmox VE</option>
             </select>
           </div>

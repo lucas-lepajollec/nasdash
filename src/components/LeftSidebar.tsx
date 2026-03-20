@@ -1,8 +1,10 @@
 'use client';
 
 import useSWR from 'swr';
-import { HardDrive, Plus, Pencil, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { HardDrive, Plus, Pencil, Trash2, Loader2, AlertCircle, GripVertical } from 'lucide-react';
 import { Device, DeviceStat } from '@/lib/types';
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface LeftSidebarProps {
   devices: Device[];
@@ -10,6 +12,53 @@ interface LeftSidebarProps {
   onAddDevice?: () => void;
   onEditDevice?: (device: Device) => void;
   onDeleteDevice?: (id: string) => void;
+  onReorderDevices?: (devices: Device[]) => void;
+}
+
+// Composant pour chaque carte d'appareil avec drag & drop
+function SortableDeviceCard({
+  device,
+  editMode,
+  onEdit,
+  onDelete,
+}: {
+  device: Device;
+  editMode: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `drag-device-${device.id}`,
+    disabled: !editMode,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: editMode ? 'grab' : 'default',
+    position: 'relative',
+    zIndex: isDragging ? 1 : 0,
+    touchAction: 'none',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <DeviceMonitorCardContent
+        device={device}
+        editMode={editMode}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    </div>
+  );
 }
 
 function formatUptime(seconds: number): string {
@@ -28,7 +77,17 @@ function progressColor(percent: number): string {
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-function DeviceMonitorCard({ device, editMode, onEdit, onDelete }: { device: Device; editMode: boolean; onEdit?: () => void; onDelete?: () => void }) {
+function DeviceMonitorCardContent({
+  device,
+  editMode,
+  onEdit,
+  onDelete,
+}: {
+  device: Device;
+  editMode: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}) {
   const isApiDevice = !!device.api;
   const { data: stats, error, isLoading } = useSWR<DeviceStat[] | { error: string, isOffline?: boolean }>(
     isApiDevice ? `/api/devices/${device.id}` : null,
@@ -41,20 +100,27 @@ function DeviceMonitorCard({ device, editMode, onEdit, onDelete }: { device: Dev
   const errorMessage = stats && 'error' in stats ? stats.error : 'Impossible de joindre l\'appareil';
 
   return (
-    <div className="nd-sidebar-card" style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s' }}>
+    <div className="nd-sidebar-card" style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span>{device.icon}</span>
-          {device.name}
-          {isLoading && isApiDevice && !stats && <Loader2 size={10} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />}
-          {isOffline && <span title={errorMessage} style={{ display: 'flex' }}><AlertCircle size={10} style={{ color: 'var(--nd-red)' }} /></span>}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1 }}>
+          {editMode && (
+            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', padding: 4, marginRight: -4 }}>
+              <GripVertical size={12} style={{ color: 'var(--nd-text-dimmed)' }} />
+            </div>
+          )}
+          <span style={{ fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span>{device.icon}</span>
+            {device.name}
+            {isLoading && isApiDevice && !stats && <Loader2 size={10} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />}
+            {isOffline && <span title={errorMessage} style={{ display: 'flex' }}><AlertCircle size={10} style={{ color: 'var(--nd-red)' }} /></span>}
+          </span>
+        </div>
         {editMode && (
           <div style={{ display: 'flex', gap: 2 }}>
-            <button className="nd-edit-btn" onClick={onEdit} style={{ color: 'var(--nd-accent)' }}>
+            <button className="nd-edit-btn" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} style={{ color: 'var(--nd-accent)' }}>
               <Pencil size={11} />
             </button>
-            <button className="nd-edit-btn nd-edit-btn-danger" onClick={onDelete} style={{ color: 'var(--nd-red)' }}>
+            <button className="nd-edit-btn nd-edit-btn-danger" onClick={(e) => { e.stopPropagation(); onDelete?.(); }} style={{ color: 'var(--nd-red)' }}>
               <Trash2 size={11} />
             </button>
           </div>
@@ -66,69 +132,74 @@ function DeviceMonitorCard({ device, editMode, onEdit, onDelete }: { device: Dev
         <div style={{ fontSize: '0.65rem', color: 'var(--nd-red)', marginTop: 4 }}>Hors ligne</div>
       )}
 
-      {!isOffline && displayStats.map((stat, i) => (
-        <div key={i} style={{ marginBottom: 4 }}>
-          <div className="nd-stat-row" style={{ fontSize: '0.7rem' }}>
-            <span className="nd-stat-label">{stat.label}</span>
-            <span className="nd-stat-value" style={{ fontSize: '0.7rem' }}>{stat.value}</span>
-          </div>
-          {stat.percent !== undefined && (
-            <div className="nd-progress" style={{ height: 4 }}>
-              <div
-                className={`nd-progress-fill ${stat.color?.startsWith('var') ? '' : (stat.color || progressColor(stat.percent))}`}
-                style={{ 
-                   width: `${stat.percent}%`,
-                   backgroundColor: stat.color?.startsWith('var') ? stat.color : undefined
-                }}
-              />
+      {!isOffline && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {displayStats.map((stat, i) => (
+            <div key={i}>
+              <div className="nd-stat-row" style={{ fontSize: '0.7rem' }}>
+                <span className="nd-stat-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }} title={stat.label}>{stat.label}</span>
+                <span className="nd-stat-value" style={{ fontSize: '0.7rem' }}>{stat.value}</span>
+              </div>
+              {stat.percent !== undefined && (
+                <div className="nd-progress" style={{ height: 4 }}>
+                  <div
+                    className={`nd-progress-fill ${stat.color?.startsWith('var') ? '' : (stat.color || progressColor(stat.percent))}`}
+                    style={{
+                      width: `${stat.percent}%`,
+                      backgroundColor: stat.color?.startsWith('var') ? stat.color : undefined
+                    }}
+                  />
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
-export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice }: LeftSidebarProps) {
+export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
   return (
     <aside className="nd-sidebar-left">
-
-
-
-      {/* DEVICES */}
-      {(devices.length > 0 || editMode) && (
-        <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-          <div className="nd-section-title">
-            <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
-            Appareils
-            {editMode && onAddDevice && (
-              <button
-                className="nd-edit-btn"
-                onClick={onAddDevice}
-                style={{ marginLeft: 'auto', color: 'var(--nd-green)' }}
-              >
-                <Plus size={13} />
-              </button>
-            )}
-          </div>
-
-          {devices.length === 0 && editMode && (
-            <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '8px 0' }}>
-              Ajouter un appareil
-            </p>
+      {/* DEVICES - Always visible */}
+      <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+        <div className="nd-section-title">
+          <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
+          Appareils
+          {editMode && onAddDevice && (
+            <button
+              className="nd-edit-btn"
+              onClick={onAddDevice}
+              style={{ marginLeft: 'auto', color: 'var(--nd-green)' }}
+            >
+              <Plus size={13} />
+            </button>
           )}
-
-          {devices.map((device) => (
-            <DeviceMonitorCard 
-              key={device.id} 
-              device={device} 
-              editMode={editMode} 
-              onEdit={() => onEditDevice?.(device)} 
-              onDelete={() => onDeleteDevice?.(device.id)} 
-            />
-          ))}
         </div>
-      )}
+
+        {devices.length === 0 && (
+          <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>
+            {editMode
+              ? 'Aucun appareil configuré. Cliquez sur le bouton + pour en ajouter un.'
+              : 'Aucun appareil configuré. Passez en mode édition pour en ajouter un.'}
+          </p>
+        )}
+
+        <SortableContext items={devices.map(d => `drag-device-${d.id}`)} strategy={verticalListSortingStrategy}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {devices.map((device) => (
+              <SortableDeviceCard
+                key={device.id}
+                device={device}
+                editMode={editMode}
+                onEdit={() => onEditDevice?.(device)}
+                onDelete={() => onDeleteDevice?.(device.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </div>
     </aside>
   );
 }
