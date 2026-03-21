@@ -63,6 +63,15 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Guarantee settings re-sync back to truthful states if the user exits Edit Mode without saving
+  useEffect(() => {
+    if (!isEditMode) {
+      fetchTS();
+      setClientSecret('');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode]);
+
   const saveConfig = async () => {
     setLoading(true);
     await fetch('/api/config', {
@@ -142,10 +151,7 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
               onChange={e => setClientSecret(e.target.value)}
             />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
-            <button className="nd-btn nd-btn-secondary" onClick={() => setLocalEditMode(false)}>
-              Annuler
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
             <button className="nd-btn nd-btn-primary" onClick={saveConfig}>
               Enregistrer
             </button>
