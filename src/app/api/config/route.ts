@@ -39,6 +39,14 @@ export async function POST(req: NextRequest) {
       services: [],
     };
     config.categories.push(newCategory);
+    
+    // Automatically expand the grid by 1 slot so an empty dropzone immediately appears
+    if (!config.settings) config.settings = {} as any;
+    const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length - 1);
+    if (currentSlots < config.categories.length + 1) {
+       config.settings.totalSlots = config.categories.length + 1;
+    }
+
     writeConfig(config);
     return NextResponse.json(newCategory, { status: 201 });
   }
@@ -116,6 +124,12 @@ export async function POST(req: NextRequest) {
           const fullToken = `${body.api.username}=${body.api.password}`;
           newDevice.api.token = fullToken;
         }
+      } else if (body.api.type === 'lhm') {
+        let baseUrl = body.api.ip;
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = `http://${baseUrl}`;
+        }
+        newDevice.api.url = `${baseUrl}:${body.api.port || 9001}/data.json`;
       }
     }
 
@@ -166,6 +180,7 @@ export async function PUT(req: NextRequest) {
     if (body.title !== undefined) cat.title = body.title;
     if (body.emoji !== undefined) cat.emoji = body.emoji;
     if (body.isSecret !== undefined) cat.isSecret = body.isSecret;
+    if (body.services !== undefined) cat.services = body.services;
     writeConfig(config);
     return NextResponse.json(cat);
   }
@@ -265,6 +280,12 @@ export async function PUT(req: NextRequest) {
             device.api.token = undefined; // Cleared
           }
         }
+      } else if (body.api.type === 'lhm') {
+        let baseUrl = body.api.ip;
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = `http://${baseUrl}`;
+        }
+        device.api.url = `${baseUrl}:${body.api.port || 9001}/data.json`;
       }
     }
 

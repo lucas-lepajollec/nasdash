@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe, Pencil, Check, X } from 'lucide-react';
+import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe, Pencil, Check, X, Trash2 } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 const getOsIcon = (os: string, hostname: string) => {
   const lower = os?.toLowerCase() || '';
@@ -27,11 +28,15 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
   const [tailnet, setTailnet] = useState('');
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const fetchTS = async () => {
     try {
       const res = await fetch('/api/tailscale');
       const data = await res.json();
+      
+      if (data.tailnet) setTailnet(data.tailnet);
+      if (data.clientId) setClientId(data.clientId);
 
       if (data.unconfigured) {
         setUnconfigured(true);
@@ -40,7 +45,7 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
         setError(true);
         setUnconfigured(false);
       } else {
-        setDevices(data);
+        setDevices(data.devices || []);
         setUnconfigured(false);
         setError(false);
       }
@@ -71,7 +76,31 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
       })
     });
     setLocalEditMode(false);
+    setClientSecret('');
     fetchTS();
+  };
+
+  const deleteConfig = async () => {
+    setLoading(true);
+    await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'settings',
+        tailscaleTailnet: '',
+        tailscaleClientId: '',
+        tailscaleClientSecret: ''
+      })
+    });
+    setTailnet('');
+    setClientId('');
+    setClientSecret('');
+    setShowDeleteConfirm(false);
+    setLocalEditMode(false);
+    setDevices(null);
+    setUnconfigured(true);
+    setError(false);
+    setLoading(false);
   };
 
   if (loading && !devices && !unconfigured && !error && !editMode) {
@@ -84,40 +113,54 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
 
   if (isEditMode) {
     return (
-      <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title">
-          <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale API
-          <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-            <button className="nd-edit-btn" onClick={saveConfig} style={{ color: 'var(--nd-green)' }} title="Sauvegarder">
-              <Check size={12} />
+      <>
+        <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+          <div className="nd-section-title">
+            <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> API Tailscale
+            <button className="nd-action-icon danger" onClick={() => setShowDeleteConfirm(true)} style={{ marginLeft: 'auto' }} title="Supprimer la configuration">
+              <Trash2 size={13} />
             </button>
-            <button className="nd-edit-btn" onClick={() => setLocalEditMode(false)} style={{ color: 'var(--nd-red)' }} title="Annuler">
-              <X size={12} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+            <input
+              className="nd-input"
+              placeholder="Nom du Tailnet (ex: email@domaine.com)"
+              value={tailnet}
+              onChange={e => setTailnet(e.target.value)}
+            />
+            <input
+              className="nd-input"
+              placeholder="Client ID (kxxxx...)"
+              value={clientId}
+              onChange={e => setClientId(e.target.value)}
+            />
+            <input
+              className="nd-input"
+              placeholder="Client Secret (Optionnel si vide)"
+              value={clientSecret}
+              type="password"
+              onChange={e => setClientSecret(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+            <button className="nd-btn nd-btn-secondary" onClick={() => setLocalEditMode(false)}>
+              Annuler
+            </button>
+            <button className="nd-btn nd-btn-primary" onClick={saveConfig}>
+              Enregistrer
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-          <input
-            className="nd-input"
-            placeholder="Nom du Tailnet (ex: email@domaine.com)"
-            value={tailnet}
-            onChange={e => setTailnet(e.target.value)}
-          />
-          <input
-            className="nd-input"
-            placeholder="Client ID (kxxxx...)"
-            value={clientId}
-            onChange={e => setClientId(e.target.value)}
-          />
-          <input
-            className="nd-input"
-            placeholder="Client Secret (tskey-client-xxxx...)"
-            value={clientSecret}
-            type="password"
-            onChange={e => setClientSecret(e.target.value)}
-          />
-        </div>
-      </div>
+
+        <ConfirmModal
+          isOpen={showDeleteConfirm}
+          title="Supprimer la configuration Tailscale ?"
+          description="Voulez-vous vraiment supprimer les identifiants ? Cette action est irréversible et déconnectera vos appareils du Dashboard."
+          confirmLabel="Supprimer"
+          onConfirm={deleteConfig}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
+      </>
     );
   }
 

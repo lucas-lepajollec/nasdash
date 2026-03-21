@@ -7,7 +7,7 @@ export async function GET() {
     const { tailscaleTailnet, tailscaleClientId, tailscaleClientSecret } = config.settings;
 
     if (!tailscaleTailnet || !tailscaleClientId || !tailscaleClientSecret) {
-      return NextResponse.json({ unconfigured: true });
+      return NextResponse.json({ unconfigured: true, tailnet: tailscaleTailnet || '', clientId: tailscaleClientId || '' });
     }
 
     // OAuth flow to get access token
@@ -24,7 +24,7 @@ export async function GET() {
     });
 
     if (!tokenRes.ok) {
-      return NextResponse.json({ unconfigured: true, error: 'Identifiants OAuth invalides' });
+      return NextResponse.json({ unconfigured: true, error: 'Identifiants OAuth invalides', tailnet: tailscaleTailnet, clientId: tailscaleClientId });
     }
 
     const tokenData = await tokenRes.json();
@@ -41,7 +41,7 @@ export async function GET() {
 
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) {
-        return NextResponse.json({ unconfigured: true, error: 'Accès refusé par Tailscale' });
+        return NextResponse.json({ unconfigured: true, error: 'Accès refusé par Tailscale', tailnet: tailscaleTailnet, clientId: tailscaleClientId });
       }
       throw new Error(`Tailscale API responded with ${res.status}`);
     }
@@ -86,7 +86,7 @@ export async function GET() {
       return a.hostname.localeCompare(b.hostname);
     });
 
-    return NextResponse.json(devices);
+    return NextResponse.json({ devices, tailnet: tailscaleTailnet, clientId: tailscaleClientId });
   } catch (error) {
     console.error('Tailscale API Error:', error);
     return NextResponse.json({ error: 'Erreur lors de la connexion à Tailscale' }, { status: 500 });

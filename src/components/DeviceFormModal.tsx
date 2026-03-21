@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Device, DeviceApiConfig } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 interface DeviceFormModalProps {
   device?: Device;
@@ -25,12 +26,14 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
   const [vmType, setVmType] = useState(device?.api?.vmType || 'qemu');
 
   const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Auto-fill default port based on API type if empty
   useEffect(() => {
     if (!port) {
       if (apiType === 'glances') setPort('61208');
       if (apiType === 'proxmox') setPort('8006');
+      if (apiType === 'lhm') setPort('9001');
     }
   }, [apiType, port]);
 
@@ -120,6 +123,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
             >
               <option value="glances">Glances</option>
               <option value="proxmox">Proxmox VE</option>
+              <option value="lhm">Libre Hardware Monitor</option>
             </select>
           </div>
 
@@ -195,8 +199,9 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
                 className="nd-input"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder={apiType === 'proxmox' ? "root@pam!token" : "Optionnel"}
+                placeholder={apiType === 'proxmox' ? "root@pam!token" : apiType === 'lhm' ? "Non requis" : "Optionnel"}
                 required={apiType === 'proxmox'}
+                disabled={apiType === 'lhm'}
               />
             </div>
             <div style={{ flex: 1 }}>
@@ -208,8 +213,9 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
                 className="nd-input"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder={device ? "Laisser vide pour garder l'actuel" : "Obligatoire (Masqué)"}
-                required={!device && apiType !== 'glances'}
+                placeholder={device ? "Laisser vide pour garder l'actuel" : apiType === 'lhm' ? "Non requis" : "Optionnel (Masqué)"}
+                required={!device && apiType === 'proxmox'}
+                disabled={apiType === 'lhm'}
               />
             </div>
           </div>
@@ -218,7 +224,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
             {device && onDelete && (
               <button
                 type="button"
-                onClick={() => onDelete(device.id)}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="nd-btn nd-btn-danger"
                 style={{ flex: 1, borderColor: 'var(--nd-red)', color: 'var(--nd-red)' }}
               >
@@ -234,6 +240,14 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
           </div>
         </form>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => onDelete && device && onDelete(device.id)}
+        title="Supprimer l'appareil ?"
+        description={device ? `Voulez-vous vraiment supprimer "${device.name}" de votre tableau de bord ? Cette action est irréversible.` : ''}
+      />
     </div>
   );
 }

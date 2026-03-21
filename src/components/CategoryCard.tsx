@@ -10,15 +10,13 @@ interface CategoryCardProps {
   editMode: boolean;
   searchQuery: string;
   onEditCategory: (cat: Category) => void;
-  onDeleteCategory: (id: string) => void;
-  onEditService: (service: Service) => void;
-  onDeleteService: (serviceId: string, categoryId: string) => void;
+  onDeleteCategory: (id: string, name: string) => void;
   onAddService: (categoryId: string) => void;
 }
 
 export default function CategoryCard({
   category, editMode, searchQuery,
-  onEditCategory, onDeleteCategory, onEditService, onDeleteService, onAddService,
+  onEditCategory, onDeleteCategory, onAddService,
 }: CategoryCardProps) {
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
     id: `drag-cat-${category.id}`, disabled: !editMode, data: { type: 'category', category }
@@ -35,8 +33,9 @@ export default function CategoryCard({
     setDroppable(node);
   };
 
-  const style = {
+  const style: React.CSSProperties = {
     opacity: isDragging ? 0.3 : 1,
+    touchAction: 'pan-y',
   };
 
   const filteredServices = searchQuery
@@ -56,15 +55,15 @@ export default function CategoryCard({
         <span className="nd-category-emoji">{category.emoji}</span>
         <span style={{ flex: 1 }}>{category.title}</span>
         {editMode && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <button className="nd-edit-btn" onClick={() => onAddService(category.id)} style={{ color: 'var(--nd-green)' }} title="Ajouter un service">
-              <Plus size={12} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title="Ajouter un service">
+              <Plus size={13} />
             </button>
-            <button className="nd-edit-btn" onClick={() => onEditCategory(category)} style={{ color: 'var(--nd-accent)' }}>
-              <Pencil size={11} />
+            <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title="Modifier la catégorie">
+              <Pencil size={13} />
             </button>
-            <button className="nd-edit-btn nd-edit-btn-danger" onClick={() => onDeleteCategory(category.id)} style={{ color: 'var(--nd-red)' }}>
-              <Trash2 size={11} />
+            <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title="Supprimer la catégorie">
+              <Trash2 size={13} />
             </button>
           </div>
         )}
@@ -76,8 +75,6 @@ export default function CategoryCard({
           <ServiceItem
             key={service.id}
             service={service}
-            onEdit={editMode ? () => onEditService(service) : undefined}
-            onDelete={editMode ? () => onDeleteService(service.id, category.id) : undefined}
             categoryId={category.id}
             editMode={editMode}
           />

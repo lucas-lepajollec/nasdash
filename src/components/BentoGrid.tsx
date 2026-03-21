@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
 import CategoryCard from './CategoryCard';
 import ServiceItem from './ServiceItem';
+import ConfirmModal from './ConfirmModal';
 import {
   DndContext,
   closestCenter,
   pointerWithin,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -29,22 +31,21 @@ export interface BentoGridProps {
   onReorder: (newCategories: Category[]) => void;
   onEditCategory: (cat: Category) => void;
   onDeleteCategory: (id: string) => void;
-  onEditService: (service: Service) => void;
-  onDeleteService: (serviceId: string, categoryId: string) => void;
   onAddService: (categoryId: string) => void;
   onDeleteSlot: (slotId: number) => void;
 }
 
-// Internal component that uses DndContext
-const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showSecret, onReorder, onEditCategory, onDeleteCategory, onEditService, onDeleteService, onAddService, onDeleteSlot }: BentoGridProps) => {
+const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showSecret, onReorder, onEditCategory, onDeleteCategory, onAddService, onDeleteSlot }: BentoGridProps) => {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
   const visible = categories.filter(c => showSecret || !c.isSecret);
 
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [activeService, setActiveService] = useState<Service | null>(null);
+  const [deleteItem, setDeleteItem] = useState<{ type: 'category' | 'slot', id: string, name?: string } | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.type === 'category') {
@@ -64,11 +65,18 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
     const targetType = over.data.current?.type;
 
     if (activeType === 'category') {
-      if (targetType !== 'category-slot') return;
       const activeData = active.data.current?.category as Category;
-      const targetSlotId = over.data.current?.slotId as number;
+      let targetSlotId: number | undefined = undefined;
 
-      if (!activeData || activeData.order === targetSlotId) return;
+      if (targetType === 'category-slot') {
+        targetSlotId = over.data.current?.slotId as number;
+      } else if (over.data.current?.categoryId) {
+        // Find parent category order if dropped inside an inner category droppable
+        const targetCat = categories.find(c => c.id === over.data.current?.categoryId);
+        if (targetCat) targetSlotId = targetCat.order;
+      }
+
+      if (targetSlotId === undefined || !activeData || activeData.order === targetSlotId) return;
 
       const targetCat = categories.find(c => c.order === targetSlotId);
 
@@ -151,21 +159,19 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
   slots.forEach((slot, i) => columns[i % colCount].push(slot));
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
         {columns.map((col, ci) => (
           <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             {col.map((slot) => (
-              <DroppableSlot key={slot.id} slotId={slot.id} category={slot.category} editMode={editMode} onDeleteSlot={onDeleteSlot}>
+              <DroppableSlot key={slot.id} slotId={slot.id} category={slot.category} editMode={editMode} onDeleteSlot={(id: number) => setDeleteItem({ type: 'slot', id: id.toString() })}>
                 {slot.category && (
                   <CategoryCard
                     category={slot.category}
                     editMode={editMode}
                     searchQuery={searchQuery}
                     onEditCategory={onEditCategory}
-                    onDeleteCategory={onDeleteCategory}
-                    onEditService={onEditService}
-                    onDeleteService={onDeleteService}
+                    onDeleteCategory={(id, name) => setDeleteItem({ type: 'category', id, name })}
                     onAddService={onAddService}
                   />
                 )}
@@ -183,8 +189,6 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
               searchQuery={searchQuery}
               onEditCategory={onEditCategory}
               onDeleteCategory={onDeleteCategory}
-              onEditService={onEditService}
-              onDeleteService={onDeleteService}
               onAddService={onAddService}
             />
           </div>
@@ -195,6 +199,25 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
           </div>
         ) : null}
       </DragOverlay>
+
+      {editMode && <ConfirmModal
+        isOpen={!!deleteItem}
+        onClose={() => setDeleteItem(null)}
+        onConfirm={() => {
+          if (!deleteItem) return;
+          if (deleteItem.type === 'category') onDeleteCategory(deleteItem.id);
+          if (deleteItem.type === 'slot') onDeleteSlot(parseInt(deleteItem.id));
+          setDeleteItem(null);
+        }}
+        title={
+          deleteItem?.type === 'category' ? 'Supprimer la catégorie ?' :
+          'Supprimer l\'emplacement ?'
+        }
+        description={
+          deleteItem?.type === 'category' ? `Voulez-vous vraiment supprimer "${deleteItem.name}" et tous ses services de votre tableau de bord ?` :
+          'Voulez-vous vraiment supprimer cet emplacement vide de la grille et décaler le reste des éléments ?'
+        }
+      />}
     </DndContext>
   );
 };
@@ -207,10 +230,10 @@ const DroppableSlot = ({ slotId, category, editMode, children, onDeleteSlot }: a
       <div ref={setNodeRef} style={{ height: 60, position: 'relative', border: isOver ? '2px dashed var(--nd-accent)' : '2px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text-dimmed)', fontSize: '0.75rem', fontWeight: 600, background: isOver ? 'var(--nd-accent-glow)' : 'transparent', transition: 'all 0.2s', margin: '0' }}>
         <span>Emplacement vide</span>
         <button
-          className="nd-edit-btn nd-edit-btn-danger"
+          className="nd-action-icon danger"
           onClick={(e) => { e.stopPropagation(); onDeleteSlot(slotId); }}
-          style={{ position: 'absolute', right: 16, color: 'var(--nd-red)' }}>
-          <Trash2 size={11} />
+          style={{ position: 'absolute', right: 16 }}>
+          <Trash2 size={13} />
         </button>
       </div>
     );

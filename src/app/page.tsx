@@ -13,7 +13,7 @@ import DeviceFormModal from '@/components/DeviceFormModal';
 import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
+import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
 export default function Dashboard() {
@@ -67,7 +67,8 @@ export default function Dashboard() {
   }, []);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 3 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
   const [activeDevice, setActiveDevice] = useState<Device | null>(null);
@@ -134,7 +135,7 @@ export default function Dashboard() {
   };
 
   // Category handlers
-  const handleSaveCategory = async (data: { title: string; emoji: string; isSecret: boolean }) => {
+  const handleSaveCategory = async (data: { title: string; emoji: string; isSecret: boolean; services?: Service[] }) => {
     if (categoryModal.category) {
       await updateCategory(categoryModal.category.id, data);
     } else {
@@ -201,7 +202,7 @@ export default function Dashboard() {
       />
 
       {/* 3-COLUMN LAYOUT */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="nd-layout">
           {/* LEFT SIDEBAR — Devices */}
           <LeftSidebar
@@ -224,8 +225,6 @@ export default function Dashboard() {
               onReorder={saveCategories}
               onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
               onDeleteCategory={handleDeleteCategory}
-              onEditService={(svc) => setServiceModal({ open: true, service: svc })}
-              onDeleteService={handleDeleteService}
               onAddService={(catId) => setServiceModal({ open: true, categoryId: catId })}
               onDeleteSlot={removeSlot}
             />

@@ -31,7 +31,7 @@ export interface DeviceApiMapping {
 }
 
 export interface DeviceApiConfig {
-  type: 'homeassistant' | 'proxmox' | 'custom' | 'glances';
+  type: 'homeassistant' | 'proxmox' | 'custom' | 'glances' | 'lhm';
   url: string;
   token?: string;
   ip?: string;

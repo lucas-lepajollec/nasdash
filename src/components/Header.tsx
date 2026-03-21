@@ -29,7 +29,7 @@ export default function Header({
 }: HeaderProps) {
   return (
     <>
-      <header className="nd-header">
+      <header className={`nd-header ${editMode ? 'nd-header--editing' : ''}`}>
         {/* Brand — terminal style */}
         <div className="nd-brand">
           <span className="nd-brand-dot" />
@@ -43,7 +43,7 @@ export default function Header({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Rechercher un service…"
+            placeholder="Rechercher..."
           />
           {searchQuery && (
             <button
@@ -59,18 +59,18 @@ export default function Header({
         </div>
 
         {/* Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="nd-header-actions">
           {editMode && (
-            <>
-              <button className="nd-btn" onClick={onAddSlot} title="Ajouter un emplacement vide">
+            <div className="nd-header-edit-row">
+              <button className="nd-btn" onClick={onAddSlot} title="Ajouter un emplacement">
                 <Plus size={12} />
                 Emplacement
               </button>
-              <button className="nd-btn nd-btn-accent" onClick={onAddCategory}>
+              <button className="nd-btn" onClick={onAddCategory}>
                 <Plus size={12} />
                 Catégorie
               </button>
-            </>
+            </div>
           )}
           <button
             className={`nd-btn ${editMode ? 'nd-btn-active' : ''}`}

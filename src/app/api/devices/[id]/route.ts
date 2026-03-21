@@ -161,7 +161,8 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         }
 
         if (data?.cpu?.total !== undefined) {
-          stats.push({ label: 'CPU', value: `${data.cpu.total.toFixed(1)}%${cpuTemp}`, percent: data.cpu.total, color: 'var(--nd-accent)' });
+          const tStr = cpuTemp ? `\u00A0\u00A0\u00A0${cpuTemp.trim()}` : '';
+          stats.push({ label: 'CPU', value: `${data.cpu.total.toFixed(1)}%${tStr}`, percent: data.cpu.total, color: 'var(--nd-accent)' });
         }
 
         if (data?.mem?.percent !== undefined) {
@@ -208,9 +209,13 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
               displayName = parts.pop() || displayName;
             }
 
+            const parts = [`${disk.percent.toFixed(1)}%`];
+            if (diskTemp) parts.push(diskTemp.trim());
+            if (totalStr) parts.push(`(${totalStr.trim()})`);
+
             stats.push({
               label: `Disque (${displayName})`,
-              value: `${disk.percent.toFixed(1)}% ${totalStr ? `(${totalStr})` : ''}${diskTemp}`,
+              value: parts.join('\u00A0\u00A0\u00A0'),
               percent: disk.percent,
               color: 'var(--nd-orange)'
             });
@@ -220,8 +225,8 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         if (data?.gpu && Array.isArray(data.gpu)) {
           for (const gpu of data.gpu) {
             if (gpu.proc !== undefined) {
-              const gTemp = gpu.temperature !== undefined ? ` ${Math.round(gpu.temperature)}°C` : '';
-              stats.push({ label: gpu.name || 'GPU', value: `${gpu.proc.toFixed(1)}%${gTemp}`, percent: gpu.proc, color: 'var(--nd-purple)' });
+              const tStr = gpu.temperature !== undefined ? `\u00A0\u00A0\u00A0${Math.round(gpu.temperature)}°C` : '';
+              stats.push({ label: gpu.name || 'GPU', value: `${gpu.proc.toFixed(1)}%${tStr}`, percent: gpu.proc, color: 'var(--nd-purple)' });
             }
           }
         }
@@ -288,6 +293,110 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
       } catch (err: any) {
         console.error('🔴 ERREUR PROXMOX REQUÊTE:', err.message || err);
         return NextResponse.json({ error: err.message || 'Impossible de joindre Proxmox', isOffline: true }, { status: 200 });
+      }
+    }
+
+    if (device.api.type === 'lhm') {
+      if (!apiUrl) return NextResponse.json({ error: 'URL LHM manquante.' }, { status: 400 });
+
+      try {
+        const res = await fetch(apiUrl, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
+        if (!res.ok) throw new Error(`HTTP: ${res.status}`);
+        const data = await res.json();
+        const stats = [];
+
+        // Recursive search helper
+        const searchLHMTree = (node: any, matchFn: (n: any) => boolean): any => {
+          if (matchFn(node)) return node;
+          if (node.Children) {
+            for (const child of node.Children) {
+              const f = searchLHMTree(child, matchFn);
+              if (f) return f;
+            }
+          }
+          return null;
+        };
+
+        const computerNode = data.Children?.[0];
+        const hwNodes = computerNode?.Children || [];
+
+        const cpuStats: any[] = [];
+        const ramStats: any[] = [];
+        const gpuStats: any[] = [];
+        const diskStats: any[] = [];
+
+        for (const hw of hwNodes) {
+          // 1. CPU
+          const cpuLoad = searchLHMTree(hw, (n: any) => n.Text === 'CPU Total' && n.Value?.includes('%'));
+          if (cpuLoad) {
+            const cpuTemp = searchLHMTree(hw, (n: any) => (n.Text === 'CPU Package' || n.Text?.includes('Core (Tctl/Tdie)') || n.Text === 'Core Max') && n.Value?.includes('°C'));
+            
+            const val = parseFloat(cpuLoad.Value.replace(',', '.'));
+            const parts = [`${val.toFixed(1)}%`];
+            if (cpuTemp) parts.push(`${Math.round(parseFloat(cpuTemp.Value.replace(',', '.')))}°C`);
+            
+            cpuStats.push({ label: 'CPU', value: parts.join('\u00A0\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-accent)' });
+          }
+
+          // 2. RAM (Select Physical RAM only)
+          if (hw.Text === 'Total Memory' || hw.Text === 'Generic Memory' || hw.Text === 'System Memory') {
+            const ramLoad = searchLHMTree(hw, (n: any) => n.Text === 'Memory' && n.Value?.includes('%'));
+            if (ramLoad) {
+              const val = parseFloat(ramLoad.Value.replace(',', '.'));
+              ramStats.push({ label: 'RAM', value: `${val.toFixed(1)}%`, percent: val, color: 'var(--nd-green)' });
+            }
+          }
+
+          // 3. GPU
+          const gpuLoad = searchLHMTree(hw, (n: any) => n.Text === 'GPU Core' && n.Value?.includes('%'));
+          if (gpuLoad) {
+            const gpuName = hw.Text.replace('NVIDIA ', '').replace('AMD ', '');
+            let gpuTemp = searchLHMTree(hw, (n: any) => n.Text === 'GPU Core' && n.Value?.includes('°C'));
+            if (!gpuTemp) {
+              gpuTemp = searchLHMTree(hw, (n: any) => n.Text?.startsWith('GPU') && n.Value?.includes('°C'));
+            }
+            
+            const val = parseFloat(gpuLoad.Value.replace(',', '.'));
+            const parts = [`${val.toFixed(1)}%`];
+            if (gpuTemp) parts.push(`${Math.round(parseFloat(gpuTemp.Value.replace(',', '.')))}°C`);
+            
+            gpuStats.push({ label: gpuName, value: parts.join('\u00A0\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-purple)' });
+          }
+
+          // 4. DISK
+          const diskLoad = searchLHMTree(hw, (n: any) => n.Text === 'Used Space' && n.Value?.includes('%'));
+          if (diskLoad) {
+            const diskName = hw.Text;
+            const finalDiskLabel = `Disque (${diskName})`;
+
+            const diskTemp = searchLHMTree(hw, (n: any) => n.Text?.startsWith('Temperature') && n.Value?.includes('°C'));
+            const totalSpace = searchLHMTree(hw, (n: any) => n.Text === 'Total Space');
+            
+            const val = parseFloat(diskLoad.Value.replace(',', '.'));
+            
+            const parts = [`${val.toFixed(1)}%`];
+            if (diskTemp) parts.push(`${Math.round(parseFloat(diskTemp.Value.replace(',', '.')))}°C`);
+
+            if (totalSpace && totalSpace.Value) {
+               let gb = parseFloat(totalSpace.Value.replace(',', '.'));
+               if (totalSpace.Value.includes('MB')) gb = gb / 1024;
+               if (gb >= 1000) {
+                 parts.push(`(${(gb/1000).toFixed(1).replace('.', ',')} To)`);
+               } else {
+                 parts.push(`(${gb.toFixed(0)} Go)`);
+               }
+            }
+            
+            diskStats.push({ label: finalDiskLabel, value: parts.join('\u00A0\u00A0\u00A0'), percent: val, color: 'var(--nd-orange)' });
+          }
+        }
+
+        stats.push(...cpuStats, ...ramStats, ...diskStats, ...gpuStats);
+
+        return NextResponse.json(stats);
+      } catch (err: any) {
+        console.error('🔴 ERREUR LHM REQUÊTE:', err.message || err);
+        return NextResponse.json({ error: err.message || 'Impossible de joindre LHM', isOffline: true }, { status: 200 });
       }
     }
 

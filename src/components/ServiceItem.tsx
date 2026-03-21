@@ -7,13 +7,11 @@ import { Service } from '@/lib/types';
 
 interface ServiceItemProps {
   service: Service;
-  onEdit?: () => void;
-  onDelete?: () => void;
   categoryId?: string;
   editMode?: boolean;
 }
 
-export default function ServiceItem({ service, onEdit, onDelete, categoryId, editMode }: ServiceItemProps) {
+export default function ServiceItem({ service, categoryId, editMode }: ServiceItemProps) {
   const [imgError, setImgError] = useState(false);
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
@@ -53,7 +51,7 @@ export default function ServiceItem({ service, onEdit, onDelete, categoryId, edi
         href={service.localUrl || service.tailscaleUrl || '#'}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit', touchAction: 'pan-y' }}
         onClick={(e) => {
           if (editMode) {
             e.preventDefault();
@@ -79,16 +77,6 @@ export default function ServiceItem({ service, onEdit, onDelete, categoryId, edi
 
       {editMode && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-          {onEdit && (
-            <button className="nd-edit-btn" onClick={onEdit} title="Modifier le service">
-              <Pencil size={11} />
-            </button>
-          )}
-          {onDelete && (
-            <button className="nd-edit-btn nd-edit-btn-danger" onClick={onDelete} title="Supprimer le service">
-              <Trash2 size={11} />
-            </button>
-          )}
           <div {...attributes} {...listeners} style={{ cursor: 'grab', padding: 4, opacity: 0.5, display: 'flex', alignItems: 'center' }}>
             <GripVertical size={14} />
           </div>

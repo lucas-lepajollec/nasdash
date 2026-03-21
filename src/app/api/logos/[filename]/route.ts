@@ -34,3 +34,23 @@ export async function GET(
     },
   });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ filename: string }> }
+) {
+  const { filename } = await params;
+  const filePath = path.join(getLogosDir(), filename);
+
+  if (!fs.existsSync(filePath)) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  try {
+    fs.unlinkSync(filePath);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete file:', error);
+    return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 });
+  }
+}

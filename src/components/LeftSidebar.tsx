@@ -5,6 +5,8 @@ import { HardDrive, Plus, Pencil, Trash2, Loader2, AlertCircle, GripVertical } f
 import { Device, DeviceStat } from '@/lib/types';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useState } from 'react';
+import ConfirmModal from './ConfirmModal';
 
 interface LeftSidebarProps {
   devices: Device[];
@@ -46,7 +48,7 @@ function SortableDeviceCard({
     cursor: editMode ? 'grab' : 'default',
     position: 'relative',
     zIndex: isDragging ? 1 : 0,
-    touchAction: 'none',
+    touchAction: 'pan-y',
   };
 
   return (
@@ -116,12 +118,12 @@ function DeviceMonitorCardContent({
           </span>
         </div>
         {editMode && (
-          <div style={{ display: 'flex', gap: 2 }}>
-            <button className="nd-edit-btn" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} style={{ color: 'var(--nd-accent)' }}>
-              <Pencil size={11} />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="nd-action-icon accent" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} title="Modifier l'appareil">
+              <Pencil size={13} />
             </button>
-            <button className="nd-edit-btn nd-edit-btn-danger" onClick={(e) => { e.stopPropagation(); onDelete?.(); }} style={{ color: 'var(--nd-red)' }}>
-              <Trash2 size={11} />
+            <button className="nd-action-icon danger" onClick={(e) => { e.stopPropagation(); onDelete?.(); }} title="Supprimer l'appareil">
+              <Trash2 size={13} />
             </button>
           </div>
         )}
@@ -136,9 +138,9 @@ function DeviceMonitorCardContent({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {displayStats.map((stat, i) => (
             <div key={i}>
-              <div className="nd-stat-row" style={{ fontSize: '0.7rem' }}>
-                <span className="nd-stat-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }} title={stat.label}>{stat.label}</span>
-                <span className="nd-stat-value" style={{ fontSize: '0.7rem' }}>{stat.value}</span>
+              <div className="nd-stat-row" style={{ fontSize: '0.7rem', flexWrap: 'wrap', gap: '2px 8px' }}>
+                <span className="nd-stat-label" style={{ fontWeight: 600, flex: '1 1 auto', minWidth: 0, wordBreak: 'break-word', color: 'var(--nd-text-muted)' }} title={stat.label}>{stat.label}</span>
+                <span className="nd-stat-value" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>{stat.value}</span>
               </div>
               {stat.percent !== undefined && (
                 <div className="nd-progress" style={{ height: 4 }}>
@@ -160,6 +162,8 @@ function DeviceMonitorCardContent({
 }
 
 export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
+  const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
+
   return (
     <aside className="nd-sidebar-left">
       {/* DEVICES - Always visible */}
@@ -169,7 +173,7 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
           Appareils
           {editMode && onAddDevice && (
             <button
-              className="nd-edit-btn"
+              className="nd-action-icon"
               onClick={onAddDevice}
               style={{ marginLeft: 'auto', color: 'var(--nd-green)' }}
             >
@@ -194,12 +198,25 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
                 device={device}
                 editMode={editMode}
                 onEdit={() => onEditDevice?.(device)}
-                onDelete={() => onDeleteDevice?.(device.id)}
+                onDelete={() => setDeviceToDelete(device)}
               />
             ))}
           </div>
         </SortableContext>
       </div>
+
+      {editMode && <ConfirmModal
+        isOpen={!!deviceToDelete}
+        onClose={() => setDeviceToDelete(null)}
+        onConfirm={() => {
+          if (deviceToDelete) {
+             onDeleteDevice?.(deviceToDelete.id);
+             setDeviceToDelete(null);
+          }
+        }}
+        title="Dételer l'appareil ?"
+        description={`Êtes-vous sûr de vouloir supprimer "${deviceToDelete?.name}" ? Cette action est définitive.`}
+      />}
     </aside>
   );
 }
