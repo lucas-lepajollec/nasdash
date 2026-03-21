@@ -5,7 +5,7 @@ import { HardDrive, Plus, Pencil, Trash2, Loader2, AlertCircle, GripVertical } f
 import { Device, DeviceStat } from '@/lib/types';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ConfirmModal from './ConfirmModal';
 
 interface LeftSidebarProps {
@@ -163,9 +163,34 @@ function DeviceMonitorCardContent({
 
 export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const [isSticky, setIsSticky] = useState(true);
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+    const checkHeight = () => {
+      if (!sidebarRef.current) return;
+      // 120px is roughly top offset + bottom gaps
+      setIsSticky(sidebarRef.current.scrollHeight + 120 <= window.innerHeight);
+    };
+    
+    checkHeight();
+    const observer = new ResizeObserver(() => checkHeight());
+    if (sidebarRef.current) observer.observe(sidebarRef.current);
+    window.addEventListener('resize', checkHeight);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', checkHeight);
+    };
+  }, [devices]);
 
   return (
-    <aside className="nd-sidebar-left">
+    <aside 
+      ref={sidebarRef} 
+      className="nd-sidebar-left"
+      style={!isSticky ? { position: 'static', maxHeight: 'none', overflowY: 'visible' } : {}}
+    >
       {/* DEVICES - Always visible */}
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
         <div className="nd-section-title">

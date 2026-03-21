@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { Server, FolderOpen, Hash, Link2, Globe } from 'lucide-react';
 import { Category } from '@/lib/types';
 import TailscaleStatus from './TailscaleStatus';
@@ -10,6 +11,27 @@ interface RightSidebarProps {
 }
 
 export default function RightSidebar({ categories, editMode }: RightSidebarProps) {
+  const sidebarRef = useRef<HTMLElement>(null);
+  const [isSticky, setIsSticky] = useState(true);
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+    const checkHeight = () => {
+      if (!sidebarRef.current) return;
+      setIsSticky(sidebarRef.current.scrollHeight + 120 <= window.innerHeight);
+    };
+    
+    checkHeight();
+    const observer = new ResizeObserver(() => checkHeight());
+    if (sidebarRef.current) observer.observe(sidebarRef.current);
+    window.addEventListener('resize', checkHeight);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', checkHeight);
+    };
+  }, [categories]);
+
   // Compute stats
   const serviceCount = categories.reduce((acc, c) => acc + c.services.length, 0);
   const categoryCount = categories.length;
@@ -36,7 +58,11 @@ export default function RightSidebar({ categories, editMode }: RightSidebarProps
   ];
 
   return (
-    <aside className="nd-sidebar-right">
+    <aside 
+      ref={sidebarRef} 
+      className="nd-sidebar-right"
+      style={!isSticky ? { position: 'static', maxHeight: 'none', overflowY: 'visible' } : {}}
+    >
       {/* Quick Stats */}
       <div className="nd-sidebar-card nd-animate-in">
         <div className="nd-section-title">
