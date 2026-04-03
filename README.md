@@ -119,7 +119,48 @@ The application will be available at **http://localhost:2504**. To connect to yo
 - **Docker API**: Never expose the standard Docker TCP port (2375) to the public internet. Always use a proxy like `docker-socket-proxy` on an internal Docker network.
 - **Data Persistence**: The `data/config.json` file contains your server IPs and API keys. Ensure your `./data` volume is properly secured and excluded from public git repositories (already handled by the default `.gitignore`).
 - **Secrets**: Use a reverse proxy (Nginx, Traefik, Caddy) with SSL/TLS to access NasDash over the internet.
+---
 
+## 🔗 Connecter des hôtes Docker distants (Sécurisé)
+
+> [!WARNING]
+> **Ne jamais ouvrir le port 2375 directement sur le démon Docker de votre hôte.** Exposer l'API Docker sans protection équivaut à donner un accès **root** complet à votre machine à n'importe qui sur le réseau.
+
+Pour piloter des machines distantes (un autre NAS, un serveur dédié, un Raspberry Pi), la méthode recommandée est d'installer un petit proxy sur chaque machine ciblée.
+
+**1. Sur la machine distante :**
+Lancez ce service via un fichier `docker-compose.yml` :
+
+```yaml
+services:
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: remote-docker-proxy
+    restart: unless-stopped
+    ports:
+      - "2375:2375"  # Expose le port vers NasDash uniquement
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - VOLUMES=1
+      - NETWORKS=1
+      - INFO=1
+      - POST=1
+      - AUTH=0
+      - BUILD=0
+      - EXEC=0
+      - SYSTEM=0
+```
+
+**2. Dans l'interface NasDash :**
+Cliquez sur "Ajouter un hôte Docker" et saisissez :
+- **Nom** : Le nom de la machine (ex: `PC Tour`, `Serveur Backup`)
+- **Adresse / Hôte** : L'adresse IP locale de la machine distante (ex: `192.168.0.xxx`) ou son IP **Tailscale**.
+- **Port** : `2375`
+
+---
 
 ## 📂 Project Structure
 
