@@ -66,7 +66,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete }: D
   };
 
   return (
-    <div className="nd-modal-overlay" onClick={onClose}>
+    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="nd-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <h2 className="nd-section-title" style={{ marginBottom: 20 }}>
           {device ? 'Éditer l\'appareil' : 'Ajouter un appareil'}

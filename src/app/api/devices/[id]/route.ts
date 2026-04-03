@@ -144,10 +144,16 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         let cpuTemp = '';
         let diskTemp = '';
         if (data?.sensors && Array.isArray(data.sensors)) {
-          const cpuS = data.sensors.find((s: any) =>
-            ['cpu', 'core', 'package', 'acpitz'].some(keyword => s.label?.toLowerCase().includes(keyword))
+          const getSensor = (kws: string[]) => data.sensors.find((s: any) => 
+            kws.some(kw => s.label?.toLowerCase().includes(kw))
           );
-          if (cpuS?.value !== undefined) {
+          const cpuS = 
+            getSensor(['package', 'tctl', 'tdie']) ||
+            getSensor(['core']) ||
+            getSensor(['cpu']) ||
+            getSensor(['acpitz']);
+          
+          if (typeof cpuS?.value === 'number') {
             cpuTemp = ` ${Math.round(cpuS.value)}°C`;
           }
 
@@ -155,7 +161,7 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
             ['nvme', 'sda', 'disk', 'hdd', 'temp1'].some(keyword => s.label?.toLowerCase().includes(keyword)) &&
             !['cpu', 'core'].some(keyword => s.label?.toLowerCase().includes(keyword)) // avoid overlapping
           );
-          if (diskS?.value !== undefined) {
+          if (typeof diskS?.value === 'number') {
             diskTemp = ` ${Math.round(diskS.value)}°C`;
           }
         }
@@ -225,7 +231,7 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         if (data?.gpu && Array.isArray(data.gpu)) {
           for (const gpu of data.gpu) {
             if (gpu.proc !== undefined) {
-              const tStr = gpu.temperature !== undefined ? `\u00A0\u00A0\u00A0${Math.round(gpu.temperature)}°C` : '';
+              const tStr = typeof gpu.temperature === 'number' ? `\u00A0\u00A0\u00A0${Math.round(gpu.temperature)}°C` : '';
               stats.push({ label: gpu.name || 'GPU', value: `${gpu.proc.toFixed(1)}%${tStr}`, percent: gpu.proc, color: 'var(--nd-purple)' });
             }
           }
@@ -263,8 +269,30 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
           stats.push({ label: 'RAM', value: `${memPercent.toFixed(1)}%`, percent: memPercent, color: 'var(--nd-green)' });
         }
 
-        const diskUsed = data.rootfs?.used || data.disk;
-        const diskTotal = data.rootfs?.total || data.maxdisk;
+        let diskUsed = data.rootfs?.used || data.disk;
+        let diskTotal = data.rootfs?.total || data.maxdisk;
+
+        // Si c'est un noeud principal (et pas une VM), on récupère la somme de tous les stockages
+        if (!device.api.vmid && typeof apiUrl === 'string' && apiUrl.endsWith('/status')) {
+          const storageUrl = apiUrl.replace('/status', '/storage');
+          try {
+             const storageData = await fetchProxmox(storageUrl, tokenStr);
+             if (Array.isArray(storageData) && storageData.length > 0) {
+               let sUsed = 0, sTotal = 0;
+               for (const st of storageData) {
+                  sUsed += st.used || 0;
+                  sTotal += st.total || 0;
+               }
+               if (sTotal > 0) {
+                 diskUsed = sUsed;
+                 diskTotal = sTotal;
+               }
+             }
+          } catch(e) {
+             console.error("Erreur récupération stockage additionnel Proxmox", e);
+          }
+        }
+
         if (diskUsed && diskTotal) {
           let diskPercent = 0;
           if (device.api.vmType === 'lxc') {
@@ -329,7 +357,10 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
           // 1. CPU
           const cpuLoad = searchLHMTree(hw, (n: any) => n.Text === 'CPU Total' && n.Value?.includes('%'));
           if (cpuLoad) {
-            const cpuTemp = searchLHMTree(hw, (n: any) => (n.Text === 'CPU Package' || n.Text?.includes('Core (Tctl/Tdie)') || n.Text === 'Core Max') && n.Value?.includes('°C'));
+            let cpuTemp = searchLHMTree(hw, (n: any) => (n.Text === 'CPU Package' || n.Text?.includes('Core (Tctl/Tdie)')) && n.Value?.includes('°C'));
+            if (!cpuTemp) {
+              cpuTemp = searchLHMTree(hw, (n: any) => n.Text === 'Core Max' && n.Value?.includes('°C'));
+            }
             
             const val = parseFloat(cpuLoad.Value.replace(',', '.'));
             const parts = [`${val.toFixed(1)}%`];

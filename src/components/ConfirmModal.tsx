@@ -30,7 +30,7 @@ export default function ConfirmModal({
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="nd-modal-overlay" onClick={onClose} style={{ zIndex: 99999 }}>
+    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ zIndex: 99999 }}>
       <div className="nd-modal nd-animate-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, textAlign: 'center', padding: '32px 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
           <div style={{ 

@@ -90,7 +90,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   };
 
   return (
-    <div className="nd-modal-overlay" onClick={onClose}>
+    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="nd-modal" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{category ? 'Modifier' : 'Ajouter'} une catégorie</h3>

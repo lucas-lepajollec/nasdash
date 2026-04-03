@@ -38,7 +38,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
   };
 
   return (
-    <div className="nd-modal-overlay" onClick={onClose}>
+    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="nd-modal" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{service ? 'Modifier' : 'Ajouter'} un service</h3>
