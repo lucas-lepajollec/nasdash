@@ -66,9 +66,10 @@ If deploying via containers, ensure [Docker](https://docs.docker.com/get-docker/
 
 ## 🐳 Docker Deployment
 
-The project includes a strongly-optimized, multi-stage Docker build producing a lightweight Next.js standalone container.
+For maximum security, NasDash is designed to work with a **Docker Socket Proxy**. This avoids exposing the powerful `/var/run/docker.sock` directly to the dashboard container.
 
 **1. Create a `docker-compose.yml` file:**
+Use the provided `docker-compose.example.yml` as a template:
 
 ```yaml
 services:
@@ -78,20 +79,47 @@ services:
     ports:
       - "2504:2504"
     volumes:
-      - ./data:/app/data  # Persistent JSON configuration + user custom logos
-    pid: "host"           # Required for reading exact host processes if deploying on root
+      - ./data:/app/data
+    pid: "host"
+    depends_on:
+      - docker-proxy
+    restart: unless-stopped
+
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: nasdash-docker-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Read-only access to socket
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - VOLUMES=1
+      - NETWORKS=1
+      - INFO=1
+      - POST=1        # Required for Start/Stop/Restart actions
+      - AUTH=0
+      - BUILD=0
+      - EXEC=0
+      - SYSTEM=0
     restart: unless-stopped
 ```
 
-**2. Start the container:**
+**2. Start the stack:**
 
 ```bash
 docker compose up -d
 ```
 
-The application will be available at **http://localhost:2504**.
+The application will be available at **http://localhost:2504**. To connect to your local Docker instance, use the hostname `docker-proxy` and port `2375` (internal proxy port) in the NasDash "Add Docker Host" modal.
 
 ---
+
+## 🔒 Security Best Practices
+
+- **Docker API**: Never expose the standard Docker TCP port (2375) to the public internet. Always use a proxy like `docker-socket-proxy` on an internal Docker network.
+- **Data Persistence**: The `data/config.json` file contains your server IPs and API keys. Ensure your `./data` volume is properly secured and excluded from public git repositories (already handled by the default `.gitignore`).
+- **Secrets**: Use a reverse proxy (Nginx, Traefik, Caddy) with SSL/TLS to access NasDash over the internet.
+
 
 ## 📂 Project Structure
 

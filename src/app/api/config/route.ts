@@ -9,6 +9,7 @@ export async function GET() {
   const config = readConfig();
   // Ensure devices array exists (backward compat)
   if (!config.devices) (config as any).devices = [];
+  if (!config.dockerHosts) (config as any).dockerHosts = [];
 
   // Strip out sensitive tokens before sending to client
   const safeConfig = JSON.parse(JSON.stringify(config));
@@ -142,6 +143,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(safeDevice, { status: 201 });
   }
 
+  if (type === 'dockerHost') {
+    if (!config.dockerHosts) (config as any).dockerHosts = [];
+    const newHost = {
+      id: uuidv4(),
+      name: body.name || 'Docker Host',
+      icon: body.icon || '🐳',
+      type: 'tcp' as const,
+      url: body.url || '',
+    };
+    (config as any).dockerHosts.push(newHost);
+    writeConfig(config);
+    return NextResponse.json(newHost, { status: 201 });
+  }
+
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 }
 
@@ -207,6 +222,7 @@ export async function PUT(req: NextRequest) {
     if (body.tailscaleTailnet !== undefined) config.settings.tailscaleTailnet = body.tailscaleTailnet;
     if (body.tailscaleClientId !== undefined) config.settings.tailscaleClientId = body.tailscaleClientId;
     if (body.tailscaleClientSecret !== undefined) config.settings.tailscaleClientSecret = body.tailscaleClientSecret;
+    if (body.dockPosition !== undefined) config.settings.dockPosition = body.dockPosition;
     writeConfig(config);
     return NextResponse.json(config.settings);
   }
@@ -326,6 +342,13 @@ export async function DELETE(req: NextRequest) {
   if (type === 'device') {
     if (!config.devices) config.devices = [];
     config.devices = config.devices.filter((d: Device) => d.id !== id);
+    writeConfig(config);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (type === 'dockerHost') {
+    if (!(config as any).dockerHosts) (config as any).dockerHosts = [];
+    (config as any).dockerHosts = (config as any).dockerHosts.filter((h: any) => h.id !== id);
     writeConfig(config);
     return NextResponse.json({ ok: true });
   }

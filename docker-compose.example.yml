@@ -1,16 +1,15 @@
 services:
   nasdash:
-    build: .
+    image: lucas/nasdash:latest # Replace with your image or build: .
     container_name: nasdash
     ports:
       - "2504:2504"
-    pid: "host"  # Required for systeminformation to read real host stats
+    pid: "host"
     volumes:
-      - ./data:/app/data  # Persistent config + uploaded logos
+      - ./data:/app/data
     environment:
       - NODE_ENV=production
       - PORT=2504
-      - HOSTNAME=0.0.0.0
     depends_on:
       - docker-proxy
     restart: unless-stopped
@@ -21,14 +20,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      # Allowed
       - CONTAINERS=1
       - IMAGES=1
       - VOLUMES=1
       - NETWORKS=1
       - INFO=1
-      - POST=1        # Required for restart/stop/start actions
-      # Blocked
+      - POST=1
       - AUTH=0
       - BUILD=0
       - EXEC=0

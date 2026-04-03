@@ -52,13 +52,79 @@ export interface Device {
   stats?: DeviceStat[];
 }
 
+// ==================== DOCKER ====================
+export interface DockerHost {
+  id: string;
+  name: string;
+  icon: string;
+  type: 'tcp';        // TCP API (http://ip:port)
+  url: string;        // e.g. "http://192.168.0.200:2375"
+}
+
+export interface DockerContainerPort {
+  ip?: string;
+  privatePort: number;
+  publicPort?: number;
+  type: string;
+}
+
+export interface DockerContainerMount {
+  type: string;
+  name?: string;
+  source: string;
+  destination: string;
+  rw: boolean;
+}
+
+export interface DockerContainer {
+  id: string;
+  names: string[];
+  image: string;
+  imageId: string;
+  state: 'running' | 'exited' | 'paused' | 'restarting' | 'created' | 'dead';
+  status: string;
+  created: number;
+  ports: DockerContainerPort[];
+  mounts: DockerContainerMount[];
+  labels: Record<string, string>;
+  // Stats (populated separately)
+  stats?: {
+    cpuPercent: number;
+    memUsage: number;
+    memLimit: number;
+    memPercent: number;
+    netInput: number;
+    netOutput: number;
+  };
+}
+
+export interface DockerImage {
+  id: string;
+  repoTags: string[];
+  size: number;
+  created: number;
+  containers: number;
+}
+
+export interface DockerVolume {
+  name: string;
+  driver: string;
+  mountpoint: string;
+  createdAt: string;
+  labels: Record<string, string>;
+  usageData?: { size: number; refCount: number };
+}
+
+// ==================== CONFIG ====================
 export interface DashboardConfig {
   categories: Category[];
   devices: Device[];
+  dockerHosts?: DockerHost[];
   settings: {
     title: string;
     showMonitor: boolean;
     totalSlots?: number;
+    dockPosition?: 'left' | 'right';
     tailscaleTailnet?: string;
     tailscaleClientId?: string;
     tailscaleClientSecret?: string;
@@ -66,35 +132,7 @@ export interface DashboardConfig {
 }
 
 export interface SystemStats {
-  cpu: {
-    load: number;
-    speed: number;
-    model: string;
-    cores: number;
-  };
-  ram: {
-    used: number;
-    total: number;
-    percent: number;
-  };
-  disk: {
-    mount?: string;
-    used: number;
-    total: number;
-    percent: number;
-    temp?: number;
-  }[];
-  gpu?: {
-    model: string;
-    vram: number;
-    usage?: number;
-    temp?: number;
-  }[];
-  temp: {
-    main: number;
-  };
   network?: {
     latency: number;
   };
-  uptime: number;
 }

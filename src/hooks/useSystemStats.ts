@@ -23,7 +23,7 @@ export function useSystemStats() {
         setHistory(prev => {
           const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
           const latency = data.network?.latency || 0;
-          const next = [...prev, { cpu: data.cpu.load, latency, time: now }];
+          const next = [...prev, { cpu: 0, latency, time: now }];
           return next.slice(-60); // Keep last 60 data points (2 min)
         });
       } catch {

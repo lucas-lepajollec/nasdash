@@ -13,6 +13,7 @@ interface HeaderProps {
   onAddCategory: () => void;
   onAddSlot?: () => Promise<void> | void;
   secretMode: boolean;
+  activeExtension?: string;
 }
 
 export default function Header({
@@ -26,10 +27,12 @@ export default function Header({
   onAddCategory,
   onAddSlot,
   secretMode,
+  activeExtension,
 }: HeaderProps) {
+  const isDashboard = !activeExtension || activeExtension === 'dashboard';
   return (
     <>
-      <header className={`nd-header ${editMode ? 'nd-header--editing' : ''}`}>
+      <header className={`nd-header ${editMode && isDashboard ? 'nd-header--editing' : ''}`}>
         {/* Brand — terminal style */}
         <div className="nd-brand">
           <span className="nd-brand-dot" />
@@ -60,7 +63,7 @@ export default function Header({
 
         {/* Actions */}
         <div className="nd-header-actions">
-          {editMode && (
+          {editMode && isDashboard && (
             <div className="nd-header-edit-row">
               <button className="nd-btn" onClick={onAddSlot} title="Ajouter un emplacement">
                 <Plus size={12} />
