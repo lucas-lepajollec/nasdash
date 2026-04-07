@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { Settings, Plug, CheckCircle, XCircle, Loader } from 'lucide-react';
 
-export default function HermesSetup({ onComplete }: { onComplete: () => void }) {
+export default function HermesSetup({ onComplete, initialSettings }: { onComplete: () => void; initialSettings?: any }) {
   const { refresh } = useConfig();
-  const [dataPath, setDataPath] = useState('/appdata/hermes');
-  const [containerName, setContainerName] = useState('hermes-agent');
-  const [dockerProxy, setDockerProxy] = useState('');
-  const [apiUrl, setApiUrl] = useState('');
-  const [apiKey, setApiKey] = useState('');
+  const [dataPath, setDataPath] = useState(initialSettings?.hermesDataPath || '/appdata/hermes');
+  const [containerName, setContainerName] = useState(initialSettings?.hermesContainerName || 'hermes-agent');
+  const [dockerProxy, setDockerProxy] = useState(initialSettings?.hermesDockerProxy || '');
+  const [apiUrl, setApiUrl] = useState(initialSettings?.hermesUrl || '');
+  const [apiKey, setApiKey] = useState(initialSettings?.hermesApiKey || '');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -27,9 +27,9 @@ export default function HermesSetup({ onComplete }: { onComplete: () => void }) 
           type: 'settings',
           hermesDataPath: dataPath,
           hermesContainerName: containerName,
-          hermesDockerProxy: dockerProxy || undefined,
-          hermesUrl: apiUrl || undefined,
-          hermesApiKey: apiKey || undefined,
+          hermesDockerProxy: dockerProxy,
+          hermesUrl: apiUrl,
+          hermesApiKey: apiKey,
         }),
       });
 
@@ -51,21 +51,33 @@ export default function HermesSetup({ onComplete }: { onComplete: () => void }) 
 
   const handleSave = async () => {
     setSaving(true);
-    await fetch('/api/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'settings',
-        hermesDataPath: dataPath,
-        hermesContainerName: containerName,
-        hermesDockerProxy: dockerProxy || undefined,
-        hermesUrl: apiUrl || undefined,
-        hermesApiKey: apiKey || undefined,
-      }),
-    });
-    await refresh();
-    setSaving(false);
-    onComplete();
+    setTestResult(null);
+    try {
+      const res = await fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'settings',
+          hermesDataPath: dataPath,
+          hermesContainerName: containerName,
+          hermesDockerProxy: dockerProxy,
+          hermesUrl: apiUrl,
+          hermesApiKey: apiKey,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Erreur lors de la sauvegarde');
+      }
+
+      await refresh();
+      onComplete();
+    } catch (e: any) {
+      setTestResult({ ok: false, message: e.message });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

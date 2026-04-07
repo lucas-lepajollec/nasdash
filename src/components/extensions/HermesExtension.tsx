@@ -22,7 +22,7 @@ const NAV_ITEMS: { id: HermesPanel; icon: any; label: string; badge?: string }[]
 ];
 
 export default function HermesExtension({ isVisible }: { isVisible: boolean }) {
-  const { config } = useConfig();
+  const { config, refresh: refreshConfig } = useConfig();
   const { status } = useHermesStatus(isVisible ? 15000 : 0);
   const [activePanel, setActivePanel] = useState<HermesPanel>('config');
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
@@ -35,8 +35,9 @@ export default function HermesExtension({ isVisible }: { isVisible: boolean }) {
   }, [config]);
 
   const handleSetupComplete = useCallback(() => {
+    refreshConfig();
     setIsConfigured(true);
-  }, []);
+  }, [refreshConfig]);
 
   if (!isVisible) return null;
 
@@ -51,7 +52,7 @@ export default function HermesExtension({ isVisible }: { isVisible: boolean }) {
 
   // Setup needed
   if (!isConfigured) {
-    return <HermesSetup onComplete={handleSetupComplete} />;
+    return <HermesSetup onComplete={handleSetupComplete} initialSettings={config?.settings} />;
   }
 
   const isRunning = status?.container?.running;

@@ -219,12 +219,19 @@ export async function PUT(req: NextRequest) {
   }
 
   if (type === 'settings') {
+    if (!config.settings) (config as any).settings = {};
+
     if (body.title !== undefined) config.settings.title = body.title;
     if (body.showMonitor !== undefined) config.settings.showMonitor = body.showMonitor;
     if (body.totalSlots !== undefined) config.settings.totalSlots = body.totalSlots;
     if (body.tailscaleTailnet !== undefined) config.settings.tailscaleTailnet = body.tailscaleTailnet;
     if (body.tailscaleClientId !== undefined) config.settings.tailscaleClientId = body.tailscaleClientId;
-    if (body.tailscaleClientSecret !== undefined) config.settings.tailscaleClientSecret = body.tailscaleClientSecret;
+    
+    // Prevent overwriting secrets with masked values
+    if (body.tailscaleClientSecret !== undefined && body.tailscaleClientSecret !== '********') {
+      config.settings.tailscaleClientSecret = body.tailscaleClientSecret;
+    }
+    
     if (body.dockPosition !== undefined) config.settings.dockPosition = body.dockPosition;
     if (body.homeAssistantUrl !== undefined) config.settings.homeAssistantUrl = body.homeAssistantUrl;
     
@@ -233,7 +240,11 @@ export async function PUT(req: NextRequest) {
     if (body.hermesContainerName !== undefined) config.settings.hermesContainerName = body.hermesContainerName;
     if (body.hermesDockerProxy !== undefined) config.settings.hermesDockerProxy = body.hermesDockerProxy;
     if (body.hermesUrl !== undefined) config.settings.hermesUrl = body.hermesUrl;
-    if (body.hermesApiKey !== undefined) config.settings.hermesApiKey = body.hermesApiKey;
+    
+    // Prevent overwriting hermesApiKey with masked values
+    if (body.hermesApiKey !== undefined && body.hermesApiKey !== '********') {
+      config.settings.hermesApiKey = body.hermesApiKey;
+    }
     
     writeConfig(config);
     return NextResponse.json(config.settings);
