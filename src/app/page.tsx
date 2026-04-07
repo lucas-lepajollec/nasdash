@@ -8,6 +8,8 @@ import { useExtension, ExtensionId } from '@/hooks/useExtension';
 import { useConfig } from '@/hooks/useConfig';
 
 const DockerExtension = lazy(() => import('@/components/extensions/DockerExtension'));
+const HomeAssistantExtension = lazy(() => import('@/components/extensions/HomeAssistantExtension'));
+const HermesExtension = lazy(() => import('@/components/extensions/HermesExtension'));
 
 export default function Shell() {
   const { activeExtension, switchExtension, extensions, ready } = useExtension();
@@ -51,8 +53,17 @@ export default function Shell() {
 
   const title = config?.settings?.title || process.env.NEXT_PUBLIC_DASHBOARD_TITLE || 'NASDASH';
 
+  const LoadingView = ({ text }: { text: string }) => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
+        <span style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)' }}>{text}</span>
+      </div>
+    </div>
+  );
+
   return (
-    <div className={`nd-shell nd-shell--dock-${dockPosition}`}>
+    <div className={`nd-shell nd-shell--dock-${dockPosition} ${activeExtension === 'ha' ? 'nd-shell--ha' : ''}`}>
       {/* Dock — Extension switcher */}
       <ExtensionDock
         extensions={extensions}
@@ -72,7 +83,7 @@ export default function Shell() {
       />
 
       {/* Main content area */}
-      <div className="nd-shell-content">
+      <div className={`nd-shell-content ${activeExtension === 'ha' && !editMode ? 'nd-shell-content--flush' : ''}`}>
         <Header
           title={title}
           searchQuery={searchQuery}
@@ -81,7 +92,7 @@ export default function Shell() {
           onToggleEdit={() => setEditMode(prev => !prev)}
           isDark={isDark}
           onToggleTheme={toggleTheme}
-          onAddCategory={() => {}} // Handled inside DashboardExtension now
+          onAddCategory={() => {}} 
           onAddSlot={() => {}}
           secretMode={showSecret}
           activeExtension={activeExtension}
@@ -89,7 +100,8 @@ export default function Shell() {
 
         {/* Extension views - Kept mounted to preserve state */}
         <div className="nd-extension-view">
-          <div style={{ display: activeExtension === 'dashboard' ? 'block' : 'none' }}>
+          {/* Dashboard */}
+          <div className="flex-1" style={{ display: activeExtension === 'dashboard' ? 'block' : 'none' }}>
             <DashboardExtension
               editMode={editMode}
               searchQuery={searchQuery}
@@ -98,18 +110,30 @@ export default function Shell() {
             />
           </div>
 
-          <div style={{ display: activeExtension === 'docker' ? 'block' : 'none' }}>
-            <Suspense fallback={
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)' }}>Chargement Docker…</span>
-                </div>
-              </div>
-            }>
+          {/* Docker */}
+          <div className="flex-1" style={{ display: activeExtension === 'docker' ? 'block' : 'none' }}>
+            <Suspense fallback={<LoadingView text="Chargement Docker…" />}>
               <DockerExtension editMode={editMode} searchQuery={searchQuery} />
             </Suspense>
           </div>
+
+          {/* Home Assistant — conditionally rendered to avoid background iframe costs */}
+          {activeExtension === 'ha' && (
+            <div className="flex-1" style={{ display: 'flex', flexDirection: 'column' }}>
+              <Suspense fallback={<LoadingView text="Chargement HA…" />}>
+                <HomeAssistantExtension editMode={editMode} isVisible={activeExtension === 'ha'} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* Hermes Agent */}
+          {activeExtension === 'hermes' && (
+            <div className="flex-1" style={{ display: 'flex', flexDirection: 'column' }}>
+              <Suspense fallback={<LoadingView text="Chargement Hermes…" />}>
+                <HermesExtension isVisible={activeExtension === 'hermes'} />
+              </Suspense>
+            </div>
+          )}
         </div>
       </div>
     </div>

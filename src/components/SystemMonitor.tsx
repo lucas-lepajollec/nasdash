@@ -13,7 +13,8 @@ export default function SystemMonitor({ history, isDark }: SystemMonitorProps) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setReady(true), 10);
+    // Longer delay to ensure layout is settled and avoid Recharts 0-size warnings
+    const t = setTimeout(() => setReady(true), 200);
     return () => clearTimeout(t);
   }, []);
 
@@ -26,7 +27,7 @@ export default function SystemMonitor({ history, isDark }: SystemMonitorProps) {
   else if (currentLatency > 80) netStatus = { label: 'Moyen', color: 'var(--nd-yellow)' };
 
   return (
-    <div style={{ marginTop: 20, marginBottom: 20 }}>
+    <div className="nd-animate-in" style={{ marginTop: 20, marginBottom: 20 }}>
       <div className="nd-monitor-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: 10 }}>
         <span><span style={{ fontSize: '0.9rem' }}>📶</span> Latence Réseau</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, textTransform: 'none', letterSpacing: 'normal' }}>
@@ -36,7 +37,7 @@ export default function SystemMonitor({ history, isDark }: SystemMonitorProps) {
       </div>
       <div className="nd-card" style={{ height: 200, padding: '12px 8px', position: 'relative', width: '100%' }}>
         <div style={{ position: 'absolute', top: 10, left: 10, right: 10, bottom: 10 }}>
-          <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1} debounce={100}>
             <LineChart data={history}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="time" tick={{ fontSize: 9, fill: isDark ? '#7d8590' : '#656d76' }} />

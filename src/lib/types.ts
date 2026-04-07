@@ -128,6 +128,13 @@ export interface DashboardConfig {
     tailscaleTailnet?: string;
     tailscaleClientId?: string;
     tailscaleClientSecret?: string;
+    homeAssistantUrl?: string;
+    // Hermes settings
+    hermesDataPath?: string;
+    hermesContainerName?: string;
+    hermesDockerProxy?: string;
+    hermesUrl?: string;
+    hermesApiKey?: string;
   };
 }
 

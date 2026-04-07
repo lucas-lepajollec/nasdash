@@ -141,7 +141,9 @@ body {
   gap: 16px;
   padding: 16px 20px;
   max-width: 1600px;
+  width: 100%;
   margin: 0 auto 16px auto;
+  flex-shrink: 0;
 }
 
 .nd-header-actions {
@@ -934,9 +936,6 @@ body {
     right: 64px;
   }
 
-  .nd-shell-content {
-    padding-bottom: 20px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -1007,18 +1006,33 @@ body {
   }
 }/* ==================== SHELL ==================== */
 .nd-shell {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
-
+.nd-shell--ha {
+  background-image: none !important;
+  background-color: var(--nd-bg) !important;
+}
 
 .nd-shell-content {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.nd-shell-content--flush {
+  padding-bottom: 0 !important;
 }
 
 .nd-extension-view {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ==================== DOCK ==================== */
@@ -1542,4 +1556,351 @@ body {
 .light .recharts-cartesian-grid-horizontal line,
 .light .recharts-cartesian-grid-vertical line {
   stroke: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ============================================================
+   HERMES DASHBOARD EXTENSION
+   ============================================================ */
+.nd-hermes {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.nd-hermes-nav {
+  width: var(--nd-sidebar-width);
+  flex-shrink: 0;
+  background: var(--nd-bg-surface);
+  border-right: 1px solid var(--nd-card-border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 4px;
+}
+
+.nd-hermes-nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+.nd-hermes-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.nd-hermes-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+.nd-hermes-status-dot--ok { color: var(--nd-green); background: var(--nd-green); }
+.nd-hermes-status-dot--error { color: var(--nd-red); background: var(--nd-red); }
+
+.nd-hermes-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--nd-text-muted);
+  cursor: pointer;
+  transition: var(--nd-transition);
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.nd-hermes-nav-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--nd-text);
+}
+
+.nd-hermes-nav-item--active {
+  background: var(--nd-accent-glow) !important;
+  color: var(--nd-accent) !important;
+}
+
+.nd-hermes-badge {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--nd-text-muted);
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+.nd-hermes-main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  position: relative;
+  background: var(--nd-bg);
+}
+
+.nd-hermes-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: var(--nd-text-muted);
+  font-size: 0.8rem;
+}
+
+/* Config panel */
+.nd-hermes-config {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.nd-hermes-config-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--nd-card-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(22, 27, 34, 0.4);
+}
+
+.nd-hermes-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: 1px solid var(--nd-card-border);
+}
+
+.nd-hermes-config-panels {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  overflow: auto;
+}
+
+.nd-hermes-panel {
+  background: var(--nd-card-bg);
+  border: 1px solid var(--nd-card-border);
+  border-radius: var(--nd-card-radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nd-hermes-panel-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--nd-text);
+  margin-bottom: 8px;
+}
+
+.nd-hermes-field-row {
+  display: flex;
+  gap: 16px;
+}
+
+.nd-hermes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.nd-hermes-field-hint {
+  font-size: 0.7rem;
+  color: var(--nd-text-dimmed);
+}
+
+.nd-hermes-field-hint code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.nd-hermes-field-value {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: center;
+}
+
+.nd-hermes-backend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.nd-hermes-backend-card {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--nd-card-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  transition: var(--nd-transition);
+  text-align: left;
+}
+
+.nd-hermes-backend-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.nd-hermes-backend-card--active {
+  background: var(--nd-accent-glow);
+  border-color: var(--nd-accent);
+}
+
+.nd-hermes-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.nd-hermes-toggle input {
+  display: none;
+}
+
+.nd-hermes-toggle-slider {
+  width: 40px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  position: relative;
+  transition: var(--nd-transition);
+}
+
+.nd-hermes-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: var(--nd-transition);
+}
+
+.nd-hermes-toggle input:checked + .nd-hermes-toggle-slider {
+  background: var(--nd-accent);
+}
+
+.nd-hermes-toggle input:checked + .nd-hermes-toggle-slider::after {
+  transform: translateX(20px);
+}
+
+.nd-hermes-config-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--nd-card-border);
+  background: rgba(22, 27, 34, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  bottom: 0;
+}
+
+.nd-hermes-unsaved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--nd-yellow);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(210, 153, 34, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.nd-hermes-raw-editor {
+  flex: 1;
+  padding: 24px;
+}
+
+.nd-hermes-yaml-textarea {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--nd-card-border);
+  border-radius: var(--nd-card-radius);
+  padding: 16px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #e6edf3;
+  resize: none;
+}
+
+.nd-hermes-yaml-textarea:focus {
+  outline: none;
+  border-color: var(--nd-accent-dim);
+}
+
+.nd-hermes-error {
+  margin: 24px;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.2);
+  border-radius: var(--nd-card-radius);
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  color: var(--nd-red);
+}
+
+.nd-hermes-toast {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 50;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: fade-in 0.3s ease;
+}
+
+.nd-hermes-toast--ok {
+  background: rgba(63, 185, 80, 0.15);
+  border: 1px solid rgba(63, 185, 80, 0.3);
+  color: var(--nd-green);
+}
+
+.nd-hermes-toast--error {
+  background: rgba(248, 81, 73, 0.15);
+  border: 1px solid rgba(248, 81, 73, 0.3);
+  color: var(--nd-red);
 }

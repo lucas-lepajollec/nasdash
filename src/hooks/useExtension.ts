@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-export type ExtensionId = 'dashboard' | 'docker';
+export type ExtensionId = 'dashboard' | 'docker' | 'ha' | 'hermes';
 
 export interface ExtensionDef {
   id: ExtensionId;
@@ -14,6 +14,8 @@ export interface ExtensionDef {
 export const EXTENSIONS: ExtensionDef[] = [
   { id: 'dashboard', name: 'Home', icon: '🏠', description: 'Services & monitoring' },
   { id: 'docker', name: 'Docker', icon: '🐳', description: 'Conteneurs & images' },
+  { id: 'ha', name: 'HA', icon: '🔌', description: 'Domotique' },
+  { id: 'hermes', name: 'Hermes', icon: '🧠', description: 'Agent IA' },
 ];
 
 const STORAGE_KEY = 'nasdash-active-extension';

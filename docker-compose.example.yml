@@ -10,6 +10,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=2504
+      - HOSTNAME=0.0.0.0
     depends_on:
       - docker-proxy
     restart: unless-stopped
