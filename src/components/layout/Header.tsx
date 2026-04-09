@@ -1,6 +1,7 @@
 'use client';
 
 import { Search, Pencil, Sun, Moon, Plus, X, Shield } from 'lucide-react';
+import { TabId } from '@/hooks/useTabs';
 
 interface HeaderProps {
   title: string;
@@ -13,7 +14,7 @@ interface HeaderProps {
   onAddCategory: () => void;
   onAddSlot?: () => Promise<void> | void;
   secretMode: boolean;
-  activeExtension?: string;
+  activeTab?: TabId;
 }
 
 export default function Header({
@@ -27,12 +28,12 @@ export default function Header({
   onAddCategory,
   onAddSlot,
   secretMode,
-  activeExtension,
+  activeTab,
 }: HeaderProps) {
-  const isDashboard = !activeExtension || activeExtension === 'dashboard';
+  const isHome = !activeTab || activeTab === 'dashboard';
   return (
     <>
-      <header className={`nd-header ${editMode && isDashboard ? 'nd-header--editing' : ''}`}>
+      <header className={`nd-header ${editMode && isHome ? 'nd-header--editing' : ''}`}>
         {/* Brand — terminal style */}
         <div className="nd-brand">
           <span className="nd-brand-dot" />
@@ -63,7 +64,7 @@ export default function Header({
 
         {/* Actions */}
         <div className="nd-header-actions">
-          {editMode && isDashboard && (
+          {editMode && isHome && (
             <div className="nd-header-edit-row">
               <button className="nd-btn" onClick={onAddSlot} title="Ajouter un emplacement">
                 <Plus size={12} />

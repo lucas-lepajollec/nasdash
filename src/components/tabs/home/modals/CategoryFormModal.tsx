@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
 import { X, Trash2, ChevronDown, ChevronRight, Pencil, Upload } from 'lucide-react';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../../../shared/ConfirmModal';
 
 interface CategoryFormModalProps {
   category?: Category;

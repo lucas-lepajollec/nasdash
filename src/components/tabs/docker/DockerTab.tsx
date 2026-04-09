@@ -4,14 +4,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDocker } from '@/hooks/useDocker';
 import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Search, Loader2, AlertCircle, ChevronDown, Terminal, Layers, Database, Plus, X, RefreshCw } from 'lucide-react';
-import ConfirmModal from '../ConfirmModal';
+import ConfirmModal from '../../shared/ConfirmModal';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : null);
 
-interface DockerExtensionProps {
+interface DockerTabProps {
   editMode: boolean;
   searchQuery: string;
+  isVisible: boolean;
 }
 
 type DockerTab = 'containers' | 'images' | 'volumes';
@@ -591,8 +592,8 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
   );
 }
 
-// ======================== MAIN DOCKER EXTENSION ========================
-export default function DockerExtension({ editMode, searchQuery }: DockerExtensionProps) {
+// ======================== MAIN DOCKER TAB ========================
+export default function DockerTab({ editMode, searchQuery, isVisible }: DockerTabProps) {
   const { config, refresh } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
@@ -659,19 +660,19 @@ export default function DockerExtension({ editMode, searchQuery }: DockerExtensi
   // No hosts configured — empty state
   if (hosts.length === 0) {
     return (
-      <>
-        <div className="nd-docker-empty nd-animate-in">
-          <div className="nd-docker-empty-icon">🐳</div>
-          <div className="nd-docker-empty-title">Docker Manager</div>
-          <div className="nd-docker-empty-desc">
+      <div className="flex flex-col items-center justify-center p-6 animate-in fade-in duration-500" style={{ minHeight: 'calc(100vh - 120px)' }}>
+        <div className="nd-docker-empty nd-card p-12 max-w-xl shadow-2xl" style={{ borderStyle: 'dashed', borderWidth: 2 }}>
+          <div className="nd-docker-empty-icon mb-6" style={{ fontSize: '4rem', opacity: 0.9 }}>🐳</div>
+          <div className="nd-docker-empty-title" style={{ fontSize: '1.25rem', marginBottom: 12 }}>Docker Manager</div>
+          <div className="nd-docker-empty-desc" style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: 32, lineHeight: 1.6 }}>
             Aucun hôte Docker configuré. Ajoutez un hôte pour commencer à gérer vos conteneurs, images et volumes depuis votre dashboard.
           </div>
-          <button className="nd-btn nd-btn-accent" onClick={() => setShowHostForm(true)} style={{ marginTop: 8 }}>
-            <Plus size={14} /> Ajouter un hôte Docker
+          <button className="nd-btn nd-btn-accent px-10 py-3 h-auto text-sm shadow-lg shadow-blue-500/10" onClick={() => setShowHostForm(true)} style={{ marginTop: 8 }}>
+            <Plus size={18} /> <span className="ml-1">Ajouter un hôte Docker</span>
           </button>
         </div>
         {showHostForm && <DockerHostFormModal onClose={() => setShowHostForm(false)} onSave={handleAddHost} />}
-      </>
+      </div>
     );
   }
 

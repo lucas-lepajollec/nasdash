@@ -21,9 +21,6 @@ export async function GET() {
   if (safeConfig.settings && safeConfig.settings.tailscaleClientSecret) {
     safeConfig.settings.tailscaleClientSecret = '********';
   }
-  if (safeConfig.settings && safeConfig.settings.hermesApiKey) {
-    safeConfig.settings.hermesApiKey = '********';
-  }
 
   return NextResponse.json(safeConfig);
 }
@@ -235,16 +232,11 @@ export async function PUT(req: NextRequest) {
     if (body.dockPosition !== undefined) config.settings.dockPosition = body.dockPosition;
     if (body.homeAssistantUrl !== undefined) config.settings.homeAssistantUrl = body.homeAssistantUrl;
     
-    // Hermes settings
-    if (body.hermesDataPath !== undefined) config.settings.hermesDataPath = body.hermesDataPath;
-    if (body.hermesContainerName !== undefined) config.settings.hermesContainerName = body.hermesContainerName;
-    if (body.hermesDockerProxy !== undefined) config.settings.hermesDockerProxy = body.hermesDockerProxy;
-    if (body.hermesUrl !== undefined) config.settings.hermesUrl = body.hermesUrl;
+    if (body.extensionOrder !== undefined) config.settings.tabOrder = body.extensionOrder;
+    if (body.tabOrder !== undefined) config.settings.tabOrder = body.tabOrder;
     
-    // Prevent overwriting hermesApiKey with masked values
-    if (body.hermesApiKey !== undefined && body.hermesApiKey !== '********') {
-      config.settings.hermesApiKey = body.hermesApiKey;
-    }
+    if (body.hiddenExtensions !== undefined) config.settings.hiddenTabs = body.hiddenExtensions;
+    if (body.hiddenTabs !== undefined) config.settings.hiddenTabs = body.hiddenTabs;
     
     writeConfig(config);
     return NextResponse.json(config.settings);

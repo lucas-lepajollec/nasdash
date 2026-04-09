@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe, Pencil, Check, X, Trash2 } from 'lucide-react';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../../shared/ConfirmModal';
 
 const getOsIcon = (os: string, hostname: string) => {
   const lower = os?.toLowerCase() || '';

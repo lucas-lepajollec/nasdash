@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
 import CategoryCard from './CategoryCard';
 import ServiceItem from './ServiceItem';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../../shared/ConfirmModal';
 import {
   DndContext,
   closestCenter,

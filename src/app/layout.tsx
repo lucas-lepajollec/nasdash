@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Outfit } from 'next/font/google';
 import './globals.css';
-import './hermes.css';
+import { ConfigProvider } from '@/providers/ConfigProvider';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -23,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`${outfit.variable} ${outfit.className}`} data-theme="dark">
-        {children}
+        <ConfigProvider>
+          {children}
+        </ConfigProvider>
       </body>
     </html>
   );

@@ -6,7 +6,7 @@ import { Device, DeviceStat } from '@/lib/types';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useRef, useEffect } from 'react';
-import ConfirmModal from './ConfirmModal';
+import ConfirmModal from '../../shared/ConfirmModal';
 
 interface LeftSidebarProps {
   devices: Device[];

@@ -1,28 +1,35 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import LeftSidebar from '@/components/LeftSidebar';
-import RightSidebar from '@/components/RightSidebar';
-import BentoGrid from '@/components/BentoGrid';
-import SystemMonitor from '@/components/SystemMonitor';
-import Footer from '@/components/Footer';
-import ServiceFormModal from '@/components/ServiceFormModal';
-import CategoryFormModal from '@/components/CategoryFormModal';
-import DeviceFormModal from '@/components/DeviceFormModal';
+import LeftSidebar from './LeftSidebar';
+import RightSidebar from './RightSidebar';
+import BentoGrid from './BentoGrid';
+import SystemMonitor from './SystemMonitor';
+import Footer from '../../layout/Footer';
+import ServiceFormModal from './modals/ServiceFormModal';
+import CategoryFormModal from './modals/CategoryFormModal';
+import DeviceFormModal from './modals/DeviceFormModal';
 import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
-interface DashboardExtensionProps {
+interface HomeTabProps {
   editMode: boolean;
   searchQuery: string;
   showSecret: boolean;
   onToggleSecret: () => void;
+  isVisible: boolean;
 }
 
-export default function DashboardExtension({ editMode, searchQuery, showSecret, onToggleSecret }: DashboardExtensionProps) {
+export default function HomeTab({ 
+  editMode, 
+  searchQuery, 
+  showSecret, 
+  onToggleSecret,
+  isVisible
+}: HomeTabProps) {
   const { stats, history } = useSystemStats();
   const {
     config,
@@ -41,22 +48,13 @@ export default function DashboardExtension({ editMode, searchQuery, showSecret, 
     deleteDevice,
     reorderDevices,
     uploadLogo,
+    serviceModal,
+    setServiceModal,
+    categoryModal,
+    setCategoryModal,
+    deviceModal,
+    setDeviceModal,
   } = useConfig();
-
-  // Modal states
-  const [serviceModal, setServiceModal] = useState<{
-    open: boolean;
-    service?: Service;
-    categoryId?: string;
-  }>({ open: false });
-  const [categoryModal, setCategoryModal] = useState<{
-    open: boolean;
-    category?: Category;
-  }>({ open: false });
-  const [deviceModal, setDeviceModal] = useState<{
-    open: boolean;
-    device?: Device;
-  }>({ open: false });
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -187,7 +185,7 @@ export default function DashboardExtension({ editMode, searchQuery, showSecret, 
             />
 
             {config.settings.showMonitor && (
-              <SystemMonitor history={history} isDark={true} />
+              <SystemMonitor history={history} isDark={true} isVisible={isVisible} />
             )}
 
             <Footer
