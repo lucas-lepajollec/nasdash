@@ -135,12 +135,14 @@ export default function TailscaleStatus({ editMode, showSecret = false }: { edit
               className="nd-input"
               placeholder="Nom du Tailnet (ex: email@domaine.com)"
               value={tailnet}
+              type={!showSecret ? 'password' : 'text'}
               onChange={e => setTailnet(e.target.value)}
             />
             <input
               className="nd-input"
               placeholder="Client ID (kxxxx...)"
               value={clientId}
+              type={!showSecret ? 'password' : 'text'}
               onChange={e => setClientId(e.target.value)}
             />
             <input

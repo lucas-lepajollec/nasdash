@@ -215,11 +215,11 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                         </div>
                         <div>
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>URL Locale</label>
-                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} value={svc.localUrl} onChange={(e) => updateServiceField(svc.id, 'localUrl', e.target.value)} />
+                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!secretMode ? 'password' : 'text'} value={svc.localUrl} onChange={(e) => updateServiceField(svc.id, 'localUrl', e.target.value)} />
                         </div>
                         <div>
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>URL Tailscale (Optionnel)</label>
-                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} value={svc.tailscaleUrl || ''} onChange={(e) => updateServiceField(svc.id, 'tailscaleUrl', e.target.value)} />
+                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!secretMode ? 'password' : 'text'} value={svc.tailscaleUrl || ''} onChange={(e) => updateServiceField(svc.id, 'tailscaleUrl', e.target.value)} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
                           <button
