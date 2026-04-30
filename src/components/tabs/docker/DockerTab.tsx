@@ -91,7 +91,7 @@ function DockerHostFormModal({ onClose, onSave }: {
 }
 
 // ======================== CONTAINER LOGS ========================
-function ContainerLogs({ hostId, containerId }: { hostId: string; containerId: string }) {
+function ContainerLogs({ hostId, containerId, showSecret }: { hostId: string; containerId: string; showSecret: boolean }) {
   const { data, error } = useSWR(
     `/api/docker/${hostId}/containers/${containerId}/logs?tail=150`,
     fetcher,
@@ -136,7 +136,9 @@ function ContainerLogs({ hostId, containerId }: { hostId: string; containerId: s
         const { scrollTop, scrollHeight, clientHeight } = terminalRef.current;
         setAutoScroll(scrollHeight - scrollTop - clientHeight < 40);
       }}>
-        {lines.length === 0 ? (
+        {!showSecret ? (
+          <span style={{ color: 'var(--nd-text-dimmed)' }}>Logs masqués — désactivez le mode secret pour afficher</span>
+        ) : lines.length === 0 ? (
           <span style={{ color: 'var(--nd-text-dimmed)' }}>Aucun log disponible</span>
         ) : (
           lines.map((line, i) => (
@@ -261,7 +263,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSecr
 
       {/* Logs */}
       {isRunning && (
-        <ContainerLogs hostId={hostId} containerId={detail.fullId} />
+        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSecret={showSecret} />
       )}
     </div>
   );

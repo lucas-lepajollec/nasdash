@@ -82,7 +82,7 @@ export default function Header({
             </div>
           )}
           <button
-            className={`nd-btn ${secretMode ? 'nd-btn-active' : ''}`}
+            className={`nd-btn ${!secretMode ? 'nd-btn-active' : ''}`}
             onClick={onToggleSecret}
             title={secretMode ? 'Masquer les informations sensibles' : 'Afficher les informations sensibles'}
           >
@@ -121,7 +121,7 @@ export default function Header({
           {/* Top Row: Burger menu items */}
           {mobileMenuOpen && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-              <button className={`nd-btn ${secretMode ? 'nd-btn-active' : ''}`} onClick={onToggleSecret}>
+              <button className={`nd-btn ${!secretMode ? 'nd-btn-active' : ''}`} onClick={onToggleSecret}>
                 {secretMode ? <Eye size={14} /> : <EyeOff size={14} />}
               </button>
               <button className={`nd-btn ${editMode ? 'nd-btn-active' : ''}`} onClick={onToggleEdit}>
