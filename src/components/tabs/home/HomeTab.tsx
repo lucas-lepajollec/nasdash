@@ -196,7 +196,7 @@ export default function HomeTab({
           </main>
 
           {/* RIGHT SIDEBAR — Stats Overview + Tailscale */}
-          <RightSidebar categories={config.categories} editMode={editMode} />
+          <RightSidebar categories={config.categories} editMode={editMode} showSecret={showSecret} />
         </div>
         <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
           {activeDevice ? (
@@ -221,6 +221,7 @@ export default function HomeTab({
           onSave={handleSaveService}
           onDelete={serviceModal.service ? handleDeleteService : undefined}
           onUploadLogo={uploadLogo}
+          showSecret={showSecret}
         />
       )}
 
@@ -240,6 +241,7 @@ export default function HomeTab({
           onClose={() => setDeviceModal({ open: false })}
           onSave={handleSaveDevice}
           onDelete={deviceModal.device ? handleDeleteDevice : undefined}
+          showSecret={showSecret}
         />
       )}
     </>

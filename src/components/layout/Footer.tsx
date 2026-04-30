@@ -28,8 +28,8 @@ export default function Footer({ categories, showSecret, onToggleSecret }: Foote
   return (
     <footer style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 32, textAlign: 'center' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4, marginBottom: 12 }}>
-        {sortedPorts.map((port) => (
-          <span key={port} className="nd-port-pill">{port}</span>
+        {sortedPorts.map((port, i) => (
+          <span key={i} className="nd-port-pill">{!showSecret ? '****' : port}</span>
         ))}
       </div>
       <div 

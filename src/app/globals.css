@@ -1031,29 +1031,41 @@ body {
   }
 }
 
+/* Actions Visibility */
+.nd-mobile-actions {
+  display: none !important;
+}
+.nd-mobile-menu {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .nd-header {
     position: relative;
     gap: 8px;
-    padding: 12px 10px;
+    padding: 12px 20px;
     margin-bottom: 8px;
-  }
-
-  .nd-header--editing {
-    margin-bottom: 64px;
   }
 
   .nd-header-actions {
     flex: 0 0 auto;
   }
 
-  .nd-header-edit-row {
-    position: absolute;
-    top: 62px;
-    left: 0;
-    width: 100%;
-    justify-content: center;
-    gap: 12px;
+  .nd-desktop-actions {
+    display: none !important;
+  }
+
+  .nd-mobile-actions {
+    display: flex !important;
+  }
+
+  .nd-mobile-menu {
+    display: flex !important;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 10px 12px 10px;
+    animation: nd-fade-in 0.2s;
+    margin-top: -4px;
   }
 
   .nd-brand {

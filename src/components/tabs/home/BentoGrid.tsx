@@ -173,6 +173,7 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
                     onEditCategory={onEditCategory}
                     onDeleteCategory={(id, name) => setDeleteItem({ type: 'category', id, name })}
                     onAddService={onAddService}
+                    showSecret={showSecret}
                   />
                 )}
               </DroppableSlot>
@@ -190,12 +191,13 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
               onEditCategory={onEditCategory}
               onDeleteCategory={onDeleteCategory}
               onAddService={onAddService}
+              showSecret={showSecret}
             />
           </div>
         ) : null}
         {activeService ? (
           <div style={{ transform: 'scale(1.02)', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', opacity: 0.9 }}>
-            <ServiceItem service={activeService} editMode={true} />
+            <ServiceItem service={activeService} editMode={true} showSecret={showSecret} />
           </div>
         ) : null}
       </DragOverlay>

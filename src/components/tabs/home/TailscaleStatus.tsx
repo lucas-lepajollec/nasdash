@@ -15,7 +15,7 @@ const getOsIcon = (os: string, hostname: string) => {
   return <Laptop size={12} color="#9ca3af" />;
 };
 
-export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
+export default function TailscaleStatus({ editMode, showSecret = false }: { editMode?: boolean; showSecret?: boolean }) {
   const [devices, setDevices] = useState<any[] | null>(null);
   const [error, setError] = useState(false);
   const [unconfigured, setUnconfigured] = useState(false);
@@ -237,7 +237,7 @@ export default function TailscaleStatus({ editMode }: { editMode?: boolean }) {
                   {device.hostname}
                   {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hôte</span>}
                 </div>
-                <div className="nd-ts-device-os">{device.ip}</div>
+                <div className="nd-ts-device-os">{!showSecret ? '***' : device.ip}</div>
               </div>
             </div>
             <div className="nd-ts-status" style={{

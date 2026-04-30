@@ -128,6 +128,7 @@ export default function Shell() {
           onAddCategory={() => setCategoryModal({ open: true })} 
           onAddSlot={addSlot}
           secretMode={showSecret}
+          onToggleSecret={() => setShowSecret(prev => !prev)}
           activeTab={activeTab}
         />
 
@@ -147,7 +148,7 @@ export default function Shell() {
           {/* Docker */}
           <div className="flex-1" style={{ display: activeTab === 'docker' ? 'block' : 'none' }}>
             <Suspense fallback={<LoadingView text="Chargement Docker…" />}>
-              <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} />
+              <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} showSecret={showSecret} />
             </Suspense>
           </div>
 

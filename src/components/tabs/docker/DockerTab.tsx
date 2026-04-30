@@ -13,6 +13,7 @@ interface DockerTabProps {
   editMode: boolean;
   searchQuery: string;
   isVisible: boolean;
+  showSecret?: boolean;
 }
 
 type DockerTab = 'containers' | 'images' | 'volumes';
@@ -148,11 +149,12 @@ function ContainerLogs({ hostId, containerId }: { hostId: string; containerId: s
 }
 
 // ======================== CONTAINER DETAIL VIEW ========================
-function ContainerDetailView({ hostId, detail, onAction, actionLoading }: {
+function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSecret }: {
   hostId: string;
   detail: any;
   onAction: (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => void;
   actionLoading: string | null;
+  showSecret: boolean;
 }) {
   if (!detail) return null;
 
@@ -225,7 +227,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading }: {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {detail.ports.map((p: any, i: number) => (
                 <span key={i} className="nd-port-pill" style={{ fontSize: '0.62rem' }}>
-                  {p.hostBindings?.join(', ') || '—'} → {p.containerPort}
+                  {!showSecret ? '***' : (p.hostBindings?.join(', ') || '—')} → {!showSecret ? '***' : p.containerPort}
                 </span>
               ))}
             </div>
@@ -239,9 +241,9 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading }: {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {detail.mounts.map((m: any, i: number) => (
                 <div key={i} style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', fontFamily: 'monospace', display: 'flex', gap: 6 }}>
-                  <span style={{ color: 'var(--nd-text-muted)' }}>{m.source?.substring(0, 40)}</span>
+                  <span style={{ color: 'var(--nd-text-muted)' }}>{!showSecret ? '***' : m.source?.substring(0, 40)}</span>
                   <span>→</span>
-                  <span style={{ color: 'var(--nd-accent)' }}>{m.destination}</span>
+                  <span style={{ color: 'var(--nd-accent)' }}>{!showSecret ? '***' : m.destination}</span>
                   <span style={{ opacity: 0.5 }}>{m.rw ? 'rw' : 'ro'}</span>
                 </div>
               ))}
@@ -593,7 +595,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
 }
 
 // ======================== MAIN DOCKER TAB ========================
-export default function DockerTab({ editMode, searchQuery, isVisible }: DockerTabProps) {
+export default function DockerTab({ editMode, searchQuery, isVisible, showSecret = false }: DockerTabProps) {
   const { config, refresh } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
@@ -846,6 +848,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible }: DockerTa
                 detail={containerDetail}
                 onAction={(id, action) => handleActionRequest(id, action, containerDetail?.name || id)}
                 actionLoading={actionLoading}
+                showSecret={showSecret}
               />
             ) : (
               <div className="nd-docker-detail" style={{ minHeight: 300 }}>
