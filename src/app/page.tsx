@@ -18,8 +18,7 @@ export default function Shell() {
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSecret, setShowSecret] = useState(false);
-
+  const [showSecret, setShowSecret] = useState(true);
   const toggleTheme = useCallback(() => {
     setIsDark(prev => {
       const next = !prev;
