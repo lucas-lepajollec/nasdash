@@ -6,7 +6,7 @@ Welcome to the NasDash project! We'd love your help to make this the ultimate ho
 
 1. **Fork and clone** the repository:
    ```bash
-   git clone https://github.com/YOUR-USERNAME/nasdash.git
+   git clone https://github.com/lucas-lepajollec/nasdash.git
    cd nasdash
    ```
 2. **Install dependencies**:
