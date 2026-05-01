@@ -12,7 +12,7 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License" /></a>
   </p>
 
-  <img src="public/screenshot.png" alt="NasDash Interface Screenshot" width="800" />
+  <img src="public/nasdash.png" alt="NasDash Interface Screenshot" width="800" />
 </div>
 
 ---
