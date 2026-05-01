@@ -1,14 +1,21 @@
 <div align="center">
+  <img src="public/logo.svg" alt="NasDash Logo" width="100" />
+  
   <h1>🚀 NasDash</h1>
   <p><strong>The Information-Dense, Glance-Inspired Personal Server Dashboard</strong></p>
   
-  [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-  [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-  [![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+  <p>
+    <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" /></a>
+    <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+    <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License" /></a>
+  </p>
 
-  <br />
+  <img src="public/screenshot.png" alt="NasDash Interface Screenshot" width="800" />
 </div>
+
+---
 
 NasDash is a high-performance, unapologetically information-dense web dashboard designed for homelab enthusiasts and sysadmins. Inspired by the renowned *Glances* UI, NasDash brings all your services, server hardware statistics, and VPN networks into a single, beautiful command-center layout.
 
@@ -17,10 +24,10 @@ NasDash is a high-performance, unapologetically information-dense web dashboard 
 - **📊 Hardware Telemetry**: Track real-time CPU, RAM, Disk, and GPU statistics across multiple remote machines simultaneously using zero-configuration auto-fetching.
   - Supports **Glances**, **Home Assistant**, and **Proxmox VE** (Nodes, QEMU VMs, LXC Containers).
 - **🚦 Dynamic Service Grid**: Organize your homelab web services into drag-and-drop slots. Each service tracks its own local network URL and Tailscale VPN URL.
-- **🔒 Stealth Secret Mode**: Features an invisible toggle switch hidden in the UI to instantly reveal heavily-guarded, confidential application categories (e.g., NSFW or sensitive data).
-- **🌐 Native Tailscale Map**: See exactly who and what is connected to your private VPN mesh network in real-time right from the right sidebar.
-- **🎨 Dark/Light Cyberpunk UI**: A handcrafted, dependency-free CSS design system offering both a deep-space dark mode and a crisp, clean light mode.
-- **⚡ Zero-Latency Editing**: Add categories, upload custom app logos, and inject new server nodes straight through the browser UI—modifications instantly sync to disk without rebooting.
+- **🔒 Stealth Secret Mode**: Features an invisible toggle switch hidden in the UI to instantly reveal heavily-guarded, confidential application categories.
+- **🌐 Native Tailscale Map**: See exactly who and what is connected to your private VPN mesh network in real-time right from the sidebar.
+- **🎨 Dark/Light Cyberpunk UI**: A handcrafted, dependency-free CSS design system offering both a deep-space dark mode and a crisp light mode.
+- **⚡ Zero-Latency Editing**: Add categories, upload logos, and inject new nodes straight through the UI—modifications instantly sync to disk without rebooting.
 
 ---
 
@@ -40,27 +47,33 @@ NasDash is a high-performance, unapologetically information-dense web dashboard 
 
 ### Prerequisites
 
-Ensure you have [Node.js](https://nodejs.org/) (v18+) and [npm](https://www.npmjs.com/) installed on your machine.
-If deploying via containers, ensure [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) are available.
+- [Node.js](https://nodejs.org/) (v18+) and npm
+- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/) (for container deployment)
 
 ### Local Development Setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/lucas-lepajollec/NasDash.git
-   cd NasDash
-   ```
+**1. Clone the repository:**
+```bash
+git clone [https://github.com/lucas-lepajollec/nasdash.git](https://github.com/lucas-lepajollec/nasdash.git)
+cd nasdash
+```
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+**2. Install dependencies:**
+```bash
+npm install
+```
 
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-   *The application will be running at `http://localhost:2499`.*
+**3. Environment Setup:**
+Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+**4. Start the development server:**
+```bash
+npm run dev
+```
+*The application will be running at `http://localhost:2499`.*
 
 ---
 
@@ -70,7 +83,6 @@ For maximum security, NasDash is designed to work with a **Docker Socket Proxy**
 
 **1. Create a `docker-compose.yml` file:**
 Use the provided `docker-compose.example.yml` as a template:
-
 ```yaml
 services:
   nasdash:
@@ -116,20 +128,20 @@ The application will be available at **http://localhost:2504**. To connect to yo
 
 ## 🔒 Security Best Practices
 
-- **Docker API**: Never expose the standard Docker TCP port (2375) to the public internet. Always use a proxy like `docker-socket-proxy` on an internal Docker network.
-- **Data Persistence**: The `data/config.json` file contains your server IPs and API keys. Ensure your `./data` volume is properly secured and excluded from public git repositories (already handled by the default `.gitignore`).
-- **Secrets**: Use a reverse proxy (Nginx, Traefik, Caddy) with SSL/TLS to access NasDash over the internet.
+> [!WARNING]
+> **Docker API**: Never expose the standard Docker TCP port (2375) directly to the public internet. Exposing the Docker API without protection is equivalent to giving full root access to your machine. Always use a proxy like `docker-socket-proxy` on an internal Docker network.
+
+- **Data Persistence**: The `data/config.json` file contains your server IPs and API keys. Ensure your `./data` volume is properly secured and excluded from public git repositories (handled by the default `.gitignore`).
+- **Secrets**: Use a reverse proxy (Nginx, Traefik, Caddy) with SSL/TLS to access NasDash securely over the internet.
+
 ---
 
-## 🔗 Connecter des hôtes Docker distants (Sécurisé)
+## 🔗 Connect Remote Docker Hosts (Secure)
 
-> [!WARNING]
-> **Ne jamais ouvrir le port 2375 directement sur le démon Docker de votre hôte.** Exposer l'API Docker sans protection équivaut à donner un accès **root** complet à votre machine à n'importe qui sur le réseau.
+To control remote machines (another NAS, a dedicated server, a Raspberry Pi), the recommended method is to install a small proxy on each target machine.
 
-Pour piloter des machines distantes (un autre NAS, un serveur dédié, un Raspberry Pi), la méthode recommandée est d'installer un petit proxy sur chaque machine ciblée.
-
-**1. Sur la machine distante :**
-Lancez ce service via un fichier `docker-compose.yml` :
+**1. On the remote machine:**
+Launch this service via a `docker-compose.yml` file:
 
 ```yaml
 services:
@@ -138,7 +150,7 @@ services:
     container_name: remote-docker-proxy
     restart: unless-stopped
     ports:
-      - "2375:2375"  # Expose le port vers NasDash uniquement
+      - "2375:2375"  # Expose port only for NasDash
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -154,42 +166,11 @@ services:
       - SYSTEM=0
 ```
 
-**2. Dans l'interface NasDash :**
-Cliquez sur "Ajouter un hôte Docker" et saisissez :
-- **Nom** : Le nom de la machine (ex: `PC Tour`, `Serveur Backup`)
-- **Adresse / Hôte** : L'adresse IP locale de la machine distante (ex: `192.168.0.xxx`) ou son IP **Tailscale**.
-- **Port** : `2375`
-
----
-
-## 📂 Project Structure
-
-```text
-NasDash/
-├── data/                   # Persistent config (config.json) & User uploaded logos
-├── public/                 # Static assets
-├── src/
-│   ├── app/                # Next.js App Router (Pages, API Routes, Layouts)
-│   ├── components/         # Pure React UI building blocks (Modals, Sidebars, Cards)
-│   ├── hooks/              # Custom React Hooks (SWR Fetchers, Config state sync)
-│   ├── lib/                # TypeScript Interfaces, utilities, server-side config parsers
-│   └── globals.css         # The core styling matrix
-├── .env                    # Global system variables (e.g. NEXT_PUBLIC_DASHBOARD_TITLE)
-├── Dockerfile              # Multi-stage production standalone build
-└── docker-compose.yml      # Suggested Docker Compose layout
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to open an issue or submit a pull request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**2. In the NasDash interface:**
+Click on "Add a Docker Host" and enter:
+- **Name**: The machine's name (e.g., `PC Tower`, `Backup Server`)
+- **Address / Host**: The local IP address of the remote machine (e.g., `192.168.0.xxx`) or its **Tailscale** IP.
+- **Port**: `2375`
 
 ---
 
@@ -206,14 +187,30 @@ If you wish to monitor a Proxmox server or its virtual machines through NasDash,
 
 ---
 
-## 📝 License
+## 📂 Project Structure
+```text
+NasDash/
+├── data/                   # Persistent config (config.json) & User uploaded logos
+├── public/                 # Static assets
+├── src/
+│   ├── app/                # Next.js App Router (Pages, API Routes, Layouts)
+│   ├── components/         # Pure React UI building blocks (Modals, Sidebars, Cards)
+│   ├── hooks/              # Custom React Hooks (SWR Fetchers, Config state sync)
+│   ├── lib/                # TypeScript Interfaces, utilities, server-side parsers
+│   └── globals.css         # The core styling matrix
+├── .env.example            # Global system variables template
+├── Dockerfile              # Multi-stage production standalone build
+└── docker-compose.yml      # Suggested Docker Compose layout
+```
 
-This project is open-source and available under the [MIT License](LICENSE).
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) to learn how to setup your environment, and our [Code of Conduct](CODE_OF_CONDUCT.md) for details on our community standards.
 
 ---
 
 <div align="center">
-
-Made with ❤️ using Next.js & React
-
+  Made with ❤️ by Lucas Lepajollec
 </div>
