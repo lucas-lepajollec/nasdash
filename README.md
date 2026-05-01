@@ -1,5 +1,5 @@
 <div align="center">
-  
+  <img src="public/logo.svg" alt="NasDash Logo" width="120" height="120" />
   <h1>🚀 NasDash</h1>
   <p><strong>The Information-Dense, Glance-Inspired Personal Server Dashboard</strong></p>
   

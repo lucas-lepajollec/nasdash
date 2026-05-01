@@ -12,7 +12,7 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: 'NasDash — Dashboard Privé',
   description: 'Dashboard NAS auto-hébergé avec monitoring système temps réel',
-  icons: { icon: '/favicon.ico' },
+  icons: '/logo.svg',
 };
 
 export default function RootLayout({
