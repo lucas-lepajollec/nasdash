@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Fond Dark Space -->
+  <rect width="256" height="256" rx="60" fill="#0b1117" />
+  
+  <!-- Widget Haut Gauche (Actif / Cyan) -->
+  <rect x="44" y="44" width="76" height="76" rx="20" fill="#151e29" stroke="#00d2ff" stroke-width="4"/>
+  <circle cx="82" cy="82" r="14" fill="#00d2ff" />
+  
+  <!-- Widgets Haut Droite (Passifs) -->
+  <rect x="136" y="44" width="76" height="40" rx="16" fill="#151e29" />
+  <rect x="136" y="96" width="76" height="24" rx="12" fill="#151e29" />
+  
+  <!-- Widget Bas Gauche (Passif) -->
+  <rect x="44" y="136" width="76" height="76" rx="20" fill="#151e29" />
+  <rect x="82" y="166" width="30" height="16" rx="8" fill="#2a3847" />
+  
+  <!-- Widget Bas Droite (Alerte / Orange) -->
+  <rect x="136" y="136" width="76" height="76" rx="20" fill="#151e29" stroke="#ff8800" stroke-width="4"/>
+  <circle cx="174" cy="174" r="14" fill="#ff8800" />
+</svg>
