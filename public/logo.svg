@@ -14,7 +14,7 @@
   <rect x="44" y="136" width="76" height="76" rx="20" fill="#151e29" />
   <rect x="82" y="166" width="30" height="16" rx="8" fill="#2a3847" />
   
-  <!-- Widget Bas Droite (Alerte / Orange) -->
-  <rect x="136" y="136" width="76" height="76" rx="20" fill="#151e29" stroke="#ff8800" stroke-width="4"/>
-  <circle cx="174" cy="174" r="14" fill="#ff8800" />
+  <!-- Widget Bas Droite (Actif / Cyan) -->
+  <rect x="136" y="136" width="76" height="76" rx="20" fill="#151e29" stroke="#00d2ff" stroke-width="4"/>
+  <circle cx="174" cy="174" r="14" fill="#00d2ff" />
 </svg>
