@@ -11,10 +11,10 @@ interface ServiceFormModalProps {
   onSave: (data: { name: string; localUrl: string; tailscaleUrl: string; logo: string; categoryId?: string }) => void;
   onDelete?: (id: string) => void;
   onUploadLogo: (file: File) => Promise<string>;
-  showSecret?: boolean;
+  showSensitive?: boolean;
 }
 
-export default function ServiceFormModal({ service, categoryId, onClose, onSave, onDelete, onUploadLogo, showSecret = false }: ServiceFormModalProps) {
+export default function ServiceFormModal({ service, categoryId, onClose, onSave, onDelete, onUploadLogo, showSensitive = false }: ServiceFormModalProps) {
   const [name, setName] = useState(service?.name || '');
   const [localUrl, setLocalUrl] = useState(service?.localUrl || '');
   const [tailscaleUrl, setTailscaleUrl] = useState(service?.tailscaleUrl || '');
@@ -55,11 +55,11 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           </div>
           <div>
             <label className="nd-label">URL Locale</label>
-            <input type={!showSecret ? "password" : "text"} className="nd-input" value={localUrl} onChange={(e) => setLocalUrl(e.target.value)} placeholder="http://192.168.1.100:8080" />
+            <input type={!showSensitive ? "password" : "text"} className="nd-input" value={localUrl} onChange={(e) => setLocalUrl(e.target.value)} placeholder="http://192.168.1.100:8080" />
           </div>
           <div>
             <label className="nd-label">URL Tailscale</label>
-            <input type={!showSecret ? "password" : "text"} className="nd-input" value={tailscaleUrl} onChange={(e) => setTailscaleUrl(e.target.value)} placeholder="http://100.100.100.100:8080" />
+            <input type={!showSensitive ? "password" : "text"} className="nd-input" value={tailscaleUrl} onChange={(e) => setTailscaleUrl(e.target.value)} placeholder="http://100.100.100.100:8080" />
           </div>
           <div>
             <label className="nd-label">Logo</label>

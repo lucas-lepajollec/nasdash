@@ -13,7 +13,7 @@ interface DockerTabProps {
   editMode: boolean;
   searchQuery: string;
   isVisible: boolean;
-  showSecret?: boolean;
+  showSensitive?: boolean;
 }
 
 type DockerTab = 'containers' | 'images' | 'volumes';
@@ -91,7 +91,7 @@ function DockerHostFormModal({ onClose, onSave }: {
 }
 
 // ======================== CONTAINER LOGS ========================
-function ContainerLogs({ hostId, containerId, showSecret }: { hostId: string; containerId: string; showSecret: boolean }) {
+function ContainerLogs({ hostId, containerId, showSensitive }: { hostId: string; containerId: string; showSensitive: boolean }) {
   const { data, error } = useSWR(
     `/api/docker/${hostId}/containers/${containerId}/logs?tail=150`,
     fetcher,
@@ -136,7 +136,7 @@ function ContainerLogs({ hostId, containerId, showSecret }: { hostId: string; co
         const { scrollTop, scrollHeight, clientHeight } = terminalRef.current;
         setAutoScroll(scrollHeight - scrollTop - clientHeight < 40);
       }}>
-        {!showSecret ? (
+        {!showSensitive ? (
           <span style={{ color: 'var(--nd-text-dimmed)' }}>Logs masqués — désactivez le mode secret pour afficher</span>
         ) : lines.length === 0 ? (
           <span style={{ color: 'var(--nd-text-dimmed)' }}>Aucun log disponible</span>
@@ -151,12 +151,12 @@ function ContainerLogs({ hostId, containerId, showSecret }: { hostId: string; co
 }
 
 // ======================== CONTAINER DETAIL VIEW ========================
-function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSecret }: {
+function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSensitive }: {
   hostId: string;
   detail: any;
   onAction: (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => void;
   actionLoading: string | null;
-  showSecret: boolean;
+  showSensitive: boolean;
 }) {
   if (!detail) return null;
 
@@ -229,7 +229,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSecr
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {detail.ports.map((p: any, i: number) => (
                 <span key={i} className="nd-port-pill" style={{ fontSize: '0.62rem' }}>
-                  {!showSecret ? '***' : (p.hostBindings?.join(', ') || '—')} → {!showSecret ? '***' : p.containerPort}
+                  {!showSensitive ? '***' : (p.hostBindings?.join(', ') || '—')} → {!showSensitive ? '***' : p.containerPort}
                 </span>
               ))}
             </div>
@@ -243,9 +243,9 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSecr
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {detail.mounts.map((m: any, i: number) => (
                 <div key={i} style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', fontFamily: 'monospace', display: 'flex', gap: 6 }}>
-                  <span style={{ color: 'var(--nd-text-muted)' }}>{!showSecret ? '***' : m.source?.substring(0, 40)}</span>
+                  <span style={{ color: 'var(--nd-text-muted)' }}>{!showSensitive ? '***' : m.source?.substring(0, 40)}</span>
                   <span>→</span>
-                  <span style={{ color: 'var(--nd-accent)' }}>{!showSecret ? '***' : m.destination}</span>
+                  <span style={{ color: 'var(--nd-accent)' }}>{!showSensitive ? '***' : m.destination}</span>
                   <span style={{ opacity: 0.5 }}>{m.rw ? 'rw' : 'ro'}</span>
                 </div>
               ))}
@@ -263,7 +263,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSecr
 
       {/* Logs */}
       {isRunning && (
-        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSecret={showSecret} />
+        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSensitive={showSensitive} />
       )}
     </div>
   );
@@ -597,7 +597,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
 }
 
 // ======================== MAIN DOCKER TAB ========================
-export default function DockerTab({ editMode, searchQuery, isVisible, showSecret = false }: DockerTabProps) {
+export default function DockerTab({ editMode, searchQuery, isVisible, showSensitive = false }: DockerTabProps) {
   const { config, refresh } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
@@ -850,7 +850,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSecret
                 detail={containerDetail}
                 onAction={(id, action) => handleActionRequest(id, action, containerDetail?.name || id)}
                 actionLoading={actionLoading}
-                showSecret={showSecret}
+                showSensitive={showSensitive}
               />
             ) : (
               <div className="nd-docker-detail" style={{ minHeight: 300 }}>

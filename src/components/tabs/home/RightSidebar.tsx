@@ -8,10 +8,10 @@ import TailscaleStatus from './TailscaleStatus';
 interface RightSidebarProps {
   categories: Category[];
   editMode?: boolean;
-  showSecret?: boolean;
+  showSensitive?: boolean;
 }
 
-export default function RightSidebar({ categories, editMode, showSecret = false }: RightSidebarProps) {
+export default function RightSidebar({ categories, editMode, showSensitive = false }: RightSidebarProps) {
   const sidebarRef = useRef<HTMLElement>(null);
   const [isSticky, setIsSticky] = useState(true);
 
@@ -88,7 +88,7 @@ export default function RightSidebar({ categories, editMode, showSecret = false 
         </div>
       </div>
 
-      <TailscaleStatus editMode={editMode} showSecret={showSecret} />
+      <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />
     </aside>
   );
 }

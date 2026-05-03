@@ -12,12 +12,12 @@ interface CategoryCardProps {
   onEditCategory: (cat: Category) => void;
   onDeleteCategory: (id: string, name: string) => void;
   onAddService: (categoryId: string) => void;
-  showSecret?: boolean;
+  showSensitive?: boolean;
 }
 
 export default function CategoryCard({
   category, editMode, searchQuery,
-  onEditCategory, onDeleteCategory, onAddService, showSecret,
+  onEditCategory, onDeleteCategory, onAddService, showSensitive,
 }: CategoryCardProps) {
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
     id: `drag-cat-${category.id}`, disabled: !editMode, data: { type: 'category', category }
@@ -78,7 +78,7 @@ export default function CategoryCard({
             service={service}
             categoryId={category.id}
             editMode={editMode}
-            showSecret={showSecret}
+            showSensitive={showSensitive}
           />
         ))}</div>
       {filteredServices.length === 0 && !searchQuery && (

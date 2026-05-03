@@ -10,7 +10,8 @@ interface CategoryFormModalProps {
   onClose: () => void;
   onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[] }) => void;
   onDelete?: (id: string) => void;
-  secretMode: boolean;
+  showSecretSections: boolean;
+  showSensitive: boolean;
 }
 
 const EMOJI_CATEGORIES: Record<string, string[]> = {
@@ -24,7 +25,7 @@ const EMOJI_CATEGORIES: Record<string, string[]> = {
   'Divers': ['💼', '📋', '📌', '📍', '🏷️', '🔖', '🎯', '✨', '⭐', '🔔']
 };
 
-export default function CategoryFormModal({ category, onClose, onSave, onDelete, secretMode }: CategoryFormModalProps) {
+export default function CategoryFormModal({ category, onClose, onSave, onDelete, showSecretSections, showSensitive }: CategoryFormModalProps) {
   const [title, setTitle] = useState(category?.title || '');
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
@@ -149,7 +150,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
           </div>
 
           {/* Secret checkbox — ONLY visible when secret mode is active */}
-          {secretMode && (
+          {showSecretSections && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
               <input
                 type="checkbox"
@@ -215,11 +216,11 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                         </div>
                         <div>
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>URL Locale</label>
-                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!secretMode ? 'password' : 'text'} value={svc.localUrl} onChange={(e) => updateServiceField(svc.id, 'localUrl', e.target.value)} />
+                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!showSensitive ? 'password' : 'text'} value={svc.localUrl} onChange={(e) => updateServiceField(svc.id, 'localUrl', e.target.value)} />
                         </div>
                         <div>
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>URL Tailscale (Optionnel)</label>
-                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!secretMode ? 'password' : 'text'} value={svc.tailscaleUrl || ''} onChange={(e) => updateServiceField(svc.id, 'tailscaleUrl', e.target.value)} />
+                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!showSensitive ? 'password' : 'text'} value={svc.tailscaleUrl || ''} onChange={(e) => updateServiceField(svc.id, 'tailscaleUrl', e.target.value)} />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
                           <button

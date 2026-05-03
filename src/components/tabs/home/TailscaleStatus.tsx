@@ -15,7 +15,7 @@ const getOsIcon = (os: string, hostname: string) => {
   return <Laptop size={12} color="#9ca3af" />;
 };
 
-export default function TailscaleStatus({ editMode, showSecret = false }: { editMode?: boolean; showSecret?: boolean }) {
+export default function TailscaleStatus({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
   const [devices, setDevices] = useState<any[] | null>(null);
   const [error, setError] = useState(false);
   const [unconfigured, setUnconfigured] = useState(false);
@@ -135,14 +135,14 @@ export default function TailscaleStatus({ editMode, showSecret = false }: { edit
               className="nd-input"
               placeholder="Nom du Tailnet (ex: email@domaine.com)"
               value={tailnet}
-              type={!showSecret ? 'password' : 'text'}
+              type={!showSensitive ? 'password' : 'text'}
               onChange={e => setTailnet(e.target.value)}
             />
             <input
               className="nd-input"
               placeholder="Client ID (kxxxx...)"
               value={clientId}
-              type={!showSecret ? 'password' : 'text'}
+              type={!showSensitive ? 'password' : 'text'}
               onChange={e => setClientId(e.target.value)}
             />
             <input
@@ -239,7 +239,7 @@ export default function TailscaleStatus({ editMode, showSecret = false }: { edit
                   {device.hostname}
                   {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hôte</span>}
                 </div>
-                <div className="nd-ts-device-os">{!showSecret ? '***' : device.ip}</div>
+                <div className="nd-ts-device-os">{!showSensitive ? '***' : device.ip}</div>
               </div>
             </div>
             <div className="nd-ts-status" style={{

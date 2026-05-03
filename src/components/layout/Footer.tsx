@@ -4,11 +4,12 @@ import { Category } from '@/lib/types';
 
 interface FooterProps {
   categories: Category[];
-  showSecret: boolean;
-  onToggleSecret: () => void;
+  showSecretSections: boolean;
+  showSensitive: boolean;
+  onToggleSecretSections: () => void;
 }
 
-export default function Footer({ categories, showSecret, onToggleSecret }: FooterProps) {
+export default function Footer({ categories, showSecretSections, showSensitive, onToggleSecretSections }: FooterProps) {
   const ports = new Set<string>();
   categories.forEach(cat => {
     cat.services.forEach(svc => {
@@ -29,11 +30,11 @@ export default function Footer({ categories, showSecret, onToggleSecret }: Foote
     <footer style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 32, textAlign: 'center' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4, marginBottom: 12 }}>
         {sortedPorts.map((port, i) => (
-          <span key={i} className="nd-port-pill">{!showSecret ? '****' : port}</span>
+          <span key={i} className="nd-port-pill">{!showSensitive ? '****' : port}</span>
         ))}
       </div>
       <div 
-        onClick={onToggleSecret}
+        onClick={onToggleSecretSections}
         style={{ cursor: 'pointer', display: 'inline-block' }}
         title=" "
       >

@@ -9,10 +9,10 @@ interface ServiceItemProps {
   service: Service;
   categoryId?: string;
   editMode?: boolean;
-  showSecret?: boolean;
+  showSensitive?: boolean;
 }
 
-export default function ServiceItem({ service, categoryId, editMode, showSecret = false }: ServiceItemProps) {
+export default function ServiceItem({ service, categoryId, editMode, showSensitive = false }: ServiceItemProps) {
   const [imgError, setImgError] = useState(false);
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
@@ -65,7 +65,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSecret 
         
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 1 }}>
           <span className="nd-service-name">{service.name}</span>
-          {service.localUrl && <span className="nd-service-url">{!showSecret ? '***' : new URL(service.localUrl).host}</span>}
+          {service.localUrl && <span className="nd-service-url">{!showSensitive ? '***' : new URL(service.localUrl).host}</span>}
         </div>
       </a>
 

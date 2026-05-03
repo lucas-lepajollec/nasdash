@@ -18,16 +18,18 @@ import { arrayMove } from '@dnd-kit/sortable';
 interface HomeTabProps {
   editMode: boolean;
   searchQuery: string;
-  showSecret: boolean;
-  onToggleSecret: () => void;
+  showSecretSections: boolean;
+  showSensitive: boolean;
+  onToggleSecretSections: () => void;
   isVisible: boolean;
 }
 
 export default function HomeTab({ 
   editMode, 
   searchQuery, 
-  showSecret, 
-  onToggleSecret,
+  showSecretSections, 
+  showSensitive,
+  onToggleSecretSections,
   isVisible
 }: HomeTabProps) {
   const { stats, history } = useSystemStats();
@@ -176,7 +178,8 @@ export default function HomeTab({
               totalSlots={config.settings.totalSlots || Math.max(12, config.categories.length)}
               editMode={editMode}
               searchQuery={searchQuery}
-              showSecret={showSecret}
+              showSecretSections={showSecretSections}
+              showSensitive={showSensitive}
               onReorder={saveCategories}
               onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
               onDeleteCategory={handleDeleteCategory}
@@ -190,13 +193,14 @@ export default function HomeTab({
 
             <Footer
               categories={config.categories}
-              showSecret={showSecret}
-              onToggleSecret={onToggleSecret}
+              showSecretSections={showSecretSections}
+              showSensitive={showSensitive}
+              onToggleSecretSections={onToggleSecretSections}
             />
           </main>
 
           {/* RIGHT SIDEBAR — Stats Overview + Tailscale */}
-          <RightSidebar categories={config.categories} editMode={editMode} showSecret={showSecret} />
+          <RightSidebar categories={config.categories} editMode={editMode} showSensitive={showSensitive} />
         </div>
         <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
           {activeDevice ? (
@@ -221,7 +225,7 @@ export default function HomeTab({
           onSave={handleSaveService}
           onDelete={serviceModal.service ? handleDeleteService : undefined}
           onUploadLogo={uploadLogo}
-          showSecret={showSecret}
+          showSensitive={showSensitive}
         />
       )}
 
@@ -231,7 +235,8 @@ export default function HomeTab({
           onClose={() => setCategoryModal({ open: false })}
           onSave={handleSaveCategory}
           onDelete={categoryModal.category ? handleDeleteCategory : undefined}
-          secretMode={showSecret}
+          showSecretSections={showSecretSections}
+          showSensitive={showSensitive}
         />
       )}
 
@@ -241,7 +246,7 @@ export default function HomeTab({
           onClose={() => setDeviceModal({ open: false })}
           onSave={handleSaveDevice}
           onDelete={deviceModal.device ? handleDeleteDevice : undefined}
-          showSecret={showSecret}
+          showSensitive={showSensitive}
         />
       )}
     </>

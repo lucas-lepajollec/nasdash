@@ -27,7 +27,8 @@ export interface BentoGridProps {
   totalSlots: number;
   editMode: boolean;
   searchQuery: string;
-  showSecret: boolean;
+  showSecretSections: boolean;
+  showSensitive: boolean;
   onReorder: (newCategories: Category[]) => void;
   onEditCategory: (cat: Category) => void;
   onDeleteCategory: (id: string) => void;
@@ -35,13 +36,13 @@ export interface BentoGridProps {
   onDeleteSlot: (slotId: number) => void;
 }
 
-const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showSecret, onReorder, onEditCategory, onDeleteCategory, onAddService, onDeleteSlot }: BentoGridProps) => {
+const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showSecretSections, showSensitive, onReorder, onEditCategory, onDeleteCategory, onAddService, onDeleteSlot }: BentoGridProps) => {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
-  const visible = categories.filter(c => showSecret || !c.isSecret);
+  const visible = categories.filter(c => showSecretSections || !c.isSecret);
 
   const [activeCat, setActiveCat] = useState<Category | null>(null);
   const [activeService, setActiveService] = useState<Service | null>(null);
@@ -173,7 +174,7 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
                     onEditCategory={onEditCategory}
                     onDeleteCategory={(id, name) => setDeleteItem({ type: 'category', id, name })}
                     onAddService={onAddService}
-                    showSecret={showSecret}
+                    showSensitive={showSensitive}
                   />
                 )}
               </DroppableSlot>
@@ -191,13 +192,13 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
               onEditCategory={onEditCategory}
               onDeleteCategory={onDeleteCategory}
               onAddService={onAddService}
-              showSecret={showSecret}
+              showSensitive={showSensitive}
             />
           </div>
         ) : null}
         {activeService ? (
           <div style={{ transform: 'scale(1.02)', boxShadow: '0 10px 20px rgba(0,0,0,0.2)', opacity: 0.9 }}>
-            <ServiceItem service={activeService} editMode={true} showSecret={showSecret} />
+            <ServiceItem service={activeService} editMode={true} showSensitive={showSensitive} />
           </div>
         ) : null}
       </DragOverlay>

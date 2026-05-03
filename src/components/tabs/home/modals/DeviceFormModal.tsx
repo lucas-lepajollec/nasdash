@@ -8,10 +8,10 @@ interface DeviceFormModalProps {
   onClose: () => void;
   onSave: (data: any) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
-  showSecret?: boolean;
+  showSensitive?: boolean;
 }
 
-export default function DeviceFormModal({ device, onClose, onSave, onDelete, showSecret = false }: DeviceFormModalProps) {
+export default function DeviceFormModal({ device, onClose, onSave, onDelete, showSensitive = false }: DeviceFormModalProps) {
   const [name, setName] = useState(device?.name || '');
   const [host, setHost] = useState(device?.host || '');
   const [icon, setIcon] = useState(device?.icon || '🖥️');
@@ -132,7 +132,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
             <div style={{ flex: 3 }}>
               <label className="nd-label">IP (Hôte)</label>
               <input
-                type={!showSecret ? "password" : "text"}
+                type={!showSensitive ? "password" : "text"}
                 className="nd-input"
                 value={ip}
                 onChange={e => setIp(e.target.value)}

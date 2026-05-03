@@ -18,7 +18,8 @@ export default function Shell() {
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSecret, setShowSecret] = useState(true);
+  const [showSecretSections, setShowSecretSections] = useState(false);
+  const [showSensitive, setShowSensitive] = useState(true);
   const toggleTheme = useCallback(() => {
     setIsDark(prev => {
       const next = !prev;
@@ -126,8 +127,8 @@ export default function Shell() {
           onToggleTheme={toggleTheme}
           onAddCategory={() => setCategoryModal({ open: true })} 
           onAddSlot={addSlot}
-          secretMode={showSecret}
-          onToggleSecret={() => setShowSecret(prev => !prev)}
+          secretMode={showSensitive}
+          onToggleSecret={() => setShowSensitive(prev => !prev)}
           activeTab={activeTab}
         />
 
@@ -138,8 +139,9 @@ export default function Shell() {
             <HomeTab
               editMode={editMode}
               searchQuery={searchQuery}
-              showSecret={showSecret}
-              onToggleSecret={() => setShowSecret(prev => !prev)}
+              showSecretSections={showSecretSections}
+              showSensitive={showSensitive}
+              onToggleSecretSections={() => setShowSecretSections(prev => !prev)}
               isVisible={activeTab === 'dashboard'}
             />
           </div>
@@ -147,7 +149,7 @@ export default function Shell() {
           {/* Docker */}
           <div className="flex-1" style={{ display: activeTab === 'docker' ? 'block' : 'none' }}>
             <Suspense fallback={<LoadingView text="Chargement Docker…" />}>
-              <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} showSecret={showSecret} />
+              <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} showSensitive={showSensitive} />
             </Suspense>
           </div>
 
