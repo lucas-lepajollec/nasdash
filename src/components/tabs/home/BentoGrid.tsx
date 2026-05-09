@@ -108,13 +108,34 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
         const oldIndex = fromCat.services.findIndex(s => s.id === srv.id);
         const newIndex = toCat.services.findIndex(s => s.id === targetSrvId);
 
+        if (fromCatId === toCatId) {
+          // Swap in same category
+          const temp = fromCat.services[oldIndex];
+          fromCat.services[oldIndex] = fromCat.services[newIndex];
+          fromCat.services[newIndex] = temp;
+        } else {
+          // Swap across categories
+          const temp = fromCat.services[oldIndex];
+          fromCat.services[oldIndex] = toCat.services[newIndex];
+          toCat.services[newIndex] = temp;
+        }
+
+      } else if (targetType === 'service-gap') {
+        const toCatId = over.data.current?.categoryId;
+        const targetIndex = over.data.current?.index;
+
+        const fromCat = newCategories.find(c => c.id === fromCatId)!;
+        const toCat = newCategories.find(c => c.id === toCatId)!;
+
+        const oldIndex = fromCat.services.findIndex(s => s.id === srv.id);
         const [movedSrv] = fromCat.services.splice(oldIndex, 1);
 
-        if (fromCatId === toCatId) {
-          fromCat.services.splice(newIndex, 0, movedSrv);
-        } else {
-          toCat.services.splice(newIndex, 0, movedSrv);
+        let insertIndex = targetIndex;
+        if (fromCatId === toCatId && oldIndex < targetIndex) {
+          insertIndex -= 1;
         }
+
+        toCat.services.splice(insertIndex, 0, movedSrv);
 
       } else if (targetType === 'category-empty-drop') {
         const toCatId = over.data.current?.categoryId;

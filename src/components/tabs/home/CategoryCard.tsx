@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Pencil, Trash2, Plus, GripVertical } from 'lucide-react';
 import { Category, Service } from '@/lib/types';
 import ServiceItem from './ServiceItem';
@@ -31,7 +32,6 @@ export default function CategoryCard({
 
   const setNodeRef = (node: HTMLElement | null) => {
     setDraggable(node);
-    setDroppable(node);
   };
 
   const style: React.CSSProperties = {
@@ -70,20 +70,50 @@ export default function CategoryCard({
         )}
       </div>
       <div ref={setDroppable} className="nd-services-grid" style={{
-        ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, minHeight: 40, outline: '2px dashed var(--nd-accent)' } : {})
+        minHeight: filteredServices.length === 0 ? 40 : undefined,
+        ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, outline: '2px dashed var(--nd-accent)' } : {})
       }}>
-        {filteredServices.map(service => (
-          <ServiceItem
-            key={service.id}
-            service={service}
-            categoryId={category.id}
-            editMode={editMode}
-            showSensitive={showSensitive}
-          />
-        ))}</div>
-      {filteredServices.length === 0 && !searchQuery && (
-        <p style={{ fontSize: '0.7rem', textAlign: 'center', padding: '12px 0', color: 'var(--nd-text-dimmed)' }}>Aucun service</p>
-      )}
+        {filteredServices.map((service, index) => (
+          <React.Fragment key={service.id}>
+            {editMode && <DropGap categoryId={category.id} index={index} />}
+            <ServiceItem
+              service={service}
+              categoryId={category.id}
+              editMode={editMode}
+              showSensitive={showSensitive}
+            />
+          </React.Fragment>
+        ))}
+        {editMode && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}
+        {filteredServices.length === 0 && !searchQuery && (
+          <div style={{ gridColumn: '1 / -1', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ fontSize: '0.7rem', textAlign: 'center', padding: '12px 0', color: 'var(--nd-text-dimmed)' }}>Aucun service</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+const DropGap = ({ categoryId, index }: { categoryId: string, index: number }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `drop-gap-${categoryId}-${index}`,
+    data: { type: 'service-gap', categoryId, index },
+  });
+
+  return (
+    <div ref={setNodeRef} style={{
+      height: 12,
+      marginTop: -6,
+      marginBottom: -6,
+      position: 'relative',
+      zIndex: isOver ? 10 : 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gridColumn: '1 / -1' // In case it's a CSS grid
+    }}>
+      {isOver && <div style={{ height: 2, width: '100%', background: 'var(--nd-accent)', borderRadius: 2 }} />}
+    </div>
+  );
+};
