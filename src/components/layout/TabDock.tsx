@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { TabDef, TabId } from '@/hooks/useTabs';
-import { ChevronRight, ChevronLeft, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowUp, ArrowDown, Eye, EyeOff, Settings } from 'lucide-react';
 
 interface TabDockProps {
   tabs: TabDef[];
@@ -13,8 +13,7 @@ interface TabDockProps {
   editMode?: boolean;
   onTogglePosition?: () => void;
   hiddenIds?: string[];
-  onToggleHidden?: (id: TabId) => void;
-  onMove?: (id: TabId, direction: 'up' | 'down') => void;
+  onOpenManager?: () => void;
 }
 
 export default function TabDock({ 
@@ -25,8 +24,7 @@ export default function TabDock({
   editMode, 
   onTogglePosition,
   hiddenIds = [],
-  onToggleHidden,
-  onMove
+  onOpenManager
 }: TabDockProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -69,36 +67,23 @@ export default function TabDock({
                 {isActive && <span className="nd-dock-item-indicator" />}
               </button>
 
-              {/* Edit Mode Controls */}
-              {editMode && (
-                <div className="nd-dock-edit-controls animate-in fade-in slide-in-from-left-2">
-                  {onToggleHidden && (
-                    <button 
-                      onClick={() => onToggleHidden(ext.id)} 
-                      className="nd-dock-edit-btn"
-                      title={isHidden ? "Afficher" : "Masquer"}
-                    >
-                      {isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
-                    </button>
-                  )}
-                  {onMove && index > 0 && (
-                    <button onClick={() => onMove(ext.id, 'up')} className="nd-dock-edit-btn" title="Monter">
-                      <ArrowUp size={12} />
-                    </button>
-                  )}
-                  {onMove && index < visibleTabs.length - 1 && (
-                    <button onClick={() => onMove(ext.id, 'down')} className="nd-dock-edit-btn" title="Descendre">
-                      <ArrowDown size={12} />
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* Edit Mode Controls removed, handled by TabManagerModal */}
             </div>
           );
         })}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', paddingBottom: 10, marginTop: editMode ? 20 : 0 }}>
+        {editMode && onOpenManager && (
+          <button 
+            className="nd-btn" 
+            onClick={onOpenManager}
+            title="Gérer les onglets"
+            style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+          >
+            <Settings size={14} />
+          </button>
+        )}
         {editMode && mobileOpen && (
           <button 
             className="nd-btn" 

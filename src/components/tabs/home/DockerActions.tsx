@@ -137,7 +137,7 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
         <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> Actions Docker
         {editMode && (
           <button 
-            className="nd-action-icon" 
+            className="nd-action-icon success" 
             onClick={() => setDockerActionModal({ open: true })} 
             style={{ marginLeft: 'auto' }} 
             title="Ajouter une action"

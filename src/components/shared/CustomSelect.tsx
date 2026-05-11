@@ -60,7 +60,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
           background: 'var(--nd-card-bg)',
           border: '1px solid var(--nd-card-border)',
           borderRadius: 8,
-          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+          boxShadow: 'var(--nd-dropdown-shadow, 0 10px 25px rgba(0,0,0,0.4))',
           zIndex: 100,
           overflow: 'hidden',
           display: 'flex',

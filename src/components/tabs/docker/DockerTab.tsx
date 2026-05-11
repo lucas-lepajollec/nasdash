@@ -703,7 +703,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               <Box size={12} style={{ color: 'var(--nd-accent)' }} />
               Hôtes Docker
               {editMode && (
-                <button className="nd-action-icon" onClick={() => setShowHostForm(true)} style={{ marginLeft: 'auto', color: 'var(--nd-green)' }}>
+                <button className="nd-action-icon success" onClick={() => setShowHostForm(true)} style={{ marginLeft: 'auto' }}>
                   <Plus size={13} />
                 </button>
               )}

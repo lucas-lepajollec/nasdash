@@ -1,0 +1,186 @@
+/* ==========================================================================
+   NASDASH THEMES
+   ========================================================================== */
+
+/* Apple Dark — True Glassmorphism
+   Ultra-transparent cards + heavy blur = frosted glass effect.
+   Soft ambient gradient behind gives the glass something to refract. */
+.theme-apple-dark {
+  --nd-bg: #000000;
+  --nd-bg-surface: #1c1c1e;
+  --nd-bg-gradient: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(56, 56, 60, 0.35) 0%, transparent 70%);
+  --nd-card-bg: rgba(38, 38, 40, 0.35);
+  --nd-card-border: rgba(255, 255, 255, 0.1);
+  --nd-card-hover-border: rgba(255, 255, 255, 0.18);
+  --nd-card-shadow: none;
+  --nd-card-radius: 14px;
+  --nd-text: #f5f5f7;
+  --nd-text-muted: #98989d;
+  --nd-text-dimmed: rgba(152, 152, 157, 0.5);
+  --nd-accent: #0a84ff;
+  --nd-accent-glow: rgba(10, 132, 255, 0.12);
+  --nd-accent-dim: rgba(10, 132, 255, 0.5);
+  --nd-blur: 40px;
+  --nd-purple: #bf5af2;
+  --nd-blue: #0a84ff;
+  --nd-orange: #ff9f0a;
+  --nd-green: #30d158;
+  --nd-red: #ff453a;
+  --nd-yellow: #ffd60a;
+  --nd-progress-bg: rgba(255, 255, 255, 0.08);
+  --nd-icon-bg: rgba(255, 255, 255, 0.04);
+  --nd-icon-border: rgba(255, 255, 255, 0.06);
+}
+
+/* Apple Light — Premium Glassmorphism */
+.theme-apple-light {
+  --nd-bg: #eef1f5;
+  --nd-bg-surface: #ffffff;
+  /* Ambient macOS-like colorful gradient to refract through the glass */
+  --nd-bg-gradient: radial-gradient(circle at 15% 0%, rgba(10, 132, 255, 0.15) 0%, transparent 50%), radial-gradient(circle at 85% 100%, rgba(255, 59, 48, 0.12) 0%, transparent 50%);
+  
+  /* Frosted Glass Cards */
+  --nd-card-bg: rgba(255, 255, 255, 0.5);
+  /* White border to give the glass edge effect */
+  --nd-card-border: rgba(255, 255, 255, 0.8);
+  --nd-card-hover-border: rgba(255, 255, 255, 1);
+  --nd-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.03); /* Extremely soft shadow just to lift it from bg */
+  --nd-card-radius: 14px;
+  
+  --nd-text: #1d1d1f;
+  --nd-text-muted: #86868b;
+  --nd-text-dimmed: rgba(134, 134, 139, 0.6);
+  
+  --nd-accent: #007aff;
+  --nd-accent-glow: rgba(0, 122, 255, 0.12);
+  --nd-accent-dim: rgba(0, 122, 255, 0.4);
+  --nd-blur: 40px;
+  
+  /* Apple Light System Colors */
+  --nd-purple: #af52de;
+  --nd-blue: #007aff;
+  --nd-orange: #ff9500;
+  --nd-green: #34c759;
+  --nd-red: #ff3b30;
+  --nd-yellow: #ffcc00;
+  
+  --nd-progress-bg: rgba(0, 0, 0, 0.05);
+  --nd-icon-bg: rgba(255, 255, 255, 0.6);
+  --nd-icon-border: rgba(255, 255, 255, 0.9);
+}
+
+/* Catppuccin Macchiato */
+.theme-catppuccin-macchiato {
+  --nd-bg: #24273a;
+  --nd-bg-surface: #363a4f;
+  --nd-bg-gradient: radial-gradient(ellipse at top center, #363a4f 0%, #24273a 70%);
+  --nd-card-bg: rgba(54, 58, 79, 0.8);
+  --nd-card-border: rgba(183, 189, 248, 0.1);
+  --nd-card-hover-border: rgba(183, 189, 248, 0.25);
+  --nd-card-shadow: none;
+  --nd-text: #cad3f5;
+  --nd-text-muted: #8087a2;
+  --nd-text-dimmed: rgba(128, 135, 162, 0.5);
+  --nd-accent: #8aadf4;
+  --nd-accent-glow: rgba(138, 173, 244, 0.15);
+  --nd-accent-dim: rgba(138, 173, 244, 0.5);
+  --nd-purple: #c6a0f6;
+  --nd-blue: #8aadf4;
+  --nd-orange: #f5a97f;
+  --nd-green: #a6da95;
+  --nd-red: #ed8796;
+  --nd-yellow: #eed49f;
+}
+
+/* Nord */
+.theme-nord {
+  --nd-bg: #2e3440;
+  --nd-bg-surface: #3b4252;
+  --nd-bg-gradient: radial-gradient(ellipse at top center, #3b4252 0%, #2e3440 70%);
+  --nd-card-bg: rgba(59, 66, 82, 0.8);
+  --nd-card-border: rgba(216, 222, 233, 0.05);
+  --nd-card-hover-border: rgba(136, 192, 208, 0.3);
+  --nd-card-shadow: none;
+  --nd-text: #eceff4;
+  --nd-text-muted: #d8dee9;
+  --nd-text-dimmed: rgba(216, 222, 233, 0.5);
+  --nd-accent: #88c0d0;
+  --nd-accent-glow: rgba(136, 192, 208, 0.15);
+  --nd-accent-dim: rgba(136, 192, 208, 0.5);
+  --nd-purple: #b48ead;
+  --nd-blue: #81a1c1;
+  --nd-orange: #d08770;
+  --nd-green: #a3be8c;
+  --nd-red: #bf616a;
+  --nd-yellow: #ebcb8b;
+}
+
+/* Dracula — pink accent, high contrast text */
+.theme-dracula {
+  --nd-bg: #282a36;
+  --nd-bg-surface: #383a4a;
+  --nd-bg-gradient: radial-gradient(ellipse at top center, #323444 0%, #282a36 65%);
+  --nd-card-bg: rgba(55, 58, 75, 0.9);
+  --nd-card-border: rgba(248, 248, 242, 0.08);
+  --nd-card-hover-border: rgba(255, 121, 198, 0.35);
+  --nd-card-shadow: none;
+  --nd-text: #f8f8f2;
+  --nd-text-muted: #bfbfbf;
+  --nd-text-dimmed: rgba(191, 191, 191, 0.5);
+  --nd-accent: #ff79c6;
+  --nd-accent-glow: rgba(255, 121, 198, 0.15);
+  --nd-accent-dim: rgba(255, 121, 198, 0.5);
+  --nd-purple: #bd93f9;
+  --nd-blue: #8be9fd;
+  --nd-orange: #ffb86c;
+  --nd-green: #50fa7b;
+  --nd-red: #ff5555;
+  --nd-yellow: #f1fa8c;
+  --nd-blur: 12px;
+}
+
+/* Ocean */
+.theme-ocean {
+  --nd-bg: #0f172a;
+  --nd-bg-surface: #1e293b;
+  --nd-bg-gradient: radial-gradient(ellipse at top center, #1e293b 0%, #0f172a 70%);
+  --nd-card-bg: rgba(30, 41, 59, 0.8);
+  --nd-card-border: rgba(56, 189, 248, 0.1);
+  --nd-card-hover-border: rgba(56, 189, 248, 0.3);
+  --nd-card-shadow: none;
+  --nd-text: #f8fafc;
+  --nd-text-muted: #94a3b8;
+  --nd-text-dimmed: rgba(148, 163, 184, 0.5);
+  --nd-accent: #38bdf8;
+  --nd-accent-glow: rgba(56, 189, 248, 0.15);
+  --nd-accent-dim: rgba(56, 189, 248, 0.5);
+  --nd-purple: #a78bfa;
+  --nd-blue: #38bdf8;
+  --nd-orange: #fb923c;
+  --nd-green: #4ade80;
+  --nd-red: #f87171;
+  --nd-yellow: #fbbf24;
+}
+
+/* Midnight (Pure OLED Black) */
+.theme-midnight {
+  --nd-bg: #000000;
+  --nd-bg-surface: #0a0a0a;
+  --nd-bg-gradient: radial-gradient(ellipse at top center, #0a0a0a 0%, #000000 50%);
+  --nd-card-bg: rgba(18, 18, 18, 0.85);
+  --nd-card-border: rgba(255, 255, 255, 0.06);
+  --nd-card-hover-border: rgba(255, 255, 255, 0.14);
+  --nd-card-shadow: none;
+  --nd-text: #ffffff;
+  --nd-text-muted: #777777;
+  --nd-text-dimmed: rgba(119, 119, 119, 0.5);
+  --nd-accent: #ffffff;
+  --nd-accent-glow: rgba(255, 255, 255, 0.08);
+  --nd-accent-dim: rgba(255, 255, 255, 0.4);
+  --nd-purple: #d4d4d4;
+  --nd-blue: #58a6ff;
+  --nd-orange: #d4d4d4;
+  --nd-green: #4ade80;
+  --nd-red: #f87171;
+  --nd-yellow: #d4d4d4;
+}

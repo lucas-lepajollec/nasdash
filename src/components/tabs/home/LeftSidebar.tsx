@@ -102,7 +102,7 @@ function DeviceMonitorCardContent({
   const errorMessage = stats && 'error' in stats ? stats.error : 'Impossible de joindre l\'appareil';
 
   return (
-    <div className="nd-sidebar-card" style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto' }}>
+    <div style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
           {editMode && (
@@ -198,9 +198,9 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
           Appareils
           {editMode && onAddDevice && (
             <button
-              className="nd-action-icon"
+              className="nd-action-icon success"
               onClick={onAddDevice}
-              style={{ marginLeft: 'auto', color: 'var(--nd-green)' }}
+              style={{ marginLeft: 'auto' }}
             >
               <Plus size={13} />
             </button>

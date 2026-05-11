@@ -250,6 +250,7 @@ export async function PUT(req: NextRequest) {
     
     if (body.hiddenExtensions !== undefined) config.settings.hiddenTabs = body.hiddenExtensions;
     if (body.hiddenTabs !== undefined) config.settings.hiddenTabs = body.hiddenTabs;
+    if (body.theme !== undefined) config.settings.theme = body.theme;
     
     writeConfig(config);
     return NextResponse.json(config.settings);

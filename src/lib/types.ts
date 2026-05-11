@@ -137,6 +137,7 @@ export interface DashboardConfig {
     tailscaleClientId?: string;
     tailscaleClientSecret?: string;
     homeAssistantUrl?: string;
+    theme?: string;
     // Tab customization
     tabOrder?: string[];
     hiddenTabs?: string[];

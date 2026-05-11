@@ -38,6 +38,10 @@ interface ConfigContextType {
   setDeviceModal: (state: { open: boolean; device?: Device }) => void;
   dockerActionModal: { open: boolean; action?: any };
   setDockerActionModal: (state: { open: boolean; action?: any }) => void;
+  settingsModal: { open: boolean };
+  setSettingsModal: (state: { open: boolean }) => void;
+  tabManagerModal: { open: boolean };
+  setTabManagerModal: (state: { open: boolean }) => void;
 }
 
 export const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -64,6 +68,12 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     open: boolean;
     action?: any;
   }>({ open: false });
+  const [settingsModal, setSettingsModal] = useState<{
+    open: boolean;
+  }>({ open: false });
+  const [tabManagerModal, setTabManagerModal] = useState<{
+    open: boolean;
+  }>({ open: false });
 
   const fetchConfig = useCallback(async () => {
     try {
@@ -71,6 +81,11 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (!data.devices) data.devices = [];
       setConfig(data);
+      
+      // Apply theme
+      if (data.settings?.theme && data.settings.theme !== 'nasdash') {
+        document.body.classList.add(`theme-${data.settings.theme}`);
+      }
     } catch (err) {
       console.error('Failed to fetch config:', err);
     } finally {
@@ -294,6 +309,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     setDeviceModal,
     dockerActionModal,
     setDockerActionModal,
+    settingsModal,
+    setSettingsModal,
+    tabManagerModal,
+    setTabManagerModal,
   };
 
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;

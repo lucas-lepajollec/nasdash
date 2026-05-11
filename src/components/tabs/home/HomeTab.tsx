@@ -62,6 +62,8 @@ export default function HomeTab({
     deleteDockerAction,
     dockerActionModal,
     setDockerActionModal,
+    settingsModal,
+    setSettingsModal,
   } = useConfig();
 
   const sensors = useSensors(

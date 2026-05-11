@@ -7,13 +7,15 @@ import HomeTab from '@/components/tabs/home/HomeTab';
 import { useTabs, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
+import SettingsModal from '@/components/shared/SettingsModal';
+import TabManagerModal from '@/components/shared/TabManagerModal';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const HomeAssistantTab = lazy(() => import('@/components/tabs/ha/HomeAssistantTab'));
 
 export default function Shell() {
   const { activeTab, switchTab, tabs, ready } = useTabs();
-  const { config, loading, refresh, addSlot, setCategoryModal, updateConfig } = useConfig();
+  const { config, loading, refresh, addSlot, setCategoryModal, settingsModal, setSettingsModal, tabManagerModal, setTabManagerModal, updateConfig } = useConfig();
 
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -30,6 +32,46 @@ export default function Shell() {
   }, []);
 
   const dockPosition = config?.settings?.dockPosition || 'left';
+  const hiddenIds = config?.settings?.hiddenTabs || [];
+  
+  const sortedTabs = (() => {
+    const tabOrder = config?.settings?.tabOrder || tabs.map(t => t.id);
+    const sorted = [...tabs].sort((a, b) => {
+      const idxA = tabOrder.indexOf(a.id);
+      const idxB = tabOrder.indexOf(b.id);
+      return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+    });
+    return sorted;
+  })();
+
+  const handleToggleTabHidden = async (id: TabId) => {
+    const newHidden = hiddenIds.includes(id) 
+      ? hiddenIds.filter((h: string) => h !== id)
+      : [...hiddenIds, id];
+    
+    await updateConfig({ type: 'settings', hiddenTabs: newHidden });
+    refresh();
+
+    // If current is now hidden, fallback to first visible
+    if (activeTab === id && !hiddenIds.includes(id)) {
+      const firstVisible = tabs.find(e => !newHidden.includes(e.id));
+      if (firstVisible) switchTab(firstVisible.id);
+    }
+  };
+
+  const handleMoveTab = async (id: TabId, direction: 'up' | 'down') => {
+    const tabOrder = config?.settings?.tabOrder || tabs.map(t => t.id);
+    const idx = tabOrder.indexOf(id);
+    if (idx === -1) return;
+    
+    const newOrder = [...tabOrder];
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= newOrder.length) return;
+    
+    [newOrder[idx], newOrder[targetIdx]] = [newOrder[targetIdx], newOrder[idx]];
+    await updateConfig({ type: 'settings', tabOrder: newOrder });
+    refresh();
+  };
 
   if (loading || !ready) {
     return (
@@ -66,48 +108,13 @@ export default function Shell() {
     <div className={`nd-shell nd-shell--dock-${dockPosition} ${activeTab === 'ha' ? 'nd-shell--ha' : ''}`}>
       {/* Dock — Tab switcher */}
       <TabDock
-        tabs={(() => {
-          const tabOrder = config?.settings?.tabOrder || tabs.map(t => t.id);
-          const sortedTabs = [...tabs].sort((a, b) => {
-            const idxA = tabOrder.indexOf(a.id);
-            const idxB = tabOrder.indexOf(b.id);
-            return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
-          });
-          return sortedTabs;
-        })()}
+        tabs={sortedTabs}
         activeTab={activeTab}
         onSwitch={switchTab}
         position={dockPosition}
         editMode={editMode}
-        hiddenIds={config?.settings?.hiddenTabs || []}
-        onToggleHidden={async (id) => {
-          const hiddenTabs = config?.settings?.hiddenTabs || [];
-          const newHidden = hiddenTabs.includes(id) 
-            ? hiddenTabs.filter(h => h !== id)
-            : [...hiddenTabs, id];
-          
-          await updateConfig({ type: 'settings', hiddenTabs: newHidden });
-          refresh();
-
-          // If current is now hidden, fallback to first visible
-          if (activeTab === id && !hiddenTabs.includes(id)) {
-            const firstVisible = tabs.find(e => !newHidden.includes(e.id));
-            if (firstVisible) switchTab(firstVisible.id);
-          }
-        }}
-        onMove={async (id, direction) => {
-          const tabOrder = config?.settings?.tabOrder || tabs.map(t => t.id);
-          const idx = tabOrder.indexOf(id);
-          if (idx === -1) return;
-          
-          const newOrder = [...tabOrder];
-          const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-          if (targetIdx < 0 || targetIdx >= newOrder.length) return;
-          
-          [newOrder[idx], newOrder[targetIdx]] = [newOrder[targetIdx], newOrder[idx]];
-          await updateConfig({ type: 'settings', tabOrder: newOrder });
-          refresh();
-        }}
+        hiddenIds={hiddenIds}
+        onOpenManager={() => setTabManagerModal({ open: true })}
         onTogglePosition={async () => {
           const newPos = dockPosition === 'left' ? 'right' : 'left';
           await updateConfig({ type: 'settings', dockPosition: newPos });
@@ -123,13 +130,15 @@ export default function Shell() {
           onSearchChange={setSearchQuery}
           editMode={editMode}
           onToggleEdit={() => setEditMode(prev => !prev)}
-          isDark={isDark}
-          onToggleTheme={toggleTheme}
+          onOpenSettings={() => setSettingsModal({ open: true })}
           onAddCategory={() => setCategoryModal({ open: true })} 
           onAddSlot={addSlot}
           secretMode={showSensitive}
           onToggleSecret={() => setShowSensitive(prev => !prev)}
           activeTab={activeTab}
+          tabs={sortedTabs}
+          onSwitchTab={switchTab}
+          onOpenTabManager={() => setTabManagerModal({ open: true })}
         />
 
         {/* Tab views - Kept mounted to preserve state */}
@@ -163,6 +172,20 @@ export default function Shell() {
           )}
         </div>
       </div>
+
+      {settingsModal.open && (
+        <SettingsModal onClose={() => setSettingsModal({ open: false })} />
+      )}
+
+      {tabManagerModal.open && (
+        <TabManagerModal
+          tabs={sortedTabs}
+          hiddenIds={hiddenIds}
+          onToggleHidden={handleToggleTabHidden}
+          onMove={handleMoveTab}
+          onClose={() => setTabManagerModal({ open: false })}
+        />
+      )}
     </div>
   );
 }
