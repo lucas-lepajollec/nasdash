@@ -25,7 +25,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
       style={{
         ...style,
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '6px 10px',
+        padding: '10px 12px',
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid var(--nd-border)',
         borderRadius: 8,
