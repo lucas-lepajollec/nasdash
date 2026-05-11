@@ -53,7 +53,7 @@ export default function TabManagerModal({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <ext.icon size={18} style={{ color: 'var(--nd-accent)' }} />
+                  <span className="nd-dock-item-icon" style={{ fontSize: '18px', color: 'var(--nd-accent)' }}>{ext.icon}</span>
                   <span style={{ fontWeight: 500 }}>{ext.name}</span>
                 </div>
                 
