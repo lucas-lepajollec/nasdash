@@ -9,9 +9,10 @@ import Footer from '../../layout/Footer';
 import ServiceFormModal from './modals/ServiceFormModal';
 import CategoryFormModal from './modals/CategoryFormModal';
 import DeviceFormModal from './modals/DeviceFormModal';
+import DockerActionFormModal from './modals/DockerActionFormModal';
 import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
-import { Category, Service, Device } from '@/lib/types';
+import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
@@ -56,6 +57,11 @@ export default function HomeTab({
     setCategoryModal,
     deviceModal,
     setDeviceModal,
+    addDockerAction,
+    updateDockerAction,
+    deleteDockerAction,
+    dockerActionModal,
+    setDockerActionModal,
   } = useConfig();
 
   const sensors = useSensors(
@@ -155,6 +161,21 @@ export default function HomeTab({
     setDeviceModal({ open: false });
   };
 
+  // Docker Action handlers
+  const handleSaveDockerAction = async (data: any) => {
+    if (dockerActionModal.action) {
+      await updateDockerAction(dockerActionModal.action.id, data);
+    } else {
+      await addDockerAction(data);
+    }
+    setDockerActionModal({ open: false });
+  };
+
+  const handleDeleteDockerAction = async (id: string) => {
+    await deleteDockerAction(id);
+    setDockerActionModal({ open: false });
+  };
+
   if (loading || !config) return null;
 
   return (
@@ -247,6 +268,15 @@ export default function HomeTab({
           onSave={handleSaveDevice}
           onDelete={deviceModal.device ? handleDeleteDevice : undefined}
           showSensitive={showSensitive}
+        />
+      )}
+
+      {dockerActionModal.open && (
+        <DockerActionFormModal
+          action={dockerActionModal.action}
+          onClose={() => setDockerActionModal({ open: false })}
+          onSave={handleSaveDockerAction}
+          onDelete={dockerActionModal.action ? handleDeleteDockerAction : undefined}
         />
       )}
     </>

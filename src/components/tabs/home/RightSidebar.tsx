@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Server, FolderOpen, Hash, Link2, Globe } from 'lucide-react';
 import { Category } from '@/lib/types';
 import TailscaleStatus from './TailscaleStatus';
+import DockerActions from './DockerActions';
 
 interface RightSidebarProps {
   categories: Category[];
@@ -89,6 +90,7 @@ export default function RightSidebar({ categories, editMode, showSensitive = fal
       </div>
 
       <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />
+      <DockerActions editMode={editMode} />
     </aside>
   );
 }

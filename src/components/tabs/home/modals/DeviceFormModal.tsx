@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Device, DeviceApiConfig } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import ConfirmModal from '../../../shared/ConfirmModal';
+import CustomSelect from '@/components/shared/CustomSelect';
 
 interface DeviceFormModalProps {
   device?: Device;
@@ -114,18 +115,18 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
 
           <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 4 }}>
             <label className="nd-label">API de surveillance</label>
-            <select
-              className="nd-input"
+            <CustomSelect
               value={apiType}
-              onChange={e => {
-                setApiType(e.target.value as any);
+              onChange={val => {
+                setApiType(val as any);
                 setPort(''); // reset port to trigger auto-fill
               }}
-            >
-              <option value="glances">Glances</option>
-              <option value="proxmox">Proxmox VE</option>
-              <option value="lhm">Libre Hardware Monitor</option>
-            </select>
+              options={[
+                { value: 'glances', label: 'Glances' },
+                { value: 'proxmox', label: 'Proxmox VE' },
+                { value: 'lhm', label: 'Libre Hardware Monitor' }
+              ]}
+            />
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
@@ -180,10 +181,14 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                 {vmid && (
                   <div style={{ flex: 1 }}>
                     <label className="nd-label">Type</label>
-                    <select className="nd-input" value={vmType} onChange={e => setVmType(e.target.value as any)}>
-                      <option value="qemu">VM (QEMU)</option>
-                      <option value="lxc">Conteneur (LXC)</option>
-                    </select>
+                    <CustomSelect
+                      value={vmType}
+                      onChange={val => setVmType(val as any)}
+                      options={[
+                        { value: 'qemu', label: 'VM (QEMU)' },
+                        { value: 'lxc', label: 'Conteneur (LXC)' }
+                      ]}
+                    />
                   </div>
                 )}
               </div>

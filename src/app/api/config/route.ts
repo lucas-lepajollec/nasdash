@@ -156,6 +156,19 @@ export async function POST(req: NextRequest) {
     writeConfig(config);
     return NextResponse.json(newHost, { status: 201 });
   }
+  if (type === 'dockerAction') {
+    if (!config.dockerActions) config.dockerActions = [];
+    const newAction = {
+      id: uuidv4(),
+      name: body.name || 'New Action',
+      icon: body.icon || 'Play',
+      actionType: body.actionType || 'start',
+      targets: body.targets || [],
+    };
+    config.dockerActions.push(newAction);
+    writeConfig(config);
+    return NextResponse.json(newAction, { status: 201 });
+  }
 
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 }
@@ -328,6 +341,27 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(safeDevice);
   }
 
+  if (type === 'reorderDockerActions') {
+    if (!config.dockerActions) config.dockerActions = [];
+    config.dockerActions = body.dockerActions;
+    writeConfig(config);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (type === 'dockerAction') {
+    if (!config.dockerActions) config.dockerActions = [];
+    const action = config.dockerActions.find((a: any) => a.id === body.id);
+    if (!action) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (body.name !== undefined) action.name = body.name;
+    if (body.icon !== undefined) action.icon = body.icon;
+    if (body.actionType !== undefined) action.actionType = body.actionType;
+    if (body.targets !== undefined) action.targets = body.targets;
+
+    writeConfig(config);
+    return NextResponse.json(action);
+  }
+
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 }
 
@@ -364,6 +398,13 @@ export async function DELETE(req: NextRequest) {
   if (type === 'dockerHost') {
     if (!(config as any).dockerHosts) (config as any).dockerHosts = [];
     (config as any).dockerHosts = (config as any).dockerHosts.filter((h: any) => h.id !== id);
+    writeConfig(config);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (type === 'dockerAction') {
+    if (!config.dockerActions) config.dockerActions = [];
+    config.dockerActions = config.dockerActions.filter((a: any) => a.id !== id);
     writeConfig(config);
     return NextResponse.json({ ok: true });
   }

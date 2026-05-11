@@ -23,6 +23,12 @@ interface ConfigContextType {
   updateConfig: (updates: any) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   
+  // Docker Actions
+  addDockerAction: (action: any) => Promise<void>;
+  updateDockerAction: (id: string, updates: any) => Promise<void>;
+  deleteDockerAction: (id: string) => Promise<void>;
+  reorderDockerActions: (newActions: any[]) => Promise<void>;
+
   // Shared Modal States
   serviceModal: { open: boolean; service?: Service; categoryId?: string };
   setServiceModal: (state: { open: boolean; service?: Service; categoryId?: string }) => void;
@@ -30,6 +36,8 @@ interface ConfigContextType {
   setCategoryModal: (state: { open: boolean; category?: Category }) => void;
   deviceModal: { open: boolean; device?: Device };
   setDeviceModal: (state: { open: boolean; device?: Device }) => void;
+  dockerActionModal: { open: boolean; action?: any };
+  setDockerActionModal: (state: { open: boolean; action?: any }) => void;
 }
 
 export const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -51,6 +59,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [deviceModal, setDeviceModal] = useState<{
     open: boolean;
     device?: Device;
+  }>({ open: false });
+  const [dockerActionModal, setDockerActionModal] = useState<{
+    open: boolean;
+    action?: any;
   }>({ open: false });
 
   const fetchConfig = useCallback(async () => {
@@ -217,6 +229,40 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     return data.url;
   };
 
+  const addDockerAction = async (action: any) => {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'dockerAction', ...action }),
+    });
+    if (res.ok) await fetchConfig();
+  };
+
+  const updateDockerAction = async (id: string, updates: any) => {
+    const res = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'dockerAction', id, ...updates }),
+    });
+    if (res.ok) await fetchConfig();
+  };
+
+  const deleteDockerAction = async (id: string) => {
+    const res = await fetch(`/api/config?type=dockerAction&id=${id}`, { method: 'DELETE' });
+    if (res.ok) await fetchConfig();
+  };
+
+  const reorderDockerActions = async (newActions: any[]) => {
+    if (!config) return;
+    setConfig(prev => prev ? { ...prev, dockerActions: newActions } : prev);
+    const res = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reorderDockerActions', dockerActions: newActions }),
+    });
+    if (!res.ok) await fetchConfig();
+  };
+
   const value = {
     config,
     loading,
@@ -236,12 +282,18 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     deleteDevice,
     updateConfig,
     uploadLogo,
+    addDockerAction,
+    updateDockerAction,
+    deleteDockerAction,
+    reorderDockerActions,
     serviceModal,
     setServiceModal,
     categoryModal,
     setCategoryModal,
     deviceModal,
     setDeviceModal,
+    dockerActionModal,
+    setDockerActionModal,
   };
 
   return <ConfigContext.Provider value={value}>{children}</ConfigContext.Provider>;

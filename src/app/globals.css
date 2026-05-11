@@ -96,17 +96,16 @@ body {
 
 /* ==================== 3-COLUMN LAYOUT ==================== */
 .nd-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--nd-sidebar-width) minmax(0, 1fr) var(--nd-right-sidebar-width);
   gap: 24px;
   max-width: 1600px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  align-items: flex-start;
+  align-items: start;
 }
 
 .nd-sidebar-left {
-  width: var(--nd-sidebar-width);
-  flex-shrink: 0;
   position: sticky;
   top: 20px;
   display: flex;
@@ -117,13 +116,10 @@ body {
 }
 
 .nd-center {
-  flex: 1;
   min-width: 0;
 }
 
 .nd-sidebar-right {
-  width: var(--nd-right-sidebar-width);
-  flex-shrink: 0;
   position: sticky;
   top: 20px;
   display: flex;
@@ -816,7 +812,13 @@ body {
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 960px) {
   .nd-layout {
+    display: flex;
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nd-center {
+    width: 100%;
   }
 
   .nd-sidebar-left,

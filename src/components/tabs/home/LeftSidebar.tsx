@@ -103,18 +103,18 @@ function DeviceMonitorCardContent({
 
   return (
     <div className="nd-sidebar-card" style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
           {editMode && (
-            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', padding: 4, marginRight: -4 }}>
+            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', padding: 4, marginRight: -4, flexShrink: 0 }}>
               <GripVertical size={12} style={{ color: 'var(--nd-text-dimmed)' }} />
             </div>
           )}
-          <span style={{ fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span>{device.icon}</span>
-            {device.name}
-            {isLoading && isApiDevice && !stats && <Loader2 size={10} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />}
-            {isOffline && <span title={errorMessage} style={{ display: 'flex' }}><AlertCircle size={10} style={{ color: 'var(--nd-red)' }} /></span>}
+          <span style={{ fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
+            <span style={{ flexShrink: 0 }}>{device.icon}</span>
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{device.name}</span>
+            {isLoading && isApiDevice && !stats && <Loader2 size={10} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)', flexShrink: 0 }} />}
+            {isOffline && <span title={errorMessage} style={{ display: 'flex', flexShrink: 0 }}><AlertCircle size={10} style={{ color: 'var(--nd-red)' }} /></span>}
           </span>
         </div>
         {editMode && (

@@ -115,11 +115,19 @@ export interface DockerVolume {
   usageData?: { size: number; refCount: number };
 }
 
-// ==================== CONFIG ====================
+export interface DockerActionConfig {
+  id: string;
+  name: string;
+  icon: string;
+  actionType: 'start' | 'stop' | 'switch';
+  targets: { hostId: string; containerName: string }[];
+}
+
 export interface DashboardConfig {
   categories: Category[];
   devices: Device[];
   dockerHosts?: DockerHost[];
+  dockerActions?: DockerActionConfig[];
   settings: {
     title: string;
     showMonitor: boolean;

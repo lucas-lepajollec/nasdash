@@ -44,9 +44,9 @@ export default function SystemMonitor({ history, isDark = true, isVisible }: Sys
           <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', fontWeight: 600 }}>{netStatus.label} ({currentLatency}ms)</span>
         </div>
       </div>
-      <div className="nd-card" ref={containerRef} style={{ height: 200, padding: '12px 8px', position: 'relative', width: '100%', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 10, left: 10, right: 10, bottom: 10 }}>
-          <ResponsiveContainer width="99%" height="100%" minWidth={1} minHeight={1}>
+      <div className="nd-card" ref={containerRef} style={{ height: 200, padding: '10px', position: 'relative', width: '100%', overflow: 'hidden' }}>
+        <div style={{ width: '100%', height: '100%', minWidth: 0, minHeight: 0 }}>
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart data={history} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'} />
               <XAxis 

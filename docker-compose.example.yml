@@ -1,6 +1,6 @@
 services:
   nasdash:
-    image: lucas/nasdash:latest # Replace with your image or build: .
+    image: lucas-lepajollec/nasdash:latest
     container_name: nasdash
     ports:
       - "2504:2504"
