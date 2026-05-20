@@ -80,7 +80,7 @@ export default function TabDock({
               className="nd-btn" 
               onClick={onOpenManager}
               title="Gérer les onglets"
-              style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+              style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
             >
               <Settings size={14} />
             </button>
@@ -90,7 +90,7 @@ export default function TabDock({
               className="nd-btn" 
               onClick={() => setMobileOpen(false)}
               title="Fermer le dock"
-              style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+              style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
             >
               {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
             </button>
@@ -100,7 +100,7 @@ export default function TabDock({
               className="nd-btn" 
               onClick={onTogglePosition}
               title={position === 'left' ? 'Déplacer à droite' : 'Déplacer à gauche'}
-              style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+              style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
             >
               {position === 'left' ? '→' : '←'}
             </button>

@@ -1816,6 +1816,27 @@ body {
   overflow-y: auto;
 }
 
+.nd-settings-sidebar-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nd-settings-sidebar-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.nd-settings-sidebar-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nd-settings-sidebar-group:nth-child(2) .nd-settings-sidebar-group-items {
+  padding-left: 6px;
+}
+
 .nd-settings-nav-item {
   display: flex;
   align-items: center;
@@ -1883,39 +1904,72 @@ body {
 /* Mobile: stack layout vertically */
 @media (max-width: 580px) {
   .nd-settings-modal {
-    flex-direction: column;
-    height: 90vh;
-    max-width: 98vw;
+    flex-direction: column !important;
+    height: 85vh !important;
+    max-height: 85vh !important;
+    max-width: 96vw !important;
+    border-radius: var(--nd-card-radius) !important;
   }
 
   .nd-settings-sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    border-right: none;
-    border-bottom: 1px solid var(--nd-card-border);
-    padding: 10px 12px;
-    gap: 8px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex-shrink: 0;
+    width: 100% !important;
+    flex-direction: column !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--nd-card-border) !important;
+    padding: 10px 12px !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    background: rgba(0, 0, 0, 0.2) !important;
   }
 
-  .nd-settings-sidebar h2 {
-    margin-bottom: 0 !important;
-    white-space: nowrap;
-    font-size: 0.85rem !important;
-    padding: 0 !important;
+  .nd-settings-sidebar-title {
+    display: none !important;
+  }
+
+  .nd-settings-sidebar-group-title {
+    display: none !important;
+  }
+
+  .nd-settings-sidebar-groups {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important; /* Hide scrollbar for clean layout */
+  }
+
+  .nd-settings-sidebar-groups::-webkit-scrollbar {
+    display: none !important; /* Hide scrollbar */
+  }
+
+  .nd-settings-sidebar-group {
+    display: contents !important;
+  }
+
+  .nd-settings-sidebar-group-items {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    padding-left: 0 !important;
   }
 
   .nd-settings-nav-item {
-    white-space: nowrap;
-    padding: 6px 10px;
-    font-size: 0.72rem;
+    white-space: nowrap !important;
+    padding: 6px 12px !important;
+    font-size: 0.72rem !important;
+    border-left: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: var(--nd-card-radius) !important;
+    flex-shrink: 0 !important;
   }
 
   .nd-settings-content {
-    padding: 14px;
+    flex: 1 !important;
+    padding: 14px !important;
+    overflow-y: auto !important;
   }
 
   .nd-settings-select-wrap {

@@ -474,14 +474,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div 
           className="nd-settings-sidebar" 
         >
-          <h2 style={{ fontSize: '0.78rem', fontWeight: 700, margin: '0 0 6px 4px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
+          <h2 className="nd-settings-sidebar-title" style={{ fontSize: '0.78rem', fontWeight: 700, margin: '0 0 6px 4px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="nd-settings-sidebar-groups">
             
             {/* Category: Général */}
-            <div>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Général</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className="nd-settings-sidebar-group">
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Général</span>
+              <div className="nd-settings-sidebar-group-items">
                 <button
                   onClick={() => setActiveTab('apparence')}
                   className="nd-settings-nav-item"
@@ -514,9 +514,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Category: Configuration Widgets (Indented child items) */}
-            <div>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Configuration Widgets</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 6 }}>
+            <div className="nd-settings-sidebar-group">
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Configuration Widgets</span>
+              <div className="nd-settings-sidebar-group-items">
                 
                 {/* Appareils Button with Status Indicator */}
                 <button
@@ -610,9 +610,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             </div>
 
             {/* Category: Intégrations */}
-            <div>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Intégrations</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div className="nd-settings-sidebar-group">
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Intégrations</span>
+              <div className="nd-settings-sidebar-group-items">
                 <button
                   onClick={() => setActiveTab('homeassistant')}
                   className="nd-settings-nav-item"
