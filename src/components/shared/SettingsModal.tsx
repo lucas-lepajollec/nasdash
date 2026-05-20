@@ -260,6 +260,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
   }, [config]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth > 580) {
+      setActiveTab('apparence');
+    }
+  }, []);
+
   const handleFontChange = async (font: string) => {
     setGlobalFont(font);
     await updateConfig({ globalFont: font });
@@ -505,28 +511,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {/* Apparence Card */}
                 <button
                   onClick={() => setActiveTab('apparence')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'apparence' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'var(--nd-accent-glow)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
                     <Palette size={18} />
@@ -535,34 +520,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Apparence & Thèmes</span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Thèmes, polices, arrondis, opacité et CSS.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
 
                 {/* Library Card */}
                 <button
                   onClick={() => setActiveTab('library')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'library' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'rgba(88, 166, 255, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#58a6ff', flexShrink: 0 }}>
                     <Sliders size={18} />
@@ -571,7 +537,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Bibliothèque Globale</span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Activez et gérez toutes les extensions NasDash.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
               </div>
             </div>
@@ -583,28 +551,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {/* Devices Widget */}
                 <button
                   onClick={() => setActiveTab('widget-devices')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'widget-devices' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'rgba(63, 185, 80, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3fb950', flexShrink: 0 }}>
                     <Monitor size={18} />
@@ -622,34 +569,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CPU, RAM, Proxmox, Glances et serveurs.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
 
                 {/* QuickStats Widget */}
                 <button
                   onClick={() => setActiveTab('widget-quickstats')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'widget-quickstats' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'rgba(63, 185, 80, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3fb950', flexShrink: 0 }}>
                     <Activity size={18} />
@@ -667,34 +595,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Résumé des services, catégories et ports ouverts.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
 
                 {/* Tailscale Widget */}
                 <button
                   onClick={() => setActiveTab('widget-tailscale')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'widget-tailscale' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'rgba(168, 85, 247, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-purple)', flexShrink: 0 }}>
                     <Shield size={18} />
@@ -712,34 +621,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>État de connexion et liste des machines actives.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
 
                 {/* Docker Actions Widget */}
                 <button
                   onClick={() => setActiveTab('widget-dockeractions')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'widget-dockeractions' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'rgba(240, 136, 62, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-orange)', flexShrink: 0 }}>
                     <Container size={18} />
@@ -757,7 +647,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Contrôles d'alimentation rapides pour vos conteneurs.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
               </div>
             </div>
@@ -769,28 +661,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {/* Home Assistant Card */}
                 <button
                   onClick={() => setActiveTab('homeassistant')}
-                  className="nd-settings-nav-item"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '12px 14px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--nd-card-border)',
-                    borderRadius: 'var(--nd-card-radius)',
-                    gap: 12,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'left'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }}
+                  className={`nd-settings-nav-item ${currentTab === 'homeassistant' ? 'nd-settings-nav-item--active' : ''}`}
                 >
                   <div style={{ background: 'var(--nd-accent-glow)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
                     <Layers size={18} />
@@ -799,7 +670,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Home Assistant</span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Export Lovelace coordonné au tableau de bord.</span>
                   </div>
-                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
                 </button>
               </div>
             </div>

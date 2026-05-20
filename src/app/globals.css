@@ -1793,22 +1793,24 @@ body {
 /* Removed Hermes Dashboard Extension styles */
 
 /* ==================== SETTINGS MODAL ==================== */
+/* Default / Desktop style (viewport > 580px) */
 .nd-settings-modal {
-  width: 540px;
+  width: 900px;
   max-width: 95vw;
-  height: 580px;
+  height: 620px;
   max-height: 90vh;
   display: flex;
-  flex-direction: column !important;
+  flex-direction: row !important;
   padding: 0 !important;
   overflow: hidden;
 }
 
 .nd-settings-sidebar {
-  width: 100% !important;
-  height: 100% !important;
-  background: transparent !important;
-  display: flex;
+  width: 240px !important;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.15) !important;
+  border-right: 1px solid var(--nd-card-border) !important;
+  display: flex !important;
   flex-direction: column;
   padding: 20px 16px;
   gap: 16px;
@@ -1840,6 +1842,7 @@ body {
 .nd-settings-nav-item {
   display: flex;
   align-items: center;
+  width: 100%;
   gap: 12px;
   padding: 12px 14px;
   border-radius: var(--nd-card-radius);
@@ -1852,12 +1855,23 @@ body {
   transition: all 0.2s ease;
 }
 
+.nd-settings-nav-item:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--nd-card-hover-border) !important;
+}
+
+.nd-settings-nav-item--active {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--nd-accent) !important;
+  box-shadow: 0 0 10px var(--nd-accent-dim) !important;
+}
+
 .nd-settings-content {
   flex: 1;
   min-width: 0;
   padding: 24px;
   overflow-y: auto;
-  display: flex;
+  display: flex !important; /* Always show content on desktop */
   flex-direction: column;
 }
 
@@ -1882,46 +1896,66 @@ body {
 /* Default button behaviors for drilldown */
 .nd-settings-back-btn,
 .nd-settings-sidebar-close-btn {
-  display: none;
-}
-
-/* Menu Mode: sidebar only */
-.nd-settings-modal--menu .nd-settings-sidebar {
-  display: flex !important;
-}
-.nd-settings-modal--menu .nd-settings-content {
   display: none !important;
 }
-.nd-settings-modal--menu .nd-settings-sidebar-close-btn {
-  display: flex !important;
+
+.nd-settings-chevron {
+  display: none !important; /* Hide chevron on desktop */
 }
 
-/* Detail Mode: content only */
-.nd-settings-modal--detail .nd-settings-sidebar {
-  display: none !important;
-}
-.nd-settings-modal--detail .nd-settings-content {
-  display: flex !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-.nd-settings-modal--detail .nd-settings-back-btn {
-  display: flex !important;
-}
-
-/* Mobile responsive optimizations */
+/* Mobile responsive optimizations (viewport <= 580px) */
 @media (max-width: 580px) {
   .nd-settings-modal {
     width: 96vw !important;
     height: 85vh !important;
     max-height: 85vh !important;
+    flex-direction: column !important;
   }
+
+  .nd-settings-sidebar {
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    border-right: none !important;
+    padding: 20px 16px !important;
+  }
+
+  .nd-settings-chevron {
+    display: block !important; /* Show chevron on mobile menu */
+  }
+
+  /* Menu Mode: sidebar only */
+  .nd-settings-modal--menu .nd-settings-sidebar {
+    display: flex !important;
+  }
+  .nd-settings-modal--menu .nd-settings-content {
+    display: none !important;
+  }
+  .nd-settings-modal--menu .nd-settings-sidebar-close-btn {
+    display: flex !important;
+  }
+
+  /* Detail Mode: content only */
+  .nd-settings-modal--detail .nd-settings-sidebar {
+    display: none !important;
+  }
+  .nd-settings-modal--detail .nd-settings-content {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .nd-settings-modal--detail .nd-settings-back-btn {
+    display: flex !important;
+  }
+
   .nd-settings-content {
     padding: 16px 14px !important;
   }
+
   .nd-settings-select-wrap {
     max-width: 100%;
   }
+
   .nd-settings-card-row {
     flex-direction: column;
     align-items: flex-start;
