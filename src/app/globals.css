@@ -1794,32 +1794,32 @@ body {
 
 /* ==================== SETTINGS MODAL ==================== */
 .nd-settings-modal {
-  width: 900px;
+  width: 540px;
   max-width: 95vw;
-  height: 620px;
+  height: 580px;
   max-height: 90vh;
   display: flex;
-  flex-direction: row;
+  flex-direction: column !important;
   padding: 0 !important;
   overflow: hidden;
 }
 
 .nd-settings-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.15);
-  border-right: 1px solid var(--nd-card-border);
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
   display: flex;
   flex-direction: column;
-  padding: 20px 14px;
-  gap: 18px;
+  padding: 20px 16px;
+  gap: 16px;
   overflow-y: auto;
 }
 
 .nd-settings-sidebar-groups {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  width: 100%;
 }
 
 .nd-settings-sidebar-group {
@@ -1830,25 +1830,26 @@ body {
 .nd-settings-sidebar-group-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .nd-settings-sidebar-group:nth-child(2) .nd-settings-sidebar-group-items {
-  padding-left: 6px;
+  padding-left: 0px !important;
 }
 
 .nd-settings-nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 12px;
+  padding: 12px 14px;
   border-radius: var(--nd-card-radius);
-  border: none;
+  border: 1px solid var(--nd-card-border);
+  background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   text-align: left;
   font-size: 0.8rem;
   font-family: inherit;
-  transition: background 0.15s;
+  transition: all 0.2s ease;
 }
 
 .nd-settings-content {
@@ -1878,104 +1879,49 @@ body {
   max-width: 280px;
 }
 
-/* Tablet: reduce sidebar */
-@media (max-width: 768px) {
-  .nd-settings-modal {
-    width: 95vw;
-    height: 85vh;
-  }
-
-  .nd-settings-sidebar {
-    width: 180px;
-    padding: 14px 10px;
-    gap: 12px;
-  }
-
-  .nd-settings-nav-item {
-    font-size: 0.72rem;
-    padding: 6px 8px;
-  }
-
-  .nd-settings-content {
-    padding: 16px;
-  }
+/* Default button behaviors for drilldown */
+.nd-settings-back-btn,
+.nd-settings-sidebar-close-btn {
+  display: none;
 }
 
-/* Mobile: stack layout vertically */
+/* Menu Mode: sidebar only */
+.nd-settings-modal--menu .nd-settings-sidebar {
+  display: flex !important;
+}
+.nd-settings-modal--menu .nd-settings-content {
+  display: none !important;
+}
+.nd-settings-modal--menu .nd-settings-sidebar-close-btn {
+  display: flex !important;
+}
+
+/* Detail Mode: content only */
+.nd-settings-modal--detail .nd-settings-sidebar {
+  display: none !important;
+}
+.nd-settings-modal--detail .nd-settings-content {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.nd-settings-modal--detail .nd-settings-back-btn {
+  display: flex !important;
+}
+
+/* Mobile responsive optimizations */
 @media (max-width: 580px) {
   .nd-settings-modal {
-    flex-direction: column !important;
+    width: 96vw !important;
     height: 85vh !important;
     max-height: 85vh !important;
-    max-width: 96vw !important;
-    border-radius: var(--nd-card-radius) !important;
   }
-
-  .nd-settings-sidebar {
-    width: 100% !important;
-    flex-direction: column !important;
-    border-right: none !important;
-    border-bottom: 1px solid var(--nd-card-border) !important;
-    padding: 10px 12px !important;
-    gap: 0 !important;
-    overflow: hidden !important;
-    flex-shrink: 0 !important;
-    background: rgba(0, 0, 0, 0.2) !important;
-  }
-
-  .nd-settings-sidebar-title {
-    display: none !important;
-  }
-
-  .nd-settings-sidebar-group-title {
-    display: none !important;
-  }
-
-  .nd-settings-sidebar-groups {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 8px !important;
-    width: 100% !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    scrollbar-width: none !important; /* Hide scrollbar for clean layout */
-  }
-
-  .nd-settings-sidebar-groups::-webkit-scrollbar {
-    display: none !important; /* Hide scrollbar */
-  }
-
-  .nd-settings-sidebar-group {
-    display: contents !important;
-  }
-
-  .nd-settings-sidebar-group-items {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 6px !important;
-    padding-left: 0 !important;
-  }
-
-  .nd-settings-nav-item {
-    white-space: nowrap !important;
-    padding: 6px 12px !important;
-    font-size: 0.72rem !important;
-    border-left: none !important;
-    border-bottom: 2px solid transparent !important;
-    border-radius: var(--nd-card-radius) !important;
-    flex-shrink: 0 !important;
-  }
-
   .nd-settings-content {
-    flex: 1 !important;
-    padding: 14px !important;
-    overflow-y: auto !important;
+    padding: 16px 14px !important;
   }
-
   .nd-settings-select-wrap {
     max-width: 100%;
   }
-
   .nd-settings-card-row {
     flex-direction: column;
     align-items: flex-start;

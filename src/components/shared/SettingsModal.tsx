@@ -198,7 +198,8 @@ function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitchProps)
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { config, updateConfig } = useConfig();
-  const [activeTab, setActiveTab] = useState('apparence');
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const currentTab = activeTab || 'apparence';
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
   const [theme, setTheme] = useState(config?.settings?.theme || 'nasdash');
 
@@ -462,7 +463,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div 
-        className="nd-modal nd-settings-modal nd-animate-in" 
+        className={`nd-modal nd-settings-modal nd-animate-in ${activeTab ? 'nd-settings-modal--detail' : 'nd-settings-modal--menu'}`}
         onClick={(e) => e.stopPropagation()} 
         style={{ 
           background: 'var(--nd-card-bg)',
@@ -474,158 +475,331 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div 
           className="nd-settings-sidebar" 
         >
-          <h2 className="nd-settings-sidebar-title" style={{ fontSize: '0.78rem', fontWeight: 700, margin: '0 0 6px 4px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
+          <div className="nd-settings-sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 12px 4px' }}>
+            <h2 className="nd-settings-sidebar-title" style={{ fontSize: '0.78rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
+            <button 
+              className="nd-settings-sidebar-close-btn" 
+              onClick={onClose} 
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer', 
+                color: 'var(--nd-text-muted)', 
+                padding: 4, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                borderRadius: 'var(--nd-card-radius)'
+              }}
+            >
+              <X size={16} />
+            </button>
+          </div>
           
           <div className="nd-settings-sidebar-groups">
             
             {/* Category: Général */}
             <div className="nd-settings-sidebar-group">
-              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Général</span>
-              <div className="nd-settings-sidebar-group-items">
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Général</span>
+              <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Apparence Card */}
                 <button
                   onClick={() => setActiveTab('apparence')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: 'none', borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'apparence' ? 'var(--nd-accent-glow)' : 'transparent',
-                    color: activeTab === 'apparence' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                    fontWeight: activeTab === 'apparence' ? 600 : 400,
-                    borderLeft: activeTab === 'apparence' ? '2px solid var(--nd-accent)' : '2px solid transparent',
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <Palette size={13} /> Apparence & CSS
+                  <div style={{ background: 'var(--nd-accent-glow)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
+                    <Palette size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Apparence & Thèmes</span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Thèmes, polices, arrondis, opacité et CSS.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
+
+                {/* Library Card */}
                 <button
                   onClick={() => setActiveTab('library')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: 'none', borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'library' ? 'var(--nd-accent-glow)' : 'transparent',
-                    color: activeTab === 'library' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                    fontWeight: activeTab === 'library' ? 600 : 400,
-                    borderLeft: activeTab === 'library' ? '2px solid var(--nd-accent)' : '2px solid transparent',
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <Sliders size={13} /> Bibliothèque Widgets
+                  <div style={{ background: 'rgba(88, 166, 255, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#58a6ff', flexShrink: 0 }}>
+                    <Sliders size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Bibliothèque Globale</span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Activez et gérez toutes les extensions NasDash.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
               </div>
             </div>
 
-            {/* Category: Configuration Widgets (Indented child items) */}
+            {/* Category: Configuration Widgets */}
             <div className="nd-settings-sidebar-group">
-              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Configuration Widgets</span>
-              <div className="nd-settings-sidebar-group-items">
-                
-                {/* Appareils Button with Status Indicator */}
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Configuration Widgets</span>
+              <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Devices Widget */}
                 <button
                   onClick={() => setActiveTab('widget-devices')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'widget-devices' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    color: activeTab === 'widget-devices' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
-                    fontWeight: activeTab === 'widget-devices' ? 600 : 400,
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Monitor size={12} /> Appareils
-                  </span>
-                  <div style={{
-                    width: '6px', height: '6px', borderRadius: '50%',
-                    background: !hideDevices ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                    boxShadow: !hideDevices ? '0 0 6px var(--nd-green)' : 'none'
-                  }} />
+                  <div style={{ background: 'rgba(63, 185, 80, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3fb950', flexShrink: 0 }}>
+                    <Monitor size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Widget Appareils
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: !hideDevices ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                        boxShadow: !hideDevices ? '0 0 6px var(--nd-green)' : 'none'
+                      }} />
+                    </span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CPU, RAM, Proxmox, Glances et serveurs.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
 
-                {/* Vue d'ensemble Button with Status Indicator */}
+                {/* QuickStats Widget */}
                 <button
                   onClick={() => setActiveTab('widget-quickstats')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'widget-quickstats' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    color: activeTab === 'widget-quickstats' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
-                    fontWeight: activeTab === 'widget-quickstats' ? 600 : 400,
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Activity size={12} /> Vue d'ensemble
-                  </span>
-                  <div style={{
-                    width: '6px', height: '6px', borderRadius: '50%',
-                    background: !hideQuickStats ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                    boxShadow: !hideQuickStats ? '0 0 6px var(--nd-green)' : 'none'
-                  }} />
+                  <div style={{ background: 'rgba(63, 185, 80, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3fb950', flexShrink: 0 }}>
+                    <Activity size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Widget Vue d'ensemble
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: !hideQuickStats ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                        boxShadow: !hideQuickStats ? '0 0 6px var(--nd-green)' : 'none'
+                      }} />
+                    </span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Résumé des services, catégories et ports ouverts.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
 
-                {/* VPN Tailscale Button with Status Indicator */}
+                {/* Tailscale Widget */}
                 <button
                   onClick={() => setActiveTab('widget-tailscale')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'widget-tailscale' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    color: activeTab === 'widget-tailscale' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
-                    fontWeight: activeTab === 'widget-tailscale' ? 600 : 400,
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Shield size={12} /> VPN Tailscale
-                  </span>
-                  <div style={{
-                    width: '6px', height: '6px', borderRadius: '50%',
-                    background: !hideTailscaleStatus ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                    boxShadow: !hideTailscaleStatus ? '0 0 6px var(--nd-green)' : 'none'
-                  }} />
+                  <div style={{ background: 'rgba(168, 85, 247, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-purple)', flexShrink: 0 }}>
+                    <Shield size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Widget VPN Tailscale
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: !hideTailscaleStatus ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                        boxShadow: !hideTailscaleStatus ? '0 0 6px var(--nd-green)' : 'none'
+                      }} />
+                    </span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>État de connexion et liste des machines actives.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
 
-                {/* Actions Docker Button with Status Indicator */}
+                {/* Docker Actions Widget */}
                 <button
                   onClick={() => setActiveTab('widget-dockeractions')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'widget-dockeractions' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    color: activeTab === 'widget-dockeractions' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
-                    fontWeight: activeTab === 'widget-dockeractions' ? 600 : 400,
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Container size={12} /> Actions Docker
-                  </span>
-                  <div style={{
-                    width: '6px', height: '6px', borderRadius: '50%',
-                    background: !hideDockerActions ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                    boxShadow: !hideDockerActions ? '0 0 6px var(--nd-green)' : 'none'
-                  }} />
+                  <div style={{ background: 'rgba(240, 136, 62, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-orange)', flexShrink: 0 }}>
+                    <Container size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Widget Actions Docker
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: !hideDockerActions ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                        boxShadow: !hideDockerActions ? '0 0 6px var(--nd-green)' : 'none'
+                      }} />
+                    </span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Contrôles d'alimentation rapides pour vos conteneurs.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
-
               </div>
             </div>
 
             {/* Category: Intégrations */}
             <div className="nd-settings-sidebar-group">
-              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Intégrations</span>
-              <div className="nd-settings-sidebar-group-items">
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Intégrations</span>
+              <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {/* Home Assistant Card */}
                 <button
                   onClick={() => setActiveTab('homeassistant')}
                   className="nd-settings-nav-item"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: 'none', borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
-                    background: activeTab === 'homeassistant' ? 'var(--nd-accent-glow)' : 'transparent',
-                    color: activeTab === 'homeassistant' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                    fontWeight: activeTab === 'homeassistant' ? 600 : 400,
-                    borderLeft: activeTab === 'homeassistant' ? '2px solid var(--nd-accent)' : '2px solid transparent',
-                    transition: 'all 0.15s ease'
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid var(--nd-card-border)',
+                    borderRadius: 'var(--nd-card-radius)',
+                    gap: 12,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-hover-border)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
                   }}
                 >
-                  <Layers size={13} /> Home Assistant
+                  <div style={{ background: 'var(--nd-accent-glow)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
+                    <Layers size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Home Assistant</span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Export Lovelace coordonné au tableau de bord.</span>
+                  </div>
+                  <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                 </button>
               </div>
             </div>
@@ -639,16 +813,36 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div className="nd-settings-content">
           
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0 }}>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0, gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button 
+                className="nd-settings-back-btn" 
+                onClick={() => setActiveTab(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--nd-card-border)',
+                  borderRadius: 'var(--nd-card-radius)',
+                  color: 'var(--nd-text)',
+                  padding: '6px 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                ← Retour
+              </button>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {activeTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
-                {activeTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
-                {activeTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
-                {activeTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
-                {activeTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
-                {activeTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
-                {activeTab === 'homeassistant' && '🏠 Export Lovelace Home Assistant'}
+                {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
+                {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
+                {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
+                {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
+                {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
+                {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
+                {currentTab === 'homeassistant' && '🏠 Export Lovelace Home Assistant'}
               </h3>
             </div>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
@@ -659,7 +853,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 1: APPARENCE
              ========================================== */}
-          {activeTab === 'apparence' && (
+          {currentTab === 'apparence' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               
               {/* Theme Selector */}
@@ -967,7 +1161,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 2: LIBRARY OVERVIEW (WIDGET LIBRARY)
              ========================================== */}
-          {activeTab === 'library' && (
+          {currentTab === 'library' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
@@ -1206,7 +1400,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 3: WIDGET-DEVICES PAGE
              ========================================== */}
-          {activeTab === 'widget-devices' && (
+          {currentTab === 'widget-devices' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <ToggleSwitch
@@ -1301,7 +1495,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 4: WIDGET-QUICKSTATS PAGE
              ========================================== */}
-          {activeTab === 'widget-quickstats' && (
+          {currentTab === 'widget-quickstats' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <ToggleSwitch
@@ -1396,7 +1590,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 5: WIDGET-TAILSCALE PAGE
              ========================================== */}
-          {activeTab === 'widget-tailscale' && (
+          {currentTab === 'widget-tailscale' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <ToggleSwitch
@@ -1491,7 +1685,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 6: WIDGET-DOCKERACTIONS PAGE
              ========================================== */}
-          {activeTab === 'widget-dockeractions' && (
+          {currentTab === 'widget-dockeractions' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <ToggleSwitch
@@ -1586,7 +1780,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 7: HOME ASSISTANT
              ========================================== */}
-          {activeTab === 'homeassistant' && (
+          {currentTab === 'homeassistant' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               
               <div style={{ padding: '10px 12px', background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.15)', borderRadius: 'var(--nd-card-radius)' }}>
