@@ -8,7 +8,7 @@ import ConfirmModal from '../../../shared/ConfirmModal';
 interface CategoryFormModalProps {
   category?: Category;
   onClose: () => void;
-  onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[]; layout?: 'standard' | 'compact' | 'bento' }) => void;
+  onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[]; layout?: Category['layout'] }) => void;
   onDelete?: (id: string) => void;
   showSecretSections: boolean;
   showSensitive: boolean;
@@ -30,7 +30,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
   const [services, setServices] = useState<Service[]>(category?.services || []);
-  const [layout, setLayout] = useState<'standard' | 'compact' | 'bento' | 'bento-logo-large' | 'bento-logo-medium' | 'bento-logo-small'>(
+  const [layout, setLayout] = useState<Category['layout']>(
     category?.layout === 'grid' ? 'bento' : (category?.layout || 'standard')
   );
   const [selectedCategory, setSelectedCategory] = useState<string>('Tech');

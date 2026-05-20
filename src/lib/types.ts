@@ -161,7 +161,7 @@ export interface DashboardConfig {
     dockerActionsOrder?: number;
     // Premium Design options
     globalFont?: string;
-    borderRadius?: string;
+    borderRadius?: number;
     cardOpacity?: number;
     emojiTheme?: string;
   };
