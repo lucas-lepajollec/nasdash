@@ -1794,10 +1794,10 @@ body {
 
 /* ==================== SETTINGS MODAL ==================== */
 .nd-settings-modal {
-  width: 720px;
-  max-width: 92vw;
-  height: 520px;
-  max-height: 85vh;
+  width: 900px;
+  max-width: 95vw;
+  height: 620px;
+  max-height: 90vh;
   display: flex;
   flex-direction: row;
   padding: 0 !important;
@@ -1805,13 +1805,15 @@ body {
 }
 
 .nd-settings-sidebar {
-  width: 160px;
+  width: 220px;
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.15);
   border-right: 1px solid var(--nd-card-border);
   display: flex;
   flex-direction: column;
-  padding: 16px 10px;
+  padding: 20px 14px;
+  gap: 18px;
+  overflow-y: auto;
 }
 
 .nd-settings-nav-item {
@@ -1831,7 +1833,7 @@ body {
 .nd-settings-content {
   flex: 1;
   min-width: 0;
-  padding: 20px;
+  padding: 24px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1855,12 +1857,35 @@ body {
   max-width: 280px;
 }
 
+/* Tablet: reduce sidebar */
+@media (max-width: 768px) {
+  .nd-settings-modal {
+    width: 95vw;
+    height: 85vh;
+  }
+
+  .nd-settings-sidebar {
+    width: 180px;
+    padding: 14px 10px;
+    gap: 12px;
+  }
+
+  .nd-settings-nav-item {
+    font-size: 0.72rem;
+    padding: 6px 8px;
+  }
+
+  .nd-settings-content {
+    padding: 16px;
+  }
+}
+
 /* Mobile: stack layout vertically */
 @media (max-width: 580px) {
   .nd-settings-modal {
     flex-direction: column;
-    height: 85vh;
-    max-width: 95vw;
+    height: 90vh;
+    max-width: 98vw;
   }
 
   .nd-settings-sidebar {
@@ -1872,6 +1897,8 @@ body {
     padding: 10px 12px;
     gap: 8px;
     overflow-x: auto;
+    overflow-y: hidden;
+    flex-shrink: 0;
   }
 
   .nd-settings-sidebar h2 {
@@ -1884,7 +1911,7 @@ body {
   .nd-settings-nav-item {
     white-space: nowrap;
     padding: 6px 10px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
   }
 
   .nd-settings-content {
@@ -2034,21 +2061,21 @@ body {
 /* ==================== BENTO LOGO-ONLY LAYOUTS ==================== */
 .nd-services-grid--bento-logo-large {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
   padding: 4px 0;
 }
 
 .nd-services-grid--bento-logo-medium {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 8px;
   padding: 4px 0;
 }
 
 .nd-services-grid--bento-logo-small {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
   gap: 6px;
   padding: 4px 0;
 }
@@ -2060,6 +2087,8 @@ body {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1;
+  min-width: 0;
+  overflow: hidden;
   border: 1px solid var(--nd-card-border);
   background: rgba(255, 255, 255, 0.01);
   border-radius: var(--nd-card-radius);

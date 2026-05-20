@@ -465,18 +465,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         className="nd-modal nd-settings-modal nd-animate-in" 
         onClick={(e) => e.stopPropagation()} 
         style={{ 
-          width: '1000px', 
-          maxWidth: '95vw', 
-          display: 'flex', 
-          flexDirection: 'row', 
-          padding: 0, 
-          height: '700px', 
-          maxHeight: '90vh', 
-          overflow: 'hidden',
-          borderRadius: 'var(--nd-card-radius)',
-          border: '1px solid var(--nd-card-border)',
           background: 'var(--nd-card-bg)',
-          backdropFilter: 'blur(var(--nd-blur))'
         }}
       >
         {/* ==========================================
@@ -484,17 +473,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
            ========================================== */}
         <div 
           className="nd-settings-sidebar" 
-          style={{ 
-            width: '240px', 
-            borderRight: '1px solid var(--nd-card-border)', 
-            padding: '20px 14px', 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 18, 
-            background: 'rgba(0,0,0,0.2)', 
-            flexShrink: 0,
-            overflowY: 'auto'
-          }}
         >
           <h2 style={{ fontSize: '0.78rem', fontWeight: 700, margin: '0 0 6px 4px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
           
@@ -658,7 +636,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         {/* ==========================================
            RIGHT CONTENT WRAPPER
            ========================================== */}
-        <div className="nd-settings-content" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+        <div className="nd-settings-content">
           
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0 }}>
