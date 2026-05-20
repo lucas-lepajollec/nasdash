@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Server, FolderOpen, Hash, Link2, Globe } from 'lucide-react';
+import { Server, FolderOpen, Hash, Link2 } from 'lucide-react';
 import { Category } from '@/lib/types';
 import TailscaleStatus from './TailscaleStatus';
 import DockerActions from './DockerActions';
+import { useConfig } from '@/hooks/useConfig';
 
 interface RightSidebarProps {
   categories: Category[];
@@ -12,28 +13,7 @@ interface RightSidebarProps {
   showSensitive?: boolean;
 }
 
-export default function RightSidebar({ categories, editMode, showSensitive = false }: RightSidebarProps) {
-  const sidebarRef = useRef<HTMLElement>(null);
-  const [isSticky, setIsSticky] = useState(true);
-
-  useEffect(() => {
-    if (!sidebarRef.current) return;
-    const checkHeight = () => {
-      if (!sidebarRef.current) return;
-      setIsSticky(sidebarRef.current.scrollHeight + 120 <= window.innerHeight);
-    };
-    
-    checkHeight();
-    const observer = new ResizeObserver(() => checkHeight());
-    if (sidebarRef.current) observer.observe(sidebarRef.current);
-    window.addEventListener('resize', checkHeight);
-    
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', checkHeight);
-    };
-  }, [categories]);
-
+export function QuickStats({ categories }: { categories: Category[] }) {
   // Compute stats
   const serviceCount = categories.reduce((acc, c) => acc + c.services.length, 0);
   const categoryCount = categories.length;
@@ -60,37 +40,69 @@ export default function RightSidebar({ categories, editMode, showSensitive = fal
   ];
 
   return (
+    <div className="nd-sidebar-card nd-animate-in">
+      <div className="nd-section-title">
+        <Server size={12} style={{ color: 'var(--nd-accent)' }} />
+        Vue d&apos;ensemble
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {quickStats.map((s) => (
+          <div key={s.label} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            padding: '8px 4px', borderRadius: 'var(--nd-card-radius)',
+            background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)',
+          }}>
+            <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums' }}>
+              {s.value}
+            </span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3 }}>
+              {s.icon} {s.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function RightSidebar({ categories, editMode, showSensitive = false }: RightSidebarProps) {
+  const sidebarRef = useRef<HTMLElement>(null);
+  const [isSticky, setIsSticky] = useState(true);
+  const { config } = useConfig();
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+    const checkHeight = () => {
+      if (!sidebarRef.current) return;
+      setIsSticky(sidebarRef.current.scrollHeight + 120 <= window.innerHeight);
+    };
+    
+    checkHeight();
+    const observer = new ResizeObserver(() => checkHeight());
+    if (sidebarRef.current) observer.observe(sidebarRef.current);
+    window.addEventListener('resize', checkHeight);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', checkHeight);
+    };
+  }, [categories]);
+
+  const showQuickStats = !config?.settings?.hideQuickStats;
+  const showTailscale = !config?.settings?.hideTailscaleStatus;
+  const showDockerActions = !config?.settings?.hideDockerActions;
+
+  return (
     <aside 
       ref={sidebarRef} 
       className="nd-sidebar-right"
       style={!isSticky ? { position: 'static', maxHeight: 'none', overflowY: 'visible' } : {}}
     >
       {/* Quick Stats */}
-      <div className="nd-sidebar-card nd-animate-in">
-        <div className="nd-section-title">
-          <Server size={12} style={{ color: 'var(--nd-accent)' }} />
-          Vue d&apos;ensemble
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {quickStats.map((s) => (
-            <div key={s.label} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              padding: '8px 4px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)',
-            }}>
-              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums' }}>
-                {s.value}
-              </span>
-              <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3 }}>
-                {s.icon} {s.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {showQuickStats && <QuickStats categories={categories} />}
 
-      <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />
-      <DockerActions editMode={editMode} />
+      {showTailscale && <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />}
+      {showDockerActions && <DockerActions editMode={editMode} />}
     </aside>
   );
 }

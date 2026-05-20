@@ -155,7 +155,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
           </div>
 
           {apiType === 'proxmox' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'rgba(0,0,0,0.1)', padding: 12, borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'rgba(0,0,0,0.1)', padding: 12, borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
               <div>
                 <label className="nd-label">Nom du Nœud (Datacenter)</label>
                 <input

@@ -73,38 +73,40 @@ export default function TabDock({
         })}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', paddingBottom: 10, marginTop: editMode ? 20 : 0 }}>
-        {editMode && onOpenManager && (
-          <button 
-            className="nd-btn" 
-            onClick={onOpenManager}
-            title="Gérer les onglets"
-            style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
-          >
-            <Settings size={14} />
-          </button>
-        )}
-        {editMode && mobileOpen && (
-          <button 
-            className="nd-btn" 
-            onClick={() => setMobileOpen(false)}
-            title="Fermer le dock"
-            style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
-          >
-            {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-          </button>
-        )}
-        {editMode && onTogglePosition && (
-          <button 
-            className="nd-btn" 
-            onClick={onTogglePosition}
-            title={position === 'left' ? 'Déplacer à droite' : 'Déplacer à gauche'}
-            style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
-          >
-            {position === 'left' ? '→' : '←'}
-          </button>
-        )}
-      </div>
+      {editMode && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', paddingBottom: 10, marginTop: 20 }}>
+          {onOpenManager && (
+            <button 
+              className="nd-btn" 
+              onClick={onOpenManager}
+              title="Gérer les onglets"
+              style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+            >
+              <Settings size={14} />
+            </button>
+          )}
+          {mobileOpen && (
+            <button 
+              className="nd-btn" 
+              onClick={() => setMobileOpen(false)}
+              title="Fermer le dock"
+              style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+            >
+              {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+            </button>
+          )}
+          {onTogglePosition && (
+            <button 
+              className="nd-btn" 
+              onClick={onTogglePosition}
+              title={position === 'left' ? 'Déplacer à droite' : 'Déplacer à gauche'}
+              style={{ padding: '6px', width: 32, height: 32, borderRadius: '50%', justifyContent: 'center' }}
+            >
+              {position === 'left' ? '→' : '←'}
+            </button>
+          )}
+        </div>
+      )}
     </nav>
   );
 

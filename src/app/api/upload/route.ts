@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'File type not allowed' }, { status: 400 });
   }
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
+  const safeName = `${baseName}_${Date.now()}${ext}`;
   const filePath = path.join(getLogosDir(), safeName);
   fs.writeFileSync(filePath, buffer);
 

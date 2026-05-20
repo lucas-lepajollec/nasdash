@@ -13,6 +13,7 @@ export interface Category {
   order: number;
   isSecret?: boolean;
   services: Service[];
+  layout?: 'standard' | 'compact' | 'bento' | 'grid' | 'bento-logo-large' | 'bento-logo-medium' | 'bento-logo-small';
 }
 
 export interface DeviceStat {
@@ -141,6 +142,28 @@ export interface DashboardConfig {
     // Tab customization
     tabOrder?: string[];
     hiddenTabs?: string[];
+    // Advanced Customization
+    hideDockerActions?: boolean;
+    hideTailscaleStatus?: boolean;
+    hideDevices?: boolean;
+    hideQuickStats?: boolean;
+    customCss?: string;
+    backgroundImage?: string;
+    // Sidebar widget alignment positions
+    devicesSidebar?: 'left' | 'right';
+    quickStatsSidebar?: 'left' | 'right';
+    tailscaleSidebar?: 'left' | 'right';
+    dockerActionsSidebar?: 'left' | 'right';
+    // Sidebar widget order preferences
+    devicesOrder?: number;
+    quickStatsOrder?: number;
+    tailscaleOrder?: number;
+    dockerActionsOrder?: number;
+    // Premium Design options
+    globalFont?: string;
+    borderRadius?: string;
+    cardOpacity?: number;
+    emojiTheme?: string;
   };
 }
 

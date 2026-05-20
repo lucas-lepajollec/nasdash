@@ -35,10 +35,12 @@ export default function Footer({ categories, showSecretSections, showSensitive, 
       </div>
       <div 
         onClick={onToggleSecretSections}
-        style={{ cursor: 'pointer', display: 'inline-block' }}
-        title=" "
+        style={{ cursor: 'pointer', display: 'inline-block', marginTop: 8 }}
+        title="Activez ou désactivez les sections secrètes"
       >
-        <small style={{ opacity: 0.3, fontSize: '0.6rem', letterSpacing: 1, userSelect: 'none' }}>NASDASH — Dashboard Privé</small>
+        <small style={{ opacity: 0.6, fontSize: '0.65rem', fontWeight: 500, letterSpacing: '2px', userSelect: 'none', color: 'var(--nd-text-muted)', textTransform: 'uppercase', transition: 'opacity 0.2s' }}>
+          NASDASH — Dashboard Privé
+        </small>
       </div>
     </footer>
   );

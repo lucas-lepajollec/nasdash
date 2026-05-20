@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       order: config.categories.length,
       isSecret: body.isSecret || false,
       services: [],
+      layout: body.layout || 'standard',
     };
     config.categories.push(newCategory);
     
@@ -209,6 +210,7 @@ export async function PUT(req: NextRequest) {
     if (body.emoji !== undefined) cat.emoji = body.emoji;
     if (body.isSecret !== undefined) cat.isSecret = body.isSecret;
     if (body.services !== undefined) cat.services = body.services;
+    if (body.layout !== undefined) cat.layout = body.layout;
     writeConfig(config);
     return NextResponse.json(cat);
   }
@@ -251,6 +253,32 @@ export async function PUT(req: NextRequest) {
     if (body.hiddenExtensions !== undefined) config.settings.hiddenTabs = body.hiddenExtensions;
     if (body.hiddenTabs !== undefined) config.settings.hiddenTabs = body.hiddenTabs;
     if (body.theme !== undefined) config.settings.theme = body.theme;
+
+    // Advanced UI Customization Toggles
+    if (body.hideDockerActions !== undefined) config.settings.hideDockerActions = body.hideDockerActions;
+    if (body.hideTailscaleStatus !== undefined) config.settings.hideTailscaleStatus = body.hideTailscaleStatus;
+    if (body.hideDevices !== undefined) config.settings.hideDevices = body.hideDevices;
+    if (body.hideQuickStats !== undefined) config.settings.hideQuickStats = body.hideQuickStats;
+    if (body.customCss !== undefined) config.settings.customCss = body.customCss;
+    if (body.backgroundImage !== undefined) config.settings.backgroundImage = body.backgroundImage;
+    
+    // Sidebar widget alignment positions
+    if (body.devicesSidebar !== undefined) config.settings.devicesSidebar = body.devicesSidebar;
+    if (body.quickStatsSidebar !== undefined) config.settings.quickStatsSidebar = body.quickStatsSidebar;
+    if (body.tailscaleSidebar !== undefined) config.settings.tailscaleSidebar = body.tailscaleSidebar;
+    if (body.dockerActionsSidebar !== undefined) config.settings.dockerActionsSidebar = body.dockerActionsSidebar;
+    
+    // Sidebar widget order preferences
+    if (body.devicesOrder !== undefined) config.settings.devicesOrder = body.devicesOrder;
+    if (body.quickStatsOrder !== undefined) config.settings.quickStatsOrder = body.quickStatsOrder;
+    if (body.tailscaleOrder !== undefined) config.settings.tailscaleOrder = body.tailscaleOrder;
+    if (body.dockerActionsOrder !== undefined) config.settings.dockerActionsOrder = body.dockerActionsOrder;
+    
+    // Premium Design options
+    if (body.globalFont !== undefined) config.settings.globalFont = body.globalFont;
+    if (body.borderRadius !== undefined) config.settings.borderRadius = body.borderRadius;
+    if (body.cardOpacity !== undefined) config.settings.cardOpacity = body.cardOpacity;
+    if (body.emojiTheme !== undefined) config.settings.emojiTheme = body.emojiTheme;
     
     writeConfig(config);
     return NextResponse.json(config.settings);

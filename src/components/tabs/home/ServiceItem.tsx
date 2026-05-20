@@ -10,9 +10,10 @@ interface ServiceItemProps {
   categoryId?: string;
   editMode?: boolean;
   showSensitive?: boolean;
+  layout?: 'standard' | 'compact' | 'bento' | 'grid' | 'bento-logo-large' | 'bento-logo-medium' | 'bento-logo-small';
 }
 
-export default function ServiceItem({ service, categoryId, editMode, showSensitive = false }: ServiceItemProps) {
+export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard' }: ServiceItemProps) {
   const [imgError, setImgError] = useState(false);
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
@@ -42,8 +43,12 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
     <span className="nd-service-icon-fallback">{service.name.charAt(0).toUpperCase()}</span>
   );
 
+  const activeLayout = layout === 'grid' ? 'bento' : layout;
+  const isLogoOnly = activeLayout?.startsWith('bento-logo');
+  const showUrl = activeLayout !== 'compact' && activeLayout !== 'bento' && !isLogoOnly;
+
   return (
-    <div ref={setNodeRef} className="nd-service" style={{ 
+    <div ref={setNodeRef} className={`nd-service nd-service--${activeLayout}`} style={{ 
       position: 'relative', 
       opacity: isDragging ? 0.3 : 1,
       outline: isOver ? '2px solid var(--nd-accent)' : undefined,
@@ -52,7 +57,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
         href={service.localUrl || service.tailscaleUrl || '#'}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit', touchAction: 'pan-y' }}
+        className="nd-service-link"
         onClick={(e) => {
           if (editMode) {
             e.preventDefault();
@@ -63,23 +68,27 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
           {logoContent}
         </div>
         
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 1 }}>
-          <span className="nd-service-name">{service.name}</span>
-          {service.localUrl && (
-            <span className="nd-service-url">
-              {!showSensitive ? '***' : (() => {
-                try {
-                  return new URL(service.localUrl).host;
-                } catch (e) {
-                  return service.localUrl;
-                }
-              })()}
-            </span>
-          )}
-        </div>
+        {!isLogoOnly && (
+          showUrl && service.localUrl ? (
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 1 }}>
+              <span className="nd-service-name">{service.name}</span>
+              <span className="nd-service-url">
+                {!showSensitive ? '***' : (() => {
+                  try {
+                    return new URL(service.localUrl).host;
+                  } catch (e) {
+                    return service.localUrl;
+                  }
+                })()}
+              </span>
+            </div>
+          ) : (
+            <span className="nd-service-name">{service.name}</span>
+          )
+        )}
       </a>
 
-      {service.tailscaleUrl && !editMode && (
+      {service.tailscaleUrl && !editMode && activeLayout !== 'bento' && !isLogoOnly && (
         <a href={service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-vpn-btn" title="VPN Tailscale" style={{ padding: 4 }}>
           <img src="/api/logos/logo-tailscale.png" alt="Tailscale" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
           <Globe size={12} style={{ display: 'none' }} />
@@ -87,10 +96,8 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
       )}
 
       {editMode && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-          <div {...attributes} {...listeners} style={{ cursor: 'grab', padding: 4, opacity: 0.5, display: 'flex', alignItems: 'center' }}>
-            <GripVertical size={14} />
-          </div>
+        <div className="nd-service-drag-handle" {...attributes} {...listeners} style={{ cursor: 'grab' }}>
+          <GripVertical size={12} />
         </div>
       )}
     </div>

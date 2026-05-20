@@ -57,17 +57,16 @@ export default function CustomSelect({ value, options, onChange, className, styl
           top: 'calc(100% + 4px)',
           left: 0,
           right: 0,
-          background: 'var(--nd-card-bg)',
+          background: 'var(--nd-bg-surface)',
           border: '1px solid var(--nd-card-border)',
-          borderRadius: 8,
+          borderRadius: 'var(--nd-card-radius)',
           boxShadow: 'var(--nd-dropdown-shadow, 0 10px 25px rgba(0,0,0,0.4))',
           zIndex: 100,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          backdropFilter: 'blur(var(--nd-blur))'
         }}>
-          {options.map((opt) => (
+          {options.map((opt, idx) => (
             <div
               key={opt.value}
               onClick={() => {
@@ -80,15 +79,15 @@ export default function CustomSelect({ value, options, onChange, className, styl
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: value === opt.value ? 'rgba(255,255,255,0.05)' : 'transparent',
-                borderBottom: '1px solid rgba(255,255,255,0.02)',
+                background: value === opt.value ? 'rgba(128, 128, 128, 0.08)' : 'transparent',
+                borderBottom: idx === options.length - 1 ? 'none' : '1px solid var(--nd-card-border)',
                 fontSize: '0.8rem',
                 color: value === opt.value ? 'var(--nd-text)' : 'var(--nd-text-muted)',
                 transition: 'background 0.2s, color 0.2s'
               }}
               onMouseEnter={(e) => {
                 if (value !== opt.value) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                  e.currentTarget.style.background = 'rgba(128, 128, 128, 0.05)';
                   e.currentTarget.style.color = 'var(--nd-text)';
                 }
               }}

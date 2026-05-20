@@ -8,7 +8,7 @@ import ConfirmModal from '../../../shared/ConfirmModal';
 interface CategoryFormModalProps {
   category?: Category;
   onClose: () => void;
-  onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[] }) => void;
+  onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[]; layout?: 'standard' | 'compact' | 'bento' }) => void;
   onDelete?: (id: string) => void;
   showSecretSections: boolean;
   showSensitive: boolean;
@@ -30,6 +30,9 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
   const [services, setServices] = useState<Service[]>(category?.services || []);
+  const [layout, setLayout] = useState<'standard' | 'compact' | 'bento' | 'bento-logo-large' | 'bento-logo-medium' | 'bento-logo-small'>(
+    category?.layout === 'grid' ? 'bento' : (category?.layout || 'standard')
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>('Tech');
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
   
@@ -51,7 +54,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
       await fetch(url, { method: 'DELETE' }).catch(console.error);
     }
 
-    onSave({ title, emoji, isSecret, services });
+    onSave({ title, emoji, isSecret, services, layout });
   };
 
   const updateServiceField = (id: string, field: keyof Service, value: string) => {
@@ -136,7 +139,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                   key={e}
                   onClick={() => setEmoji(e)}
                   style={{
-                    width: 32, height: 32, borderRadius: 6, fontSize: '1rem',
+                    width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', fontSize: '1rem',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', border: 'none',
                     background: emoji === e ? 'var(--nd-accent-glow)' : 'transparent',
@@ -144,6 +147,49 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                   }}
                 >
                   {e}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="nd-label">Style d&apos;affichage (Layout)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+              {(['standard', 'compact', 'bento', 'bento-logo-large', 'bento-logo-medium', 'bento-logo-small'] as const).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLayout(l)}
+                  style={{
+                    fontSize: '0.65rem',
+                    padding: '8px 2px',
+                    borderRadius: 'var(--nd-card-radius)',
+                    border: '1px solid var(--nd-card-border)',
+                    cursor: 'pointer',
+                    background: layout === l ? 'var(--nd-accent-glow)' : 'rgba(0,0,0,0.15)',
+                    color: layout === l ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+                    borderColor: layout === l ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                    fontWeight: layout === l ? 600 : 400,
+                    transition: 'all 0.2s',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                  title={
+                    l === 'standard' ? 'Standard' :
+                    l === 'compact' ? 'Compact' :
+                    l === 'bento' ? 'Bento Grid' :
+                    l === 'bento-logo-large' ? 'Bento Logo Grand' :
+                    l === 'bento-logo-medium' ? 'Bento Logo Moyen' :
+                    'Bento Logo Petit'
+                  }
+                >
+                  {l === 'standard' && '📜 Standard'}
+                  {l === 'compact' && '⚡ Compact'}
+                  {l === 'bento' && '🍱 Bento Grid'}
+                  {l === 'bento-logo-large' && '🖼️ Logo G'}
+                  {l === 'bento-logo-medium' && '🖼️ Logo M'}
+                  {l === 'bento-logo-small' && '🖼️ Logo P'}
                 </button>
               ))}
             </div>
@@ -168,9 +214,9 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
           {category && services.length > 0 && (
             <div style={{ marginTop: 8 }}>
               <label className="nd-label">Services rattachés</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--nd-bg-alt)', padding: 12, borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--nd-bg-alt)', padding: 12, borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
                 {services.map(svc => (
-                  <div key={svc.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--nd-bg)', padding: 10, borderRadius: 6, border: '1px solid transparent' }}>
+                  <div key={svc.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--nd-bg)', padding: 10, borderRadius: 'var(--nd-card-radius)', border: '1px solid transparent' }}>
                     
                     {/* Header Row */}
                     <div 
@@ -201,14 +247,14 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>Logo (URL ou Upload)</label>
                           <div style={{ display: 'flex', gap: 6 }}>
                             <input className="nd-input" style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem' }} value={svc.logo} onChange={(e) => updateServiceField(svc.id, 'logo', e.target.value)} placeholder="https://... ou emoji" />
-                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 6, padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
+                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
                               <Upload size={14} />
                               <input type="file" accept=".png,.svg,.jpg,.jpeg,.webp,.ico" style={{ display: 'none' }} onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) handleUploadLogo(svc.id, e.target.files[0]);
                               }} />
                             </label>
                             {svc.logo?.startsWith('/api/logos/') && (
-                              <button type="button" onClick={() => setDeleteLogoConfirm(svc.id)} title="Supprimer le logo local" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 6, padding: '0 10px', color: 'var(--nd-red)', transition: 'all 0.2s' }}>
+                              <button type="button" onClick={() => setDeleteLogoConfirm(svc.id)} title="Supprimer le logo local" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-red)', transition: 'all 0.2s' }}>
                                 <Trash2 size={14} />
                               </button>
                             )}

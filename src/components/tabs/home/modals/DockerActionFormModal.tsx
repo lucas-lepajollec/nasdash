@@ -121,7 +121,7 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
                     onClick={() => setIcon(i.name)}
                     style={{
                       padding: 8,
-                      borderRadius: 6,
+                      borderRadius: 'var(--nd-card-radius)',
                       background: icon === i.name ? 'var(--nd-accent)' : 'var(--nd-icon-bg)',
                       border: 'none',
                       color: icon === i.name ? 'white' : 'var(--nd-text)',
@@ -166,7 +166,7 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
               maxHeight: 200, 
               overflowY: 'auto', 
               background: 'var(--nd-icon-bg)', 
-              borderRadius: 8,
+              borderRadius: 'var(--nd-card-radius)',
               border: '1px solid var(--nd-border)',
               display: 'flex',
               flexDirection: 'column'
@@ -195,7 +195,7 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
                     }}
                   >
                     <div style={{ 
-                      width: 16, height: 16, borderRadius: 4, 
+                      width: 16, height: 16, borderRadius: 'calc(var(--nd-card-radius) * 0.4)', 
                       border: `1px solid ${selected ? 'var(--nd-accent)' : 'var(--nd-border)'}`,
                       background: selected ? 'var(--nd-accent)' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center'

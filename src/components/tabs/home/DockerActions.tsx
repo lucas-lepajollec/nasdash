@@ -28,7 +28,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
         padding: '10px 12px',
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid var(--nd-border)',
-        borderRadius: 8,
+        borderRadius: 'var(--nd-card-radius)',
         cursor: editMode ? 'default' : 'pointer',
         opacity: isDragging ? 0.5 : 1,
       }}
@@ -67,8 +67,6 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
   if (!config) return null;
 
   const actions = config.dockerActions || [];
-
-  if (!editMode && actions.length === 0) return null;
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -148,9 +146,9 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-        {actions.length === 0 && editMode && (
+        {actions.length === 0 && (
           <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'center', padding: '12px 0' }}>
-            Aucune action rapide configurée.
+            Aucune action rapide configurée.{!editMode && " Activez le mode édition pour en ajouter."}
           </p>
         )}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

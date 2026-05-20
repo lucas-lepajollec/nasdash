@@ -1,12 +1,199 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Palette } from 'lucide-react';
+import { 
+  X, Palette, Layers, Sliders, Clipboard, Check, 
+  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container 
+} from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import CustomSelect from './CustomSelect';
+import ConfirmModal from './ConfirmModal';
 
 interface SettingsModalProps {
   onClose: () => void;
+}
+
+const THEME_PRESETS: Record<string, {
+  name: string;
+  primaryColor: string;
+  accentColor: string;
+  cardBg: string;
+  cardBorder: string;
+  text: string;
+  textMuted: string;
+  bgGradient: string;
+  borderRadius: string;
+}> = {
+  nasdash: {
+    name: 'NasDash (Défaut)',
+    primaryColor: '#00e5ff',
+    accentColor: '#00e5ff',
+    cardBg: 'rgba(22, 27, 34, 0.8)',
+    cardBorder: 'rgba(255, 255, 255, 0.06)',
+    text: '#e6edf3',
+    textMuted: '#7d8590',
+    bgGradient: 'radial-gradient(ellipse at top center, #161b22 0%, #0d1117 70%)',
+    borderRadius: '12px',
+  },
+  'apple-dark': {
+    name: 'Apple Dark',
+    primaryColor: '#0a84ff',
+    accentColor: '#0a84ff',
+    cardBg: 'rgba(28, 28, 30, 0.35)',
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
+    text: '#f5f5f7',
+    textMuted: '#98989d',
+    bgGradient: 'linear-gradient(135deg, #020204 0%, #0d0d12 40%, #171722 100%)',
+    borderRadius: '14px',
+  },
+  'apple-light': {
+    name: 'Apple Light',
+    primaryColor: '#007aff',
+    accentColor: '#007aff',
+    cardBg: 'rgba(255, 255, 255, 0.5)',
+    cardBorder: 'rgba(255, 255, 255, 0.8)',
+    text: '#1d1d1f',
+    textMuted: '#86868b',
+    bgGradient: 'linear-gradient(135deg, #eef1f5 0%, #e2e8f0 100%)',
+    borderRadius: '14px',
+  },
+  'catppuccin-macchiato': {
+    name: 'Catppuccin Macchiato',
+    primaryColor: '#8aadf4',
+    accentColor: '#8aadf4',
+    cardBg: 'rgba(54, 58, 79, 0.7)',
+    cardBorder: 'rgba(183, 189, 248, 0.1)',
+    text: '#cad3f5',
+    textMuted: '#8087a2',
+    bgGradient: 'linear-gradient(135deg, #181926 0%, #24273a 50%, #363a4f 100%)',
+    borderRadius: '12px',
+  },
+  nord: {
+    name: 'Nord',
+    primaryColor: '#88c0d0',
+    accentColor: '#88c0d0',
+    cardBg: 'rgba(59, 66, 82, 0.75)',
+    cardBorder: 'rgba(216, 222, 233, 0.06)',
+    text: '#eceff4',
+    textMuted: '#8fbcbb',
+    bgGradient: 'linear-gradient(135deg, #1a1c23 0%, #2e3440 60%, #3b4252 100%)',
+    borderRadius: '12px',
+  },
+  dracula: {
+    name: 'Dracula',
+    primaryColor: '#ff79c6',
+    accentColor: '#ff79c6',
+    cardBg: 'rgba(40, 42, 54, 0.75)',
+    cardBorder: 'rgba(248, 248, 242, 0.08)',
+    text: '#f8f8f2',
+    textMuted: '#bd93f9',
+    bgGradient: 'linear-gradient(135deg, #15161c 0%, #282a36 60%, #373948 100%)',
+    borderRadius: '12px',
+  },
+  ocean: {
+    name: 'Ocean',
+    primaryColor: '#38bdf8',
+    accentColor: '#38bdf8',
+    cardBg: 'rgba(15, 23, 42, 0.75)',
+    cardBorder: 'rgba(56, 189, 248, 0.1)',
+    text: '#f8fafc',
+    textMuted: '#38bdf8',
+    bgGradient: 'linear-gradient(135deg, #03060a 0%, #0f172a 50%, #1e293b 100%)',
+    borderRadius: '12px',
+  },
+  midnight: {
+    name: 'Midnight',
+    primaryColor: '#ffffff',
+    accentColor: '#ffffff',
+    cardBg: 'rgba(10, 10, 12, 0.85)',
+    cardBorder: 'rgba(255, 255, 255, 0.08)',
+    text: '#ffffff',
+    textMuted: '#e5e7eb',
+    bgGradient: 'linear-gradient(130deg, #000000 0%, #050505 50%, #0d0d0f 100%)',
+    borderRadius: '12px',
+  },
+  cyberpunk: {
+    name: 'Cyberpunk',
+    primaryColor: '#ff007f',
+    accentColor: '#00e5ff',
+    cardBg: 'rgba(23, 0, 38, 0.65)',
+    cardBorder: 'rgba(0, 229, 255, 0.2)',
+    text: '#f0e6ff',
+    textMuted: '#00e5ff',
+    bgGradient: 'linear-gradient(135deg, #030008 0%, #090112 40%, #1b002c 100%)',
+    borderRadius: 'var(--nd-card-radius)',
+  }
+};
+
+/* ==========================================
+   PREMIUM CUSTOM TOGGLE COMPONENT
+   ========================================== */
+interface ToggleSwitchProps {
+  checked: boolean;
+  onChange: (val: boolean) => void;
+  label?: string;
+  sublabel?: string;
+}
+
+function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitchProps) {
+  return (
+    <div 
+      onClick={() => onChange(!checked)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '12px 14px',
+        background: 'rgba(255, 255, 255, 0.01)',
+        border: '1px solid var(--nd-card-border)',
+        borderRadius: 'var(--nd-card-radius)',
+        cursor: 'pointer',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        userSelect: 'none'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--nd-card-border)';
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.01)';
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginRight: 16 }}>
+        {label && <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--nd-text)' }}>{label}</span>}
+        {sublabel && <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)' }}>{sublabel}</span>}
+      </div>
+      <div 
+        style={{
+          width: '38px',
+          height: '20px',
+          borderRadius: 'var(--nd-card-radius)',
+          background: checked ? 'var(--nd-accent)' : 'rgba(255,255,255,0.06)',
+          border: '1px solid',
+          borderColor: checked ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+          position: 'relative',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          flexShrink: 0,
+          boxShadow: checked ? '0 0 10px var(--nd-accent-dim)' : 'none'
+        }}
+      >
+        <div 
+          style={{
+            width: '14px',
+            height: '14px',
+            borderRadius: '50%',
+            background: '#ffffff',
+            position: 'absolute',
+            top: '2px',
+            left: checked ? '20px' : '2px',
+            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4)'
+          }}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
@@ -14,6 +201,123 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState('apparence');
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
   const [theme, setTheme] = useState(config?.settings?.theme || 'nasdash');
+
+  // Background states
+  const [backgroundImage, setBackgroundImage] = useState(config?.settings?.backgroundImage || '');
+  const [customCss, setCustomCss] = useState(config?.settings?.customCss || '');
+  const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
+  const [bgToDelete, setBgToDelete] = useState<string | null>(null);
+
+  // Design system states
+  const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
+  const [borderRadius, setBorderRadius] = useState(config?.settings?.borderRadius ?? 12);
+  const [cardOpacity, setCardOpacity] = useState(config?.settings?.cardOpacity ?? 0.8);
+
+  // Widget positioning & ordering states
+  const [devicesSidebar, setDevicesSidebar] = useState(config?.settings?.devicesSidebar || 'left');
+  const [devicesOrder, setDevicesOrder] = useState(config?.settings?.devicesOrder ?? 0);
+
+  const [quickStatsSidebar, setQuickStatsSidebar] = useState(config?.settings?.quickStatsSidebar || 'right');
+  const [quickStatsOrder, setQuickStatsOrder] = useState(config?.settings?.quickStatsOrder ?? 1);
+
+  const [tailscaleSidebar, setTailscaleSidebar] = useState(config?.settings?.tailscaleSidebar || 'right');
+  const [tailscaleOrder, setTailscaleOrder] = useState(config?.settings?.tailscaleOrder ?? 2);
+
+  const [dockerActionsSidebar, setDockerActionsSidebar] = useState(config?.settings?.dockerActionsSidebar || 'right');
+  const [dockerActionsOrder, setDockerActionsOrder] = useState(config?.settings?.dockerActionsOrder ?? 3);
+
+  // Sidebar visibility states
+  const [hideDevices, setHideDevices] = useState(!!config?.settings?.hideDevices);
+  const [hideQuickStats, setHideQuickStats] = useState(!!config?.settings?.hideQuickStats);
+  const [hideTailscaleStatus, setHideTailscaleStatus] = useState(!!config?.settings?.hideTailscaleStatus);
+  const [hideDockerActions, setHideDockerActions] = useState(!!config?.settings?.hideDockerActions);
+
+  // Modal / status states
+  const [copied, setCopied] = useState(false);
+  const [isConfirmBgDeleteOpen, setIsConfirmBgDeleteOpen] = useState(false);
+
+  useEffect(() => {
+    if (config) {
+      setGlobalFont(config.settings?.globalFont || 'Outfit');
+      setBorderRadius(config.settings?.borderRadius ?? 12);
+      setCardOpacity(config.settings?.cardOpacity ?? 0.8);
+      setDevicesSidebar(config.settings?.devicesSidebar || 'left');
+      setDevicesOrder(config.settings?.devicesOrder ?? 0);
+      setQuickStatsSidebar(config.settings?.quickStatsSidebar || 'right');
+      setQuickStatsOrder(config.settings?.quickStatsOrder ?? 1);
+      setTailscaleSidebar(config.settings?.tailscaleSidebar || 'right');
+      setTailscaleOrder(config.settings?.tailscaleOrder ?? 2);
+      setDockerActionsSidebar(config.settings?.dockerActionsSidebar || 'right');
+      setDockerActionsOrder(config.settings?.dockerActionsOrder ?? 3);
+      setHideDevices(!!config.settings?.hideDevices);
+      setHideQuickStats(!!config.settings?.hideQuickStats);
+      setHideTailscaleStatus(!!config.settings?.hideTailscaleStatus);
+      setHideDockerActions(!!config.settings?.hideDockerActions);
+      if (config.settings?.backgroundImage !== undefined) {
+        setBackgroundImage(config.settings.backgroundImage);
+      }
+    }
+  }, [config]);
+
+  const handleFontChange = async (font: string) => {
+    setGlobalFont(font);
+    await updateConfig({ globalFont: font });
+  };
+
+  const handleRadiusChange = (val: number) => {
+    setBorderRadius(val);
+    document.body.style.setProperty('--nd-card-radius', `${val}px`);
+  };
+
+  const handleRadiusSave = async (val: number) => {
+    await updateConfig({ borderRadius: val });
+  };
+
+  const handleOpacityChange = (val: number) => {
+    setCardOpacity(val);
+    document.body.style.setProperty('--nd-card-bg-opacity', String(val));
+    // Reconstruct --nd-card-bg directly so the change is immediate
+    const rgb = getComputedStyle(document.body).getPropertyValue('--nd-card-bg-rgb').trim();
+    if (rgb) {
+      document.body.style.setProperty('--nd-card-bg', `rgba(${rgb}, ${val})`);
+    }
+  };
+
+  const handleOpacitySave = async (val: number) => {
+    await updateConfig({ cardOpacity: val });
+  };
+
+  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
+    if (widgetKey === 'devices') {
+      setDevicesSidebar(sidebar);
+      await updateConfig({ devicesSidebar: sidebar });
+    } else if (widgetKey === 'quickstats') {
+      setQuickStatsSidebar(sidebar);
+      await updateConfig({ quickStatsSidebar: sidebar });
+    } else if (widgetKey === 'tailscale') {
+      setTailscaleSidebar(sidebar);
+      await updateConfig({ tailscaleSidebar: sidebar });
+    } else if (widgetKey === 'dockeractions') {
+      setDockerActionsSidebar(sidebar);
+      await updateConfig({ dockerActionsSidebar: sidebar });
+    }
+  };
+
+  const handleWidgetOrder = async (widgetKey: string, order: number) => {
+    if (widgetKey === 'devices') {
+      setDevicesOrder(order);
+      await updateConfig({ devicesOrder: order });
+    } else if (widgetKey === 'quickstats') {
+      setQuickStatsOrder(order);
+      await updateConfig({ quickStatsOrder: order });
+    } else if (widgetKey === 'tailscale') {
+      setTailscaleOrder(order);
+      await updateConfig({ tailscaleOrder: order });
+    } else if (widgetKey === 'dockeractions') {
+      setDockerActionsOrder(order);
+      await updateConfig({ dockerActionsOrder: order });
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -47,7 +351,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     classesToRemove.forEach(cls => document.body.classList.remove(cls));
     if (newTheme !== 'nasdash') {
       document.body.classList.add(`theme-${newTheme}`);
-      // Force remove light mode for other themes
       if (document.body.classList.contains('light')) {
         document.body.classList.remove('light');
         setMode('dark');
@@ -57,84 +360,1288 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     await updateConfig({ theme: newTheme });
   };
 
+  const fetchUploadedBgs = async () => {
+    try {
+      const res = await fetch('/api/logos');
+      const data = await res.json();
+      if (data && data.files) {
+        setUploadedBgs(data.files);
+      }
+    } catch (err) {
+      console.error('Failed to fetch background images:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUploadedBgs();
+  }, []);
+
+  const handleSaveBackground = async () => {
+    await updateConfig({ backgroundImage });
+  };
+
+  const handleConfirmBgDelete = async () => {
+    const targetUrl = bgToDelete || backgroundImage;
+    if (targetUrl && targetUrl.startsWith('/api/logos/')) {
+      const filename = targetUrl.replace('/api/logos/', '');
+      try {
+        await fetch(`/api/logos/${filename}`, {
+          method: 'DELETE',
+        });
+      } catch (err) {
+        console.error('Failed to delete background file:', err);
+      }
+    }
+    
+    if (targetUrl === backgroundImage) {
+      setBackgroundImage('');
+      await updateConfig({ backgroundImage: '' });
+    }
+
+    fetchUploadedBgs();
+    setBgToDelete(null);
+    setIsConfirmBgDeleteOpen(false);
+  };
+
+  const handleSaveCss = async () => {
+    await updateConfig({ customCss });
+  };
+
+  const handleToggleWidget = async (key: string, value: boolean) => {
+    if (key === 'hideDevices') {
+      setHideDevices(value);
+      await updateConfig({ hideDevices: value });
+    } else if (key === 'hideQuickStats') {
+      setHideQuickStats(value);
+      await updateConfig({ hideQuickStats: value });
+    } else if (key === 'hideTailscaleStatus') {
+      setHideTailscaleStatus(value);
+      await updateConfig({ hideTailscaleStatus: value });
+    } else if (key === 'hideDockerActions') {
+      setHideDockerActions(value);
+      await updateConfig({ hideDockerActions: value });
+    }
+  };
+
+  // Generate Home Assistant Lovelace Exporter Theme
+  const activePreset = THEME_PRESETS[theme] || THEME_PRESETS.nasdash;
+  const isLight = theme === 'apple-light';
+  const haYamlTheme = `nasdash_${theme.replace('-', '_')}:
+  # Base Backgrounds
+  background-image: "${activePreset.bgGradient}"
+  lovelace-background: "var(--background-image)"
+
+  # Main Layout Colors
+  primary-color: "${activePreset.primaryColor}"
+  accent-color: "${activePreset.accentColor}"
+  
+  # Text Colors
+  primary-text-color: "${activePreset.text}"
+  secondary-text-color: "${activePreset.textMuted}"
+  disabled-text-color: "${isLight ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)'}"
+  
+  # Lovelace Cards (Glassmorphism preset)
+  ha-card-background: "${activePreset.cardBg}"
+  ha-card-border-color: "${activePreset.cardBorder}"
+  ha-card-border-width: "1px"
+  ha-card-border-radius: "${activePreset.borderRadius}"
+  
+  # Sidebar Menu & Headers
+  sidebar-background-color: "${activePreset.cardBg}"
+  sidebar-icon-color: "${activePreset.textMuted}"
+  sidebar-selected-icon-color: "${activePreset.primaryColor}"
+  app-header-background-color: "${activePreset.cardBg}"
+  app-header-text-color: "${activePreset.text}"`;
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(haYamlTheme);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div 
-        className="nd-modal nd-settings-modal" 
+        className="nd-modal nd-settings-modal nd-animate-in" 
         onClick={(e) => e.stopPropagation()} 
+        style={{ 
+          width: '1000px', 
+          maxWidth: '95vw', 
+          display: 'flex', 
+          flexDirection: 'row', 
+          padding: 0, 
+          height: '700px', 
+          maxHeight: '90vh', 
+          overflow: 'hidden',
+          borderRadius: 'var(--nd-card-radius)',
+          border: '1px solid var(--nd-card-border)',
+          background: 'var(--nd-card-bg)',
+          backdropFilter: 'blur(var(--nd-blur))'
+        }}
       >
-        {/* Left Sidebar */}
-        <div className="nd-settings-sidebar">
-          <h2 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 20, paddingLeft: 4 }}>Paramètres</h2>
+        {/* ==========================================
+           LEFT SIDEBAR (OBSIDIAN-STYLE)
+           ========================================== */}
+        <div 
+          className="nd-settings-sidebar" 
+          style={{ 
+            width: '240px', 
+            borderRight: '1px solid var(--nd-card-border)', 
+            padding: '20px 14px', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 18, 
+            background: 'rgba(0,0,0,0.2)', 
+            flexShrink: 0,
+            overflowY: 'auto'
+          }}
+        >
+          <h2 style={{ fontSize: '0.78rem', fontWeight: 700, margin: '0 0 6px 4px', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <button
-              onClick={() => setActiveTab('apparence')}
-              className="nd-settings-nav-item"
-              style={{
-                background: activeTab === 'apparence' ? 'rgba(255,255,255,0.06)' : 'transparent',
-                color: activeTab === 'apparence' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                fontWeight: activeTab === 'apparence' ? 600 : 400
-              }}
-            >
-              <Palette size={15} /> Apparence
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            
+            {/* Category: Général */}
+            <div>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Général</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button
+                  onClick={() => setActiveTab('apparence')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: 'none', borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'apparence' ? 'var(--nd-accent-glow)' : 'transparent',
+                    color: activeTab === 'apparence' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                    fontWeight: activeTab === 'apparence' ? 600 : 400,
+                    borderLeft: activeTab === 'apparence' ? '2px solid var(--nd-accent)' : '2px solid transparent',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Palette size={13} /> Apparence & CSS
+                </button>
+                <button
+                  onClick={() => setActiveTab('library')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: 'none', borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'library' ? 'var(--nd-accent-glow)' : 'transparent',
+                    color: activeTab === 'library' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                    fontWeight: activeTab === 'library' ? 600 : 400,
+                    borderLeft: activeTab === 'library' ? '2px solid var(--nd-accent)' : '2px solid transparent',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Sliders size={13} /> Bibliothèque Widgets
+                </button>
+              </div>
+            </div>
+
+            {/* Category: Configuration Widgets (Indented child items) */}
+            <div>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Configuration Widgets</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 6 }}>
+                
+                {/* Appareils Button with Status Indicator */}
+                <button
+                  onClick={() => setActiveTab('widget-devices')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'widget-devices' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'widget-devices' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+                    fontWeight: activeTab === 'widget-devices' ? 600 : 400,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Monitor size={12} /> Appareils
+                  </span>
+                  <div style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: !hideDevices ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                    boxShadow: !hideDevices ? '0 0 6px var(--nd-green)' : 'none'
+                  }} />
+                </button>
+
+                {/* Vue d'ensemble Button with Status Indicator */}
+                <button
+                  onClick={() => setActiveTab('widget-quickstats')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'widget-quickstats' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'widget-quickstats' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+                    fontWeight: activeTab === 'widget-quickstats' ? 600 : 400,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Activity size={12} /> Vue d'ensemble
+                  </span>
+                  <div style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: !hideQuickStats ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                    boxShadow: !hideQuickStats ? '0 0 6px var(--nd-green)' : 'none'
+                  }} />
+                </button>
+
+                {/* VPN Tailscale Button with Status Indicator */}
+                <button
+                  onClick={() => setActiveTab('widget-tailscale')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'widget-tailscale' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'widget-tailscale' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+                    fontWeight: activeTab === 'widget-tailscale' ? 600 : 400,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Shield size={12} /> VPN Tailscale
+                  </span>
+                  <div style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: !hideTailscaleStatus ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                    boxShadow: !hideTailscaleStatus ? '0 0 6px var(--nd-green)' : 'none'
+                  }} />
+                </button>
+
+                {/* Actions Docker Button with Status Indicator */}
+                <button
+                  onClick={() => setActiveTab('widget-dockeractions')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', border: 'none', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'widget-dockeractions' ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    color: activeTab === 'widget-dockeractions' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+                    fontWeight: activeTab === 'widget-dockeractions' ? 600 : 400,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Container size={12} /> Actions Docker
+                  </span>
+                  <div style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: !hideDockerActions ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                    boxShadow: !hideDockerActions ? '0 0 6px var(--nd-green)' : 'none'
+                  }} />
+                </button>
+
+              </div>
+            </div>
+
+            {/* Category: Intégrations */}
+            <div>
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', letterSpacing: '0.5px', marginLeft: 6, display: 'block', marginBottom: 6 }}>Intégrations</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button
+                  onClick={() => setActiveTab('homeassistant')}
+                  className="nd-settings-nav-item"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: 'none', borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    background: activeTab === 'homeassistant' ? 'var(--nd-accent-glow)' : 'transparent',
+                    color: activeTab === 'homeassistant' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                    fontWeight: activeTab === 'homeassistant' ? 600 : 400,
+                    borderLeft: activeTab === 'homeassistant' ? '2px solid var(--nd-accent)' : '2px solid transparent',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Layers size={13} /> Home Assistant
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        {/* Right Content */}
-        <div className="nd-settings-content">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 600, margin: 0 }}>
-              {activeTab === 'apparence' && 'Apparence et Thèmes'}
-            </h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0 }}>
+        {/* ==========================================
+           RIGHT CONTENT WRAPPER
+           ========================================== */}
+        <div className="nd-settings-content" style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+          
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0 }}>
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {activeTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
+                {activeTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
+                {activeTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
+                {activeTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
+                {activeTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
+                {activeTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
+                {activeTab === 'homeassistant' && '🏠 Export Lovelace Home Assistant'}
+              </h3>
+            </div>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
               <X size={18} />
             </button>
           </div>
 
+          {/* ==========================================
+             TAB 1: APPARENCE
+             ========================================== */}
           {activeTab === 'apparence' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               
-              {/* Mode Sombre / Clair - Uniquement pour le thème de base */}
+              {/* Theme Selector */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Thème (Couleurs globales)</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Sélectionnez la palette de couleurs esthétiques du tableau de bord.
+                </p>
+                <CustomSelect
+                  value={theme}
+                  onChange={handleThemeChange}
+                  options={[
+                    { value: 'nasdash', label: 'NasDash (Défaut)' },
+                    { value: 'apple-dark', label: 'Apple Dark (Frosted)' },
+                    { value: 'apple-light', label: 'Apple Light (Premium)' },
+                    { value: 'catppuccin-macchiato', label: 'Catppuccin Macchiato' },
+                    { value: 'nord', label: 'Nord Ice' },
+                    { value: 'dracula', label: 'Dracula Gothic' },
+                    { value: 'ocean', label: 'Ocean deep glow' },
+                    { value: 'midnight', label: 'Midnight OLED' },
+                    { value: 'cyberpunk', label: 'Retro Cyberpunk 🤖' }
+                  ]}
+                />
+              </div>
+
+              {/* Mode Sombre / Clair (Default Theme Only) */}
               {theme === 'nasdash' && (
-                <div className="nd-settings-card">
-                  <div className="nd-settings-card-row">
+                <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>Mode d'affichage</h4>
-                      <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', marginTop: 4 }}>
-                        Basculez entre le mode clair et le mode sombre.
+                      <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Mode d'affichage</h4>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                        Basculez entre le mode clair et sombre de base.
                       </p>
                     </div>
-                    <button className="nd-btn" onClick={toggleMode} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      {mode === 'light' ? '☀️ Clair' : '🌙 Sombre'}
+                    <button className="nd-btn" onClick={toggleMode} style={{ flexShrink: 0, whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '0.75rem' }}>
+                      {mode === 'light' ? '☀️ Mode Clair' : '🌙 Mode Sombre'}
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Choix du Thème */}
-              <div className="nd-settings-card">
-                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>Thème (Couleurs)</h4>
-                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', marginTop: 4, marginBottom: 14 }}>
-                  Personnalisez les couleurs du dashboard.
+              {/* Custom Fixed Background Upload */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Fond d'écran personnalisé (Fixe)</h4>
+                <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Définissez une image de fond fixe pour écraser le dégradé de couleur du thème.
                 </p>
-                <div className="nd-settings-select-wrap">
-                  <CustomSelect
-                    value={theme}
-                    onChange={handleThemeChange}
-                    options={[
-                      { value: 'nasdash', label: 'NasDash (Défaut)' },
-                      { value: 'apple-dark', label: 'Apple Dark (Premium)' },
-                      { value: 'apple-light', label: 'Apple Light (Premium)' },
-                      { value: 'catppuccin-macchiato', label: 'Catppuccin Macchiato' },
-                      { value: 'nord', label: 'Nord' },
-                      { value: 'dracula', label: 'Dracula' },
-                      { value: 'ocean', label: 'Ocean' },
-                      { value: 'midnight', label: 'Midnight' }
-                    ]}
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      className="nd-input"
+                      placeholder="https://example.com/background.jpg ou fichier importé"
+                      value={backgroundImage}
+                      onChange={(e) => setBackgroundImage(e.target.value)}
+                      style={{ flex: 1, fontSize: '0.78rem' }}
+                    />
+                    <button className="nd-btn" onClick={handleSaveBackground} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
+                      Enregistrer
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="bg-upload-input"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        try {
+                          const res = await fetch('/api/upload', {
+                            method: 'POST',
+                            body: formData,
+                          });
+                          const data = await res.json();
+                          if (data.url) {
+                            setBackgroundImage(data.url);
+                            await updateConfig({ backgroundImage: data.url });
+                            fetchUploadedBgs();
+                          }
+                        } catch (err) {
+                          console.error('Failed to upload background:', err);
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="bg-upload-input" className="nd-btn" style={{ padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)' }}>
+                      📁 Importer une image
+                    </label>
+                    {backgroundImage && (
+                      <button 
+                        className="nd-btn" 
+                        onClick={() => {
+                          setBgToDelete(backgroundImage);
+                          setIsConfirmBgDeleteOpen(true);
+                        }} 
+                        style={{ padding: '6px 12px', fontSize: '0.72rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                      >
+                        ❌ Supprimer le fond
+                      </button>
+                    )}
+                  </div>
+
+                  {uploadedBgs.length > 0 && (
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--nd-text-muted)', display: 'block', marginBottom: '8px' }}>
+                        Galerie des fonds importés ({uploadedBgs.length})
+                      </span>
+                      <div 
+                        style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
+                          gap: '8px',
+                          maxHeight: '180px',
+                          overflowY: 'auto',
+                          paddingRight: '4px'
+                        }}
+                      >
+                        {uploadedBgs.map((bg) => {
+                          const isActive = backgroundImage === bg.url;
+                          return (
+                            <div
+                              key={bg.name}
+                              onClick={async () => {
+                                setBackgroundImage(bg.url);
+                                await updateConfig({ backgroundImage: bg.url });
+                              }}
+                              style={{
+                                position: 'relative',
+                                height: '50px',
+                                borderRadius: 'var(--nd-card-radius)',
+                                overflow: 'hidden',
+                                border: isActive ? '2px solid var(--nd-accent)' : '1px solid var(--nd-card-border)',
+                                boxShadow: isActive ? '0 0 8px var(--nd-accent)' : 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                backgroundImage: `url("${bg.url}")`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.03)';
+                                if (!isActive) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                if (!isActive) e.currentTarget.style.borderColor = 'var(--nd-card-border)';
+                              }}
+                              title={bg.name}
+                            >
+                              {/* Corner delete button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setBgToDelete(bg.url);
+                                  setIsConfirmBgDeleteOpen(true);
+                                }}
+                                style={{
+                                  position: 'absolute',
+                                  top: '2px',
+                                  right: '2px',
+                                  width: '16px',
+                                  height: '16px',
+                                  borderRadius: '50%',
+                                  background: 'rgba(0, 0, 0, 0.6)',
+                                  border: 'none',
+                                  color: '#fff',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '9px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease',
+                                  zIndex: 2
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'var(--nd-red)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)';
+                                }}
+                                title="Supprimer définitivement"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
+              </div>
+
+              {/* Design System Customization (Typography, Opacity, Radius) */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Personnalisation Visuelle</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Ajustez en temps réel les polices de caractères et la géométrie des cartes.
+                </p>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Google Font Selector */}
+                  <div>
+                    <label className="nd-label" style={{ display: 'block', fontSize: '0.72rem', color: 'var(--nd-text)', marginBottom: 4 }}>
+                      Typographie globale (Google Fonts)
+                    </label>
+                    <CustomSelect
+                      value={globalFont}
+                      onChange={handleFontChange}
+                      options={[
+                        { value: 'Outfit', label: 'Outfit (Défaut)' },
+                        { value: 'Inter', label: 'Inter (Pure & Moderne)' },
+                        { value: 'Poppins', label: 'Poppins (Rond & Épuré)' },
+                        { value: 'Rubik', label: 'Rubik (Arrondi Confort)' },
+                        { value: 'Ubuntu', label: 'Ubuntu (Style Linux)' },
+                        { value: 'Lexend', label: 'Lexend (Haute Lisibilité)' },
+                        { value: 'JetBrains Mono', label: 'JetBrains Mono (Console Tech)' },
+                        { value: 'Fira Code', label: 'Fira Code (Developer)' },
+                        { value: 'Source Code Pro', label: 'Source Code Pro (Terminal)' },
+                        { value: 'Montserrat', label: 'Montserrat (Géométrique)' },
+                        { value: 'Roboto', label: 'Roboto (Neutre/Standard)' }
+                      ]}
+                    />
+                  </div>
+
+                  {/* Border Radius Slider */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
+                        Arrondi des cartes
+                      </label>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
+                        {borderRadius}px
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="24"
+                      step="1"
+                      value={borderRadius}
+                      onChange={(e) => handleRadiusChange(Number(e.target.value))}
+                      onMouseUp={() => handleRadiusSave(borderRadius)}
+                      onTouchEnd={() => handleRadiusSave(borderRadius)}
+                      style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
+                    />
+                  </div>
+
+                  {/* Card Opacity Slider */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
+                        Opacité du fond des cartes (Transparence)
+                      </label>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
+                        {Math.round(cardOpacity * 100)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={cardOpacity}
+                      onChange={(e) => handleOpacityChange(Number(e.target.value))}
+                      onMouseUp={() => handleOpacitySave(cardOpacity)}
+                      onTouchEnd={() => handleOpacitySave(cardOpacity)}
+                      style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom CSS overrides */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Overide CSS personnalisé</h4>
+                <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Injectez des styles CSS surcharges réactivement sur votre dashboard.
+                </p>
+                <textarea
+                  className="nd-input"
+                  rows={3}
+                  placeholder="/* Exemple: .nd-brand { color: red !important; } */"
+                  value={customCss}
+                  onChange={(e) => setCustomCss(e.target.value)}
+                  style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.7rem', resize: 'vertical', minHeight: '60px', marginBottom: '8px' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button className="nd-btn" onClick={handleSaveCss} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
+                    Appliquer le CSS
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 2: LIBRARY OVERVIEW (WIDGET LIBRARY)
+             ========================================== */}
+          {activeTab === 'library' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
+                  Activez ou désactivez les extensions de NasDash. Les widgets activés apparaissent dans vos barres latérales selon leur ordre de priorité.
+                </p>
+              </div>
+
+              {/* Section 1: Active Widgets */}
+              <div>
+                <h5 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-green)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--nd-green)', boxShadow: '0 0 8px var(--nd-green)' }} />
+                  Widgets Activés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => !h).length })
+                </h5>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {!hideDevices && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>🖥️ Appareils</span>
+                          <span style={{ fontSize: '0.6rem', background: 'var(--nd-accent-glow)', color: 'var(--nd-accent)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Système</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Vitalités en temps réel des serveurs connectés (Glances, Proxmox, LHM).
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-devices')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideDevices', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!hideQuickStats && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>📊 Vue d'ensemble</span>
+                          <span style={{ fontSize: '0.6rem', background: 'var(--nd-accent-glow)', color: 'var(--nd-accent)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Raccourci</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Résumé rapide (services, catégories, ports ouverts et statuts).
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-quickstats')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideQuickStats', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!hideTailscaleStatus && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>🛡️ VPN Tailscale</span>
+                          <span style={{ fontSize: '0.6rem', background: 'rgba(168,85,247,0.15)', color: 'var(--nd-purple)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Réseau</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Statut de connexion de votre réseau Tailscale et vos machines.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-tailscale')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideTailscaleStatus', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!hideDockerActions && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>🐳 Actions Docker</span>
+                          <span style={{ fontSize: '0.6rem', background: 'rgba(240,136,62,0.15)', color: 'var(--nd-orange)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Docker</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Boutons d'allumage/extinction globaux de vos conteneurs.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-dockeractions')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideDockerActions', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => !h).length === 0 && (
+                    <div style={{ gridColumn: 'span 2', padding: '20px', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.74rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                      Aucun widget n'est actif. Activez-en ci-dessous !
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Section 2: Inactive Widgets */}
+              <div>
+                <h5 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-text-dimmed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--nd-text-dimmed)' }} />
+                  Widgets Désactivés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => h).length })
+                </h5>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  {hideDevices && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>🖥️ Appareils</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Statistiques matérielles des serveurs (CPU, disques, Proxmox, Glances).
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideDevices', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {hideQuickStats && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>📊 Vue d'ensemble</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Résumé rapide du dashboard (catégories, services et ports ouverts).
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideQuickStats', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {hideTailscaleStatus && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>🛡️ VPN Tailscale</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Affiche l'état du pont Tailscale et de vos machines connectées.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideTailscaleStatus', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {hideDockerActions && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>🐳 Actions Docker</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Boutons interactifs d'actions rapides sur vos conteneurs Docker.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideDockerActions', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => h).length === 0 && (
+                    <div style={{ gridColumn: 'span 2', padding: '20px', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.74rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                      Tous les widgets sont actifs ! 🎉
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 3: WIDGET-DEVICES PAGE
+             ========================================== */}
+          {activeTab === 'widget-devices' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideDevices}
+                  onChange={(val) => handleToggleWidget('hideDevices', !val)}
+                  label="Activer le widget Appareils"
+                  sublabel="Choisissez si ce module de monitoring matériel doit s'afficher sur votre tableau de bord."
+                />
+              </div>
+
+              {!hideDevices && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWidgetPosition('devices', 'left')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: devicesSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: devicesSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: devicesSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: devicesSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={() => handleWidgetPosition('devices', 'right')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: devicesSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: devicesSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: devicesSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: devicesSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={() => handleWidgetOrder('devices', Math.max(0, devicesOrder - 1))}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="0"
+                        max="20"
+                        value={devicesOrder}
+                        onChange={(e) => handleWidgetOrder('devices', Number(e.target.value))}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={() => handleWidgetOrder('devices', devicesOrder + 1)}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Future Options Note */}
+                  <div style={{ padding: '14px', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--nd-accent)', fontWeight: 600 }}>⚡ Évolutivité & Extensions</span>
+                    <p style={{ margin: 0, fontSize: '0.66rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
+                      Ce sous-menu est conçu pour être extensible. Dans de futures versions, vous pourrez y configurer des capteurs matériels additionnels, lier des connexions API Proxmox multiples, ou masquer certains serveurs hors-ligne.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 4: WIDGET-QUICKSTATS PAGE
+             ========================================== */}
+          {activeTab === 'widget-quickstats' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideQuickStats}
+                  onChange={(val) => handleToggleWidget('hideQuickStats', !val)}
+                  label="Activer le widget Vue d'ensemble"
+                  sublabel="Choisissez si le résumé des statistiques du dashboard doit s'afficher dans une barre latérale."
+                />
+              </div>
+
+              {!hideQuickStats && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWidgetPosition('quickstats', 'left')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: quickStatsSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: quickStatsSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: quickStatsSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: quickStatsSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={() => handleWidgetPosition('quickstats', 'right')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: quickStatsSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: quickStatsSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: quickStatsSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: quickStatsSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={() => handleWidgetOrder('quickstats', Math.max(0, quickStatsOrder - 1))}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="0"
+                        max="20"
+                        value={quickStatsOrder}
+                        onChange={(e) => handleWidgetOrder('quickstats', Number(e.target.value))}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={() => handleWidgetOrder('quickstats', quickStatsOrder + 1)}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Future Options Note */}
+                  <div style={{ padding: '14px', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--nd-accent)', fontWeight: 600 }}>⚡ Personnalisations à venir</span>
+                    <p style={{ margin: 0, fontSize: '0.66rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
+                      Vous pourrez bientôt choisir les statistiques exactes à faire figurer dans ce résumé (ex: masquer le total des ports ouverts, inclure des informations réseau local, ou configurer des alertes d'inaccessibilité).
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 5: WIDGET-TAILSCALE PAGE
+             ========================================== */}
+          {activeTab === 'widget-tailscale' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideTailscaleStatus}
+                  onChange={(val) => handleToggleWidget('hideTailscaleStatus', !val)}
+                  label="Activer le widget VPN Tailscale"
+                  sublabel="Choisissez si l'état général et la liste des machines Tailscale doivent s'afficher."
+                />
+              </div>
+
+              {!hideTailscaleStatus && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWidgetPosition('tailscale', 'left')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: tailscaleSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: tailscaleSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: tailscaleSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: tailscaleSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={() => handleWidgetPosition('tailscale', 'right')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: tailscaleSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: tailscaleSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: tailscaleSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: tailscaleSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={() => handleWidgetOrder('tailscale', Math.max(0, tailscaleOrder - 1))}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="0"
+                        max="20"
+                        value={tailscaleOrder}
+                        onChange={(e) => handleWidgetOrder('tailscale', Number(e.target.value))}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={() => handleWidgetOrder('tailscale', tailscaleOrder + 1)}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Future Options Note */}
+                  <div style={{ padding: '14px', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--nd-accent)', fontWeight: 600 }}>⚡ Évolutivité du pont VPN</span>
+                    <p style={{ margin: 0, fontSize: '0.66rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
+                      De nouveaux réglages permettront bientôt de masquer les machines hors-ligne, de trier la liste par ping ou d'attribuer des alias personnalisés à vos adresses Tailscale IP de manière simple et intuitive.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 6: WIDGET-DOCKERACTIONS PAGE
+             ========================================== */}
+          {activeTab === 'widget-dockeractions' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideDockerActions}
+                  onChange={(val) => handleToggleWidget('hideDockerActions', !val)}
+                  label="Activer le widget Actions Docker"
+                  sublabel="Choisissez si la section d'alimentation des conteneurs doit s'afficher sur votre dashboard."
+                />
+              </div>
+
+              {!hideDockerActions && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWidgetPosition('dockeractions', 'left')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: dockerActionsSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: dockerActionsSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: dockerActionsSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: dockerActionsSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={() => handleWidgetPosition('dockeractions', 'right')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: dockerActionsSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: dockerActionsSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: dockerActionsSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: dockerActionsSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={() => handleWidgetOrder('dockeractions', Math.max(0, dockerActionsOrder - 1))}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="0"
+                        max="20"
+                        value={dockerActionsOrder}
+                        onChange={(e) => handleWidgetOrder('dockeractions', Number(e.target.value))}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={() => handleWidgetOrder('dockeractions', dockerActionsOrder + 1)}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Future Options Note */}
+                  <div style={{ padding: '14px', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--nd-accent)', fontWeight: 600 }}>⚡ Contrôles conteneurs sécurisés</span>
+                    <p style={{ margin: 0, fontSize: '0.66rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
+                      De futures options permettront d'ajouter des confirmations d'arrêt pour éviter les fausses manipulations, de lister les logs succincts, ou de grouper vos conteneurs par piles (stacks/compose) pour un allumage synchronisé.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 7: HOME ASSISTANT
+             ========================================== */}
+          {activeTab === 'homeassistant' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              
+              <div style={{ padding: '10px 12px', background: 'rgba(0,229,255,0.05)', border: '1px solid rgba(0,229,255,0.15)', borderRadius: 'var(--nd-card-radius)' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--nd-accent)', display: 'block', fontWeight: 600 }}>💡 Synchronisation visuelle Lovelace</span>
+                <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', marginTop: 4, display: 'block', lineHeight: 1.4 }}>
+                  Copiez le code YAML ci-dessous dans votre fichier <code style={{ color: 'var(--nd-text)', fontFamily: 'monospace' }}>themes.yaml</code> de Home Assistant. Vos cartes Lovelace et fonds s'adapteront harmonieusement au style graphique choisi ici !
+                </span>
+              </div>
+
+              <div style={{ position: 'relative' }}>
+                <pre style={{
+                  background: 'rgba(0,0,0,0.35)', padding: '12px', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)',
+                  fontFamily: 'monospace', fontSize: '0.65rem', color: 'var(--nd-text)', overflowX: 'auto', maxHeight: '280px', margin: 0
+                }}>
+                  {haYamlTheme}
+                </pre>
+                <button
+                  onClick={copyToClipboard}
+                  style={{
+                    position: 'absolute', top: 8, right: 8, padding: '4px 8px', borderRadius: 4, background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.62rem'
+                  }}
+                >
+                  {copied ? <Check size={10} style={{ color: 'var(--nd-green)' }} /> : <Clipboard size={10} />}
+                  {copied ? 'Copié !' : 'Copier'}
+                </button>
+              </div>
+
+              <div className="nd-settings-card" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, color: 'var(--nd-accent)' }}>🧹 Note de compatibilité</h4>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
+                  Si vous avez des styles statiques forcés comme <code style={{ color: 'var(--nd-orange)' }}>background: #161b22 !important;</code> dans vos cartes HA via card-mod, remplacez-les par <code style={{ color: 'var(--nd-green)' }}>background: var(--ha-card-background) !important;</code> pour qu'elles héritent automatiquement des thèmes dynamiques !
+                </p>
               </div>
 
             </div>
@@ -142,6 +1649,20 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
         </div>
       </div>
+
+      {/* Background deletion Custom Confirmation Portal */}
+      <ConfirmModal
+        isOpen={isConfirmBgDeleteOpen}
+        onClose={() => {
+          setIsConfirmBgDeleteOpen(false);
+          setBgToDelete(null);
+        }}
+        onConfirm={handleConfirmBgDelete}
+        title="Supprimer le fond d'écran ?"
+        description="Si ce fond d'écran est une image importée localement depuis votre appareil, le fichier image sera définitivement effacé de votre serveur de stockage. Souhaitez-vous continuer ?"
+        confirmLabel="Oui, supprimer"
+        cancelLabel="Annuler"
+      />
     </div>
   );
 }

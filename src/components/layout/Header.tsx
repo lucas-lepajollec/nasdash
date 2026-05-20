@@ -135,7 +135,7 @@ export default function Header({
               top: 16, right: 16, left: 16,
               background: 'var(--nd-card-bg)',
               border: '1px solid var(--nd-card-border)',
-              borderRadius: 16,
+              borderRadius: 'var(--nd-card-radius)',
               padding: 20,
               display: 'flex',
               flexDirection: 'column',

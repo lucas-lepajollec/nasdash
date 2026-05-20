@@ -163,72 +163,44 @@ function DeviceMonitorCardContent({
 
 export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
-  const sidebarRef = useRef<HTMLElement>(null);
-  const [isSticky, setIsSticky] = useState(true);
-
-  useEffect(() => {
-    if (!sidebarRef.current) return;
-    const checkHeight = () => {
-      if (!sidebarRef.current) return;
-      // 120px is roughly top offset + bottom gaps
-      setIsSticky(sidebarRef.current.scrollHeight + 120 <= window.innerHeight);
-    };
-    
-    checkHeight();
-    const observer = new ResizeObserver(() => checkHeight());
-    if (sidebarRef.current) observer.observe(sidebarRef.current);
-    window.addEventListener('resize', checkHeight);
-    
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', checkHeight);
-    };
-  }, [devices]);
 
   return (
-    <aside 
-      ref={sidebarRef} 
-      className="nd-sidebar-left"
-      style={!isSticky ? { position: 'static', maxHeight: 'none', overflowY: 'visible' } : {}}
-    >
-      {/* DEVICES - Always visible */}
-      <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title">
-          <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
-          Appareils
-          {editMode && onAddDevice && (
-            <button
-              className="nd-action-icon success"
-              onClick={onAddDevice}
-              style={{ marginLeft: 'auto' }}
-            >
-              <Plus size={13} />
-            </button>
-          )}
-        </div>
-
-        {devices.length === 0 && (
-          <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>
-            {editMode
-              ? 'Aucun appareil configuré. Cliquez sur le bouton + pour en ajouter un.'
-              : 'Aucun appareil configuré. Passez en mode édition pour en ajouter un.'}
-          </p>
+    <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+      <div className="nd-section-title">
+        <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
+        Appareils
+        {editMode && onAddDevice && (
+          <button
+            className="nd-action-icon success"
+            onClick={onAddDevice}
+            style={{ marginLeft: 'auto' }}
+          >
+            <Plus size={13} />
+          </button>
         )}
-
-        <SortableContext items={devices.map(d => `drag-device-${d.id}`)} strategy={verticalListSortingStrategy}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {devices.map((device) => (
-              <SortableDeviceCard
-                key={device.id}
-                device={device}
-                editMode={editMode}
-                onEdit={() => onEditDevice?.(device)}
-                onDelete={() => setDeviceToDelete(device)}
-              />
-            ))}
-          </div>
-        </SortableContext>
       </div>
+
+      {devices.length === 0 && (
+        <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>
+          {editMode
+            ? 'Aucun appareil configuré. Cliquez sur le bouton + pour en ajouter un.'
+            : 'Aucun appareil configuré. Passez en mode édition pour en ajouter un.'}
+        </p>
+      )}
+
+      <SortableContext items={devices.map(d => `drag-device-${d.id}`)} strategy={verticalListSortingStrategy}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {devices.map((device) => (
+            <SortableDeviceCard
+              key={device.id}
+              device={device}
+              editMode={editMode}
+              onEdit={() => onEditDevice?.(device)}
+              onDelete={() => setDeviceToDelete(device)}
+            />
+          ))}
+        </div>
+      </SortableContext>
 
       {editMode && <ConfirmModal
         isOpen={!!deviceToDelete}
@@ -242,6 +214,6 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
         title="Dételer l'appareil ?"
         description={`Êtes-vous sûr de vouloir supprimer "${deviceToDelete?.name}" ? Cette action est définitive.`}
       />}
-    </aside>
+    </div>
   );
 }

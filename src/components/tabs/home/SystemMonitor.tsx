@@ -66,7 +66,7 @@ export default function SystemMonitor({ history, isDark = true, isVisible }: Sys
                 contentStyle={{
                   background: isDark ? '#161b22' : '#fff',
                   border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: 8,
+                  borderRadius: 'var(--nd-card-radius)',
                   fontSize: '0.72rem',
                 }}
               />

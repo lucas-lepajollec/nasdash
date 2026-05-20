@@ -45,6 +45,8 @@ export default function CategoryCard({
 
   if (searchQuery && filteredServices.length === 0) return null;
 
+  const showDropGap = editMode && (category.layout !== 'bento' && category.layout !== 'grid' && !category.layout?.startsWith('bento-logo'));
+
   return (
     <div ref={setNodeRef} style={{ ...style, position: 'relative' }} className="nd-card nd-animate-in">
       <div className="nd-category-title">
@@ -69,22 +71,27 @@ export default function CategoryCard({
           </div>
         )}
       </div>
-      <div ref={setDroppable} className="nd-services-grid" style={{
-        minHeight: filteredServices.length === 0 ? 40 : undefined,
-        ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, outline: '2px dashed var(--nd-accent)' } : {})
-      }}>
+      <div 
+        ref={setDroppable} 
+        className={`nd-services-grid nd-services-grid--${category.layout || 'standard'}`} 
+        style={{
+          minHeight: filteredServices.length === 0 ? 40 : undefined,
+          ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, outline: '2px dashed var(--nd-accent)' } : {})
+        }}
+      >
         {filteredServices.map((service, index) => (
           <React.Fragment key={service.id}>
-            {editMode && <DropGap categoryId={category.id} index={index} />}
+            {showDropGap && <DropGap categoryId={category.id} index={index} />}
             <ServiceItem
               service={service}
               categoryId={category.id}
               editMode={editMode}
               showSensitive={showSensitive}
+              layout={category.layout}
             />
           </React.Fragment>
         ))}
-        {editMode && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}
+        {showDropGap && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}
         {filteredServices.length === 0 && !searchQuery && (
           <div style={{ gridColumn: '1 / -1', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ fontSize: '0.7rem', textAlign: 'center', padding: '12px 0', color: 'var(--nd-text-dimmed)' }}>Aucun service</p>

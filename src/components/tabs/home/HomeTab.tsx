@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import LeftSidebar from './LeftSidebar';
-import RightSidebar from './RightSidebar';
+import RightSidebar, { QuickStats } from './RightSidebar';
+import TailscaleStatus from './TailscaleStatus';
+import DockerActions from './DockerActions';
 import BentoGrid from './BentoGrid';
 import SystemMonitor from './SystemMonitor';
 import Footer from '../../layout/Footer';
@@ -180,19 +182,77 @@ export default function HomeTab({
 
   if (loading || !config) return null;
 
+  const widgets = [
+    {
+      id: 'devices',
+      visible: !config.settings?.hideDevices,
+      sidebar: config.settings?.devicesSidebar || 'left',
+      order: config.settings?.devicesOrder ?? 0,
+      render: () => (
+        <LeftSidebar
+          devices={config.devices || []}
+          editMode={editMode}
+          onAddDevice={() => setDeviceModal({ open: true })}
+          onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
+          onDeleteDevice={handleDeleteDevice}
+          onReorderDevices={reorderDevices}
+        />
+      )
+    },
+    {
+      id: 'quickstats',
+      visible: !config.settings?.hideQuickStats,
+      sidebar: config.settings?.quickStatsSidebar || 'right',
+      order: config.settings?.quickStatsOrder ?? 1,
+      render: () => (
+        <QuickStats categories={config.categories} />
+      )
+    },
+    {
+      id: 'tailscale',
+      visible: !config.settings?.hideTailscaleStatus,
+      sidebar: config.settings?.tailscaleSidebar || 'right',
+      order: config.settings?.tailscaleOrder ?? 2,
+      render: () => (
+        <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />
+      )
+    },
+    {
+      id: 'dockeractions',
+      visible: !config.settings?.hideDockerActions,
+      sidebar: config.settings?.dockerActionsSidebar || 'right',
+      order: config.settings?.dockerActionsOrder ?? 3,
+      render: () => (
+        <DockerActions editMode={editMode} />
+      )
+    }
+  ];
+
+  const leftWidgets = widgets
+    .filter(w => w.visible && w.sidebar === 'left')
+    .sort((a, b) => a.order - b.order);
+
+  const rightWidgets = widgets
+    .filter(w => w.visible && w.sidebar === 'right')
+    .sort((a, b) => a.order - b.order);
+
+  const hasLeftContent = leftWidgets.length > 0;
+  const hasRightContent = rightWidgets.length > 0;
+
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="nd-layout">
-          {/* LEFT SIDEBAR — Devices */}
-          <LeftSidebar
-            devices={config.devices || []}
-            editMode={editMode}
-            onAddDevice={() => setDeviceModal({ open: true })}
-            onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
-            onDeleteDevice={handleDeleteDevice}
-            onReorderDevices={reorderDevices}
-          />
+        <div className="nd-layout" style={{ gridTemplateColumns: 'var(--nd-sidebar-width) minmax(0, 1fr) var(--nd-right-sidebar-width)' }}>
+          {/* LEFT SIDEBAR COLUMN */}
+          {hasLeftContent ? (
+            <aside className="nd-sidebar-left">
+              {leftWidgets.map(w => (
+                <React.Fragment key={w.id}>{w.render()}</React.Fragment>
+              ))}
+            </aside>
+          ) : (
+            <div className="nd-column-spacer" style={{ width: 'var(--nd-sidebar-width)' }} />
+          )}
 
           {/* CENTER — Service Grid + Monitor */}
           <main className="nd-center">
@@ -222,8 +282,16 @@ export default function HomeTab({
             />
           </main>
 
-          {/* RIGHT SIDEBAR — Stats Overview + Tailscale */}
-          <RightSidebar categories={config.categories} editMode={editMode} showSensitive={showSensitive} />
+          {/* RIGHT SIDEBAR COLUMN */}
+          {hasRightContent ? (
+            <aside className="nd-sidebar-right">
+              {rightWidgets.map(w => (
+                <React.Fragment key={w.id}>{w.render()}</React.Fragment>
+              ))}
+            </aside>
+          ) : (
+            <div className="nd-column-spacer" style={{ width: 'var(--nd-right-sidebar-width)' }} />
+          )}
         </div>
         <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
           {activeDevice ? (

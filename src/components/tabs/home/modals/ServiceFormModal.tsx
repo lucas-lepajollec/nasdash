@@ -65,14 +65,38 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
             <label className="nd-label">Logo</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {logo && (
-                <img src={logo} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
+                <img src={logo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
               )}
               <label className="nd-btn" style={{ cursor: 'pointer' }}>
                 <Upload size={12} /> Upload
                 <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: 'none' }} />
               </label>
               {logo && (
-                <button className="nd-btn" onClick={() => setLogo('')}><X size={12} /></button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="nd-btn" title="Détacher le logo du service" onClick={() => setLogo('')}>
+                    <X size={12} />
+                  </button>
+                  {logo.startsWith('/api/logos/') && (
+                    <button 
+                      className="nd-btn" 
+                      title="Supprimer définitivement le fichier du serveur" 
+                      onClick={async () => {
+                        if (confirm("Voulez-vous supprimer définitivement ce logo du serveur ? Cette action supprimera le fichier physique.")) {
+                          const filename = logo.replace('/api/logos/', '');
+                          try {
+                            await fetch(`/api/logos/${filename}`, { method: 'DELETE' });
+                          } catch (e) {
+                            console.error("Erreur de suppression du logo:", e);
+                          }
+                          setLogo('');
+                        }
+                      }} 
+                      style={{ color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>

@@ -42,6 +42,100 @@ function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
+function condensePorts(ports: any[]): Array<{ hostDisplay: string; containerDisplay: string }> {
+  if (!ports || ports.length === 0) return [];
+
+  const parsed = ports.map(p => {
+    let hostPort: number | null = null;
+    let hostIp = '';
+    
+    if (p.hostBindings && p.hostBindings.length > 0) {
+      const binding = p.hostBindings[0];
+      const parts = binding.split(':');
+      if (parts.length > 1) {
+        hostIp = parts.slice(0, -1).join(':');
+        const parsedPort = parseInt(parts[parts.length - 1], 10);
+        if (!isNaN(parsedPort)) hostPort = parsedPort;
+      } else {
+        const parsedPort = parseInt(binding, 10);
+        if (!isNaN(parsedPort)) hostPort = parsedPort;
+      }
+    }
+
+    const containerPort = typeof p.containerPort === 'number' ? p.containerPort : parseInt(p.containerPort, 10);
+    const validContainerPort = !isNaN(containerPort) ? containerPort : 0;
+    
+    return {
+      raw: p,
+      hostPort,
+      hostIp,
+      containerPort: validContainerPort,
+      type: p.type || 'tcp'
+    };
+  });
+
+  parsed.sort((a, b) => {
+    if (a.hostPort !== null && b.hostPort !== null) {
+      if (a.hostPort !== b.hostPort) return a.hostPort - b.hostPort;
+    } else if (a.hostPort !== null) {
+      return -1;
+    } else if (b.hostPort !== null) {
+      return 1;
+    }
+    return a.containerPort - b.containerPort;
+  });
+
+  const groups: Array<typeof parsed> = [];
+  parsed.forEach(p => {
+    if (groups.length === 0) {
+      groups.push([p]);
+      return;
+    }
+
+    const currentGroup = groups[groups.length - 1];
+    const last = currentGroup[currentGroup.length - 1];
+
+    const isHostSequential = (p.hostPort !== null && last.hostPort !== null && p.hostPort === last.hostPort + 1 && p.hostIp === last.hostIp);
+    const isHostBothNull = (p.hostPort === null && last.hostPort === null);
+    
+    const isContainerSequential = (p.containerPort === last.containerPort + 1);
+    const isSameType = (p.type === last.type);
+
+    if ((isHostSequential || isHostBothNull) && isContainerSequential && isSameType) {
+      currentGroup.push(p);
+    } else {
+      groups.push([p]);
+    }
+  });
+
+  return groups.map(group => {
+    const first = group[0];
+    const last = group[group.length - 1];
+
+    let hostDisplay = '—';
+    if (first.hostPort !== null) {
+      const ipPrefix = first.hostIp ? `${first.hostIp}:` : '';
+      if (first.hostPort === last.hostPort || last.hostPort === null) {
+        hostDisplay = `${ipPrefix}${first.hostPort}`;
+      } else {
+        hostDisplay = `${ipPrefix}${first.hostPort}-${last.hostPort}`;
+      }
+    }
+
+    let containerDisplay = '';
+    if (first.containerPort === last.containerPort) {
+      containerDisplay = `${first.containerPort}/${first.type}`;
+    } else {
+      containerDisplay = `${first.containerPort}-${last.containerPort}/${first.type}`;
+    }
+
+    return {
+      hostDisplay,
+      containerDisplay
+    };
+  });
+}
+
 // ======================== DOCKER HOST FORM MODAL ========================
 function DockerHostFormModal({ onClose, onSave }: {
   onClose: () => void;
@@ -227,9 +321,9 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Ports</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {detail.ports.map((p: any, i: number) => (
+              {condensePorts(detail.ports).map((p: any, i: number) => (
                 <span key={i} className="nd-port-pill" style={{ fontSize: '0.62rem' }}>
-                  {!showSensitive ? '***' : (p.hostBindings?.join(', ') || '—')} → {!showSensitive ? '***' : p.containerPort}
+                  {!showSensitive ? '***' : p.hostDisplay} → {!showSensitive ? '***' : p.containerDisplay}
                 </span>
               ))}
             </div>
@@ -326,7 +420,7 @@ function ImagesTab({ images, loading, containers, hostId, refreshImages, selecte
     <>
       {/* Top action bar if selected */}
       {selected.length > 0 && (
-        <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 8, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{selected.length} image(s) sélectionnée(s)</span>
           <button 
             className="nd-btn" 
@@ -416,7 +510,7 @@ function ImagesTab({ images, loading, containers, hostId, refreshImages, selecte
               Cela libérera de l&apos;espace disque, mais vous devrez la retélécharger si un conteneur en a besoin.
             </p>
             {deleteError && (
-              <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 6, color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
+              <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
                 {deleteError}
               </div>
             )}
@@ -491,7 +585,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
     <>
       {/* Top action bar if selected */}
       {selected.length > 0 && (
-        <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 8, marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{selected.length} volume(s) sélectionné(s)</span>
           <button 
             className="nd-btn" 
@@ -578,7 +672,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
               Cette action est irréversible et effacera toutes les données stockées dessus.
             </p>
             {deleteError && (
-              <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 6, color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
+              <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
                 {deleteError}
               </div>
             )}

@@ -11,7 +11,9 @@
   --nd-bg-surface: #161b22;
   --nd-bg-gradient: radial-gradient(ellipse at top center, #161b22 0%, #0d1117 70%);
 
-  --nd-card-bg: rgba(22, 27, 34, 0.8);
+  --nd-card-bg-rgb: 22, 27, 34;
+  --nd-card-bg-opacity: 0.8;
+  --nd-card-bg: rgba(var(--nd-card-bg-rgb), var(--nd-card-bg-opacity));
   --nd-card-border: rgba(255, 255, 255, 0.06);
   --nd-card-hover-border: rgba(255, 255, 255, 0.12);
   --nd-card-radius: 12px;
@@ -52,7 +54,9 @@
   --nd-bg-surface: #ffffff;
   --nd-bg-gradient: radial-gradient(ellipse at top center, #ffffff 0%, #f5f5f7 70%);
 
-  --nd-card-bg: rgba(255, 255, 255, 0.75);
+  --nd-card-bg-rgb: 255, 255, 255;
+  --nd-card-bg-opacity: 0.75;
+  --nd-card-bg: rgba(var(--nd-card-bg-rgb), var(--nd-card-bg-opacity));
   --nd-card-border: rgba(0, 0, 0, 0.05);
   --nd-card-hover-border: rgba(0, 0, 0, 0.12);
   --nd-card-shadow: none;
@@ -204,13 +208,13 @@ body {
   gap: 2px;
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   padding: 3px;
 }
 
 .nd-nav-tab {
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: calc(var(--nd-card-radius) * 0.6);
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--nd-text-muted);
@@ -250,7 +254,7 @@ body {
   width: 100%;
   height: 36px;
   padding: 0 12px 0 34px;
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
   color: var(--nd-text);
@@ -288,27 +292,28 @@ body {
 
 .nd-btn {
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   border: 1px solid var(--nd-card-border);
-  background: transparent;
+  background: var(--nd-card-bg);
   color: var(--nd-text-muted);
   cursor: pointer;
-  transition: background var(--nd-transition), color var(--nd-transition), border-color var(--nd-transition);
+  transition: background var(--nd-transition), color var(--nd-transition), border-color var(--nd-transition), transform var(--nd-transition);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
   font-size: 0.72rem;
   font-weight: 600;
-  font-family: 'Outfit', sans-serif;
+  font-family: inherit;
   height: 36px;
   box-sizing: border-box;
 }
 
 .nd-btn:hover {
   color: var(--nd-text);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--nd-card-bg);
   border-color: var(--nd-card-hover-border);
+  filter: brightness(1.1);
 }
 
 .nd-btn-active {
@@ -338,7 +343,7 @@ body {
   height: 26px;
   padding: 0;
   margin: 0;
-  border-radius: 6px;
+  border-radius: calc(var(--nd-card-radius) * 0.5);
   transition: all var(--nd-transition);
   display: flex;
   align-items: center;
@@ -367,7 +372,7 @@ body {
 .nd-secret-banner {
   background: rgba(248, 81, 73, 0.08);
   border: 1px solid rgba(248, 81, 73, 0.2);
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   padding: 8px 16px;
   display: flex;
   align-items: center;
@@ -409,7 +414,6 @@ body {
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
   padding: 14px;
-  backdrop-filter: blur(var(--nd-blur));
 }
 
 /* ==================== STAT ROW ==================== */
@@ -490,8 +494,6 @@ body {
 
 .nd-dock {
   background: var(--nd-card-bg);
-  backdrop-filter: blur(var(--nd-blur));
-  -webkit-backdrop-filter: blur(var(--nd-blur));
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
   padding: 12px;
@@ -515,7 +517,6 @@ body {
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
   padding: 14px;
-  backdrop-filter: blur(var(--nd-blur));
   box-shadow: var(--nd-card-shadow);
   transition: border-color var(--nd-transition);
 }
@@ -548,7 +549,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 7px 8px;
-  border-radius: 8px;
+  border-radius: calc(var(--nd-card-radius) * 0.7);
   border: 1px solid transparent;
   transition: background var(--nd-transition), border-color var(--nd-transition);
   text-decoration: none;
@@ -567,7 +568,7 @@ body {
 .nd-service-icon {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: calc(var(--nd-card-radius) * 0.7);
   background: var(--nd-icon-bg);
   border: 1px solid var(--nd-icon-border);
   display: flex;
@@ -610,7 +611,7 @@ body {
 .nd-vpn-btn {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: calc(var(--nd-card-radius) * 0.5);
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--nd-card-border);
   display: flex;
@@ -631,7 +632,7 @@ body {
 /* ==================== EDIT BUTTONS ==================== */
 .nd-edit-btn {
   padding: 4px;
-  border-radius: 5px;
+  border-radius: calc(var(--nd-card-radius) * 0.4);
   border: none;
   background: transparent;
   cursor: pointer;
@@ -670,16 +671,17 @@ body {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.62rem;
   padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--nd-card-radius);
+  background: var(--nd-card-bg);
   color: var(--nd-text-muted);
   border: 1px solid var(--nd-card-border);
-  transition: border-color var(--nd-transition), color var(--nd-transition);
+  transition: border-color var(--nd-transition), color var(--nd-transition), transform var(--nd-transition);
 }
 
 .nd-port-pill:hover {
   border-color: var(--nd-accent);
   color: var(--nd-accent);
+  transform: scale(1.05);
 }
 
 /* ==================== MODAL ==================== */
@@ -712,7 +714,7 @@ body {
 .nd-input {
   width: 100%;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--nd-card-border);
   color: var(--nd-text);
@@ -953,7 +955,7 @@ body {
   .nd-dock-mobile-btn--left {
     left: 0;
     border-left: none;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 var(--nd-card-radius) var(--nd-card-radius) 0;
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--left {
@@ -963,7 +965,7 @@ body {
   .nd-dock-mobile-btn--right {
     right: 0;
     border-right: none;
-    border-radius: 8px 0 0 8px;
+    border-radius: var(--nd-card-radius) 0 0 var(--nd-card-radius);
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--right {
@@ -985,8 +987,8 @@ body {
     bottom: auto !important;
     top: 50% !important;
     z-index: 10003 !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     background: var(--nd-bg-surface) !important;
     box-shadow: none !important;
@@ -1047,7 +1049,7 @@ body {
   .nd-dock-mobile-btn--left {
     left: 0;
     border-left: none;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 var(--nd-card-radius) var(--nd-card-radius) 0;
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--left {
@@ -1057,7 +1059,7 @@ body {
   .nd-dock-mobile-btn--right {
     right: 0;
     border-right: none;
-    border-radius: 8px 0 0 8px;
+    border-radius: var(--nd-card-radius) 0 0 var(--nd-card-radius);
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--right {
@@ -1185,7 +1187,6 @@ body {
   align-items: center;
   padding: 10px 0;
   background: var(--nd-card-bg);
-  backdrop-filter: blur(var(--nd-blur));
   border: 1px solid var(--nd-card-border);
   box-shadow: var(--nd-card-shadow);
   border-radius: var(--nd-card-radius);
@@ -1229,7 +1230,7 @@ body {
   justify-content: center;
   gap: 3px;
   padding: 8px 0;
-  border-radius: 10px;
+  border-radius: var(--nd-card-radius);
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -1285,7 +1286,7 @@ body {
 .nd-dock--right .nd-dock-item-indicator {
   left: auto;
   right: -2px;
-  border-radius: 4px 0 0 4px;
+  border-radius: calc(var(--nd-card-radius) * 0.35) 0 0 calc(var(--nd-card-radius) * 0.35);
 }
 
 .nd-dock-item--hidden {
@@ -1303,10 +1304,9 @@ body {
   padding: 5px;
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   box-shadow: none;
   z-index: 110;
-  backdrop-filter: blur(var(--nd-blur)) saturate(180%);
   transition: opacity 0.2s, transform 0.2s;
 }
 
@@ -1350,7 +1350,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: calc(var(--nd-card-radius) * 0.35);
   border: none;
   background: transparent;
   color: var(--nd-text-muted);
@@ -1430,14 +1430,14 @@ body {
   gap: 2px;
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   padding: 3px;
   width: fit-content;
 }
 
 .nd-docker-tab {
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: calc(var(--nd-card-radius) * 0.6);
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--nd-text-muted);
@@ -1474,7 +1474,6 @@ body {
   padding: 10px 12px;
   cursor: pointer;
   transition: all var(--nd-transition);
-  backdrop-filter: blur(var(--nd-blur));
 }
 
 .nd-container-card:hover {
@@ -1599,7 +1598,7 @@ body {
 
 .nd-host-btn {
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--nd-text-muted);
@@ -1630,7 +1629,6 @@ body {
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
   padding: 16px;
-  backdrop-filter: blur(var(--nd-blur));
 }
 
 .nd-docker-detail-header {
@@ -1663,7 +1661,7 @@ body {
 .nd-docker-stat-card {
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--nd-card-border);
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   padding: 10px;
   text-align: center;
 }
@@ -1749,7 +1747,7 @@ body {
     margin-bottom: 8px;
     padding: 10px;
     background: rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    border-radius: var(--nd-card-radius);
     border: 1px solid var(--nd-card-border) !important;
     position: relative;
   }
@@ -1821,7 +1819,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--nd-card-radius);
   border: none;
   cursor: pointer;
   text-align: left;
@@ -1842,7 +1840,7 @@ body {
 .nd-settings-card {
   background: rgba(255, 255, 255, 0.02);
   padding: 14px;
-  border-radius: 10px;
+  border-radius: var(--nd-card-radius);
   border: 1px solid var(--nd-card-border);
 }
 
@@ -1903,4 +1901,241 @@ body {
     gap: 10px;
   }
 }
+
+/* ==================== LAYOUT MODES (STANDARD, COMPACT, BENTO) ==================== */
+
+.nd-service-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  touch-action: pan-y;
+}
+
+.nd-services-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nd-services-grid--compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nd-services-grid--bento {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+  padding: 4px 0;
+}
+
+/* Service Item Modifiers */
+.nd-service--standard {
+  /* Default styling is already handled */
+}
+
+/* Compact style */
+.nd-service--compact {
+  padding: 4px 6px;
+  gap: 6px;
+}
+
+.nd-service--compact .nd-service-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: calc(var(--nd-card-radius) * 0.5);
+}
+
+.nd-service--compact .nd-service-icon img {
+  width: 14px;
+  height: 14px;
+}
+
+.nd-service--compact .nd-service-name {
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+/* Bento Grid style */
+.nd-service--bento {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 6px;
+  height: 84px;
+  border: 1px solid var(--nd-card-border);
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: var(--nd-card-radius);
+}
+
+.light .nd-service--bento {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.nd-service--bento:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--nd-accent);
+}
+
+.nd-service--bento .nd-service-link {
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 6px !important;
+  width: 100%;
+}
+
+.nd-service--bento .nd-service-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--nd-card-radius);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.nd-service--bento .nd-service-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.nd-service-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nd-text-muted);
+  opacity: 0.4;
+  padding: 4px;
+  transition: opacity 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.nd-service-drag-handle:hover {
+  opacity: 0.9;
+  color: var(--nd-accent);
+}
+
+.nd-service--bento .nd-service-drag-handle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px;
+}
+
+/* ==================== BENTO LOGO-ONLY LAYOUTS ==================== */
+.nd-services-grid--bento-logo-large {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.nd-services-grid--bento-logo-medium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.nd-services-grid--bento-logo-small {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.nd-service--bento-logo-large,
+.nd-service--bento-logo-medium,
+.nd-service--bento-logo-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--nd-card-border);
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: var(--nd-card-radius);
+  transition: all 0.2s ease;
+}
+
+.light .nd-service--bento-logo-large,
+.light .nd-service--bento-logo-medium,
+.light .nd-service--bento-logo-small {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.nd-service--bento-logo-large:hover,
+.nd-service--bento-logo-medium:hover,
+.nd-service--bento-logo-small:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--nd-accent);
+  transform: translateY(-1px);
+}
+
+.nd-service--bento-logo-large .nd-service-link,
+.nd-service--bento-logo-medium .nd-service-link,
+.nd-service--bento-logo-small .nd-service-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.nd-service--bento-logo-large .nd-service-icon {
+  width: 50%;
+  height: 50%;
+  border-radius: var(--nd-card-radius);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.nd-service--bento-logo-medium .nd-service-icon {
+  width: 55%;
+  height: 55%;
+  border-radius: calc(var(--nd-card-radius) * 0.5);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nd-service--bento-logo-small .nd-service-icon {
+  width: 60%;
+  height: 60%;
+  border-radius: calc(var(--nd-card-radius) * 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.nd-service--bento-logo-large .nd-service-icon img,
+.nd-service--bento-logo-medium .nd-service-icon img,
+.nd-service--bento-logo-small .nd-service-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.nd-service--bento-logo-large .nd-service-drag-handle,
+.nd-service--bento-logo-medium .nd-service-drag-handle,
+.nd-service--bento-logo-small .nd-service-drag-handle {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  padding: 1px;
+}
+
+/* ==================== CARD TRANSPARENCY OVERRIDE ==================== */
+/* Remove residual frosted glass blur behind dashboard cards and sidebars for clean, consistent glassmorphism */
+.nd-card, .nd-sidebar-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+
+
 
