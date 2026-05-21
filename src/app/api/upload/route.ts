@@ -6,6 +6,7 @@ import fs from 'fs';
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
+  const type = formData.get('type') as string | null;
 
   if (!file) {
     return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -21,7 +22,8 @@ export async function POST(req: NextRequest) {
   }
 
   const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
-  const safeName = `${baseName}_${Date.now()}${ext}`;
+  const prefix = type === 'background' ? 'bg_' : '';
+  const safeName = `${prefix}${baseName}_${Date.now()}${ext}`;
   const filePath = path.join(getLogosDir(), safeName);
   fs.writeFileSync(filePath, buffer);
 

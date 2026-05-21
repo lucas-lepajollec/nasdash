@@ -136,11 +136,17 @@ export default function HomeTab({
   };
 
   // Category handlers
-  const handleSaveCategory = async (data: { title: string; emoji: string; isSecret: boolean; services?: Service[] }) => {
+  const handleSaveCategory = async (data: { 
+    title: string; 
+    emoji: string; 
+    isSecret: boolean; 
+    services?: Service[]; 
+    layout?: Category['layout'];
+  }) => {
     if (categoryModal.category) {
       await updateCategory(categoryModal.category.id, data);
     } else {
-      await addCategory(data.title, data.emoji, data.isSecret);
+      await addCategory(data.title, data.emoji, data.isSecret, data.layout);
     }
     setCategoryModal({ open: false });
   };

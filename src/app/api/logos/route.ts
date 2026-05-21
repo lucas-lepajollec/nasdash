@@ -9,6 +9,10 @@ export async function GET(req: NextRequest) {
     if (!fs.existsSync(dir)) {
       return NextResponse.json({ files: [] });
     }
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get('type');
+    const current = searchParams.get('current');
+
     const files = fs.readdirSync(dir);
     
     // Filter for image files
@@ -16,7 +20,17 @@ export async function GET(req: NextRequest) {
     const images = files
       .filter((file) => {
         const ext = path.extname(file).toLowerCase();
-        return imageExtensions.includes(ext);
+        if (!imageExtensions.includes(ext)) return false;
+
+        const fileUrl = `/api/logos/${file}`;
+        
+        // If query wants backgrounds, keep bg_ prefix or the currently selected background
+        if (type === 'background') {
+          return file.startsWith('bg_') || (current && fileUrl === current);
+        }
+
+        // Otherwise (listing logos), hide files that start with bg_ prefix
+        return !file.startsWith('bg_');
       })
       .map((file) => {
         const filePath = path.join(dir, file);

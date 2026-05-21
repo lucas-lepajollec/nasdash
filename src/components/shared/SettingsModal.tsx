@@ -143,21 +143,8 @@ function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitchProps)
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '12px 14px',
-        background: 'rgba(255, 255, 255, 0.01)',
-        border: '1px solid var(--nd-card-border)',
-        borderRadius: 'var(--nd-card-radius)',
         cursor: 'pointer',
-        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         userSelect: 'none'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)';
-        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.01)';
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginRight: 16 }}>
@@ -166,29 +153,27 @@ function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitchProps)
       </div>
       <div 
         style={{
-          width: '38px',
-          height: '20px',
-          borderRadius: 'var(--nd-card-radius)',
-          background: checked ? 'var(--nd-accent)' : 'rgba(255,255,255,0.06)',
-          border: '1px solid',
-          borderColor: checked ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+          width: '36px',
+          height: '18px',
+          borderRadius: '9px',
+          background: checked ? 'var(--nd-green)' : 'rgba(255,255,255,0.08)',
+          border: checked ? 'none' : '1px solid var(--nd-card-border)',
           position: 'relative',
-          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.2s ease',
           flexShrink: 0,
-          boxShadow: checked ? '0 0 10px var(--nd-accent-dim)' : 'none'
+          boxShadow: checked ? '0 0 8px rgba(63, 185, 80, 0.3)' : 'none'
         }}
       >
         <div 
           style={{
-            width: '14px',
-            height: '14px',
+            width: '12px',
+            height: '12px',
             borderRadius: '50%',
-            background: '#ffffff',
+            background: checked ? '#ffffff' : '#888888',
             position: 'absolute',
-            top: '2px',
-            left: checked ? '20px' : '2px',
-            transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.4)'
+            top: checked ? '3px' : '2px',
+            left: checked ? '21px' : '3px',
+            transition: 'all 0.2s ease',
           }}
         />
       </div>
@@ -369,7 +354,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   const fetchUploadedBgs = async () => {
     try {
-      const res = await fetch('/api/logos');
+      const res = await fetch(`/api/logos?type=background&current=${encodeURIComponent(backgroundImage)}`);
       const data = await res.json();
       if (data && data.files) {
         setUploadedBgs(data.files);
@@ -381,7 +366,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   useEffect(() => {
     fetchUploadedBgs();
-  }, []);
+  }, [backgroundImage]);
 
   const handleSaveBackground = async () => {
     await updateConfig({ backgroundImage });
@@ -801,6 +786,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
                         const formData = new FormData();
                         formData.append('file', file);
+                        formData.append('type', 'background');
 
                         try {
                           const res = await fetch('/api/upload', {

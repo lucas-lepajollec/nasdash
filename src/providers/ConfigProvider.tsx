@@ -7,7 +7,7 @@ interface ConfigContextType {
   config: DashboardConfig | null;
   loading: boolean;
   refresh: () => Promise<void>;
-  addCategory: (title: string, emoji: string, isSecret?: boolean) => Promise<void>;
+  addCategory: (title: string, emoji: string, isSecret?: boolean, layout?: Category['layout']) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   addService: (categoryId: string, service: Omit<Service, 'id'>) => Promise<void>;
@@ -169,11 +169,11 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     }
   }, [config]);
 
-  const addCategory = async (title: string, emoji: string, isSecret = false) => {
+  const addCategory = async (title: string, emoji: string, isSecret = false, layout?: Category['layout']) => {
     const res = await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'category', title, emoji, isSecret }),
+      body: JSON.stringify({ type: 'category', title, emoji, isSecret, layout }),
     });
     if (res.ok) await fetchConfig();
   };
