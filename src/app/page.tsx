@@ -9,6 +9,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
 import SettingsModal from '@/components/shared/SettingsModal';
 import TabManagerModal from '@/components/shared/TabManagerModal';
+import PerfMonitor from '@/components/shared/PerfMonitor';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const HomeAssistantTab = lazy(() => import('@/components/tabs/ha/HomeAssistantTab'));
@@ -191,6 +192,9 @@ export default function Shell() {
           onClose={() => setTabManagerModal({ open: false })}
         />
       )}
+
+      {/* Performance Monitor — petit bouton en bas à droite */}
+      <PerfMonitor />
     </div>
   );
 }

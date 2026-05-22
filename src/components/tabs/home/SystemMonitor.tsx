@@ -2,24 +2,27 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useState, useEffect, useRef } from 'react';
+import { useSystemStats } from '@/hooks/useSystemStats';
 
 interface SystemMonitorProps {
-  history: any[];
   isDark?: boolean;
   isVisible: boolean;
 }
 
-export default function SystemMonitor({ history, isDark = true, isVisible }: SystemMonitorProps) {
+export default function SystemMonitor({ isDark = true, isVisible }: SystemMonitorProps) {
+  const { history } = useSystemStats();
   const [isReady, setIsReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // We wait for the next frame and layout to be stable
+    let timer: NodeJS.Timeout;
     const handle = requestAnimationFrame(() => {
-      const timer = setTimeout(() => setIsReady(true), 500);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setIsReady(true), 500);
     });
-    return () => cancelAnimationFrame(handle);
+    return () => {
+      cancelAnimationFrame(handle);
+      clearTimeout(timer);
+    };
   }, []);
 
   // Stop rendering if parent is hidden, but AFTER hooks to avoid React errors

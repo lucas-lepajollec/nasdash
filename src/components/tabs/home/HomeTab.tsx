@@ -12,7 +12,6 @@ import ServiceFormModal from './modals/ServiceFormModal';
 import CategoryFormModal from './modals/CategoryFormModal';
 import DeviceFormModal from './modals/DeviceFormModal';
 import DockerActionFormModal from './modals/DockerActionFormModal';
-import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
@@ -35,7 +34,6 @@ export default function HomeTab({
   onToggleSecretSections,
   isVisible
 }: HomeTabProps) {
-  const { stats, history } = useSystemStats();
   const {
     config,
     loading,
@@ -278,7 +276,7 @@ export default function HomeTab({
             />
 
             {config.settings.showMonitor && (
-              <SystemMonitor history={history} isDark={true} isVisible={isVisible} />
+              <SystemMonitor isDark={true} isVisible={isVisible} />
             )}
 
             <Footer
