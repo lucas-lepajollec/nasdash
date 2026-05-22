@@ -25,7 +25,7 @@ export async function GET() {
         send({ error: 'Failed to get initial stats', details: String(err) });
       }
 
-      // Then poll every 2 seconds
+      // Then poll every 5 seconds
       const interval = setInterval(async () => {
         if (!active) {
           clearInterval(interval);
@@ -37,7 +37,7 @@ export async function GET() {
         } catch {
           // silently skip failed polls
         }
-      }, 2000);
+      }, 5000);
 
       // Cleanup when client disconnects
       setTimeout(() => {

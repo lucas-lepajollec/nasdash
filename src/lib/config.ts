@@ -131,10 +131,11 @@ function clearErrorSmartly(deviceId: string, context: string) {
 
 export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = {};
 
+const glancesUrlCache: Record<string, string> = {};
 export function startBackgroundMonitoring() {
   if (globalAny.monitoringStarted) return;
   globalAny.monitoringStarted = true;
-  console.log('🚀 Démarrage du Background Monitoring des appareils (Toutes les 20s)...');
+  console.log('🚀 Démarrage du Background Monitoring des appareils (Toutes les 10s)...');
 
   const interpolateEnv = (str: string) => str.replace(/\${([^}]+)}/g, (_, v) => process.env[v] || '');
 
@@ -182,10 +183,10 @@ export function startBackgroundMonitoring() {
       const currentConfig = readConfig();
       if (!currentConfig.devices) return;
 
-      for (const device of currentConfig.devices) {
+      const promises = currentConfig.devices.map(async (device) => {
         if (!device.api) {
           devicesStatusCache[device.id] = { online: true, stats: device.stats || [], updatedAt: Date.now() };
-          continue;
+          return;
         }
 
         const id = device.id;
@@ -194,13 +195,14 @@ export function startBackgroundMonitoring() {
         if (device.api.type === 'glances') {
           if (!apiUrl) {
             devicesStatusCache[id] = { online: false, error: 'URL Glances manquante.', isOffline: true, updatedAt: Date.now() };
-            continue;
+            return;
           }
 
           let baseUrl = apiUrl;
           if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
           let fetchUrls: string[] = [];
+          if (glancesUrlCache[id]) fetchUrls.push(glancesUrlCache[id]);
           if (baseUrl.endsWith('/all')) {
             fetchUrls.push(baseUrl);
           } else {
@@ -210,6 +212,7 @@ export function startBackgroundMonitoring() {
             }
             const endpoints = ['/api/5/all', '/api/4/all', '/api/3/all', '/api/2/all'];
             for (const ep of endpoints) fetchUrls.push(`${base}${ep}`);
+            fetchUrls = Array.from(new Set(fetchUrls));
           }
 
           try {
@@ -232,7 +235,7 @@ export function startBackgroundMonitoring() {
             for (const url of fetchUrls) {
               try {
                 res = await fetch(url, { headers, cache: 'no-store', signal: AbortSignal.timeout(4000) });
-                if (res.ok) { finalUrl = url; break; }
+                if (res.ok) { finalUrl = url; glancesUrlCache[id] = url; break; }
                 if (res.status !== 404) { finalUrl = url; break; }
               } catch (e) {
                 lastError = e;
@@ -247,7 +250,7 @@ export function startBackgroundMonitoring() {
                 logErrorSmartly(id, 'Glances', `Fetch Error: ${lastError?.message || lastError}`);
                 devicesStatusCache[id] = { online: false, error: 'Impossible de joindre Glances', isOffline: true, updatedAt: Date.now() };
               }
-              continue;
+              return;
             }
 
             const text = await res.text();
@@ -257,7 +260,7 @@ export function startBackgroundMonitoring() {
             } catch (e) {
               logErrorSmartly(id, 'Glances HTML', `Reçu HTML au lieu de JSON sur ${finalUrl}`);
               devicesStatusCache[id] = { online: false, error: 'Réponse invalide (HTML)', isOffline: true, updatedAt: Date.now() };
-              continue;
+              return;
             }
 
             const stats = [];
@@ -351,7 +354,7 @@ export function startBackgroundMonitoring() {
         else if (device.api.type === 'proxmox') {
           if (!apiUrl || !device.api.token) {
             devicesStatusCache[id] = { online: false, error: 'URL ou Token manquant.', isOffline: true, updatedAt: Date.now() };
-            continue;
+            return;
           }
 
           try {
@@ -416,7 +419,7 @@ export function startBackgroundMonitoring() {
 
             if (stats.length === 0) {
               devicesStatusCache[id] = { online: false, error: 'VM arrêtée ou aucune stat.', isOffline: true, updatedAt: Date.now() };
-              continue;
+              return;
             }
 
             clearErrorSmartly(id, 'Proxmox');
@@ -431,7 +434,7 @@ export function startBackgroundMonitoring() {
         else if (device.api.type === 'lhm') {
           if (!apiUrl) {
             devicesStatusCache[id] = { online: false, error: 'URL LHM manquante.', isOffline: true, updatedAt: Date.now() };
-            continue;
+            return;
           }
 
           try {
@@ -524,7 +527,8 @@ export function startBackgroundMonitoring() {
           // Unknown or unsupported type just uses static stats if they exist
           devicesStatusCache[id] = { online: true, stats: device.stats || [], updatedAt: Date.now() };
         }
-      }
+      });
+      await Promise.all(promises);
     } catch (err) {
       console.error('Background Polling Loop Error:', err);
     }
@@ -532,7 +536,7 @@ export function startBackgroundMonitoring() {
 
   // Run immediately then every 20s
   doPoll();
-  setInterval(doPoll, 20000);
+  setInterval(doPoll, 10000);
 }
 
 // Auto-start on server load
