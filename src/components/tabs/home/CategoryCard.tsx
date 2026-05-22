@@ -79,18 +79,40 @@ export default function CategoryCard({
           ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, outline: '2px dashed var(--nd-accent)' } : {})
         }}
       >
-        {filteredServices.map((service, index) => (
-          <React.Fragment key={service.id}>
-            {showDropGap && <DropGap categoryId={category.id} index={index} />}
-            <ServiceItem
-              service={service}
-              categoryId={category.id}
-              editMode={editMode}
-              showSensitive={showSensitive}
-              layout={category.layout}
-            />
-          </React.Fragment>
-        ))}
+        {filteredServices.map((service, index) => {
+          const isGrid = category.layout === 'bento' || category.layout === 'grid' || category.layout?.startsWith('bento-logo');
+          
+          if (isGrid && editMode) {
+            return (
+              <div key={service.id} style={{ position: 'relative' }}>
+                <DropGap categoryId={category.id} index={index} isVertical />
+                <ServiceItem
+                  service={service}
+                  categoryId={category.id}
+                  editMode={editMode}
+                  showSensitive={showSensitive}
+                  layout={category.layout}
+                />
+                {index === filteredServices.length - 1 && (
+                  <DropGap categoryId={category.id} index={index + 1} isVertical isLast />
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <React.Fragment key={service.id}>
+              {showDropGap && <DropGap categoryId={category.id} index={index} />}
+              <ServiceItem
+                service={service}
+                categoryId={category.id}
+                editMode={editMode}
+                showSensitive={showSensitive}
+                layout={category.layout}
+              />
+            </React.Fragment>
+          );
+        })}
         {showDropGap && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}
         {filteredServices.length === 0 && !searchQuery && (
           <div style={{ gridColumn: '1 / -1', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -102,11 +124,29 @@ export default function CategoryCard({
   );
 }
 
-const DropGap = ({ categoryId, index }: { categoryId: string, index: number }) => {
+const DropGap = ({ categoryId, index, isVertical, isLast }: { categoryId: string, index: number, isVertical?: boolean, isLast?: boolean }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `drop-gap-${categoryId}-${index}`,
     data: { type: 'service-gap', categoryId, index },
   });
+
+  if (isVertical) {
+    return (
+      <div ref={setNodeRef} style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        [isLast ? 'right' : 'left']: -10,
+        width: 20,
+        zIndex: isOver ? 10 : 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {isOver && <div style={{ width: 2, height: '100%', background: 'var(--nd-accent)', borderRadius: 2 }} />}
+      </div>
+    );
+  }
 
   return (
     <div ref={setNodeRef} style={{

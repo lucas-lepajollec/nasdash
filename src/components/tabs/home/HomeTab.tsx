@@ -118,8 +118,9 @@ export default function HomeTab({
   const handleSaveService = async (data: {
     name: string;
     localUrl: string;
-    tailscaleUrl: string;
+    secondaryUrl: string;
     logo: string;
+    secondaryLogo: string;
     categoryId?: string;
   }) => {
     if (serviceModal.service) {

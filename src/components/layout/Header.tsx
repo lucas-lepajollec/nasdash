@@ -6,6 +6,11 @@ import { TabId, TabDef } from '@/hooks/useTabs';
 
 interface HeaderProps {
   title: string;
+  titleLogo?: string;
+  titleTablet?: string;
+  titleMobile?: string;
+  titleFont?: 'outfit' | 'space-grotesk' | 'syne' | 'righteous' | 'montserrat';
+  titleAnimation?: 'none' | 'spotlight-silver';
   searchQuery: string;
   onSearchChange: (q: string) => void;
   editMode: boolean;
@@ -23,6 +28,11 @@ interface HeaderProps {
 
 export default function Header({
   title,
+  titleLogo,
+  titleTablet,
+  titleMobile,
+  titleFont = 'outfit',
+  titleAnimation,
   searchQuery,
   onSearchChange,
   editMode,
@@ -39,13 +49,35 @@ export default function Header({
 }: HeaderProps) {
   const isHome = !activeTab || activeTab === 'dashboard';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const renderAnimatedTitleText = (txt: string) => txt;
+
   return (
     <>
       <header className="nd-header">
-        {/* Brand — terminal style */}
-        <div className="nd-brand pl-2 md:pl-0">
+        {/* Brand — terminal style with flashing green status LED */}
+        <div className={`nd-brand pl-2 md:pl-0 ${titleAnimation && titleAnimation !== 'none' ? `nd-title-anim-${titleAnimation}` : ''}`}>
           <span className="nd-brand-dot" />
-          <strong>{title}</strong>
+          {titleLogo ? (
+            <img 
+              src={titleLogo} 
+              alt="Logo" 
+              className="nd-title-logo" 
+              style={{ maxHeight: '20px', width: 'auto', objectFit: 'contain' }} 
+            />
+          ) : (
+            <strong style={{ fontFamily: `var(--font-${titleFont === 'space-grotesk' ? 'space' : titleFont}), sans-serif` }}>
+              {titleTablet || titleMobile ? (
+                <>
+                  <span className="nd-title-desktop">{renderAnimatedTitleText(title)}</span>
+                  {titleTablet && <span className="nd-title-tablet">{renderAnimatedTitleText(titleTablet)}</span>}
+                  {titleMobile && <span className="nd-title-mobile">{renderAnimatedTitleText(titleMobile)}</span>}
+                </>
+              ) : (
+                renderAnimatedTitleText(title)
+              )}
+            </strong>
+          )}
         </div>
 
         {/* Search */}

@@ -4,6 +4,24 @@ import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
+// --- Smart Logger to avoid spamming errors ---
+const globalAny: any = global;
+if (!globalAny.__dockerErrorLogCache) globalAny.__dockerErrorLogCache = new Map<string, string>();
+const errorLogCache: Map<string, string> = globalAny.__dockerErrorLogCache;
+
+function logErrorSmartly(hostId: string, context: string, errorMsg: string) {
+  const key = `${hostId}-${context}`;
+  if (errorLogCache.get(key) !== errorMsg) {
+    console.error(`🔴 [${context}]`, errorMsg);
+    errorLogCache.set(key, errorMsg);
+  }
+}
+
+function clearErrorSmartly(hostId: string, context: string) {
+  errorLogCache.delete(`${hostId}-${context}`);
+}
+// ---------------------------------------------
+
 function getConfig() {
   const configPath = path.join(process.cwd(), 'data', 'config.json');
   return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -43,8 +61,10 @@ export async function GET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
+  let resolvedHostId = 'unknown';
   try {
     const { hostId } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) {
       return NextResponse.json({ error: 'Docker host not found' }, { status: 404 });
@@ -80,9 +100,10 @@ export async function GET(
       labels: c.Labels || {},
     }));
 
+    clearErrorSmartly(resolvedHostId, 'Docker');
     return NextResponse.json(containers);
   } catch (e: any) {
-    console.error('Docker containers error:', e.message);
+    logErrorSmartly(resolvedHostId, 'Docker', e.message || 'Unknown error');
     return NextResponse.json(
       { error: e.message || 'Failed to fetch containers', isOffline: true },
       { status: 502 }

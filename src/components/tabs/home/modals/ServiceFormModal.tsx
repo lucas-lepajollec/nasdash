@@ -8,7 +8,7 @@ interface ServiceFormModalProps {
   service?: Service;
   categoryId?: string;
   onClose: () => void;
-  onSave: (data: { name: string; localUrl: string; tailscaleUrl: string; logo: string; categoryId?: string }) => void;
+  onSave: (data: { name: string; localUrl: string; secondaryUrl: string; logo: string; secondaryLogo: string; categoryId?: string }) => void;
   onDelete?: (id: string) => void;
   onUploadLogo: (file: File) => Promise<string>;
   showSensitive?: boolean;
@@ -17,8 +17,9 @@ interface ServiceFormModalProps {
 export default function ServiceFormModal({ service, categoryId, onClose, onSave, onDelete, onUploadLogo, showSensitive = false }: ServiceFormModalProps) {
   const [name, setName] = useState(service?.name || '');
   const [localUrl, setLocalUrl] = useState(service?.localUrl || '');
-  const [tailscaleUrl, setTailscaleUrl] = useState(service?.tailscaleUrl || '');
+  const [secondaryUrl, setSecondaryUrl] = useState(service?.secondaryUrl || '');
   const [logo, setLogo] = useState(service?.logo || '');
+  const [secondaryLogo, setSecondaryLogo] = useState(service?.secondaryLogo || '');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -35,7 +36,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onSave({ name, localUrl, tailscaleUrl, logo, categoryId });
+    onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId });
   };
 
   return (
@@ -58,8 +59,8 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
             <input type={!showSensitive ? "password" : "text"} className="nd-input" value={localUrl} onChange={(e) => setLocalUrl(e.target.value)} placeholder="http://192.168.1.100:8080" />
           </div>
           <div>
-            <label className="nd-label">URL Tailscale</label>
-            <input type={!showSensitive ? "password" : "text"} className="nd-input" value={tailscaleUrl} onChange={(e) => setTailscaleUrl(e.target.value)} placeholder="http://100.100.100.100:8080" />
+            <label className="nd-label">URL Secondaire (Optionnel)</label>
+            <input type={!showSensitive ? "password" : "text"} className="nd-input" value={secondaryUrl} onChange={(e) => setSecondaryUrl(e.target.value)} placeholder="https://vpn.example.com" />
           </div>
           <div>
             <label className="nd-label">Logo</label>
@@ -89,6 +90,50 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
                             console.error("Erreur de suppression du logo:", e);
                           }
                           setLogo('');
+                        }
+                      }} 
+                      style={{ color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="nd-label">Logo Secondaire (Optionnel)</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {secondaryLogo && (
+                <img src={secondaryLogo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
+              )}
+              <label className="nd-btn" style={{ cursor: 'pointer' }}>
+                <Upload size={12} /> Upload
+                <input type="file" accept="image/*" onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const url = await onUploadLogo(file);
+                  setSecondaryLogo(url);
+                }} style={{ display: 'none' }} />
+              </label>
+              {secondaryLogo && (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button className="nd-btn" title="Détacher le logo secondaire" onClick={() => setSecondaryLogo('')}>
+                    <X size={12} />
+                  </button>
+                  {secondaryLogo.startsWith('/api/logos/') && (
+                    <button 
+                      className="nd-btn" 
+                      title="Supprimer définitivement le fichier du serveur" 
+                      onClick={async () => {
+                        if (confirm("Voulez-vous supprimer définitivement ce logo du serveur ? Cette action supprimera le fichier physique.")) {
+                          const filename = secondaryLogo.replace('/api/logos/', '');
+                          try {
+                            await fetch(`/api/logos/${filename}`, { method: 'DELETE' });
+                          } catch (e) {
+                            console.error("Erreur de suppression du logo:", e);
+                          }
+                          setSecondaryLogo('');
                         }
                       }} 
                       style={{ color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}

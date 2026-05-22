@@ -59,10 +59,11 @@ export async function POST(req: NextRequest) {
 
     const newService: Service = {
       id: uuidv4(),
-      name: body.name || 'New Service',
+      name: body.name || 'Nouveau',
       logo: body.logo || '',
       localUrl: body.localUrl || '',
-      tailscaleUrl: body.tailscaleUrl || '',
+      secondaryUrl: body.secondaryUrl || '',
+      secondaryLogo: body.secondaryLogo || '',
     };
     config.categories[catIndex].services.push(newService);
     writeConfig(config);
@@ -78,6 +79,8 @@ export async function POST(req: NextRequest) {
       name: body.name || 'Nouvel appareil',
       host: body.host || '',
       icon: body.icon || '🖥️',
+      statStyle: body.statStyle || 'horizontal',
+      hideValues: body.hideValues || false,
       stats: [],
     };
 
@@ -222,6 +225,9 @@ export async function PUT(req: NextRequest) {
         if (body.name !== undefined) svc.name = body.name;
         if (body.logo !== undefined) svc.logo = body.logo;
         if (body.localUrl !== undefined) svc.localUrl = body.localUrl;
+        if (body.secondaryUrl !== undefined) svc.secondaryUrl = body.secondaryUrl;
+        if (body.secondaryLogo !== undefined) svc.secondaryLogo = body.secondaryLogo;
+        // Keep tailscaleUrl setter for backwards compatibility if clients still send it
         if (body.tailscaleUrl !== undefined) svc.tailscaleUrl = body.tailscaleUrl;
         writeConfig(config);
         return NextResponse.json(svc);
@@ -234,6 +240,11 @@ export async function PUT(req: NextRequest) {
     if (!config.settings) (config as any).settings = {};
 
     if (body.title !== undefined) config.settings.title = body.title;
+    if (body.titleTablet !== undefined) config.settings.titleTablet = body.titleTablet;
+    if (body.titleMobile !== undefined) config.settings.titleMobile = body.titleMobile;
+    if (body.titleLogo !== undefined) config.settings.titleLogo = body.titleLogo;
+    if (body.titleFont !== undefined) config.settings.titleFont = body.titleFont;
+    if (body.titleAnimation !== undefined) config.settings.titleAnimation = body.titleAnimation;
     if (body.showMonitor !== undefined) config.settings.showMonitor = body.showMonitor;
     if (body.totalSlots !== undefined) config.settings.totalSlots = body.totalSlots;
     if (body.tailscaleTailnet !== undefined) config.settings.tailscaleTailnet = body.tailscaleTailnet;
@@ -274,6 +285,11 @@ export async function PUT(req: NextRequest) {
     if (body.tailscaleOrder !== undefined) config.settings.tailscaleOrder = body.tailscaleOrder;
     if (body.dockerActionsOrder !== undefined) config.settings.dockerActionsOrder = body.dockerActionsOrder;
     
+    // Appearance Profiles
+    if (body.appearanceProfiles !== undefined) {
+      config.appearanceProfiles = body.appearanceProfiles;
+    }
+    
     // Premium Design options
     if (body.globalFont !== undefined) config.settings.globalFont = body.globalFont;
     if (body.borderRadius !== undefined) config.settings.borderRadius = body.borderRadius;
@@ -292,6 +308,8 @@ export async function PUT(req: NextRequest) {
     if (body.name !== undefined) device.name = body.name;
     if (body.host !== undefined) device.host = body.host;
     if (body.icon !== undefined) device.icon = body.icon;
+    if (body.statStyle !== undefined) device.statStyle = body.statStyle;
+    if (body.hideValues !== undefined) device.hideValues = body.hideValues;
 
     if (body.api) {
       const oldApiObj: any = device.api || {};

@@ -6,6 +6,7 @@ import {
   Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container 
 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from './CustomSelect';
 import ConfirmModal from './ConfirmModal';
 
@@ -189,10 +190,20 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [theme, setTheme] = useState(config?.settings?.theme || 'nasdash');
 
   // Background states
+  const [title, setTitle] = useState(config?.settings?.title || 'MON HOME LAB');
+  const [titleTablet, setTitleTablet] = useState(config?.settings?.titleTablet || '');
+  const [titleMobile, setTitleMobile] = useState(config?.settings?.titleMobile || '');
+  const [titleLogo, setTitleLogo] = useState(config?.settings?.titleLogo || '');
+  const [titleFont, setTitleFont] = useState(config?.settings?.titleFont || 'outfit');
+  const [titleAnimation, setTitleAnimation] = useState(config?.settings?.titleAnimation || 'none');
   const [backgroundImage, setBackgroundImage] = useState(config?.settings?.backgroundImage || '');
   const [customCss, setCustomCss] = useState(config?.settings?.customCss || '');
   const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
   const [bgToDelete, setBgToDelete] = useState<string | null>(null);
+
+  // Appearance Profiles
+  const [appearanceProfiles, setAppearanceProfiles] = useState<AppearanceProfile[]>([]);
+  const [newProfileName, setNewProfileName] = useState('');
 
   // Design system states
   const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
@@ -221,6 +232,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   // Modal / status states
   const [copied, setCopied] = useState(false);
   const [isConfirmBgDeleteOpen, setIsConfirmBgDeleteOpen] = useState(false);
+  const [isConfirmLogoDeleteOpen, setIsConfirmLogoDeleteOpen] = useState(false);
+  const [logoToDelete, setLogoToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (config) {
@@ -239,8 +252,17 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setHideQuickStats(!!config.settings?.hideQuickStats);
       setHideTailscaleStatus(!!config.settings?.hideTailscaleStatus);
       setHideDockerActions(!!config.settings?.hideDockerActions);
+      if (config.settings?.title !== undefined) setTitle(config.settings.title);
+      if (config.settings?.titleTablet !== undefined) setTitleTablet(config.settings.titleTablet);
+      if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
+      if (config.settings?.titleLogo !== undefined) setTitleLogo(config.settings.titleLogo);
+      if (config.settings?.titleFont !== undefined) setTitleFont(config.settings.titleFont);
+      if (config.settings?.titleAnimation !== undefined) setTitleAnimation(config.settings.titleAnimation);
       if (config.settings?.backgroundImage !== undefined) {
         setBackgroundImage(config.settings.backgroundImage);
+      }
+      if (config.appearanceProfiles) {
+        setAppearanceProfiles(config.appearanceProfiles);
       }
     }
   }, [config]);
@@ -393,6 +415,74 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     fetchUploadedBgs();
     setBgToDelete(null);
     setIsConfirmBgDeleteOpen(false);
+  };
+
+  const handleSaveLogo = async () => {
+    await updateConfig({ titleLogo });
+  };
+
+  const handleConfirmLogoDelete = async () => {
+    const targetUrl = logoToDelete || titleLogo;
+    if (targetUrl && targetUrl.startsWith('/api/logos/')) {
+      const filename = targetUrl.replace('/api/logos/', '');
+      try {
+        await fetch(`/api/logos/${filename}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('Failed to delete logo file:', err);
+      }
+    }
+    
+    if (targetUrl === titleLogo) {
+      setTitleLogo('');
+      await updateConfig({ titleLogo: '' });
+    }
+
+    setLogoToDelete(null);
+    setIsConfirmLogoDeleteOpen(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!newProfileName.trim()) return;
+    const newProfile: AppearanceProfile = {
+      id: Date.now().toString(),
+      name: newProfileName,
+      settings: {
+        theme,
+        backgroundImage,
+        globalFont,
+        borderRadius,
+        cardOpacity,
+        title,
+        titleLogo,
+        titleFont,
+        titleAnimation
+      }
+    };
+    const updatedProfiles = [...appearanceProfiles, newProfile];
+    setAppearanceProfiles(updatedProfiles);
+    setNewProfileName('');
+    await updateConfig({ appearanceProfiles: updatedProfiles });
+  };
+
+  const handleApplyProfile = async (profile: AppearanceProfile) => {
+    const { settings } = profile;
+    if (settings.theme !== undefined) setTheme(settings.theme);
+    if (settings.backgroundImage !== undefined) setBackgroundImage(settings.backgroundImage);
+    if (settings.globalFont !== undefined) setGlobalFont(settings.globalFont);
+    if (settings.borderRadius !== undefined) setBorderRadius(settings.borderRadius);
+    if (settings.cardOpacity !== undefined) setCardOpacity(settings.cardOpacity);
+    if (settings.title !== undefined) setTitle(settings.title);
+    if (settings.titleLogo !== undefined) setTitleLogo(settings.titleLogo);
+    if (settings.titleFont !== undefined) setTitleFont(settings.titleFont);
+    if (settings.titleAnimation !== undefined) setTitleAnimation(settings.titleAnimation);
+    
+    await updateConfig(settings);
+  };
+
+  const handleDeleteProfile = async (id: string) => {
+    const updatedProfiles = appearanceProfiles.filter(p => p.id !== id);
+    setAppearanceProfiles(updatedProfiles);
+    await updateConfig({ appearanceProfiles: updatedProfiles });
   };
 
   const handleSaveCss = async () => {
@@ -665,6 +755,21 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           </div>
         </div>
 
+        {isConfirmLogoDeleteOpen && (
+          <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
+            <div className="nd-modal" style={{ maxWidth: 400 }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>Supprimer le logo ?</h3>
+              <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)', lineHeight: 1.5 }}>
+                Êtes-vous sûr de vouloir supprimer ce logo ? S'il s'agit d'un fichier importé, il sera définitivement effacé du serveur.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <button className="nd-btn" onClick={() => { setIsConfirmLogoDeleteOpen(false); setLogoToDelete(null); }}>Annuler</button>
+                <button className="nd-btn nd-btn-danger" onClick={handleConfirmLogoDelete}>Oui, supprimer</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ==========================================
            RIGHT CONTENT WRAPPER
            ========================================== */}
@@ -714,6 +819,48 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {currentTab === 'apparence' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               
+              {/* Appearance Profiles */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Profils d'Apparence</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Sauvegardez votre configuration esthétique actuelle (thème, fond, police, opacité, logo) pour basculer facilement entre différents profils.
+                </p>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  <input
+                    type="text"
+                    className="nd-input"
+                    placeholder="Nom du nouveau profil..."
+                    value={newProfileName}
+                    onChange={(e) => setNewProfileName(e.target.value)}
+                    style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
+                  />
+                  <button className="nd-btn" onClick={handleSaveProfile} disabled={!newProfileName.trim()} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                    Sauvegarder
+                  </button>
+                </div>
+
+                {appearanceProfiles.length > 0 && (
+                  <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr' }}>
+                    {appearanceProfiles.map(profile => (
+                      <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--nd-text)' }}>{profile.name}</span>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 2 }}>{profile.settings.theme}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="nd-btn" onClick={() => handleApplyProfile(profile)} style={{ padding: '4px 10px', fontSize: '0.7rem' }}>
+                            Appliquer
+                          </button>
+                          <button className="nd-btn nd-btn-danger" onClick={() => handleDeleteProfile(profile.id)} style={{ padding: '4px 8px' }} title="Supprimer le profil">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Theme Selector */}
               <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Thème (Couleurs globales)</h4>
@@ -735,6 +882,113 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     { value: 'cyberpunk', label: 'Retro Cyberpunk 🤖' }
                   ]}
                 />
+              </div>
+
+              {/* Titre & Animations */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Titre de l'application</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Personnalisez le titre en haut à gauche pour chaque taille d'écran.
+                </p>
+                
+                <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr' }}>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Titre principal (Desktop)</label>
+                    <input type="text" className="nd-input" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => updateConfig({ title })} placeholder="MON HOME LAB" style={{ fontSize: '0.75rem', padding: '6px 10px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Titre (Tablette - Optionnel)</label>
+                    <input type="text" className="nd-input" value={titleTablet} onChange={(e) => setTitleTablet(e.target.value)} onBlur={() => updateConfig({ titleTablet })} placeholder="Laisser vide pour utiliser le principal" style={{ fontSize: '0.75rem', padding: '6px 10px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Titre (Mobile - Optionnel)</label>
+                    <input type="text" className="nd-input" value={titleMobile} onChange={(e) => setTitleMobile(e.target.value)} onBlur={() => updateConfig({ titleMobile })} placeholder="Laisser vide pour utiliser le principal" style={{ fontSize: '0.75rem', padding: '6px 10px' }} />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Logo (Remplace le texte si défini)</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      className="nd-input"
+                      placeholder="URL ou base64 du logo (SVG, PNG)"
+                      value={titleLogo}
+                      onChange={(e) => setTitleLogo(e.target.value)}
+                      style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
+                    />
+                    <button className="nd-btn" onClick={handleSaveLogo} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                      Enregistrer
+                    </button>
+                    {titleLogo && (
+                      <button 
+                        className="nd-btn nd-btn-danger" 
+                        onClick={() => {
+                          setLogoToDelete(titleLogo);
+                          setIsConfirmLogoDeleteOpen(true);
+                        }} 
+                        style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                        title="Supprimer le logo"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                    <label className="nd-btn" style={{ padding: '6px 10px', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      Importer un fichier
+                      <input 
+                        type="file" 
+                        accept="image/png, image/svg+xml, image/webp" 
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          formData.append('type', 'logo');
+                          try {
+                            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                            if (res.ok) {
+                              const data = await res.json();
+                              setTitleLogo(data.url);
+                              await updateConfig({ titleLogo: data.url });
+                            }
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Police du titre (Design)</label>
+                  <CustomSelect
+                    value={titleFont}
+                    onChange={(val) => { setTitleFont(val as any); updateConfig({ titleFont: val as any }); }}
+                    options={[
+                      { value: 'outfit', label: 'Outfit (Défaut, Moderne)' },
+                      { value: 'space-grotesk', label: 'Space Grotesk (Tech & Brut)' },
+                      { value: 'syne', label: 'Syne (Design & Artistique)' },
+                      { value: 'righteous', label: 'Righteous (Logo & Courbe)' },
+                      { value: 'montserrat', label: 'Montserrat (Premium & Classic)' },
+                    ]}
+                  />
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Animation du titre</label>
+                  <CustomSelect
+                    value={titleAnimation}
+                    onChange={(val) => { setTitleAnimation(val as any); updateConfig({ titleAnimation: val as any }); }}
+                    options={[
+                      { value: 'none', label: 'Aucune' },
+                      { value: 'spotlight-silver', label: 'Balayage Argenté (Silver)' },
+                    ]}
+                  />
+                </div>
               </div>
 
               {/* Mode Sombre / Clair (Default Theme Only) */}

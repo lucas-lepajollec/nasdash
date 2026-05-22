@@ -3,6 +3,24 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 
+// --- Smart Logger to avoid spamming errors ---
+const globalAny: any = global;
+if (!globalAny.__errorLogCache) globalAny.__errorLogCache = new Map<string, string>();
+const errorLogCache: Map<string, string> = globalAny.__errorLogCache;
+
+function logErrorSmartly(deviceId: string, context: string, errorMsg: string) {
+  const key = `${deviceId}-${context}`;
+  if (errorLogCache.get(key) !== errorMsg) {
+    console.error(`🔴 [${context}]`, errorMsg);
+    errorLogCache.set(key, errorMsg);
+  }
+}
+
+function clearErrorSmartly(deviceId: string, context: string) {
+  errorLogCache.delete(`${deviceId}-${context}`);
+}
+// ---------------------------------------------
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, segmentData: { params: Promise<{ id: string }> }) {
@@ -101,7 +119,6 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         let finalUrl = '';
 
         for (const url of fetchUrls) {
-          console.log('🔗 URL GLANCES APPELÉE:', url);
           try {
             res = await fetch(url, { headers, cache: 'no-store' });
             if (res.ok) {
@@ -120,10 +137,10 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
 
         if (!res || !res.ok) {
           if (res) {
-            console.error('🔴 ERREUR GLANCES HTTP:', res.status, res.statusText);
+            logErrorSmartly(id, 'Glances', `Erreur HTTP: ${res.status} ${res.statusText}`);
             return NextResponse.json({ error: `Erreur serveur (${res.status})`, isOffline: true }, { status: 200 });
           } else {
-            console.error('🔴 ERREUR GLANCES FETCH:', lastError);
+            logErrorSmartly(id, 'Glances', `Fetch Error: ${lastError?.message || lastError}`);
             return NextResponse.json({ error: 'Impossible de joindre Glances', isOffline: true }, { status: 200 });
           }
         }
@@ -133,9 +150,7 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
         try {
           data = JSON.parse(text);
         } catch (e) {
-          console.error('🔴 GLANCES HTML REÇU (Au lieu de JSON) SUR:', finalUrl);
-          console.error('🔴 AUTH ENVOYÉE:', headers['Authorization']);
-          console.error('🔴 DEBUT DU HTML:', text.substring(0, 50));
+          logErrorSmartly(id, 'Glances HTML', `Reçu HTML au lieu de JSON sur ${finalUrl} : ${text.substring(0, 50)}`);
           throw new Error('Réponse invalide (HTML au lieu de JSON)');
         }
 
@@ -237,9 +252,10 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
           }
         }
 
+        clearErrorSmartly(id, 'Glances');
         return NextResponse.json(stats);
       } catch (err: any) {
-        console.error('🔴 ERREUR GLANCES REQUÊTE:', err.message || err);
+        logErrorSmartly(id, 'Glances', err.message || err);
         return NextResponse.json({ error: err.message || 'Impossible de joindre Glances', isOffline: true }, { status: 200 });
       }
     }
@@ -288,8 +304,8 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
                  diskTotal = sTotal;
                }
              }
-          } catch(e) {
-             console.error("Erreur récupération stockage additionnel Proxmox", e);
+          } catch(e: any) {
+             logErrorSmartly(id, 'Proxmox Storage', e.message || e);
           }
         }
 
@@ -317,9 +333,10 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
           return NextResponse.json({ error: 'VM arrêtée ou aucune stat.', isOffline: true }, { status: 200 });
         }
 
+        clearErrorSmartly(id, 'Proxmox');
         return NextResponse.json(stats);
       } catch (err: any) {
-        console.error('🔴 ERREUR PROXMOX REQUÊTE:', err.message || err);
+        logErrorSmartly(id, 'Proxmox', err.message || err);
         return NextResponse.json({ error: err.message || 'Impossible de joindre Proxmox', isOffline: true }, { status: 200 });
       }
     }
@@ -424,9 +441,10 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
 
         stats.push(...cpuStats, ...ramStats, ...diskStats, ...gpuStats);
 
+        clearErrorSmartly(id, 'LHM');
         return NextResponse.json(stats);
       } catch (err: any) {
-        console.error('🔴 ERREUR LHM REQUÊTE:', err.message || err);
+        logErrorSmartly(id, 'LHM', err.message || err);
         return NextResponse.json({ error: err.message || 'Impossible de joindre LHM', isOffline: true }, { status: 200 });
       }
     }

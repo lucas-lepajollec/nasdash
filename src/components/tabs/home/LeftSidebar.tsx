@@ -103,22 +103,29 @@ function DeviceMonitorCardContent({
 
   return (
     <div style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5, flex: 1, minWidth: 0 }}>
           {editMode && (
-            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', padding: 4, marginRight: -4, flexShrink: 0 }}>
+            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', padding: 4, marginRight: -4, flexShrink: 0, marginTop: -2 }}>
               <GripVertical size={12} style={{ color: 'var(--nd-text-dimmed)' }} />
             </div>
           )}
-          <span style={{ fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-            <span style={{ flexShrink: 0 }}>{device.icon}</span>
-            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{device.name}</span>
+          <span style={{ flexShrink: 0, fontSize: '0.75rem', marginTop: 1 }}>{device.icon}</span>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '2px 6px', flex: 1, minWidth: 0 }}>
+            <span style={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+              {device.name}
+            </span>
+            {device.host && (
+              <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                {device.host}
+              </span>
+            )}
             {isLoading && isApiDevice && !stats && <Loader2 size={10} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)', flexShrink: 0 }} />}
             {isOffline && <span title={errorMessage} style={{ display: 'flex', flexShrink: 0 }}><AlertCircle size={10} style={{ color: 'var(--nd-red)' }} /></span>}
-          </span>
+          </div>
         </div>
         {editMode && (
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
             <button className="nd-action-icon accent" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} title="Modifier l'appareil">
               <Pencil size={13} />
             </button>
@@ -128,34 +135,153 @@ function DeviceMonitorCardContent({
           </div>
         )}
       </div>
-      <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', marginBottom: 6 }}>{device.host}</div>
 
       {isOffline && (
         <div style={{ fontSize: '0.65rem', color: 'var(--nd-red)', marginTop: 4 }}>Hors ligne</div>
       )}
 
       {!isOffline && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {displayStats.map((stat, i) => (
-            <div key={i}>
-              <div className="nd-stat-row" style={{ fontSize: '0.7rem', flexWrap: 'wrap', gap: '2px 8px' }}>
-                <span className="nd-stat-label" style={{ fontWeight: 600, flex: '1 1 auto', minWidth: 0, wordBreak: 'break-word', color: 'var(--nd-text-muted)' }} title={stat.label}>{stat.label}</span>
-                <span className="nd-stat-value" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>{stat.value}</span>
-              </div>
-              {stat.percent !== undefined && (
-                <div className="nd-progress" style={{ height: 4 }}>
-                  <div
-                    className={`nd-progress-fill ${stat.color?.startsWith('var') ? '' : (stat.color || progressColor(stat.percent))}`}
-                    style={{
-                      width: `${stat.percent}%`,
-                      backgroundColor: stat.color?.startsWith('var') ? stat.color : undefined
-                    }}
-                  />
-                </div>
-              )}
+        <>
+          {(!device.statStyle || device.statStyle === 'horizontal') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {displayStats.map((stat, i) => {
+                const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
+                let shortLabel = stat.label;
+                if (isDisk) {
+                  const match = shortLabel.match(/\(([^)]+)\)/);
+                  if (match) shortLabel = match[1];
+                  else shortLabel = shortLabel.replace(/disque|disk/i, '').trim();
+                }
+
+                let cleanValue = stat.value.replace(/\d+(?:[.,]\d+)?\s*%/, '').trim();
+                cleanValue = cleanValue.replace(/^[-|/]\s*/, '').trim();
+                const shouldHideValue = device.hideValues;
+
+                return (
+                  <div key={i}>
+                    <div className="nd-stat-row" style={{ fontSize: '0.7rem', flexWrap: 'wrap', gap: '2px 8px' }}>
+                      <span className="nd-stat-label" style={{ fontWeight: 600, flex: '1 1 auto', minWidth: 0, wordBreak: 'break-word', color: 'var(--nd-text-muted)' }} title={stat.label}>{shortLabel}</span>
+                      {!shouldHideValue && (
+                        <span className="nd-stat-value" style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>{device.hideValues && isDisk ? cleanValue : stat.value}</span>
+                      )}
+                    </div>
+                    {stat.percent !== undefined && (
+                      <div className="nd-progress" style={{ height: 4 }}>
+                        <div
+                          className={`nd-progress-fill ${stat.color?.startsWith('var') ? '' : (stat.color || progressColor(stat.percent))}`}
+                          style={{
+                            width: `${stat.percent}%`,
+                            backgroundColor: stat.color?.startsWith('var') ? stat.color : undefined
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          )}
+
+          {device.statStyle === 'vertical' && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 8px', justifyContent: 'space-around', marginTop: 10 }}>
+              {displayStats.map((stat, i) => {
+                const pcolor = stat.color?.startsWith('var') ? stat.color : (stat.color || progressColor(stat.percent || 0));
+                const barColor = pcolor.includes('danger') ? 'var(--nd-red)' : pcolor.includes('warn') ? 'var(--nd-orange)' : pcolor.includes('success') ? 'var(--nd-green)' : pcolor || 'var(--nd-accent)';
+                
+                const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
+                let shortLabel = stat.label;
+                if (isDisk) {
+                  const match = shortLabel.match(/\(([^)]+)\)/);
+                  if (match) shortLabel = match[1];
+                  else shortLabel = shortLabel.replace(/disque|disk/i, '').trim();
+                }
+
+                let cleanValue = stat.value.replace(/\d+(?:[.,]\d+)?\s*%/, '').trim();
+                cleanValue = cleanValue.replace(/^[-|/]\s*/, '').trim();
+
+                const shouldHideInsideText = device.hideValues;
+                const shouldHideBottomText = device.hideValues;
+
+                return (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 40, flex: 1, maxWidth: '33%' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={stat.label}>{shortLabel}</span>
+                    <div style={{ position: 'relative', width: 34, height: 70, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'flex', alignItems: 'flex-end', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}>
+                      {stat.percent !== undefined && (
+                        <div style={{ width: '100%', height: `${stat.percent}%`, backgroundColor: barColor, borderRadius: 8, transition: 'height 0.5s ease-in-out' }} />
+                      )}
+                      {!shouldHideInsideText && (
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, pointerEvents: 'none', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.6)' }}>
+                          {stat.percent !== undefined ? `${Math.round(stat.percent)}%` : '-'}
+                        </div>
+                      )}
+                    </div>
+                    {cleanValue && !shouldHideBottomText && (
+                      <span style={{ fontSize: '0.6rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={cleanValue}>{cleanValue}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {device.statStyle === 'circle' && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 8px', justifyContent: 'space-around', marginTop: 10 }}>
+              {displayStats.map((stat, i) => {
+                const pcolor = stat.color?.startsWith('var') ? stat.color : (stat.color || progressColor(stat.percent || 0));
+                const strokeColor = pcolor.includes('danger') ? 'var(--nd-red)' : pcolor.includes('warn') ? 'var(--nd-orange)' : pcolor.includes('success') ? 'var(--nd-green)' : pcolor || 'var(--nd-accent)';
+                
+                const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
+                let shortLabel = stat.label;
+                if (isDisk) {
+                  const match = shortLabel.match(/\(([^)]+)\)/);
+                  if (match) shortLabel = match[1];
+                  else shortLabel = shortLabel.replace(/disque|disk/i, '').trim();
+                }
+
+                let cleanValue = stat.value.replace(/\d+(?:[.,]\d+)?\s*%/, '').trim();
+                cleanValue = cleanValue.replace(/^[-|/]\s*/, '').trim();
+
+                const shouldHideInsideText = device.hideValues;
+                const shouldHideBottomText = device.hideValues;
+
+                return (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 48, flex: 1, maxWidth: '33%' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={stat.label}>{shortLabel}</span>
+                    <div style={{ position: 'relative', width: 44, height: 44 }}>
+                      <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="rgba(255,255,255,0.05)"
+                          strokeWidth="3"
+                        />
+                        {stat.percent !== undefined && (
+                          <path
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            fill="none"
+                            stroke={strokeColor}
+                            strokeWidth="3.5"
+                            strokeDasharray={`${stat.percent}, 100`}
+                            strokeLinecap="round"
+                            style={{ transition: 'stroke-dasharray 0.5s ease-in-out' }}
+                          />
+                        )}
+                      </svg>
+                      {!shouldHideInsideText && (
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700, pointerEvents: 'none' }}>
+                          {stat.percent !== undefined ? `${Math.round(stat.percent)}%` : '-'}
+                        </div>
+                      )}
+                    </div>
+                    {cleanValue && !shouldHideBottomText && (
+                      <span style={{ fontSize: '0.6rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={cleanValue}>{cleanValue}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
-import { X, Trash2, ChevronDown, ChevronRight, Pencil, Upload } from 'lucide-react';
+import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings } from 'lucide-react';
 import ConfirmModal from '../../../shared/ConfirmModal';
+import CustomSelect from '../../../shared/CustomSelect';
 
 interface CategoryFormModalProps {
   category?: Category;
@@ -154,45 +155,18 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
 
           <div>
             <label className="nd-label">Style d&apos;affichage (Layout)</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-              {(['standard', 'compact', 'bento', 'bento-logo-large', 'bento-logo-medium', 'bento-logo-small'] as const).map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLayout(l)}
-                  style={{
-                    fontSize: '0.65rem',
-                    padding: '8px 2px',
-                    borderRadius: 'var(--nd-card-radius)',
-                    border: '1px solid var(--nd-card-border)',
-                    cursor: 'pointer',
-                    background: layout === l ? 'var(--nd-accent-glow)' : 'rgba(0,0,0,0.15)',
-                    color: layout === l ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
-                    borderColor: layout === l ? 'var(--nd-accent)' : 'var(--nd-card-border)',
-                    fontWeight: layout === l ? 600 : 400,
-                    transition: 'all 0.2s',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
-                  title={
-                    l === 'standard' ? 'Standard' :
-                    l === 'compact' ? 'Compact' :
-                    l === 'bento' ? 'Bento Grid' :
-                    l === 'bento-logo-large' ? 'Bento Logo Grand' :
-                    l === 'bento-logo-medium' ? 'Bento Logo Moyen' :
-                    'Bento Logo Petit'
-                  }
-                >
-                  {l === 'standard' && '📜 Standard'}
-                  {l === 'compact' && '⚡ Compact'}
-                  {l === 'bento' && '🍱 Bento Grid'}
-                  {l === 'bento-logo-large' && '🖼️ Logo G'}
-                  {l === 'bento-logo-medium' && '🖼️ Logo M'}
-                  {l === 'bento-logo-small' && '🖼️ Logo P'}
-                </button>
-              ))}
-            </div>
+            <CustomSelect
+              value={layout || 'standard'}
+              onChange={(val) => setLayout(val as Category['layout'])}
+              options={[
+                { value: 'standard', label: '📜 Standard' },
+                { value: 'compact', label: '⚡ Compact' },
+                { value: 'bento', label: '🍱 Bento Grid' },
+                { value: 'bento-logo-large', label: '🖼️ Bento Logo Grand' },
+                { value: 'bento-logo-medium', label: '🖼️ Bento Logo Moyen' },
+                { value: 'bento-logo-small', label: '🖼️ Bento Logo Petit' },
+              ]}
+            />
           </div>
 
           {/* Secret checkbox — ONLY visible when secret mode is active */}
@@ -214,31 +188,32 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
           {category && services.length > 0 && (
             <div style={{ marginTop: 8 }}>
               <label className="nd-label">Services rattachés</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--nd-bg-alt)', padding: 12, borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                 {services.map(svc => (
-                  <div key={svc.id} style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--nd-bg)', padding: 10, borderRadius: 'var(--nd-card-radius)', border: '1px solid transparent' }}>
+                  <div key={svc.id} style={{ display: 'flex', flexDirection: 'column', background: 'var(--nd-bg-alt)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)', transition: 'all 0.2s ease', overflow: 'hidden' }}>
                     
                     {/* Header Row */}
                     <div 
                       onClick={() => setExpandedServiceId(prev => prev === svc.id ? null : svc.id)}
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '12px 14px' }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         {svc.logo.startsWith('http') || svc.logo.startsWith('/') ? (
-                           <img src={svc.logo} alt="" style={{ width: 16, height: 16, borderRadius: 4, objectFit: 'contain' }} />
+                           <img src={svc.logo} alt="" style={{ width: 20, height: 20, borderRadius: 4, objectFit: 'contain', background: 'var(--nd-icon-bg)', padding: 2 }} />
                         ) : (
-                           <span style={{ fontSize: '0.9rem', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{svc.logo}</span>
+                           <span style={{ fontSize: '1rem', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{svc.logo}</span>
                         )}
-                        <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{svc.name}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: expandedServiceId === svc.id ? 'var(--nd-text)' : 'var(--nd-text-muted)' }}>{svc.name}</span>
                       </div>
-                      <div style={{ color: 'var(--nd-text-dimmed)' }}>
-                        {expandedServiceId === svc.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      <div style={{ color: expandedServiceId === svc.id ? 'var(--nd-accent)' : 'var(--nd-text-dimmed)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {expandedServiceId !== svc.id && <Settings size={14} style={{ opacity: 0.5 }} />}
+                        {expandedServiceId === svc.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                       </div>
                     </div>
 
                     {/* Expanded Edit Form */}
                     {expandedServiceId === svc.id && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4, paddingTop: 8, borderTop: '1px solid var(--nd-card-border)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 14px 14px 14px', borderTop: '1px solid var(--nd-card-border)', paddingTop: 14, background: 'var(--nd-bg)' }}>
                         <div>
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>Nom du service</label>
                           <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} value={svc.name} onChange={(e) => updateServiceField(svc.id, 'name', e.target.value)} />
@@ -265,15 +240,38 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                           <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!showSensitive ? 'password' : 'text'} value={svc.localUrl} onChange={(e) => updateServiceField(svc.id, 'localUrl', e.target.value)} />
                         </div>
                         <div>
-                          <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>URL Tailscale (Optionnel)</label>
-                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!showSensitive ? 'password' : 'text'} value={svc.tailscaleUrl || ''} onChange={(e) => updateServiceField(svc.id, 'tailscaleUrl', e.target.value)} />
+                          <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>URL Secondaire (Optionnel)</label>
+                          <input className="nd-input" style={{ padding: '6px 10px', fontSize: '0.75rem' }} type={!showSensitive ? 'password' : 'text'} value={svc.secondaryUrl || ''} onChange={(e) => updateServiceField(svc.id, 'secondaryUrl', e.target.value)} />
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div>
+                          <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>Logo Secondaire (Optionnel)</label>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <input className="nd-input" style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem' }} value={svc.secondaryLogo || ''} onChange={(e) => updateServiceField(svc.id, 'secondaryLogo', e.target.value)} placeholder="https://... ou fichier" />
+                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
+                              <Upload size={14} />
+                              <input type="file" accept=".png,.svg,.jpg,.jpeg,.webp,.ico" style={{ display: 'none' }} onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  const formData = new FormData();
+                                  formData.append('file', e.target.files[0]);
+                                  const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                  const data = await res.json();
+                                  updateServiceField(svc.id, 'secondaryLogo', data.url);
+                                }
+                              }} />
+                            </label>
+                            {svc.secondaryLogo?.startsWith('/api/logos/') && (
+                              <button type="button" onClick={() => updateServiceField(svc.id, 'secondaryLogo', '')} title="Supprimer le logo secondaire" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-red)', transition: 'all 0.2s' }}>
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                           <button
+                            className="nd-btn nd-btn-danger"
                             onClick={(e) => { e.stopPropagation(); setDeleteServiceConfirm(svc.id); }}
-                            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', border: 'none', padding: '6px 10px', borderRadius: 4, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer' }}
                           >
-                            <Trash2 size={12} /> Supprimer le service
+                            <Trash2 size={12} style={{ marginRight: 6 }} /> Supprimer le service
                           </button>
                         </div>
                       </div>

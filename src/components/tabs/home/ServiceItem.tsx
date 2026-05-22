@@ -54,7 +54,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
       outline: isOver ? '2px solid var(--nd-accent)' : undefined,
     }}>
       <a
-        href={service.localUrl || service.tailscaleUrl || '#'}
+        href={service.localUrl || service.secondaryUrl || service.tailscaleUrl || '#'}
         target="_blank"
         rel="noopener noreferrer"
         className="nd-service-link"
@@ -88,9 +88,13 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
         )}
       </a>
 
-      {service.tailscaleUrl && !editMode && activeLayout !== 'bento' && !isLogoOnly && (
-        <a href={service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-vpn-btn" title="VPN Tailscale" style={{ padding: 4 }}>
-          <img src="/api/logos/logo-tailscale.png" alt="Tailscale" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
+      {(service.secondaryUrl || service.tailscaleUrl) && !editMode && activeLayout !== 'bento' && !isLogoOnly && (
+        <a href={service.secondaryUrl || service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-vpn-btn" title="Lien Secondaire" style={{ padding: 4 }}>
+          {service.secondaryLogo ? (
+            <img src={service.secondaryLogo} alt="Lien secondaire" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
+          ) : (
+            <img src="/api/logos/logo-tailscale.png" alt="Tailscale" style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
+          )}
           <Globe size={12} style={{ display: 'none' }} />
         </a>
       )}

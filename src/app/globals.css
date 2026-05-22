@@ -176,30 +176,34 @@ body {
   /* Pushes search to center */
 }
 
-.nd-brand strong {
-  color: var(--nd-text);
-  font-weight: 700;
-}
-
+/* Operational LED Indicator Dot */
 .nd-brand-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--nd-green);
   box-shadow: 0 0 6px var(--nd-green);
-  animation: nd-pulse-dot 2s ease-in-out infinite;
+  animation: nd-pulse-dot 2.5s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 @keyframes nd-pulse-dot {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 6px var(--nd-green);
   }
-
   50% {
-    opacity: 0.5;
+    opacity: 0.4;
+    transform: scale(0.9);
+    box-shadow: 0 0 2px var(--nd-green);
   }
+}
+
+.nd-brand strong {
+  color: var(--nd-text);
+  font-weight: 700;
 }
 
 .nd-nav-tabs {
@@ -2218,5 +2222,40 @@ body {
 }
 
 
+/* ==================== TITLE ANIMATIONS & RESPONSIVE ==================== */
+.nd-title-desktop { display: inline; }
+.nd-title-tablet { display: none; }
+.nd-title-mobile { display: none; }
 
+@media (max-width: 1024px) {
+  .nd-title-desktop { display: none; }
+  .nd-title-tablet { display: inline; }
+}
+
+@media (max-width: 640px) {
+  .nd-title-tablet { display: none; }
+  .nd-title-desktop { display: none; }
+  .nd-title-mobile { display: inline; }
+}
+
+/* Balayage Lumineux Premium & Adaptatif (Spotlight) */
+@keyframes spotlightSweep {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* Spotlight Silver: Métallique Premium */
+.nd-title-anim-spotlight-silver strong {
+  background: linear-gradient(
+    110deg,
+    var(--nd-text-muted) 35%,
+    var(--nd-text) 50%,
+    var(--nd-text-muted) 65%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: spotlightSweep 3.5s linear infinite;
+}
 

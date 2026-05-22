@@ -3,7 +3,9 @@ export interface Service {
   name: string;
   logo: string;
   localUrl: string;
-  tailscaleUrl: string;
+  secondaryUrl?: string;
+  secondaryLogo?: string;
+  tailscaleUrl?: string; // Kept for backwards compatibility
 }
 
 export interface Category {
@@ -51,6 +53,8 @@ export interface Device {
   icon: string;
   api?: DeviceApiConfig;
   stats?: DeviceStat[];
+  statStyle?: 'horizontal' | 'vertical' | 'circle';
+  hideValues?: boolean;
 }
 
 // ==================== DOCKER ====================
@@ -124,13 +128,25 @@ export interface DockerActionConfig {
   targets: { hostId: string; containerName: string }[];
 }
 
+export interface AppearanceProfile {
+  id: string;
+  name: string;
+  settings: Partial<DashboardConfig['settings']>;
+}
+
 export interface DashboardConfig {
   categories: Category[];
   devices: Device[];
   dockerHosts?: DockerHost[];
   dockerActions?: DockerActionConfig[];
+  appearanceProfiles?: AppearanceProfile[];
   settings: {
     title: string;
+    titleTablet?: string;
+    titleMobile?: string;
+    titleLogo?: string;
+    titleFont?: 'outfit' | 'space-grotesk' | 'syne' | 'righteous' | 'montserrat';
+    titleAnimation?: 'none' | 'spotlight-silver';
     showMonitor: boolean;
     totalSlots?: number;
     dockPosition?: 'left' | 'right';

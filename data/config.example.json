@@ -1,76 +1,131 @@
 {
-    "settings": {
-        "title": "MON HOME LAB",
-        "showMonitor": true,
-        "totalSlots": 10
-    },
-    "devices": [
-        {
-            "id": "demo-device-1",
-            "name": "App Exemple 1",
-            "host": "192.168.1.20",
-            "icon": "🏠",
-            "api": {
-                "type": "glances",
-                "url": "http://192.168.1.20:61208/api/3/all",
-                "token": "user:password"
-            }
-        },
-        {
-            "id": "demo-device-2",
-            "name": "Proxmox Exemple",
-            "host": "proxmox",
-            "icon": "🖥️",
-            "stats": [],
-            "api": {
-                "type": "proxmox",
-                "url": "https://192.168.1.30:8006/api2/json/nodes/proxmox/status",
-                "ip": "192.168.1.30",
-                "port": "8006",
-                "username": "root@pam!example",
-                "nodeName": "proxmox",
-                "vmid": "",
-                "token": "root@pam!example=11111111-2222-3333-4444-555555555555"
-            }
-        }
+  "settings": {
+    "title": "MON HOME LAB",
+    "showMonitor": true,
+    "totalSlots": 10,
+    "hiddenTabs": [],
+    "theme": "nasdash",
+    "dockPosition": "right",
+    "tabOrder": [
+      "dashboard",
+      "docker",
+      "ha"
     ],
-    "categories": [
+    "hiddenSections": [],
+    "hideDevices": false,
+    "hideQuickStats": false,
+    "hideTailscaleStatus": false,
+    "hideDockerActions": false,
+    "backgroundImage": "",
+    "borderRadius": 12,
+    "devicesOrder": 0,
+    "devicesSidebar": "left",
+    "globalFont": "Outfit",
+    "cardOpacity": 0.8,
+    "quickStatsSidebar": "right",
+    "quickStatsOrder": 1,
+    "tailscaleSidebar": "right",
+    "tailscaleOrder": 2,
+    "dockerActionsSidebar": "right",
+    "dockerActionsOrder": 3
+  },
+  "devices": [
+    {
+      "id": "demo-device-1",
+      "name": "Serveur Principal",
+      "host": "192.168.1.20",
+      "icon": "🏠",
+      "statStyle": "vertical",
+      "hideValues": false,
+      "api": {
+        "type": "glances",
+        "url": "http://192.168.1.20:61208/api/3/all",
+        "token": "user:password"
+      }
+    },
+    {
+      "id": "demo-device-2",
+      "name": "Hyperviseur",
+      "host": "proxmox",
+      "icon": "🖥️",
+      "statStyle": "circle",
+      "hideValues": true,
+      "api": {
+        "type": "proxmox",
+        "url": "https://192.168.1.30:8006/api2/json/nodes/proxmox/status",
+        "ip": "192.168.1.30",
+        "port": "8006",
+        "username": "root@pam!example",
+        "nodeName": "proxmox",
+        "vmid": "",
+        "token": "root@pam!example=11111111-2222-3333-4444-555555555555"
+      }
+    }
+  ],
+  "categories": [
+    {
+      "id": "category-1",
+      "title": "Applications",
+      "emoji": "🚀",
+      "order": 0,
+      "layout": "bento",
+      "isSecret": false,
+      "services": [
         {
-            "id": "category-1",
-            "title": "Catégorie Exemple 1",
-            "emoji": "🤖",
-            "order": 0,
-            "services": [
-                {
-                    "id": "service-1",
-                    "name": "Service Exemple 1",
-                    "logo": "/api/logos/logo.png",
-                    "localUrl": "http://192.168.1.10:3000",
-                    "tailscaleUrl": "http://100.100.100.100:3000"
-                },
-                {
-                    "id": "service-2",
-                    "name": "Service Exemple 2",
-                    "logo": "/api/logos/logo.png",
-                    "localUrl": "http://192.168.1.10:8080",
-                    "tailscaleUrl": "http://100.100.100.100:8080"
-                }
-            ]
+          "id": "service-1",
+          "name": "Service Exemple 1",
+          "logo": "/api/logos/logo.png",
+          "localUrl": "http://192.168.1.10:3000",
+          "secondaryUrl": "http://100.100.100.100:3000"
         },
         {
-            "id": "category-2",
-            "title": "Catégorie Exemple 2",
-            "emoji": "🎬",
-            "order": 1,
-            "services": [
-                {
-                    "id": "service-3",
-                    "name": "Service Exemple 3",
-                    "logo": "/api/logos/logo.png",
-                    "localUrl": "http://192.168.1.20:8096",
-                    "tailscaleUrl": "http://100.100.100.101:8096"
-                }
-            ]
+          "id": "service-2",
+          "name": "Service Exemple 2",
+          "logo": "/api/logos/logo.png",
+          "localUrl": "http://192.168.1.10:8080",
+          "secondaryUrl": "http://100.100.100.100:8080"
         }
-    ]
+      ]
+    }
+  ],
+  "dockerHosts": [
+    {
+      "id": "docker-host-1",
+      "name": "Local Docker",
+      "icon": "🐳",
+      "type": "tcp",
+      "url": "http://192.168.1.20:2375"
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot-category-1",
+      "type": "category",
+      "order": 0,
+      "category": {
+        "id": "category-1",
+        "title": "Applications",
+        "emoji": "🚀",
+        "order": 0,
+        "layout": "bento",
+        "isSecret": false,
+        "services": [
+          {
+            "id": "service-1",
+            "name": "Service Exemple 1",
+            "logo": "/api/logos/logo.png",
+            "localUrl": "http://192.168.1.10:3000",
+            "secondaryUrl": "http://100.100.100.100:3000"
+          },
+          {
+            "id": "service-2",
+            "name": "Service Exemple 2",
+            "logo": "/api/logos/logo.png",
+            "localUrl": "http://192.168.1.10:8080",
+            "secondaryUrl": "http://100.100.100.100:8080"
+          }
+        ]
+      }
+    }
+  ]
 }

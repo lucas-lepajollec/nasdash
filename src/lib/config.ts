@@ -60,6 +60,18 @@ export function readConfig(): DashboardConfig {
     return defaultConfig;
   }
 
+  if (configData && configData.categories) {
+    configData.categories.forEach((cat: any) => {
+      if (cat.services) {
+        cat.services.forEach((svc: any) => {
+          if (svc.tailscaleUrl && !svc.secondaryUrl) {
+            svc.secondaryUrl = svc.tailscaleUrl;
+          }
+        });
+      }
+    });
+  }
+
   return configData;
 }
 
