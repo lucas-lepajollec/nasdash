@@ -164,6 +164,9 @@ export interface DashboardConfig {
     hideTailscaleStatus?: boolean;
     hideDevices?: boolean;
     hideQuickStats?: boolean;
+    hideClock?: boolean;
+    hideWeather?: boolean;
+    hideCalendar?: boolean;
     customCss?: string;
     backgroundImage?: string;
     // Sidebar widget alignment positions
@@ -171,11 +174,19 @@ export interface DashboardConfig {
     quickStatsSidebar?: 'left' | 'right';
     tailscaleSidebar?: 'left' | 'right';
     dockerActionsSidebar?: 'left' | 'right';
+    clockSidebar?: 'left' | 'right';
+    weatherSidebar?: 'left' | 'right';
+    calendarSidebar?: 'left' | 'right';
     // Sidebar widget order preferences
     devicesOrder?: number;
     quickStatsOrder?: number;
     tailscaleOrder?: number;
     dockerActionsOrder?: number;
+    clockOrder?: number;
+    weatherOrder?: number;
+    calendarOrder?: number;
+    // Weather configuration
+    weatherLocation?: string;
     // Premium Design options
     globalFont?: string;
     borderRadius?: number;

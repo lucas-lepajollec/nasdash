@@ -129,7 +129,10 @@ function clearErrorSmartly(deviceId: string, context: string) {
 }
 // ---------------------------------------------
 
-export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = {};
+if (!globalAny.devicesStatusCache) {
+  globalAny.devicesStatusCache = {};
+}
+export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = globalAny.devicesStatusCache;
 
 if (globalAny.activeClients === undefined) globalAny.activeClients = 0;
 
@@ -548,6 +551,7 @@ export function startBackgroundMonitoring() {
   };
 
   // Run immediately then every 20s
+  globalAny.triggerPoll = doPoll;
   doPoll();
   setInterval(doPoll, 10000);
 }
