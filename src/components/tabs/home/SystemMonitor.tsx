@@ -57,6 +57,8 @@ export default function SystemMonitor({ isDark = true, isVisible }: SystemMonito
                 tick={{ fontSize: 9, fill: isDark ? '#7d8590' : '#656d76' }} 
                 axisLine={false}
                 tickLine={false}
+                interval={Math.max(1, Math.floor(history.length / 6))}
+                padding={{ left: 10, right: 10 }}
               />
               <YAxis
                 domain={[0, 'dataMax + 20']}

@@ -20,7 +20,13 @@ interface PerfMetrics {
 let globalRenderCount = 0;
 
 // Network interceptor
-let networkStats = { count: 0, totalTime: 0, lastReset: Date.now() };
+function getNetworkStats() {
+  if (typeof window === 'undefined') return { count: 0, totalTime: 0, lastReset: Date.now() };
+  if (!(window as any).__perfNetworkStats) {
+    (window as any).__perfNetworkStats = { count: 0, totalTime: 0, lastReset: Date.now() };
+  }
+  return (window as any).__perfNetworkStats;
+}
 
 function interceptFetch() {
   if (typeof window === 'undefined') return;
@@ -31,15 +37,15 @@ function interceptFetch() {
   window.fetch = async function (...args) {
     const start = performance.now();
     try {
-      const response = await originalFetch.apply(this, args);
+      const response = await originalFetch.apply(window, args as any);
       const elapsed = performance.now() - start;
-      networkStats.count++;
-      networkStats.totalTime += elapsed;
+      getNetworkStats().count++;
+      getNetworkStats().totalTime += elapsed;
       return response;
     } catch (e) {
       const elapsed = performance.now() - start;
-      networkStats.count++;
-      networkStats.totalTime += elapsed;
+      getNetworkStats().count++;
+      getNetworkStats().totalTime += elapsed;
       throw e;
     }
   };
@@ -93,9 +99,10 @@ export default function PerfMonitor() {
       prevRenderRef.current = globalRenderCount;
 
       // Network
-      const timeSinceReset = (Date.now() - networkStats.lastReset) / 1000;
-      const reqPerSec = timeSinceReset > 0 ? networkStats.count / timeSinceReset : 0;
-      const avgResponse = networkStats.count > 0 ? networkStats.totalTime / networkStats.count : 0;
+      const currentNetworkStats = getNetworkStats();
+      const timeSinceReset = (Date.now() - currentNetworkStats.lastReset) / 1000;
+      const reqPerSec = timeSinceReset > 0 ? currentNetworkStats.count / timeSinceReset : 0;
+      const avgResponse = currentNetworkStats.count > 0 ? currentNetworkStats.totalTime / currentNetworkStats.count : 0;
 
       const newMetrics: PerfMetrics = {
         fps,
@@ -127,7 +134,10 @@ export default function PerfMonitor() {
   useEffect(() => {
     if (isOpen) {
       // Reset network stats when opening
-      networkStats = { count: 0, totalTime: 0, lastReset: Date.now() };
+      const currentNetworkStats = getNetworkStats();
+      currentNetworkStats.count = 0;
+      currentNetworkStats.totalTime = 0;
+      currentNetworkStats.lastReset = Date.now();
       animFrameRef.current = requestAnimationFrame(measure);
       return () => cancelAnimationFrame(animFrameRef.current);
     }
@@ -161,10 +171,10 @@ export default function PerfMonitor() {
           color: 'var(--nd-accent)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           backdropFilter: 'blur(12px)', transition: 'all 0.2s',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         }}
-        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.background = 'var(--nd-accent-glow)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'var(--nd-card-bg)'; }}
       >
         <Activity size={16} />
       </button>
@@ -192,22 +202,23 @@ export default function PerfMonitor() {
       width: 320, maxHeight: '80vh', overflow: 'auto',
       background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)',
       borderRadius: 'var(--nd-card-radius)', backdropFilter: 'blur(20px)',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
       fontFamily: 'var(--font-global), system-ui, sans-serif',
+      transition: 'all 0.3s ease-out'
     }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '12px 14px', borderBottom: '1px solid var(--nd-card-border)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Activity size={14} style={{ color: 'var(--nd-accent)' }} />
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#e6edf3', letterSpacing: 0.5 }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--nd-text)', letterSpacing: 0.5 }}>
             PERF MONITOR
           </span>
           <span style={{
             fontSize: '0.55rem', padding: '2px 6px', borderRadius: 4,
-            background: 'rgba(46, 160, 67, 0.15)', color: 'var(--nd-green)',
+            background: 'var(--nd-accent-glow)', color: 'var(--nd-accent)',
             fontWeight: 600, textTransform: 'uppercase',
           }}>
             LIVE
@@ -228,8 +239,8 @@ export default function PerfMonitor() {
       <div style={{ padding: '10px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {statItems.map(item => (
           <div key={item.label} style={{
-            padding: '10px 10px', borderRadius: 8,
-            background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)',
+            padding: '10px 10px', borderRadius: 'var(--nd-card-radius)',
+            background: 'rgba(128, 128, 128, 0.05)', border: '1px solid var(--nd-card-border)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
               <span style={{ color: 'var(--nd-text-muted)', display: 'flex' }}>{item.icon}</span>
@@ -253,7 +264,7 @@ export default function PerfMonitor() {
           <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.3 }}>
             Historique FPS & Mémoire (30s)
           </div>
-          <svg width="100%" height="50" viewBox={`0 0 ${history.length - 1} 50`} preserveAspectRatio="none" style={{ borderRadius: 6, background: 'rgba(255,255,255,0.02)' }}>
+          <svg width="100%" height="50" viewBox={`0 0 ${history.length - 1} 50`} preserveAspectRatio="none" style={{ borderRadius: 6, background: 'rgba(128, 128, 128, 0.05)' }}>
             {/* FPS line */}
             <polyline
               fill="none"
@@ -285,7 +296,7 @@ export default function PerfMonitor() {
 
       {/* Verdict */}
       <div style={{
-        padding: '10px 14px', borderTop: '1px solid rgba(255,255,255,0.04)',
+        padding: '10px 14px', borderTop: '1px solid var(--nd-card-border)',
         fontSize: '0.6rem', color: 'var(--nd-text-muted)',
       }}>
         {metrics.fps >= 50 && metrics.reactRenders < 5 && memPercent < 60 ? (

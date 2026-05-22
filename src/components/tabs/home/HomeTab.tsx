@@ -5,9 +5,6 @@ import LeftSidebar from './LeftSidebar';
 import RightSidebar, { QuickStats } from './RightSidebar';
 import TailscaleStatus from './TailscaleStatus';
 import DockerActions from './DockerActions';
-import ClockWidget from './ClockWidget';
-import CalendarWidget from './CalendarWidget';
-import WeatherWidget from './WeatherWidget';
 import BentoGrid from './BentoGrid';
 import SystemMonitor from './SystemMonitor';
 import Footer from '../../layout/Footer';
@@ -232,33 +229,6 @@ export default function HomeTab({
       order: config.settings?.dockerActionsOrder ?? 3,
       render: () => (
         <DockerActions editMode={editMode} />
-      )
-    },
-    {
-      id: 'clock',
-      visible: !config.settings?.hideClock,
-      sidebar: config.settings?.clockSidebar || 'right',
-      order: config.settings?.clockOrder ?? 4,
-      render: () => (
-        <ClockWidget />
-      )
-    },
-    {
-      id: 'calendar',
-      visible: !config.settings?.hideCalendar,
-      sidebar: config.settings?.calendarSidebar || 'right',
-      order: config.settings?.calendarOrder ?? 5,
-      render: () => (
-        <CalendarWidget />
-      )
-    },
-    {
-      id: 'weather',
-      visible: !config.settings?.hideWeather,
-      sidebar: config.settings?.weatherSidebar || 'right',
-      order: config.settings?.weatherOrder ?? 6,
-      render: () => (
-        <WeatherWidget />
       )
     }
   ];

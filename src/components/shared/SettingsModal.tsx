@@ -228,11 +228,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [hideQuickStats, setHideQuickStats] = useState(!!config?.settings?.hideQuickStats);
   const [hideTailscaleStatus, setHideTailscaleStatus] = useState(!!config?.settings?.hideTailscaleStatus);
   const [hideDockerActions, setHideDockerActions] = useState(!!config?.settings?.hideDockerActions);
-  const [hideClock, setHideClock] = useState(!!config?.settings?.hideClock);
-  const [hideCalendar, setHideCalendar] = useState(!!config?.settings?.hideCalendar);
-  const [hideWeather, setHideWeather] = useState(!!config?.settings?.hideWeather);
-  const [weatherLocation, setWeatherLocation] = useState(config?.settings?.weatherLocation || 'Paris');
-  const [enablePerfMonitor, setEnablePerfMonitor] = useState(!!config?.settings?.enablePerfMonitor);
 
   // Modal / status states
   const [copied, setCopied] = useState(false);
@@ -257,11 +252,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setHideQuickStats(!!config.settings?.hideQuickStats);
       setHideTailscaleStatus(!!config.settings?.hideTailscaleStatus);
       setHideDockerActions(!!config.settings?.hideDockerActions);
-      setHideClock(!!config.settings?.hideClock);
-      setHideCalendar(!!config.settings?.hideCalendar);
-      setHideWeather(!!config.settings?.hideWeather);
-      setWeatherLocation(config.settings?.weatherLocation || 'Paris');
-      setEnablePerfMonitor(!!config.settings?.enablePerfMonitor);
       if (config.settings?.title !== undefined) setTitle(config.settings.title);
       if (config.settings?.titleTablet !== undefined) setTitleTablet(config.settings.titleTablet);
       if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
@@ -1280,72 +1270,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           )}
 
           
-          
           {/* ==========================================
-             TAB: CLOCK
-             ========================================== */}
-          {currentTab === 'widget-clock' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                <ToggleSwitch
-                  checked={!hideClock}
-                  onChange={(val) => handleToggleWidget('hideClock', !val)}
-                  label="Activer le widget Horloge"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ==========================================
-             TAB: CALENDAR
-             ========================================== */}
-          {currentTab === 'widget-calendar' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                <ToggleSwitch
-                  checked={!hideCalendar}
-                  onChange={(val) => handleToggleWidget('hideCalendar', !val)}
-                  label="Activer le widget Calendrier"
-                  sublabel="Désactivé par défaut."
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ==========================================
-             TAB: WEATHER
-             ========================================== */}
-          {currentTab === 'widget-weather' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                <ToggleSwitch
-                  checked={!hideWeather}
-                  onChange={(val) => handleToggleWidget('hideWeather', !val)}
-                  label="Activer le widget Météo"
-                  sublabel="Désactivé par défaut. Requiert vos coordonnées GPS."
-                />
-              </div>
-
-              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Emplacement météo</h4>
-                <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                  Indiquez votre ville pour afficher la météo.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                  <div>
-                    <label className="nd-label">Ville</label>
-                    <input className="nd-input" value={weatherLocation} onChange={e => setWeatherLocation(e.target.value)} placeholder="Ex: Paris" />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-                  <button className="nd-btn" onClick={async () => await updateConfig({ weatherLocation })} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
-                    Sauvegarder
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-{/* ==========================================
              TAB: DEVELOPER
              ========================================== */}
           {currentTab === 'developer' && (
@@ -1361,11 +1286,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 </p>
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 12px', borderRadius: 'var(--nd-card-radius)', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <ToggleSwitch 
-                    checked={enablePerfMonitor}
-                    onChange={async (val) => {
-                      setEnablePerfMonitor(val);
-                      await updateConfig({ enablePerfMonitor: val });
-                    }}
+                    checked={!!config?.settings?.enablePerfMonitor}
+                    onChange={async (val) => await updateConfig({ enablePerfMonitor: val })}
                     label="Activer le Performance Monitor"
                     sublabel="Désactivé par défaut pour économiser les ressources client."
                   />

@@ -16,6 +16,8 @@
     "hideQuickStats": false,
     "hideTailscaleStatus": false,
     "hideDockerActions": false,
+    "customCss": "",
+    "enablePerfMonitor": false,
     "backgroundImage": "",
     "borderRadius": 12,
     "devicesOrder": 0,

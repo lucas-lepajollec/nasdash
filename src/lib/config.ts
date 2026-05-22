@@ -129,10 +129,8 @@ function clearErrorSmartly(deviceId: string, context: string) {
 }
 // ---------------------------------------------
 
-if (!globalAny.devicesStatusCache) {
-  globalAny.devicesStatusCache = {};
-}
-export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = globalAny.devicesStatusCache;
+if (!globalAny.__devicesStatusCache) globalAny.__devicesStatusCache = {};
+export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = globalAny.__devicesStatusCache;
 
 if (globalAny.activeClients === undefined) globalAny.activeClients = 0;
 
@@ -147,7 +145,8 @@ export function decrementActiveClients() {
   globalAny.activeClients = Math.max(0, globalAny.activeClients - 1);
 }
 
-const glancesUrlCache: Record<string, string> = {};
+if (!globalAny.__glancesUrlCache) globalAny.__glancesUrlCache = {};
+const glancesUrlCache: Record<string, string> = globalAny.__glancesUrlCache;
 export function startBackgroundMonitoring() {
   if (globalAny.monitoringStarted) return;
   globalAny.monitoringStarted = true;
@@ -551,7 +550,6 @@ export function startBackgroundMonitoring() {
   };
 
   // Run immediately then every 20s
-  globalAny.triggerPoll = doPoll;
   doPoll();
   setInterval(doPoll, 10000);
 }
