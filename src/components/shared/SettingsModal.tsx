@@ -228,6 +228,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [hideQuickStats, setHideQuickStats] = useState(!!config?.settings?.hideQuickStats);
   const [hideTailscaleStatus, setHideTailscaleStatus] = useState(!!config?.settings?.hideTailscaleStatus);
   const [hideDockerActions, setHideDockerActions] = useState(!!config?.settings?.hideDockerActions);
+  const [enablePerfMonitor, setEnablePerfMonitor] = useState(!!config?.settings?.enablePerfMonitor);
 
   // Modal / status states
   const [copied, setCopied] = useState(false);
@@ -252,6 +253,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setHideQuickStats(!!config.settings?.hideQuickStats);
       setHideTailscaleStatus(!!config.settings?.hideTailscaleStatus);
       setHideDockerActions(!!config.settings?.hideDockerActions);
+      setEnablePerfMonitor(!!config.settings?.enablePerfMonitor);
       if (config.settings?.title !== undefined) setTitle(config.settings.title);
       if (config.settings?.titleTablet !== undefined) setTitleTablet(config.settings.titleTablet);
       if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
@@ -594,6 +596,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Apparence & Thèmes</span>
                     <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Thèmes, polices, arrondis, opacité et CSS.</span>
+                  </div>
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
+                </button>
+
+                {/* Développeur Card */}
+                <button
+                  onClick={() => setActiveTab('developer')}
+                  className={`nd-settings-nav-item ${currentTab === 'developer' ? 'nd-settings-nav-item--active' : ''}`}
+                >
+                  <div style={{ background: 'rgba(239, 68, 68, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                    <Cpu size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Développeur</span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CSS, Perf Monitor, Debug.</span>
                   </div>
                   <span className="nd-settings-chevron">
                     <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -1247,7 +1266,40 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 </div>
               </div>
 
-              {/* Custom CSS overrides */}
+              
+
+            </div>
+          )}
+
+          
+          {/* ==========================================
+             TAB: DEVELOPER
+             ========================================== */}
+          {currentTab === 'developer' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Performance Monitor
+                  <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Beta</span>
+                </h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Affiche une bulle flottante contenant des statistiques en temps réel sur les performances du navigateur (FPS, RAM, Latence).
+                </p>
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 12px', borderRadius: 'var(--nd-card-radius)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <ToggleSwitch 
+                    checked={enablePerfMonitor}
+                    onChange={async (val) => {
+                      setEnablePerfMonitor(val);
+                      await updateConfig({ enablePerfMonitor: val });
+                    }}
+                    label="Activer le Performance Monitor"
+                    sublabel="Désactivé par défaut pour économiser les ressources client."
+                  />
+                </div>
+              </div>
+
+{/* Custom CSS overrides */}
               <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Overide CSS personnalisé</h4>
                 <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
@@ -1267,7 +1319,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   </button>
                 </div>
               </div>
-
             </div>
           )}
 

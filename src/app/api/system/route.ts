@@ -1,10 +1,22 @@
 import { getSystemStats } from '@/lib/system';
+import { incrementActiveClients, decrementActiveClients } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   const encoder = new TextEncoder();
   let active = true;
+
+  incrementActiveClients();
+
+  const cleanup = () => {
+    if (active) {
+      active = false;
+      decrementActiveClients();
+    }
+  };
+
+  req.signal.addEventListener('abort', cleanup);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -41,15 +53,12 @@ export async function GET() {
 
       // Cleanup when client disconnects
       setTimeout(() => {
-        if (active) {
-          active = false;
-          clearInterval(interval);
-          try { controller.close(); } catch { /* ignore */ }
-        }
+        cleanup();
+        try { controller.close(); } catch { /* ignore */ }
       }, 300000); // Max 5 min connection
     },
     cancel() {
-      active = false;
+      cleanup();
     },
   });
 

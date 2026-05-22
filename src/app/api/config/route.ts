@@ -266,6 +266,7 @@ export async function PUT(req: NextRequest) {
     if (body.theme !== undefined) config.settings.theme = body.theme;
 
     // Advanced UI Customization Toggles
+    if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
     if (body.hideDockerActions !== undefined) config.settings.hideDockerActions = body.hideDockerActions;
     if (body.hideTailscaleStatus !== undefined) config.settings.hideTailscaleStatus = body.hideTailscaleStatus;
     if (body.hideDevices !== undefined) config.settings.hideDevices = body.hideDevices;

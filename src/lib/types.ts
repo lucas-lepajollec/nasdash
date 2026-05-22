@@ -159,6 +159,7 @@ export interface DashboardConfig {
     tabOrder?: string[];
     hiddenTabs?: string[];
     // Advanced Customization
+    enablePerfMonitor?: boolean;
     hideDockerActions?: boolean;
     hideTailscaleStatus?: boolean;
     hideDevices?: boolean;

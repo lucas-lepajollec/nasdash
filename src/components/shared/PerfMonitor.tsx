@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Activity, X, Cpu, HardDrive, Wifi, BarChart3, Clock, Layers } from 'lucide-react';
+import { useConfig } from '@/hooks/useConfig';
 
 interface PerfMetrics {
   fps: number;
@@ -45,6 +46,7 @@ function interceptFetch() {
 }
 
 export default function PerfMonitor() {
+  const { config } = useConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [metrics, setMetrics] = useState<PerfMetrics>({
     fps: 0, memoryUsed: 0, memoryTotal: 0, domNodes: 0,
@@ -143,6 +145,10 @@ export default function PerfMonitor() {
     return 'var(--nd-red)';
   };
 
+  if (!config?.settings?.enablePerfMonitor) {
+    return null;
+  }
+
   if (!isOpen) {
     return (
       <button
@@ -151,7 +157,7 @@ export default function PerfMonitor() {
         style={{
           position: 'fixed', bottom: 16, right: 16, zIndex: 99999,
           width: 36, height: 36, borderRadius: '50%',
-          background: 'rgba(20, 25, 35, 0.85)', border: '1px solid rgba(255,255,255,0.1)',
+          background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)',
           color: 'var(--nd-accent)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           backdropFilter: 'blur(12px)', transition: 'all 0.2s',
@@ -184,10 +190,10 @@ export default function PerfMonitor() {
     <div style={{
       position: 'fixed', bottom: 16, right: 16, zIndex: 99999,
       width: 320, maxHeight: '80vh', overflow: 'auto',
-      background: 'rgba(12, 16, 24, 0.95)', border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: 12, backdropFilter: 'blur(20px)',
+      background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)',
+      borderRadius: 'var(--nd-card-radius)', backdropFilter: 'blur(20px)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-      fontFamily: 'var(--font-outfit), system-ui, sans-serif',
+      fontFamily: 'var(--font-global), system-ui, sans-serif',
     }}>
       {/* Header */}
       <div style={{
@@ -223,7 +229,7 @@ export default function PerfMonitor() {
         {statItems.map(item => (
           <div key={item.label} style={{
             padding: '10px 10px', borderRadius: 8,
-            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+            background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
               <span style={{ color: 'var(--nd-text-muted)', display: 'flex' }}>{item.icon}</span>

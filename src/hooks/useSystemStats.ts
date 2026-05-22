@@ -9,6 +9,8 @@ export function useSystemStats() {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const connect = useCallback(() => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
@@ -39,10 +41,31 @@ export function useSystemStats() {
   }, []);
 
   useEffect(() => {
-    connect();
+    // Initial connection if visible
+    if (document.visibilityState === 'visible') {
+      connect();
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // Disconnect immediately to save server resources
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+      } else {
+        // Reconnect instantly when returning to the tab
+        connect();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
     };
   }, [connect]);

@@ -131,6 +131,19 @@ function clearErrorSmartly(deviceId: string, context: string) {
 
 export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = {};
 
+if (globalAny.activeClients === undefined) globalAny.activeClients = 0;
+
+export function incrementActiveClients() {
+  globalAny.activeClients++;
+  if (globalAny.activeClients === 1 && globalAny.triggerPoll) {
+    globalAny.triggerPoll();
+  }
+}
+
+export function decrementActiveClients() {
+  globalAny.activeClients = Math.max(0, globalAny.activeClients - 1);
+}
+
 const glancesUrlCache: Record<string, string> = {};
 export function startBackgroundMonitoring() {
   if (globalAny.monitoringStarted) return;
