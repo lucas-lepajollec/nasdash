@@ -62,7 +62,8 @@ export default function CustomSelect({ value, options, onChange, className, styl
           borderRadius: 'var(--nd-card-radius)',
           boxShadow: 'var(--nd-dropdown-shadow, 0 10px 25px rgba(0,0,0,0.4))',
           zIndex: 100,
-          overflow: 'hidden',
+          overflowY: 'auto',
+          maxHeight: '250px',
           display: 'flex',
           flexDirection: 'column',
         }}>

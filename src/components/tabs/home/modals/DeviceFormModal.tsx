@@ -81,6 +81,9 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const [vmType, setVmType] = useState(device?.api?.vmType || 'qemu');
   const [statStyle, setStatStyle] = useState<Device['statStyle']>(device?.statStyle || 'horizontal');
   const [hideValues, setHideValues] = useState<boolean>(device?.hideValues || false);
+  const [colsDesktop, setColsDesktop] = useState<number>(device?.colsDesktop || 3);
+  const [colsTablet, setColsTablet] = useState<number>(device?.colsTablet || 3);
+  const [colsMobile, setColsMobile] = useState<number>(device?.colsMobile || 3);
 
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -106,6 +109,9 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
         icon,
         statStyle,
         hideValues,
+        colsDesktop: statStyle !== 'horizontal' ? colsDesktop : undefined,
+        colsTablet: statStyle !== 'horizontal' ? colsTablet : undefined,
+        colsMobile: statStyle !== 'horizontal' ? colsMobile : undefined,
         api: {
           type: apiType,
           ip,
@@ -182,6 +188,47 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
               />
             </div>
           </div>
+
+          {statStyle !== 'horizontal' && (
+            <div style={{ display: 'flex', gap: 12, padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
+              <div style={{ flex: 1 }}>
+                <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Desktop)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  className="nd-input"
+                  value={colsDesktop}
+                  onChange={e => setColsDesktop(Math.max(1, Math.min(6, parseInt(e.target.value) || 3)))}
+                  required
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Tablette)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  className="nd-input"
+                  value={colsTablet}
+                  onChange={e => setColsTablet(Math.max(1, Math.min(6, parseInt(e.target.value) || 3)))}
+                  required
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Mobile)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  className="nd-input"
+                  value={colsMobile}
+                  onChange={e => setColsMobile(Math.max(1, Math.min(6, parseInt(e.target.value) || 3)))}
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
             <ToggleSwitch

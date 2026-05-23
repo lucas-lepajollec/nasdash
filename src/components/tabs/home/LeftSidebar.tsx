@@ -183,7 +183,15 @@ function DeviceMonitorCardContent({
           )}
 
           {device.statStyle === 'vertical' && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 8px', justifyContent: 'space-around', marginTop: 10 }}>
+            <div 
+              className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-tablet-${device.colsTablet || 3} cols-mobile-${device.colsMobile || 3}`}
+              style={{
+                width: '100%',
+                '--cols-desktop': device.colsDesktop || 3,
+                '--cols-tablet': device.colsTablet || 3,
+                '--cols-mobile': device.colsMobile || 3,
+              } as React.CSSProperties}
+            >
               {displayStats.map((stat, i) => {
                 const pcolor = stat.color?.startsWith('var') ? stat.color : (stat.color || progressColor(stat.percent || 0));
                 const barColor = pcolor.includes('danger') ? 'var(--nd-red)' : pcolor.includes('warn') ? 'var(--nd-orange)' : pcolor.includes('success') ? 'var(--nd-green)' : pcolor || 'var(--nd-accent)';
@@ -203,14 +211,14 @@ function DeviceMonitorCardContent({
                 const shouldHideBottomText = device.hideValues;
 
                 return (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 40, flex: 1, maxWidth: '33%' }}>
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%', maxWidth: '100%', minWidth: 0 }}>
                     <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={stat.label}>{shortLabel}</span>
-                    <div style={{ position: 'relative', width: 34, height: 70, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'flex', alignItems: 'flex-end', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}>
+                    <div style={{ position: 'relative', width: 'var(--bar-width, 34px)', height: 'var(--bar-height, 70px)', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'flex', alignItems: 'flex-end', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)' }}>
                       {stat.percent !== undefined && (
                         <div style={{ width: '100%', height: `${stat.percent}%`, backgroundColor: barColor, borderRadius: 8, transition: 'height 0.5s ease-in-out' }} />
                       )}
                       {!shouldHideInsideText && (
-                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, pointerEvents: 'none', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.6)' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'calc(var(--bar-width, 34px) * 0.16 + 1px)', fontWeight: 700, pointerEvents: 'none', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.6)' }}>
                           {stat.percent !== undefined ? `${Math.round(stat.percent)}%` : '-'}
                         </div>
                       )}
@@ -225,7 +233,15 @@ function DeviceMonitorCardContent({
           )}
 
           {device.statStyle === 'circle' && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 8px', justifyContent: 'space-around', marginTop: 10 }}>
+            <div 
+              className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-tablet-${device.colsTablet || 3} cols-mobile-${device.colsMobile || 3}`}
+              style={{
+                width: '100%',
+                '--cols-desktop': device.colsDesktop || 3,
+                '--cols-tablet': device.colsTablet || 3,
+                '--cols-mobile': device.colsMobile || 3,
+              } as React.CSSProperties}
+            >
               {displayStats.map((stat, i) => {
                 const pcolor = stat.color?.startsWith('var') ? stat.color : (stat.color || progressColor(stat.percent || 0));
                 const strokeColor = pcolor.includes('danger') ? 'var(--nd-red)' : pcolor.includes('warn') ? 'var(--nd-orange)' : pcolor.includes('success') ? 'var(--nd-green)' : pcolor || 'var(--nd-accent)';
@@ -245,9 +261,9 @@ function DeviceMonitorCardContent({
                 const shouldHideBottomText = device.hideValues;
 
                 return (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 48, flex: 1, maxWidth: '33%' }}>
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%', maxWidth: '100%', minWidth: 0 }}>
                     <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }} title={stat.label}>{shortLabel}</span>
-                    <div style={{ position: 'relative', width: 44, height: 44 }}>
+                    <div style={{ position: 'relative', width: 'var(--circle-size, 44px)', height: 'var(--circle-size, 44px)' }}>
                       <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                         <path
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -268,7 +284,7 @@ function DeviceMonitorCardContent({
                         )}
                       </svg>
                       {!shouldHideInsideText && (
-                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.55rem', fontWeight: 700, pointerEvents: 'none' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'calc(var(--circle-size, 44px) * 0.16 + 1px)', fontWeight: 700, pointerEvents: 'none' }}>
                           {stat.percent !== undefined ? `${Math.round(stat.percent)}%` : '-'}
                         </div>
                       )}
@@ -292,6 +308,49 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .nd-device-stats-grid {
+          display: grid !important;
+          width: 100% !important;
+          gap: 12px 8px !important;
+          margin-top: 10px !important;
+          justify-items: center !important;
+          align-items: start !important;
+          
+          /* Defaults */
+          --circle-size: 44px !important;
+          --bar-width: 34px !important;
+          --bar-height: 70px !important;
+        }
+
+        /* Mobile columns and sizes */
+        .nd-device-stats-grid.cols-mobile-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; --circle-size: 64px !important; --bar-width: 44px !important; --bar-height: 84px !important; }
+        .nd-device-stats-grid.cols-mobile-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; --circle-size: 52px !important; --bar-width: 38px !important; --bar-height: 76px !important; }
+        .nd-device-stats-grid.cols-mobile-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; --circle-size: 44px !important; --bar-width: 34px !important; --bar-height: 70px !important; }
+        .nd-device-stats-grid.cols-mobile-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; --circle-size: 38px !important; --bar-width: 30px !important; --bar-height: 64px !important; }
+        .nd-device-stats-grid.cols-mobile-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; --circle-size: 34px !important; --bar-width: 26px !important; --bar-height: 58px !important; }
+        .nd-device-stats-grid.cols-mobile-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
+
+        /* Tablet columns and sizes (from 768px to 1023px) */
+        @media (min-width: 768px) {
+          .nd-device-stats-grid.cols-tablet-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; --circle-size: 64px !important; --bar-width: 44px !important; --bar-height: 84px !important; }
+          .nd-device-stats-grid.cols-tablet-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; --circle-size: 52px !important; --bar-width: 38px !important; --bar-height: 76px !important; }
+          .nd-device-stats-grid.cols-tablet-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; --circle-size: 44px !important; --bar-width: 34px !important; --bar-height: 70px !important; }
+          .nd-device-stats-grid.cols-tablet-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; --circle-size: 38px !important; --bar-width: 30px !important; --bar-height: 64px !important; }
+          .nd-device-stats-grid.cols-tablet-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; --circle-size: 34px !important; --bar-width: 26px !important; --bar-height: 58px !important; }
+          .nd-device-stats-grid.cols-tablet-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
+        }
+
+        /* Desktop columns and sizes (from 1024px) */
+        @media (min-width: 1024px) {
+          .nd-device-stats-grid.cols-desktop-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; --circle-size: 64px !important; --bar-width: 46px !important; --bar-height: 86px !important; }
+          .nd-device-stats-grid.cols-desktop-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; --circle-size: 52px !important; --bar-width: 38px !important; --bar-height: 76px !important; }
+          .nd-device-stats-grid.cols-desktop-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; --circle-size: 44px !important; --bar-width: 34px !important; --bar-height: 70px !important; }
+          .nd-device-stats-grid.cols-desktop-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; --circle-size: 38px !important; --bar-width: 30px !important; --bar-height: 64px !important; }
+          .nd-device-stats-grid.cols-desktop-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; --circle-size: 34px !important; --bar-width: 26px !important; --bar-height: 58px !important; }
+          .nd-device-stats-grid.cols-desktop-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
+        }
+      `}} />
       <div className="nd-section-title">
         <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
         Appareils

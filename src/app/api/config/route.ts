@@ -81,6 +81,9 @@ export async function POST(req: NextRequest) {
       icon: body.icon || '🖥️',
       statStyle: body.statStyle || 'horizontal',
       hideValues: body.hideValues || false,
+      colsDesktop: body.colsDesktop !== undefined ? body.colsDesktop : 3,
+      colsTablet: body.colsTablet !== undefined ? body.colsTablet : 3,
+      colsMobile: body.colsMobile !== undefined ? body.colsMobile : 3,
       stats: [],
     };
 
@@ -270,6 +273,10 @@ export async function PUT(req: NextRequest) {
     if (body.hideTailscaleStatus !== undefined) config.settings.hideTailscaleStatus = body.hideTailscaleStatus;
     if (body.hideDevices !== undefined) config.settings.hideDevices = body.hideDevices;
     if (body.hideQuickStats !== undefined) config.settings.hideQuickStats = body.hideQuickStats;
+    if (body.hideClock !== undefined) config.settings.hideClock = body.hideClock;
+    if (body.hideCalendar !== undefined) config.settings.hideCalendar = body.hideCalendar;
+    if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
+    if (body.clockTimezone !== undefined) config.settings.clockTimezone = body.clockTimezone;
     if (body.customCss !== undefined) config.settings.customCss = body.customCss;
     if (body.backgroundImage !== undefined) config.settings.backgroundImage = body.backgroundImage;
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
@@ -279,12 +286,16 @@ export async function PUT(req: NextRequest) {
     if (body.quickStatsSidebar !== undefined) config.settings.quickStatsSidebar = body.quickStatsSidebar;
     if (body.tailscaleSidebar !== undefined) config.settings.tailscaleSidebar = body.tailscaleSidebar;
     if (body.dockerActionsSidebar !== undefined) config.settings.dockerActionsSidebar = body.dockerActionsSidebar;
+    if (body.clockSidebar !== undefined) config.settings.clockSidebar = body.clockSidebar;
+    if (body.calendarSidebar !== undefined) config.settings.calendarSidebar = body.calendarSidebar;
     
     // Sidebar widget order preferences
     if (body.devicesOrder !== undefined) config.settings.devicesOrder = body.devicesOrder;
     if (body.quickStatsOrder !== undefined) config.settings.quickStatsOrder = body.quickStatsOrder;
     if (body.tailscaleOrder !== undefined) config.settings.tailscaleOrder = body.tailscaleOrder;
     if (body.dockerActionsOrder !== undefined) config.settings.dockerActionsOrder = body.dockerActionsOrder;
+    if (body.clockOrder !== undefined) config.settings.clockOrder = body.clockOrder;
+    if (body.calendarOrder !== undefined) config.settings.calendarOrder = body.calendarOrder;
     
     // Appearance Profiles
     if (body.appearanceProfiles !== undefined) {
@@ -311,6 +322,9 @@ export async function PUT(req: NextRequest) {
     if (body.icon !== undefined) device.icon = body.icon;
     if (body.statStyle !== undefined) device.statStyle = body.statStyle;
     if (body.hideValues !== undefined) device.hideValues = body.hideValues;
+    if (body.colsDesktop !== undefined) device.colsDesktop = body.colsDesktop;
+    if (body.colsTablet !== undefined) device.colsTablet = body.colsTablet;
+    if (body.colsMobile !== undefined) device.colsMobile = body.colsMobile;
 
     if (body.api) {
       const oldApiObj: any = device.api || {};

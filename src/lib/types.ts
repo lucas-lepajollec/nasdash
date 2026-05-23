@@ -55,6 +55,9 @@ export interface Device {
   stats?: DeviceStat[];
   statStyle?: 'horizontal' | 'vertical' | 'circle';
   hideValues?: boolean;
+  colsDesktop?: number;
+  colsTablet?: number;
+  colsMobile?: number;
 }
 
 // ==================== DOCKER ====================
@@ -163,6 +166,11 @@ export interface DashboardConfig {
     hideTailscaleStatus?: boolean;
     hideDevices?: boolean;
     hideQuickStats?: boolean;
+    hideClock?: boolean;
+    hideCalendar?: boolean;
+    calendarUrl?: string;
+    clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
+    clockTimezone?: string;
     customCss?: string;
     backgroundImage?: string;
     // Developer options
@@ -172,11 +180,15 @@ export interface DashboardConfig {
     quickStatsSidebar?: 'left' | 'right';
     tailscaleSidebar?: 'left' | 'right';
     dockerActionsSidebar?: 'left' | 'right';
+    clockSidebar?: 'left' | 'right';
+    calendarSidebar?: 'left' | 'right';
     // Sidebar widget order preferences
     devicesOrder?: number;
     quickStatsOrder?: number;
     tailscaleOrder?: number;
     dockerActionsOrder?: number;
+    clockOrder?: number;
+    calendarOrder?: number;
     // Premium Design options
     globalFont?: string;
     borderRadius?: number;

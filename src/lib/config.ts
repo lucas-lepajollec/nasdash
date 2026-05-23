@@ -104,7 +104,9 @@ function getDefaultConfig(): DashboardConfig {
     settings: {
       title: 'HOME LAB',
       showMonitor: true,
-      totalSlots: 10
+      totalSlots: 10,
+      hideDockerActions: true,
+      hideCalendar: true
     },
     devices: [],
     categories: []
@@ -148,8 +150,9 @@ export function decrementActiveClients() {
 if (!globalAny.__glancesUrlCache) globalAny.__glancesUrlCache = {};
 const glancesUrlCache: Record<string, string> = globalAny.__glancesUrlCache;
 export function startBackgroundMonitoring() {
-  if (globalAny.monitoringStarted) return;
-  globalAny.monitoringStarted = true;
+  if (globalAny.__monitoringInterval) {
+    clearInterval(globalAny.__monitoringInterval);
+  }
   console.log('🚀 Démarrage du Background Monitoring des appareils (Toutes les 10s)...');
 
   const interpolateEnv = (str: string) => str.replace(/\${([^}]+)}/g, (_, v) => process.env[v] || '');
@@ -296,7 +299,16 @@ export function startBackgroundMonitoring() {
             }
 
             if (data?.mem?.percent !== undefined) {
-              stats.push({ label: 'RAM', value: `${data.mem.percent.toFixed(1)}%`, percent: data.mem.percent, color: 'var(--nd-green)' });
+              const parts = [`${data.mem.percent.toFixed(1)}%`];
+              if (data.mem.total) {
+                const gb = data.mem.total / 1024 / 1024 / 1024;
+                if (gb >= 1000) {
+                  parts.push(`(${(gb / 1000).toFixed(1).replace('.', ',')} To)`);
+                } else {
+                  parts.push(`(${gb.toFixed(0)} Go)`);
+                }
+              }
+              stats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0\u00A0'), percent: data.mem.percent, color: 'var(--nd-green)' });
             }
 
             if (data?.fs && Array.isArray(data.fs)) {
@@ -388,7 +400,14 @@ export function startBackgroundMonitoring() {
             const memTotal = data.memory?.total || data.maxmem;
             if (memUsed && memTotal) {
               const memPercent = (memUsed / memTotal) * 100;
-              stats.push({ label: 'RAM', value: `${memPercent.toFixed(1)}%`, percent: memPercent, color: 'var(--nd-green)' });
+              const parts = [`${memPercent.toFixed(1)}%`];
+              const gb = memTotal / 1024 / 1024 / 1024;
+              if (gb >= 1000) {
+                parts.push(`(${(gb / 1000).toFixed(1).replace('.', ',')} To)`);
+              } else {
+                parts.push(`(${gb.toFixed(0)} Go)`);
+              }
+              stats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0\u00A0'), percent: memPercent, color: 'var(--nd-green)' });
             }
 
             let diskUsed = data.rootfs?.used || data.disk;
@@ -494,7 +513,26 @@ export function startBackgroundMonitoring() {
                 const ramLoad = searchLHMTree(hw, (n: any) => n.Text === 'Memory' && n.Value?.includes('%'));
                 if (ramLoad) {
                   const val = parseFloat(ramLoad.Value.replace(',', '.'));
-                  ramStats.push({ label: 'RAM', value: `${val.toFixed(1)}%`, percent: val, color: 'var(--nd-green)' });
+                  let ramTotalStr = '';
+                  const memUsedNode = searchLHMTree(hw, (n: any) => n.Text === 'Memory Used');
+                  const memAvailNode = searchLHMTree(hw, (n: any) => n.Text === 'Memory Available');
+                  if (memUsedNode && memAvailNode && memUsedNode.Value && memAvailNode.Value) {
+                    let usedGB = parseFloat(memUsedNode.Value.replace(',', '.'));
+                    if (memUsedNode.Value.includes('MB')) usedGB /= 1024;
+                    let availGB = parseFloat(memAvailNode.Value.replace(',', '.'));
+                    if (memAvailNode.Value.includes('MB')) availGB /= 1024;
+                    const totalGB = usedGB + availGB;
+                    
+                    if (totalGB >= 1000) {
+                      ramTotalStr = `(${(totalGB / 1000).toFixed(1).replace('.', ',')} To)`;
+                    } else {
+                      ramTotalStr = `(${Math.round(totalGB)} Go)`;
+                    }
+                  }
+                  
+                  const parts = [`${val.toFixed(1)}%`];
+                  if (ramTotalStr) parts.push(ramTotalStr);
+                  ramStats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0\u00A0'), percent: val, color: 'var(--nd-green)' });
                 }
               }
 
@@ -549,9 +587,9 @@ export function startBackgroundMonitoring() {
     }
   };
 
-  // Run immediately then every 20s
+  // Run immediately then every 10s
   doPoll();
-  setInterval(doPoll, 10000);
+  globalAny.__monitoringInterval = setInterval(doPoll, 10000);
 }
 
 // Auto-start on server load

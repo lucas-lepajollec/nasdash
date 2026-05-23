@@ -147,7 +147,7 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
         {actions.length === 0 && (
-          <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'center', padding: '12px 0' }}>
+          <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
             Aucune action rapide configurée.{!editMode && " Activez le mode édition pour en ajouter."}
           </p>
         )}

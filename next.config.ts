@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 
+// Trigger dev server restart to reload background monitoring loop
 const nextConfig: NextConfig = {
   output: 'standalone',
   serverExternalPackages: ['systeminformation'],

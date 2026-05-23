@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Palette, Layers, Sliders, Clipboard, Check, 
-  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container 
+  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar 
 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
@@ -223,11 +223,26 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [dockerActionsSidebar, setDockerActionsSidebar] = useState(config?.settings?.dockerActionsSidebar || 'right');
   const [dockerActionsOrder, setDockerActionsOrder] = useState(config?.settings?.dockerActionsOrder ?? 3);
 
+  const [clockSidebar, setClockSidebar] = useState(config?.settings?.clockSidebar || 'left');
+  const [clockOrder, setClockOrder] = useState(config?.settings?.clockOrder ?? -1);
+  const [clockDesign, setClockDesign] = useState(config?.settings?.clockDesign || 'default');
+  const [clockTimezone, setClockTimezone] = useState(config?.settings?.clockTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+  const [calendarSidebar, setCalendarSidebar] = useState(config?.settings?.calendarSidebar || 'left');
+  const [calendarOrder, setCalendarOrder] = useState(config?.settings?.calendarOrder ?? -2);
+
   // Sidebar visibility states
   const [hideDevices, setHideDevices] = useState(!!config?.settings?.hideDevices);
   const [hideQuickStats, setHideQuickStats] = useState(!!config?.settings?.hideQuickStats);
   const [hideTailscaleStatus, setHideTailscaleStatus] = useState(!!config?.settings?.hideTailscaleStatus);
-  const [hideDockerActions, setHideDockerActions] = useState(!!config?.settings?.hideDockerActions);
+  const [hideDockerActions, setHideDockerActions] = useState(config?.settings?.hideDockerActions ?? true);
+  const [hideClock, setHideClock] = useState(!!config?.settings?.hideClock);
+  const [hideCalendar, setHideCalendar] = useState(config?.settings?.hideCalendar ?? true);
+  const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
+
+  const [tailscaleTailnet, setTailscaleTailnet] = useState(config?.settings?.tailscaleTailnet || '');
+  const [tailscaleClientId, setTailscaleClientId] = useState(config?.settings?.tailscaleClientId || '');
+  const [tailscaleClientSecret, setTailscaleClientSecret] = useState(config?.settings?.tailscaleClientSecret ? '********' : '');
 
   // Modal / status states
   const [copied, setCopied] = useState(false);
@@ -248,10 +263,22 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setTailscaleOrder(config.settings?.tailscaleOrder ?? 2);
       setDockerActionsSidebar(config.settings?.dockerActionsSidebar || 'right');
       setDockerActionsOrder(config.settings?.dockerActionsOrder ?? 3);
+      setClockSidebar(config.settings?.clockSidebar || 'left');
+      setClockOrder(config.settings?.clockOrder ?? -1);
+      setClockDesign(config.settings?.clockDesign || 'default');
+      setClockTimezone(config.settings?.clockTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
       setHideDevices(!!config.settings?.hideDevices);
       setHideQuickStats(!!config.settings?.hideQuickStats);
       setHideTailscaleStatus(!!config.settings?.hideTailscaleStatus);
-      setHideDockerActions(!!config.settings?.hideDockerActions);
+      setHideDockerActions(config.settings?.hideDockerActions ?? true);
+      setHideClock(!!config.settings?.hideClock);
+      setHideCalendar(config.settings?.hideCalendar ?? true);
+      if (config.settings?.calendarSidebar !== undefined) setCalendarSidebar(config.settings.calendarSidebar);
+      if (config.settings?.calendarOrder !== undefined) setCalendarOrder(config.settings.calendarOrder);
+      if (config.settings?.calendarUrl !== undefined) setCalendarUrl(config.settings.calendarUrl);
+      if (config.settings?.tailscaleTailnet !== undefined) setTailscaleTailnet(config.settings.tailscaleTailnet);
+      if (config.settings?.tailscaleClientId !== undefined) setTailscaleClientId(config.settings.tailscaleClientId);
+      if (config.settings?.tailscaleClientSecret !== undefined) setTailscaleClientSecret(config.settings.tailscaleClientSecret ? '********' : '');
       if (config.settings?.title !== undefined) setTitle(config.settings.title);
       if (config.settings?.titleTablet !== undefined) setTitleTablet(config.settings.titleTablet);
       if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
@@ -314,6 +341,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     } else if (widgetKey === 'dockeractions') {
       setDockerActionsSidebar(sidebar);
       await updateConfig({ dockerActionsSidebar: sidebar });
+    } else if (widgetKey === 'clock') {
+      setClockSidebar(sidebar);
+      await updateConfig({ clockSidebar: sidebar });
+    } else if (widgetKey === 'calendar') {
+      setCalendarSidebar(sidebar);
+      await updateConfig({ calendarSidebar: sidebar });
     }
   };
 
@@ -330,6 +363,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     } else if (widgetKey === 'dockeractions') {
       setDockerActionsOrder(order);
       await updateConfig({ dockerActionsOrder: order });
+    } else if (widgetKey === 'clock') {
+      setClockOrder(order);
+      await updateConfig({ clockOrder: order });
+    } else if (widgetKey === 'calendar') {
+      setCalendarOrder(order);
+      await updateConfig({ calendarOrder: order });
     }
   };
 
@@ -502,6 +541,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     } else if (key === 'hideDockerActions') {
       setHideDockerActions(value);
       await updateConfig({ hideDockerActions: value });
+    } else if (key === 'hideClock') {
+      setHideClock(value);
+      await updateConfig({ hideClock: value });
+    } else if (key === 'hideCalendar') {
+      setHideCalendar(value);
+      await updateConfig({ hideCalendar: value });
     }
   };
 
@@ -743,6 +788,58 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
                   </span>
                 </button>
+
+                {/* Clock Widget */}
+                <button
+                  onClick={() => setActiveTab('widget-clock')}
+                  className={`nd-settings-nav-item ${currentTab === 'widget-clock' ? 'nd-settings-nav-item--active' : ''}`}
+                >
+                  <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
+                    <Clipboard size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Widget Horloge / Date
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: !hideClock ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                        boxShadow: !hideClock ? '0 0 6px var(--nd-green)' : 'none'
+                      }} />
+                    </span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Affichage de l'heure et de la date.</span>
+                  </div>
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
+                </button>
+
+                {/* Calendar Widget */}
+                <button
+                  onClick={() => setActiveTab('widget-calendar')}
+                  className={`nd-settings-nav-item ${currentTab === 'widget-calendar' ? 'nd-settings-nav-item--active' : ''}`}
+                >
+                  <div style={{ background: 'rgba(251, 146, 60, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb923c', flexShrink: 0 }}>
+                    <Calendar size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      Widget Calendrier
+                      <span style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: !hideCalendar ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                        boxShadow: !hideCalendar ? '0 0 6px var(--nd-green)' : 'none'
+                      }} />
+                    </span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Affichage des jours et des événements.</span>
+                  </div>
+                  <span className="nd-settings-chevron">
+                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -822,6 +919,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
                 {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
                 {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
+                {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
+                {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
                 {currentTab === 'homeassistant' && '🏠 Export Lovelace Home Assistant'}
               </h3>
             </div>
@@ -1332,7 +1431,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               <div>
                 <h5 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-green)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--nd-green)', boxShadow: '0 0 8px var(--nd-green)' }} />
-                  Widgets Activés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => !h).length })
+                  Widgets Activés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => !h).length })
                 </h5>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {!hideDevices && (
@@ -1447,7 +1546,63 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </div>
                   )}
 
-                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => !h).length === 0 && (
+                  {!hideClock && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>🕒 Horloge / Date</span>
+                          <span style={{ fontSize: '0.6rem', background: 'var(--nd-accent-glow)', color: 'var(--nd-accent)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Affichage</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Affichage de l'heure et de la date avec un beau design.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-clock')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideClock', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!hideCalendar && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>📅 Calendrier</span>
+                          <span style={{ fontSize: '0.6rem', background: 'rgba(251, 146, 60, 0.15)', color: '#fb923c', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Organisation</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Affichage des jours et des événements.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-calendar')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideCalendar', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => !h).length === 0 && (
                     <div style={{ gridColumn: 'span 2', padding: '20px', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.74rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                       Aucun widget n'est actif. Activez-en ci-dessous !
                     </div>
@@ -1459,7 +1614,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               <div>
                 <h5 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-text-dimmed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--nd-text-dimmed)' }} />
-                  Widgets Désactivés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => h).length })
+                  Widgets Désactivés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => h).length })
                 </h5>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {hideDevices && (
@@ -1546,7 +1701,49 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </div>
                   )}
 
-                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions].filter(h => h).length === 0 && (
+                  {hideClock && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>🕒 Horloge / Date</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Affichage de l'heure et de la date avec un beau design.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideClock', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {hideCalendar && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>📅 Calendrier</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Affichage des jours et des événements.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideCalendar', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => h).length === 0 && (
                     <div style={{ gridColumn: 'span 2', padding: '20px', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.74rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                       Tous les widgets sont actifs ! 🎉
                     </div>
@@ -1836,6 +2033,49 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       De nouveaux réglages permettront bientôt de masquer les machines hors-ligne, de trier la liste par ping ou d'attribuer des alias personnalisés à vos adresses Tailscale IP de manière simple et intuitive.
                     </p>
                   </div>
+
+                  {/* Tailscale API Configuration */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Authentification API Tailscale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Connectez votre compte Tailscale pour visualiser l'état de vos appareils directement sur le Dashboard.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <input
+                        type="text"
+                        className="nd-input"
+                        placeholder="Nom du Tailnet (ex: email@domaine.com)"
+                        value={tailscaleTailnet}
+                        onChange={(e) => {
+                          setTailscaleTailnet(e.target.value);
+                          updateConfig({ tailscaleTailnet: e.target.value });
+                        }}
+                        style={{ fontSize: '0.75rem', padding: '10px 14px' }}
+                      />
+                      <input
+                        type="password"
+                        className="nd-input"
+                        placeholder="OAuth Client ID (kxxxx...)"
+                        value={tailscaleClientId}
+                        onChange={(e) => {
+                          setTailscaleClientId(e.target.value);
+                          updateConfig({ tailscaleClientId: e.target.value });
+                        }}
+                        style={{ fontSize: '0.75rem', padding: '10px 14px' }}
+                      />
+                      <input
+                        type="password"
+                        className="nd-input"
+                        placeholder="OAuth Client Secret (tskey-client-...)"
+                        value={tailscaleClientSecret}
+                        onChange={(e) => {
+                          setTailscaleClientSecret(e.target.value);
+                          updateConfig({ tailscaleClientSecret: e.target.value });
+                        }}
+                        style={{ fontSize: '0.75rem', padding: '10px 14px' }}
+                      />
+                    </div>
+                  </div>
                 </>
               )}
             </div>
@@ -1937,7 +2177,259 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           )}
 
           {/* ==========================================
-             TAB 7: HOME ASSISTANT
+             TAB 7: WIDGET-CLOCK PAGE
+             ========================================== */}
+          {currentTab === 'widget-clock' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideClock}
+                  onChange={(val) => handleToggleWidget('hideClock', !val)}
+                  label="Activer le widget Horloge / Date"
+                  sublabel="Choisissez si l'horloge doit s'afficher sur votre tableau de bord."
+                />
+              </div>
+
+              {!hideClock && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWidgetPosition('clock', 'left')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: clockSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: clockSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: clockSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: clockSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={() => handleWidgetPosition('clock', 'right')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: clockSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: clockSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: clockSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: clockSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={() => handleWidgetOrder('clock', Math.max(-5, clockOrder - 1))}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="-5"
+                        max="20"
+                        value={clockOrder}
+                        onChange={(e) => handleWidgetOrder('clock', Number(e.target.value))}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={() => handleWidgetOrder('clock', clockOrder + 1)}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Timezone Configuration */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Fuseau Horaire</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Spécifiez le fuseau horaire de l'horloge. Laissez vide pour utiliser l'heure locale.
+                    </p>
+                    <CustomSelect
+                      value={clockTimezone || ''}
+                      onChange={async (val) => {
+                        setClockTimezone(val);
+                        await updateConfig({ clockTimezone: val });
+                      }}
+                      options={[
+                        { value: '', label: '🏠 Heure locale (Défaut)' },
+                        ...(Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone').map(tz => ({
+                          value: tz,
+                          label: tz.replace('_', ' ')
+                        })) : [])
+                      ]}
+                    />
+                  </div>
+
+                  {/* Design Configuration */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Design & Style</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Sélectionnez l'apparence visuelle de l'horloge.
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {[
+                        { id: 'default', name: 'Défaut', desc: 'Design classique et propre' },
+                        { id: 'minimal', name: 'Minimaliste', desc: 'Discret, texte seul' },
+                        { id: 'glow', name: 'Terminal', desc: 'Style ligne de commande minimaliste' },
+                        { id: 'split', name: 'Split Cards', desc: 'Boîtes séparées (style Flip)' }
+                      ].map(design => (
+                        <button
+                          key={design.id}
+                          onClick={async () => {
+                            setClockDesign(design.id as any);
+                            await updateConfig({ clockDesign: design.id });
+                          }}
+                          style={{
+                            padding: '12px', border: '1px solid',
+                            borderColor: clockDesign === design.id ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                            background: clockDesign === design.id ? 'var(--nd-accent-glow)' : 'rgba(0,0,0,0.2)',
+                            color: clockDesign === design.id ? 'var(--nd-accent)' : 'var(--nd-text)',
+                            borderRadius: 'var(--nd-card-radius)', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s',
+                            boxShadow: clockDesign === design.id ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                          }}
+                        >
+                          <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: 4 }}>{design.name}</div>
+                          <div style={{ fontSize: '0.62rem', color: clockDesign === design.id ? 'inherit' : 'var(--nd-text-muted)', opacity: 0.8 }}>{design.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 8: WIDGET-CALENDAR PAGE
+             ========================================== */}
+          {currentTab === 'widget-calendar' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideCalendar}
+                  onChange={(val) => handleToggleWidget('hideCalendar', !val)}
+                  label="Activer le widget Calendrier"
+                  sublabel="Affiche un calendrier simple sur votre tableau de bord."
+                />
+              </div>
+
+              {!hideCalendar && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={() => handleWidgetPosition('calendar', 'left')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: calendarSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: calendarSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: calendarSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: calendarSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={() => handleWidgetPosition('calendar', 'right')}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: calendarSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: calendarSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: calendarSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: calendarSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={() => handleWidgetOrder('calendar', Math.max(-5, calendarOrder - 1))}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="-5"
+                        max="20"
+                        value={calendarOrder}
+                        onChange={(e) => handleWidgetOrder('calendar', Number(e.target.value))}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={() => handleWidgetOrder('calendar', calendarOrder + 1)}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Calendar Sync URL */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Synchronisation iCal</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Collez l'URL d'un calendrier au format .ics (Google Agenda, Apple, etc.) pour afficher vos événements.
+                    </p>
+                    <input
+                      type="url"
+                      className="nd-input"
+                      placeholder="https://..."
+                      value={calendarUrl}
+                      onChange={(e) => {
+                        setCalendarUrl(e.target.value);
+                      }}
+                      onBlur={() => {
+                        updateConfig({ calendarUrl });
+                      }}
+                      style={{ width: '100%', fontSize: '0.75rem', padding: '10px 14px' }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
+             TAB 9: HOME ASSISTANT
              ========================================== */}
           {currentTab === 'homeassistant' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

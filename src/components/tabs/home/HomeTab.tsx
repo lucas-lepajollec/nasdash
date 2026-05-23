@@ -12,6 +12,8 @@ import ServiceFormModal from './modals/ServiceFormModal';
 import CategoryFormModal from './modals/CategoryFormModal';
 import DeviceFormModal from './modals/DeviceFormModal';
 import DockerActionFormModal from './modals/DockerActionFormModal';
+import ClockWidget from './ClockWidget';
+import CalendarWidget from './CalendarWidget';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
@@ -224,11 +226,29 @@ export default function HomeTab({
     },
     {
       id: 'dockeractions',
-      visible: !config.settings?.hideDockerActions,
+      visible: !(config.settings?.hideDockerActions ?? true),
       sidebar: config.settings?.dockerActionsSidebar || 'right',
       order: config.settings?.dockerActionsOrder ?? 3,
       render: () => (
         <DockerActions editMode={editMode} />
+      )
+    },
+    {
+      id: 'clock',
+      visible: !config.settings?.hideClock,
+      sidebar: config.settings?.clockSidebar || 'left',
+      order: config.settings?.clockOrder ?? -1,
+      render: () => (
+        <ClockWidget />
+      )
+    },
+    {
+      id: 'calendar',
+      visible: !(config.settings?.hideCalendar ?? true),
+      sidebar: config.settings?.calendarSidebar || 'left',
+      order: config.settings?.calendarOrder ?? -2,
+      render: () => (
+        <CalendarWidget editMode={editMode} />
       )
     }
   ];

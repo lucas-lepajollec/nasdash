@@ -420,6 +420,69 @@ body {
   padding: 14px;
 }
 
+/* ==================== DEVICE STATS GRID ==================== */
+.nd-device-stats-grid {
+  display: grid;
+  gap: 12px 8px;
+  margin-top: 10px;
+  justify-items: center;
+  align-items: start;
+  
+  /* Defaults */
+  --circle-size: 44px;
+  --bar-width: 34px;
+  --bar-height: 70px;
+}
+
+/* Mobile responsive columns & sizes */
+.nd-device-stats-grid {
+  grid-template-columns: repeat(var(--cols-mobile, 3), minmax(0, 1fr));
+}
+.nd-device-stats-grid.cols-mobile-2 {
+  --circle-size: 50px;
+  --bar-width: 38px;
+  --bar-height: 76px;
+}
+.nd-device-stats-grid.cols-mobile-1 {
+  --circle-size: 60px;
+  --bar-width: 44px;
+  --bar-height: 84px;
+}
+
+/* Tablet media query (from 768px to 1023px) */
+@media (min-width: 768px) {
+  .nd-device-stats-grid {
+    grid-template-columns: repeat(var(--cols-tablet, 3), minmax(0, 1fr));
+  }
+  .nd-device-stats-grid.cols-tablet-2 {
+    --circle-size: 50px;
+    --bar-width: 38px;
+    --bar-height: 76px;
+  }
+  .nd-device-stats-grid.cols-tablet-1 {
+    --circle-size: 60px;
+    --bar-width: 44px;
+    --bar-height: 84px;
+  }
+}
+
+/* Desktop media query (from 1024px) */
+@media (min-width: 1024px) {
+  .nd-device-stats-grid {
+    grid-template-columns: repeat(var(--cols-desktop, 3), minmax(0, 1fr));
+  }
+  .nd-device-stats-grid.cols-desktop-2 {
+    --circle-size: 52px;
+    --bar-width: 38px;
+    --bar-height: 76px;
+  }
+  .nd-device-stats-grid.cols-desktop-1 {
+    --circle-size: 64px;
+    --bar-width: 46px;
+    --bar-height: 86px;
+  }
+}
+
 /* ==================== STAT ROW ==================== */
 .nd-stat-row {
   display: flex;
