@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import ical from 'node-ical';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +10,9 @@ export async function GET(request: NextRequest) {
     if (!url) {
       return NextResponse.json({ error: 'Missing calendar URL' }, { status: 400 });
     }
+
+    // Use dynamic import to prevent Next.js static evaluation from crashing
+    const ical = require('node-ical');
 
     // Fetch and parse the ICS file
     const eventsData = await ical.async.fromURL(url);
