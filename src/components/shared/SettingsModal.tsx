@@ -1120,15 +1120,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     ]}
                   />
                 </div>
-
-                <div style={{ marginTop: 12 }}>
-                  <ToggleSwitch
-                    checked={!hideWidgetTitles}
-                    onChange={(val) => handleToggleWidget('hideWidgetTitles', !val)}
-                    label="Afficher les titres des widgets"
-                    sublabel="Affiche le titre (ex: APPAREILS, CALENDRIER) au-dessus de chaque widget."
-                  />
-                </div>
               </div>
 
               {/* Mode Sombre / Clair (Default Theme Only) */}
@@ -1449,6 +1440,16 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.4 }}>
                   Activez ou désactivez les extensions de NasDash. Les widgets activés apparaissent dans vos barres latérales selon leur ordre de priorité.
                 </p>
+              </div>
+
+              {/* Options globales de la bibliothèque */}
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideWidgetTitles}
+                  onChange={(val) => handleToggleWidget('hideWidgetTitles', !val)}
+                  label="Afficher les titres des widgets"
+                  sublabel="Masque ou affiche les titres (ex: APPAREILS, CALENDRIER, HORLOGE) au-dessus de tous vos widgets."
+                />
               </div>
 
               {/* Section 1: Active Widgets */}

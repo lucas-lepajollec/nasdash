@@ -290,6 +290,7 @@ export async function PUT(req: NextRequest) {
     if (body.hideQuickStats !== undefined) config.settings.hideQuickStats = body.hideQuickStats;
     if (body.hideClock !== undefined) config.settings.hideClock = body.hideClock;
     if (body.hideCalendar !== undefined) config.settings.hideCalendar = body.hideCalendar;
+    if (body.hideWidgetTitles !== undefined) config.settings.hideWidgetTitles = body.hideWidgetTitles;
     if (body.calendarUrl !== undefined) config.settings.calendarUrl = body.calendarUrl;
     if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
     if (body.clockTimezone !== undefined) config.settings.clockTimezone = body.clockTimezone;
