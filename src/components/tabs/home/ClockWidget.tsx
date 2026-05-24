@@ -24,7 +24,7 @@ export default function ClockWidget() {
         minute: '2-digit',
         timeZone: timezone
       }).format(date);
-    } catch(e) {
+    } catch (e) {
       return new Intl.DateTimeFormat('fr-FR', {
         hour: '2-digit',
         minute: '2-digit'
@@ -38,7 +38,7 @@ export default function ClockWidget() {
         second: '2-digit',
         timeZone: timezone
       }).format(date);
-    } catch(e) {
+    } catch (e) {
       return new Intl.DateTimeFormat('fr-FR', {
         second: '2-digit'
       }).format(date);
@@ -55,7 +55,7 @@ export default function ClockWidget() {
         timeZone: timezone
       }).format(date);
       return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-    } catch(e) {
+    } catch (e) {
       return '';
     }
   };
@@ -73,9 +73,9 @@ export default function ClockWidget() {
         <div className="nd-section-title">
           <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
         </div>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0 8px 0', position: 'relative' }}>
-          
+
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
             <span style={{ fontSize: '3.2rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
               {hours}
@@ -86,7 +86,7 @@ export default function ClockWidget() {
               {secs}
             </span>
           </div>
-          
+
           <div style={{ marginTop: '8px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--nd-text-muted)', textTransform: 'capitalize', letterSpacing: '0.5px' }}>
             {dateStr}
           </div>
@@ -118,7 +118,7 @@ export default function ClockWidget() {
         <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--nd-text-muted)', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', opacity: 0.7 }}>
           <span>admin@nas:~</span>
         </div>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
             <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"

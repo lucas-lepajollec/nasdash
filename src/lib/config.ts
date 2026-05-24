@@ -8,7 +8,6 @@ const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const LOGOS_DIR = path.join(DATA_DIR, 'logos');
 
 export function ensureDataDir() {
-  console.log('Vérification du dossier data...');
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
@@ -109,7 +108,8 @@ function getDefaultConfig(): DashboardConfig {
       hideCalendar: true
     },
     devices: [],
-    categories: []
+    categories: [],
+    localEvents: []
   };
 }
 
@@ -294,7 +294,7 @@ export function startBackgroundMonitoring() {
             }
 
             if (data?.cpu?.total !== undefined) {
-              const tStr = cpuTemp ? `\u00A0\u00A0\u00A0${cpuTemp.trim()}` : '';
+              const tStr = cpuTemp ? `\u00A0\u00A0${cpuTemp.trim()}` : '';
               stats.push({ label: 'CPU', value: `${data.cpu.total.toFixed(1)}%${tStr}`, percent: data.cpu.total, color: 'var(--nd-accent)' });
             }
 
@@ -308,7 +308,7 @@ export function startBackgroundMonitoring() {
                   parts.push(`(${gb.toFixed(0)} Go)`);
                 }
               }
-              stats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0\u00A0'), percent: data.mem.percent, color: 'var(--nd-green)' });
+              stats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0'), percent: data.mem.percent, color: 'var(--nd-green)' });
             }
 
             if (data?.fs && Array.isArray(data.fs)) {
@@ -353,7 +353,7 @@ export function startBackgroundMonitoring() {
 
                 stats.push({
                   label: `Disque (${displayName})`,
-                  value: parts.join('\u00A0\u00A0\u00A0'),
+                  value: parts.join('\u00A0\u00A0'),
                   percent: disk.percent,
                   color: 'var(--nd-orange)'
                 });
@@ -363,7 +363,7 @@ export function startBackgroundMonitoring() {
             if (data?.gpu && Array.isArray(data.gpu)) {
               for (const gpu of data.gpu) {
                 if (gpu.proc !== undefined) {
-                  const tStr = typeof gpu.temperature === 'number' ? `\u00A0\u00A0\u00A0${Math.round(gpu.temperature)}°C` : '';
+                  const tStr = typeof gpu.temperature === 'number' ? `\u00A0\u00A0${Math.round(gpu.temperature)}°C` : '';
                   stats.push({ label: gpu.name || 'GPU', value: `${gpu.proc.toFixed(1)}%${tStr}`, percent: gpu.proc, color: 'var(--nd-purple)' });
                 }
               }
@@ -407,7 +407,7 @@ export function startBackgroundMonitoring() {
               } else {
                 parts.push(`(${gb.toFixed(0)} Go)`);
               }
-              stats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0\u00A0'), percent: memPercent, color: 'var(--nd-green)' });
+              stats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0'), percent: memPercent, color: 'var(--nd-green)' });
             }
 
             let diskUsed = data.rootfs?.used || data.disk;
@@ -506,7 +506,7 @@ export function startBackgroundMonitoring() {
                 const val = parseFloat(cpuLoad.Value.replace(',', '.'));
                 const parts = [`${val.toFixed(1)}%`];
                 if (cpuTemp) parts.push(`${Math.round(parseFloat(cpuTemp.Value.replace(',', '.')))}°C`);
-                cpuStats.push({ label: 'CPU', value: parts.join('\u00A0\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-accent)' });
+                cpuStats.push({ label: 'CPU', value: parts.join('\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-accent)' });
               }
 
               if (hw.Text === 'Total Memory' || hw.Text === 'Generic Memory' || hw.Text === 'System Memory') {
@@ -532,7 +532,7 @@ export function startBackgroundMonitoring() {
                   
                   const parts = [`${val.toFixed(1)}%`];
                   if (ramTotalStr) parts.push(ramTotalStr);
-                  ramStats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0\u00A0'), percent: val, color: 'var(--nd-green)' });
+                  ramStats.push({ label: 'RAM', value: parts.join('\u00A0\u00A0'), percent: val, color: 'var(--nd-green)' });
                 }
               }
 
@@ -546,7 +546,7 @@ export function startBackgroundMonitoring() {
                 const val = parseFloat(gpuLoad.Value.replace(',', '.'));
                 const parts = [`${val.toFixed(1)}%`];
                 if (gpuTemp) parts.push(`${Math.round(parseFloat(gpuTemp.Value.replace(',', '.')))}°C`);
-                gpuStats.push({ label: gpuName, value: parts.join('\u00A0\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-purple)' });
+                gpuStats.push({ label: gpuName, value: parts.join('\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-purple)' });
               }
 
               const diskLoad = searchLHMTree(hw, (n: any) => n.Text === 'Used Space' && n.Value?.includes('%'));
@@ -563,7 +563,7 @@ export function startBackgroundMonitoring() {
                    if (gb >= 1000) parts.push(`(${((gb/1000)).toFixed(1).replace('.', ',')} To)`);
                    else parts.push(`(${gb.toFixed(0)} Go)`);
                 }
-                diskStats.push({ label: `Disque (${diskName})`, value: parts.join('\u00A0\u00A0\u00A0'), percent: val, color: 'var(--nd-orange)' });
+                diskStats.push({ label: `Disque (${diskName})`, value: parts.join('\u00A0\u00A0'), percent: val, color: 'var(--nd-orange)' });
               }
             }
 

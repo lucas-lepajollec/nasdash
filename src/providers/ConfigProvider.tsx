@@ -29,6 +29,11 @@ interface ConfigContextType {
   deleteDockerAction: (id: string) => Promise<void>;
   reorderDockerActions: (newActions: any[]) => Promise<void>;
 
+  // Local Events
+  addLocalEvent: (event: Omit<any, 'id'>) => Promise<void>;
+  updateLocalEvent: (id: string, updates: any) => Promise<void>;
+  deleteLocalEvent: (id: string) => Promise<void>;
+
   // Shared Modal States
   serviceModal: { open: boolean; service?: Service; categoryId?: string };
   setServiceModal: (state: { open: boolean; service?: Service; categoryId?: string }) => void;
@@ -42,6 +47,10 @@ interface ConfigContextType {
   setSettingsModal: (state: { open: boolean }) => void;
   tabManagerModal: { open: boolean };
   setTabManagerModal: (state: { open: boolean }) => void;
+  calendarEventModal: { open: boolean; date?: string; events?: any[] };
+  setCalendarEventModal: (state: { open: boolean; date?: string; events?: any[] }) => void;
+  viewEventModal: { open: boolean; event?: any };
+  setViewEventModal: (state: { open: boolean; event?: any }) => void;
 }
 
 export const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -73,6 +82,15 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }>({ open: false });
   const [tabManagerModal, setTabManagerModal] = useState<{
     open: boolean;
+  }>({ open: false });
+  const [calendarEventModal, setCalendarEventModal] = useState<{
+    open: boolean;
+    date?: string;
+    events?: any[];
+  }>({ open: false });
+  const [viewEventModal, setViewEventModal] = useState<{
+    open: boolean;
+    event?: any;
   }>({ open: false });
 
   const fetchConfig = useCallback(async () => {
@@ -350,7 +368,30 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
-  const value = {
+  const addLocalEvent = async (event: Omit<any, 'id'>) => {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'localEvent', ...event }),
+    });
+    if (res.ok) await fetchConfig();
+  };
+
+  const updateLocalEvent = async (id: string, updates: any) => {
+    const res = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'localEvent', id, ...updates }),
+    });
+    if (res.ok) await fetchConfig();
+  };
+
+  const deleteLocalEvent = async (id: string) => {
+    const res = await fetch(`/api/config?type=localEvent&id=${id}`, { method: 'DELETE' });
+    if (res.ok) await fetchConfig();
+  };
+
+  const value: any = {
     config,
     loading,
     refresh: fetchConfig,
@@ -373,6 +414,9 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     updateDockerAction,
     deleteDockerAction,
     reorderDockerActions,
+    addLocalEvent,
+    updateLocalEvent,
+    deleteLocalEvent,
     serviceModal,
     setServiceModal,
     categoryModal,
@@ -385,6 +429,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     setSettingsModal,
     tabManagerModal,
     setTabManagerModal,
+    calendarEventModal,
+    setCalendarEventModal,
+    viewEventModal,
+    setViewEventModal,
   };
 
   return (

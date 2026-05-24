@@ -183,7 +183,7 @@ function DeviceMonitorCardContent({
           )}
 
           {device.statStyle === 'vertical' && (
-            <div 
+            <div
               className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-tablet-${device.colsTablet || 3} cols-mobile-${device.colsMobile || 3}`}
               style={{
                 width: '100%',
@@ -195,7 +195,7 @@ function DeviceMonitorCardContent({
               {displayStats.map((stat, i) => {
                 const pcolor = stat.color?.startsWith('var') ? stat.color : (stat.color || progressColor(stat.percent || 0));
                 const barColor = pcolor.includes('danger') ? 'var(--nd-red)' : pcolor.includes('warn') ? 'var(--nd-orange)' : pcolor.includes('success') ? 'var(--nd-green)' : pcolor || 'var(--nd-accent)';
-                
+
                 const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
                 let shortLabel = stat.label;
                 if (isDisk) {
@@ -233,7 +233,7 @@ function DeviceMonitorCardContent({
           )}
 
           {device.statStyle === 'circle' && (
-            <div 
+            <div
               className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-tablet-${device.colsTablet || 3} cols-mobile-${device.colsMobile || 3}`}
               style={{
                 width: '100%',
@@ -245,7 +245,7 @@ function DeviceMonitorCardContent({
               {displayStats.map((stat, i) => {
                 const pcolor = stat.color?.startsWith('var') ? stat.color : (stat.color || progressColor(stat.percent || 0));
                 const strokeColor = pcolor.includes('danger') ? 'var(--nd-red)' : pcolor.includes('warn') ? 'var(--nd-orange)' : pcolor.includes('success') ? 'var(--nd-green)' : pcolor || 'var(--nd-accent)';
-                
+
                 const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
                 let shortLabel = stat.label;
                 if (isDisk) {
@@ -308,7 +308,8 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .nd-device-stats-grid {
           display: grid !important;
           width: 100% !important;
@@ -392,8 +393,8 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
         onClose={() => setDeviceToDelete(null)}
         onConfirm={() => {
           if (deviceToDelete) {
-             onDeleteDevice?.(deviceToDelete.id);
-             setDeviceToDelete(null);
+            onDeleteDevice?.(deviceToDelete.id);
+            setDeviceToDelete(null);
           }
         }}
         title="Dételer l'appareil ?"

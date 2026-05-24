@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Palette, Layers, Sliders, Clipboard, Check, 
-  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar 
+  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar, Trash2
 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
@@ -204,6 +204,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   // Appearance Profiles
   const [appearanceProfiles, setAppearanceProfiles] = useState<AppearanceProfile[]>([]);
   const [newProfileName, setNewProfileName] = useState('');
+
+  // Delete Confirmations
+  const [confirmDeleteProfile, setConfirmDeleteProfile] = useState<string | null>(null);
 
   // Design system states
   const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
@@ -522,6 +525,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     const updatedProfiles = appearanceProfiles.filter(p => p.id !== id);
     setAppearanceProfiles(updatedProfiles);
     await updateConfig({ appearanceProfiles: updatedProfiles });
+    setConfirmDeleteProfile(null);
   };
 
   const handleSaveCss = async () => {
@@ -958,17 +962,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {appearanceProfiles.length > 0 && (
                   <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr' }}>
                     {appearanceProfiles.map(profile => (
-                      <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nd-card-bg)', padding: '12px 16px', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
                         <div>
-                          <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--nd-text)' }}>{profile.name}</span>
-                          <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 2 }}>{profile.settings.theme}</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)' }}>{profile.name}</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 4 }}>{profile.settings.theme}</span>
                         </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button className="nd-btn" onClick={() => handleApplyProfile(profile)} style={{ padding: '4px 10px', fontSize: '0.7rem' }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <button className="nd-btn" onClick={() => handleApplyProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
                             Appliquer
                           </button>
-                          <button className="nd-btn nd-btn-danger" onClick={() => handleDeleteProfile(profile.id)} style={{ padding: '4px 8px' }} title="Supprimer le profil">
-                            <X size={14} />
+                          <button 
+                            type="button"
+                            className="nd-btn nd-btn-danger"
+                            onClick={() => setConfirmDeleteProfile(profile.id)} 
+                            style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            title="Supprimer le profil"
+                          >
+                            <Trash2 size={13} /> Supprimer
                           </button>
                         </div>
                       </div>
@@ -2486,6 +2496,17 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         confirmLabel="Oui, supprimer"
         cancelLabel="Annuler"
       />
+
+      {/* Profile Delete Confirmation */}
+      {confirmDeleteProfile && (
+        <ConfirmModal
+          isOpen={true}
+          title="Supprimer le profil"
+          description={`Êtes-vous sûr de vouloir supprimer le profil "${appearanceProfiles.find(p => p.id === confirmDeleteProfile)?.name}" ? Cette action est irréversible.`}
+          onConfirm={() => handleDeleteProfile(confirmDeleteProfile)}
+          onClose={() => setConfirmDeleteProfile(null)}
+        />
+      )}
     </div>
   );
 }

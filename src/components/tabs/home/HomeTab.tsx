@@ -245,8 +245,8 @@ export default function HomeTab({
     {
       id: 'calendar',
       visible: !(config.settings?.hideCalendar ?? true),
-      sidebar: config.settings?.calendarSidebar || 'left',
-      order: config.settings?.calendarOrder ?? -2,
+      sidebar: config.settings?.calendarSidebar || 'right',
+      order: config.settings?.calendarOrder ?? 4,
       render: () => (
         <CalendarWidget editMode={editMode} />
       )

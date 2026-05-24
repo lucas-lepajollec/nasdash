@@ -137,12 +137,23 @@ export interface AppearanceProfile {
   settings: Partial<DashboardConfig['settings']>;
 }
 
+export interface LocalCalendarEvent {
+  id: string;
+  title: string;
+  start: string; // ISO string
+  end?: string; // ISO string
+  description?: string;
+  isAllDay?: boolean;
+}
+
 export interface DashboardConfig {
+  version: number;
   categories: Category[];
-  devices: Device[];
+  devices?: Device[];
   dockerHosts?: DockerHost[];
   dockerActions?: DockerActionConfig[];
   appearanceProfiles?: AppearanceProfile[];
+  localEvents?: LocalCalendarEvent[];
   settings: {
     title: string;
     titleTablet?: string;

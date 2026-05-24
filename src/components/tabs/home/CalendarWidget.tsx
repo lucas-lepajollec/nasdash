@@ -15,12 +15,14 @@ interface CalendarEvent {
 }
 
 export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
-  const { config } = useConfig();
+  const { config, setCalendarEventModal } = useConfig();
   const calendarUrl = config?.settings?.calendarUrl;
+  const localEvents = config?.localEvents || [];
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const { setViewEventModal } = useConfig();
   
   // Wait for client-side hydration to show actual date, to avoid SSR mismatch
   const [mounted, setMounted] = useState(false);
@@ -30,8 +32,14 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      let combinedEvents: CalendarEvent[] = localEvents.map(e => ({
+        ...e,
+        start: e.start || null,
+        end: e.end || null
+      }));
+      
       if (!calendarUrl) {
-        setEvents([]);
+        setEvents(combinedEvents);
         return;
       }
       setLoadingEvents(true);
@@ -39,17 +47,18 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
         const res = await fetch(`/api/calendar?url=${encodeURIComponent(calendarUrl)}`);
         const data = await res.json();
         if (data && data.events) {
-          setEvents(data.events);
+          combinedEvents = [...combinedEvents, ...data.events];
         }
       } catch (e) {
         console.error('Failed to fetch calendar events:', e);
       } finally {
+        setEvents(combinedEvents);
         setLoadingEvents(false);
       }
     };
 
     fetchEvents();
-  }, [calendarUrl]);
+  }, [calendarUrl, localEvents]);
 
   const daysOfWeek = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
   const monthNames = [
@@ -107,6 +116,12 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
       days.push(
         <div 
           key={i} 
+          className="nd-calendar-day"
+          onClick={() => setCalendarEventModal({ 
+            open: true, 
+            date: `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`,
+            events: dayEvents
+          })}
           style={{ 
             display: 'flex',
             flexDirection: 'column',
@@ -119,9 +134,8 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
             background: today ? 'var(--nd-accent)' : 'transparent',
             borderRadius: 'var(--nd-card-radius)',
             position: 'relative',
-            cursor: hasEvents ? 'pointer' : 'default'
+            cursor: 'pointer' // Always pointer to add events
           }}
-          title={hasEvents ? `${dayEvents.length} événement(s)` : ''}
         >
           {i}
           {hasEvents && !today && (
@@ -130,6 +144,21 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
           {hasEvents && today && (
             <div style={{ position: 'absolute', bottom: '2px', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--nd-bg)' }} />
           )}
+          
+          {hasEvents && (
+            <div className="nd-calendar-tooltip">
+              {dayEvents.map((e, idx) => (
+                <div key={idx} style={{ marginBottom: idx === dayEvents.length - 1 ? 0 : 4, borderBottom: idx === dayEvents.length - 1 ? 'none' : '1px solid var(--nd-card-border)', paddingBottom: idx === dayEvents.length - 1 ? 0 : 4 }}>
+                  <div style={{ fontWeight: 600, color: 'var(--nd-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                  {e.start && !e.isAllDay && (
+                    <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>
+                      {new Date(e.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
@@ -137,13 +166,52 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
   };
 
   // Get upcoming events
+  const startOfToday = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
   const upcomingEvents = events
-    .filter(e => e.start && new Date(e.start) >= realToday)
+    .filter(e => e.start && new Date(e.start) >= startOfToday)
     .sort((a, b) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
-    .slice(0, 3);
+    .slice(0, 2);
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+      <style dangerouslySetInnerHTML={{__html: `
+        .nd-calendar-day .nd-calendar-tooltip {
+          visibility: hidden;
+          opacity: 0;
+          position: absolute;
+          bottom: calc(100% + 5px);
+          left: 50%;
+          transform: translateX(-50%);
+          background: var(--nd-bg);
+          border: 1px solid var(--nd-card-border);
+          border-radius: var(--nd-card-radius);
+          padding: 8px 12px;
+          width: max-content;
+          max-width: 200px;
+          z-index: 50;
+          pointer-events: none;
+          transition: opacity 0.2s, visibility 0.2s;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          text-align: left;
+        }
+        .nd-calendar-day:hover .nd-calendar-tooltip {
+          visibility: visible;
+          opacity: 1;
+        }
+        /* Aligner à gauche pour Lundi et Mardi */
+        .nd-calendar-day:nth-child(7n+1) .nd-calendar-tooltip,
+        .nd-calendar-day:nth-child(7n+2) .nd-calendar-tooltip {
+          left: -10px;
+          transform: none;
+        }
+        /* Aligner à droite pour Samedi et Dimanche */
+        .nd-calendar-day:nth-child(7n) .nd-calendar-tooltip,
+        .nd-calendar-day:nth-child(7n+6) .nd-calendar-tooltip {
+          left: auto;
+          right: -10px;
+          transform: none;
+        }
+      `}} />
       <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <CalendarIcon size={12} style={{ color: '#fb923c' }} /> Calendrier
@@ -152,17 +220,17 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
           {loadingEvents && <div style={{ width: 10, height: 10, border: '2px solid rgba(251, 146, 60, 0.3)', borderTopColor: '#fb923c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
           {!isCurrentMonth && (
             <button 
+              className="nd-btn"
               onClick={goToToday}
               style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', 
-                fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', cursor: 'pointer',
-                fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px',
-                transition: 'all 0.2s'
+                fontSize: '0.65rem', 
+                padding: '4px 8px', 
+                height: 'auto',
+                borderWidth: '1px'
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+              title="Revenir au mois en cours"
             >
-              <RotateCcw size={10} /> Aujourd'hui
+              <RotateCcw size={10} /> Revenir
             </button>
           )}
         </div>
@@ -206,7 +274,11 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
             {upcomingEvents.map(e => {
               const start = new Date(e.start!);
               return (
-                <div key={e.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.7rem' }}>
+                <div 
+                  key={e.id} 
+                  onClick={() => setViewEventModal({ open: true, event: e })}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.7rem', cursor: 'pointer' }}
+                >
                   <div style={{ background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, fontSize: '0.6rem', minWidth: '40px', textAlign: 'center' }}>
                     {start.getDate()} {monthNames[start.getMonth()].substring(0, 3)}
                   </div>

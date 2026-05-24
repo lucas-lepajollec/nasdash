@@ -9,6 +9,8 @@ import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
 import SettingsModal from '@/components/shared/SettingsModal';
 import TabManagerModal from '@/components/shared/TabManagerModal';
+import CalendarEventModal from '@/components/shared/CalendarEventModal';
+import ViewEventModal from '@/components/shared/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
@@ -192,6 +194,9 @@ export default function Shell() {
           onClose={() => setTabManagerModal({ open: false })}
         />
       )}
+
+      <CalendarEventModal />
+      <ViewEventModal />
 
       {/* Performance Monitor — petit bouton en bas à droite */}
       <PerfMonitor />

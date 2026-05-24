@@ -10,6 +10,7 @@ export async function GET() {
   // Ensure devices array exists (backward compat)
   if (!config.devices) (config as any).devices = [];
   if (!config.dockerHosts) (config as any).dockerHosts = [];
+  if (!config.localEvents) config.localEvents = [];
 
   // Strip out sensitive tokens before sending to client
   const safeConfig = JSON.parse(JSON.stringify(config));
@@ -176,6 +177,20 @@ export async function POST(req: NextRequest) {
     writeConfig(config);
     return NextResponse.json(newAction, { status: 201 });
   }
+  if (type === 'localEvent') {
+    if (!config.localEvents) config.localEvents = [];
+    const newEvent = {
+      id: uuidv4(),
+      title: body.title || 'Nouvel événement',
+      start: body.start,
+      end: body.end,
+      description: body.description,
+      isAllDay: body.isAllDay || false
+    };
+    config.localEvents.push(newEvent);
+    writeConfig(config);
+    return NextResponse.json(newEvent, { status: 201 });
+  }
 
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 }
@@ -275,6 +290,7 @@ export async function PUT(req: NextRequest) {
     if (body.hideQuickStats !== undefined) config.settings.hideQuickStats = body.hideQuickStats;
     if (body.hideClock !== undefined) config.settings.hideClock = body.hideClock;
     if (body.hideCalendar !== undefined) config.settings.hideCalendar = body.hideCalendar;
+    if (body.calendarUrl !== undefined) config.settings.calendarUrl = body.calendarUrl;
     if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
     if (body.clockTimezone !== undefined) config.settings.clockTimezone = body.clockTimezone;
     if (body.customCss !== undefined) config.settings.customCss = body.customCss;
@@ -424,6 +440,21 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(action);
   }
 
+  if (type === 'localEvent') {
+    if (!config.localEvents) config.localEvents = [];
+    const event = config.localEvents.find((e: any) => e.id === body.id);
+    if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (body.title !== undefined) event.title = body.title;
+    if (body.start !== undefined) event.start = body.start;
+    if (body.end !== undefined) event.end = body.end;
+    if (body.description !== undefined) event.description = body.description;
+    if (body.isAllDay !== undefined) event.isAllDay = body.isAllDay;
+
+    writeConfig(config);
+    return NextResponse.json(event);
+  }
+
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 }
 
@@ -467,6 +498,13 @@ export async function DELETE(req: NextRequest) {
   if (type === 'dockerAction') {
     if (!config.dockerActions) config.dockerActions = [];
     config.dockerActions = config.dockerActions.filter((a: any) => a.id !== id);
+    writeConfig(config);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (type === 'localEvent') {
+    if (!config.localEvents) config.localEvents = [];
+    config.localEvents = config.localEvents.filter((e: any) => e.id !== id);
     writeConfig(config);
     return NextResponse.json({ ok: true });
   }
