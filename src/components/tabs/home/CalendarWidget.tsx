@@ -240,7 +240,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
       )}
       
       {/* HEADER CALENDRIER (Mois & Nav) */}
-      <div style={{ marginTop: '12px' }}>
+      <div style={{ marginTop: hideTitles ? '0' : '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)', textTransform: 'capitalize' }}>

@@ -91,6 +91,8 @@ function DeviceMonitorCardContent({
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
+  const { config } = useConfig();
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
   const isApiDevice = !!device.api;
   const { data: stats, error, isLoading } = useSWR<DeviceStat[] | { error: string, isOffline?: boolean }>(
     isApiDevice ? `/api/devices/${device.id}` : null,
@@ -103,7 +105,7 @@ function DeviceMonitorCardContent({
   const errorMessage = stats && 'error' in stats ? stats.error : 'Impossible de joindre l\'appareil';
 
   return (
-    <div style={{ marginTop: 8, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
+    <div style={{ marginTop: hideTitles ? 0 : 4, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5, flex: 1, minWidth: 0 }}>
           {editMode && (

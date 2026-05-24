@@ -84,7 +84,7 @@ export default function TailscaleStatus({ editMode, showSensitive = false }: { e
             <AlertCircle size={12} /> Tailscale Error
           </div>
         )}
-        <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginBottom: 8 }}>
+        <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: hideTitles ? 0 : 4, marginBottom: 8 }}>
           <Globe size={10} /> Dashboard Tailscale
         </a>
         <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: 4 }}>Démon indisponible ou configuration invalide</p>

@@ -77,7 +77,7 @@ export default function ClockWidget() {
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0 8px 0', position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: hideTitles ? '8px 0' : '16px 0 8px 0', position: 'relative' }}>
 
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
             <span style={{ fontSize: '3.2rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
@@ -107,7 +107,7 @@ export default function ClockWidget() {
             <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '16px 0 8px 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
           <div style={{ fontSize: '3.2rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px' }}>
             {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}
           </div>
