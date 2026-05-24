@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import LeftSidebar from './LeftSidebar';
 import RightSidebar, { QuickStats } from './RightSidebar';
 import TailscaleStatus from './TailscaleStatus';
@@ -67,6 +67,35 @@ export default function HomeTab({
     settingsModal,
     setSettingsModal,
   } = useConfig();
+
+  const leftSidebarRef = useRef<HTMLElement>(null);
+  const rightSidebarRef = useRef<HTMLElement>(null);
+  const [leftSticky, setLeftSticky] = useState(true);
+  const [rightSticky, setRightSticky] = useState(true);
+
+  useEffect(() => {
+    const checkSticky = () => {
+      if (leftSidebarRef.current) {
+        setLeftSticky(leftSidebarRef.current.scrollHeight + 40 < window.innerHeight);
+      }
+      if (rightSidebarRef.current) {
+        setRightSticky(rightSidebarRef.current.scrollHeight + 40 < window.innerHeight);
+      }
+    };
+
+    checkSticky();
+    window.addEventListener('resize', checkSticky);
+    
+    // Check when DOM updates
+    const observer = new ResizeObserver(checkSticky);
+    if (leftSidebarRef.current) observer.observe(leftSidebarRef.current);
+    if (rightSidebarRef.current) observer.observe(rightSidebarRef.current);
+
+    return () => {
+      window.removeEventListener('resize', checkSticky);
+      observer.disconnect();
+    };
+  }, [config, editMode]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -270,7 +299,7 @@ export default function HomeTab({
         <div className="nd-layout" style={{ gridTemplateColumns: 'var(--nd-sidebar-width) minmax(0, 1fr) var(--nd-right-sidebar-width)' }}>
           {/* LEFT SIDEBAR COLUMN */}
           {hasLeftContent ? (
-            <aside className="nd-sidebar-left">
+            <aside ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
               {leftWidgets.map(w => (
                 <React.Fragment key={w.id}>{w.render()}</React.Fragment>
               ))}
@@ -309,7 +338,7 @@ export default function HomeTab({
 
           {/* RIGHT SIDEBAR COLUMN */}
           {hasRightContent ? (
-            <aside className="nd-sidebar-right">
+            <aside ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
               {rightWidgets.map(w => (
                 <React.Fragment key={w.id}>{w.render()}</React.Fragment>
               ))}

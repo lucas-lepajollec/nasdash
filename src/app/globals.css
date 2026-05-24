@@ -118,8 +118,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
 }
 
 .nd-center {
@@ -132,8 +130,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
 }
 
 /* ==================== HEADER ==================== */
