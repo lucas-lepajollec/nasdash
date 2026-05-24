@@ -99,11 +99,11 @@ export default function ClockWidget() {
   if (design === 'minimal') {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column', padding: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div style={{ fontSize: '2.5rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-1px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '4px 0' }}>
+          <div style={{ fontSize: '3.2rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px' }}>
             {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}
           </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--nd-text-muted)', textAlign: 'right', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'lowercase' }}>
+          <div style={{ fontSize: '0.9rem', color: 'var(--nd-text-muted)', fontWeight: 500, letterSpacing: '1px', textTransform: 'lowercase' }}>
             {dateStr}
           </div>
         </div>
