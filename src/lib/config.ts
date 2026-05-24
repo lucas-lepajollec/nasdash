@@ -100,6 +100,7 @@ function getDefaultConfig(): DashboardConfig {
   }
 
   return {
+    version: 1,
     settings: {
       title: 'HOME LAB',
       showMonitor: true,

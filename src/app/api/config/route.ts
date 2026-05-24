@@ -211,7 +211,7 @@ export async function PUT(req: NextRequest) {
 
     // Preserve sensitive tokens from existing devices
     const newDevices = body.devices.map((newDevice: any) => {
-      const existingDevice = config.devices.find((d: any) => d.id === newDevice.id);
+      const existingDevice = (config.devices || []).find((d: any) => d.id === newDevice.id);
       if (existingDevice && existingDevice.api?.token && newDevice.api?.token === '********') {
         // Keep the original token if the new one is masked
         newDevice.api.token = existingDevice.api.token;
