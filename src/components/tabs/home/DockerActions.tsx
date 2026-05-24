@@ -57,6 +57,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
 
 export default function DockerActions({ editMode }: { editMode?: boolean }) {
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
 
   const sensors = useSensors(
@@ -131,19 +132,21 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-2">
-      <div className="nd-section-title">
-        <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> Actions Docker
-        {editMode && (
-          <button 
-            className="nd-action-icon success" 
-            onClick={() => setDockerActionModal({ open: true })} 
-            style={{ marginLeft: 'auto' }} 
-            title="Ajouter une action"
-          >
-            <Plus size={13} />
-          </button>
-        )}
-      </div>
+      {!hideTitles && (
+        <div className="nd-section-title">
+          <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> Actions Docker
+          {editMode && (
+            <button 
+              className="nd-action-icon success" 
+              onClick={() => setDockerActionModal({ open: true })} 
+              style={{ marginLeft: 'auto' }} 
+              title="Ajouter une action"
+            >
+              <Plus size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
         {actions.length === 0 && (

@@ -11,6 +11,7 @@ export default function ClockWidget() {
   // Settings
   const timezone = config?.settings?.clockTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const design = config?.settings?.clockDesign || 'default';
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -70,9 +71,11 @@ export default function ClockWidget() {
   if (design === 'default') {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="nd-section-title">
-          <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
-        </div>
+        {!hideTitles && (
+          <div className="nd-section-title">
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0 8px 0', position: 'relative' }}>
 
@@ -98,8 +101,13 @@ export default function ClockWidget() {
   // Minimal design
   if (design === 'minimal') {
     return (
-      <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column', padding: '16px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '4px 0' }}>
+      <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column', padding: hideTitles ? '16px' : '0' }}>
+        {!hideTitles && (
+          <div className="nd-section-title">
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+          </div>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: hideTitles ? '4px 0' : '16px' }}>
           <div style={{ fontSize: '3.2rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px' }}>
             {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}
           </div>
@@ -114,8 +122,14 @@ export default function ClockWidget() {
   // Terminal design
   if (design === 'glow') {
     return (
-      <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column', padding: '16px', background: 'rgba(0,0,0,0.15)', border: '1px solid var(--nd-card-border)' }}>
-        <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--nd-text-muted)', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', opacity: 0.7 }}>
+      <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column', padding: hideTitles ? '16px' : '0', background: 'rgba(0,0,0,0.15)', border: '1px solid var(--nd-card-border)' }}>
+        {!hideTitles && (
+          <div className="nd-section-title">
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+          </div>
+        )}
+        <div style={{ padding: hideTitles ? '0' : '16px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--nd-text-muted)', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', opacity: 0.7 }}>
           <span>admin@nas:~</span>
         </div>
 
@@ -138,6 +152,7 @@ export default function ClockWidget() {
             {dateStr}
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -146,9 +161,11 @@ export default function ClockWidget() {
   if (design === 'split') {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="nd-section-title">
-          <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Temps local
-        </div>
+        {!hideTitles && (
+          <div className="nd-section-title">
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '12px 0' }}>
           <div style={{ display: 'flex', gap: '6px' }}>
             <div style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', border: '1px solid var(--nd-card-border)', borderRadius: '6px', padding: '8px 10px', fontSize: '2.2rem', fontWeight: 800, color: 'var(--nd-text)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 6px rgba(0,0,0,0.2)', position: 'relative' }}>

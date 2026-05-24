@@ -14,6 +14,9 @@ interface RightSidebarProps {
 }
 
 export function QuickStats({ categories }: { categories: Category[] }) {
+  const { config } = useConfig();
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+
   // Compute stats
   const serviceCount = categories.reduce((acc, c) => acc + c.services.length, 0);
   const categoryCount = categories.length;
@@ -41,10 +44,12 @@ export function QuickStats({ categories }: { categories: Category[] }) {
 
   return (
     <div className="nd-sidebar-card nd-animate-in">
-      <div className="nd-section-title">
-        <Server size={12} style={{ color: 'var(--nd-accent)' }} />
-        Vue d&apos;ensemble
-      </div>
+      {!hideTitles && (
+        <div className="nd-section-title">
+          <Server size={12} style={{ color: 'var(--nd-accent)' }} />
+          Vue d&apos;ensemble
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {quickStats.map((s) => (
           <div key={s.label} style={{

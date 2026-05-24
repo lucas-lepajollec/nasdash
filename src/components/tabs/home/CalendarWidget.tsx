@@ -23,6 +23,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const { setViewEventModal } = useConfig();
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
   
   // Wait for client-side hydration to show actual date, to avoid SSR mismatch
   const [mounted, setMounted] = useState(false);
@@ -212,30 +213,33 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
           transform: none;
         }
       `}} />
-      <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <CalendarIcon size={12} style={{ color: '#fb923c' }} /> Calendrier
+      {!hideTitles && (
+        <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <CalendarIcon size={12} style={{ color: '#fb923c' }} /> Calendrier
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {loadingEvents && <div style={{ width: 10, height: 10, border: '2px solid rgba(251, 146, 60, 0.3)', borderTopColor: '#fb923c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
+            {!isCurrentMonth && (
+              <button 
+                className="nd-btn"
+                onClick={goToToday}
+                style={{
+                  fontSize: '0.65rem', 
+                  padding: '4px 8px', 
+                  height: 'auto',
+                  borderWidth: '1px'
+                }}
+                title="Revenir au mois en cours"
+              >
+                <RotateCcw size={10} /> Revenir
+              </button>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {loadingEvents && <div style={{ width: 10, height: 10, border: '2px solid rgba(251, 146, 60, 0.3)', borderTopColor: '#fb923c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
-          {!isCurrentMonth && (
-            <button 
-              className="nd-btn"
-              onClick={goToToday}
-              style={{
-                fontSize: '0.65rem', 
-                padding: '4px 8px', 
-                height: 'auto',
-                borderWidth: '1px'
-              }}
-              title="Revenir au mois en cours"
-            >
-              <RotateCcw size={10} /> Revenir
-            </button>
-          )}
-        </div>
-      </div>
-
+      )}
+      
+      {/* HEADER CALENDRIER (Mois & Nav) */}
       <div style={{ marginTop: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

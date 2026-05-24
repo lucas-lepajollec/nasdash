@@ -7,6 +7,7 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useRef, useEffect } from 'react';
 import ConfirmModal from '../../shared/ConfirmModal';
+import { useConfig } from '@/hooks/useConfig';
 
 interface LeftSidebarProps {
   devices: Device[];
@@ -304,6 +305,8 @@ function DeviceMonitorCardContent({
 }
 
 export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
+  const { config } = useConfig();
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
 
   return (
@@ -352,19 +355,21 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
           .nd-device-stats-grid.cols-desktop-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
         }
       `}} />
-      <div className="nd-section-title">
-        <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
-        Appareils
-        {editMode && onAddDevice && (
-          <button
-            className="nd-action-icon success"
-            onClick={onAddDevice}
-            style={{ marginLeft: 'auto' }}
-          >
-            <Plus size={13} />
-          </button>
-        )}
-      </div>
+      {!hideTitles && (
+        <div className="nd-section-title">
+          <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
+          Appareils
+          {editMode && onAddDevice && (
+            <button
+              className="nd-action-icon success"
+              onClick={onAddDevice}
+              style={{ marginLeft: 'auto' }}
+            >
+              <Plus size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       {devices.length === 0 && (
         <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>

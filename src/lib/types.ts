@@ -179,6 +179,7 @@ export interface DashboardConfig {
     hideQuickStats?: boolean;
     hideClock?: boolean;
     hideCalendar?: boolean;
+    hideWidgetTitles?: boolean;
     calendarUrl?: string;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
     clockTimezone?: string;

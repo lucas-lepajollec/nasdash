@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe } from 'lucide-react';
+import { useConfig } from '@/hooks/useConfig';
 
 const getOsIcon = (os: string, hostname: string) => {
   const lower = os?.toLowerCase() || '';
@@ -15,6 +16,8 @@ const getOsIcon = (os: string, hostname: string) => {
 };
 
 export default function TailscaleStatus({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
+  const { config } = useConfig();
+  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
   const [devices, setDevices] = useState<any[] | null>(null);
   const [error, setError] = useState(false);
   const [unconfigured, setUnconfigured] = useState(false);
@@ -61,9 +64,11 @@ export default function TailscaleStatus({ editMode, showSensitive = false }: { e
   if (unconfigured) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title">
-          <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
-        </div>
+        {!hideTitles && (
+          <div className="nd-section-title">
+            <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
+          </div>
+        )}
         <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: '8px 4px' }}>
           Tailscale n'est pas configuré. Allez dans les paramètres pour lier votre compte.
         </p>
@@ -74,9 +79,11 @@ export default function TailscaleStatus({ editMode, showSensitive = false }: { e
   if (error) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        <div className="nd-section-title" style={{ color: 'var(--nd-red)' }}>
-          <AlertCircle size={12} /> Tailscale Error
-        </div>
+        {!hideTitles && (
+          <div className="nd-section-title" style={{ color: 'var(--nd-red)' }}>
+            <AlertCircle size={12} /> Tailscale Error
+          </div>
+        )}
         <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginBottom: 8 }}>
           <Globe size={10} /> Dashboard Tailscale
         </a>
@@ -89,12 +96,14 @@ export default function TailscaleStatus({ editMode, showSensitive = false }: { e
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="nd-section-title" style={{ flex: 1 }}>
-          <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
+      {!hideTitles && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="nd-section-title" style={{ flex: 1 }}>
+            <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
+          </div>
         </div>
-      </div>
-      <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, marginBottom: 8 }}>
+      )}
+      <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: hideTitles ? 0 : 4, marginBottom: 8 }}>
         <Globe size={10} /> Dashboard Tailscale
       </a>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

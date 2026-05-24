@@ -239,8 +239,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [hideQuickStats, setHideQuickStats] = useState(!!config?.settings?.hideQuickStats);
   const [hideTailscaleStatus, setHideTailscaleStatus] = useState(!!config?.settings?.hideTailscaleStatus);
   const [hideDockerActions, setHideDockerActions] = useState(config?.settings?.hideDockerActions ?? true);
-  const [hideClock, setHideClock] = useState(!!config?.settings?.hideClock);
+  const [hideClock, setHideClock] = useState(config?.settings?.hideClock ?? false);
   const [hideCalendar, setHideCalendar] = useState(config?.settings?.hideCalendar ?? true);
+  const [hideWidgetTitles, setHideWidgetTitles] = useState(config?.settings?.hideWidgetTitles ?? false);
   const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
 
   const [tailscaleTailnet, setTailscaleTailnet] = useState(config?.settings?.tailscaleTailnet || '');
@@ -274,8 +275,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setHideQuickStats(!!config.settings?.hideQuickStats);
       setHideTailscaleStatus(!!config.settings?.hideTailscaleStatus);
       setHideDockerActions(config.settings?.hideDockerActions ?? true);
-      setHideClock(!!config.settings?.hideClock);
+      setHideClock(config.settings?.hideClock ?? false);
       setHideCalendar(config.settings?.hideCalendar ?? true);
+      setHideWidgetTitles(config.settings?.hideWidgetTitles ?? false);
       if (config.settings?.calendarSidebar !== undefined) setCalendarSidebar(config.settings.calendarSidebar);
       if (config.settings?.calendarOrder !== undefined) setCalendarOrder(config.settings.calendarOrder);
       if (config.settings?.calendarUrl !== undefined) setCalendarUrl(config.settings.calendarUrl);
@@ -551,6 +553,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     } else if (key === 'hideCalendar') {
       setHideCalendar(value);
       await updateConfig({ hideCalendar: value });
+    } else if (key === 'hideWidgetTitles') {
+      setHideWidgetTitles(value);
+      await updateConfig({ hideWidgetTitles: value });
     }
   };
 
@@ -1113,6 +1118,15 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       { value: 'none', label: 'Aucune' },
                       { value: 'spotlight-silver', label: 'Balayage Argenté (Silver)' },
                     ]}
+                  />
+                </div>
+
+                <div style={{ marginTop: 12 }}>
+                  <ToggleSwitch
+                    checked={!hideWidgetTitles}
+                    onChange={(val) => handleToggleWidget('hideWidgetTitles', !val)}
+                    label="Afficher les titres des widgets"
+                    sublabel="Affiche le titre (ex: APPAREILS, CALENDRIER) au-dessus de chaque widget."
                   />
                 </div>
               </div>
