@@ -132,7 +132,7 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-2">
-      {!hideTitles && (
+      {(!hideTitles || editMode) && (
         <div className="nd-section-title">
           <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> Actions Docker
           {editMode && (
@@ -148,7 +148,7 @@ export default function DockerActions({ editMode }: { editMode?: boolean }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: hideTitles ? 0 : 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: (hideTitles && !editMode) ? 0 : 8 }}>
         {actions.length === 0 && (
           <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
             Aucune action rapide configurée.{!editMode && " Activez le mode édition pour en ajouter."}

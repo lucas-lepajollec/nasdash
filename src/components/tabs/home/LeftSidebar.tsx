@@ -105,7 +105,7 @@ function DeviceMonitorCardContent({
   const errorMessage = stats && 'error' in stats ? stats.error : 'Impossible de joindre l\'appareil';
 
   return (
-    <div style={{ marginTop: hideTitles ? 0 : 4, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
+    <div style={{ marginTop: (hideTitles && !editMode) ? 0 : 4, padding: 10, opacity: isOffline ? 0.6 : 1, filter: isOffline ? 'grayscale(0.8)' : 'none', transition: 'all 0.3s', userSelect: editMode ? 'none' : 'auto', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5, flex: 1, minWidth: 0 }}>
           {editMode && (
@@ -357,7 +357,7 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
           .nd-device-stats-grid.cols-desktop-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
         }
       `}} />
-      {!hideTitles && (
+      {(!hideTitles || editMode) && (
         <div className="nd-section-title">
           <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
           Appareils
