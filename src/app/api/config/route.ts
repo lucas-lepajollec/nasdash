@@ -457,7 +457,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json(event);
   }
 
-  return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+  return NextResponse.json({ error: 'Unknown update type' }, { status: 400 });
 }
 
 export async function DELETE(req: NextRequest) {
