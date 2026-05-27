@@ -57,7 +57,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
 
 export default function DockerActions({ editMode }: { editMode?: boolean }) {
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
 
   const sensors = useSensors(

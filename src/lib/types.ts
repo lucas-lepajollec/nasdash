@@ -56,7 +56,6 @@ export interface Device {
   statStyle?: 'horizontal' | 'vertical' | 'circle';
   hideValues?: boolean;
   colsDesktop?: number;
-  colsTablet?: number;
   colsMobile?: number;
 }
 
@@ -156,7 +155,6 @@ export interface DashboardConfig {
   localEvents?: LocalCalendarEvent[];
   settings: {
     title: string;
-    titleTablet?: string;
     titleMobile?: string;
     titleLogo?: string;
     titleFont?: 'outfit' | 'space-grotesk' | 'syne' | 'righteous' | 'montserrat';
@@ -185,6 +183,13 @@ export interface DashboardConfig {
     clockTimezone?: string;
     customCss?: string;
     backgroundImage?: string;
+    mobileWallpaper?: string;
+    mobileTheme?: string;
+    mobileGlobalFont?: string;
+    mobileBorderRadius?: number;
+    mobileCardOpacity?: number;
+    mobileTitleAnimation?: string;
+    mobileAppearanceProfiles?: AppearanceProfile[];
     // Developer options
     enablePerfMonitor?: boolean;
     // Sidebar widget alignment positions

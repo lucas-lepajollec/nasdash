@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
     const current = searchParams.get('current');
+    const currentTablet = searchParams.get('currentTablet');
+    const currentMobile = searchParams.get('currentMobile');
 
     const files = fs.readdirSync(dir);
     
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest) {
         
         // If query wants backgrounds, keep bg_ prefix or the currently selected background
         if (type === 'background') {
-          return file.startsWith('bg_') || (current && fileUrl === current);
+          return file.startsWith('bg_') || (current && fileUrl === current) || (currentTablet && fileUrl === currentTablet) || (currentMobile && fileUrl === currentMobile);
         }
 
         // Otherwise (listing logos), hide files that start with bg_ prefix

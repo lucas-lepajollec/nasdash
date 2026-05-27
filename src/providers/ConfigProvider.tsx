@@ -58,6 +58,8 @@ export const ConfigContext = createContext<ConfigContextType | undefined>(undefi
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<DashboardConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeBgUrl, setActiveBgUrl] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
 
   // Modals
   const [serviceModal, setServiceModal] = useState<{
@@ -113,10 +115,23 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!config) return;
 
-    // Apply active theme
-    const activeTheme = config.settings?.theme || 'nasdash';
+    // Determine current values (with mobile overrides)
+    const activeTheme = (isMobile && config.settings?.mobileTheme) ? config.settings.mobileTheme : (config.settings?.theme || 'nasdash');
+    const activeRadius = (isMobile && config.settings?.mobileBorderRadius !== undefined) ? config.settings.mobileBorderRadius : config.settings?.borderRadius;
+    const activeOpacity = (isMobile && config.settings?.mobileCardOpacity !== undefined) ? config.settings.mobileCardOpacity : config.settings?.cardOpacity;
+    const activeFont = (isMobile && config.settings?.mobileGlobalFont) ? config.settings.mobileGlobalFont : config.settings?.globalFont;
+    const activeBg = (isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || '');
     
-    // Clear all previous theme classes on document.body
+    setActiveBgUrl(activeBg);
+    
+    // Clean up legacy inline styles if they exist
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundSize = '';
+    document.body.style.backgroundAttachment = '';
+    document.body.style.backgroundPosition = '';
+    document.body.style.backgroundRepeat = '';
+
+    // Apply active theme
     const themeClasses = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
     themeClasses.forEach(cls => document.body.classList.remove(cls));
     
@@ -129,37 +144,20 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Apply Custom Background Image
-    if (config.settings?.backgroundImage) {
-      document.body.style.backgroundImage = `url("${config.settings.backgroundImage}")`;
-      document.body.style.backgroundSize = 'cover';
-      document.body.style.backgroundAttachment = 'fixed';
-      document.body.style.backgroundPosition = 'center';
-      document.body.style.backgroundRepeat = 'no-repeat';
-    } else {
-      document.body.style.backgroundImage = '';
-      document.body.style.backgroundSize = '';
-      document.body.style.backgroundAttachment = '';
-      document.body.style.backgroundPosition = '';
-      document.body.style.backgroundRepeat = '';
-    }
-
     // Apply Border Radius
-    if (config.settings?.borderRadius !== undefined) {
-      document.body.style.setProperty('--nd-card-radius', `${config.settings.borderRadius}px`);
+    if (activeRadius !== undefined) {
+      document.body.style.setProperty('--nd-card-radius', `${activeRadius}px`);
     } else {
       document.body.style.removeProperty('--nd-card-radius');
     }
 
     // Apply Card Opacity
-    if (config.settings?.cardOpacity !== undefined) {
-      const opacity = config.settings.cardOpacity;
-      document.body.style.setProperty('--nd-card-bg-opacity', String(opacity));
-      // Reconstruct --nd-card-bg directly (CSS variable cascade between :root and body doesn't auto-resolve)
+    if (activeOpacity !== undefined) {
+      document.body.style.setProperty('--nd-card-bg-opacity', String(activeOpacity));
       requestAnimationFrame(() => {
         const rgb = getComputedStyle(document.body).getPropertyValue('--nd-card-bg-rgb').trim();
         if (rgb) {
-          document.body.style.setProperty('--nd-card-bg', `rgba(${rgb}, ${opacity})`);
+          document.body.style.setProperty('--nd-card-bg', `rgba(${rgb}, ${activeOpacity})`);
         }
       });
     } else {
@@ -170,22 +168,30 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     // Dynamic Google Font Injection
     const fontId = 'dynamic-google-font';
     let linkEl = document.getElementById(fontId) as HTMLLinkElement | null;
-    if (config.settings?.globalFont) {
-      const fontName = config.settings.globalFont;
+    if (activeFont) {
       if (!linkEl) {
         linkEl = document.createElement('link');
         linkEl.id = fontId;
         linkEl.rel = 'stylesheet';
         document.head.appendChild(linkEl);
       }
-      const encodedFont = encodeURIComponent(fontName);
+      const encodedFont = encodeURIComponent(activeFont);
       linkEl.href = `https://fonts.googleapis.com/css2?family=${encodedFont}:wght@300;400;500;600;700;800&display=swap`;
-      document.body.style.fontFamily = `"${fontName}", sans-serif`;
+      document.body.style.fontFamily = `"${activeFont}", sans-serif`;
     } else {
       if (linkEl) linkEl.remove();
       document.body.style.fontFamily = '';
     }
-  }, [config]);
+  }, [config, isMobile]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const addCategory = async (title: string, emoji: string, isSecret = false, layout?: Category['layout']) => {
     const res = await fetch('/api/config', {
@@ -437,6 +443,22 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ConfigContext.Provider value={value}>
+      <div 
+        style={{
+          position: 'fixed',
+          top: '-10vh',
+          left: 0,
+          width: '100vw',
+          height: '120vh',
+          zIndex: -1,
+          backgroundColor: 'var(--nd-bg)',
+          backgroundImage: activeBgUrl ? `url("${activeBgUrl}")` : 'var(--nd-bg-gradient)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          pointerEvents: 'none',
+        }}
+      />
       {config?.settings?.customCss && (
         <style dangerouslySetInnerHTML={{ __html: config.settings.customCss }} />
       )}

@@ -85,6 +85,8 @@
 html {
   scroll-behavior: smooth;
   color-scheme: dark;
+  background-color: var(--nd-bg);
+  overscroll-behavior: none;
 }
 
 .light {
@@ -93,13 +95,12 @@ html {
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-color: var(--nd-bg);
-  background-image: var(--nd-bg-gradient);
-  background-attachment: fixed;
   color: var(--nd-text);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
 }
+
 
 /* ==================== 3-COLUMN LAYOUT ==================== */
 .nd-layout {
@@ -113,11 +114,16 @@ body {
 }
 
 .nd-sidebar-left {
-  position: sticky;
-  top: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .nd-sidebar-left {
+    position: sticky;
+    top: 20px;
+  }
 }
 
 .nd-center {
@@ -125,11 +131,16 @@ body {
 }
 
 .nd-sidebar-right {
-  position: sticky;
-  top: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .nd-sidebar-right {
+    position: sticky;
+    top: 20px;
+  }
 }
 
 /* ==================== HEADER ==================== */

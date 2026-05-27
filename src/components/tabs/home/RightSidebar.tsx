@@ -13,9 +13,9 @@ interface RightSidebarProps {
   showSensitive?: boolean;
 }
 
-export function QuickStats({ categories }: { categories: Category[] }) {
+export function QuickStats({ categories, editMode }: { categories: Category[], editMode?: boolean }) {
   const { config } = useConfig();
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
   // Compute stats
   const serviceCount = categories.reduce((acc, c) => acc + c.services.length, 0);

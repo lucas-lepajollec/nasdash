@@ -241,7 +241,7 @@ export default function HomeTab({
       sidebar: config.settings?.quickStatsSidebar || 'right',
       order: config.settings?.quickStatsOrder ?? 1,
       render: () => (
-        <QuickStats categories={config.categories} />
+        <QuickStats categories={config.categories} editMode={editMode} />
       )
     },
     {
@@ -268,7 +268,7 @@ export default function HomeTab({
       sidebar: config.settings?.clockSidebar || 'left',
       order: config.settings?.clockOrder ?? -1,
       render: () => (
-        <ClockWidget />
+        <ClockWidget editMode={editMode} />
       )
     },
     {

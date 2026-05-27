@@ -23,7 +23,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const { setViewEventModal } = useConfig();
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   
   // Wait for client-side hydration to show actual date, to avoid SSR mismatch
   const [mounted, setMounted] = useState(false);

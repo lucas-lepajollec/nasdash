@@ -4,19 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 
-export default function ClockWidget() {
-  const [time, setTime] = useState(new Date());
+export default function ClockWidget({ editMode }: { editMode?: boolean }) {
   const { config } = useConfig();
+  const [time, setTime] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
 
   // Settings
   const timezone = config?.settings?.clockTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const design = config?.settings?.clockDesign || 'default';
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
   useEffect(() => {
+    setMounted(true);
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  if (!mounted) return null;
 
   const formatTime = (date: Date) => {
     try {
@@ -128,7 +132,7 @@ export default function ClockWidget() {
             <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', padding: '16px', background: 'rgba(0,0,0,0.15)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginTop: hideTitles ? '0' : '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--nd-text-muted)', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', opacity: 0.7 }}>
           <span>admin@nas:~</span>
         </div>

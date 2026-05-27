@@ -17,7 +17,7 @@ const getOsIcon = (os: string, hostname: string) => {
 
 export default function TailscaleStatus({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
   const { config } = useConfig();
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [devices, setDevices] = useState<any[] | null>(null);
   const [error, setError] = useState(false);
   const [unconfigured, setUnconfigured] = useState(false);

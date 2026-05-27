@@ -191,12 +191,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   // Background states
   const [title, setTitle] = useState(config?.settings?.title || 'MON HOME LAB');
-  const [titleTablet, setTitleTablet] = useState(config?.settings?.titleTablet || '');
   const [titleMobile, setTitleMobile] = useState(config?.settings?.titleMobile || '');
   const [titleLogo, setTitleLogo] = useState(config?.settings?.titleLogo || '');
   const [titleFont, setTitleFont] = useState(config?.settings?.titleFont || 'outfit');
   const [titleAnimation, setTitleAnimation] = useState(config?.settings?.titleAnimation || 'none');
   const [backgroundImage, setBackgroundImage] = useState(config?.settings?.backgroundImage || '');
+  const [mobileWallpaper, setMobileWallpaper] = useState(config?.settings?.mobileWallpaper || '');
+  
+  const [mobileTheme, setMobileTheme] = useState(config?.settings?.mobileTheme || '');
+  const [mobileGlobalFont, setMobileGlobalFont] = useState(config?.settings?.mobileGlobalFont || '');
+  const [mobileBorderRadius, setMobileBorderRadius] = useState<number | ''>(config?.settings?.mobileBorderRadius ?? '');
+  const [mobileCardOpacity, setMobileCardOpacity] = useState<number | ''>(config?.settings?.mobileCardOpacity ?? '');
+  const [mobileTitleAnimation, setMobileTitleAnimation] = useState(config?.settings?.mobileTitleAnimation || '');
   const [customCss, setCustomCss] = useState(config?.settings?.customCss || '');
   const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
   const [bgToDelete, setBgToDelete] = useState<string | null>(null);
@@ -204,9 +210,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   // Appearance Profiles
   const [appearanceProfiles, setAppearanceProfiles] = useState<AppearanceProfile[]>([]);
   const [newProfileName, setNewProfileName] = useState('');
+  
+  const [mobileAppearanceProfiles, setMobileAppearanceProfiles] = useState<AppearanceProfile[]>([]);
+  const [newMobileProfileName, setNewMobileProfileName] = useState('');
 
   // Delete Confirmations
   const [confirmDeleteProfile, setConfirmDeleteProfile] = useState<string | null>(null);
+  const [confirmDeleteMobileProfile, setConfirmDeleteMobileProfile] = useState<string | null>(null);
 
   // Design system states
   const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
@@ -253,6 +263,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [isConfirmBgDeleteOpen, setIsConfirmBgDeleteOpen] = useState(false);
   const [isConfirmLogoDeleteOpen, setIsConfirmLogoDeleteOpen] = useState(false);
   const [logoToDelete, setLogoToDelete] = useState<string | null>(null);
+  const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (config) {
@@ -285,7 +297,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       if (config.settings?.tailscaleClientId !== undefined) setTailscaleClientId(config.settings.tailscaleClientId);
       if (config.settings?.tailscaleClientSecret !== undefined) setTailscaleClientSecret(config.settings.tailscaleClientSecret ? '********' : '');
       if (config.settings?.title !== undefined) setTitle(config.settings.title);
-      if (config.settings?.titleTablet !== undefined) setTitleTablet(config.settings.titleTablet);
       if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
       if (config.settings?.titleLogo !== undefined) setTitleLogo(config.settings.titleLogo);
       if (config.settings?.titleFont !== undefined) setTitleFont(config.settings.titleFont);
@@ -293,8 +304,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       if (config.settings?.backgroundImage !== undefined) {
         setBackgroundImage(config.settings.backgroundImage);
       }
+      if (config.settings?.mobileWallpaper !== undefined) {
+        setMobileWallpaper(config.settings.mobileWallpaper);
+      }
+      if (config.settings?.mobileTheme !== undefined) setMobileTheme(config.settings.mobileTheme);
+      if (config.settings?.mobileGlobalFont !== undefined) setMobileGlobalFont(config.settings.mobileGlobalFont);
+      if (config.settings?.mobileBorderRadius !== undefined) setMobileBorderRadius(config.settings.mobileBorderRadius);
+      if (config.settings?.mobileCardOpacity !== undefined) setMobileCardOpacity(config.settings.mobileCardOpacity);
+      if (config.settings?.mobileTitleAnimation !== undefined) setMobileTitleAnimation(config.settings.mobileTitleAnimation);
       if (config.appearanceProfiles) {
         setAppearanceProfiles(config.appearanceProfiles);
+      }
+      if (config.settings?.mobileAppearanceProfiles) {
+        setMobileAppearanceProfiles(config.settings.mobileAppearanceProfiles);
       }
     }
   }, [config]);
@@ -420,7 +442,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   const fetchUploadedBgs = async () => {
     try {
-      const res = await fetch(`/api/logos?type=background&current=${encodeURIComponent(backgroundImage)}`);
+      const params = new URLSearchParams();
+      params.append('type', 'background');
+      if (backgroundImage) params.append('current', backgroundImage);
+      if (mobileWallpaper) params.append('currentMobile', mobileWallpaper);
+
+      const res = await fetch(`/api/logos?${params.toString()}`);
       const data = await res.json();
       if (data && data.files) {
         setUploadedBgs(data.files);
@@ -430,13 +457,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
   };
 
+  // Only fetch on mount or manual trigger (like upload) so gallery is stable
   useEffect(() => {
     fetchUploadedBgs();
-  }, [backgroundImage]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaveBackground = async () => {
     await updateConfig({ backgroundImage });
   };
+
+  const handleSaveMobileWallpaper = async () => {
+    await updateConfig({ mobileWallpaper });
+  };
+
 
   const handleConfirmBgDelete = async () => {
     const targetUrl = bgToDelete || backgroundImage;
@@ -528,6 +561,47 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     setAppearanceProfiles(updatedProfiles);
     await updateConfig({ appearanceProfiles: updatedProfiles });
     setConfirmDeleteProfile(null);
+  };
+
+  const handleSaveMobileProfile = async () => {
+    if (!newMobileProfileName.trim()) return;
+    const newProfile: AppearanceProfile = {
+      id: Date.now().toString(),
+      name: newMobileProfileName,
+      settings: {
+        mobileTheme,
+        mobileWallpaper,
+        mobileGlobalFont,
+        mobileBorderRadius: typeof mobileBorderRadius === 'number' ? mobileBorderRadius : undefined,
+        mobileCardOpacity: typeof mobileCardOpacity === 'number' ? mobileCardOpacity : undefined,
+        titleMobile,
+        mobileTitleAnimation,
+      }
+    };
+    const updatedProfiles = [...mobileAppearanceProfiles, newProfile];
+    setMobileAppearanceProfiles(updatedProfiles);
+    setNewMobileProfileName('');
+    await updateConfig({ mobileAppearanceProfiles: updatedProfiles });
+  };
+
+  const handleApplyMobileProfile = async (profile: AppearanceProfile) => {
+    const { settings } = profile;
+    if (settings.mobileTheme !== undefined) setMobileTheme(settings.mobileTheme);
+    if (settings.mobileWallpaper !== undefined) setMobileWallpaper(settings.mobileWallpaper);
+    if (settings.mobileGlobalFont !== undefined) setMobileGlobalFont(settings.mobileGlobalFont);
+    if (settings.mobileBorderRadius !== undefined) setMobileBorderRadius(settings.mobileBorderRadius);
+    if (settings.mobileCardOpacity !== undefined) setMobileCardOpacity(settings.mobileCardOpacity);
+    if (settings.titleMobile !== undefined) setTitleMobile(settings.titleMobile);
+    if (settings.mobileTitleAnimation !== undefined) setMobileTitleAnimation(settings.mobileTitleAnimation);
+    
+    await updateConfig(settings);
+  };
+
+  const handleDeleteMobileProfile = async (id: string) => {
+    const updatedProfiles = mobileAppearanceProfiles.filter(p => p.id !== id);
+    setMobileAppearanceProfiles(updatedProfiles);
+    await updateConfig({ mobileAppearanceProfiles: updatedProfiles });
+    setConfirmDeleteMobileProfile(null);
   };
 
   const handleSaveCss = async () => {
@@ -692,164 +766,75 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
             {/* Category: Configuration Widgets */}
             <div className="nd-settings-sidebar-group">
-              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Configuration Widgets</span>
-              <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {/* Devices Widget */}
-                <button
-                  onClick={() => setActiveTab('widget-devices')}
-                  className={`nd-settings-nav-item ${currentTab === 'widget-devices' ? 'nd-settings-nav-item--active' : ''}`}
-                >
-                  <div style={{ background: 'rgba(63, 185, 80, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3fb950', flexShrink: 0 }}>
-                    <Monitor size={18} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Widget Appareils
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: !hideDevices ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                        boxShadow: !hideDevices ? '0 0 6px var(--nd-green)' : 'none'
-                      }} />
-                    </span>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>CPU, RAM, Proxmox, Glances et serveurs.</span>
-                  </div>
-                  <span className="nd-settings-chevron">
-                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-                  </span>
-                </button>
-
-                {/* QuickStats Widget */}
-                <button
-                  onClick={() => setActiveTab('widget-quickstats')}
-                  className={`nd-settings-nav-item ${currentTab === 'widget-quickstats' ? 'nd-settings-nav-item--active' : ''}`}
-                >
-                  <div style={{ background: 'rgba(63, 185, 80, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3fb950', flexShrink: 0 }}>
-                    <Activity size={18} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Widget Vue d'ensemble
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: !hideQuickStats ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                        boxShadow: !hideQuickStats ? '0 0 6px var(--nd-green)' : 'none'
-                      }} />
-                    </span>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Résumé des services, catégories et ports ouverts.</span>
-                  </div>
-                  <span className="nd-settings-chevron">
-                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-                  </span>
-                </button>
-
-                {/* Tailscale Widget */}
-                <button
-                  onClick={() => setActiveTab('widget-tailscale')}
-                  className={`nd-settings-nav-item ${currentTab === 'widget-tailscale' ? 'nd-settings-nav-item--active' : ''}`}
-                >
-                  <div style={{ background: 'rgba(168, 85, 247, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-purple)', flexShrink: 0 }}>
-                    <Shield size={18} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Widget VPN Tailscale
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: !hideTailscaleStatus ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                        boxShadow: !hideTailscaleStatus ? '0 0 6px var(--nd-green)' : 'none'
-                      }} />
-                    </span>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>État de connexion et liste des machines actives.</span>
-                  </div>
-                  <span className="nd-settings-chevron">
-                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-                  </span>
-                </button>
-
-                {/* Docker Actions Widget */}
-                <button
-                  onClick={() => setActiveTab('widget-dockeractions')}
-                  className={`nd-settings-nav-item ${currentTab === 'widget-dockeractions' ? 'nd-settings-nav-item--active' : ''}`}
-                >
-                  <div style={{ background: 'rgba(240, 136, 62, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-orange)', flexShrink: 0 }}>
-                    <Container size={18} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Widget Actions Docker
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: !hideDockerActions ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                        boxShadow: !hideDockerActions ? '0 0 6px var(--nd-green)' : 'none'
-                      }} />
-                    </span>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Contrôles d'alimentation rapides pour vos conteneurs.</span>
-                  </div>
-                  <span className="nd-settings-chevron">
-                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-                  </span>
-                </button>
-
-                {/* Clock Widget */}
-                <button
-                  onClick={() => setActiveTab('widget-clock')}
-                  className={`nd-settings-nav-item ${currentTab === 'widget-clock' ? 'nd-settings-nav-item--active' : ''}`}
-                >
-                  <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
-                    <Clipboard size={18} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Widget Horloge / Date
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: !hideClock ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                        boxShadow: !hideClock ? '0 0 6px var(--nd-green)' : 'none'
-                      }} />
-                    </span>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Affichage de l'heure et de la date.</span>
-                  </div>
-                  <span className="nd-settings-chevron">
-                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-                  </span>
-                </button>
-
-                {/* Calendar Widget */}
-                <button
-                  onClick={() => setActiveTab('widget-calendar')}
-                  className={`nd-settings-nav-item ${currentTab === 'widget-calendar' ? 'nd-settings-nav-item--active' : ''}`}
-                >
-                  <div style={{ background: 'rgba(251, 146, 60, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb923c', flexShrink: 0 }}>
-                    <Calendar size={18} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      Widget Calendrier
-                      <span style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: !hideCalendar ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
-                        boxShadow: !hideCalendar ? '0 0 6px var(--nd-green)' : 'none'
-                      }} />
-                    </span>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Affichage des jours et des événements.</span>
-                  </div>
-                  <span className="nd-settings-chevron">
-                    <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-                  </span>
-                </button>
-              </div>
+              <button 
+                onClick={() => setIsWidgetsMenuOpen(!isWidgetsMenuOpen)}
+                style={{ 
+                  width: '100%',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px 4px',
+                  cursor: 'pointer',
+                  marginBottom: 8
+                }}
+              >
+                <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px' }}>
+                  Configuration Widgets
+                </span>
+                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', transform: isWidgetsMenuOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
+              
+              {isWidgetsMenuOpen && (
+                <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { id: 'widget-devices', icon: <Monitor size={18} />, color: '#3fb950', bg: 'rgba(63, 185, 80, 0.08)', label: 'Appareils', desc: 'CPU, RAM, Proxmox, Glances et serveurs.', active: !hideDevices },
+                    { id: 'widget-quickstats', icon: <Activity size={18} />, color: '#3fb950', bg: 'rgba(63, 185, 80, 0.08)', label: "Vue d'ensemble", desc: 'Résumé des services, catégories et ports ouverts.', active: !hideQuickStats },
+                    { id: 'widget-tailscale', icon: <Shield size={18} />, color: 'var(--nd-purple)', bg: 'rgba(168, 85, 247, 0.08)', label: 'VPN Tailscale', desc: 'État de connexion et liste des machines actives.', active: !hideTailscaleStatus },
+                    { id: 'widget-dockeractions', icon: <Container size={18} />, color: 'var(--nd-orange)', bg: 'rgba(240, 136, 62, 0.08)', label: 'Actions Docker', desc: "Contrôles d'alimentation rapides pour vos conteneurs.", active: !hideDockerActions },
+                    { id: 'widget-clock', icon: <Clipboard size={18} />, color: 'var(--nd-accent)', bg: 'rgba(56, 189, 248, 0.08)', label: 'Horloge / Date', desc: "Affichage de l'heure et de la date.", active: !hideClock },
+                    { id: 'widget-calendar', icon: <Calendar size={18} />, color: '#fb923c', bg: 'rgba(251, 146, 60, 0.08)', label: 'Calendrier', desc: 'Affichage des jours et des événements.', active: !hideCalendar },
+                  ].sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1)).map((w, index, array) => {
+                    const isFirstInactive = !w.active && (index === 0 || array[index - 1].active);
+                    return (
+                      <React.Fragment key={w.id}>
+                        {isFirstInactive && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
+                            <div style={{ flex: 1, height: 1, background: 'var(--nd-card-border)' }} />
+                            <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Désactivés</span>
+                            <div style={{ flex: 1, height: 1, background: 'var(--nd-card-border)' }} />
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setActiveTab(w.id)}
+                          className={`nd-settings-nav-item ${currentTab === w.id ? 'nd-settings-nav-item--active' : ''}`}
+                        >
+                          <div style={{ background: w.bg, padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: w.color, flexShrink: 0 }}>
+                            {w.icon}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              Widget {w.label}
+                              <span style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: '50%',
+                                background: w.active ? 'var(--nd-green)' : 'rgba(255,255,255,0.2)',
+                                boxShadow: w.active ? '0 0 6px var(--nd-green)' : 'none'
+                              }} />
+                            </span>
+                            <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.desc}</span>
+                          </div>
+                          <span className="nd-settings-chevron">
+                            <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+                          </span>
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Category: Intégrations */}
@@ -1027,14 +1012,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Titre principal (Desktop)</label>
                     <input type="text" className="nd-input" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => updateConfig({ title })} placeholder="MON HOME LAB" style={{ fontSize: '0.75rem', padding: '6px 10px' }} />
                   </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Titre (Tablette - Optionnel)</label>
-                    <input type="text" className="nd-input" value={titleTablet} onChange={(e) => setTitleTablet(e.target.value)} onBlur={() => updateConfig({ titleTablet })} placeholder="Laisser vide pour utiliser le principal" style={{ fontSize: '0.75rem', padding: '6px 10px' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Titre (Mobile - Optionnel)</label>
-                    <input type="text" className="nd-input" value={titleMobile} onChange={(e) => setTitleMobile(e.target.value)} onBlur={() => updateConfig({ titleMobile })} placeholder="Laisser vide pour utiliser le principal" style={{ fontSize: '0.75rem', padding: '6px 10px' }} />
-                  </div>
                 </div>
 
                 <div style={{ marginTop: 12 }}>
@@ -1141,23 +1118,31 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
               {/* Custom Fixed Background Upload */}
               <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Fond d'écran personnalisé (Fixe)</h4>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Fonds d'écran personnalisés (Fixes)</h4>
                 <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                  Définissez une image de fond fixe pour écraser le dégradé de couleur du thème.
+                  Définissez des images de fond fixes pour écraser le dégradé de couleur du thème. L'image est recadrée et fixée au scroll.
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      type="text"
-                      className="nd-input"
-                      placeholder="https://example.com/background.jpg ou fichier importé"
-                      value={backgroundImage}
-                      onChange={(e) => setBackgroundImage(e.target.value)}
-                      style={{ flex: 1, fontSize: '0.78rem' }}
-                    />
-                    <button className="nd-btn" onClick={handleSaveBackground} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
-                      Enregistrer
-                    </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginLeft: 2 }}>Image de fond (Desktop & Tablette Paysage)</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        type="text"
+                        className="nd-input"
+                        placeholder="https://example.com/background.jpg ou fichier importé"
+                        value={backgroundImage}
+                        onChange={(e) => setBackgroundImage(e.target.value)}
+                        style={{ flex: 1, fontSize: '0.78rem' }}
+                      />
+                      <button className="nd-btn" onClick={handleSaveBackground} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
+                        Enregistrer
+                      </button>
+                      {backgroundImage && (
+                        <button className="nd-btn" onClick={async () => { setBackgroundImage(''); await updateConfig({ backgroundImage: '' }); }} style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)' }}>
+                          Effacer
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -1180,9 +1165,20 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                           });
                           const data = await res.json();
                           if (data.url) {
-                            setBackgroundImage(data.url);
-                            await updateConfig({ backgroundImage: data.url });
-                            fetchUploadedBgs();
+                            // Auto-detect best field by aspect ratio
+                            const img = new Image();
+                            img.src = data.url;
+                            img.onload = async () => {
+                              const ratio = img.width / img.height;
+                              if (ratio < 1.0) {
+                                setMobileWallpaper(data.url);
+                                await updateConfig({ mobileWallpaper: data.url });
+                              } else {
+                                setBackgroundImage(data.url);
+                                await updateConfig({ backgroundImage: data.url });
+                              }
+                              fetchUploadedBgs();
+                            };
                           }
                         } catch (err) {
                           console.error('Failed to upload background:', err);
@@ -1191,20 +1187,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       style={{ display: 'none' }}
                     />
                     <label htmlFor="bg-upload-input" className="nd-btn" style={{ padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)' }}>
-                      📁 Importer une image
+                      📁 Importer une image (Auto-Détection)
                     </label>
-                    {backgroundImage && (
-                      <button 
-                        className="nd-btn" 
-                        onClick={() => {
-                          setBgToDelete(backgroundImage);
-                          setIsConfirmBgDeleteOpen(true);
-                        }} 
-                        style={{ padding: '6px 12px', fontSize: '0.72rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}
-                      >
-                        ❌ Supprimer le fond
-                      </button>
-                    )}
                   </div>
 
                   {uploadedBgs.length > 0 && (
@@ -1227,9 +1211,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                           return (
                             <div
                               key={bg.name}
-                              onClick={async () => {
-                                setBackgroundImage(bg.url);
-                                await updateConfig({ backgroundImage: bg.url });
+                              onClick={() => {
+                                const img = new Image();
+                                img.src = bg.url;
+                                img.onload = async () => {
+                                  const ratio = img.width / img.height;
+                                  if (ratio < 1.0) {
+                                    setMobileWallpaper(bg.url);
+                                    await updateConfig({ mobileWallpaper: bg.url });
+                                  } else {
+                                    setBackgroundImage(bg.url);
+                                    await updateConfig({ backgroundImage: bg.url });
+                                  }
+                                };
                               }}
                               style={{
                                 position: 'relative',
@@ -1378,7 +1372,368 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 </div>
               </div>
 
-              
+              {/* Configuration Mobile (Collapsible Header) */}
+              <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <button 
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  style={{ 
+                    width: '100%',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    background: 'none',
+                    border: 'none',
+                    padding: '8px 0',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      📱 Configuration Spéciale Mobile
+                    </h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
+                      Surchargez les paramètres globaux uniquement pour la version mobile. (Laissez vide pour hériter)
+                    </p>
+                  </div>
+                  <ChevronRight size={20} style={{ color: 'var(--nd-text)', transform: isMobileMenuOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+              </div>
+
+              {isMobileMenuOpen && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
+                  {/* Titre Mobile */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Titre de l'application (Mobile)</h4>
+                    <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                      Remplace le titre principal sur les petits écrans.
+                    </p>
+                    <input type="text" className="nd-input" value={titleMobile} onChange={(e) => setTitleMobile(e.target.value)} onBlur={() => updateConfig({ titleMobile })} placeholder="Laissez vide pour utiliser le titre principal" style={{ fontSize: '0.75rem', padding: '6px 10px', width: '100%' }} />
+                  </div>
+
+                  {/* Theme Mobile */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Thème (Mobile)</h4>
+                    <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                      Sélectionnez la palette de couleurs esthétiques pour la version mobile.
+                    </p>
+                    <CustomSelect
+                      value={mobileTheme}
+                      onChange={(val) => { setMobileTheme(val); updateConfig({ mobileTheme: val }); }}
+                      options={[
+                        { value: '', label: 'Hériter du thème Desktop' },
+                        ...Object.keys(THEME_PRESETS).map(t => ({ value: t, label: THEME_PRESETS[t].name }))
+                      ]}
+                    />
+                  </div>
+
+                  {/* Fonds d'écran personnalisés (Mobile) */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Fonds d'écran personnalisés (Mobile)</h4>
+                    <p style={{ margin: '4px 0 10px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                      Définissez des images de fond fixes spécialement pour les mobiles. L'image est recadrée et fixée au scroll.
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          type="text"
+                          className="nd-input"
+                          placeholder="https://example.com/mobile-bg.jpg ou fichier importé"
+                          value={mobileWallpaper}
+                          onChange={(e) => setMobileWallpaper(e.target.value)}
+                          style={{ flex: 1, fontSize: '0.78rem' }}
+                        />
+                        <button className="nd-btn" onClick={async () => { await updateConfig({ mobileWallpaper }); }} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
+                          Enregistrer
+                        </button>
+                        {mobileWallpaper && (
+                          <button className="nd-btn" onClick={async () => { setMobileWallpaper(''); await updateConfig({ mobileWallpaper: '' }); }} style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)' }}>
+                            Effacer
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="mobile-bg-upload-input"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            formData.append('type', 'background');
+
+                            try {
+                              const res = await fetch('/api/upload', {
+                                method: 'POST',
+                                body: formData,
+                              });
+                              const data = await res.json();
+                              if (data.url) {
+                                setMobileWallpaper(data.url);
+                                await updateConfig({ mobileWallpaper: data.url });
+                                fetchUploadedBgs();
+                              }
+                            } catch (err) {
+                              console.error('Failed to upload background:', err);
+                            }
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                        <label htmlFor="mobile-bg-upload-input" className="nd-btn" style={{ padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)' }}>
+                          📁 Importer une image mobile
+                        </label>
+                      </div>
+
+                      {uploadedBgs.length > 0 && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--nd-text-muted)', display: 'block', marginBottom: '8px' }}>
+                            Galerie des fonds importés
+                          </span>
+                          <div 
+                            style={{ 
+                              display: 'grid', 
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
+                              gap: '8px',
+                              maxHeight: '180px',
+                              overflowY: 'auto',
+                              paddingRight: '4px'
+                            }}
+                          >
+                            {uploadedBgs.map((bg) => {
+                              const isActive = mobileWallpaper === bg.url;
+                              return (
+                                <div
+                                  key={bg.name}
+                                  onClick={async () => {
+                                    setMobileWallpaper(bg.url);
+                                    await updateConfig({ mobileWallpaper: bg.url });
+                                  }}
+                                  style={{
+                                    position: 'relative',
+                                    height: '50px',
+                                    borderRadius: 'var(--nd-card-radius)',
+                                    overflow: 'hidden',
+                                    border: isActive ? '2px solid var(--nd-accent)' : '1px solid var(--nd-card-border)',
+                                    boxShadow: isActive ? '0 0 8px var(--nd-accent)' : 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    backgroundImage: `url("${bg.url}")`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'scale(1.03)';
+                                    if (!isActive) e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'scale(1)';
+                                    if (!isActive) e.currentTarget.style.borderColor = 'var(--nd-card-border)';
+                                  }}
+                                  title={bg.name}
+                                >
+                                  {/* Corner delete button */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setBgToDelete(bg.url);
+                                      setIsConfirmBgDeleteOpen(true);
+                                    }}
+                                    style={{
+                                      position: 'absolute',
+                                      top: '2px',
+                                      right: '2px',
+                                      width: '16px',
+                                      height: '16px',
+                                      borderRadius: '50%',
+                                      background: 'rgba(0, 0, 0, 0.6)',
+                                      border: 'none',
+                                      color: '#fff',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '9px',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease',
+                                      zIndex: 2
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = 'var(--nd-red)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.6)';
+                                    }}
+                                    title="Supprimer définitivement"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Personnalisation Visuelle Mobile */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Personnalisation Visuelle (Mobile)</h4>
+                    <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la typographie, l'opacité et l'animation du titre pour le mobile.
+                    </p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Typographie globale (Mobile)</label>
+                        <CustomSelect
+                          value={mobileGlobalFont}
+                          onChange={(val) => { setMobileGlobalFont(val); updateConfig({ mobileGlobalFont: val }); }}
+                          options={[
+                            { value: '', label: 'Hériter de Desktop' },
+                            { value: 'Outfit', label: 'Outfit (Défaut)' },
+                            { value: 'Inter', label: 'Inter (Pure & Moderne)' },
+                            { value: 'Poppins', label: 'Poppins (Rond & Épuré)' },
+                            { value: 'Rubik', label: 'Rubik (Arrondi Confort)' },
+                            { value: 'Ubuntu', label: 'Ubuntu (Style Linux)' },
+                            { value: 'Lexend', label: 'Lexend (Haute Lisibilité)' },
+                            { value: 'JetBrains Mono', label: 'JetBrains Mono (Console Tech)' },
+                            { value: 'Fira Code', label: 'Fira Code (Developer)' },
+                            { value: 'Source Code Pro', label: 'Source Code Pro (Terminal)' },
+                            { value: 'Montserrat', label: 'Montserrat (Géométrique)' },
+                            { value: 'Roboto', label: 'Roboto (Neutre/Standard)' }
+                          ]}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>Animation du titre (Mobile)</label>
+                        <CustomSelect
+                          value={mobileTitleAnimation}
+                          onChange={(val) => { setMobileTitleAnimation(val); updateConfig({ mobileTitleAnimation: val }); }}
+                          options={[
+                            { value: '', label: 'Hériter de Desktop' },
+                            { value: 'none', label: 'Aucune' },
+                            { value: 'spotlight-silver', label: 'Balayage Argenté (Silver)' },
+                          ]}
+                        />
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
+                            Arrondi des cartes (Mobile)
+                          </label>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
+                            {mobileBorderRadius === '' ? 'Hérité' : `${mobileBorderRadius}px`}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-1"
+                          max="24"
+                          step="1"
+                          value={mobileBorderRadius === '' ? -1 : mobileBorderRadius}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val === -1) {
+                              setMobileBorderRadius('');
+                            } else {
+                              setMobileBorderRadius(val);
+                            }
+                          }}
+                          onMouseUp={() => updateConfig({ mobileBorderRadius: mobileBorderRadius === '' ? null : mobileBorderRadius })}
+                          onTouchEnd={() => updateConfig({ mobileBorderRadius: mobileBorderRadius === '' ? null : mobileBorderRadius })}
+                          style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
+                        />
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                          <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
+                            Opacité du fond des cartes (Mobile)
+                          </label>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
+                            {mobileCardOpacity === '' ? 'Hérité' : `${Math.round((mobileCardOpacity as number) * 100)}%`}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-0.05"
+                          max="1"
+                          step="0.05"
+                          value={mobileCardOpacity === '' ? -0.05 : mobileCardOpacity}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (val < 0) {
+                              setMobileCardOpacity('');
+                            } else {
+                              setMobileCardOpacity(val);
+                            }
+                          }}
+                          onMouseUp={() => updateConfig({ mobileCardOpacity: mobileCardOpacity === '' ? null : mobileCardOpacity })}
+                          onTouchEnd={() => updateConfig({ mobileCardOpacity: mobileCardOpacity === '' ? null : mobileCardOpacity })}
+                          style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Profils d'Apparence Mobile */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Profils d'Apparence Mobile</h4>
+                    <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                      Sauvegardez votre configuration mobile pour basculer facilement entre différents profils.
+                    </p>
+                    
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                        <input
+                          type="text"
+                          className="nd-input"
+                          placeholder="Nom du nouveau profil mobile..."
+                          value={newMobileProfileName}
+                          onChange={(e) => setNewMobileProfileName(e.target.value)}
+                          style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
+                        />
+                        <button className="nd-btn" onClick={handleSaveMobileProfile} disabled={!newMobileProfileName.trim()} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                          Sauvegarder
+                        </button>
+                      </div>
+
+                      {mobileAppearanceProfiles.length > 0 && (
+                        <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr' }}>
+                          {mobileAppearanceProfiles.map(profile => (
+                            <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nd-card-bg)', padding: '12px 16px', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
+                              <div>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)' }}>{profile.name}</span>
+                                <span style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 4 }}>
+                                  {profile.settings.mobileTheme || 'Hérité'} • {profile.settings.mobileGlobalFont || 'Hérité'}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <button className="nd-btn" onClick={() => handleApplyMobileProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
+                                  Appliquer
+                                </button>
+                                <button 
+                                  type="button"
+                                  className="nd-btn nd-btn-danger"
+                                  onClick={() => setConfirmDeleteMobileProfile(profile.id)} 
+                                  style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                  title="Supprimer le profil mobile"
+                                >
+                                  <Trash2 size={13} /> Supprimer
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              )}
 
             </div>
           )}
@@ -2511,6 +2866,17 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         confirmLabel="Oui, supprimer"
         cancelLabel="Annuler"
       />
+
+      {/* Mobile Profile Delete Confirmation */}
+      {confirmDeleteMobileProfile && (
+        <ConfirmModal
+          isOpen={true}
+          title="Supprimer le profil mobile"
+          description={`Êtes-vous sûr de vouloir supprimer le profil mobile "${mobileAppearanceProfiles.find(p => p.id === confirmDeleteMobileProfile)?.name}" ? Cette action est irréversible.`}
+          onConfirm={() => handleDeleteMobileProfile(confirmDeleteMobileProfile)}
+          onClose={() => setConfirmDeleteMobileProfile(null)}
+        />
+      )}
 
       {/* Profile Delete Confirmation */}
       {confirmDeleteProfile && (

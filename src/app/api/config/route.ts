@@ -83,7 +83,6 @@ export async function POST(req: NextRequest) {
       statStyle: body.statStyle || 'horizontal',
       hideValues: body.hideValues || false,
       colsDesktop: body.colsDesktop !== undefined ? body.colsDesktop : 3,
-      colsTablet: body.colsTablet !== undefined ? body.colsTablet : 3,
       colsMobile: body.colsMobile !== undefined ? body.colsMobile : 3,
       stats: [],
     };
@@ -258,7 +257,6 @@ export async function PUT(req: NextRequest) {
     if (!config.settings) (config as any).settings = {};
 
     if (body.title !== undefined) config.settings.title = body.title;
-    if (body.titleTablet !== undefined) config.settings.titleTablet = body.titleTablet;
     if (body.titleMobile !== undefined) config.settings.titleMobile = body.titleMobile;
     if (body.titleLogo !== undefined) config.settings.titleLogo = body.titleLogo;
     if (body.titleFont !== undefined) config.settings.titleFont = body.titleFont;
@@ -296,6 +294,7 @@ export async function PUT(req: NextRequest) {
     if (body.clockTimezone !== undefined) config.settings.clockTimezone = body.clockTimezone;
     if (body.customCss !== undefined) config.settings.customCss = body.customCss;
     if (body.backgroundImage !== undefined) config.settings.backgroundImage = body.backgroundImage;
+    if (body.mobileWallpaper !== undefined) config.settings.mobileWallpaper = body.mobileWallpaper;
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
     
     // Sidebar widget alignment positions
@@ -317,6 +316,9 @@ export async function PUT(req: NextRequest) {
     // Appearance Profiles
     if (body.appearanceProfiles !== undefined) {
       config.appearanceProfiles = body.appearanceProfiles;
+    }
+    if (body.mobileAppearanceProfiles !== undefined) {
+      config.settings.mobileAppearanceProfiles = body.mobileAppearanceProfiles;
     }
     
     // Premium Design options
@@ -340,7 +342,6 @@ export async function PUT(req: NextRequest) {
     if (body.statStyle !== undefined) device.statStyle = body.statStyle;
     if (body.hideValues !== undefined) device.hideValues = body.hideValues;
     if (body.colsDesktop !== undefined) device.colsDesktop = body.colsDesktop;
-    if (body.colsTablet !== undefined) device.colsTablet = body.colsTablet;
     if (body.colsMobile !== undefined) device.colsMobile = body.colsMobile;
 
     if (body.api) {

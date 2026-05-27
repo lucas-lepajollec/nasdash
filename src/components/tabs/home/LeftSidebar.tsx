@@ -92,7 +92,7 @@ function DeviceMonitorCardContent({
   onDelete?: () => void;
 }) {
   const { config } = useConfig();
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const isApiDevice = !!device.api;
   const { data: stats, error, isLoading } = useSWR<DeviceStat[] | { error: string, isOffline?: boolean }>(
     isApiDevice ? `/api/devices/${device.id}` : null,
@@ -187,11 +187,10 @@ function DeviceMonitorCardContent({
 
           {device.statStyle === 'vertical' && (
             <div
-              className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-tablet-${device.colsTablet || 3} cols-mobile-${device.colsMobile || 3}`}
+              className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-mobile-${device.colsMobile || 3}`}
               style={{
                 width: '100%',
                 '--cols-desktop': device.colsDesktop || 3,
-                '--cols-tablet': device.colsTablet || 3,
                 '--cols-mobile': device.colsMobile || 3,
               } as React.CSSProperties}
             >
@@ -237,11 +236,10 @@ function DeviceMonitorCardContent({
 
           {device.statStyle === 'circle' && (
             <div
-              className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-tablet-${device.colsTablet || 3} cols-mobile-${device.colsMobile || 3}`}
+              className={`nd-device-stats-grid cols-desktop-${device.colsDesktop || 3} cols-mobile-${device.colsMobile || 3}`}
               style={{
                 width: '100%',
                 '--cols-desktop': device.colsDesktop || 3,
-                '--cols-tablet': device.colsTablet || 3,
                 '--cols-mobile': device.colsMobile || 3,
               } as React.CSSProperties}
             >
@@ -308,7 +306,7 @@ function DeviceMonitorCardContent({
 
 export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
   const { config } = useConfig();
-  const hideTitles = config?.settings?.hideWidgetTitles ?? false;
+  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
 
   return (
@@ -337,15 +335,6 @@ export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevi
         .nd-device-stats-grid.cols-mobile-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; --circle-size: 34px !important; --bar-width: 26px !important; --bar-height: 58px !important; }
         .nd-device-stats-grid.cols-mobile-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
 
-        /* Tablet columns and sizes (from 768px to 1023px) */
-        @media (min-width: 768px) {
-          .nd-device-stats-grid.cols-tablet-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; --circle-size: 64px !important; --bar-width: 44px !important; --bar-height: 84px !important; }
-          .nd-device-stats-grid.cols-tablet-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; --circle-size: 52px !important; --bar-width: 38px !important; --bar-height: 76px !important; }
-          .nd-device-stats-grid.cols-tablet-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; --circle-size: 44px !important; --bar-width: 34px !important; --bar-height: 70px !important; }
-          .nd-device-stats-grid.cols-tablet-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; --circle-size: 38px !important; --bar-width: 30px !important; --bar-height: 64px !important; }
-          .nd-device-stats-grid.cols-tablet-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; --circle-size: 34px !important; --bar-width: 26px !important; --bar-height: 58px !important; }
-          .nd-device-stats-grid.cols-tablet-6 { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; --circle-size: 30px !important; --bar-width: 22px !important; --bar-height: 52px !important; }
-        }
 
         /* Desktop columns and sizes (from 1024px) */
         @media (min-width: 1024px) {

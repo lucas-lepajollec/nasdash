@@ -82,7 +82,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const [statStyle, setStatStyle] = useState<Device['statStyle']>(device?.statStyle || 'horizontal');
   const [hideValues, setHideValues] = useState<boolean>(device?.hideValues || false);
   const [colsDesktop, setColsDesktop] = useState<number>(device?.colsDesktop || 3);
-  const [colsTablet, setColsTablet] = useState<number>(device?.colsTablet || 3);
   const [colsMobile, setColsMobile] = useState<number>(device?.colsMobile || 3);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -110,7 +109,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
         statStyle,
         hideValues,
         colsDesktop: statStyle !== 'horizontal' ? colsDesktop : undefined,
-        colsTablet: statStyle !== 'horizontal' ? colsTablet : undefined,
         colsMobile: statStyle !== 'horizontal' ? colsMobile : undefined,
         api: {
           type: apiType,
@@ -203,18 +201,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                   required
                 />
               </div>
-              <div style={{ flex: 1 }}>
-                <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Tablette)</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={6}
-                  className="nd-input"
-                  value={colsTablet}
-                  onChange={e => setColsTablet(Math.max(1, Math.min(6, parseInt(e.target.value) || 3)))}
-                  required
-                />
-              </div>
+
               <div style={{ flex: 1 }}>
                 <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Mobile)</label>
                 <input

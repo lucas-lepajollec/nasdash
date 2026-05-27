@@ -130,7 +130,6 @@ export default function Shell() {
         <Header
           title={title}
           titleLogo={config?.settings?.titleLogo}
-          titleTablet={config?.settings?.titleTablet}
           titleMobile={config?.settings?.titleMobile}
           titleFont={config?.settings?.titleFont}
           titleAnimation={config?.settings?.titleAnimation}

@@ -7,7 +7,7 @@ import { TabId, TabDef } from '@/hooks/useTabs';
 interface HeaderProps {
   title: string;
   titleLogo?: string;
-  titleTablet?: string;
+
   titleMobile?: string;
   titleFont?: 'outfit' | 'space-grotesk' | 'syne' | 'righteous' | 'montserrat';
   titleAnimation?: 'none' | 'spotlight-silver';
@@ -29,7 +29,7 @@ interface HeaderProps {
 export default function Header({
   title,
   titleLogo,
-  titleTablet,
+
   titleMobile,
   titleFont = 'outfit',
   titleAnimation,
@@ -56,8 +56,8 @@ export default function Header({
     <>
       <header className="nd-header">
         {/* Brand — terminal style with flashing green status LED */}
-        <div className={`nd-brand pl-2 md:pl-0 ${titleAnimation && titleAnimation !== 'none' ? `nd-title-anim-${titleAnimation}` : ''}`}>
-          <span className="nd-brand-dot" />
+        <div className={`nd-brand pl-2 md:pl-0 ${titleAnimation && titleAnimation !== 'none' ? `nd-title-anim-${titleAnimation}` : ''}`} style={{ minWidth: 0, overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+          <span className="nd-brand-dot" style={{ flexShrink: 0 }} />
           {titleLogo ? (
             <img 
               src={titleLogo} 
@@ -66,12 +66,18 @@ export default function Header({
               style={{ maxHeight: '20px', width: 'auto', objectFit: 'contain' }} 
             />
           ) : (
-            <strong style={{ fontFamily: `var(--font-${titleFont === 'space-grotesk' ? 'space' : titleFont}), sans-serif` }}>
-              {titleTablet || titleMobile ? (
+            <strong style={{ 
+              fontFamily: `var(--font-${titleFont === 'space-grotesk' ? 'space' : titleFont}), sans-serif`,
+              display: 'block',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0
+            }}>
+              {titleMobile ? (
                 <>
                   <span className="nd-title-desktop">{renderAnimatedTitleText(title)}</span>
-                  {titleTablet && <span className="nd-title-tablet">{renderAnimatedTitleText(titleTablet)}</span>}
-                  {titleMobile && <span className="nd-title-mobile">{renderAnimatedTitleText(titleMobile)}</span>}
+                  <span className="nd-title-mobile">{renderAnimatedTitleText(titleMobile)}</span>
                 </>
               ) : (
                 renderAnimatedTitleText(title)
