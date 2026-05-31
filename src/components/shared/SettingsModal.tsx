@@ -3,12 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Palette, Layers, Sliders, Clipboard, Check, 
-  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar, Trash2
+  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar, Trash2,
+  Home, Layout, ArrowUp, ArrowDown, Eye, EyeOff, Ban
 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { useTabs } from '@/hooks/useTabs';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from './CustomSelect';
 import ConfirmModal from './ConfirmModal';
+import EmojiPickerModal from './EmojiPickerModal';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -184,6 +187,34 @@ function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitchProps)
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { config, updateConfig } = useConfig();
+  const { tabs } = useTabs();
+  
+  const tabOrder = (() => {
+    const savedOrder = config?.settings?.tabOrder || [];
+    const savedSet = new Set(savedOrder);
+    const newTabs = tabs.map(t => t.id).filter(id => !savedSet.has(id));
+    return savedOrder.length > 0 ? [...savedOrder, ...newTabs] : tabs.map(t => t.id);
+  })();
+  const hiddenTabs = config?.settings?.hiddenTabs || [];
+
+  const handleToggleTabHidden = async (id: string) => {
+    const newHidden = hiddenTabs.includes(id) 
+      ? hiddenTabs.filter((h: string) => h !== id)
+      : [...hiddenTabs, id];
+    await updateConfig({ hiddenTabs: newHidden });
+  };
+
+  const handleMoveTab = async (id: string, direction: 'up' | 'down') => {
+    const currentIndex = tabOrder.indexOf(id);
+    if (currentIndex === -1) return;
+    const newOrder = [...tabOrder];
+    if (direction === 'up' && currentIndex > 0) {
+      [newOrder[currentIndex - 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex - 1]];
+    } else if (direction === 'down' && currentIndex < newOrder.length - 1) {
+      [newOrder[currentIndex + 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex + 1]];
+    }
+    await updateConfig({ tabOrder: newOrder });
+  };
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const currentTab = activeTab || 'apparence';
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
@@ -222,6 +253,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
   const [borderRadius, setBorderRadius] = useState(config?.settings?.borderRadius ?? 12);
   const [cardOpacity, setCardOpacity] = useState(config?.settings?.cardOpacity ?? 0.8);
+
+  // Emoji Picker state
+  const [iconPickerTabId, setIconPickerTabId] = useState<string | null>(null);
 
   // Widget positioning & ordering states
   const [devicesSidebar, setDevicesSidebar] = useState(config?.settings?.devicesSidebar || 'left');
@@ -264,6 +298,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [isConfirmLogoDeleteOpen, setIsConfirmLogoDeleteOpen] = useState(false);
   const [logoToDelete, setLogoToDelete] = useState<string | null>(null);
   const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(false);
+  const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -764,6 +799,78 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               </div>
             </div>
 
+            {/* Category: Gestion des Onglets */}
+            <div className="nd-settings-sidebar-group">
+              <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Onglets</span>
+              <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button
+                  onClick={() => setActiveTab('tabs-general')}
+                  className={`nd-settings-nav-item ${currentTab === 'tabs-general' ? 'nd-settings-nav-item--active' : ''}`}
+                >
+                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text)', flexShrink: 0 }}>
+                    <Layers size={18} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Général</span>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Gérer les onglets et le dock</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Category: Paramètres Spécifiques */}
+            <div className="nd-settings-sidebar-group">
+              <button 
+                onClick={() => setIsTabsMenuOpen(!isTabsMenuOpen)}
+                style={{ 
+                  width: '100%',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  background: 'none',
+                  border: 'none',
+                  padding: '4px 4px',
+                  cursor: 'pointer',
+                  color: 'var(--nd-text-muted)',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--nd-text)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--nd-text-muted)'}
+              >
+                <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block' }}>Paramètres Spécifiques</span>
+                <ChevronRight size={14} style={{ transform: isTabsMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              </button>
+              
+              {isTabsMenuOpen && (
+                <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  <button
+                    onClick={() => setActiveTab('tabs-home')}
+                    className={`nd-settings-nav-item ${currentTab === 'tabs-home' ? 'nd-settings-nav-item--active' : ''}`}
+                  >
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text)', flexShrink: 0 }}>
+                      <Home size={18} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Home</span>
+                      <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Gérer l'onglet Home</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('tabs-widgets')}
+                    className={`nd-settings-nav-item ${currentTab === 'tabs-widgets' ? 'nd-settings-nav-item--active' : ''}`}
+                  >
+                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text)', flexShrink: 0 }}>
+                      <Layout size={18} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Widgets</span>
+                      <span style={{ fontSize: '0.66rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Gérer l'onglet Widgets</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Category: Configuration Widgets */}
             <div className="nd-settings-sidebar-group">
               <button 
@@ -885,7 +992,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0, gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
               <button 
                 className="nd-settings-back-btn" 
                 onClick={() => setActiveTab(null)}
@@ -901,14 +1008,20 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease'
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
                 ← Retour
               </button>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
+                {currentTab === 'developer' && '⚙️ Menu Développeur'}
                 {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
+                {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
+                {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
+                {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
                 {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
                 {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
                 {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
@@ -2136,6 +2249,214 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {/* ==========================================
              TAB 3: WIDGET-DEVICES PAGE
              ========================================== */}
+          {(currentTab as string) === 'tabs-home' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Widgets</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Affichez ou masquez les widgets actifs spécifiquement sur l'onglet Home. (Seuls les widgets activés dans Bibliothèque Globale sont listés).
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideDevices)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideDevices: !val } } })}
+                      label="🖥️ Appareils"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideQuickStats)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideQuickStats: !val } } })}
+                      label="📊 Vue d'ensemble"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideTailscaleStatus)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideTailscaleStatus: !val } } })}
+                      label="🛡️ VPN Tailscale"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideDockerActions)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideDockerActions: !val } } })}
+                      label="🐳 Actions Docker"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideClock)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideClock: !val } } })}
+                      label="⌚ Horloge"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideCalendar)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideCalendar: !val } } })}
+                      label="📅 Calendrier"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(currentTab as string) === 'tabs-widgets' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Widgets</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Affichez ou masquez les widgets actifs spécifiquement sur l'onglet Widgets. (Seuls les widgets activés dans Bibliothèque Globale sont listés).
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideDevices)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideDevices: !val } } })}
+                      label="🖥️ Appareils"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideQuickStats)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideQuickStats: !val } } })}
+                      label="📊 Vue d'ensemble"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideTailscaleStatus)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideTailscaleStatus: !val } } })}
+                      label="🛡️ VPN Tailscale"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideDockerActions)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideDockerActions: !val } } })}
+                      label="🐳 Actions Docker"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideClock)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideClock: !val } } })}
+                      label="⌚ Horloge"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideCalendar)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideCalendar: !val } } })}
+                      label="📅 Calendrier"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(currentTab as string) === 'tabs-general' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Position du Dock</h4>
+                <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Choisissez où s'affiche la barre de navigation principale.
+                </p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button 
+                    onClick={() => updateConfig({ dockPosition: 'left' })}
+                    className={`nd-btn ${config?.settings?.dockPosition !== 'right' ? 'nd-settings-nav-item--active' : ''}`}
+                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.75rem', justifyContent: 'center', border: config?.settings?.dockPosition !== 'right' ? '1px solid var(--nd-accent)' : '1px solid var(--nd-card-border)' }}
+                  >
+                    ⬅️ À gauche
+                  </button>
+                  <button 
+                    onClick={() => updateConfig({ dockPosition: 'right' })}
+                    className={`nd-btn ${config?.settings?.dockPosition === 'right' ? 'nd-settings-nav-item--active' : ''}`}
+                    style={{ flex: 1, padding: '8px 12px', fontSize: '0.75rem', justifyContent: 'center', border: config?.settings?.dockPosition === 'right' ? '1px solid var(--nd-accent)' : '1px solid var(--nd-card-border)' }}
+                  >
+                    À droite ➡️
+                  </button>
+                </div>
+              </div>
+
+              <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Gestion des Onglets</h4>
+                <p style={{ margin: '4px 0 16px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                  Activez/désactivez les onglets, modifiez leurs icônes, et utilisez les flèches pour les réorganiser.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {(tabOrder.length > 0 ? tabOrder : tabs.map(t => t.id)).map((tabId, idx) => {
+                    const t = tabs.find(t => t.id === tabId);
+                    if (!t) return null;
+                    const isHidden = hiddenTabs.includes(t.id);
+                    return (
+                      <div key={t.id} style={{ display: 'flex', flexDirection: 'column', padding: '14px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
+                          <ToggleSwitch 
+                            checked={!isHidden}
+                            onChange={(val) => handleToggleTabHidden(t.id)}
+                            label={t.name}
+                            sublabel={`Statut : ${!isHidden ? 'Actif dans le dock' : 'Masqué'}`}
+                          />
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', opacity: !isHidden ? 1 : 0.5, transition: 'opacity 0.2s', flexWrap: 'wrap' }}>
+                            <button onClick={() => handleMoveTab(t.id, 'up')} disabled={idx === 0} style={{ padding: '6px 10px', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: '6px', cursor: idx === 0 ? 'not-allowed' : 'pointer', color: idx === 0 ? 'var(--nd-text-muted)' : 'var(--nd-text)', opacity: idx === 0 ? 0.3 : 1, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }} title="Monter">
+                              <ArrowUp size={14} /> Monter
+                            </button>
+                            <button onClick={() => handleMoveTab(t.id, 'down')} disabled={idx === (tabOrder.length > 0 ? tabOrder.length : tabs.length) - 1} style={{ padding: '6px 10px', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: '6px', cursor: idx === (tabOrder.length > 0 ? tabOrder.length : tabs.length) - 1 ? 'not-allowed' : 'pointer', color: idx === (tabOrder.length > 0 ? tabOrder.length : tabs.length) - 1 ? 'var(--nd-text-muted)' : 'var(--nd-text)', opacity: idx === (tabOrder.length > 0 ? tabOrder.length : tabs.length) - 1 ? 0.3 : 1, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }} title="Descendre">
+                              Descendre <ArrowDown size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: !isHidden ? 1 : 0.5, transition: 'opacity 0.2s', borderTop: '1px dashed var(--nd-card-border)', paddingTop: 12 }}>
+                           <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>Icône du dock :</span>
+                           <button
+                             onClick={() => setIconPickerTabId(t.id)}
+                             style={{ 
+                               padding: '4px 12px',
+                               background: 'rgba(255,255,255,0.05)',
+                               border: '1px solid var(--nd-card-border)',
+                               borderRadius: '6px',
+                               color: 'var(--nd-text)',
+                               fontSize: '0.9rem',
+                               cursor: 'pointer',
+                               display: 'flex',
+                               alignItems: 'center',
+                               gap: 8,
+                               transition: 'all 0.2s'
+                             }}
+                           >
+                             {(() => {
+                               const iconVal = config?.settings?.tabIcons?.[t.id] !== undefined ? config?.settings?.tabIcons?.[t.id] : t.icon;
+                               return iconVal ? <span style={{ fontSize: '1rem' }}>{iconVal}</span> : <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--nd-text-muted)' }}><Ban size={14} /><span style={{ fontSize: '0.75rem' }}>Aucune</span></div>;
+                             })()}
+                             <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginLeft: 6 }}>Modifier</span>
+                           </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {currentTab === 'widget-devices' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
@@ -2852,6 +3173,17 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
         </div>
       </div>
+
+      {iconPickerTabId && (
+        <EmojiPickerModal
+          title={`Icône de l'onglet ${tabs.find(t => t.id === iconPickerTabId)?.name || ''}`}
+          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] !== undefined ? config?.settings?.tabIcons?.[iconPickerTabId] : (tabs.find(t => t.id === iconPickerTabId)?.icon || '')}
+          onSelect={(emoji) => {
+            updateConfig({ tabIcons: { ...(config?.settings?.tabIcons || {}), [iconPickerTabId]: emoji } });
+          }}
+          onClose={() => setIconPickerTabId(null)}
+        />
+      )}
 
       {/* Background deletion Custom Confirmation Portal */}
       <ConfirmModal

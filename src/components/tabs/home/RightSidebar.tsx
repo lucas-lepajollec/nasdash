@@ -93,9 +93,11 @@ export default function RightSidebar({ categories, editMode, showSensitive = fal
     };
   }, [categories]);
 
-  const showQuickStats = !config?.settings?.hideQuickStats;
-  const showTailscale = !config?.settings?.hideTailscaleStatus;
-  const showDockerActions = !config?.settings?.hideDockerActions;
+  const tabConf = config?.settings?.tabs?.home || {};
+
+  const showQuickStats = !(config?.settings?.hideQuickStats || (tabConf as any).hideQuickStats);
+  const showTailscale = !(config?.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus);
+  const showDockerActions = !(config?.settings?.hideDockerActions || (tabConf as any).hideDockerActions);
 
   return (
     <aside 

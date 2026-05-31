@@ -758,8 +758,8 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
   // No hosts configured — empty state
   if (hosts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-6 animate-in fade-in duration-500" style={{ minHeight: 'calc(100vh - 120px)' }}>
-        <div className="nd-docker-empty nd-card p-12 max-w-xl shadow-2xl" style={{ borderStyle: 'dashed', borderWidth: 2 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', minHeight: 'calc(100vh - 120px)' }}>
+        <div className="nd-docker-empty nd-card" style={{ borderStyle: 'dashed', borderWidth: 2, width: '100%', maxWidth: 560, boxSizing: 'border-box' }}>
           <div className="nd-docker-empty-icon mb-6" style={{ fontSize: '4rem', opacity: 0.9 }}>🐳</div>
           <div className="nd-docker-empty-title" style={{ fontSize: '1.25rem', marginBottom: 12 }}>Docker Manager</div>
           <div className="nd-docker-empty-desc" style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: 32, lineHeight: 1.6 }}>

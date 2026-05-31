@@ -15,6 +15,7 @@ interface ConfigContextType {
   deleteService: (id: string) => Promise<void>;
   saveCategories: (newCategories: Category[]) => Promise<void>;
   addSlot: () => Promise<void>;
+  addWidgetsSlot: () => Promise<void>;
   removeSlot: (slotId: number) => Promise<void>;
   addDevice: (device: Omit<Device, 'id'>) => Promise<void>;
   reorderDevices: (newDevices: Device[]) => Promise<void>;
@@ -45,8 +46,7 @@ interface ConfigContextType {
   setDockerActionModal: (state: { open: boolean; action?: any }) => void;
   settingsModal: { open: boolean };
   setSettingsModal: (state: { open: boolean }) => void;
-  tabManagerModal: { open: boolean };
-  setTabManagerModal: (state: { open: boolean }) => void;
+
   calendarEventModal: { open: boolean; date?: string; events?: any[] };
   setCalendarEventModal: (state: { open: boolean; date?: string; events?: any[] }) => void;
   viewEventModal: { open: boolean; event?: any };
@@ -60,6 +60,19 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [activeBgUrl, setActiveBgUrl] = useState('');
   const [isMobile, setIsMobile] = useState(false);
+  const [bgStyle, setBgStyle] = useState({ top: '-10vh', height: '120vh' });
+
+  useEffect(() => {
+    if (window.innerWidth <= 768) {
+      // Use screen.height to get a stable value that doesn't change
+      // when the mobile browser address bar appears/disappears
+      const h = window.screen.height;
+      setBgStyle({
+        top: `-${h * 0.1}px`,
+        height: `${h * 1.2}px`
+      });
+    }
+  }, []);
 
   // Modals
   const [serviceModal, setServiceModal] = useState<{
@@ -82,9 +95,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [settingsModal, setSettingsModal] = useState<{
     open: boolean;
   }>({ open: false });
-  const [tabManagerModal, setTabManagerModal] = useState<{
-    open: boolean;
-  }>({ open: false });
+
   const [calendarEventModal, setCalendarEventModal] = useState<{
     open: boolean;
     date?: string;
@@ -261,6 +272,24 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const addWidgetsSlot = async () => {
+    if (!config) return;
+    const currentSlots = config.settings.widgetsTotalSlots || config.settings.widgetsOrder?.length || 5;
+    const newGrid = [...(config.settings.widgetsOrder || [])];
+    newGrid.push(`empty-${Math.random().toString(36).substr(2, 9)}`);
+
+    setConfig(prev => prev ? {
+      ...prev,
+      settings: { ...prev.settings, widgetsTotalSlots: currentSlots + 1, widgetsOrder: newGrid }
+    } : prev);
+
+    await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'settings', widgetsTotalSlots: currentSlots + 1, widgetsOrder: newGrid }),
+    });
+  };
+
   const removeSlot = async (slotId: number) => {
     if (!config) return;
     const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length);
@@ -324,12 +353,28 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateConfig = async (updates: any) => {
+    setConfig(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        settings: {
+          ...prev.settings,
+          ...updates
+        }
+      };
+    });
+
     const res = await fetch('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'settings', ...updates }),
     });
-    if (res.ok) await fetchConfig();
+    // We still fetch to ensure server state is perfectly synced, but the local update above prevents UI flicker
+    if (res.ok) {
+      await fetchConfig();
+    } else {
+      await fetchConfig(); // Revert on error
+    }
   };
 
   const uploadLogo = async (file: File): Promise<string> => {
@@ -409,6 +454,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     deleteService,
     saveCategories,
     addSlot,
+    addWidgetsSlot,
     removeSlot,
     addDevice,
     reorderDevices,
@@ -433,8 +479,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     setDockerActionModal,
     settingsModal,
     setSettingsModal,
-    tabManagerModal,
-    setTabManagerModal,
+
     calendarEventModal,
     setCalendarEventModal,
     viewEventModal,
@@ -446,10 +491,10 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       <div 
         style={{
           position: 'fixed',
-          top: '-10vh',
-          left: 0,
-          width: '100vw',
-          height: '120vh',
+          top: bgStyle.top,
+          left: '-10vw',
+          width: '120vw',
+          height: bgStyle.height,
           zIndex: -1,
           backgroundColor: 'var(--nd-bg)',
           backgroundImage: activeBgUrl ? `url("${activeBgUrl}")` : 'var(--nd-bg-gradient)',

@@ -110,16 +110,18 @@ export default function Header({
 
         {/* Actions Desktop */}
         <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0">
-          {editMode && isHome && (
+          {editMode && (isHome || activeTab === 'widgets') && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="nd-btn" onClick={onAddSlot} title="Ajouter un emplacement">
                 <Plus size={12} />
                 Emplacement
               </button>
-              <button className="nd-btn" onClick={onAddCategory}>
-                <Plus size={12} />
-                Catégorie
-              </button>
+              {isHome && (
+                <button className="nd-btn" onClick={onAddCategory}>
+                  <Plus size={12} />
+                  Catégorie
+                </button>
+              )}
               <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px', alignSelf: 'center' }} />
             </div>
           )}
@@ -229,25 +231,20 @@ export default function Header({
               </button>
             </div>
 
-            {/* Edit Mode Controls */}
-            {editMode && (
+                {editMode && (
               <>
                 <div style={{ height: 1, background: 'var(--nd-border)', margin: '4px 0' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {onOpenTabManager && (
-                    <button className="nd-btn" onClick={() => { onOpenTabManager(); setMobileMenuOpen(false); }} style={{ width: '100%', padding: '12px', justifyContent: 'center' }}>
-                      <Settings size={16} style={{ marginRight: 8 }} />
-                      Gérer les onglets
-                    </button>
-                  )}
-                  {isHome && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {(isHome || activeTab === 'widgets') && (
+                    <div style={{ display: 'grid', gridTemplateColumns: isHome ? '1fr 1fr' : '1fr', gap: 8 }}>
                       <button className="nd-btn" onClick={() => { onAddSlot?.(); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
                         <Plus size={14} style={{ marginRight: 6 }} /> Emplacement
                       </button>
-                      <button className="nd-btn" onClick={() => { onAddCategory(); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
-                        <Plus size={14} style={{ marginRight: 6 }} /> Catégorie
-                      </button>
+                      {isHome && (
+                        <button className="nd-btn" onClick={() => { onAddCategory(); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
+                          <Plus size={14} style={{ marginRight: 6 }} /> Catégorie
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

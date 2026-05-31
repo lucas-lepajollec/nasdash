@@ -146,8 +146,8 @@ export default function HomeAssistantTab({ editMode, isVisible }: { editMode: bo
 
   // Setup / Edit View - Handled centering locally
   return (
-    <div className="flex flex-col items-center justify-center p-6 animate-in fade-in duration-500" style={{ minHeight: 'calc(100vh - 120px)' }}>
-      <div className="nd-docker-empty nd-card p-12 max-w-xl shadow-2xl" style={{ borderStyle: 'dashed', borderWidth: 2, background: 'rgba(59, 130, 246, 0.03)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', minHeight: 'calc(100vh - 120px)' }}>
+      <div className="nd-docker-empty nd-card" style={{ borderStyle: 'dashed', borderWidth: 2, background: 'rgba(59, 130, 246, 0.03)', width: '100%', maxWidth: 560, boxSizing: 'border-box' }}>
         <div className="nd-docker-empty-icon text-blue-400 mb-6" style={{ fontSize: '4rem', opacity: 0.9 }}>🏠</div>
         <div className="nd-docker-empty-title" style={{ fontSize: '1.25rem', marginBottom: 12 }}>Dashboard Domotique</div>
         <div className="nd-docker-empty-desc" style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: 32, lineHeight: 1.6 }}>

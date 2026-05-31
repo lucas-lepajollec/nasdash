@@ -116,7 +116,7 @@ export default function TailscaleStatus({ editMode, showSensitive = false }: { e
                   {device.hostname}
                   {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hôte</span>}
                 </div>
-                <div className="nd-ts-device-os">{!showSensitive ? '***' : device.ip}</div>
+                <div className="nd-ts-device-os">{!showSensitive ? '•••' : device.ip}</div>
               </div>
             </div>
             <div className="nd-ts-status" style={{

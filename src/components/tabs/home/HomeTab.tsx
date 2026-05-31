@@ -218,10 +218,12 @@ export default function HomeTab({
 
   if (loading || !config) return null;
 
+  const tabConf = config.settings?.tabs?.home || {};
+
   const widgets = [
     {
       id: 'devices',
-      visible: !config.settings?.hideDevices,
+      visible: !(config.settings?.hideDevices || (tabConf as any).hideDevices),
       sidebar: config.settings?.devicesSidebar || 'left',
       order: config.settings?.devicesOrder ?? 0,
       render: () => (
@@ -237,7 +239,7 @@ export default function HomeTab({
     },
     {
       id: 'quickstats',
-      visible: !config.settings?.hideQuickStats,
+      visible: !(config.settings?.hideQuickStats || (tabConf as any).hideQuickStats),
       sidebar: config.settings?.quickStatsSidebar || 'right',
       order: config.settings?.quickStatsOrder ?? 1,
       render: () => (
@@ -246,7 +248,7 @@ export default function HomeTab({
     },
     {
       id: 'tailscale',
-      visible: !config.settings?.hideTailscaleStatus,
+      visible: !(config.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus),
       sidebar: config.settings?.tailscaleSidebar || 'right',
       order: config.settings?.tailscaleOrder ?? 2,
       render: () => (
@@ -255,7 +257,7 @@ export default function HomeTab({
     },
     {
       id: 'dockeractions',
-      visible: !(config.settings?.hideDockerActions ?? true),
+      visible: !((config.settings?.hideDockerActions ?? true) || (tabConf as any).hideDockerActions),
       sidebar: config.settings?.dockerActionsSidebar || 'right',
       order: config.settings?.dockerActionsOrder ?? 3,
       render: () => (
@@ -264,7 +266,7 @@ export default function HomeTab({
     },
     {
       id: 'clock',
-      visible: !config.settings?.hideClock,
+      visible: !(config.settings?.hideClock || (tabConf as any).hideClock),
       sidebar: config.settings?.clockSidebar || 'left',
       order: config.settings?.clockOrder ?? -1,
       render: () => (
@@ -273,7 +275,7 @@ export default function HomeTab({
     },
     {
       id: 'calendar',
-      visible: !(config.settings?.hideCalendar ?? true),
+      visible: !((config.settings?.hideCalendar ?? true) || (tabConf as any).hideCalendar),
       sidebar: config.settings?.calendarSidebar || 'right',
       order: config.settings?.calendarOrder ?? 4,
       render: () => (

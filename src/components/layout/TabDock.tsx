@@ -73,38 +73,16 @@ export default function TabDock({
         })}
       </div>
 
-      {editMode && (
+      {editMode && mobileOpen && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', paddingBottom: 4, marginTop: 8 }}>
-          {onOpenManager && (
-            <button 
-              className="nd-btn" 
-              onClick={onOpenManager}
-              title="Gérer les onglets"
-              style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
-            >
-              <Settings size={14} />
-            </button>
-          )}
-          {mobileOpen && (
-            <button 
-              className="nd-btn" 
-              onClick={() => setMobileOpen(false)}
-              title="Fermer le dock"
-              style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
-            >
-              {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-            </button>
-          )}
-          {onTogglePosition && (
-            <button 
-              className="nd-btn" 
-              onClick={onTogglePosition}
-              title={position === 'left' ? 'Déplacer à droite' : 'Déplacer à gauche'}
-              style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
-            >
-              {position === 'left' ? '→' : '←'}
-            </button>
-          )}
+          <button 
+            className="nd-btn" 
+            onClick={() => setMobileOpen(false)}
+            title="Fermer le dock"
+            style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
+          >
+            {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+          </button>
         </div>
       )}
     </nav>

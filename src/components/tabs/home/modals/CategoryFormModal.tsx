@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
+import { EMOJI_CATEGORIES } from '@/lib/constants';
 import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings } from 'lucide-react';
 import ConfirmModal from '../../../shared/ConfirmModal';
 import CustomSelect from '../../../shared/CustomSelect';
@@ -15,16 +16,6 @@ interface CategoryFormModalProps {
   showSensitive: boolean;
 }
 
-const EMOJI_CATEGORIES: Record<string, string[]> = {
-  'Tech': ['🤖', '🖥️', '💻', '⌨️', '🖱️', '📱', '⌚', '🔋', '🔌', '💾'],
-  'Cloud': ['☁️', '🌍', '🌐', '📡', '🛰️', '🔗', '🔒', '🔑', '🔐', '🛡️'],
-  'Médias': ['🎬', '🎮', '🎵', '🎧', '📺', '🎸', '🎹', '🎤', '🎭', '🎪'],
-  'Fichiers': ['📁', '📂', '📄', '📊', '📈', '📉', '🗂️', '🗃️', '💿', '📀'],
-  'Outils': ['🔧', '🛠️', '⚙️', '🔨', '🧰', '🔩', '⚡', '💡', '🔬', '🔭'],
-  'Dev': ['🐳', '🐙', '🦀', '🦊', '🐘', '🐍', '☕', '📦', '🚀', '🧪'],
-  'Maison': ['🏠', '🏡', '🏢', '🏭', '🏗️', '📶', '📟', '📠', '🖨️', '📷'],
-  'Divers': ['💼', '📋', '📌', '📍', '🏷️', '🔖', '🎯', '✨', '⭐', '🔔']
-};
 
 export default function CategoryFormModal({ category, onClose, onSave, onDelete, showSecretSections, showSensitive }: CategoryFormModalProps) {
   const [title, setTitle] = useState(category?.title || '');
@@ -34,7 +25,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [layout, setLayout] = useState<Category['layout']>(
     category?.layout === 'grid' ? 'bento' : (category?.layout || 'standard')
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>('Tech');
+  const [selectedCategory, setSelectedCategory] = useState<string>(Object.keys(EMOJI_CATEGORIES)[0]);
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
   
   const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState(false);

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-export type TabId = 'dashboard' | 'docker' | 'ha';
+export type TabId = 'dashboard' | 'widgets' | 'docker' | 'ha';
 
 export interface TabDef {
   id: TabId;
@@ -13,6 +13,7 @@ export interface TabDef {
 
 export const TABS: TabDef[] = [
   { id: 'dashboard', name: 'Home', icon: '🏠', description: 'Services & monitoring' },
+  { id: 'widgets', name: 'Widgets', icon: '🎛️', description: 'Grille de widgets fluide' },
   { id: 'docker', name: 'Docker', icon: '🐳', description: 'Conteneurs & images' },
   { id: 'ha', name: 'HA', icon: '🔌', description: 'Domotique' },
 ];

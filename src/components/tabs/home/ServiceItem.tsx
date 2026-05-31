@@ -73,7 +73,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 1 }}>
               <span className="nd-service-name">{service.name}</span>
               <span className="nd-service-url">
-                {!showSensitive ? '***' : (() => {
+                {!showSensitive ? '•••' : (() => {
                   try {
                     return new URL(service.localUrl).host;
                   } catch (e) {

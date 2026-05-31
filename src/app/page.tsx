@@ -8,17 +8,17 @@ import { useTabs, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
 import SettingsModal from '@/components/shared/SettingsModal';
-import TabManagerModal from '@/components/shared/TabManagerModal';
 import CalendarEventModal from '@/components/shared/CalendarEventModal';
 import ViewEventModal from '@/components/shared/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const HomeAssistantTab = lazy(() => import('@/components/tabs/ha/HomeAssistantTab'));
+const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
 
 export default function Shell() {
   const { activeTab, switchTab, tabs, ready } = useTabs();
-  const { config, loading, refresh, addSlot, setCategoryModal, settingsModal, setSettingsModal, tabManagerModal, setTabManagerModal, updateConfig } = useConfig();
+  const { config, loading, refresh, addSlot, addWidgetsSlot, setCategoryModal, settingsModal, setSettingsModal, updateConfig } = useConfig();
 
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -38,13 +38,18 @@ export default function Shell() {
   const hiddenIds = config?.settings?.hiddenTabs || [];
   
   const sortedTabs = (() => {
-    const tabOrder = config?.settings?.tabOrder || tabs.map(t => t.id);
+    const savedOrder = config?.settings?.tabOrder || [];
+    const savedSet = new Set(savedOrder);
+    const newTabs = tabs.map(t => t.id).filter(id => !savedSet.has(id));
+    const tabOrder = savedOrder.length > 0 ? [...savedOrder, ...newTabs] : tabs.map(t => t.id);
+
+    const customIcons = config?.settings?.tabIcons || {};
     const sorted = [...tabs].sort((a, b) => {
       const idxA = tabOrder.indexOf(a.id);
       const idxB = tabOrder.indexOf(b.id);
       return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
     });
-    return sorted;
+    return sorted.map(t => ({ ...t, icon: customIcons[t.id] !== undefined ? customIcons[t.id] : t.icon }));
   })();
 
   const handleToggleTabHidden = async (id: TabId) => {
@@ -117,7 +122,6 @@ export default function Shell() {
         position={dockPosition}
         editMode={editMode}
         hiddenIds={hiddenIds}
-        onOpenManager={() => setTabManagerModal({ open: true })}
         onTogglePosition={async () => {
           const newPos = dockPosition === 'left' ? 'right' : 'left';
           await updateConfig({ type: 'settings', dockPosition: newPos });
@@ -139,13 +143,12 @@ export default function Shell() {
           onToggleEdit={() => setEditMode(prev => !prev)}
           onOpenSettings={() => setSettingsModal({ open: true })}
           onAddCategory={() => setCategoryModal({ open: true })} 
-          onAddSlot={addSlot}
+          onAddSlot={() => activeTab === 'widgets' ? addWidgetsSlot() : addSlot()}
           secretMode={showSensitive}
           onToggleSecret={() => setShowSensitive(prev => !prev)}
           activeTab={activeTab}
           tabs={sortedTabs}
           onSwitchTab={switchTab}
-          onOpenTabManager={() => setTabManagerModal({ open: true })}
         />
 
         {/* Tab views - Kept mounted to preserve state */}
@@ -169,6 +172,13 @@ export default function Shell() {
             </Suspense>
           </div>
 
+          {/* Widgets Tab */}
+          <div className="flex-1" style={{ display: activeTab === 'widgets' ? 'block' : 'none' }}>
+            <Suspense fallback={<LoadingView text="Chargement Widgets…" />}>
+              <WidgetsTab editMode={editMode} isVisible={activeTab === 'widgets'} showSensitive={showSensitive} categories={config?.categories || []} />
+            </Suspense>
+          </div>
+
           {/* Home Assistant — conditionally rendered to avoid background iframe costs */}
           {activeTab === 'ha' && (
             <div className="flex-1">
@@ -182,16 +192,6 @@ export default function Shell() {
 
       {settingsModal.open && (
         <SettingsModal onClose={() => setSettingsModal({ open: false })} />
-      )}
-
-      {tabManagerModal.open && (
-        <TabManagerModal
-          tabs={sortedTabs}
-          hiddenIds={hiddenIds}
-          onToggleHidden={handleToggleTabHidden}
-          onMove={handleMoveTab}
-          onClose={() => setTabManagerModal({ open: false })}
-        />
       )}
 
       <CalendarEventModal />

@@ -276,10 +276,14 @@ export async function PUT(req: NextRequest) {
     
     if (body.extensionOrder !== undefined) config.settings.tabOrder = body.extensionOrder;
     if (body.tabOrder !== undefined) config.settings.tabOrder = body.tabOrder;
+    if (body.widgetsOrder !== undefined) config.settings.widgetsOrder = body.widgetsOrder;
+    if (body.widgetsTotalSlots !== undefined) config.settings.widgetsTotalSlots = body.widgetsTotalSlots;
     
     if (body.hiddenExtensions !== undefined) config.settings.hiddenTabs = body.hiddenExtensions;
     if (body.hiddenTabs !== undefined) config.settings.hiddenTabs = body.hiddenTabs;
+    if (body.tabIcons !== undefined) config.settings.tabIcons = body.tabIcons;
     if (body.theme !== undefined) config.settings.theme = body.theme;
+    if (body.tabs !== undefined) config.settings.tabs = body.tabs;
 
     // Advanced UI Customization Toggles
     if (body.hideDockerActions !== undefined) config.settings.hideDockerActions = body.hideDockerActions;

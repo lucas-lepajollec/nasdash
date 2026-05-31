@@ -170,6 +170,28 @@ export interface DashboardConfig {
     // Tab customization
     tabOrder?: string[];
     hiddenTabs?: string[];
+    tabIcons?: Record<string, string>;
+    // Tabs visibility overrides
+    tabs?: {
+      home?: {
+        hideDockerActions?: boolean;
+        hideTailscaleStatus?: boolean;
+        hideDevices?: boolean;
+        hideQuickStats?: boolean;
+        hideClock?: boolean;
+        hideCalendar?: boolean;
+      };
+      widgets?: {
+        hideDockerActions?: boolean;
+        hideTailscaleStatus?: boolean;
+        hideDevices?: boolean;
+        hideQuickStats?: boolean;
+        hideClock?: boolean;
+        hideCalendar?: boolean;
+      };
+    };
+    widgetsOrder?: string[];
+    widgetsTotalSlots?: number;
     // Advanced Customization
     hideDockerActions?: boolean;
     hideTailscaleStatus?: boolean;
