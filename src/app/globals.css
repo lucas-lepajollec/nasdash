@@ -2328,4 +2328,68 @@ body {
   background-clip: text;
   animation: spotlightSweep 3.5s linear infinite;
 }
+
+/* ============================================================
+   WEATHER ANIMATIONS
+   ============================================================ */
+
+@keyframes weatherFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes weatherFloatSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes weatherSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes weatherRainDrop {
+  0% { transform: translateY(-2px); opacity: 0.8; }
+  50% { transform: translateY(3px); opacity: 1; }
+  100% { transform: translateY(-2px); opacity: 0.8; }
+}
+
+@keyframes weatherFlash {
+  0%, 100% { opacity: 1; }
+  5% { opacity: 0.4; }
+  10% { opacity: 1; }
+  15% { opacity: 0.4; }
+  20% { opacity: 1; }
+}
+
+@keyframes weatherGlowPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.weather-anim-sun {
+  animation: weatherSpin 20s linear infinite;
+}
+
+.weather-anim-cloud {
+  animation: weatherFloat 4s ease-in-out infinite;
+}
+
+.weather-anim-rain {
+  animation: weatherRainDrop 1.5s ease-in-out infinite;
+}
+
+.weather-anim-snow {
+  animation: weatherFloatSlow 3s ease-in-out infinite;
+}
+
+.weather-anim-storm {
+  animation: weatherFlash 4s infinite, weatherFloat 3s ease-in-out infinite;
+}
+
+.weather-glow {
+  transition: box-shadow 0.5s ease;
+  animation: weatherGlowPulse 4s ease-in-out infinite;
+}
+
 

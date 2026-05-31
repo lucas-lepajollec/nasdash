@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, Palette, Layers, Sliders, Clipboard, Check, 
   Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar, Trash2,
-  Home, Layout, ArrowUp, ArrowDown, Eye, EyeOff, Ban
+  Home, Layout, ArrowUp, ArrowDown, Eye, EyeOff, Ban, Cloud
 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useTabs } from '@/hooks/useTabs';
@@ -285,6 +285,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [hideDockerActions, setHideDockerActions] = useState(config?.settings?.hideDockerActions ?? true);
   const [hideClock, setHideClock] = useState(config?.settings?.hideClock ?? false);
   const [hideCalendar, setHideCalendar] = useState(config?.settings?.hideCalendar ?? true);
+  const [hideWeather, setHideWeather] = useState(config?.settings?.hideWeather ?? false);
+  const [weatherWidgetStyle, setWeatherWidgetStyle] = useState<'default' | 'currentOnly' | 'minimal' | 'extended'>(config?.settings?.weatherWidgetStyle || 'default');
+  const [weatherSearchQuery, setWeatherSearchQuery] = useState('');
+  const [weatherSearchResults, setWeatherSearchResults] = useState<any[]>([]);
+  const [isSearchingWeather, setIsSearchingWeather] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [cityToDelete, setCityToDelete] = useState<{id: string, name: string} | null>(null);
   const [hideWidgetTitles, setHideWidgetTitles] = useState(config?.settings?.hideWidgetTitles ?? false);
   const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
 
@@ -324,6 +331,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setHideDockerActions(config.settings?.hideDockerActions ?? true);
       setHideClock(config.settings?.hideClock ?? false);
       setHideCalendar(config.settings?.hideCalendar ?? true);
+      setHideWeather(config.settings?.hideWeather ?? false);
+      setWeatherWidgetStyle(config.settings?.weatherWidgetStyle || 'default');
       setHideWidgetTitles(config.settings?.hideWidgetTitles ?? false);
       if (config.settings?.calendarSidebar !== undefined) setCalendarSidebar(config.settings.calendarSidebar);
       if (config.settings?.calendarOrder !== undefined) setCalendarOrder(config.settings.calendarOrder);
@@ -662,6 +671,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     } else if (key === 'hideCalendar') {
       setHideCalendar(value);
       await updateConfig({ hideCalendar: value });
+    } else if (key === 'hideWeather') {
+      setHideWeather(value);
+      await updateConfig({ hideWeather: value });
     } else if (key === 'hideWidgetTitles') {
       setHideWidgetTitles(value);
       await updateConfig({ hideWidgetTitles: value });
@@ -702,6 +714,65 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     navigator.clipboard.writeText(haYamlTheme);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const searchWeatherCity = async () => {
+    if (!weatherSearchQuery.trim()) return;
+    setIsSearchingWeather(true);
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=fr&format=json`);
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      setWeatherSearchResults(data.results || []);
+    } catch (e) {
+      console.error(e);
+      setWeatherSearchResults([]);
+    } finally {
+      setIsSearchingWeather(false);
+    }
+  };
+
+  const selectWeatherCity = async (city: any) => {
+    const newId = Math.random().toString(36).substring(2, 9);
+    const loc = { id: newId, lat: city.latitude, lon: city.longitude, name: city.name };
+    const currentLocations = config?.settings?.weatherLocations || [];
+    
+    // Migrate old single location if present and list is empty
+    if (currentLocations.length === 0 && config?.settings?.weatherLocation) {
+      currentLocations.push({ id: 'legacy-1', ...config.settings.weatherLocation });
+    }
+
+    const newLocations = [...currentLocations, loc];
+    
+    // Set as active if it's the first one
+    const newActiveId = currentLocations.length === 0 ? newId : (config?.settings?.activeWeatherLocationId || currentLocations[0]?.id || newId);
+
+    await updateConfig({ 
+      weatherLocations: newLocations,
+      activeWeatherLocationId: newActiveId
+    });
+    
+    setWeatherSearchResults([]);
+    setWeatherSearchQuery('');
+  };
+
+  const removeWeatherCity = async (idToRemove: string) => {
+    const currentLocations = config?.settings?.weatherLocations || [];
+    const newLocations = currentLocations.filter(loc => loc.id !== idToRemove);
+    
+    let newActiveId = config?.settings?.activeWeatherLocationId;
+    if (newActiveId === idToRemove) {
+      newActiveId = newLocations.length > 0 ? newLocations[0].id : undefined;
+    }
+
+    await updateConfig({ 
+      weatherLocations: newLocations,
+      activeWeatherLocationId: newActiveId
+    });
+  };
+
+  const setActiveWeatherCity = async (id: string) => {
+    await updateConfig({ activeWeatherLocationId: id });
   };
 
   return (
@@ -902,6 +973,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     { id: 'widget-dockeractions', icon: <Container size={18} />, color: 'var(--nd-orange)', bg: 'rgba(240, 136, 62, 0.08)', label: 'Actions Docker', desc: "Contrôles d'alimentation rapides pour vos conteneurs.", active: !hideDockerActions },
                     { id: 'widget-clock', icon: <Clipboard size={18} />, color: 'var(--nd-accent)', bg: 'rgba(56, 189, 248, 0.08)', label: 'Horloge / Date', desc: "Affichage de l'heure et de la date.", active: !hideClock },
                     { id: 'widget-calendar', icon: <Calendar size={18} />, color: '#fb923c', bg: 'rgba(251, 146, 60, 0.08)', label: 'Calendrier', desc: 'Affichage des jours et des événements.', active: !hideCalendar },
+                    { id: 'widget-weather', icon: <Cloud size={18} />, color: 'var(--nd-accent)', bg: 'rgba(56, 189, 248, 0.08)', label: 'Météo', desc: "Prévisions et température locale.", active: !hideWeather },
                   ].sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1)).map((w, index, array) => {
                     const isFirstInactive = !w.active && (index === 0 || array[index - 1].active);
                     return (
@@ -1028,6 +1100,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
                 {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
                 {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
+                {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
                 {currentTab === 'homeassistant' && '🏠 Export Lovelace Home Assistant'}
               </h3>
             </div>
@@ -1924,7 +1997,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               <div>
                 <h5 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-green)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--nd-green)', boxShadow: '0 0 8px var(--nd-green)' }} />
-                  Widgets Activés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => !h).length })
+                  Widgets Activés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar, hideWeather].filter(h => !h).length })
                 </h5>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {!hideDevices && (
@@ -2095,7 +2168,35 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </div>
                   )}
 
-                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => !h).length === 0 && (
+                  {!hideWeather && (
+                    <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>☁️ Météo</span>
+                          <span style={{ fontSize: '0.6rem', background: 'rgba(56, 189, 248, 0.15)', color: 'var(--nd-accent)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Affichage</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Prévisions et température locale avec un design élégant.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                        <button onClick={() => setActiveTab('widget-weather')} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>
+                          Configurer →
+                        </button>
+                        <div 
+                          onClick={() => handleToggleWidget('hideWeather', true)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'var(--nd-green)', position: 'relative', cursor: 'pointer',
+                            boxShadow: '0 0 8px rgba(63, 185, 80, 0.3)', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '3px', left: '21px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar, hideWeather].filter(h => !h).length === 0 && (
                     <div style={{ gridColumn: 'span 2', padding: '20px', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.74rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                       Aucun widget n'est actif. Activez-en ci-dessous !
                     </div>
@@ -2107,7 +2208,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               <div>
                 <h5 style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-text-dimmed)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--nd-text-dimmed)' }} />
-                  Widgets Désactivés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => h).length })
+                  Widgets Désactivés ({ [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar, hideWeather].filter(h => h).length })
                 </h5>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {hideDevices && (
@@ -2236,7 +2337,28 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                     </div>
                   )}
 
-                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar].filter(h => h).length === 0 && (
+                  {hideWeather && (
+                    <div style={{ padding: '14px', background: 'rgba(0,0,0,0.1)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', opacity: 0.6, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+                      <div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: 6 }}>☁️ Météo</span>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
+                          Prévisions et température locale avec un design élégant.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <div 
+                          onClick={() => handleToggleWidget('hideWeather', false)}
+                          style={{
+                            width: '36px', height: '18px', borderRadius: '9px', background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nd-card-border)', position: 'relative', cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#888', position: 'absolute', top: '2px', left: '3px', transition: 'all 0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  { [hideDevices, hideQuickStats, hideTailscaleStatus, hideDockerActions, hideClock, hideCalendar, hideWeather].filter(h => h).length === 0 && (
                     <div style={{ gridColumn: 'span 2', padding: '20px', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.74rem', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                       Tous les widgets sont actifs ! 🎉
                     </div>
@@ -2305,6 +2427,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       sublabel="Afficher le widget"
                     />
                   </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.home?.hideWeather)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideWeather: !val } } })}
+                      label="☁️ Météo"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -2363,6 +2493,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                       checked={!(config?.settings?.tabs?.widgets?.hideCalendar)}
                       onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideCalendar: !val } } })}
                       label="📅 Calendrier"
+                      sublabel="Afficher le widget"
+                    />
+                  </div>
+                  <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <ToggleSwitch
+                      checked={!(config?.settings?.tabs?.widgets?.hideWeather)}
+                      onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, hideWeather: !val } } })}
+                      label="☁️ Météo"
                       sublabel="Afficher le widget"
                     />
                   </div>
@@ -3130,6 +3268,201 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           )}
 
           {/* ==========================================
+             TAB WEATHER
+             ========================================== */}
+          {currentTab === 'widget-weather' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                <ToggleSwitch
+                  checked={!hideWeather}
+                  onChange={(val) => handleToggleWidget('hideWeather', !val)}
+                  label="Activer le widget Météo"
+                  sublabel="Affiche la météo locale sur votre tableau de bord."
+                />
+              </div>
+
+              {!hideWeather && (
+                <>
+                  {/* Column Segment Selector */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Choisissez dans quelle barre latérale injecter ce widget.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        onClick={async () => await updateConfig({ weatherSidebar: 'left' })}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: config?.settings?.weatherSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: config?.settings?.weatherSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: config?.settings?.weatherSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: config?.settings?.weatherSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        👈 Barre Gauche
+                      </button>
+                      <button
+                        onClick={async () => await updateConfig({ weatherSidebar: 'right' })}
+                        style={{
+                          flex: 1, padding: '10px 14px', border: '1px solid',
+                          borderColor: (!config?.settings?.weatherSidebar || config?.settings?.weatherSidebar === 'right') ? 'var(--nd-accent)' : 'var(--nd-card-border)',
+                          background: (!config?.settings?.weatherSidebar || config?.settings?.weatherSidebar === 'right') ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
+                          color: (!config?.settings?.weatherSidebar || config?.settings?.weatherSidebar === 'right') ? 'var(--nd-accent)' : 'var(--nd-text)',
+                          borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                          boxShadow: (!config?.settings?.weatherSidebar || config?.settings?.weatherSidebar === 'right') ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                        }}
+                      >
+                        Barre Droite 👉
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Priority / Sorting Order */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Ajustez la position relative de ce widget (les valeurs les plus petites s'affichent en haut).
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <button 
+                        onClick={async () => await updateConfig({ weatherOrder: Math.max(-5, (config?.settings?.weatherOrder ?? 5) - 1) })}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        className="nd-input"
+                        min="-5"
+                        max="20"
+                        value={config?.settings?.weatherOrder ?? 5}
+                        onChange={async (e) => await updateConfig({ weatherOrder: Number(e.target.value) })}
+                        style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
+                      />
+                      <button 
+                        onClick={async () => await updateConfig({ weatherOrder: (config?.settings?.weatherOrder ?? 5) + 1 })}
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Weather Location Search */}
+                  <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Localisation (OpenMeteo)</h4>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+                      Recherchez votre ville pour afficher la météo correspondante.
+                    </p>
+                    
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                      <input
+                        type="text"
+                        className="nd-input"
+                        placeholder="Ex: Paris, Tokyo..."
+                        value={weatherSearchQuery}
+                        onChange={(e) => setWeatherSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && searchWeatherCity()}
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '10px 14px' }}
+                      />
+                      <button 
+                        className="nd-btn nd-btn-accent" 
+                        onClick={searchWeatherCity}
+                        disabled={isSearchingWeather || !weatherSearchQuery.trim()}
+                        style={{ padding: '10px 16px', fontSize: '0.75rem' }}
+                      >
+                        {isSearchingWeather ? '...' : 'Chercher'}
+                      </button>
+                    </div>
+
+                    {weatherSearchResults.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: 8 }}>
+                        {weatherSearchResults.map((city, idx) => (
+                          <div 
+                            key={idx}
+                            onClick={() => selectWeatherCity(city)}
+                            style={{ padding: '8px 12px', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '4px', background: 'rgba(255,255,255,0.02)' }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                          >
+                            <span style={{ fontWeight: 600 }}>{city.name}</span>
+                            {city.admin1 && <span style={{ color: 'var(--nd-text-muted)' }}>, {city.admin1}</span>}
+                            {city.country && <span style={{ color: 'var(--nd-text-muted)' }}> ({city.country})</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {config?.settings?.weatherLocations && config.settings.weatherLocations.length > 0 && (
+                      <div style={{ marginTop: 16 }}>
+                        <h5 style={{ margin: '0 0 8px 0', fontSize: '0.75rem', fontWeight: 600 }}>Villes enregistrées</h5>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {config.settings.weatherLocations.map((loc) => {
+                            const isActive = config.settings?.activeWeatherLocationId === loc.id || (config.settings?.weatherLocations?.length === 1);
+                            return (
+                              <div key={loc.id} style={{ padding: '8px 12px', background: isActive ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)', border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.2)' : 'var(--nd-card-border)'}`, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }} onClick={() => setActiveWeatherCity(loc.id)}>
+                                  {isActive ? <CheckCircle2 size={16} color="var(--nd-green)" /> : <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid var(--nd-card-border)' }} />}
+                                  <span style={{ fontSize: '0.75rem', fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--nd-green)' : 'var(--nd-text)' }}>{loc.name}</span>
+                                </div>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCityToDelete({ id: loc.id, name: loc.name });
+                                  }}
+                                  style={{ background: 'none', border: 'none', color: 'var(--nd-red)', cursor: 'pointer', padding: 4, opacity: 0.6, transition: 'opacity 0.2s' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                  onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                                  title="Supprimer"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Style selector */}
+                    <div style={{ marginTop: 24 }}>
+                      <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', marginBottom: 12 }}>Style du Widget Météo</h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                        {[
+                          { id: 'default', name: 'Standard', desc: 'Météo actuelle + 3 prochains jours' },
+                          { id: 'extended', name: 'Étendu', desc: 'Météo actuelle + 5 prochains jours' },
+                          { id: 'currentOnly', name: 'Actuelle', desc: 'Uniquement la météo actuelle avec détails' },
+                          { id: 'minimal', name: 'Minimaliste', desc: 'Juste la température et l\'icône' }
+                        ].map(design => (
+                          <div 
+                            key={design.id}
+                            onClick={async () => {
+                              setWeatherWidgetStyle(design.id as any);
+                              await updateConfig({ weatherWidgetStyle: design.id });
+                            }}
+                            style={{ 
+                              padding: '12px', borderRadius: 'var(--nd-card-radius)', cursor: 'pointer', transition: 'var(--nd-transition)',
+                              border: `1px solid ${weatherWidgetStyle === design.id ? 'var(--nd-accent)' : 'var(--nd-card-border)'}`,
+                              background: weatherWidgetStyle === design.id ? 'var(--nd-accent-glow)' : 'rgba(0,0,0,0.2)',
+                              color: weatherWidgetStyle === design.id ? 'var(--nd-accent)' : 'var(--nd-text)',
+                              boxShadow: weatherWidgetStyle === design.id ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>{design.name}</div>
+                            <div style={{ fontSize: '0.62rem', color: weatherWidgetStyle === design.id ? 'inherit' : 'var(--nd-text-muted)', opacity: 0.8 }}>{design.desc}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ==========================================
              TAB 9: HOME ASSISTANT
              ========================================== */}
           {currentTab === 'homeassistant' && (
@@ -3218,6 +3551,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           description={`Êtes-vous sûr de vouloir supprimer le profil "${appearanceProfiles.find(p => p.id === confirmDeleteProfile)?.name}" ? Cette action est irréversible.`}
           onConfirm={() => handleDeleteProfile(confirmDeleteProfile)}
           onClose={() => setConfirmDeleteProfile(null)}
+        />
+      )}
+      {/* City Delete Confirmation */}
+      {cityToDelete && (
+        <ConfirmModal
+          isOpen={true}
+          onClose={() => setCityToDelete(null)}
+          onConfirm={() => {
+            if (cityToDelete) {
+              removeWeatherCity(cityToDelete.id);
+              setCityToDelete(null);
+            }
+          }}
+          title="Supprimer la ville ?"
+          description={`Voulez-vous vraiment supprimer la ville de ${cityToDelete.name} ?`}
+          confirmLabel="Supprimer"
+          cancelLabel="Annuler"
         />
       )}
     </div>

@@ -292,6 +292,7 @@ export async function PUT(req: NextRequest) {
     if (body.hideQuickStats !== undefined) config.settings.hideQuickStats = body.hideQuickStats;
     if (body.hideClock !== undefined) config.settings.hideClock = body.hideClock;
     if (body.hideCalendar !== undefined) config.settings.hideCalendar = body.hideCalendar;
+    if (body.hideWeather !== undefined) config.settings.hideWeather = body.hideWeather;
     if (body.hideWidgetTitles !== undefined) config.settings.hideWidgetTitles = body.hideWidgetTitles;
     if (body.calendarUrl !== undefined) config.settings.calendarUrl = body.calendarUrl;
     if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
@@ -308,6 +309,7 @@ export async function PUT(req: NextRequest) {
     if (body.dockerActionsSidebar !== undefined) config.settings.dockerActionsSidebar = body.dockerActionsSidebar;
     if (body.clockSidebar !== undefined) config.settings.clockSidebar = body.clockSidebar;
     if (body.calendarSidebar !== undefined) config.settings.calendarSidebar = body.calendarSidebar;
+    if (body.weatherSidebar !== undefined) config.settings.weatherSidebar = body.weatherSidebar;
     
     // Sidebar widget order preferences
     if (body.devicesOrder !== undefined) config.settings.devicesOrder = body.devicesOrder;
@@ -316,6 +318,11 @@ export async function PUT(req: NextRequest) {
     if (body.dockerActionsOrder !== undefined) config.settings.dockerActionsOrder = body.dockerActionsOrder;
     if (body.clockOrder !== undefined) config.settings.clockOrder = body.clockOrder;
     if (body.calendarOrder !== undefined) config.settings.calendarOrder = body.calendarOrder;
+    if (body.weatherOrder !== undefined) config.settings.weatherOrder = body.weatherOrder;
+    if (body.weatherLocation !== undefined) config.settings.weatherLocation = body.weatherLocation;
+    if (body.weatherLocations !== undefined) config.settings.weatherLocations = body.weatherLocations;
+    if (body.activeWeatherLocationId !== undefined) config.settings.activeWeatherLocationId = body.activeWeatherLocationId;
+    if (body.weatherWidgetStyle !== undefined) config.settings.weatherWidgetStyle = body.weatherWidgetStyle;
     
     // Appearance Profiles
     if (body.appearanceProfiles !== undefined) {

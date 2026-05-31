@@ -14,6 +14,7 @@ import DeviceFormModal from './modals/DeviceFormModal';
 import DockerActionFormModal from './modals/DockerActionFormModal';
 import ClockWidget from './ClockWidget';
 import CalendarWidget from './CalendarWidget';
+import WeatherWidget from './WeatherWidget';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
@@ -280,6 +281,15 @@ export default function HomeTab({
       order: config.settings?.calendarOrder ?? 4,
       render: () => (
         <CalendarWidget editMode={editMode} />
+      )
+    },
+    {
+      id: 'weather',
+      visible: !(config.settings?.hideWeather || (tabConf as any).hideWeather),
+      sidebar: config.settings?.weatherSidebar || 'right',
+      order: config.settings?.weatherOrder ?? 5,
+      render: () => (
+        <WeatherWidget editMode={editMode} />
       )
     }
   ];

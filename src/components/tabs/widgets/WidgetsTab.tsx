@@ -8,6 +8,7 @@ import { Trash2, Plus } from 'lucide-react';
 // Import widgets
 import ClockWidget from '../home/ClockWidget';
 import CalendarWidget from '../home/CalendarWidget';
+import WeatherWidget from '../home/WeatherWidget';
 import { QuickStats } from '../home/RightSidebar';
 import TailscaleStatus from '../home/TailscaleStatus';
 import DockerActions from '../home/DockerActions';
@@ -72,6 +73,7 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
   const widgetsList = [
     { id: 'clock', component: <ClockWidget />, hidden: config?.settings?.hideClock || (tabConf as any).hideClock },
     { id: 'calendar', component: <CalendarWidget />, hidden: config?.settings?.hideCalendar || (tabConf as any).hideCalendar },
+    { id: 'weather', component: <WeatherWidget editMode={editMode} />, hidden: config?.settings?.hideWeather || (tabConf as any).hideWeather },
     { id: 'quickstats', component: <QuickStats categories={categories} editMode={editMode} />, hidden: config?.settings?.hideQuickStats || (tabConf as any).hideQuickStats },
     { id: 'tailscale', component: <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />, hidden: config?.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus },
     { id: 'dockeractions', component: <DockerActions editMode={editMode} />, hidden: config?.settings?.hideDockerActions || (tabConf as any).hideDockerActions },

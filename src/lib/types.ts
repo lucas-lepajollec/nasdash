@@ -180,6 +180,7 @@ export interface DashboardConfig {
         hideQuickStats?: boolean;
         hideClock?: boolean;
         hideCalendar?: boolean;
+        hideWeather?: boolean;
       };
       widgets?: {
         hideDockerActions?: boolean;
@@ -188,6 +189,7 @@ export interface DashboardConfig {
         hideQuickStats?: boolean;
         hideClock?: boolean;
         hideCalendar?: boolean;
+        hideWeather?: boolean;
       };
     };
     widgetsOrder?: string[];
@@ -199,7 +201,12 @@ export interface DashboardConfig {
     hideQuickStats?: boolean;
     hideClock?: boolean;
     hideCalendar?: boolean;
+    hideWeather?: boolean;
     hideWidgetTitles?: boolean;
+    weatherLocation?: { lat: number; lon: number; name: string };
+    weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
+    weatherWidgetStyle?: 'default' | 'currentOnly' | 'minimal' | 'extended';
+    activeWeatherLocationId?: string;
     calendarUrl?: string;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
     clockTimezone?: string;
@@ -221,6 +228,7 @@ export interface DashboardConfig {
     dockerActionsSidebar?: 'left' | 'right';
     clockSidebar?: 'left' | 'right';
     calendarSidebar?: 'left' | 'right';
+    weatherSidebar?: 'left' | 'right';
     // Sidebar widget order preferences
     devicesOrder?: number;
     quickStatsOrder?: number;
@@ -228,6 +236,7 @@ export interface DashboardConfig {
     dockerActionsOrder?: number;
     clockOrder?: number;
     calendarOrder?: number;
+    weatherOrder?: number;
     // Premium Design options
     globalFont?: string;
     borderRadius?: number;
