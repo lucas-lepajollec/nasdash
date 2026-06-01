@@ -1,19 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { Server, FolderOpen, Hash, Link2 } from 'lucide-react';
 import { Category } from '@/lib/types';
-import TailscaleStatus from './TailscaleStatus';
-import DockerActions from './DockerActions';
 import { useConfig } from '@/hooks/useConfig';
 
-interface RightSidebarProps {
-  categories: Category[];
-  editMode?: boolean;
-  showSensitive?: boolean;
-}
-
-export function QuickStats({ categories, editMode }: { categories: Category[], editMode?: boolean }) {
+export default function QuickStatsWidget({ categories, editMode }: { categories: Category[], editMode?: boolean }) {
   const { config } = useConfig();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
@@ -67,49 +58,5 @@ export function QuickStats({ categories, editMode }: { categories: Category[], e
         ))}
       </div>
     </div>
-  );
-}
-
-export default function RightSidebar({ categories, editMode, showSensitive = false }: RightSidebarProps) {
-  const sidebarRef = useRef<HTMLElement>(null);
-  const [isSticky, setIsSticky] = useState(true);
-  const { config } = useConfig();
-
-  useEffect(() => {
-    if (!sidebarRef.current) return;
-    const checkHeight = () => {
-      if (!sidebarRef.current) return;
-      setIsSticky(sidebarRef.current.scrollHeight + 120 <= window.innerHeight);
-    };
-    
-    checkHeight();
-    const observer = new ResizeObserver(() => checkHeight());
-    if (sidebarRef.current) observer.observe(sidebarRef.current);
-    window.addEventListener('resize', checkHeight);
-    
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', checkHeight);
-    };
-  }, [categories]);
-
-  const tabConf = config?.settings?.tabs?.home || {};
-
-  const showQuickStats = !(config?.settings?.hideQuickStats || (tabConf as any).hideQuickStats);
-  const showTailscale = !(config?.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus);
-  const showDockerActions = !(config?.settings?.hideDockerActions || (tabConf as any).hideDockerActions);
-
-  return (
-    <aside 
-      ref={sidebarRef} 
-      className="nd-sidebar-right"
-      style={!isSticky ? { position: 'static', maxHeight: 'none', overflowY: 'visible' } : {}}
-    >
-      {/* Quick Stats */}
-      {showQuickStats && <QuickStats categories={categories} />}
-
-      {showTailscale && <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />}
-      {showDockerActions && <DockerActions editMode={editMode} />}
-    </aside>
   );
 }

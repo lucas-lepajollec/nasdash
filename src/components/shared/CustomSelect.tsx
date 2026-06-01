@@ -20,17 +20,33 @@ export default function CustomSelect({ value, options, onChange, className, styl
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [id] = useState(() => Math.random().toString(36).substring(2, 9));
+
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
+    
+    const handleOtherSelectOpen = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail !== id) {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      window.addEventListener('customSelectOpen', handleOtherSelectOpen);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      window.removeEventListener('customSelectOpen', handleOtherSelectOpen);
+    };
+  }, [isOpen, id]);
 
   const selectedOption = options.find(o => o.value === value) || options[0];
 
@@ -38,7 +54,13 @@ export default function CustomSelect({ value, options, onChange, className, styl
     <div ref={containerRef} style={{ position: 'relative', width: '100%', ...style }} className={className}>
       <div 
         className="nd-input" 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          const nextState = !isOpen;
+          setIsOpen(nextState);
+          if (nextState) {
+            window.dispatchEvent(new CustomEvent('customSelectOpen', { detail: id }));
+          }
+        }}
         style={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -60,7 +82,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
           background: 'var(--nd-bg-surface)',
           border: '1px solid var(--nd-card-border)',
           borderRadius: 'var(--nd-card-radius)',
-          boxShadow: 'var(--nd-dropdown-shadow, 0 10px 25px rgba(0,0,0,0.4))',
+          boxShadow: 'var(--nd-dropdown-shadow, 0 4px 12px rgba(0,0,0,0.15))',
           zIndex: 100,
           overflowY: 'auto',
           maxHeight: '250px',

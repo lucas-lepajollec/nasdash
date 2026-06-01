@@ -1955,7 +1955,7 @@ body {
 .nd-settings-nav-item--active {
   background: rgba(255, 255, 255, 0.05) !important;
   border-color: var(--nd-accent) !important;
-  box-shadow: 0 0 10px var(--nd-accent-dim) !important;
+  box-shadow: none !important;
 }
 
 .nd-settings-content {

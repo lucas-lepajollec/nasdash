@@ -6,10 +6,10 @@ import { Device, DeviceStat } from '@/lib/types';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useRef, useEffect } from 'react';
-import ConfirmModal from '../../shared/ConfirmModal';
+import ConfirmModal from '../modals/ConfirmModal';
 import { useConfig } from '@/hooks/useConfig';
 
-interface LeftSidebarProps {
+interface DevicesWidgetProps {
   devices: Device[];
   editMode: boolean;
   onAddDevice?: () => void;
@@ -304,7 +304,7 @@ function DeviceMonitorCardContent({
   );
 }
 
-export default function LeftSidebar({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: LeftSidebarProps) {
+export default function DevicesWidget({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: DevicesWidgetProps) {
   const { config } = useConfig();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);

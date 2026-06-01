@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDocker } from '@/hooks/useDocker';
 import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Search, Loader2, AlertCircle, ChevronDown, Terminal, Layers, Database, Plus, X, RefreshCw } from 'lucide-react';
-import ConfirmModal from '../../shared/ConfirmModal';
+import ConfirmModal from '../../modals/ConfirmModal';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : null);

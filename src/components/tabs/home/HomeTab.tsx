@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import LeftSidebar from './LeftSidebar';
-import RightSidebar, { QuickStats } from './RightSidebar';
-import TailscaleStatus from './TailscaleStatus';
-import DockerActions from './DockerActions';
+import DevicesWidget from '../../widgets/DevicesWidget';
+import QuickStatsWidget from '../../widgets/QuickStatsWidget';
+import TailscaleWidget from '../../widgets/TailscaleWidget';
+import DockerWidget from '../../widgets/DockerWidget';
 import BentoGrid from './BentoGrid';
 import SystemMonitor from './SystemMonitor';
 import Footer from '../../layout/Footer';
-import ServiceFormModal from './modals/ServiceFormModal';
-import CategoryFormModal from './modals/CategoryFormModal';
-import DeviceFormModal from './modals/DeviceFormModal';
-import DockerActionFormModal from './modals/DockerActionFormModal';
-import ClockWidget from './ClockWidget';
-import CalendarWidget from './CalendarWidget';
-import WeatherWidget from './WeatherWidget';
+import ServiceFormModal from '../../modals/ServiceFormModal';
+import CategoryFormModal from '../../modals/CategoryFormModal';
+import DeviceFormModal from '../../modals/DeviceFormModal';
+import DockerActionFormModal from '../../modals/DockerActionFormModal';
+import ClockWidget from '../../widgets/ClockWidget';
+import CalendarWidget from '../../widgets/CalendarWidget';
+import WeatherWidget from '../../widgets/WeatherWidget';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
@@ -228,7 +228,7 @@ export default function HomeTab({
       sidebar: config.settings?.devicesSidebar || 'left',
       order: config.settings?.devicesOrder ?? 0,
       render: () => (
-        <LeftSidebar
+        <DevicesWidget
           devices={config.devices || []}
           editMode={editMode}
           onAddDevice={() => setDeviceModal({ open: true })}
@@ -244,7 +244,7 @@ export default function HomeTab({
       sidebar: config.settings?.quickStatsSidebar || 'right',
       order: config.settings?.quickStatsOrder ?? 1,
       render: () => (
-        <QuickStats categories={config.categories} editMode={editMode} />
+        <QuickStatsWidget categories={config.categories} editMode={editMode} />
       )
     },
     {
@@ -253,7 +253,7 @@ export default function HomeTab({
       sidebar: config.settings?.tailscaleSidebar || 'right',
       order: config.settings?.tailscaleOrder ?? 2,
       render: () => (
-        <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />
+        <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />
       )
     },
     {
@@ -262,7 +262,7 @@ export default function HomeTab({
       sidebar: config.settings?.dockerActionsSidebar || 'right',
       order: config.settings?.dockerActionsOrder ?? 3,
       render: () => (
-        <DockerActions editMode={editMode} />
+        <DockerWidget editMode={editMode} />
       )
     },
     {

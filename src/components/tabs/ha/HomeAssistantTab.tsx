@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { Settings, Plus, Trash2, Home, RefreshCw } from 'lucide-react';
-import ConfirmModal from '../../shared/ConfirmModal';
+import ConfirmModal from '../../modals/ConfirmModal';
 
 // ======================== HOME ASSISTANT FORM MODAL ========================
 function HomeAssistantFormModal({ onClose, onSave, onDelete, initialUrl }: {

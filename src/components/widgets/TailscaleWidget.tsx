@@ -15,7 +15,7 @@ const getOsIcon = (os: string, hostname: string) => {
   return <Laptop size={12} color="#9ca3af" />;
 };
 
-export default function TailscaleStatus({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
+export default function TailscaleWidget({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
   const { config } = useConfig();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [devices, setDevices] = useState<any[] | null>(null);

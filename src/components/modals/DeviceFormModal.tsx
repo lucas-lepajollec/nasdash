@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Device, DeviceApiConfig } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
-import ConfirmModal from '../../../shared/ConfirmModal';
+import ConfirmModal from './ConfirmModal';
 import CustomSelect from '@/components/shared/CustomSelect';
 
 interface ToggleSwitchProps {

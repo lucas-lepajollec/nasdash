@@ -6,13 +6,13 @@ import { DndContext, closestCenter, pointerWithin, KeyboardSensor, PointerSensor
 import { Trash2, Plus } from 'lucide-react';
 
 // Import widgets
-import ClockWidget from '../home/ClockWidget';
-import CalendarWidget from '../home/CalendarWidget';
-import WeatherWidget from '../home/WeatherWidget';
-import { QuickStats } from '../home/RightSidebar';
-import TailscaleStatus from '../home/TailscaleStatus';
-import DockerActions from '../home/DockerActions';
-import LeftSidebar from '../home/LeftSidebar';
+import ClockWidget from '../../widgets/ClockWidget';
+import CalendarWidget from '../../widgets/CalendarWidget';
+import WeatherWidget from '../../widgets/WeatherWidget';
+import QuickStatsWidget from '../../widgets/QuickStatsWidget';
+import TailscaleWidget from '../../widgets/TailscaleWidget';
+import DockerWidget from '../../widgets/DockerWidget';
+import DevicesWidget from '../../widgets/DevicesWidget';
 
 function DroppableSlot({ id, editMode, children }: { id: string, editMode: boolean, children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -74,12 +74,12 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
     { id: 'clock', component: <ClockWidget />, hidden: config?.settings?.hideClock || (tabConf as any).hideClock },
     { id: 'calendar', component: <CalendarWidget />, hidden: config?.settings?.hideCalendar || (tabConf as any).hideCalendar },
     { id: 'weather', component: <WeatherWidget editMode={editMode} />, hidden: config?.settings?.hideWeather || (tabConf as any).hideWeather },
-    { id: 'quickstats', component: <QuickStats categories={categories} editMode={editMode} />, hidden: config?.settings?.hideQuickStats || (tabConf as any).hideQuickStats },
-    { id: 'tailscale', component: <TailscaleStatus editMode={editMode} showSensitive={showSensitive} />, hidden: config?.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus },
-    { id: 'dockeractions', component: <DockerActions editMode={editMode} />, hidden: config?.settings?.hideDockerActions || (tabConf as any).hideDockerActions },
+    { id: 'quickstats', component: <QuickStatsWidget categories={categories} editMode={editMode} />, hidden: config?.settings?.hideQuickStats || (tabConf as any).hideQuickStats },
+    { id: 'tailscale', component: <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />, hidden: config?.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus },
+    { id: 'dockeractions', component: <DockerWidget editMode={editMode} />, hidden: config?.settings?.hideDockerActions || (tabConf as any).hideDockerActions },
     { 
       id: 'devices', 
-      component: <LeftSidebar 
+      component: <DevicesWidget 
         devices={config?.devices || []} 
         editMode={editMode} 
         onAddDevice={() => setDeviceModal({ open: true })}

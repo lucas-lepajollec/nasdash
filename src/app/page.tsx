@@ -7,9 +7,9 @@ import HomeTab from '@/components/tabs/home/HomeTab';
 import { useTabs, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device } from '@/lib/types';
-import SettingsModal from '@/components/shared/SettingsModal';
-import CalendarEventModal from '@/components/shared/CalendarEventModal';
-import ViewEventModal from '@/components/shared/ViewEventModal';
+import SettingsModal from '@/components/modals/SettingsModal';
+import CalendarEventModal from '@/components/modals/CalendarEventModal';
+import ViewEventModal from '@/components/modals/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));

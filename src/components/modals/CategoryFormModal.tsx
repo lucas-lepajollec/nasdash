@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
 import { EMOJI_CATEGORIES } from '@/lib/constants';
 import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings } from 'lucide-react';
-import ConfirmModal from '../../../shared/ConfirmModal';
-import CustomSelect from '../../../shared/CustomSelect';
+import ConfirmModal from './ConfirmModal';
+import CustomSelect from '../shared/CustomSelect';
 
 interface CategoryFormModalProps {
   category?: Category;
