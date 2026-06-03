@@ -107,7 +107,8 @@ body {
   display: grid;
   grid-template-columns: var(--nd-sidebar-width) minmax(0, 1fr) var(--nd-right-sidebar-width);
   gap: 24px;
-  max-width: 1600px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 20px 40px;
   align-items: start;
@@ -150,7 +151,7 @@ body {
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  max-width: 1600px;
+  max-width: 100%;
   width: 100%;
   margin: 0 auto 16px auto;
   flex-shrink: 0;
@@ -161,7 +162,6 @@ body {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  flex: 1;
 }
 
 .nd-header-edit-row {
@@ -179,8 +179,6 @@ body {
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-  flex: 1;
-  /* Pushes search to center */
 }
 
 /* Operational LED Indicator Dot */
@@ -395,7 +393,7 @@ body {
   text-transform: uppercase;
   color: var(--nd-red);
   width: calc(100% - 40px);
-  max-width: calc(1600px - 40px);
+  max-width: calc(100% - 40px);
   margin: -10px auto 26px auto;
   animation: nd-fade-in 0.3s ease-out;
 }
@@ -590,7 +588,7 @@ body {
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
-  padding: 14px;
+  padding: 10px;
   box-shadow: var(--nd-card-shadow);
   transition: border-color var(--nd-transition);
 }
@@ -600,13 +598,13 @@ body {
 }
 
 .nd-category-title {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--nd-text-muted);
-  padding-bottom: 10px;
-  margin-bottom: 6px;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
   border-bottom: 1px solid var(--nd-card-border);
   display: flex;
   align-items: center;
@@ -621,8 +619,8 @@ body {
 .nd-service {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 8px;
+  gap: 8px;
+  padding: 5px 6px;
   border-radius: calc(var(--nd-card-radius) * 0.7);
   border: 1px solid transparent;
   transition: background var(--nd-transition), border-color var(--nd-transition);
@@ -640,8 +638,8 @@ body {
 }
 
 .nd-service-icon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: calc(var(--nd-card-radius) * 0.7);
   background: var(--nd-icon-bg);
   border: 1px solid var(--nd-icon-border);
@@ -653,8 +651,8 @@ body {
 }
 
 .nd-service-icon img {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
 }
 
@@ -666,7 +664,7 @@ body {
 
 .nd-service-name {
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   color: var(--nd-text);
   white-space: nowrap;
   overflow: hidden;
@@ -674,7 +672,7 @@ body {
 }
 
 .nd-service-url {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   color: var(--nd-text-dimmed);
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   white-space: nowrap;
@@ -762,7 +760,7 @@ body {
 .nd-modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 99999 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1140,8 +1138,12 @@ body {
 
   .nd-shell--dock-left,
   .nd-shell--dock-right {
-    padding-left: 44px !important;
-    padding-right: 44px !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+  .nd-shell--dock-hidden {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 }
 
@@ -1151,6 +1153,12 @@ body {
 }
 .nd-mobile-menu {
   display: none !important;
+}
+.nd-header-mobile {
+  display: none !important;
+}
+.nd-header-desktop {
+  display: flex !important;
 }
 
 @media (max-width: 768px) {
@@ -1176,6 +1184,14 @@ body {
   }
 
   .nd-mobile-actions {
+    display: flex !important;
+  }
+
+  .nd-header-desktop {
+    display: none !important;
+  }
+
+  .nd-header-mobile {
     display: flex !important;
   }
 
@@ -1243,11 +1259,12 @@ body {
   padding-left: 88px;
   padding-right: 88px;
 }
-
-.nd-shell--ha {
-  background-image: none !important;
-  background-color: var(--nd-bg) !important;
+.nd-shell--dock-hidden {
+  padding-left: 12px;
+  padding-right: 12px;
 }
+
+
 
 .nd-shell-content {
   display: flex;
@@ -1276,7 +1293,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0;
+  padding: 16px 0;
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
   box-shadow: var(--nd-card-shadow);
@@ -1302,7 +1319,6 @@ body {
   flex-direction: column;
   gap: 8px;
   flex: 1;
-  padding-top: 8px;
   width: 100%;
 }
 
@@ -1489,7 +1505,8 @@ body {
 .nd-docker-layout {
   display: flex;
   gap: 20px;
-  max-width: 1600px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 20px 40px;
   align-items: flex-start;

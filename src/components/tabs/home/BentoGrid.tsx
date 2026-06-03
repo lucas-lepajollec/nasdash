@@ -152,13 +152,14 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
     }
   };
 
-  const [colCount, setColCount] = useState(3);
+  const [colCount, setColCount] = useState(4);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 960) setColCount(1);
-      else if (window.innerWidth <= 1400) setColCount(2);
-      else setColCount(3);
+      if (window.innerWidth <= 800) setColCount(1);
+      else if (window.innerWidth <= 1200) setColCount(2);
+      else if (window.innerWidth <= 1600) setColCount(3);
+      else setColCount(4);
     };
     handleResize(); // Initial check
     window.addEventListener('resize', handleResize);

@@ -133,6 +133,8 @@ import { ToggleSwitch, ToggleSwitchProps } from './settings/shared/ToggleSwitch'
 import { SettingsAccordion, SettingsAccordionProps } from './settings/shared/SettingsAccordion';
 import { SettingsSidebar } from './settings/SettingsSidebar';
 import { AppearanceTab } from './settings/tabs/AppearanceTab';
+import { HeaderTab } from './settings/tabs/HeaderTab';
+import { MobileTab } from './settings/tabs/MobileTab';
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
 import { LibraryTab } from './settings/tabs/LibraryTab';
 import { TabsHomeTab } from './settings/tabs/onglets/TabsHomeTab';
@@ -145,7 +147,6 @@ import { DockerActionsWidgetTab } from './settings/tabs/widgets/DockerActionsWid
 import { ClockWidgetTab } from './settings/tabs/widgets/ClockWidgetTab';
 import { CalendarWidgetTab } from './settings/tabs/widgets/CalendarWidgetTab';
 import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
-import { HomeAssistantTab } from './settings/tabs/onglets/HomeAssistantTab';
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { config, updateConfig } = useConfig();
@@ -188,34 +189,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const toggleAccordion = (id: string) => {
     setOpenAccordions(prev => prev.includes(id) ? [] : [id]);
   };
-
-  // Background states
-  const [title, setTitle] = useState(config?.settings?.title || 'MON HOME LAB');
-  const [titleMobile, setTitleMobile] = useState(config?.settings?.titleMobile || '');
-  const [titleLogo, setTitleLogo] = useState(config?.settings?.titleLogo || '');
-  const [titleFont, setTitleFont] = useState(config?.settings?.titleFont || 'outfit');
-  const [titleAnimation, setTitleAnimation] = useState(config?.settings?.titleAnimation || 'none');
-  const [backgroundImage, setBackgroundImage] = useState(config?.settings?.backgroundImage || '');
-  const [mobileWallpaper, setMobileWallpaper] = useState(config?.settings?.mobileWallpaper || '');
-  
-  const [mobileTheme, setMobileTheme] = useState(config?.settings?.mobileTheme || '');
-  const [mobileGlobalFont, setMobileGlobalFont] = useState(config?.settings?.mobileGlobalFont || '');
-  const [mobileBorderRadius, setMobileBorderRadius] = useState<number | ''>(config?.settings?.mobileBorderRadius ?? '');
-  const [mobileCardOpacity, setMobileCardOpacity] = useState<number | ''>(config?.settings?.mobileCardOpacity ?? '');
-  const [mobileTitleAnimation, setMobileTitleAnimation] = useState(config?.settings?.mobileTitleAnimation || '');
-  const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
-  const [bgToDelete, setBgToDelete] = useState<string | null>(null);
-
-  // Appearance Profiles
-  const [appearanceProfiles, setAppearanceProfiles] = useState<AppearanceProfile[]>([]);
-  const [newProfileName, setNewProfileName] = useState('');
-  
-  const [mobileAppearanceProfiles, setMobileAppearanceProfiles] = useState<AppearanceProfile[]>([]);
-  const [newMobileProfileName, setNewMobileProfileName] = useState('');
-
-  // Delete Confirmations
-  const [confirmDeleteProfile, setConfirmDeleteProfile] = useState<string | null>(null);
-  const [confirmDeleteMobileProfile, setConfirmDeleteMobileProfile] = useState<string | null>(null);
 
   // Design system states
   const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
@@ -270,9 +243,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   // Modal / status states
   const [copied, setCopied] = useState(false);
-  const [isConfirmBgDeleteOpen, setIsConfirmBgDeleteOpen] = useState(false);
-  const [isConfirmLogoDeleteOpen, setIsConfirmLogoDeleteOpen] = useState(false);
-  const [logoToDelete, setLogoToDelete] = useState<string | null>(null);
+
   const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(false);
   const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -300,29 +271,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       if (config.settings?.calendarUrl !== undefined) setCalendarUrl(config.settings.calendarUrl);
       if (config.settings?.tailscaleTailnet !== undefined) setTailscaleTailnet(config.settings.tailscaleTailnet);
       if (config.settings?.tailscaleClientId !== undefined) setTailscaleClientId(config.settings.tailscaleClientId);
-      if (config.settings?.tailscaleClientSecret !== undefined) setTailscaleClientSecret(config.settings.tailscaleClientSecret ? '********' : '');
-      if (config.settings?.title !== undefined) setTitle(config.settings.title);
-      if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
-      if (config.settings?.titleLogo !== undefined) setTitleLogo(config.settings.titleLogo);
-      if (config.settings?.titleFont !== undefined) setTitleFont(config.settings.titleFont);
-      if (config.settings?.titleAnimation !== undefined) setTitleAnimation(config.settings.titleAnimation);
-      if (config.settings?.backgroundImage !== undefined) {
-        setBackgroundImage(config.settings.backgroundImage);
-      }
-      if (config.settings?.mobileWallpaper !== undefined) {
-        setMobileWallpaper(config.settings.mobileWallpaper);
-      }
-      if (config.settings?.mobileTheme !== undefined) setMobileTheme(config.settings.mobileTheme);
-      if (config.settings?.mobileGlobalFont !== undefined) setMobileGlobalFont(config.settings.mobileGlobalFont);
-      if (config.settings?.mobileBorderRadius !== undefined) setMobileBorderRadius(config.settings.mobileBorderRadius);
-      if (config.settings?.mobileCardOpacity !== undefined) setMobileCardOpacity(config.settings.mobileCardOpacity);
-      if (config.settings?.mobileTitleAnimation !== undefined) setMobileTitleAnimation(config.settings.mobileTitleAnimation);
-      if (config.appearanceProfiles) {
-        setAppearanceProfiles(config.appearanceProfiles);
-      }
-      if (config.settings?.mobileAppearanceProfiles) {
-        setMobileAppearanceProfiles(config.settings.mobileAppearanceProfiles);
-      }
     }
   }, [config]);
 
@@ -332,324 +280,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
   }, []);
 
-  const handleFontChange = async (font: string) => {
-    setGlobalFont(font);
-    await updateConfig({ globalFont: font });
-  };
 
-  const handleRadiusChange = (val: number) => {
-    setBorderRadius(val);
-    document.body.style.setProperty('--nd-card-radius', `${val}px`);
-  };
-
-  const handleRadiusSave = async (val: number) => {
-    await updateConfig({ borderRadius: val });
-  };
-
-  const handleOpacityChange = (val: number) => {
-    setCardOpacity(val);
-    document.body.style.setProperty('--nd-card-bg-opacity', String(val));
-    // Reconstruct --nd-card-bg directly so the change is immediate
-    const rgb = getComputedStyle(document.body).getPropertyValue('--nd-card-bg-rgb').trim();
-    if (rgb) {
-      document.body.style.setProperty('--nd-card-bg', `rgba(${rgb}, ${val})`);
-    }
-  };
-
-  const handleOpacitySave = async (val: number) => {
-    await updateConfig({ cardOpacity: val });
-  };
-
-  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
-    if (widgetKey === 'devices') {
-      setDevicesSidebar(sidebar);
-      await updateConfig({ devicesSidebar: sidebar });
-    } else if (widgetKey === 'quickstats') {
-      setQuickStatsSidebar(sidebar);
-      await updateConfig({ quickStatsSidebar: sidebar });
-    } else if (widgetKey === 'tailscale') {
-      setTailscaleSidebar(sidebar);
-      await updateConfig({ tailscaleSidebar: sidebar });
-    } else if (widgetKey === 'dockeractions') {
-      setDockerActionsSidebar(sidebar);
-      await updateConfig({ dockerActionsSidebar: sidebar });
-    } else if (widgetKey === 'clock') {
-      setClockSidebar(sidebar);
-      await updateConfig({ clockSidebar: sidebar });
-    } else if (widgetKey === 'calendar') {
-      setCalendarSidebar(sidebar);
-      await updateConfig({ calendarSidebar: sidebar });
-    }
-  };
-
-  const handleWidgetOrder = async (widgetKey: string, order: number) => {
-    if (widgetKey === 'devices') {
-      setDevicesOrder(order);
-      await updateConfig({ devicesOrder: order });
-    } else if (widgetKey === 'quickstats') {
-      setQuickStatsOrder(order);
-      await updateConfig({ quickStatsOrder: order });
-    } else if (widgetKey === 'tailscale') {
-      setTailscaleOrder(order);
-      await updateConfig({ tailscaleOrder: order });
-    } else if (widgetKey === 'dockeractions') {
-      setDockerActionsOrder(order);
-      await updateConfig({ dockerActionsOrder: order });
-    } else if (widgetKey === 'clock') {
-      setClockOrder(order);
-      await updateConfig({ clockOrder: order });
-    } else if (widgetKey === 'calendar') {
-      setCalendarOrder(order);
-      await updateConfig({ calendarOrder: order });
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  useEffect(() => {
-    if (document.body.classList.contains('light')) {
-      setMode('light');
-    } else {
-      setMode('dark');
-    }
-  }, []);
-
-  const toggleMode = () => {
-    const newMode = mode === 'light' ? 'dark' : 'light';
-    setMode(newMode);
-    if (newMode === 'light') {
-      document.body.classList.add('light');
-      localStorage.setItem('nd-theme', 'light');
-    } else {
-      document.body.classList.remove('light');
-      localStorage.setItem('nd-theme', 'dark');
-    }
-  };
-
-  const handleThemeChange = async (newTheme: string) => {
-    setTheme(newTheme);
-    const classesToRemove = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
-    classesToRemove.forEach(cls => document.body.classList.remove(cls));
-    if (newTheme !== 'nasdash') {
-      document.body.classList.add(`theme-${newTheme}`);
-      if (document.body.classList.contains('light')) {
-        document.body.classList.remove('light');
-        setMode('dark');
-        localStorage.setItem('nd-theme', 'dark');
-      }
-    }
-    await updateConfig({ theme: newTheme });
-  };
-
-  const fetchUploadedBgs = async () => {
-    try {
-      const params = new URLSearchParams();
-      params.append('type', 'background');
-      if (backgroundImage) params.append('current', backgroundImage);
-      if (mobileWallpaper) params.append('currentMobile', mobileWallpaper);
-
-      const res = await fetch(`/api/logos?${params.toString()}`);
-      const data = await res.json();
-      if (data && data.files) {
-        setUploadedBgs(data.files);
-      }
-    } catch (err) {
-      console.error('Failed to fetch background images:', err);
-    }
-  };
-
-  // Only fetch on mount or manual trigger (like upload) so gallery is stable
-  useEffect(() => {
-    fetchUploadedBgs();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSaveBackground = async () => {
-    await updateConfig({ backgroundImage });
-  };
-
-  const handleSaveMobileWallpaper = async () => {
-    await updateConfig({ mobileWallpaper });
-  };
-
-
-  const handleConfirmBgDelete = async () => {
-    const targetUrl = bgToDelete || backgroundImage;
-    if (targetUrl && targetUrl.startsWith('/api/logos/')) {
-      const filename = targetUrl.replace('/api/logos/', '');
-      try {
-        await fetch(`/api/logos/${filename}`, {
-          method: 'DELETE',
-        });
-      } catch (err) {
-        console.error('Failed to delete background file:', err);
-      }
-    }
-    
-    if (targetUrl === backgroundImage) {
-      setBackgroundImage('');
-      await updateConfig({ backgroundImage: '' });
-    }
-
-    fetchUploadedBgs();
-    setBgToDelete(null);
-    setIsConfirmBgDeleteOpen(false);
-  };
-
-  const handleSaveLogo = async () => {
-    await updateConfig({ titleLogo });
-  };
-
-  const handleConfirmLogoDelete = async () => {
-    const targetUrl = logoToDelete || titleLogo;
-    if (targetUrl && targetUrl.startsWith('/api/logos/')) {
-      const filename = targetUrl.replace('/api/logos/', '');
-      try {
-        await fetch(`/api/logos/${filename}`, { method: 'DELETE' });
-      } catch (err) {
-        console.error('Failed to delete logo file:', err);
-      }
-    }
-    
-    if (targetUrl === titleLogo) {
-      setTitleLogo('');
-      await updateConfig({ titleLogo: '' });
-    }
-
-    setLogoToDelete(null);
-    setIsConfirmLogoDeleteOpen(false);
-  };
-
-  const handleSaveProfile = async () => {
-    if (!newProfileName.trim()) return;
-    const newProfile: AppearanceProfile = {
-      id: Date.now().toString(),
-      name: newProfileName,
-      settings: {
-        theme,
-        backgroundImage,
-        globalFont,
-        borderRadius,
-        cardOpacity,
-        title,
-        titleLogo,
-        titleFont,
-        titleAnimation
-      }
-    };
-    const updatedProfiles = [...appearanceProfiles, newProfile];
-    setAppearanceProfiles(updatedProfiles);
-    setNewProfileName('');
-    await updateConfig({ appearanceProfiles: updatedProfiles });
-  };
-
-  const handleApplyProfile = async (profile: AppearanceProfile) => {
-    const { settings } = profile;
-    if (settings.theme !== undefined) setTheme(settings.theme);
-    if (settings.backgroundImage !== undefined) setBackgroundImage(settings.backgroundImage);
-    if (settings.globalFont !== undefined) setGlobalFont(settings.globalFont);
-    if (settings.borderRadius !== undefined) setBorderRadius(settings.borderRadius);
-    if (settings.cardOpacity !== undefined) setCardOpacity(settings.cardOpacity);
-    if (settings.title !== undefined) setTitle(settings.title);
-    if (settings.titleLogo !== undefined) setTitleLogo(settings.titleLogo);
-    if (settings.titleFont !== undefined) setTitleFont(settings.titleFont);
-    if (settings.titleAnimation !== undefined) setTitleAnimation(settings.titleAnimation);
-    
-    await updateConfig(settings);
-  };
-
-  const handleDeleteProfile = async (id: string) => {
-    const updatedProfiles = appearanceProfiles.filter(p => p.id !== id);
-    setAppearanceProfiles(updatedProfiles);
-    await updateConfig({ appearanceProfiles: updatedProfiles });
-    setConfirmDeleteProfile(null);
-  };
-
-  const handleSaveMobileProfile = async () => {
-    if (!newMobileProfileName.trim()) return;
-    const newProfile: AppearanceProfile = {
-      id: Date.now().toString(),
-      name: newMobileProfileName,
-      settings: {
-        mobileTheme,
-        mobileWallpaper,
-        mobileGlobalFont,
-        mobileBorderRadius: typeof mobileBorderRadius === 'number' ? mobileBorderRadius : undefined,
-        mobileCardOpacity: typeof mobileCardOpacity === 'number' ? mobileCardOpacity : undefined,
-        titleMobile,
-        mobileTitleAnimation,
-      }
-    };
-    const updatedProfiles = [...mobileAppearanceProfiles, newProfile];
-    setMobileAppearanceProfiles(updatedProfiles);
-    setNewMobileProfileName('');
-    await updateConfig({ mobileAppearanceProfiles: updatedProfiles });
-  };
-
-  const handleApplyMobileProfile = async (profile: AppearanceProfile) => {
-    const { settings } = profile;
-    if (settings.mobileTheme !== undefined) setMobileTheme(settings.mobileTheme);
-    if (settings.mobileWallpaper !== undefined) setMobileWallpaper(settings.mobileWallpaper);
-    if (settings.mobileGlobalFont !== undefined) setMobileGlobalFont(settings.mobileGlobalFont);
-    if (settings.mobileBorderRadius !== undefined) setMobileBorderRadius(settings.mobileBorderRadius);
-    if (settings.mobileCardOpacity !== undefined) setMobileCardOpacity(settings.mobileCardOpacity);
-    if (settings.titleMobile !== undefined) setTitleMobile(settings.titleMobile);
-    if (settings.mobileTitleAnimation !== undefined) setMobileTitleAnimation(settings.mobileTitleAnimation);
-    
-    await updateConfig(settings);
-  };
-
-  const handleDeleteMobileProfile = async (id: string) => {
-    const updatedProfiles = mobileAppearanceProfiles.filter(p => p.id !== id);
-    setMobileAppearanceProfiles(updatedProfiles);
-    await updateConfig({ mobileAppearanceProfiles: updatedProfiles });
-    setConfirmDeleteMobileProfile(null);
-  };
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
   };
 
-
-  // Generate Home Assistant Lovelace Exporter Theme
-  const currentTheme = config?.settings?.theme || 'nasdash';
-  const activePreset = THEME_PRESETS[currentTheme] || THEME_PRESETS.nasdash;
-  const isLight = currentTheme === 'apple-light';
-  const haYamlTheme = `nasdash_${currentTheme.replace('-', '_')}:
-  # Base Backgrounds
-  background-image: "${activePreset.bgGradient}"
-  lovelace-background: "var(--background-image)"
-
-  # Main Layout Colors
-  primary-color: "${activePreset.primaryColor}"
-  accent-color: "${activePreset.accentColor}"
-  
-  # Text Colors
-  primary-text-color: "${activePreset.text}"
-  secondary-text-color: "${activePreset.textMuted}"
-  disabled-text-color: "${isLight ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)'}"
-  
-  # Lovelace Cards (Glassmorphism preset)
-  ha-card-background: "${activePreset.cardBg}"
-  ha-card-border-color: "${activePreset.cardBorder}"
-  ha-card-border-width: "1px"
-  ha-card-border-radius: "${activePreset.borderRadius}"
-  
-  # Sidebar Menu & Headers
-  sidebar-background-color: "${activePreset.cardBg}"
-  sidebar-icon-color: "${activePreset.textMuted}"
-  sidebar-selected-icon-color: "${activePreset.primaryColor}"
-  app-header-background-color: "${activePreset.cardBg}"
-  app-header-text-color: "${activePreset.text}"`;
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(haYamlTheme);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const searchWeatherCity = async () => {
     if (!weatherSearchQuery.trim()) return;
@@ -728,20 +364,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           onClose={onClose}
         />
 
-        {isConfirmLogoDeleteOpen && (
-          <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
-            <div className="nd-modal" style={{ maxWidth: 400 }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>Supprimer le logo ?</h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)', lineHeight: 1.5 }}>
-                Êtes-vous sûr de vouloir supprimer ce logo ? S'il s'agit d'un fichier importé, il sera définitivement effacé du serveur.
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="nd-btn" onClick={() => { setIsConfirmLogoDeleteOpen(false); setLogoToDelete(null); }}>Annuler</button>
-                <button className="nd-btn nd-btn-danger" onClick={handleConfirmLogoDelete}>Oui, supprimer</button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* ==========================================
            RIGHT CONTENT WRAPPER
@@ -775,6 +398,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               </button>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
+                {currentTab === 'header' && '📋 En-tête'}
+                {currentTab === 'mobile' && '📱 Mobile'}
                 {currentTab === 'developer' && '⚙️ Menu Développeur'}
                 {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
                 {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
@@ -787,7 +412,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
                 {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
                 {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
-                {currentTab === 'homeassistant' && '🏠 Export Lovelace Home Assistant'}
               </h3>
             </div>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
@@ -799,6 +423,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
              TAB 1: APPARENCE
              ========================================== */}
           {currentTab === 'apparence' && <AppearanceTab />}
+          {currentTab === 'header' && <HeaderTab />}
+          {currentTab === 'mobile' && <MobileTab />}
 
           
           {/* ==========================================
@@ -852,11 +478,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
              ========================================== */}
           {currentTab === 'widget-weather' && <WeatherWidgetTab />}
 
-          {/* ==========================================
-             TAB 9: HOME ASSISTANT
-             ========================================== */}
-          {currentTab === 'homeassistant' && <HomeAssistantTab />}
-
         </div>
       </div>
 
@@ -871,41 +492,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         />
       )}
 
-      {/* Background deletion Custom Confirmation Portal */}
-      <ConfirmModal
-        isOpen={isConfirmBgDeleteOpen}
-        onClose={() => {
-          setIsConfirmBgDeleteOpen(false);
-          setBgToDelete(null);
-        }}
-        onConfirm={handleConfirmBgDelete}
-        title="Supprimer le fond d'écran ?"
-        description="Si ce fond d'écran est une image importée localement depuis votre appareil, le fichier image sera définitivement effacé de votre serveur de stockage. Souhaitez-vous continuer ?"
-        confirmLabel="Oui, supprimer"
-        cancelLabel="Annuler"
-      />
 
-      {/* Mobile Profile Delete Confirmation */}
-      {confirmDeleteMobileProfile && (
-        <ConfirmModal
-          isOpen={true}
-          title="Supprimer le profil mobile"
-          description={`Êtes-vous sûr de vouloir supprimer le profil mobile "${mobileAppearanceProfiles.find(p => p.id === confirmDeleteMobileProfile)?.name}" ? Cette action est irréversible.`}
-          onConfirm={() => handleDeleteMobileProfile(confirmDeleteMobileProfile)}
-          onClose={() => setConfirmDeleteMobileProfile(null)}
-        />
-      )}
 
-      {/* Profile Delete Confirmation */}
-      {confirmDeleteProfile && (
-        <ConfirmModal
-          isOpen={true}
-          title="Supprimer le profil"
-          description={`Êtes-vous sûr de vouloir supprimer le profil "${appearanceProfiles.find(p => p.id === confirmDeleteProfile)?.name}" ? Cette action est irréversible.`}
-          onConfirm={() => handleDeleteProfile(confirmDeleteProfile)}
-          onClose={() => setConfirmDeleteProfile(null)}
-        />
-      )}
+
       {/* City Delete Confirmation */}
       {cityToDelete && (
         <ConfirmModal

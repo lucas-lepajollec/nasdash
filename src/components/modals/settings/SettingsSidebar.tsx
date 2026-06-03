@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Cpu, Sliders, ChevronRight, Monitor, Activity, Shield, Container, Clipboard, Calendar, Cloud, Home, Layout, Layers, X } from 'lucide-react';
+import { Palette, Cpu, Sliders, ChevronRight, Monitor, Activity, Shield, Container, Clipboard, Calendar, Cloud, Home, Layout, Layers, X, Smartphone, PanelTop } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 
 interface SettingsSidebarProps {
@@ -67,6 +67,36 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
             </button>
 
             <button
+              onClick={() => setActiveTab('header')}
+              className={`nd-settings-nav-item ${currentTab === 'header' ? 'nd-settings-nav-item--active' : ''}`}
+            >
+              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', flexShrink: 0 }}>
+                <PanelTop size={18} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>En-tête</span>
+              </div>
+              <span className="nd-settings-chevron">
+                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('mobile')}
+              className={`nd-settings-nav-item ${currentTab === 'mobile' ? 'nd-settings-nav-item--active' : ''}`}
+            >
+              <div style={{ background: 'rgba(251, 146, 60, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb923c', flexShrink: 0 }}>
+                <Smartphone size={18} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Mobile</span>
+              </div>
+              <span className="nd-settings-chevron">
+                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('developer')}
               className={`nd-settings-nav-item ${currentTab === 'developer' ? 'nd-settings-nav-item--active' : ''}`}
             >
@@ -97,14 +127,30 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
             </button>
 
             {/* Configuration Widgets */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8, marginBottom: 4, padding: '0 4px' }}>
-              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px' }}>
+            <button 
+              onClick={() => setIsWidgetsMenuOpen(!isWidgetsMenuOpen)}
+              style={{ 
+                width: '100%',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                background: 'none',
+                border: 'none',
+                padding: '4px 4px',
+                marginTop: 8,
+                marginBottom: 4,
+                cursor: 'pointer',
+                color: 'var(--nd-text-muted)',
+                transition: 'color 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--nd-text)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--nd-text-muted)'}
+            >
+              <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Configuration Widgets
               </span>
-              <button onClick={() => setIsWidgetsMenuOpen(!isWidgetsMenuOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', transform: isWidgetsMenuOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
-              </button>
-            </div>
+              <ChevronRight size={14} style={{ transform: isWidgetsMenuOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+            </button>
             {isWidgetsMenuOpen && (
               <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
@@ -223,26 +269,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
           )}
         </div>
 
-        {/* Category: Intégrations */}
-        <div className="nd-settings-sidebar-group">
-          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Intégrations</span>
-          <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button
-              onClick={() => setActiveTab('homeassistant')}
-              className={`nd-settings-nav-item ${currentTab === 'homeassistant' ? 'nd-settings-nav-item--active' : ''}`}
-            >
-              <div style={{ background: 'var(--nd-accent-glow)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-accent)', flexShrink: 0 }}>
-                <Layers size={18} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Home Assistant</span>
-              </div>
-              <span className="nd-settings-chevron">
-                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-              </span>
-            </button>
-          </div>
-        </div>
+
 
       </div>
     </div>

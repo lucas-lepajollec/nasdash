@@ -272,7 +272,8 @@ export async function PUT(req: NextRequest) {
     }
     
     if (body.dockPosition !== undefined) config.settings.dockPosition = body.dockPosition;
-    if (body.homeAssistantUrl !== undefined) config.settings.homeAssistantUrl = body.homeAssistantUrl;
+    if (body.hideDock !== undefined) config.settings.hideDock = body.hideDock;
+
     
     if (body.extensionOrder !== undefined) config.settings.tabOrder = body.extensionOrder;
     if (body.tabOrder !== undefined) config.settings.tabOrder = body.tabOrder;
@@ -332,11 +333,23 @@ export async function PUT(req: NextRequest) {
       config.settings.mobileAppearanceProfiles = body.mobileAppearanceProfiles;
     }
     
-    // Premium Design options
     if (body.globalFont !== undefined) config.settings.globalFont = body.globalFont;
     if (body.borderRadius !== undefined) config.settings.borderRadius = body.borderRadius;
     if (body.cardOpacity !== undefined) config.settings.cardOpacity = body.cardOpacity;
     if (body.emojiTheme !== undefined) config.settings.emojiTheme = body.emojiTheme;
+    
+    // Header & Mobile Customizations
+    if (body.headerLayoutDesktop !== undefined) config.settings.headerLayoutDesktop = body.headerLayoutDesktop;
+    if (body.headerLayoutMobile !== undefined) config.settings.headerLayoutMobile = body.headerLayoutMobile;
+    if (body.hideHeaderTitle !== undefined) config.settings.hideHeaderTitle = body.hideHeaderTitle;
+    if (body.hideHeaderSearch !== undefined) config.settings.hideHeaderSearch = body.hideHeaderSearch;
+    if (body.hideHeaderMenu !== undefined) config.settings.hideHeaderMenu = body.hideHeaderMenu;
+    if (body.showHeaderMenuIcons !== undefined) config.settings.showHeaderMenuIcons = body.showHeaderMenuIcons;
+    if (body.mobileTheme !== undefined) config.settings.mobileTheme = body.mobileTheme;
+    if (body.mobileGlobalFont !== undefined) config.settings.mobileGlobalFont = body.mobileGlobalFont;
+    if (body.mobileBorderRadius !== undefined) config.settings.mobileBorderRadius = body.mobileBorderRadius;
+    if (body.mobileCardOpacity !== undefined) config.settings.mobileCardOpacity = body.mobileCardOpacity;
+    if (body.mobileTitleAnimation !== undefined) config.settings.mobileTitleAnimation = body.mobileTitleAnimation;
     
     writeConfig(config);
     return NextResponse.json(config.settings);

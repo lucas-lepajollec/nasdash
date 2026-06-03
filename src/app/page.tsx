@@ -13,7 +13,6 @@ import ViewEventModal from '@/components/modals/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
-const HomeAssistantTab = lazy(() => import('@/components/tabs/ha/HomeAssistantTab'));
 const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
 
 export default function Shell() {
@@ -112,25 +111,29 @@ export default function Shell() {
     </div>
   );
 
+  const isDockHidden = config?.settings?.hideDock ?? false;
+
   return (
-    <div className={`nd-shell nd-shell--dock-${dockPosition} ${activeTab === 'ha' ? 'nd-shell--ha' : ''}`}>
+    <div className={`nd-shell ${isDockHidden ? 'nd-shell--dock-hidden' : `nd-shell--dock-${dockPosition}`}`}>
       {/* Dock — Tab switcher */}
-      <TabDock
-        tabs={sortedTabs}
-        activeTab={activeTab}
-        onSwitch={switchTab}
-        position={dockPosition}
-        editMode={editMode}
-        hiddenIds={hiddenIds}
-        onTogglePosition={async () => {
-          const newPos = dockPosition === 'left' ? 'right' : 'left';
-          await updateConfig({ type: 'settings', dockPosition: newPos });
-          refresh();
-        }}
-      />
+      {!isDockHidden && (
+        <TabDock
+          tabs={sortedTabs}
+          activeTab={activeTab}
+          onSwitch={switchTab}
+          position={dockPosition}
+          editMode={editMode}
+          hiddenIds={hiddenIds}
+          onTogglePosition={async () => {
+            const newPos = dockPosition === 'left' ? 'right' : 'left';
+            await updateConfig({ type: 'settings', dockPosition: newPos });
+            refresh();
+          }}
+        />
+      )}
 
       {/* Main content area */}
-      <div className={`nd-shell-content ${activeTab === 'ha' && !editMode ? 'nd-shell-content--flush' : ''}`}>
+      <div className="nd-shell-content">
         <Header
           title={title}
           titleLogo={config?.settings?.titleLogo}
@@ -178,15 +181,6 @@ export default function Shell() {
               <WidgetsTab editMode={editMode} isVisible={activeTab === 'widgets'} showSensitive={showSensitive} categories={config?.categories || []} />
             </Suspense>
           </div>
-
-          {/* Home Assistant — conditionally rendered to avoid background iframe costs */}
-          {activeTab === 'ha' && (
-            <div className="flex-1">
-              <Suspense fallback={<LoadingView text="Chargement HA…" />}>
-                <HomeAssistantTab editMode={editMode} isVisible={activeTab === 'ha'} />
-              </Suspense>
-            </div>
-          )}
         </div>
       </div>
 

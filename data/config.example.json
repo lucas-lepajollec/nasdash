@@ -8,8 +8,7 @@
     "dockPosition": "right",
     "tabOrder": [
       "dashboard",
-      "docker",
-      "ha"
+      "docker"
     ],
     "hiddenSections": [],
     "hideDevices": false,

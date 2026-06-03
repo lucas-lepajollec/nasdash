@@ -180,7 +180,7 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
   gridArray.forEach((itemId, i) => columns[i % colCount].push({ itemId, originalIndex: i }));
 
   return (
-    <div className="nd-tab-content nd-animate-in" style={{ padding: '8px 20px 40px', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
+    <div className="nd-tab-content nd-animate-in" style={{ padding: '8px 20px 40px', maxWidth: '100%', margin: '0 auto', width: '100%' }}>
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
           {columns.map((col, ci) => (

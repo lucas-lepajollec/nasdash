@@ -145,6 +145,22 @@ export interface LocalCalendarEvent {
   isAllDay?: boolean;
 }
 
+export type HeaderElementDesktop = 'title' | 'search' | 'menu' | 'none';
+export type HeaderElementMobile = 'title' | 'search' | 'none';
+
+export interface HeaderLayoutDesktop {
+  left?: HeaderElementDesktop;
+  center?: HeaderElementDesktop;
+  right?: HeaderElementDesktop;
+  splitMenuAround?: 'title' | 'search' | 'none';
+}
+
+export interface HeaderLayoutMobile {
+  left?: HeaderElementMobile;
+  center?: HeaderElementMobile;
+}
+
+
 export interface DashboardConfig {
   version: number;
   categories: Category[];
@@ -159,13 +175,21 @@ export interface DashboardConfig {
     titleLogo?: string;
     titleFont?: 'outfit' | 'space-grotesk' | 'syne' | 'righteous' | 'montserrat';
     titleAnimation?: 'none' | 'spotlight-silver';
+
+    hideHeaderTitle?: boolean;
+    hideHeaderSearch?: boolean;
+    hideHeaderMenu?: boolean;
+    headerLayoutDesktop?: HeaderLayoutDesktop;
+    headerLayoutMobile?: HeaderLayoutMobile;
+    showHeaderMenuIcons?: boolean;
+
     showMonitor: boolean;
     totalSlots?: number;
     dockPosition?: 'left' | 'right';
     tailscaleTailnet?: string;
     tailscaleClientId?: string;
     tailscaleClientSecret?: string;
-    homeAssistantUrl?: string;
+
     theme?: string;
     // Tab customization
     tabOrder?: string[];
@@ -207,6 +231,7 @@ export interface DashboardConfig {
     weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
     weatherWidgetStyle?: 'default' | 'currentOnly' | 'minimal' | 'extended';
     activeWeatherLocationId?: string;
+    hideDock?: boolean;
     calendarUrl?: string;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
     clockTimezone?: string;

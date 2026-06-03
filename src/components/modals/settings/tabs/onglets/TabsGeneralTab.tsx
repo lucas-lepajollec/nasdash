@@ -46,7 +46,7 @@ export function TabsGeneralTab() {
         <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
           Choisissez où s'affiche la barre de navigation principale.
         </p>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <button 
             onClick={() => updateConfig({ dockPosition: 'left' })}
             className={`nd-btn ${config?.settings?.dockPosition !== 'right' ? 'nd-settings-nav-item--active' : ''}`}
@@ -61,6 +61,14 @@ export function TabsGeneralTab() {
           >
             À droite ➡️
           </button>
+        </div>
+        <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16 }}>
+          <ToggleSwitch 
+            checked={!!config?.settings?.hideDock}
+            onChange={(val) => updateConfig({ hideDock: val })}
+            label="Désactiver le Dock"
+            sublabel="Masque complètement le dock (mode plein écran)."
+          />
         </div>
       </div>
 
