@@ -76,6 +76,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
           height: 8,
           borderRadius: '50%',
           background: statusColor,
+          opacity: pingStatus?.status === 'online' ? 0.45 : (pingStatus?.status === 'offline' ? 0.6 : 0.3),
           zIndex: 5
         }} />
       );
