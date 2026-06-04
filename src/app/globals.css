@@ -608,6 +608,10 @@ body {
   transition: border-color var(--nd-transition);
 }
 
+.nd-card:has(.nd-service:hover) {
+  z-index: 50 !important;
+}
+
 .nd-card:hover {
   border-color: var(--nd-card-hover-border);
 }
@@ -646,6 +650,7 @@ body {
 .nd-service:hover {
   background: rgba(255, 255, 255, 0.03);
   border-color: var(--nd-card-border);
+  z-index: 20;
 }
 
 .light .nd-service:hover {
@@ -2319,7 +2324,6 @@ body {
   justify-content: center;
   aspect-ratio: 1 / 1;
   min-width: 0;
-  overflow: hidden;
   border: 1px solid var(--nd-card-border);
   background: rgba(255, 255, 255, 0.01);
   border-radius: var(--nd-card-radius);

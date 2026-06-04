@@ -85,11 +85,11 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
     return (
       <div style={{ marginLeft: 'auto', paddingLeft: 8, display: 'flex', alignItems: 'center' }}>
         {pingStatus?.status === 'online' ? (
-          <CheckCircle2 size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%' }} />
+          <CheckCircle2 size={statusIconSize} color={statusColor} style={{ opacity: 0.45 }} />
         ) : pingStatus?.status === 'offline' ? (
-          <XCircle size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%' }} />
+          <XCircle size={statusIconSize} color={statusColor} style={{ opacity: 0.6 }} />
         ) : (
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, opacity: 0.5 }} />
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, opacity: 0.3 }} />
         )}
       </div>
     );
