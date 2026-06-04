@@ -8,6 +8,18 @@ export function TabsHomeTab() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+        <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Options Générales</h4>
+        <div style={{ marginTop: 12 }}>
+          <ToggleSwitch 
+            checked={!!config?.settings?.showPingDetails}
+            onChange={(val) => updateConfig({ showPingDetails: val })}
+            label="Détails du ping des services"
+            sublabel="Affiche le statut (OK/Erreur) et la latence (ms) sous le nom des services (Layout Standard)."
+          />
+        </div>
+      </div>
+
+      <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Widgets</h4>
         <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
           Affichez ou masquez les widgets actifs spécifiquement sur l'onglet Home. (Seuls les widgets activés dans Bibliothèque Globale sont listés).

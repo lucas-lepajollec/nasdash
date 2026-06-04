@@ -49,6 +49,21 @@
   --nd-icon-border: rgba(255, 255, 255, 0.06);
 }
 
+/* Réduction dynamique des sidebars pour laisser respirer le centre */
+@media (max-width: 1280px) {
+  :root {
+    --nd-sidebar-width: 210px;
+    --nd-right-sidebar-width: 210px;
+  }
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --nd-sidebar-width: 190px;
+    --nd-right-sidebar-width: 190px;
+  }
+}
+
 .light {
   --nd-bg: #f5f5f7;
   --nd-bg-surface: #ffffff;
@@ -637,6 +652,92 @@ body {
   background: rgba(0, 0, 0, 0.03);
 }
 
+/* ==================== SECONDARY LINK TOOLTIP ==================== */
+.nd-service-tooltip-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.nd-service-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--nd-card-bg);
+  border: 1px solid var(--nd-card-border);
+  border-radius: var(--nd-card-radius);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+  transition-delay: 0.4s; /* Délai avant apparition au survol */
+  pointer-events: auto;
+  text-decoration: none;
+}
+
+/* Flèche sous la bulle */
+.nd-service-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--nd-card-bg) transparent transparent transparent;
+}
+
+.nd-service-tooltip::before {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--nd-card-border) transparent transparent transparent;
+  z-index: -1;
+}
+
+.nd-service:hover .nd-service-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.nd-service-tooltip-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nd-service-tooltip-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.nd-service-tooltip-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--nd-text);
+  white-space: nowrap;
+}
+
 .nd-service-icon {
   width: 28px;
   height: 28px;
@@ -678,27 +779,6 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.nd-vpn-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: calc(var(--nd-card-radius) * 0.5);
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--nd-card-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color var(--nd-transition);
-  flex-shrink: 0;
-  color: var(--nd-text-muted);
-  opacity: 0.4;
-}
-
-.nd-vpn-btn:hover {
-  border-color: var(--nd-accent);
-  opacity: 1;
-  color: var(--nd-accent);
 }
 
 /* ==================== EDIT BUTTONS ==================== */
@@ -932,6 +1012,7 @@ body {
     max-height: none;
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: flex-start;
   }
 
   .nd-sidebar-left>*,
@@ -1161,11 +1242,9 @@ body {
   display: flex !important;
 }
 
-@media (max-width: 768px) {
-  .nd-shell--dock-left,
-  .nd-shell--dock-right {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+@media (max-width: 960px) {
+  .nd-header-menu {
+    display: none !important;
   }
 
   .nd-header {
@@ -1224,6 +1303,14 @@ body {
 
   .nd-brand span strong {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .nd-shell--dock-left,
+  .nd-shell--dock-right {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .nd-sidebar-left,
@@ -1379,21 +1466,20 @@ body {
 
 .nd-dock-item-indicator {
   position: absolute;
-  left: -2px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
-  height: 16px;
-  border-radius: 0 4px 4px 0;
+  height: 18px;
+  border-radius: 0 6px 6px 0;
   background: var(--nd-accent);
-  box-shadow: 0 0 8px var(--nd-accent);
   animation: nd-fade-in 0.2s ease-out;
 }
 
 .nd-dock--right .nd-dock-item-indicator {
   left: auto;
-  right: -2px;
-  border-radius: calc(var(--nd-card-radius) * 0.35) 0 0 calc(var(--nd-card-radius) * 0.35);
+  right: 0;
+  border-radius: 6px 0 0 6px;
 }
 
 .nd-dock-item--hidden {
@@ -2099,7 +2185,7 @@ body {
 
 .nd-services-grid--bento {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   padding: 4px 0;
 }
@@ -2139,6 +2225,7 @@ body {
   text-align: center;
   padding: 10px 6px;
   height: 84px;
+  min-width: 0; /* Permet de rétrécir dans la grille */
   border: 1px solid var(--nd-card-border);
   background: rgba(255, 255, 255, 0.01);
   border-radius: var(--nd-card-radius);
@@ -2160,6 +2247,7 @@ body {
   text-align: center !important;
   gap: 6px !important;
   width: 100%;
+  min-width: 0;
 }
 
 .nd-service--bento .nd-service-icon {

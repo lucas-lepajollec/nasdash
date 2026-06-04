@@ -214,7 +214,7 @@ export default function Header(props: HeaderProps) {
             {layoutDesktop.splitMenuAround !== 'none' && (layoutDesktop.left === layoutDesktop.splitMenuAround) ? null : renderElement(layoutDesktop.left || 'title', false)}
           </div>
           
-          <div className="nd-header-center" style={{ display: 'flex', flex: 1, justifyContent: 'center' }}>
+          <div className="nd-header-center" style={{ display: 'flex', flex: 1, justifyContent: 'center', padding: '0 16px' }}>
             {layoutDesktop.splitMenuAround !== 'none' ? renderSplitMenuCenter() : renderElement(layoutDesktop.center || 'search', false)}
           </div>
           

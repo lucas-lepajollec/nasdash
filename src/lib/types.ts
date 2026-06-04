@@ -182,6 +182,7 @@ export interface DashboardConfig {
     headerLayoutDesktop?: HeaderLayoutDesktop;
     headerLayoutMobile?: HeaderLayoutMobile;
     showHeaderMenuIcons?: boolean;
+    showPingDetails?: boolean;
 
     showMonitor: boolean;
     totalSlots?: number;

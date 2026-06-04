@@ -45,14 +45,15 @@ export default function QuickStatsWidget({ categories, editMode }: { categories:
         {quickStats.map((s) => (
           <div key={s.label} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
-            padding: '8px 4px', borderRadius: 'var(--nd-card-radius)',
+            padding: '8px 2px', borderRadius: 'var(--nd-card-radius)',
             background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)',
+            minWidth: 0
           }}>
             <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums' }}>
               {s.value}
             </span>
-            <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3 }}>
-              {s.icon} {s.label}
+            <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 3, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {s.icon} <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</span>
             </span>
           </div>
         ))}
