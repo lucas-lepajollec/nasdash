@@ -1,0 +1,84 @@
+{
+  "tabs": [
+    {
+      "id": "custom_685ff317-feb2-4597-91a8-7ffff7fa9043",
+      "name": "test",
+      "icon": "⌨️",
+      "description": "Onglet personnalisé",
+      "isCustom": true
+    }
+  ],
+  "layouts": {
+    "custom_685ff317-feb2-4597-91a8-7ffff7fa9043": {
+      "rows": [
+        {
+          "id": "9376e4b1-2b5a-4014-bbc0-ebde2320f336",
+          "type": "1-col",
+          "columns": [
+            {
+              "id": "b28e58f9-2b26-4b92-a8b7-0fb9acf4cc66",
+              "width": "100%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "clock"
+                },
+                {
+                  "type": "weather"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "3220056f-f39a-4ad5-9aab-a9fe94e1c86f",
+          "type": "50-50",
+          "columns": [
+            {
+              "id": "c40c5246-b4fe-4d6a-a78a-423938ade684",
+              "width": "50%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "tailscale"
+                }
+              ]
+            },
+            {
+              "id": "420648da-cf00-4675-85f4-318b21b0ec60",
+              "width": "50%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "spacer"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "c79167f6-a528-4f1f-869a-4aef31866833",
+          "type": "75-25",
+          "columns": [
+            {
+              "id": "d4ae1a6e-4a03-44a3-9ec6-3cff835d2925",
+              "width": "75%",
+              "content": null
+            },
+            {
+              "id": "fc39e65e-c1ec-42d4-9bbd-9e119833f829",
+              "width": "25%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "dockeractions"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "id": "custom_685ff317-feb2-4597-91a8-7ffff7fa9043"
+    }
+  }
+}

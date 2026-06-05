@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Ban } from 'lucide-react';
 import { EMOJI_CATEGORIES } from '@/lib/constants';
 
@@ -34,7 +35,12 @@ export default function EmojiPickerModal({
     onClose();
   };
 
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ zIndex: 10000 }}>
       <div className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 400, maxWidth: '90%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -99,6 +105,7 @@ export default function EmojiPickerModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

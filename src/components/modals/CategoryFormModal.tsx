@@ -21,7 +21,13 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [title, setTitle] = useState(category?.title || '');
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
-  const [services, setServices] = useState<Service[]>(category?.services || []);
+  const [services, setServices] = useState<Service[]>(
+    category?.services?.map(s => ({
+      ...s,
+      secondaryUrl: s.secondaryUrl || s.tailscaleUrl || '',
+      tailscaleUrl: undefined // Force removal of legacy field so it doesn't persist
+    })) || []
+  );
   const [layout, setLayout] = useState<Category['layout']>(
     category?.layout === 'grid' ? 'bento' : (category?.layout || 'standard')
   );

@@ -3,10 +3,11 @@ import { ArrowUp, ArrowDown, Ban } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useTabs } from '@/hooks/useTabs';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
+import EmojiPickerModal from '../../../EmojiPickerModal';
 
 export function TabsGeneralTab() {
   const { config, updateConfig } = useConfig();
-  const { tabs } = useTabs();
+  const { tabs, refreshTabs } = useTabs();
 
   const [iconPickerTabId, setIconPickerTabId] = useState<string | null>(null);
 
@@ -102,71 +103,69 @@ export function TabsGeneralTab() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: !isHidden ? 1 : 0.5, transition: 'opacity 0.2s', borderTop: '1px dashed var(--nd-card-border)', paddingTop: 12 }}>
                    <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>Icône du dock :</span>
-                   <button
-                     onClick={() => setIconPickerTabId(t.id)}
-                     style={{
-                       background: 'var(--nd-bg-alt)',
-                       padding: '4px 8px',
-                       border: '1px solid var(--nd-card-border)',
-                       borderRadius: '6px',
-                       color: 'var(--nd-text)',
-                       fontSize: '0.9rem',
-                       cursor: 'pointer',
-                       display: 'flex',
-                       alignItems: 'center',
-                       gap: 8,
-                       transition: 'all 0.2s'
-                     }}
-                   >
-                     {(() => {
-                       const iconVal = config?.settings?.tabIcons?.[t.id] !== undefined ? config?.settings?.tabIcons?.[t.id] : t.icon;
-                       return iconVal ? <span style={{ fontSize: '1rem' }}>{iconVal}</span> : <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--nd-text-muted)' }}><Ban size={14} /><span style={{ fontSize: '0.75rem' }}>Aucune</span></div>;
-                     })()}
-                     <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginLeft: 6 }}>Modifier</span>
-                   </button>
+                     <button
+                       onClick={() => setIconPickerTabId(t.id)}
+                       style={{
+                         background: 'var(--nd-bg-alt)',
+                         padding: '4px 8px',
+                         border: '1px solid var(--nd-card-border)',
+                         borderRadius: '6px',
+                         color: 'var(--nd-text)',
+                         fontSize: '0.9rem',
+                         cursor: 'pointer',
+                         display: 'flex',
+                         alignItems: 'center',
+                         gap: 8,
+                         transition: 'all 0.2s'
+                       }}
+                     >
+                       {(() => {
+                         const iconVal = config?.settings?.tabIcons?.[t.id] !== undefined ? config?.settings?.tabIcons?.[t.id] : t.icon;
+                         return iconVal ? <span style={{ fontSize: '1rem' }}>{iconVal}</span> : <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--nd-text-muted)' }}><Ban size={14} /><span style={{ fontSize: '0.75rem' }}>Aucune</span></div>;
+                       })()}
+                       <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginLeft: 6 }}>Modifier</span>
+                     </button>
+                     
+                  </div>
                 </div>
-              </div>
             );
           })}
         </div>
+
       </div>
 
       {/* Icon Picker Modal */}
       {iconPickerTabId && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setIconPickerTabId(null)} />
-          <div className="nd-settings-card" style={{ position: 'relative', width: '100%', maxWidth: '300px', background: 'var(--nd-bg)', padding: '20px', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-             <h4 style={{ margin: '0 0 16px 0', fontSize: '0.9rem', textAlign: 'center' }}>Choisir une icône</h4>
-             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-               <button
-                 onClick={async () => {
-                   await updateConfig({ tabIcons: { ...config?.settings?.tabIcons, [iconPickerTabId]: '' } });
-                   setIconPickerTabId(null);
-                 }}
-                 style={{ background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: 4 }}
-                 title="Aucune icône"
-               >
-                 <Ban size={18} color="var(--nd-text-muted)" />
-               </button>
-               {commonIcons.map(icon => (
-                 <button
-                   key={icon}
-                   onClick={async () => {
-                     await updateConfig({ tabIcons: { ...config?.settings?.tabIcons, [iconPickerTabId]: icon } });
-                     setIconPickerTabId(null);
-                   }}
-                   style={{ background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: '8px', padding: '10px', fontSize: '1.2rem', cursor: 'pointer', transition: 'all 0.2s' }}
-                 >
-                   {icon}
-                 </button>
-               ))}
-             </div>
-             <button onClick={() => setIconPickerTabId(null)} className="nd-btn" style={{ width: '100%', marginTop: 20, justifyContent: 'center', background: 'rgba(255,255,255,0.05)' }}>
-               Fermer
-             </button>
-          </div>
-        </div>
+        <EmojiPickerModal
+          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] || ''}
+          onSelect={async (icon: string) => {
+            await updateConfig({ tabIcons: { ...config?.settings?.tabIcons, [iconPickerTabId]: icon } });
+            
+            // S'il s'agit d'un onglet personnalisé, on met aussi à jour la source de vérité
+            const isCustomTab = !['dashboard', 'widgets', 'docker'].includes(iconPickerTabId);
+            if (isCustomTab) {
+              try {
+                await fetch('/api/custom-tabs', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    type: 'updateTab',
+                    id: iconPickerTabId,
+                    tabUpdates: { icon }
+                  })
+                });
+                window.dispatchEvent(new Event('customTabsUpdated'));
+              } catch (e) {
+                console.error("Failed to sync custom tab icon", e);
+              }
+            }
+          }}
+          onClose={() => setIconPickerTabId(null)}
+          title={`Choisir l'icône de ${tabs.find(t => t.id === iconPickerTabId)?.name || 'l\'onglet'}`}
+        />
       )}
+
+
     </div>
   );
 }

@@ -10,8 +10,8 @@ interface SettingsSidebarProps {
 
 export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsSidebarProps) {
   const { config } = useConfig();
-  const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(false);
-  const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(false);
+  const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(() => currentTab?.startsWith('widget-'));
+  const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(() => currentTab?.startsWith('tabs-'));
 
   // Read widget visibility states
   const hideDevices = config?.settings?.hideDevices ?? false;
@@ -213,6 +213,18 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Général</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('custom-tabs')}
+              className={`nd-settings-nav-item ${currentTab === 'custom-tabs' ? 'nd-settings-nav-item--active' : ''}`}
+            >
+              <div style={{ background: 'rgba(168, 85, 247, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-purple)', flexShrink: 0 }}>
+                <Layout size={18} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Onglets Personnalisés</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)' }}>Mises en page libres</span>
               </div>
             </button>
           </div>

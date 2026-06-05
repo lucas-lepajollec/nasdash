@@ -11,13 +11,26 @@ import SettingsModal from '@/components/modals/SettingsModal';
 import CalendarEventModal from '@/components/modals/CalendarEventModal';
 import ViewEventModal from '@/components/modals/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
+import CustomTabRenderer from '@/components/tabs/custom/CustomTabRenderer';
+
+import ServiceFormModal from '@/components/modals/ServiceFormModal';
+import CategoryFormModal from '@/components/modals/CategoryFormModal';
+import DeviceFormModal from '@/components/modals/DeviceFormModal';
+import DockerActionFormModal from '@/components/modals/DockerActionFormModal';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
 
 export default function Shell() {
   const { activeTab, switchTab, tabs, ready } = useTabs();
-  const { config, loading, refresh, addSlot, addWidgetsSlot, setCategoryModal, settingsModal, setSettingsModal, updateConfig } = useConfig();
+  const { 
+    config, loading, refresh, addSlot, addWidgetsSlot, 
+    settingsModal, setSettingsModal, updateConfig,
+    serviceModal, setServiceModal, addService, updateService, deleteService, uploadLogo,
+    categoryModal, setCategoryModal, addCategory, updateCategory, deleteCategory,
+    deviceModal, setDeviceModal, addDevice, updateDevice, deleteDevice,
+    dockerActionModal, setDockerActionModal, addDockerAction, updateDockerAction, deleteDockerAction
+  } = useConfig();
 
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -181,11 +194,76 @@ export default function Shell() {
               <WidgetsTab editMode={editMode} isVisible={activeTab === 'widgets'} showSensitive={showSensitive} categories={config?.categories || []} />
             </Suspense>
           </div>
+
+          {/* Custom Tabs */}
+          {tabs.filter(t => t.isCustom).map(t => (
+            <div key={t.id} className="flex-1" style={{ display: activeTab === t.id ? 'block' : 'none', minHeight: '100%', position: 'relative' }}>
+              <CustomTabRenderer tab={t} editMode={editMode} />
+            </div>
+          ))}
         </div>
       </div>
 
       {settingsModal.open && (
         <SettingsModal onClose={() => setSettingsModal({ open: false })} />
+      )}
+
+      {serviceModal.open && (
+        <ServiceFormModal
+          service={serviceModal.service}
+          categoryId={serviceModal.categoryId}
+          onClose={() => setServiceModal({ open: false })}
+          onSave={async (data: any) => {
+            if (serviceModal.service) await updateService(serviceModal.service.id, data);
+            else if (data.categoryId) await addService(data.categoryId, data);
+            setServiceModal({ open: false });
+          }}
+          onDelete={serviceModal.service ? async (id: string) => { await deleteService(id); setServiceModal({ open: false }); } : undefined}
+          onUploadLogo={uploadLogo}
+          showSensitive={showSensitive}
+        />
+      )}
+
+      {categoryModal.open && (
+        <CategoryFormModal
+          category={categoryModal.category}
+          onClose={() => setCategoryModal({ open: false })}
+          onSave={async (data: any) => {
+            if (categoryModal.category) await updateCategory(categoryModal.category.id, data);
+            else await addCategory(data.title, data.emoji, data.isSecret, data.layout);
+            setCategoryModal({ open: false });
+          }}
+          onDelete={categoryModal.category ? async (id: string) => { await deleteCategory(id); setCategoryModal({ open: false }); } : undefined}
+          showSecretSections={showSecretSections}
+          showSensitive={showSensitive}
+        />
+      )}
+
+      {deviceModal.open && (
+        <DeviceFormModal
+          device={deviceModal.device}
+          onClose={() => setDeviceModal({ open: false })}
+          onSave={async (data: any) => {
+            if (data.id) await updateDevice(data.id, data);
+            else await addDevice(data);
+            setDeviceModal({ open: false });
+          }}
+          onDelete={deviceModal.device ? async (id: string) => { await deleteDevice(id); setDeviceModal({ open: false }); } : undefined}
+          showSensitive={showSensitive}
+        />
+      )}
+
+      {dockerActionModal.open && (
+        <DockerActionFormModal
+          action={dockerActionModal.action}
+          onClose={() => setDockerActionModal({ open: false })}
+          onSave={async (data: any) => {
+            if (dockerActionModal.action) await updateDockerAction(dockerActionModal.action.id, data);
+            else await addDockerAction(data);
+            setDockerActionModal({ open: false });
+          }}
+          onDelete={dockerActionModal.action ? async (id: string) => { await deleteDockerAction(id); setDockerActionModal({ open: false }); } : undefined}
+        />
       )}
 
       <CalendarEventModal />

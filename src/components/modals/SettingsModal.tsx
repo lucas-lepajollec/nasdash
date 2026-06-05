@@ -147,9 +147,11 @@ import { DockerActionsWidgetTab } from './settings/tabs/widgets/DockerActionsWid
 import { ClockWidgetTab } from './settings/tabs/widgets/ClockWidgetTab';
 import { CalendarWidgetTab } from './settings/tabs/widgets/CalendarWidgetTab';
 import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
+import { CustomTabsListTab } from './settings/tabs/custom/CustomTabsListTab';
+import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab';
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
-  const { config, updateConfig } = useConfig();
+  const { config, updateConfig, settingsModal } = useConfig();
   const { tabs } = useTabs();
   
   const tabOrder = (() => {
@@ -178,8 +180,23 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
     await updateConfig({ tabOrder: newOrder });
   };
-  const [activeTab, setActiveTab] = useState<string | null>(null);
-  const currentTab = activeTab || 'apparence';
+  const [activeTab, setActiveTab] = useState<string | null>(() => {
+    if (settingsModal.targetTab) return settingsModal.targetTab;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nd_settings_last_tab');
+      if (saved) return saved;
+      if (window.innerWidth > 580) return 'apparence';
+    }
+    return null;
+  });
+  const currentTab = activeTab || (typeof window !== 'undefined' && window.innerWidth > 580 ? 'apparence' : '');
+
+  useEffect(() => {
+    if (activeTab && typeof window !== 'undefined') {
+      localStorage.setItem('nd_settings_last_tab', activeTab);
+    }
+  }, [activeTab]);
+
   const [mode, setMode] = useState<'light' | 'dark'>('dark');
   const [theme, setTheme] = useState(config?.settings?.theme || 'nasdash');
 
@@ -236,6 +253,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [cityToDelete, setCityToDelete] = useState<{id: string, name: string} | null>(null);
   const [hideWidgetTitles, setHideWidgetTitles] = useState(config?.settings?.hideWidgetTitles ?? false);
   const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
+  const [customTabToEdit, setCustomTabToEdit] = useState<string | null>(settingsModal.targetCustomTabId || null);
 
   const [tailscaleTailnet, setTailscaleTailnet] = useState(config?.settings?.tailscaleTailnet || '');
   const [tailscaleClientId, setTailscaleClientId] = useState(config?.settings?.tailscaleClientId || '');
@@ -274,11 +292,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
   }, [config]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth > 580) {
-      setActiveTab('apparence');
-    }
-  }, []);
+  // Removed hardcoded setActiveTab('apparence') here so we don't overwrite localStorage
 
 
 
@@ -412,6 +426,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
                 {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
                 {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
+                {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
+                {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
               </h3>
             </div>
             <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
@@ -431,6 +447,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
              TAB: DEVELOPER
              ========================================== */}
           {currentTab === 'developer' && <DeveloperTab />}
+
+          {currentTab === 'custom-tabs' && <CustomTabsListTab onEditTab={(id) => { setCustomTabToEdit(id || null); setActiveTab('custom-tab-builder'); }} />}
+          {currentTab === 'custom-tab-builder' && <CustomTabBuilderTab tabId={customTabToEdit || undefined} onBack={() => setActiveTab('custom-tabs')} onSuccess={() => setActiveTab('custom-tabs')} />}
 
           {/* ==========================================
              TAB 2: LIBRARY OVERVIEW (WIDGET LIBRARY)

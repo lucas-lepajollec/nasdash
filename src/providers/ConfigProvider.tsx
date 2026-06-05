@@ -44,8 +44,8 @@ interface ConfigContextType {
   setDeviceModal: (state: { open: boolean; device?: Device }) => void;
   dockerActionModal: { open: boolean; action?: any };
   setDockerActionModal: (state: { open: boolean; action?: any }) => void;
-  settingsModal: { open: boolean };
-  setSettingsModal: (state: { open: boolean }) => void;
+  settingsModal: { open: boolean; targetTab?: string; targetCustomTabId?: string };
+  setSettingsModal: (state: { open: boolean; targetTab?: string; targetCustomTabId?: string }) => void;
 
   calendarEventModal: { open: boolean; date?: string; events?: any[] };
   setCalendarEventModal: (state: { open: boolean; date?: string; events?: any[] }) => void;
@@ -94,6 +94,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }>({ open: false });
   const [settingsModal, setSettingsModal] = useState<{
     open: boolean;
+    targetTab?: string;
+    targetCustomTabId?: string;
   }>({ open: false });
 
   const [calendarEventModal, setCalendarEventModal] = useState<{

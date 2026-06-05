@@ -357,6 +357,19 @@ body {
   opacity: 0.9;
 }
 
+.nd-btn-outline-accent {
+  background: transparent;
+  border-color: var(--nd-accent);
+  color: var(--nd-accent);
+  font-weight: 600;
+}
+
+.nd-btn-outline-accent:hover {
+  background: var(--nd-accent);
+  border-color: var(--nd-accent);
+  color: #000;
+}
+
 /* Enhanced Distinct Hitboxes for Edit Icons */
 .nd-action-icon {
   background: transparent;
@@ -677,12 +690,10 @@ body {
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
   padding: 6px 12px;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  opacity: 0;
-  visibility: hidden;
   transition: all 0.2s ease-in-out;
   transition-delay: 0.4s; /* Délai avant apparition au survol */
   pointer-events: auto;
@@ -714,8 +725,7 @@ body {
 }
 
 .nd-service:hover .nd-service-tooltip {
-  opacity: 1;
-  visibility: visible;
+  display: flex;
   transform: translateX(-50%) translateY(-8px);
 }
 
@@ -1017,7 +1027,7 @@ body {
     max-height: none;
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .nd-sidebar-left>*,
@@ -1321,6 +1331,7 @@ body {
   .nd-sidebar-left,
   .nd-sidebar-right {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .nd-sidebar-left>*,

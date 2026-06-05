@@ -1,6 +1,7 @@
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
+import CustomSelect from '@/components/shared/CustomSelect';
 
 export function TabsHomeTab() {
   const { config, updateConfig } = useConfig();
@@ -9,13 +10,33 @@ export function TabsHomeTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Options Générales</h4>
-        <div style={{ marginTop: 12 }}>
-          <ToggleSwitch 
-            checked={!!config?.settings?.showPingDetails}
-            onChange={(val) => updateConfig({ showPingDetails: val })}
-            label="Détails du ping des services"
-            sublabel="Affiche le statut (OK/Erreur) et la latence (ms) sous le nom des services (Layout Standard)."
-          />
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+            <ToggleSwitch 
+              checked={!!config?.settings?.showPingDetails}
+              onChange={(val) => updateConfig({ showPingDetails: val })}
+              label="Détails du ping des services"
+              sublabel="Affiche le statut (OK/Erreur) et la latence (ms) sous le nom des services (Layout Standard)."
+            />
+          </div>
+          <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: 4, color: 'var(--nd-text)' }}>
+              Affichage des pastilles de ping (OK/Erreur)
+            </label>
+            <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 8 }}>
+              Choisissez sur quelles layouts afficher les icônes de statut réseau.
+            </p>
+            <CustomSelect
+              value={config?.settings?.pingIndicatorMode || 'all'}
+              onChange={(val) => updateConfig({ pingIndicatorMode: val as 'none' | 'standard_only' | 'all' })}
+              options={[
+                { value: 'none', label: 'Ne pas afficher' },
+                { value: 'standard_only', label: 'Uniquement sur Standard & Compact' },
+                { value: 'all', label: 'Afficher sur toutes les layouts' }
+              ]}
+              style={{ width: '100%' }}
+            />
+          </div>
         </div>
       </div>
 

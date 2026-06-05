@@ -8,10 +8,6 @@ import DockerWidget from '../../widgets/DockerWidget';
 import BentoGrid from './BentoGrid';
 import SystemMonitor from './SystemMonitor';
 import Footer from '../../layout/Footer';
-import ServiceFormModal from '../../modals/ServiceFormModal';
-import CategoryFormModal from '../../modals/CategoryFormModal';
-import DeviceFormModal from '../../modals/DeviceFormModal';
-import DockerActionFormModal from '../../modals/DockerActionFormModal';
 import ClockWidget from '../../widgets/ClockWidget';
 import CalendarWidget from '../../widgets/CalendarWidget';
 import WeatherWidget from '../../widgets/WeatherWidget';
@@ -144,42 +140,9 @@ export default function HomeTab({
     setActiveDevice(null);
   };
 
-  // Service handlers
-  const handleSaveService = async (data: {
-    name: string;
-    localUrl: string;
-    secondaryUrl: string;
-    logo: string;
-    secondaryLogo: string;
-    categoryId?: string;
-  }) => {
-    if (serviceModal.service) {
-      await updateService(serviceModal.service.id, data);
-    } else if (data.categoryId) {
-      await addService(data.categoryId, data);
-    }
-    setServiceModal({ open: false });
-  };
-
   const handleDeleteService = async (id: string) => {
     await deleteService(id);
     setServiceModal({ open: false });
-  };
-
-  // Category handlers
-  const handleSaveCategory = async (data: { 
-    title: string; 
-    emoji: string; 
-    isSecret: boolean; 
-    services?: Service[]; 
-    layout?: Category['layout'];
-  }) => {
-    if (categoryModal.category) {
-      await updateCategory(categoryModal.category.id, data);
-    } else {
-      await addCategory(data.title, data.emoji, data.isSecret, data.layout);
-    }
-    setCategoryModal({ open: false });
   };
 
   const handleDeleteCategory = async (id: string) => {
@@ -187,29 +150,9 @@ export default function HomeTab({
     setCategoryModal({ open: false });
   };
 
-  // Device handlers
-  const handleSaveDevice = async (data: Omit<Device, 'id'> & { id?: string }) => {
-    if (data.id) {
-      await updateDevice(data.id, data);
-    } else {
-      await addDevice(data);
-    }
-    setDeviceModal({ open: false });
-  };
-
   const handleDeleteDevice = async (id: string) => {
     await deleteDevice(id);
     setDeviceModal({ open: false });
-  };
-
-  // Docker Action handlers
-  const handleSaveDockerAction = async (data: any) => {
-    if (dockerActionModal.action) {
-      await updateDockerAction(dockerActionModal.action.id, data);
-    } else {
-      await addDockerAction(data);
-    }
-    setDockerActionModal({ open: false });
   };
 
   const handleDeleteDockerAction = async (id: string) => {
@@ -372,49 +315,6 @@ export default function HomeTab({
           ) : null}
         </DragOverlay>
       </DndContext>
-
-      {/* Modals */}
-      {serviceModal.open && (
-        <ServiceFormModal
-          service={serviceModal.service}
-          categoryId={serviceModal.categoryId}
-          onClose={() => setServiceModal({ open: false })}
-          onSave={handleSaveService}
-          onDelete={serviceModal.service ? handleDeleteService : undefined}
-          onUploadLogo={uploadLogo}
-          showSensitive={showSensitive}
-        />
-      )}
-
-      {categoryModal.open && (
-        <CategoryFormModal
-          category={categoryModal.category}
-          onClose={() => setCategoryModal({ open: false })}
-          onSave={handleSaveCategory}
-          onDelete={categoryModal.category ? handleDeleteCategory : undefined}
-          showSecretSections={showSecretSections}
-          showSensitive={showSensitive}
-        />
-      )}
-
-      {deviceModal.open && (
-        <DeviceFormModal
-          device={deviceModal.device}
-          onClose={() => setDeviceModal({ open: false })}
-          onSave={handleSaveDevice}
-          onDelete={deviceModal.device ? handleDeleteDevice : undefined}
-          showSensitive={showSensitive}
-        />
-      )}
-
-      {dockerActionModal.open && (
-        <DockerActionFormModal
-          action={dockerActionModal.action}
-          onClose={() => setDockerActionModal({ open: false })}
-          onSave={handleSaveDockerAction}
-          onDelete={dockerActionModal.action ? handleDeleteDockerAction : undefined}
-        />
-      )}
     </>
   );
 }

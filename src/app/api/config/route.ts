@@ -346,6 +346,7 @@ export async function PUT(req: NextRequest) {
     if (body.hideHeaderMenu !== undefined) config.settings.hideHeaderMenu = body.hideHeaderMenu;
     if (body.showHeaderMenuIcons !== undefined) config.settings.showHeaderMenuIcons = body.showHeaderMenuIcons;
     if (body.showPingDetails !== undefined) config.settings.showPingDetails = body.showPingDetails;
+    if (body.pingIndicatorMode !== undefined) config.settings.pingIndicatorMode = body.pingIndicatorMode;
     if (body.mobileTheme !== undefined) config.settings.mobileTheme = body.mobileTheme;
     if (body.mobileGlobalFont !== undefined) config.settings.mobileGlobalFont = body.mobileGlobalFont;
     if (body.mobileBorderRadius !== undefined) config.settings.mobileBorderRadius = body.mobileBorderRadius;

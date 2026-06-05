@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 
-export default function ClockWidget({ editMode }: { editMode?: boolean }) {
+export default function ClockWidget({ editMode, layoutSize = 'medium' }: { editMode?: boolean, layoutSize?: 'small' | 'medium' | 'full' }) {
   const { config } = useConfig();
   const [time, setTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
@@ -84,7 +84,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: hideTitles ? '8px 0' : '16px 0 8px 0', position: 'relative' }}>
 
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-            <span style={{ fontSize: '3.2rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+            <span style={{ fontSize: layoutSize === 'small' ? '2.5rem' : '3.2rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
               {hours}
               <span style={{ animation: 'nd-pulse-opacity 2s infinite ease-in-out', display: 'inline-block', transform: 'translateY(-2px)' }}>:</span>
               {mins}
@@ -112,7 +112,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
-          <div style={{ fontSize: '3.2rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px' }}>
+          <div style={{ fontSize: layoutSize === 'small' ? '2.5rem' : '3.2rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px' }}>
             {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}
           </div>
           <div style={{ fontSize: '0.9rem', color: 'var(--nd-text-muted)', fontWeight: 500, letterSpacing: '1px', textTransform: 'lowercase' }}>

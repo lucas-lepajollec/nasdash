@@ -17,7 +17,7 @@ interface ServiceFormModalProps {
 export default function ServiceFormModal({ service, categoryId, onClose, onSave, onDelete, onUploadLogo, showSensitive = false }: ServiceFormModalProps) {
   const [name, setName] = useState(service?.name || '');
   const [localUrl, setLocalUrl] = useState(service?.localUrl || '');
-  const [secondaryUrl, setSecondaryUrl] = useState(service?.secondaryUrl || '');
+  const [secondaryUrl, setSecondaryUrl] = useState(service?.secondaryUrl || service?.tailscaleUrl || '');
   const [logo, setLogo] = useState(service?.logo || '');
   const [secondaryLogo, setSecondaryLogo] = useState(service?.secondaryLogo || '');
 
@@ -36,7 +36,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId });
+    onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId, tailscaleUrl: '' } as any);
   };
 
   return (

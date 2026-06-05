@@ -4,7 +4,7 @@ import { Server, FolderOpen, Hash, Link2 } from 'lucide-react';
 import { Category } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
 
-export default function QuickStatsWidget({ categories, editMode }: { categories: Category[], editMode?: boolean }) {
+export default function QuickStatsWidget({ categories, editMode, layoutSize = 'medium' }: { categories: Category[], editMode?: boolean, layoutSize?: 'small' | 'medium' | 'full' }) {
   const { config } = useConfig();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
@@ -41,7 +41,7 @@ export default function QuickStatsWidget({ categories, editMode }: { categories:
           Vue d&apos;ensemble
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: layoutSize === 'small' ? '1fr' : (layoutSize === 'full' ? 'repeat(4, 1fr)' : '1fr 1fr'), gap: 8 }}>
         {quickStats.map((s) => (
           <div key={s.label} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',

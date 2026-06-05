@@ -183,6 +183,7 @@ export interface DashboardConfig {
     headerLayoutMobile?: HeaderLayoutMobile;
     showHeaderMenuIcons?: boolean;
     showPingDetails?: boolean;
+    pingIndicatorMode?: 'none' | 'standard_only' | 'all';
 
     showMonitor: boolean;
     totalSlots?: number;
@@ -275,4 +276,32 @@ export interface SystemStats {
   network?: {
     latency: number;
   };
+}
+
+// ==================== CUSTOM TABS ====================
+
+export type CustomTabRowType = '1-col' | '50-50' | '25-75' | '75-25' | '3-col';
+
+export interface CustomTabWidgetInfo {
+  type: string; // 'clock', 'weather', 'quickstats', 'spacer'
+  height?: number; // For spacer widgets
+  props?: Record<string, any>;
+}
+
+export interface CustomTabColumn {
+  id: string;
+  width: string; // '100%', '50%', '25%', '75%', '33%'
+  content: CustomTabWidgetInfo | CustomTabRow | null; // legacy or nested row
+  widgets?: CustomTabWidgetInfo[]; // new array-based multiple widgets
+}
+
+export interface CustomTabRow {
+  id: string;
+  type: CustomTabRowType;
+  columns: CustomTabColumn[];
+}
+
+export interface CustomTabLayout {
+  id: string; // matches the TabDef id
+  rows: CustomTabRow[];
 }

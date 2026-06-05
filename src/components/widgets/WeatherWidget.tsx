@@ -44,7 +44,7 @@ const getWeatherLabel = (code: number) => {
   return "Inconnu";
 };
 
-export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
+export default function WeatherWidget({ editMode, layoutSize = 'medium' }: { editMode?: boolean, layoutSize?: 'small' | 'medium' | 'full' }) {
   const { config, setSettingsModal } = useConfig();
   const hideTitles = config?.settings?.hideWidgetTitles;
 
@@ -56,7 +56,8 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
     return locations.length > 0 ? locations : (legacyLocation ? [{id: 'legacy', ...legacyLocation}] : []);
   }, [locations, legacyLocation]);
   
-  const widgetStyle = config?.settings?.weatherWidgetStyle || 'default';
+  const widgetStyleRaw = config?.settings?.weatherWidgetStyle || 'default';
+  const widgetStyle = layoutSize === 'small' ? 'currentOnly' : widgetStyleRaw;
   
   const initialIndex = availableLocations.findIndex(l => l.id === activeId);
   const [currentIndex, setCurrentIndex] = useState(initialIndex >= 0 ? initialIndex : 0);
@@ -159,7 +160,7 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (widgetStyle === 'minimal') ? 0 : 16 }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, fontFamily: 'var(--font-outfit), sans-serif', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                <div style={{ fontSize: layoutSize === 'small' ? '2rem' : '2.5rem', fontWeight: 700, lineHeight: 1, fontFamily: 'var(--font-outfit), sans-serif', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
                   {Math.round(weather.current.temperature_2m)}°
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', marginTop: 4, fontWeight: 500 }}>

@@ -60,13 +60,17 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
   const showUrl = activeLayout !== 'compact' && activeLayout !== 'bento' && !isLogoOnly;
 
   const statusColor = pingStatus?.status === 'online' ? 'var(--nd-green)' : (pingStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
-  const statusIconSize = activeLayout === 'compact' ? 14 : 16;
+  const statusIconSize = activeLayout === 'compact' ? 16 : 20;
+
+  const pingIndicatorMode = config?.settings?.pingIndicatorMode || 'all';
 
   const renderStatusIndicator = () => {
     if (!service.localUrl || editMode) return null;
+    if (pingIndicatorMode === 'none') return null;
     
     // Pour bento/logo, une pastille simple en haut à droite
     if (activeLayout === 'bento' || isLogoOnly) {
+      if (pingIndicatorMode === 'standard_only') return null;
       return (
         <div style={{
           position: 'absolute',
@@ -86,9 +90,9 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
     return (
       <div style={{ marginLeft: 'auto', paddingLeft: 8, display: 'flex', alignItems: 'center' }}>
         {pingStatus?.status === 'online' ? (
-          <CheckCircle2 size={statusIconSize} color={statusColor} style={{ opacity: 0.45 }} />
+          <CheckCircle2 size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%', opacity: 0.45 }} />
         ) : pingStatus?.status === 'offline' ? (
-          <XCircle size={statusIconSize} color={statusColor} style={{ opacity: 0.6 }} />
+          <XCircle size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%', opacity: 0.6 }} />
         ) : (
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, opacity: 0.3 }} />
         )}

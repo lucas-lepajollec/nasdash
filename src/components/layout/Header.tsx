@@ -28,8 +28,10 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
-  const { config } = useConfig();
+  const { config, setSettingsModal } = useConfig();
   const isHome = !props.activeTab || props.activeTab === 'dashboard';
+  const currentTabDef = props.tabs?.find(t => t.id === props.activeTab);
+  const isCustomTab = currentTabDef?.isCustom === true;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Settings
@@ -168,16 +170,24 @@ export default function Header(props: HeaderProps) {
 
   const ActionsDesktop = () => (
     <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0" style={{ display: 'flex', gap: 8 }}>
-      {props.editMode && (isHome || props.activeTab === 'widgets') && (
+      {props.editMode && (isHome || props.activeTab === 'widgets' || isCustomTab) && (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
-            <Plus size={12} />
-            Emplacement
-          </button>
+          {(isHome || props.activeTab === 'widgets') && (
+            <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
+              <Plus size={12} />
+              Emplacement
+            </button>
+          )}
           {isHome && (
             <button className="nd-btn" onClick={props.onAddCategory}>
               <Plus size={12} />
               Catégorie
+            </button>
+          )}
+          {isCustomTab && (
+            <button className="nd-btn" onClick={() => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab })}>
+              <Pencil size={12} />
+              Structure
             </button>
           )}
           <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px', alignSelf: 'center' }} />
@@ -335,6 +345,13 @@ export default function Header(props: HeaderProps) {
                           <Plus size={14} style={{ marginRight: 6 }} /> Catégorie
                         </button>
                       )}
+                    </div>
+                  )}
+                  {isCustomTab && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+                      <button className="nd-btn" onClick={() => { setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
+                        <Pencil size={14} style={{ marginRight: 6 }} /> Modifier la structure
+                      </button>
                     </div>
                   )}
                 </div>
