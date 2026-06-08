@@ -117,7 +117,7 @@ export default function WeatherWidget({ editMode, layoutSize = 'medium' }: { edi
 
   if (!location) {
     return (
-      <div className="nd-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', gap: 12 }}>
+      <div className="nd-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', gap: 12 }}>
         <CloudRain size={32} className="text-gray-400 opacity-50" />
         <div style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)' }}>Météo non configurée</div>
         {editMode && (
@@ -130,7 +130,7 @@ export default function WeatherWidget({ editMode, layoutSize = 'medium' }: { edi
   }
 
   return (
-    <div className="nd-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+    <div className="nd-widget-card nd-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* City Switcher Header (Always visible even if widget titles are hidden) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>

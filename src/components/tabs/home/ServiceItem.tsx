@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { Globe, Pencil, Trash2, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
@@ -21,8 +21,22 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
   const [imgError, setImgError] = useState(false);
   const { config } = useConfig();
 
-  // Polling every 30 seconds
-  const pingUrl = service.localUrl ? `/api/ping?url=${encodeURIComponent(service.localUrl)}` : null;
+  const pingIndicatorMode = config?.settings?.pingIndicatorMode || 'all';
+  const showUrl = layout !== 'compact' && layout !== 'grid' && layout !== 'bento' && !layout?.startsWith('bento-logo');
+  const showPingText = showUrl && config?.settings?.showPingDetails;
+  
+  const [shouldFetch, setShouldFetch] = useState(false);
+  
+  useEffect(() => {
+    // Stagger ping requests to avoid hitting the browser's 6-connection limit per origin
+    const delay = 500 + Math.random() * 3000;
+    const timer = setTimeout(() => setShouldFetch(true), delay);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const shouldPing = service.localUrl && !editMode && (pingIndicatorMode !== 'none' || showPingText);
+  const pingUrl = shouldPing && shouldFetch ? `/api/ping?url=${encodeURIComponent(service.localUrl)}` : null;
+
   const { data: pingStatus } = useSWR(pingUrl, fetcher, { 
     refreshInterval: 30000, 
     revalidateOnFocus: false 
@@ -57,12 +71,8 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
 
   const activeLayout = layout === 'grid' ? 'bento' : layout;
   const isLogoOnly = activeLayout?.startsWith('bento-logo');
-  const showUrl = activeLayout !== 'compact' && activeLayout !== 'bento' && !isLogoOnly;
-
-  const statusColor = pingStatus?.status === 'online' ? 'var(--nd-green)' : (pingStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
   const statusIconSize = activeLayout === 'compact' ? 16 : 20;
-
-  const pingIndicatorMode = config?.settings?.pingIndicatorMode || 'all';
+  const statusColor = pingStatus?.status === 'online' ? 'var(--nd-green)' : (pingStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
 
   const renderStatusIndicator = () => {
     if (!service.localUrl || editMode) return null;
@@ -100,7 +110,6 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
     );
   };
 
-  const showPingText = showUrl && config?.settings?.showPingDetails;
 
   return (
     <div ref={setNodeRef} className={`nd-service nd-service--${activeLayout}`} style={{ 

@@ -305,9 +305,13 @@ function DeviceMonitorCardContent({
 }
 
 export default function DevicesWidget({ devices, editMode, onAddDevice, onEditDevice, onDeleteDevice, onReorderDevices }: DevicesWidgetProps) {
-  const { config } = useConfig();
+  const { config, setDeviceModal, updateConfig } = useConfig();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
+
+  const handleAdd = onAddDevice || (() => setDeviceModal({ open: true }));
+  const handleEdit = onEditDevice || ((device: Device) => setDeviceModal({ open: true, device }));
+  const handleDelete = onDeleteDevice || ((id: string) => updateConfig({ devices: devices.filter(d => d.id !== id) }));
 
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
@@ -350,10 +354,10 @@ export default function DevicesWidget({ devices, editMode, onAddDevice, onEditDe
         <div className="nd-section-title">
           <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
           Appareils
-          {editMode && onAddDevice && (
+          {editMode && (
             <button
               className="nd-action-icon success"
-              onClick={onAddDevice}
+              onClick={handleAdd}
               style={{ marginLeft: 'auto' }}
             >
               <Plus size={13} />
@@ -377,7 +381,7 @@ export default function DevicesWidget({ devices, editMode, onAddDevice, onEditDe
               key={device.id}
               device={device}
               editMode={editMode}
-              onEdit={() => onEditDevice?.(device)}
+              onEdit={() => handleEdit(device)}
               onDelete={() => setDeviceToDelete(device)}
             />
           ))}
@@ -389,7 +393,7 @@ export default function DevicesWidget({ devices, editMode, onAddDevice, onEditDe
         onClose={() => setDeviceToDelete(null)}
         onConfirm={() => {
           if (deviceToDelete) {
-            onDeleteDevice?.(deviceToDelete.id);
+            handleDelete(deviceToDelete.id);
             setDeviceToDelete(null);
           }
         }}

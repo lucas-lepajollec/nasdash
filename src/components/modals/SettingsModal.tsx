@@ -386,51 +386,51 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         <div className="nd-settings-content">
           
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0, gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-              <button 
-                className="nd-settings-back-btn" 
-                onClick={() => setActiveTab(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid var(--nd-card-border)',
-                  borderRadius: 'var(--nd-card-radius)',
-                  color: 'var(--nd-text)',
-                  padding: '6px 12px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0
-                }}
-              >
-                ← Retour
-              </button>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
-                {currentTab === 'header' && '📋 En-tête'}
-                {currentTab === 'mobile' && '📱 Mobile'}
-                {currentTab === 'developer' && '⚙️ Menu Développeur'}
-                {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
-                {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
-                {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
-                {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
-                {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
-                {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
-                {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
-                {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
-                {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
-                {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
-                {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
-                {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
-                {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
-              </h3>
-            </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
+          <div className="nd-settings-header" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0, gap: '12px 16px' }}>
+            <button 
+              className="nd-settings-back-btn" 
+              onClick={() => setActiveTab(null)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--nd-card-border)',
+                borderRadius: 'var(--nd-card-radius)',
+                color: 'var(--nd-text)',
+                padding: '6px 12px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              ← Retour
+            </button>
+            
+            <h3 className="nd-settings-title" style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, wordBreak: 'break-word', lineHeight: 1.3 }}>
+              {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
+              {currentTab === 'header' && '📋 En-tête'}
+              {currentTab === 'mobile' && '📱 Mobile'}
+              {currentTab === 'developer' && '⚙️ Menu Développeur'}
+              {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
+              {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
+              {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
+              {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
+              {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
+              {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
+              {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
+              {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
+              {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
+              {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
+              {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
+              {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
+              {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
+            </h3>
+
+            <button className="nd-settings-close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
               <X size={18} />
             </button>
           </div>

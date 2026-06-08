@@ -3,6 +3,7 @@ import { Palette, Layout, Layers, Monitor, X, Trash2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../../../shared/CustomSelect';
+import ConfirmModal from '../../ConfirmModal';
 import { THEME_PRESETS } from '../../SettingsModal';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
 
@@ -259,12 +260,12 @@ export function AppearanceTab() {
             {appearanceProfiles.length > 0 && (
               <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr' }}>
                 {appearanceProfiles.map(profile => (
-                  <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nd-card-bg)', padding: '12px 16px', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
-                    <div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)' }}>{profile.name}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 4 }}>{profile.settings.theme}</span>
+                  <div key={profile.id} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between', background: 'var(--nd-card-bg)', padding: '12px 16px', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
+                    <div style={{ minWidth: '120px' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)', wordBreak: 'break-word' }}>{profile.name}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 4, wordBreak: 'break-all' }}>{profile.settings.theme}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                       <button className="nd-btn" onClick={() => handleApplyProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
                         Appliquer
                       </button>
@@ -511,6 +512,26 @@ export function AppearanceTab() {
 
 
       </div>
+
+      <ConfirmModal
+        isOpen={!!confirmDeleteProfile}
+        onClose={() => setConfirmDeleteProfile(null)}
+        onConfirm={() => {
+          if (confirmDeleteProfile) handleDeleteProfile(confirmDeleteProfile);
+        }}
+        title="Supprimer le profil"
+        description="Êtes-vous sûr de vouloir supprimer ce profil d'apparence ? Cette action est irréversible."
+        confirmLabel="Supprimer"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmBgDeleteOpen}
+        onClose={() => setIsConfirmBgDeleteOpen(false)}
+        onConfirm={handleConfirmBgDelete}
+        title="Supprimer l'image de fond"
+        description="Êtes-vous sûr de vouloir supprimer cette image ? Elle sera supprimée du serveur."
+        confirmLabel="Supprimer"
+      />
     </>
   );
 }

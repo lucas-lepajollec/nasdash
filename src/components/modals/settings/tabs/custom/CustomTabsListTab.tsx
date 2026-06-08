@@ -46,7 +46,7 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
         ) : (
           customTabs.map(tab => (
             <div key={tab.id} className="nd-settings-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 150, flex: 1 }}>
                 <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 'var(--nd-card-radius)', background: 'var(--nd-bg)', border: '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
                   {tab.icon}
                 </div>

@@ -625,7 +625,7 @@ body {
   z-index: 50 !important;
 }
 
-.nd-card:hover {
+.nd-card:hover, .nd-sidebar-card:hover {
   border-color: var(--nd-card-hover-border);
 }
 
@@ -695,9 +695,11 @@ body {
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   transition: all 0.2s ease-in-out;
-  transition-delay: 0.4s; /* Délai avant apparition au survol */
+  transition-delay: 0.4s;
   pointer-events: auto;
   text-decoration: none;
+  /* Bridge the gap so hover doesn't drop */
+  margin-bottom: 8px;
 }
 
 /* Flèche sous la bulle */
@@ -712,21 +714,21 @@ body {
   border-color: var(--nd-card-bg) transparent transparent transparent;
 }
 
+/* Transparent bridge area */
 .nd-service-tooltip::before {
   content: '';
   position: absolute;
   top: 100%;
-  left: 50%;
-  margin-left: -6px;
-  border-width: 6px;
-  border-style: solid;
-  border-color: var(--nd-card-border) transparent transparent transparent;
-  z-index: -1;
+  left: -50px;
+  right: -50px;
+  height: 25px;
+  background: transparent;
+  z-index: -2;
 }
 
 .nd-service:hover .nd-service-tooltip {
   display: flex;
-  transform: translateX(-50%) translateY(-8px);
+  transform: translateX(-50%) translateY(0);
 }
 
 .nd-service-tooltip-icon {
@@ -2133,6 +2135,12 @@ body {
 
   .nd-settings-chevron {
     display: block !important; /* Show chevron on mobile menu */
+  }
+
+  .nd-settings-title {
+    order: 3;
+    flex-basis: 100%;
+    margin-top: 4px !important;
   }
 
   /* Menu Mode: sidebar only */
