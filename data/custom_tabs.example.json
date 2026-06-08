@@ -1,0 +1,42 @@
+{
+  "tabs": [
+    {
+      "id": "custom_example_system",
+      "name": "Supervision",
+      "icon": "🖥️",
+      "description": "Exemple d'onglet personnalisé",
+      "isCustom": true
+    }
+  ],
+  "layouts": {
+    "custom_example_system": {
+      "id": "custom_example_system",
+      "rows": [
+        {
+          "id": "row-1",
+          "type": "50-50",
+          "columns": [
+            {
+              "id": "col-1",
+              "width": "50%",
+              "content": null,
+              "widgets": [
+                { "type": "clock" },
+                { "type": "quickstats" }
+              ]
+            },
+            {
+              "id": "col-2",
+              "width": "50%",
+              "content": null,
+              "widgets": [
+                { "type": "weather" },
+                { "type": "devices" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

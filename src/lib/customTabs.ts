@@ -15,8 +15,17 @@ const DEFAULT_DATA: CustomTabsData = {
   layouts: {}
 };
 
+const EXAMPLE_TABS_FILE = path.join(process.cwd(), 'data', 'custom_tabs.example.json');
+
 export function readCustomTabs(): CustomTabsData {
   try {
+    if (!fs.existsSync(CUSTOM_TABS_FILE)) {
+      if (fs.existsSync(EXAMPLE_TABS_FILE)) {
+        const exampleData = fs.readFileSync(EXAMPLE_TABS_FILE, 'utf-8');
+        fs.writeFileSync(CUSTOM_TABS_FILE, exampleData, 'utf-8');
+      }
+    }
+    
     if (fs.existsSync(CUSTOM_TABS_FILE)) {
       const data = fs.readFileSync(CUSTOM_TABS_FILE, 'utf-8');
       return JSON.parse(data);

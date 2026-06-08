@@ -12,6 +12,13 @@
   </p>
 
   <img src="public/nasdash.png" alt="NasDash Interface Screenshot" width="800" />
+  
+  <br />
+  
+  ### 🖼️ Galerie d'images
+  <!-- Ajoutez vos images/captures d'écran supplémentaires ici pour montrer la personnalisation -->
+  <p><i>Images et démos de personnalisation à venir...</i></p>
+
 </div>
 
 ---
@@ -22,10 +29,11 @@ NasDash is a high-performance, unapologetically information-dense web dashboard 
 
 - **📊 Hardware Telemetry**: Track real-time CPU, RAM, Disk, and GPU statistics across multiple remote machines simultaneously using zero-configuration auto-fetching.
   - Supports **Glances**, **Home Assistant**, and **Proxmox VE** (Nodes, QEMU VMs, LXC Containers).
-- **🚦 Dynamic Service Grid**: Organize your homelab web services into drag-and-drop slots. Each service tracks its own local network URL and Tailscale VPN URL.
+- **🚦 Dynamic Service Grid & Live Ping**: Organize your homelab web services into drag-and-drop slots. Each service tracks its own local network URL and Tailscale VPN URL. A built-in staggered ping system monitors the live status of all your services without degrading browser performance.
+- **🛠️ Custom Tab Builder**: Go beyond the default dashboard layout. Create entirely custom tabs using a visual grid builder. Mix and match widgets (Weather, Clock, Docker Actions, Tailscale, Devices, QuickStats) into single-column, 50-50, or 75-25 split layouts.
 - **🔒 Stealth Secret Mode**: Features an invisible toggle switch hidden in the UI to instantly reveal heavily-guarded, confidential application categories.
 - **🌐 Native Tailscale Map**: See exactly who and what is connected to your private VPN mesh network in real-time right from the sidebar.
-- **🎨 Dark/Light Cyberpunk UI**: A handcrafted, dependency-free CSS design system offering both a deep-space dark mode and a crisp light mode.
+- **🎨 Dark/Light Cyberpunk UI**: A handcrafted, dependency-free CSS design system offering both a deep-space dark mode and a crisp light mode, complete with fluid hover animations and glassmorphism.
 - **⚡ Zero-Latency Editing**: Add categories, upload logos, and inject new nodes straight through the UI—modifications instantly sync to disk without rebooting.
 
 ---
