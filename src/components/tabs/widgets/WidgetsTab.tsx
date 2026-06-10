@@ -5,14 +5,8 @@ import { useConfig } from '@/hooks/useConfig';
 import { DndContext, closestCenter, pointerWithin, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, useDraggable, useDroppable, defaultDropAnimationSideEffects } from '@dnd-kit/core';
 import { Trash2, Plus } from 'lucide-react';
 
-// Import widgets
-import ClockWidget from '../../widgets/ClockWidget';
-import CalendarWidget from '../../widgets/CalendarWidget';
-import WeatherWidget from '../../widgets/WeatherWidget';
-import QuickStatsWidget from '../../widgets/QuickStatsWidget';
-import TailscaleWidget from '../../widgets/TailscaleWidget';
-import DockerWidget from '../../widgets/DockerWidget';
-import DevicesWidget from '../../widgets/DevicesWidget';
+import { WidgetRenderer } from '../../widgets/WidgetRenderer';
+import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 
 function DroppableSlot({ id, editMode, children }: { id: string, editMode: boolean, children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -70,26 +64,17 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
   const tabConf = config?.settings?.tabs?.widgets || {};
   const globalConf = config?.settings || {};
 
-  const widgetsList = [
-    { id: 'clock', component: <ClockWidget />, hidden: config?.settings?.hideClock || (tabConf as any).hideClock },
-    { id: 'calendar', component: <CalendarWidget />, hidden: config?.settings?.hideCalendar || (tabConf as any).hideCalendar },
-    { id: 'weather', component: <WeatherWidget editMode={editMode} />, hidden: config?.settings?.hideWeather || (tabConf as any).hideWeather },
-    { id: 'quickstats', component: <QuickStatsWidget categories={categories} editMode={editMode} />, hidden: config?.settings?.hideQuickStats || (tabConf as any).hideQuickStats },
-    { id: 'tailscale', component: <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />, hidden: config?.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus },
-    { id: 'dockeractions', component: <DockerWidget editMode={editMode} />, hidden: config?.settings?.hideDockerActions || (tabConf as any).hideDockerActions },
-    { 
-      id: 'devices', 
-      component: <DevicesWidget 
-        devices={config?.devices || []} 
-        editMode={editMode} 
-        onAddDevice={() => setDeviceModal({ open: true })}
-        onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
-        onDeleteDevice={async (id) => { await deleteDevice(id); setDeviceModal({ open: false }); }}
-        onReorderDevices={reorderDevices}
-      />, 
-      hidden: config?.settings?.hideDevices || (tabConf as any).hideDevices 
-    },
-  ];
+  const widgetsList = WIDGET_REGISTRY.map(w => {
+    const hideKey = getWidgetConfigKeys(w.id).hide;
+    const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
+    const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
+    
+    return {
+      id: w.id,
+      component: <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={categories} />,
+      hidden: isGloballyHidden || isTabHidden
+    };
+  });
 
   const visibleWidgets = widgetsList.filter(w => !w.hidden);
   

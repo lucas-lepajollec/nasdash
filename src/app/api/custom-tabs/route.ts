@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const body = await req.json();
-  const { type, id, tabUpdates, layoutUpdates } = body;
+  const { type, id, tabUpdates, layoutUpdates, layout } = body;
   
   if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   
@@ -55,12 +55,13 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Tab not found' }, { status: 404 });
   }
 
-  if (type === 'updateTab') {
+  if (type === 'updateTab' || layout || layoutUpdates) {
     if (tabUpdates) {
       data.tabs[tabIndex] = { ...data.tabs[tabIndex], ...tabUpdates };
     }
-    if (layoutUpdates) {
-      data.layouts[id] = { ...data.layouts[id], ...layoutUpdates, id };
+    const finalLayout = layoutUpdates || layout;
+    if (finalLayout) {
+      data.layouts[id] = { ...data.layouts[id], ...finalLayout, id };
     }
     writeCustomTabs(data);
     return NextResponse.json({ tab: data.tabs[tabIndex], layout: data.layouts[id] });

@@ -175,6 +175,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
       case 'tailscale': return '🔒 Tailscale';
       case 'dockeractions': return '🐳 Actions Docker';
       case 'calendar': return '📅 Calendrier';
+      case 'networkgraph': return '📶 Graphe Réseau';
       default: return `🧩 Widget Inconnu (${widget.type})`;
     }
   };

@@ -3,13 +3,7 @@ import { CustomTabRow, CustomTabColumn, CustomTabWidgetInfo, CustomTabLayout } f
 import { TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 
-import ClockWidget from '../../widgets/ClockWidget';
-import WeatherWidget from '../../widgets/WeatherWidget';
-import QuickStatsWidget from '../../widgets/QuickStatsWidget';
-import DevicesWidget from '../../widgets/DevicesWidget';
-import TailscaleWidget from '../../widgets/TailscaleWidget';
-import DockerWidget from '../../widgets/DockerWidget';
-import CalendarWidget from '../../widgets/CalendarWidget';
+import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 import { Settings2, Plus, PenTool } from 'lucide-react';
 
 interface CustomTabRendererProps {
@@ -74,58 +68,43 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
   };
 
   const renderWidget = (info: CustomTabWidgetInfo, size: 'small' | 'medium' | 'full', rowId: string, colId: string, index: number) => {
-    switch (info.type) {
-      case 'clock':
-        return <ClockWidget layoutSize={size} editMode={editMode} />;
-      case 'weather':
-        return <WeatherWidget layoutSize={size} editMode={editMode} />;
-      case 'quickstats':
-        return <QuickStatsWidget categories={config?.categories || []} layoutSize={size} editMode={editMode} />;
-      case 'devices':
-        return <DevicesWidget devices={config?.devices || []} editMode={editMode} />;
-      case 'tailscale':
-        return <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />;
-      case 'dockeractions':
-        return <DockerWidget editMode={editMode} />;
-      case 'calendar':
-        return <CalendarWidget editMode={editMode} />;
-      case 'spacer':
-        return (
-          <div style={{
-            height: info.height || 120,
-            minHeight: editMode ? 60 : undefined,
-            width: '100%',
-            background: editMode ? 'rgba(255,255,255,0.02)' : 'transparent',
-            border: editMode ? '1px dashed var(--nd-card-border)' : 'none',
-            borderRadius: 'var(--nd-card-radius)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: editMode ? 'none' : 'all 0.2s',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            {editMode && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '80%' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', fontWeight: 600 }}>
-                  Espace ({info.height || 120}px)
-                </span>
-                <input 
-                  type="range" 
-                  min="20" 
-                  max="1000" 
-                  step="10" 
-                  value={info.height || 120}
-                  onChange={(e) => handleUpdateSpacerHeight(rowId, colId, index, parseInt(e.target.value))}
-                  style={{ width: '100%', cursor: 'ew-resize', accentColor: 'var(--nd-accent)' }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      default:
-        return <div style={{ padding: 20, textAlign: 'center', color: 'var(--nd-text-muted)', background: 'var(--nd-bg)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>Widget inconnu ({info.type})</div>;
+    if (info.type === 'spacer') {
+      return (
+        <div style={{
+          height: info.height || 120,
+          minHeight: editMode ? 60 : undefined,
+          width: '100%',
+          background: editMode ? 'rgba(255,255,255,0.02)' : 'transparent',
+          border: editMode ? '1px dashed var(--nd-card-border)' : 'none',
+          borderRadius: 'var(--nd-card-radius)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: editMode ? 'none' : 'all 0.2s',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {editMode && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '80%' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', fontWeight: 600 }}>
+                Espace ({info.height || 120}px)
+              </span>
+              <input 
+                type="range" 
+                min="20" 
+                max="1000" 
+                step="10" 
+                value={info.height || 120}
+                onChange={(e) => handleUpdateSpacerHeight(rowId, colId, index, parseInt(e.target.value))}
+                style={{ width: '100%', cursor: 'ew-resize', accentColor: 'var(--nd-accent)' }}
+              />
+            </div>
+          )}
+        </div>
+      );
     }
+    
+    return <WidgetRenderer id={info.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} />;
   };
 
   const renderRow = (row: CustomTabRow) => {

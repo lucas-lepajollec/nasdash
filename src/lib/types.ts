@@ -207,8 +207,11 @@ export interface DashboardConfig {
         hideClock?: boolean;
         hideCalendar?: boolean;
         hideWeather?: boolean;
+        hideNetworkGraph?: boolean;
         hideLeftSidebar?: boolean;
         hideRightSidebar?: boolean;
+        hideBottomPanel?: boolean;
+        bottomPanelTitle?: string;
         leftSidebarPosition?: 'left' | 'right';
         rightSidebarPosition?: 'left' | 'right';
       };
@@ -233,6 +236,7 @@ export interface DashboardConfig {
     hideClock?: boolean;
     hideCalendar?: boolean;
     hideWeather?: boolean;
+    hideNetworkGraph?: boolean;
     hideWidgetTitles?: boolean;
     weatherLocation?: { lat: number; lon: number; name: string };
     weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
@@ -254,13 +258,14 @@ export interface DashboardConfig {
     // Developer options
     enablePerfMonitor?: boolean;
     // Sidebar widget alignment positions
-    devicesSidebar?: 'left' | 'right';
-    quickStatsSidebar?: 'left' | 'right';
-    tailscaleSidebar?: 'left' | 'right';
-    dockerActionsSidebar?: 'left' | 'right';
-    clockSidebar?: 'left' | 'right';
-    calendarSidebar?: 'left' | 'right';
-    weatherSidebar?: 'left' | 'right';
+    devicesSidebar?: 'left' | 'right' | 'bottom';
+    quickStatsSidebar?: 'left' | 'right' | 'bottom';
+    tailscaleSidebar?: 'left' | 'right' | 'bottom';
+    dockerActionsSidebar?: 'left' | 'right' | 'bottom';
+    clockSidebar?: 'left' | 'right' | 'bottom';
+    calendarSidebar?: 'left' | 'right' | 'bottom';
+    weatherSidebar?: 'left' | 'right' | 'bottom';
+    networkGraphSidebar?: 'left' | 'right' | 'bottom';
     // Sidebar widget order preferences
     devicesOrder?: number;
     quickStatsOrder?: number;
@@ -269,6 +274,7 @@ export interface DashboardConfig {
     clockOrder?: number;
     calendarOrder?: number;
     weatherOrder?: number;
+    networkGraphOrder?: number;
     // Premium Design options
     globalFont?: string;
     borderRadius?: number;

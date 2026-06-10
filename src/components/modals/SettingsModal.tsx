@@ -147,6 +147,7 @@ import { DockerActionsWidgetTab } from './settings/tabs/widgets/DockerActionsWid
 import { ClockWidgetTab } from './settings/tabs/widgets/ClockWidgetTab';
 import { CalendarWidgetTab } from './settings/tabs/widgets/CalendarWidgetTab';
 import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
+import { NetworkGraphWidgetTab } from './settings/tabs/widgets/NetworkGraphWidgetTab';
 import { CustomTabsListTab } from './settings/tabs/custom/CustomTabsListTab';
 import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab';
 
@@ -180,6 +181,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
     await updateConfig({ tabOrder: newOrder });
   };
+  const [editingTabId, setEditingTabId] = useState<string | undefined>(settingsModal.targetCustomTabId || undefined);
   const [activeTab, setActiveTab] = useState<string | null>(() => {
     if (settingsModal.targetTab) return settingsModal.targetTab;
     if (typeof window !== 'undefined') {
@@ -426,6 +428,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
               {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
               {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
+              {currentTab === 'widget-networkgraph' && '📶 Configuration — Graphe Réseau'}
               {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
               {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
             </h3>
@@ -442,14 +445,13 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {currentTab === 'header' && <HeaderTab />}
           {currentTab === 'mobile' && <MobileTab />}
 
+          {currentTab === 'widget-networkgraph' && <NetworkGraphWidgetTab />}
+
           
           {/* ==========================================
              TAB: DEVELOPER
              ========================================== */}
           {currentTab === 'developer' && <DeveloperTab />}
-
-          {currentTab === 'custom-tabs' && <CustomTabsListTab onEditTab={(id) => { setCustomTabToEdit(id || null); setActiveTab('custom-tab-builder'); }} />}
-          {currentTab === 'custom-tab-builder' && <CustomTabBuilderTab tabId={customTabToEdit || undefined} onBack={() => setActiveTab('custom-tabs')} onSuccess={() => setActiveTab('custom-tabs')} />}
 
           {/* ==========================================
              TAB 2: LIBRARY OVERVIEW (WIDGET LIBRARY)
@@ -497,6 +499,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
              ========================================== */}
           {currentTab === 'widget-weather' && <WeatherWidgetTab />}
 
+          {/* ==========================================
+             CUSTOM TABS
+             ========================================== */}
+          {currentTab === 'custom-tabs' && <CustomTabsListTab onEditTab={(id) => { setEditingTabId(id); setActiveTab('custom-tab-builder'); }} />}
+          {currentTab === 'custom-tab-builder' && <CustomTabBuilderTab tabId={editingTabId} onBack={() => { setEditingTabId(undefined); setActiveTab('custom-tabs'); }} onSuccess={() => { setEditingTabId(undefined); setActiveTab('custom-tabs'); }} />}
         </div>
       </div>
 

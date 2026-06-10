@@ -1,16 +1,10 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import DevicesWidget from '../../widgets/DevicesWidget';
-import QuickStatsWidget from '../../widgets/QuickStatsWidget';
-import TailscaleWidget from '../../widgets/TailscaleWidget';
-import DockerWidget from '../../widgets/DockerWidget';
+import { WidgetRenderer } from '../../widgets/WidgetRenderer';
+import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import BentoGrid from './BentoGrid';
-import SystemMonitor from './SystemMonitor';
 import Footer from '../../layout/Footer';
-import ClockWidget from '../../widgets/ClockWidget';
-import CalendarWidget from '../../widgets/CalendarWidget';
-import WeatherWidget from '../../widgets/WeatherWidget';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
@@ -165,78 +159,22 @@ export default function HomeTab({
 
   const tabConf = config.settings?.tabs?.home || {};
 
-  const widgets = [
-    {
-      id: 'devices',
-      visible: !(config.settings?.hideDevices || (tabConf as any).hideDevices),
-      sidebar: config.settings?.devicesSidebar || 'left',
-      order: config.settings?.devicesOrder ?? 0,
-      render: () => (
-        <DevicesWidget
-          devices={config.devices || []}
-          editMode={editMode}
-          onAddDevice={() => setDeviceModal({ open: true })}
-          onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
-          onDeleteDevice={handleDeleteDevice}
-          onReorderDevices={reorderDevices}
-        />
-      )
-    },
-    {
-      id: 'quickstats',
-      visible: !(config.settings?.hideQuickStats || (tabConf as any).hideQuickStats),
-      sidebar: config.settings?.quickStatsSidebar || 'right',
-      order: config.settings?.quickStatsOrder ?? 1,
-      render: () => (
-        <QuickStatsWidget categories={config.categories} editMode={editMode} />
-      )
-    },
-    {
-      id: 'tailscale',
-      visible: !(config.settings?.hideTailscaleStatus || (tabConf as any).hideTailscaleStatus),
-      sidebar: config.settings?.tailscaleSidebar || 'right',
-      order: config.settings?.tailscaleOrder ?? 2,
-      render: () => (
-        <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />
-      )
-    },
-    {
-      id: 'dockeractions',
-      visible: !((config.settings?.hideDockerActions ?? true) || (tabConf as any).hideDockerActions),
-      sidebar: config.settings?.dockerActionsSidebar || 'right',
-      order: config.settings?.dockerActionsOrder ?? 3,
-      render: () => (
-        <DockerWidget editMode={editMode} />
-      )
-    },
-    {
-      id: 'clock',
-      visible: !(config.settings?.hideClock || (tabConf as any).hideClock),
-      sidebar: config.settings?.clockSidebar || 'left',
-      order: config.settings?.clockOrder ?? -1,
-      render: () => (
-        <ClockWidget editMode={editMode} />
-      )
-    },
-    {
-      id: 'calendar',
-      visible: !((config.settings?.hideCalendar ?? true) || (tabConf as any).hideCalendar),
-      sidebar: config.settings?.calendarSidebar || 'right',
-      order: config.settings?.calendarOrder ?? 4,
-      render: () => (
-        <CalendarWidget editMode={editMode} />
-      )
-    },
-    {
-      id: 'weather',
-      visible: !(config.settings?.hideWeather || (tabConf as any).hideWeather),
-      sidebar: config.settings?.weatherSidebar || 'right',
-      order: config.settings?.weatherOrder ?? 5,
-      render: () => (
-        <WeatherWidget editMode={editMode} />
-      )
-    }
-  ];
+  const widgets = WIDGET_REGISTRY.map(w => {
+    const hideKey = getWidgetConfigKeys(w.id).hide;
+    const sidebarKey = getWidgetConfigKeys(w.id).sidebar;
+    const orderKey = getWidgetConfigKeys(w.id).order;
+
+    const isGloballyHidden = (config.settings as any)?.[hideKey] ?? w.defaultHidden;
+    const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
+
+    return {
+      id: w.id,
+      visible: !(isGloballyHidden || isTabHidden),
+      sidebar: (config.settings as any)?.[sidebarKey] || w.defaultSidebar,
+      order: (config.settings as any)?.[orderKey] ?? w.defaultOrder,
+      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config.categories} />
+    };
+  });
 
   const onUpdateWidgetHeight = useCallback(async (id: string, height: number) => {
     if (!config) return;
@@ -265,6 +203,7 @@ export default function HomeTab({
 
   const baseLeftWidgets = widgets.filter(w => w.visible && w.sidebar === 'left').sort((a, b) => a.order - b.order);
   const baseRightWidgets = widgets.filter(w => w.visible && w.sidebar === 'right').sort((a, b) => a.order - b.order);
+  const baseBottomWidgets = widgets.filter(w => w.visible && w.sidebar === 'bottom').sort((a, b) => a.order - b.order);
 
   const leftSidebars = [];
   const rightSidebars = [];
@@ -329,8 +268,24 @@ export default function HomeTab({
               onDeleteSlot={removeSlot}
             />
 
-            {config.settings.showMonitor && (
-              <SystemMonitor isDark={true} isVisible={isVisible} />
+            {!tabConf.hideBottomPanel && baseBottomWidgets.length > 0 && (
+              <section className="nd-bottom-panel" style={{ marginTop: 24, marginBottom: 24 }}>
+                {(tabConf.bottomPanelTitle ?? 'Activité réseau') && (
+                  <div className="nd-section-title" style={{ marginBottom: 16 }}>
+                    {tabConf.bottomPanelTitle ?? 'Activité réseau'}
+                  </div>
+                )}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                  gap: 16,
+                  alignItems: 'stretch'
+                }}>
+                  {baseBottomWidgets.map(w => (
+                    <React.Fragment key={w.id}>{w.render()}</React.Fragment>
+                  ))}
+                </div>
+              </section>
             )}
 
             <Footer

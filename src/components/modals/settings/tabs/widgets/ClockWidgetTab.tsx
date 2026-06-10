@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
+import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import CustomSelect from '../../../../shared/CustomSelect';
 
 export function ClockWidgetTab() {
@@ -38,66 +39,7 @@ export function ClockWidgetTab() {
 
       {!hideClock && (
         <>
-          {/* Column Segment Selector */}
-          <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => handleWidgetPosition('clock', 'left')}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid',
-                  borderColor: clockSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
-                  background: clockSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
-                  color: clockSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                  borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: clockSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
-                }}
-              >
-                👈 Barre Gauche
-              </button>
-              <button
-                onClick={() => handleWidgetPosition('clock', 'right')}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid',
-                  borderColor: clockSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
-                  background: clockSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
-                  color: clockSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                  borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: clockSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
-                }}
-              >
-                Barre Droite 👉
-              </button>
-            </div>
-          </div>
-
-          {/* Priority / Sorting Order */}
-          <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button 
-                onClick={() => handleWidgetOrder('clock', Math.max(-5, clockOrder - 1))}
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
-              >
-                -
-              </button>
-              <input
-                type="number"
-                className="nd-input"
-                min="-5"
-                max="20"
-                value={clockOrder}
-                onChange={(e) => handleWidgetOrder('clock', Number(e.target.value))}
-                style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
-              />
-              <button 
-                onClick={() => handleWidgetOrder('clock', clockOrder + 1)}
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
-              >
-                +
-              </button>
-            </div>
-          </div>
+          <WidgetLayoutConfig widgetId="clock" />
 
           {/* Timezone Configuration */}
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>

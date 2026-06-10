@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Palette, Cpu, Sliders, ChevronRight, Monitor, Activity, Shield, Container, Clipboard, Calendar, Cloud, Home, Layout, Layers, X, Smartphone, PanelTop } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 
 interface SettingsSidebarProps {
   currentTab: string;
@@ -12,15 +13,6 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
   const { config } = useConfig();
   const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(() => currentTab?.startsWith('widget-'));
   const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(() => currentTab?.startsWith('tabs-'));
-
-  // Read widget visibility states
-  const hideDevices = config?.settings?.hideDevices ?? false;
-  const hideQuickStats = config?.settings?.hideQuickStats ?? false;
-  const hideTailscaleStatus = config?.settings?.hideTailscaleStatus ?? false;
-  const hideDockerActions = config?.settings?.hideDockerActions ?? false;
-  const hideClock = config?.settings?.hideClock ?? false;
-  const hideCalendar = config?.settings?.hideCalendar ?? false;
-  const hideWeather = config?.settings?.hideWeather ?? false;
 
   return (
     <div className="nd-settings-sidebar">
@@ -153,15 +145,15 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
             </button>
             {isWidgetsMenuOpen && (
               <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { id: 'widget-devices', icon: <Monitor size={18} />, color: '#3fb950', bg: 'rgba(63, 185, 80, 0.08)', label: 'Appareils', desc: 'CPU, RAM, Proxmox, Glances et serveurs.', active: !hideDevices },
-                  { id: 'widget-quickstats', icon: <Activity size={18} />, color: '#3fb950', bg: 'rgba(63, 185, 80, 0.08)', label: "Vue d'ensemble", desc: 'Résumé des services, catégories et ports ouverts.', active: !hideQuickStats },
-                  { id: 'widget-tailscale', icon: <Shield size={18} />, color: 'var(--nd-purple)', bg: 'rgba(168, 85, 247, 0.08)', label: 'VPN Tailscale', desc: 'État de connexion et liste des machines actives.', active: !hideTailscaleStatus },
-                  { id: 'widget-dockeractions', icon: <Container size={18} />, color: 'var(--nd-orange)', bg: 'rgba(240, 136, 62, 0.08)', label: 'Actions Docker', desc: "Contrôles d'alimentation rapides pour vos conteneurs.", active: !hideDockerActions },
-                  { id: 'widget-clock', icon: <Clipboard size={18} />, color: 'var(--nd-accent)', bg: 'rgba(56, 189, 248, 0.08)', label: 'Horloge / Date', desc: "Affichage de l'heure et de la date.", active: !hideClock },
-                  { id: 'widget-calendar', icon: <Calendar size={18} />, color: '#fb923c', bg: 'rgba(251, 146, 60, 0.08)', label: 'Calendrier', desc: 'Affichage des jours et des événements.', active: !hideCalendar },
-                  { id: 'widget-weather', icon: <Cloud size={18} />, color: 'var(--nd-accent)', bg: 'rgba(56, 189, 248, 0.08)', label: 'Météo', desc: "Prévisions et température locale.", active: !hideWeather },
-                ].sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1)).map((w, index, array) => {
+                {WIDGET_REGISTRY.map((w) => {
+                  const keys = getWidgetConfigKeys(w.id);
+                  const isHidden = (config?.settings as any)?.[keys.hide] ?? w.defaultHidden;
+                  return {
+                    ...w,
+                    active: !isHidden,
+                    iconNode: <span style={{ fontSize: '1rem', lineHeight: 1 }}>{w.icon}</span>
+                  };
+                }).sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1)).map((w, index, array) => {
                   const isFirstInactive = !w.active && (index === 0 || array[index - 1].active);
                   return (
                     <React.Fragment key={w.id}>
@@ -173,15 +165,15 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                         </div>
                       )}
                       <button
-                        onClick={() => setActiveTab(w.id)}
-                        className={`nd-settings-nav-item ${currentTab === w.id ? 'nd-settings-nav-item--active' : ''}`}
+                        onClick={() => setActiveTab(`widget-${w.id}`)}
+                        className={`nd-settings-nav-item ${currentTab === `widget-${w.id}` ? 'nd-settings-nav-item--active' : ''}`}
                       >
                         <div style={{ background: w.bg, padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: w.color, flexShrink: 0 }}>
-                          {w.icon}
+                          {w.iconNode}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            Widget {w.label}
+                            {w.name}
                             <span style={{
                               width: 6,
                               height: 6,

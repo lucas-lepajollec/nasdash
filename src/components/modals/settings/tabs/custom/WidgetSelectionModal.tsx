@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Clock, CloudRain, Activity } from 'lucide-react';
+import { X } from 'lucide-react';
 import { CustomTabWidgetInfo } from '@/lib/types';
+import { WIDGET_REGISTRY } from '@/lib/widgetRegistry';
 
 interface WidgetSelectionModalProps {
   onClose: () => void;
@@ -16,13 +17,12 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
   }, []);
 
   const availableWidgets = [
-    { id: 'clock', name: 'Horloge', icon: <Clock size={24} />, desc: 'Heure et date.' },
-    { id: 'weather', name: 'Météo', icon: <CloudRain size={24} />, desc: 'Prévisions météo.' },
-    { id: 'quickstats', name: 'Quick Stats', icon: <Activity size={24} />, desc: 'Ping et latence.' },
-    { id: 'devices', name: 'Appareils', icon: <Activity size={24} />, desc: 'Ressources système.' },
-    { id: 'tailscale', name: 'Tailscale', icon: <Activity size={24} />, desc: 'Réseau VPN.' },
-    { id: 'dockeractions', name: 'Docker', icon: <Activity size={24} />, desc: 'Boutons conteneurs.' },
-    { id: 'calendar', name: 'Calendrier', icon: <Activity size={24} />, desc: 'Événements prévus.' },
+    ...WIDGET_REGISTRY.map(w => ({
+      id: w.id,
+      name: w.name,
+      icon: <div style={{ fontSize: '24px', lineHeight: 1 }}>{w.icon}</div>,
+      desc: w.description
+    })),
     { id: 'spacer', name: 'Espace Vide', icon: <div style={{width: 24, height: 24, border: '2px dashed var(--nd-accent)', borderRadius: 4}} />, desc: 'Espace vide ajustable.' }
   ];
 

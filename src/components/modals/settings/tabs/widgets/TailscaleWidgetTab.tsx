@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
+import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 
 export function TailscaleWidgetTab() {
   const { config, updateConfig } = useConfig();
@@ -38,64 +39,7 @@ export function TailscaleWidgetTab() {
 
       {!hideTailscaleStatus && (
         <>
-          <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => handleWidgetPosition('tailscale', 'left')}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid',
-                  borderColor: tailscaleSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
-                  background: tailscaleSidebar === 'left' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
-                  color: tailscaleSidebar === 'left' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                  borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: tailscaleSidebar === 'left' ? '0 0 8px var(--nd-accent-glow)' : 'none'
-                }}
-              >
-                👈 Barre Gauche
-              </button>
-              <button
-                onClick={() => handleWidgetPosition('tailscale', 'right')}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid',
-                  borderColor: tailscaleSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-card-border)',
-                  background: tailscaleSidebar === 'right' ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
-                  color: tailscaleSidebar === 'right' ? 'var(--nd-accent)' : 'var(--nd-text)',
-                  borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: tailscaleSidebar === 'right' ? '0 0 8px var(--nd-accent-glow)' : 'none'
-                }}
-              >
-                Barre Droite 👉
-              </button>
-            </div>
-          </div>
-
-          <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button 
-                onClick={() => handleWidgetOrder('tailscale', Math.max(0, tailscaleOrder - 1))}
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
-              >
-                -
-              </button>
-              <input
-                type="number"
-                className="nd-input"
-                min="0"
-                max="20"
-                value={tailscaleOrder}
-                onChange={(e) => handleWidgetOrder('tailscale', Number(e.target.value))}
-                style={{ flex: 1, height: '32px', fontSize: '0.8rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', borderRadius: 'var(--nd-card-radius)' }}
-              />
-              <button 
-                onClick={() => handleWidgetOrder('tailscale', tailscaleOrder + 1)}
-                style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text)', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}
-              >
-                +
-              </button>
-            </div>
-          </div>
+          <WidgetLayoutConfig widgetId="tailscale" />
 
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Authentification API Tailscale</h4>

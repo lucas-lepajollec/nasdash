@@ -288,13 +288,6 @@ export async function PUT(req: NextRequest) {
     if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
 
     // Advanced UI Customization Toggles
-    if (body.hideDockerActions !== undefined) config.settings.hideDockerActions = body.hideDockerActions;
-    if (body.hideTailscaleStatus !== undefined) config.settings.hideTailscaleStatus = body.hideTailscaleStatus;
-    if (body.hideDevices !== undefined) config.settings.hideDevices = body.hideDevices;
-    if (body.hideQuickStats !== undefined) config.settings.hideQuickStats = body.hideQuickStats;
-    if (body.hideClock !== undefined) config.settings.hideClock = body.hideClock;
-    if (body.hideCalendar !== undefined) config.settings.hideCalendar = body.hideCalendar;
-    if (body.hideWeather !== undefined) config.settings.hideWeather = body.hideWeather;
     if (body.hideWidgetTitles !== undefined) config.settings.hideWidgetTitles = body.hideWidgetTitles;
     if (body.calendarUrl !== undefined) config.settings.calendarUrl = body.calendarUrl;
     if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
@@ -304,23 +297,12 @@ export async function PUT(req: NextRequest) {
     if (body.mobileWallpaper !== undefined) config.settings.mobileWallpaper = body.mobileWallpaper;
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
     
-    // Sidebar widget alignment positions
-    if (body.devicesSidebar !== undefined) config.settings.devicesSidebar = body.devicesSidebar;
-    if (body.quickStatsSidebar !== undefined) config.settings.quickStatsSidebar = body.quickStatsSidebar;
-    if (body.tailscaleSidebar !== undefined) config.settings.tailscaleSidebar = body.tailscaleSidebar;
-    if (body.dockerActionsSidebar !== undefined) config.settings.dockerActionsSidebar = body.dockerActionsSidebar;
-    if (body.clockSidebar !== undefined) config.settings.clockSidebar = body.clockSidebar;
-    if (body.calendarSidebar !== undefined) config.settings.calendarSidebar = body.calendarSidebar;
-    if (body.weatherSidebar !== undefined) config.settings.weatherSidebar = body.weatherSidebar;
-    
-    // Sidebar widget order preferences
-    if (body.devicesOrder !== undefined) config.settings.devicesOrder = body.devicesOrder;
-    if (body.quickStatsOrder !== undefined) config.settings.quickStatsOrder = body.quickStatsOrder;
-    if (body.tailscaleOrder !== undefined) config.settings.tailscaleOrder = body.tailscaleOrder;
-    if (body.dockerActionsOrder !== undefined) config.settings.dockerActionsOrder = body.dockerActionsOrder;
-    if (body.clockOrder !== undefined) config.settings.clockOrder = body.clockOrder;
-    if (body.calendarOrder !== undefined) config.settings.calendarOrder = body.calendarOrder;
-    if (body.weatherOrder !== undefined) config.settings.weatherOrder = body.weatherOrder;
+    // Dynamically save all widget specific states (hide[Widget], [widget]Sidebar, [widget]Order)
+    Object.keys(body).forEach(key => {
+      if (key.startsWith('hide') || key.endsWith('Sidebar') || key.endsWith('Order')) {
+        (config.settings as any)[key] = body[key];
+      }
+    });
     if (body.weatherLocation !== undefined) config.settings.weatherLocation = body.weatherLocation;
     if (body.weatherLocations !== undefined) config.settings.weatherLocations = body.weatherLocations;
     if (body.activeWeatherLocationId !== undefined) config.settings.activeWeatherLocationId = body.activeWeatherLocationId;
