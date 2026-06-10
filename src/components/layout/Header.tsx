@@ -25,6 +25,7 @@ interface HeaderProps {
   tabs?: TabDef[];
   onSwitchTab?: (id: TabId) => void;
   onOpenTabManager?: () => void;
+  onAddWidget?: () => void;
 }
 
 export default function Header(props: HeaderProps) {
@@ -173,10 +174,18 @@ export default function Header(props: HeaderProps) {
       {props.editMode && (isHome || props.activeTab === 'widgets' || isCustomTab) && (
         <div style={{ display: 'flex', gap: 8 }}>
           {(isHome || props.activeTab === 'widgets') && (
-            <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
-              <Plus size={12} />
-              Emplacement
-            </button>
+            <>
+              <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
+                <Plus size={12} />
+                Emplacement
+              </button>
+              {isHome && (
+                <button className="nd-btn" onClick={props.onAddWidget} title="Ajouter un widget">
+                  <Plus size={12} />
+                  Widget
+                </button>
+              )}
+            </>
           )}
           {isHome && (
             <button className="nd-btn" onClick={props.onAddCategory}>
@@ -276,23 +285,24 @@ export default function Header(props: HeaderProps) {
               background: 'var(--nd-card-bg)',
               border: '1px solid var(--nd-card-border)',
               borderRadius: 'var(--nd-card-radius)',
-              padding: 20,
+              padding: 16,
               display: 'flex',
               flexDirection: 'column',
-              gap: 20,
+              gap: 16,
               boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600, margin: 0 }}>Menu</h3>
-              <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 8 }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Menu</h3>
+              <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 6 }}>
                 <X size={16} />
               </button>
             </div>
 
             {/* Tabs List */}
             {props.tabs && props.tabs.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>Navigation</span>
                 {props.tabs.map(tab => {
                   const isActive = tab.id === props.activeTab;
                   return (
@@ -303,54 +313,60 @@ export default function Header(props: HeaderProps) {
                         props.onSwitchTab?.(tab.id);
                         setMobileMenuOpen(false);
                       }}
-                      style={{ justifyContent: 'flex-start', padding: '12px 16px', width: '100%', border: isActive ? '1px solid var(--nd-accent)' : '1px solid transparent' }}
+                      style={{ justifyContent: 'flex-start', padding: '10px 12px', width: '100%', border: isActive ? '1px solid var(--nd-accent)' : '1px solid transparent' }}
                     >
-                      <span className="nd-dock-item-icon" style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--nd-accent)' : 'inherit', fontSize: '18px' }}>{tab.icon}</span>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 500 }}>{tab.name}</span>
+                      <span className="nd-dock-item-icon" style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--nd-accent)' : 'inherit', fontSize: '16px' }}>{tab.icon}</span>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{tab.name}</span>
                     </button>
                   );
                 })}
               </div>
             )}
 
-            <div style={{ height: 1, background: 'var(--nd-border)', margin: '4px 0' }} />
+            <div style={{ height: 1, background: 'var(--nd-border)', margin: '0' }} />
 
             {/* Global Actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 10 }}>
-              <button className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleSecret} style={{ flexDirection: 'column', height: 'auto', padding: '16px 8px', gap: 8 }}>
-                {props.secretMode ? <Eye size={20} /> : <EyeOff size={20} />}
-                <span style={{ fontSize: '0.8rem' }}>{props.secretMode ? 'Cacher' : 'Visible'}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              <button className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleSecret} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                {props.secretMode ? <Eye size={18} /> : <EyeOff size={18} />}
+                <span style={{ fontSize: '0.75rem' }}>{props.secretMode ? 'Cacher' : 'Visible'}</span>
               </button>
-              <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleEdit} style={{ flexDirection: 'column', height: 'auto', padding: '16px 8px', gap: 8 }}>
-                <Pencil size={20} />
-                <span style={{ fontSize: '0.8rem' }}>Éditer</span>
+              <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleEdit} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                <Pencil size={18} />
+                <span style={{ fontSize: '0.75rem' }}>Éditer</span>
               </button>
-              <button className="nd-btn" onClick={() => { props.onOpenSettings(); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '16px 8px', gap: 8 }}>
-                <Settings size={20} />
-                <span style={{ fontSize: '0.8rem' }}>Paramètres</span>
+              <button className="nd-btn" onClick={() => { props.onOpenSettings(); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                <Settings size={18} />
+                <span style={{ fontSize: '0.75rem' }}>Paramètres</span>
               </button>
             </div>
 
             {props.editMode && (
               <>
-                <div style={{ height: 1, background: 'var(--nd-border)', margin: '4px 0' }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ height: 1, background: 'var(--nd-border)', margin: '0' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>Édition</span>
                   {(isHome || props.activeTab === 'widgets') && (
-                    <div style={{ display: 'grid', gridTemplateColumns: isHome ? '1fr 1fr' : '1fr', gap: 8 }}>
-                      <button className="nd-btn" onClick={() => { props.onAddSlot?.(); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
-                        <Plus size={14} style={{ marginRight: 6 }} /> Emplacement
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <button className="nd-btn" onClick={() => { props.onAddSlot?.(); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
+                        <Plus size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Emplacement
                       </button>
                       {isHome && (
-                        <button className="nd-btn" onClick={() => { props.onAddCategory(); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
-                          <Plus size={14} style={{ marginRight: 6 }} /> Catégorie
-                        </button>
+                        <>
+                          <button className="nd-btn" onClick={() => { props.onAddWidget?.(); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
+                            <Plus size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Widget
+                          </button>
+                          <button className="nd-btn" onClick={() => { props.onAddCategory(); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
+                            <Plus size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Catégorie
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
                   {isCustomTab && (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-                      <button className="nd-btn" onClick={() => { setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }); setMobileMenuOpen(false); }} style={{ justifyContent: 'center' }}>
-                        <Pencil size={14} style={{ marginRight: 6 }} /> Modifier la structure
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <button className="nd-btn" onClick={() => { setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
+                        <Pencil size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Modifier la structure
                       </button>
                     </div>
                   )}

@@ -63,7 +63,12 @@
             {
               "id": "d4ae1a6e-4a03-44a3-9ec6-3cff835d2925",
               "width": "75%",
-              "content": null
+              "content": null,
+              "widgets": [
+                {
+                  "type": "devices"
+                }
+              ]
             },
             {
               "id": "fc39e65e-c1ec-42d4-9bbd-9e119833f829",

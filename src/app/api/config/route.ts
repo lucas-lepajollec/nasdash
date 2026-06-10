@@ -285,6 +285,7 @@ export async function PUT(req: NextRequest) {
     if (body.tabIcons !== undefined) config.settings.tabIcons = body.tabIcons;
     if (body.theme !== undefined) config.settings.theme = body.theme;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
+    if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
 
     // Advanced UI Customization Toggles
     if (body.hideDockerActions !== undefined) config.settings.hideDockerActions = body.hideDockerActions;

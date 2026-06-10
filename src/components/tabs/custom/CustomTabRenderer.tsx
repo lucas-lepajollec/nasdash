@@ -15,9 +15,10 @@ import { Settings2, Plus, PenTool } from 'lucide-react';
 interface CustomTabRendererProps {
   tab: TabDef;
   editMode: boolean;
+  showSensitive?: boolean;
 }
 
-export default function CustomTabRenderer({ tab, editMode }: CustomTabRendererProps) {
+export default function CustomTabRenderer({ tab, editMode, showSensitive = false }: CustomTabRendererProps) {
   const { config, setSettingsModal } = useConfig();
   const [layout, setLayout] = useState<CustomTabLayout | null>(null);
 
@@ -83,7 +84,7 @@ export default function CustomTabRenderer({ tab, editMode }: CustomTabRendererPr
       case 'devices':
         return <DevicesWidget devices={config?.devices || []} editMode={editMode} />;
       case 'tailscale':
-        return <TailscaleWidget editMode={editMode} />;
+        return <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />;
       case 'dockeractions':
         return <DockerWidget editMode={editMode} />;
       case 'calendar':

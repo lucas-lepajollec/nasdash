@@ -207,6 +207,10 @@ export interface DashboardConfig {
         hideClock?: boolean;
         hideCalendar?: boolean;
         hideWeather?: boolean;
+        hideLeftSidebar?: boolean;
+        hideRightSidebar?: boolean;
+        leftSidebarPosition?: 'left' | 'right';
+        rightSidebarPosition?: 'left' | 'right';
       };
       widgets?: {
         hideDockerActions?: boolean;
@@ -220,6 +224,7 @@ export interface DashboardConfig {
     };
     widgetsOrder?: string[];
     widgetsTotalSlots?: number;
+    homeWidgets?: (CustomTabWidgetInfo & { id: string, order: number })[];
     // Advanced Customization
     hideDockerActions?: boolean;
     hideTailscaleStatus?: boolean;

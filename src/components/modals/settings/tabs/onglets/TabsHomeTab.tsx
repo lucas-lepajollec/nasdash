@@ -41,6 +41,56 @@ export function TabsHomeTab() {
       </div>
 
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+        <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Disposition (Layout)</h4>
+        <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+          Gérez l'affichage et la position des panneaux latéraux sur l'onglet Home.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Left Panel */}
+          <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Panneau Gauche</span>
+              <ToggleSwitch
+                checked={!config?.settings?.tabs?.home?.hideLeftSidebar}
+                onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideLeftSidebar: !val } } })}
+                label="Afficher le panneau"
+              />
+            </div>
+            <CustomSelect
+              value={config?.settings?.tabs?.home?.leftSidebarPosition || 'left'}
+              onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, leftSidebarPosition: val } } })}
+              options={[
+                { value: 'left', label: 'Position : À gauche' },
+                { value: 'right', label: 'Position : À droite' }
+              ]}
+              style={{ width: '100%' }}
+            />
+          </div>
+          
+          {/* Right Panel */}
+          <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Panneau Droit</span>
+              <ToggleSwitch
+                checked={!config?.settings?.tabs?.home?.hideRightSidebar}
+                onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, hideRightSidebar: !val } } })}
+                label="Afficher le panneau"
+              />
+            </div>
+            <CustomSelect
+              value={config?.settings?.tabs?.home?.rightSidebarPosition || 'right'}
+              onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, home: { ...config?.settings?.tabs?.home, rightSidebarPosition: val } } })}
+              options={[
+                { value: 'left', label: 'Position : À gauche' },
+                { value: 'right', label: 'Position : À droite' }
+              ]}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Widgets</h4>
         <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
           Affichez ou masquez les widgets actifs spécifiquement sur l'onglet Home. (Seuls les widgets activés dans Bibliothèque Globale sont listés).

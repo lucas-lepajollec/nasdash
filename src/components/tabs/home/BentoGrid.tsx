@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Category, Service } from '@/lib/types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Category, Service, CustomTabWidgetInfo } from '@/lib/types';
+import { GripHorizontal, Trash2 } from 'lucide-react';
 import CategoryCard from './CategoryCard';
 import ServiceItem from './ServiceItem';
+import HomeWidgetRenderer from './HomeWidgetRenderer';
 import ConfirmModal from '../../modals/ConfirmModal';
 import {
   DndContext,
@@ -20,44 +22,58 @@ import {
   useDroppable,
   defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
-import { Trash2 } from 'lucide-react';
 
 export interface BentoGridProps {
   categories: Category[];
+  homeWidgets?: (CustomTabWidgetInfo & { id: string, order: number })[];
   totalSlots: number;
   editMode: boolean;
   searchQuery: string;
   showSecretSections: boolean;
   showSensitive: boolean;
   onReorder: (newCategories: Category[]) => void;
+  onReorderWidgets?: (newWidgets: (CustomTabWidgetInfo & { id: string, order: number })[]) => void;
   onEditCategory: (cat: Category) => void;
   onDeleteCategory: (id: string) => void;
+  onDeleteWidget?: (id: string) => void;
+  onUpdateWidgetHeight?: (id: string, height: number) => void;
   onAddService: (categoryId: string) => void;
   onDeleteSlot: (slotId: number) => void;
 }
 
-const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showSecretSections, showSensitive, onReorder, onEditCategory, onDeleteCategory, onAddService, onDeleteSlot }: BentoGridProps) => {
+const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, searchQuery, showSecretSections, showSensitive, onReorder, onReorderWidgets, onEditCategory, onDeleteCategory, onDeleteWidget, onUpdateWidgetHeight, onAddService, onDeleteSlot }: BentoGridProps) => {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
-  const visible = categories.filter(c => showSecretSections || !c.isSecret);
+  const visibleCategories = categories.filter(c => showSecretSections || !c.isSecret);
 
-  const [activeCat, setActiveCat] = useState<Category | null>(null);
+  type GridItemType = { isCategory: boolean; data: any; order: number };
+  const gridItems: GridItemType[] = [
+    ...visibleCategories.map(c => ({ isCategory: true, data: c, order: c.order })),
+    ...homeWidgets.map(w => ({ isCategory: false, data: w, order: w.order }))
+  ];
+  gridItems.sort((a, b) => a.order - b.order);
+
+  const [activeItem, setActiveItem] = useState<GridItemType | null>(null);
   const [activeService, setActiveService] = useState<Service | null>(null);
-  const [deleteItem, setDeleteItem] = useState<{ type: 'category' | 'slot', id: string, name?: string } | null>(null);
+  const [deleteItem, setDeleteItem] = useState<{ type: 'category' | 'slot' | 'widget', id: string, name?: string } | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
-    if (event.active.data.current?.type === 'category') {
-      setActiveCat(event.active.data.current?.category as Category);
+    if (event.active.data.current?.type === 'category' || event.active.data.current?.type === 'widget') {
+      setActiveItem({ 
+        isCategory: event.active.data.current?.type === 'category', 
+        data: event.active.data.current?.type === 'category' ? event.active.data.current?.category : event.active.data.current?.widget, 
+        order: (event.active.data.current?.type === 'category' ? event.active.data.current?.category?.order : event.active.data.current?.widget?.order) || 0
+      });
     } else if (event.active.data.current?.type === 'service') {
       setActiveService(event.active.data.current?.service as Service);
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveCat(null);
+    setActiveItem(null);
     setActiveService(null);
     const { active, over } = event;
     if (!over) return;
@@ -65,30 +81,66 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
     const activeType = active.data.current?.type;
     const targetType = over.data.current?.type;
 
-    if (activeType === 'category') {
-      const activeData = active.data.current?.category as Category;
+    if (activeType === 'category' || activeType === 'widget') {
+      const isCategory = activeType === 'category';
+      const activeData = isCategory ? active.data.current?.category : active.data.current?.widget;
       let targetSlotId: number | undefined = undefined;
 
       if (targetType === 'category-slot') {
         targetSlotId = over.data.current?.slotId as number;
-      } else if (over.data.current?.categoryId) {
-        // Find parent category order if dropped inside an inner category droppable
-        const targetCat = categories.find(c => c.id === over.data.current?.categoryId);
-        if (targetCat) targetSlotId = targetCat.order;
+      } else if (over.data.current?.categoryId || over.data.current?.widgetId) {
+        // Find parent order if dropped inside an inner droppable
+        const targetId = over.data.current?.categoryId || over.data.current?.widgetId;
+        const targetItem = gridItems.find(i => i.data.id === targetId);
+        if (targetItem) targetSlotId = targetItem.order;
       }
 
       if (targetSlotId === undefined || !activeData || activeData.order === targetSlotId) return;
 
-      const targetCat = categories.find(c => c.order === targetSlotId);
+      const targetItem = gridItems.find(i => i.order === targetSlotId);
 
-      const newCategories = categories.map(c => {
-        if (c.id === activeData.id) return { ...c, order: targetSlotId };
-        if (targetCat && c.id === targetCat.id) return { ...c, order: activeData.order };
-        return c;
-      });
+      // We need to update either categories or homeWidgets based on what was dragged.
+      // Also, we must swap their orders.
+      if (isCategory) {
+        const newCategories = categories.map(c => {
+          if (c.id === activeData.id) return { ...c, order: targetSlotId };
+          if (targetItem?.isCategory && c.id === targetItem.data.id) return { ...c, order: activeData.order };
+          return c;
+        });
+        
+        if (targetItem && !targetItem.isCategory && onReorderWidgets) {
+          // Cross-swap: target was a widget
+          const newWidgets = homeWidgets.map(w => {
+            if (w.id === targetItem.data.id) return { ...w, order: activeData.order };
+            return w;
+          });
+          onReorderWidgets(newWidgets);
+        }
+        
+        newCategories.sort((a, b) => a.order - b.order);
+        onReorder(newCategories);
+      } else {
+        if (onReorderWidgets) {
+          const newWidgets = homeWidgets.map(w => {
+            if (w.id === activeData.id) return { ...w, order: targetSlotId };
+            if (targetItem && !targetItem.isCategory && w.id === targetItem.data.id) return { ...w, order: activeData.order };
+            return w;
+          });
 
-      newCategories.sort((a, b) => a.order - b.order);
-      onReorder(newCategories);
+          if (targetItem?.isCategory) {
+            // Cross-swap: target was a category
+            const newCategories = categories.map(c => {
+              if (c.id === targetItem.data.id) return { ...c, order: activeData.order };
+              return c;
+            });
+            newCategories.sort((a, b) => a.order - b.order);
+            onReorder(newCategories);
+          }
+
+          newWidgets.sort((a, b) => a.order - b.order);
+          onReorderWidgets(newWidgets);
+        }
+      }
       return;
     }
 
@@ -153,29 +205,38 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
   };
 
   const [colCount, setColCount] = useState(4);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 960) setColCount(1);
-      else if (window.innerWidth <= 1350) setColCount(2);
-      else if (window.innerWidth <= 1700) setColCount(3);
-      else setColCount(4);
-    };
-    handleResize(); // Initial check
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width <= 600) setColCount(1);
+        else if (width <= 900) setColCount(2);
+        else if (width <= 1200) setColCount(3);
+        else if (width <= 1500) setColCount(4);
+        else if (width <= 1800) setColCount(5);
+        else setColCount(6);
+      }
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
-  // Ensure grid stretches if a visible category has an order higher than totalSlots
+  // Ensure grid stretches if an item has an order higher than totalSlots
   const actualSlotsCount = Math.max(
     totalSlots,
-    ...visible.map(c => (typeof c.order === 'number' ? c.order + 1 : 0)),
+    ...gridItems.map(i => (typeof i.order === 'number' ? i.order + 1 : 0)),
     0
   );
 
   const slots = Array.from({ length: actualSlotsCount }, (_, i) => ({
     id: i,
-    category: visible.find(c => c.order === i)
+    item: gridItems.find(item => item.order === i)
   }));
 
   const columns: typeof slots[] = Array.from({ length: colCount }, () => []);
@@ -183,21 +244,37 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
 
   return (
     <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div ref={containerRef} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
         {columns.map((col, ci) => (
           <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
             {col.map((slot) => (
-              <DroppableSlot key={slot.id} slotId={slot.id} category={slot.category} editMode={editMode} onDeleteSlot={(id: number) => setDeleteItem({ type: 'slot', id: id.toString() })}>
-                {slot.category && (
-                  <CategoryCard
-                    category={slot.category}
-                    editMode={editMode}
-                    searchQuery={searchQuery}
-                    onEditCategory={onEditCategory}
-                    onDeleteCategory={(id, name) => setDeleteItem({ type: 'category', id, name })}
-                    onAddService={onAddService}
-                    showSensitive={showSensitive}
-                  />
+              <DroppableSlot key={slot.id} slotId={slot.id} item={slot.item} editMode={editMode} onDeleteSlot={(id: number) => setDeleteItem({ type: 'slot', id: id.toString() })}>
+                {slot.item && (
+                  slot.item.isCategory ? (
+                    <CategoryCard
+                      category={slot.item.data}
+                      editMode={editMode}
+                      searchQuery={searchQuery}
+                      onEditCategory={onEditCategory}
+                      onDeleteCategory={(id, name) => setDeleteItem({ type: 'category', id, name })}
+                      onAddService={onAddService}
+                      showSensitive={showSensitive}
+                    />
+                  ) : (
+                    <DraggableWidgetWrapper 
+                      widget={slot.item.data} 
+                      editMode={editMode} 
+                      onDelete={() => setDeleteItem({ type: 'widget', id: slot.item!.data.id })}
+                    >
+                      <HomeWidgetRenderer 
+                        widget={slot.item.data} 
+                        editMode={editMode} 
+                        showSensitive={showSensitive}
+                        onDelete={(id) => setDeleteItem({ type: 'widget', id })} 
+                        onUpdateHeight={onUpdateWidgetHeight} 
+                      />
+                    </DraggableWidgetWrapper>
+                  )
                 )}
               </DroppableSlot>
             ))}
@@ -205,10 +282,10 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
         ))}
       </div>
       <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
-        {activeCat ? (
+        {activeItem?.isCategory ? (
           <div style={{ transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', borderRadius: 'var(--nd-card-radius)', opacity: 0.9 }}>
             <CategoryCard
-              category={activeCat}
+              category={activeItem.data}
               editMode={editMode}
               searchQuery={searchQuery}
               onEditCategory={onEditCategory}
@@ -216,6 +293,10 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
               onAddService={onAddService}
               showSensitive={showSensitive}
             />
+          </div>
+        ) : activeItem && !activeItem.isCategory ? (
+          <div style={{ transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', borderRadius: 'var(--nd-card-radius)', opacity: 0.9 }}>
+            <HomeWidgetRenderer widget={activeItem.data} editMode={editMode} onDelete={() => {}} />
           </div>
         ) : null}
         {activeService ? (
@@ -232,14 +313,17 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
           if (!deleteItem) return;
           if (deleteItem.type === 'category') onDeleteCategory(deleteItem.id);
           if (deleteItem.type === 'slot') onDeleteSlot(parseInt(deleteItem.id));
+          if (deleteItem.type === 'widget' && onDeleteWidget) onDeleteWidget(deleteItem.id);
           setDeleteItem(null);
         }}
         title={
           deleteItem?.type === 'category' ? 'Supprimer la catégorie ?' :
+          deleteItem?.type === 'widget' ? 'Supprimer ce widget ?' :
           'Supprimer l\'emplacement ?'
         }
         description={
           deleteItem?.type === 'category' ? `Voulez-vous vraiment supprimer "${deleteItem.name}" et tous ses services de votre tableau de bord ?` :
+          deleteItem?.type === 'widget' ? `Voulez-vous vraiment supprimer ce widget de votre tableau de bord ?` :
           'Voulez-vous vraiment supprimer cet emplacement vide de la grille et décaler le reste des éléments ?'
         }
       />}
@@ -247,10 +331,10 @@ const BentoGridWithDnd = ({ categories, totalSlots, editMode, searchQuery, showS
   );
 };
 
-const DroppableSlot = ({ slotId, category, editMode, children, onDeleteSlot }: any) => {
+const DroppableSlot = ({ slotId, item, editMode, children, onDeleteSlot }: any) => {
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}`, data: { type: 'category-slot', slotId } });
-  if (!editMode && !category) return null;
-  if (editMode && !category) {
+  if (!editMode && !item) return null;
+  if (editMode && !item) {
     return (
       <div ref={setNodeRef} style={{ height: 60, position: 'relative', border: isOver ? '2px dashed var(--nd-accent)' : '2px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text-dimmed)', fontSize: '0.75rem', fontWeight: 600, background: isOver ? 'var(--nd-accent-glow)' : 'transparent', transition: 'all 0.2s', margin: '0' }}>
         <span>Emplacement vide</span>
@@ -266,6 +350,60 @@ const DroppableSlot = ({ slotId, category, editMode, children, onDeleteSlot }: a
   return (
     <div ref={setNodeRef} style={{ position: 'relative', width: '100%', ...(isOver ? { outline: '2px dashed var(--nd-accent)', outlineOffset: 4, borderRadius: 'var(--nd-card-radius)' } : {}) }}>
       {children}
+    </div>
+  );
+};
+
+import { useDraggable } from '@dnd-kit/core';
+
+const DraggableWidgetWrapper = ({ widget, editMode, onDelete, children }: { widget: any, editMode: boolean, onDelete: () => void, children: React.ReactNode }) => {
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
+    id: `widget-${widget.id}`,
+    data: { type: 'widget', widget, widgetId: widget.id },
+    disabled: !editMode
+  });
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={{ 
+        opacity: isDragging ? 0.4 : 1, 
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {editMode && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          padding: '6px 10px', 
+          background: 'var(--nd-card-bg)',
+          border: '1px solid var(--nd-card-border)',
+          borderRadius: 'var(--nd-card-radius)',
+          marginBottom: 8
+        }}>
+          <button 
+            {...listeners} 
+            {...attributes} 
+            style={{ cursor: 'grab', background: 'none', border: 'none', color: 'var(--nd-text-dimmed)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Déplacer"
+          >
+            <GripHorizontal size={14} />
+          </button>
+          <button
+            className="nd-action-icon danger"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            title="Supprimer le widget"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      )}
+      <div style={{ width: '100%' }}>
+        {children}
+      </div>
     </div>
   );
 };

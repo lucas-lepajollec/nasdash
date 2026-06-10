@@ -63,6 +63,7 @@ export default function HomeTab({
     setDockerActionModal,
     settingsModal,
     setSettingsModal,
+    updateConfig,
   } = useConfig();
 
   const leftSidebarRef = useRef<HTMLElement>(null);
@@ -248,6 +249,25 @@ export default function HomeTab({
   const hasLeftContent = leftWidgets.length > 0;
   const hasRightContent = rightWidgets.length > 0;
 
+  const onUpdateWidgetHeight = useCallback(async (id: string, height: number) => {
+    if (!config) return;
+    const currentWidgets = config.settings.homeWidgets || [];
+    const newWidgets = currentWidgets.map(w => w.id === id ? { ...w, height } : w);
+    await updateConfig({ homeWidgets: newWidgets });
+  }, [config, updateConfig]);
+
+  const onDeleteWidget = useCallback(async (id: string) => {
+    if (!config) return;
+    const currentWidgets = config.settings.homeWidgets || [];
+    const newWidgets = currentWidgets.filter(w => w.id !== id);
+    await updateConfig({ homeWidgets: newWidgets });
+  }, [config, updateConfig]);
+
+  const onReorderWidgets = useCallback(async (newWidgets: any[]) => {
+    if (!config) return;
+    await updateConfig({ homeWidgets: newWidgets });
+  }, [config, updateConfig]);
+
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -266,15 +286,19 @@ export default function HomeTab({
           {/* CENTER — Service Grid + Monitor */}
           <main className="nd-center">
             <BentoGrid
-              categories={config.categories}
-              totalSlots={config.settings.totalSlots || Math.max(12, config.categories.length)}
+              categories={config?.categories || []}
+              homeWidgets={config?.settings?.homeWidgets || []}
+              totalSlots={config?.settings?.totalSlots || Math.max(12, (config?.categories?.length || 0) + (config?.settings?.homeWidgets?.length || 0))}
               editMode={editMode}
               searchQuery={searchQuery}
               showSecretSections={showSecretSections}
               showSensitive={showSensitive}
               onReorder={saveCategories}
+              onReorderWidgets={onReorderWidgets}
               onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
-              onDeleteCategory={handleDeleteCategory}
+              onDeleteCategory={deleteCategory}
+              onDeleteWidget={onDeleteWidget}
+              onUpdateWidgetHeight={onUpdateWidgetHeight}
               onAddService={(catId) => setServiceModal({ open: true, categoryId: catId })}
               onDeleteSlot={removeSlot}
             />

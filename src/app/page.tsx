@@ -17,6 +17,7 @@ import ServiceFormModal from '@/components/modals/ServiceFormModal';
 import CategoryFormModal from '@/components/modals/CategoryFormModal';
 import DeviceFormModal from '@/components/modals/DeviceFormModal';
 import DockerActionFormModal from '@/components/modals/DockerActionFormModal';
+import { WidgetSelectionModal } from '@/components/modals/settings/tabs/custom/WidgetSelectionModal';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
@@ -34,6 +35,7 @@ export default function Shell() {
 
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [widgetModalOpen, setWidgetModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSecretSections, setShowSecretSections] = useState(false);
   const [showSensitive, setShowSensitive] = useState(true);
@@ -160,6 +162,7 @@ export default function Shell() {
           onOpenSettings={() => setSettingsModal({ open: true })}
           onAddCategory={() => setCategoryModal({ open: true })} 
           onAddSlot={() => activeTab === 'widgets' ? addWidgetsSlot() : addSlot()}
+          onAddWidget={() => setWidgetModalOpen(true)}
           secretMode={showSensitive}
           onToggleSecret={() => setShowSensitive(prev => !prev)}
           activeTab={activeTab}
@@ -198,7 +201,7 @@ export default function Shell() {
           {/* Custom Tabs */}
           {tabs.filter(t => t.isCustom).map(t => (
             <div key={t.id} className="flex-1" style={{ display: activeTab === t.id ? 'block' : 'none', minHeight: '100%', position: 'relative' }}>
-              <CustomTabRenderer tab={t} editMode={editMode} />
+              <CustomTabRenderer tab={t} editMode={editMode} showSensitive={showSensitive} />
             </div>
           ))}
         </div>
@@ -271,6 +274,34 @@ export default function Shell() {
 
       {/* Performance Monitor — petit bouton en bas à droite */}
       <PerfMonitor />
+
+      {widgetModalOpen && (
+        <WidgetSelectionModal
+          onClose={() => setWidgetModalOpen(false)}
+          onSelect={(widgetInfo) => {
+            const newWidget = {
+              type: widgetInfo.type,
+              id: `hw-${Math.random().toString(36).substr(2, 9)}`,
+              order: (config?.settings.homeWidgets?.length || 0) + (config?.categories?.length || 0) + 10,
+              props: {}
+            };
+            // @ts-ignore
+            if (widgetInfo.type === 'spacer') newWidget.height = 120;
+            const currentWidgets = config?.settings.homeWidgets || [];
+            
+            // Calculate new totalSlots to ensure an empty dropzone is created
+            const totalItems = (config?.categories?.length || 0) + currentWidgets.length + 1;
+            const currentSlots = config?.settings.totalSlots || Math.max(12, totalItems - 1);
+            const newTotalSlots = Math.max(currentSlots, totalItems + 1);
+
+            updateConfig({ 
+              homeWidgets: [...currentWidgets, newWidget],
+              totalSlots: newTotalSlots
+            });
+            setWidgetModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
