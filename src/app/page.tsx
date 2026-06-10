@@ -279,20 +279,31 @@ export default function Shell() {
         <WidgetSelectionModal
           onClose={() => setWidgetModalOpen(false)}
           onSelect={(widgetInfo) => {
+            const currentWidgets = config?.settings.homeWidgets || [];
+            const categories = config?.categories || [];
+            
+            const occupiedSlots = new Set([
+              ...categories.map(c => c.order),
+              ...currentWidgets.map(w => w.order)
+            ]);
+            
+            let firstEmptySlot = 0;
+            while (occupiedSlots.has(firstEmptySlot)) {
+              firstEmptySlot++;
+            }
+
             const newWidget = {
               type: widgetInfo.type,
               id: `hw-${Math.random().toString(36).substr(2, 9)}`,
-              order: (config?.settings.homeWidgets?.length || 0) + (config?.categories?.length || 0) + 10,
+              order: firstEmptySlot,
               props: {}
             };
+            
             // @ts-ignore
             if (widgetInfo.type === 'spacer') newWidget.height = 120;
-            const currentWidgets = config?.settings.homeWidgets || [];
             
-            // Calculate new totalSlots to ensure an empty dropzone is created
-            const totalItems = (config?.categories?.length || 0) + currentWidgets.length + 1;
-            const currentSlots = config?.settings.totalSlots || Math.max(12, totalItems - 1);
-            const newTotalSlots = Math.max(currentSlots, totalItems + 1);
+            const currentSlots = config?.settings.totalSlots || Math.max(12, categories.length + currentWidgets.length);
+            const newTotalSlots = Math.max(currentSlots, firstEmptySlot + 1);
 
             updateConfig({ 
               homeWidgets: [...currentWidgets, newWidget],
