@@ -238,17 +238,6 @@ export default function HomeTab({
     }
   ];
 
-  const leftWidgets = widgets
-    .filter(w => w.visible && w.sidebar === 'left')
-    .sort((a, b) => a.order - b.order);
-
-  const rightWidgets = widgets
-    .filter(w => w.visible && w.sidebar === 'right')
-    .sort((a, b) => a.order - b.order);
-
-  const hasLeftContent = leftWidgets.length > 0;
-  const hasRightContent = rightWidgets.length > 0;
-
   const onUpdateWidgetHeight = useCallback(async (id: string, height: number) => {
     if (!config) return;
     const currentWidgets = config.settings.homeWidgets || [];
@@ -268,20 +257,57 @@ export default function HomeTab({
     await updateConfig({ homeWidgets: newWidgets });
   }, [config, updateConfig]);
 
+  const showLeftPanel = !tabConf.hideLeftSidebar;
+  const showRightPanel = !tabConf.hideRightSidebar;
+
+  const leftPanelPos = tabConf.leftSidebarPosition || 'left';
+  const rightPanelPos = tabConf.rightSidebarPosition || 'right';
+
+  const baseLeftWidgets = widgets.filter(w => w.visible && w.sidebar === 'left').sort((a, b) => a.order - b.order);
+  const baseRightWidgets = widgets.filter(w => w.visible && w.sidebar === 'right').sort((a, b) => a.order - b.order);
+
+  const leftSidebars = [];
+  const rightSidebars = [];
+
+  if (showLeftPanel && baseLeftWidgets.length > 0) {
+    const el = (
+      <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
+        {baseLeftWidgets.map(w => (
+          <React.Fragment key={w.id}>{w.render()}</React.Fragment>
+        ))}
+      </aside>
+    );
+    if (leftPanelPos === 'left') leftSidebars.push(el);
+    else rightSidebars.push(el);
+  }
+
+  if (showRightPanel && baseRightWidgets.length > 0) {
+    const el = (
+      <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
+        {baseRightWidgets.map(w => (
+          <React.Fragment key={w.id}>{w.render()}</React.Fragment>
+        ))}
+      </aside>
+    );
+    if (rightPanelPos === 'left') leftSidebars.push(el);
+    else rightSidebars.push(el);
+  }
+
+  let gridCols = '';
+  if (leftSidebars.length === 1) gridCols += 'var(--nd-sidebar-width) ';
+  else if (leftSidebars.length === 2) gridCols += 'var(--nd-sidebar-width) var(--nd-sidebar-width) ';
+  
+  gridCols += 'minmax(0, 1fr)';
+  
+  if (rightSidebars.length === 1) gridCols += ' var(--nd-right-sidebar-width)';
+  else if (rightSidebars.length === 2) gridCols += ' var(--nd-right-sidebar-width) var(--nd-right-sidebar-width)';
+
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-        <div className="nd-layout" style={{ gridTemplateColumns: 'var(--nd-sidebar-width) minmax(0, 1fr) var(--nd-right-sidebar-width)' }}>
-          {/* LEFT SIDEBAR COLUMN */}
-          {hasLeftContent ? (
-            <aside ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
-              {leftWidgets.map(w => (
-                <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-              ))}
-            </aside>
-          ) : (
-            <div className="nd-column-spacer" style={{ width: 'var(--nd-sidebar-width)' }} />
-          )}
+        <div className="nd-layout" style={{ gridTemplateColumns: gridCols }}>
+          {/* LEFT SIDEBAR(S) */}
+          {leftSidebars.length > 0 ? leftSidebars : null}
 
           {/* CENTER — Service Grid + Monitor */}
           <main className="nd-center">
@@ -315,16 +341,8 @@ export default function HomeTab({
             />
           </main>
 
-          {/* RIGHT SIDEBAR COLUMN */}
-          {hasRightContent ? (
-            <aside ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
-              {rightWidgets.map(w => (
-                <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-              ))}
-            </aside>
-          ) : (
-            <div className="nd-column-spacer" style={{ width: 'var(--nd-right-sidebar-width)' }} />
-          )}
+          {/* RIGHT SIDEBAR(S) */}
+          {rightSidebars.length > 0 ? rightSidebars : null}
         </div>
         <DragOverlay dropAnimation={{ sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0.4' } } }) }}>
           {activeDevice ? (
