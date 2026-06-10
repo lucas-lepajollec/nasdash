@@ -21,8 +21,8 @@ interface HomeWidgetRendererProps {
 export default function HomeWidgetRenderer({ widget, editMode, showSensitive = false, onDelete, onUpdateHeight }: HomeWidgetRendererProps) {
   const { config } = useConfig();
   
-  // By default, widgets in Home occupy the full slot size
-  const size = 'full';
+  // By default, widgets in Home BentoGrid slots occupy the medium slot size
+  const size = 'medium';
 
   const renderWidgetContent = () => {
     switch (widget.type) {
