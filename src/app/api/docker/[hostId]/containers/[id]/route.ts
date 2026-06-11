@@ -48,6 +48,48 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
+    // Mock details
+    if (host.url === 'mock' || host.id === 'mock-host-id') {
+      const mockContainers = [
+        { id: "mock11111111", name: "web-server", image: "nginx:latest", state: "running", status: "running", startedAt: "2026-06-11T07:00:00Z" },
+        { id: "mock22222222", name: "postgres-db", image: "postgres:15-alpine", state: "running", status: "running", startedAt: "2026-06-11T05:00:00Z" },
+        { id: "mock33333333", name: "redis-cache", image: "redis:alpine", state: "running", status: "running", startedAt: "2026-06-11T09:00:00Z" },
+        { id: "mock44444444", name: "node-api", image: "node:18-alpine", state: "exited", status: "exited", startedAt: "2026-06-11T08:00:00Z", finishedAt: "2026-06-11T08:50:00Z" },
+        { id: "mock55555555", name: "prometheus", image: "prom/prometheus:latest", state: "running", status: "running", startedAt: "2026-06-11T09:15:00Z" },
+        { id: "mock66666666", name: "grafana", image: "grafana/grafana:latest", state: "running", status: "running", startedAt: "2026-06-11T09:15:00Z" },
+        { id: "mock77777777", name: "pihole-dns", image: "pihole/pihole:latest", state: "paused", status: "paused", startedAt: "2026-06-10T10:00:00Z" },
+        { id: "mock88888888", name: "jellyfin-media", image: "jellyfin/jellyfin:latest", state: "running", status: "running", startedAt: "2026-06-09T10:00:00Z" },
+      ];
+      const found = mockContainers.find(c => c.id === id);
+      if (!found) return NextResponse.json({ error: 'Container not found' }, { status: 404 });
+      
+      const result = {
+        id: found.id,
+        fullId: found.id.padEnd(64, '0'),
+        name: found.name,
+        image: found.image,
+        state: found.state,
+        status: found.status,
+        startedAt: found.startedAt,
+        finishedAt: found.finishedAt || '',
+        created: 1780517682,
+        restartCount: 0,
+        ports: [],
+        mounts: [],
+        env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
+        labels: {},
+        stats: {
+          cpuPercent: found.state === 'running' ? 1.2 : 0,
+          memUsage: found.state === 'running' ? 24 * 1024 * 1024 : 0,
+          memLimit: 1024 * 1024 * 1024,
+          memPercent: found.state === 'running' ? 2.3 : 0,
+          netInput: found.state === 'running' ? 124500 : 0,
+          netOutput: found.state === 'running' ? 987000 : 0,
+        }
+      };
+      return NextResponse.json(result);
+    }
+
     const detail = await dockerFetch(host.url, `/containers/${id}/json`);
 
     // Also get one-shot stats
@@ -130,6 +172,11 @@ export async function POST(
 
     if (!action || !['start', 'stop', 'restart', 'remove'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action. Use: start, stop, restart, remove' }, { status: 400 });
+    }
+
+    // Mock action success
+    if (host.url === 'mock' || host.id === 'mock-host-id') {
+      return NextResponse.json({ ok: true, action });
     }
 
     const endpoint = action === 'remove'

@@ -140,6 +140,7 @@ import { LibraryTab } from './settings/tabs/LibraryTab';
 import { TabsHomeTab } from './settings/tabs/onglets/TabsHomeTab';
 import { TabsWidgetsTab } from './settings/tabs/onglets/TabsWidgetsTab';
 import { TabsGeneralTab } from './settings/tabs/onglets/TabsGeneralTab';
+import { TabsDockerTab } from './settings/tabs/onglets/TabsDockerTab';
 import { DevicesWidgetTab } from './settings/tabs/widgets/DevicesWidgetTab';
 import { QuickStatsWidgetTab } from './settings/tabs/widgets/QuickStatsWidgetTab';
 import { TailscaleWidgetTab } from './settings/tabs/widgets/TailscaleWidgetTab';
@@ -148,6 +149,7 @@ import { ClockWidgetTab } from './settings/tabs/widgets/ClockWidgetTab';
 import { CalendarWidgetTab } from './settings/tabs/widgets/CalendarWidgetTab';
 import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
 import { NetworkGraphWidgetTab } from './settings/tabs/widgets/NetworkGraphWidgetTab';
+import { DockerContainersWidgetTab } from './settings/tabs/widgets/DockerContainersWidgetTab';
 import { CustomTabsListTab } from './settings/tabs/custom/CustomTabsListTab';
 import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab';
 
@@ -230,6 +232,9 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [dockerActionsSidebar, setDockerActionsSidebar] = useState(config?.settings?.dockerActionsSidebar || 'right');
   const [dockerActionsOrder, setDockerActionsOrder] = useState(config?.settings?.dockerActionsOrder ?? 3);
 
+  const [dockerContainersSidebar, setDockerContainersSidebar] = useState(config?.settings?.dockerContainersSidebar || 'right');
+  const [dockerContainersOrder, setDockerContainersOrder] = useState(config?.settings?.dockerContainersOrder ?? 4);
+
   const [clockSidebar, setClockSidebar] = useState(config?.settings?.clockSidebar || 'left');
   const [clockOrder, setClockOrder] = useState(config?.settings?.clockOrder ?? -1);
   const [clockDesign, setClockDesign] = useState(config?.settings?.clockDesign || 'default');
@@ -240,6 +245,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
   // Sidebar visibility states
   const hideDevices = !!config?.settings?.hideDevices;
+  const hideDockerContainers = config?.settings?.hideDockerContainers ?? true;
   const hideQuickStats = !!config?.settings?.hideQuickStats;
   const hideTailscaleStatus = !!config?.settings?.hideTailscaleStatus;
   const hideDockerActions = config?.settings?.hideDockerActions ?? true;
@@ -281,6 +287,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setTailscaleOrder(config.settings?.tailscaleOrder ?? 2);
       setDockerActionsSidebar(config.settings?.dockerActionsSidebar || 'right');
       setDockerActionsOrder(config.settings?.dockerActionsOrder ?? 3);
+      setDockerContainersSidebar(config.settings?.dockerContainersSidebar || 'right');
+      setDockerContainersOrder(config.settings?.dockerContainersOrder ?? 4);
       setClockSidebar(config.settings?.clockSidebar || 'left');
       setClockOrder(config.settings?.clockOrder ?? -1);
       setClockDesign(config.settings?.clockDesign || 'default');
@@ -421,6 +429,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
               {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
               {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
+              {currentTab === 'tabs-docker' && '🐳 Paramètres — Onglet Docker'}
               {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
               {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
               {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
@@ -429,6 +438,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
               {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
               {currentTab === 'widget-networkgraph' && '📶 Configuration — Graphe Réseau'}
+              {currentTab === 'widget-dockercontainers' && '🐳 Configuration — Conteneurs Docker'}
               {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
               {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
             </h3>
@@ -446,6 +456,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {currentTab === 'mobile' && <MobileTab />}
 
           {currentTab === 'widget-networkgraph' && <NetworkGraphWidgetTab />}
+          {currentTab === 'widget-dockercontainers' && <DockerContainersWidgetTab />}
 
           
           {/* ==========================================
@@ -464,6 +475,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {(currentTab as string) === 'tabs-home' && <TabsHomeTab />}
 
           {(currentTab as string) === 'tabs-widgets' && <TabsWidgetsTab />}
+
+          {(currentTab as string) === 'tabs-docker' && <TabsDockerTab />}
 
           {(currentTab as string) === 'tabs-general' && <TabsGeneralTab />}
 

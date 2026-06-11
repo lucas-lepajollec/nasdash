@@ -252,7 +252,13 @@ export default function HomeTab({
           <main className="nd-center">
             <BentoGrid
               categories={config?.categories || []}
-              homeWidgets={config?.settings?.homeWidgets || []}
+              homeWidgets={(config?.settings?.homeWidgets || []).filter(w => {
+                const def = WIDGET_REGISTRY.find(x => x.id === w.type);
+                if (!def) return true; // spacer or unknown
+                const hideKey = getWidgetConfigKeys(w.type).hide;
+                const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? def.defaultHidden;
+                return !isGloballyHidden;
+              })}
               totalSlots={config?.settings?.totalSlots || Math.max(12, (config?.categories?.length || 0) + (config?.settings?.homeWidgets?.length || 0))}
               editMode={editMode}
               searchQuery={searchQuery}

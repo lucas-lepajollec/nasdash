@@ -61,7 +61,7 @@ export default function HomeWidgetRenderer({ widget, editMode, showSensitive = f
   };
 
   return (
-    <div className="nd-widget-card" style={{ position: 'relative', width: '100%' }}>
+    <div className={`nd-widget-card ${widget.type === 'spacer' ? 'nd-spacer-widget' : ''}`} style={{ position: 'relative', width: '100%' }}>
       {renderWidgetContent()}
     </div>
   );

@@ -2,24 +2,15 @@ import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
+import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 
 export function QuickStatsWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideQuickStats = !!config?.settings?.hideQuickStats;
-  const quickStatsSidebar = config?.settings?.quickStatsSidebar || 'right';
-  const quickStatsOrder = config?.settings?.quickStatsOrder ?? 1;
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
-  };
-
-  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
-    await updateConfig({ [`${widgetKey}Sidebar`]: sidebar });
-  };
-
-  const handleWidgetOrder = async (widgetKey: string, order: number) => {
-    await updateConfig({ [`${widgetKey}Order`]: order });
   };
 
   return (
@@ -36,6 +27,7 @@ export function QuickStatsWidgetTab() {
       {!hideQuickStats && (
         <>
           <WidgetLayoutConfig widgetId="quickStats" />
+          <WidgetDockerLayoutConfig widgetId="quickStats" />
         </>
       )}
     </div>

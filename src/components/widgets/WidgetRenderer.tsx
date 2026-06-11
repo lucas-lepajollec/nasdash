@@ -10,6 +10,7 @@ import TailscaleWidget from './TailscaleWidget';
 import DockerWidget from './DockerWidget';
 import CalendarWidget from './CalendarWidget';
 import NetworkGraphWidget from './NetworkGraphWidget';
+import DockerContainersWidget from './DockerContainersWidget';
 
 interface WidgetRendererProps {
   id: string;
@@ -57,6 +58,8 @@ export function WidgetRenderer({
       return <CalendarWidget editMode={editMode} />;
     case 'networkgraph':
       return <NetworkGraphWidget editMode={editMode} />;
+    case 'dockercontainers':
+      return <DockerContainersWidget editMode={editMode} />;
     default:
       return (
         <div style={{ padding: 20, textAlign: 'center', color: 'var(--nd-text-muted)', background: 'var(--nd-bg)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>

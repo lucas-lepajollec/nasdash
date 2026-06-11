@@ -20,6 +20,15 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
+    // Mock volumes
+    if (host.url === 'mock' || host.id === 'mock-host-id') {
+      const mockVolumes = [
+        { name: "postgres_data", driver: "local", mountpoint: "/var/lib/docker/volumes/postgres_data/_data", createdAt: "2026-06-11T05:00:00Z", usageData: { size: 45000000, refCount: 1 } },
+        { name: "redis_data", driver: "local", mountpoint: "/var/lib/docker/volumes/redis_data/_data", createdAt: "2026-06-11T09:00:00Z", usageData: { size: 12000, refCount: 1 } },
+      ];
+      return NextResponse.json(mockVolumes);
+    }
+
     const dockerUrl = `${host.url.replace(/\/$/, '')}/volumes`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);

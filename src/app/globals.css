@@ -1016,6 +1016,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
+    padding: 0 12px 30px;
   }
 
   .nd-center {
@@ -1025,17 +1027,16 @@ body {
   .nd-sidebar-left,
   .nd-sidebar-right {
     width: 100%;
-    position: static;
+    position: static !important;
     max-height: none;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: stretch;
   }
 
   .nd-sidebar-left>*,
   .nd-sidebar-right>* {
-    flex: 1;
-    min-width: 200px;
+    width: 100%;
+    min-width: 0;
   }
 
   .nd-shell {
@@ -1330,15 +1331,22 @@ body {
     padding-right: 0 !important;
   }
 
+  .nd-layout {
+    gap: 12px;
+    padding: 0 8px 24px;
+  }
+
   .nd-sidebar-left,
   .nd-sidebar-right {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
   .nd-sidebar-left>*,
   .nd-sidebar-right>* {
     min-width: 0;
+    width: 100%;
   }
 }
 
@@ -1902,6 +1910,7 @@ body {
   .nd-docker-layout {
     flex-direction: column;
     padding: 0 12px 20px;
+    gap: 14px;
   }
 
   .nd-mobile-only {
@@ -1912,9 +1921,11 @@ body {
 
   .nd-docker-sidebar {
     width: 100%;
-    position: static;
-    padding-right: 0px;
-    margin-right: 0px;
+    position: static !important;
+    padding-right: 0;
+    margin-right: 0;
+    max-height: none;
+    overflow-y: visible;
   }
 
   .nd-docker-main {
@@ -2518,6 +2529,41 @@ body {
 .weather-glow {
   transition: box-shadow 0.5s ease;
   animation: weatherGlowPulse 4s ease-in-out infinite;
+}
+
+/* Docker widgets sidebar styling */
+.nd-docker-widgets-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 1024px) {
+  .nd-docker-widgets-sidebar {
+    position: sticky;
+    top: 20px;
+  }
+}
+
+@media (max-width: 960px) {
+  .nd-docker-widgets-sidebar {
+    width: 100% !important;
+    order: 99 !important;
+  }
+  .nd-docker-sidebar {
+    order: 1 !important;
+  }
+  .nd-docker-main {
+    order: 2 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .nd-spacer-widget {
+    display: none !important;
+  }
 }
 
 

@@ -23,7 +23,7 @@ export function SettingsSection({
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid var(--nd-card-border)',
         borderRadius: 'var(--nd-card-radius)',
-        overflow: 'hidden'
+        overflow: isOpen ? 'visible' : 'hidden'
       }}
     >
       <summary 

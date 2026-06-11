@@ -5,6 +5,7 @@ import { useConfig } from '@/hooks/useConfig';
 
 import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 import { Settings2, Plus, PenTool } from 'lucide-react';
+import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 
 interface CustomTabRendererProps {
   tab: TabDef;
@@ -142,8 +143,15 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
                 </div>
               )}
 
-              {currentWidgets.map((widget, i) => (
-                <div key={i} style={{ width: '100%' }}>
+              {currentWidgets.filter(w => {
+                if (w.type === 'spacer') return true;
+                const def = WIDGET_REGISTRY.find(x => x.id === w.type);
+                if (!def) return false;
+                const hideKey = getWidgetConfigKeys(w.type).hide;
+                const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? def.defaultHidden;
+                return !isGloballyHidden;
+              }).map((widget, i) => (
+                <div key={i} className={widget.type === 'spacer' ? 'nd-spacer-widget' : ''} style={{ width: '100%' }}>
                   {renderWidget(widget, size, row.id, col.id, i)}
                 </div>
               ))}

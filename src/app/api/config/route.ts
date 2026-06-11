@@ -307,6 +307,8 @@ export async function PUT(req: NextRequest) {
     if (body.weatherLocations !== undefined) config.settings.weatherLocations = body.weatherLocations;
     if (body.activeWeatherLocationId !== undefined) config.settings.activeWeatherLocationId = body.activeWeatherLocationId;
     if (body.weatherWidgetStyle !== undefined) config.settings.weatherWidgetStyle = body.weatherWidgetStyle;
+    if (body.dockerContainersStyle !== undefined) config.settings.dockerContainersStyle = body.dockerContainersStyle;
+    if (body.dockerContainersAutoScroll !== undefined) config.settings.dockerContainersAutoScroll = body.dockerContainersAutoScroll;
     
     // Appearance Profiles
     if (body.appearanceProfiles !== undefined) {

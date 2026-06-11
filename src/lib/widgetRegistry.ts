@@ -116,6 +116,19 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
     defaultOrder: 0,
     defaultHidden: false,
     hasConfig: false // Only Layout Config
+  },
+  {
+    id: 'dockercontainers',
+    name: 'Conteneurs Docker',
+    icon: '🐳',
+    description: 'Visualisation et état détaillé de vos conteneurs Docker.',
+    category: 'Système',
+    color: 'var(--nd-accent)',
+    bg: 'var(--nd-accent-glow)',
+    defaultSidebar: 'right',
+    defaultOrder: 4,
+    defaultHidden: true,
+    hasConfig: false // Only Layout Config
   }
 ];
 
@@ -132,6 +145,7 @@ export const getWidgetConfigKeys = (id: string) => {
   if (id === 'quickstats') base = 'quickStats';
   else if (id === 'dockeractions') base = 'dockerActions';
   else if (id === 'networkgraph') base = 'networkGraph';
+  else if (id === 'dockercontainers') base = 'dockerContainers';
 
   const hideKey = id === 'tailscale' ? 'hideTailscaleStatus' : `hide${capitalize(base)}`;
 

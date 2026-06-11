@@ -2,24 +2,15 @@ import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
+import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 
 export function DockerActionsWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideDockerActions = config?.settings?.hideDockerActions ?? true;
-  const dockerActionsSidebar = config?.settings?.dockerActionsSidebar || 'right';
-  const dockerActionsOrder = config?.settings?.dockerActionsOrder ?? 3;
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
-  };
-
-  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
-    await updateConfig({ [`${widgetKey}Sidebar`]: sidebar });
-  };
-
-  const handleWidgetOrder = async (widgetKey: string, order: number) => {
-    await updateConfig({ [`${widgetKey}Order`]: order });
   };
 
   return (
@@ -36,6 +27,7 @@ export function DockerActionsWidgetTab() {
       {!hideDockerActions && (
         <>
           <WidgetLayoutConfig widgetId="dockerActions" />
+          <WidgetDockerLayoutConfig widgetId="dockerActions" />
         </>
       )}
     </div>

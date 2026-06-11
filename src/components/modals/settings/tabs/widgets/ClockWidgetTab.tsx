@@ -1,29 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
+import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import CustomSelect from '../../../../shared/CustomSelect';
 
 export function ClockWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideClock = !!config?.settings?.hideClock;
-  const clockSidebar = config?.settings?.clockSidebar || 'right';
-  const clockOrder = config?.settings?.clockOrder ?? 4;
-  
-  const [clockTimezone, setClockTimezone] = useState(config?.settings?.clockTimezone || '');
-  const [clockDesign, setClockDesign] = useState<'default' | 'minimal' | 'glow' | 'split'>(config?.settings?.clockDesign || 'default');
+  const clockTimezone = config?.settings?.clockTimezone || '';
+  const clockDesign = config?.settings?.clockDesign || 'default';
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
-  };
-
-  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
-    await updateConfig({ [`${widgetKey}Sidebar`]: sidebar });
-  };
-
-  const handleWidgetOrder = async (widgetKey: string, order: number) => {
-    await updateConfig({ [`${widgetKey}Order`]: order });
   };
 
   return (
@@ -40,6 +30,7 @@ export function ClockWidgetTab() {
       {!hideClock && (
         <>
           <WidgetLayoutConfig widgetId="clock" />
+          <WidgetDockerLayoutConfig widgetId="clock" />
 
           {/* Timezone Configuration */}
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
@@ -50,7 +41,6 @@ export function ClockWidgetTab() {
             <CustomSelect
               value={clockTimezone || ''}
               onChange={async (val) => {
-                setClockTimezone(val);
                 await updateConfig({ clockTimezone: val });
               }}
               options={[
@@ -79,7 +69,6 @@ export function ClockWidgetTab() {
                 <button
                   key={design.id}
                   onClick={async () => {
-                    setClockDesign(design.id as any);
                     await updateConfig({ clockDesign: design.id });
                   }}
                   style={{

@@ -269,6 +269,17 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Widgets</span>
                 </div>
               </button>
+              <button
+                onClick={() => setActiveTab('tabs-docker')}
+                className={`nd-settings-nav-item ${currentTab === 'tabs-docker' ? 'nd-settings-nav-item--active' : ''}`}
+              >
+                <div style={{ background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text)', flexShrink: 0 }}>
+                  <Container size={18} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Docker</span>
+                </div>
+              </button>
             </div>
           )}
         </div>

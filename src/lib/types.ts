@@ -208,6 +208,7 @@ export interface DashboardConfig {
         hideCalendar?: boolean;
         hideWeather?: boolean;
         hideNetworkGraph?: boolean;
+        hideDockerContainers?: boolean;
         hideLeftSidebar?: boolean;
         hideRightSidebar?: boolean;
         hideBottomPanel?: boolean;
@@ -223,6 +224,22 @@ export interface DashboardConfig {
         hideClock?: boolean;
         hideCalendar?: boolean;
         hideWeather?: boolean;
+        hideNetworkGraph?: boolean;
+        hideDockerContainers?: boolean;
+      };
+      docker?: {
+        hideDockerActions?: boolean;
+        hideTailscaleStatus?: boolean;
+        hideDevices?: boolean;
+        hideQuickStats?: boolean;
+        hideClock?: boolean;
+        hideCalendar?: boolean;
+        hideWeather?: boolean;
+        hideNetworkGraph?: boolean;
+        hideDockerContainers?: boolean;
+        hideWidgetsSidebar?: boolean;
+        widgetsSidebarPosition?: 'left' | 'right';
+        dockerPanelPosition?: 'left' | 'right';
       };
     };
     widgetsOrder?: string[];
@@ -237,6 +254,7 @@ export interface DashboardConfig {
     hideCalendar?: boolean;
     hideWeather?: boolean;
     hideNetworkGraph?: boolean;
+    hideDockerContainers?: boolean;
     hideWidgetTitles?: boolean;
     weatherLocation?: { lat: number; lon: number; name: string };
     weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
@@ -245,6 +263,8 @@ export interface DashboardConfig {
     hideDock?: boolean;
     calendarUrl?: string;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
+    dockerContainersStyle?: 'standard' | 'extended' | 'minimalist';
+    dockerContainersAutoScroll?: boolean;
     clockTimezone?: string;
     customCss?: string;
     backgroundImage?: string;
@@ -266,6 +286,7 @@ export interface DashboardConfig {
     calendarSidebar?: 'left' | 'right' | 'bottom';
     weatherSidebar?: 'left' | 'right' | 'bottom';
     networkGraphSidebar?: 'left' | 'right' | 'bottom';
+    dockerContainersSidebar?: 'left' | 'right' | 'bottom';
     // Sidebar widget order preferences
     devicesOrder?: number;
     quickStatsOrder?: number;
@@ -275,6 +296,7 @@ export interface DashboardConfig {
     calendarOrder?: number;
     weatherOrder?: number;
     networkGraphOrder?: number;
+    dockerContainersOrder?: number;
     // Premium Design options
     globalFont?: string;
     borderRadius?: number;

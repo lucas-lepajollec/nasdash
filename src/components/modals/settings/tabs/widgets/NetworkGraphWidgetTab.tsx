@@ -2,6 +2,7 @@ import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
+import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 
 export function NetworkGraphWidgetTab() {
   const { config, updateConfig } = useConfig();
@@ -26,6 +27,7 @@ export function NetworkGraphWidgetTab() {
       {!hideNetworkGraph && (
         <>
           <WidgetLayoutConfig widgetId="networkGraph" />
+          <WidgetDockerLayoutConfig widgetId="networkGraph" />
         </>
       )}
     </div>

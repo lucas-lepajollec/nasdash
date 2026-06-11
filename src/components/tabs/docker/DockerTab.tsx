@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDocker } from '@/hooks/useDocker';
 import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Search, Loader2, AlertCircle, ChevronDown, Terminal, Layers, Database, Plus, X, RefreshCw } from 'lucide-react';
 import ConfirmModal from '../../modals/ConfirmModal';
 import useSWR from 'swr';
+import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 
 const fetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : null);
 
@@ -786,11 +789,55 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
   const runningCount = containers.filter((c: any) => c.state === 'running').length;
   const stoppedCount = containers.filter((c: any) => c.state === 'exited').length;
 
+  const tabConf = config?.settings?.tabs?.docker || {};
+  const dockerPanelPos = tabConf.dockerPanelPosition || 'left';
+  const showWidgets = !(tabConf.hideWidgetsSidebar ?? true);
+  const widgetsPos = tabConf.widgetsSidebarPosition || 'right';
+
+  // Determine flex orders
+  let dockerSidebarOrder = 1;
+  let dockerMainOrder = 2;
+  let widgetsSidebarOrder = 3;
+
+  if (dockerPanelPos === 'left' && widgetsPos === 'right') {
+    dockerSidebarOrder = 1;
+    dockerMainOrder = 2;
+    widgetsSidebarOrder = 3;
+  } else if (dockerPanelPos === 'right' && widgetsPos === 'left') {
+    widgetsSidebarOrder = 1;
+    dockerMainOrder = 2;
+    dockerSidebarOrder = 3;
+  } else if (dockerPanelPos === 'left' && widgetsPos === 'left') {
+    widgetsSidebarOrder = 1;
+    dockerSidebarOrder = 2;
+    dockerMainOrder = 3;
+  } else if (dockerPanelPos === 'right' && widgetsPos === 'right') {
+    dockerMainOrder = 1;
+    widgetsSidebarOrder = 2;
+    dockerSidebarOrder = 3;
+  }
+
+  // Active widgets list for Docker tab
+  const activeWidgets = WIDGET_REGISTRY.map(w => {
+    const hideKey = getWidgetConfigKeys(w.id).hide;
+    const orderKey = getWidgetConfigKeys(w.id).order;
+
+    const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
+    const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
+
+    return {
+      id: w.id,
+      visible: !isGloballyHidden && !isTabHidden,
+      order: (tabConf as any)?.[orderKey] ?? ((config?.settings as any)?.[orderKey] ?? w.defaultOrder),
+      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config?.categories || []} />
+    };
+  }).filter(w => w.visible).sort((a, b) => a.order - b.order);
+
   return (
     <>
       <div className="nd-docker-layout nd-animate-in">
         {/* Sidebar — Host selector + Container list */}
-        <aside className="nd-docker-sidebar" style={{ overflowY: 'hidden' }}>
+        <aside className="nd-docker-sidebar" style={{ overflowY: 'hidden', order: dockerSidebarOrder }}>
           {/* Host Selector */}
           <div className="nd-sidebar-card">
             <div className="nd-section-title" style={{ marginBottom: 8 }}>
@@ -915,7 +962,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
         </aside>
 
         {/* Main content */}
-        <div className="nd-docker-main">
+        <div className="nd-docker-main" style={{ order: dockerMainOrder }}>
           <div className="nd-docker-tabs" style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 12 }}>
               <button className={`nd-docker-tab ${activeTab === 'containers' ? 'nd-docker-tab--active' : ''}`} onClick={() => setActiveTab('containers')} style={{ flexShrink: 0 }}>
                 <Container size={12} /> Conteneurs ({containers.length})
@@ -966,6 +1013,14 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
             <VolumesTab volumes={volumes} loading={volumesLoading} containers={containers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={containers.find((c: any) => c.fullId === selectedContainerId)} />
           )}
         </div>
+
+        {showWidgets && activeWidgets.length > 0 && (
+          <aside className="nd-docker-widgets-sidebar" style={{ order: widgetsSidebarOrder }}>
+            {activeWidgets.map(w => (
+              <React.Fragment key={w.id}>{w.render()}</React.Fragment>
+            ))}
+          </aside>
+        )}
       </div>
 
       {showHostForm && <DockerHostFormModal onClose={() => setShowHostForm(false)} onSave={handleAddHost} />}

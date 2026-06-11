@@ -20,6 +20,20 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
+    // Mock logs
+    if (host.url === 'mock' || host.id === 'mock-host-id') {
+      const mockLogs = {
+        lines: [
+          `[2026-06-11 10:00:00] INFO Starting service...`,
+          `[2026-06-11 10:00:01] INFO Connection to database established.`,
+          `[2026-06-11 10:00:02] INFO Listening on port 80.`,
+          `[2026-06-11 10:05:00] DEBUG Health check passed.`,
+          `[2026-06-11 10:10:00] DEBUG Health check passed.`
+        ]
+      };
+      return NextResponse.json(mockLogs);
+    }
+
     const url = new URL(request.url);
     const tail = url.searchParams.get('tail') || '100';
     const timestamps = url.searchParams.get('timestamps') !== 'false';

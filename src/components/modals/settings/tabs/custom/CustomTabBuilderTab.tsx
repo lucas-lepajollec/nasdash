@@ -5,6 +5,7 @@ import { ChevronLeft, Plus, Save, Trash2, Layout, Type, GripVertical, Settings2 
 import EmojiPickerModal from '../../../EmojiPickerModal';
 import { useConfig } from '@/hooks/useConfig';
 import { WidgetSelectionModal } from './WidgetSelectionModal';
+import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 
 interface CustomTabBuilderTabProps {
   tabId?: string;
@@ -167,17 +168,28 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
   };
 
   const renderWidgetPreview = (widget: CustomTabWidgetInfo) => {
+    const def = WIDGET_REGISTRY.find(w => w.id === widget.type);
+    const isGloballyHidden = (() => {
+      if (!def) return false;
+      const hideKey = getWidgetConfigKeys(widget.type).hide;
+      return (config?.settings as any)?.[hideKey] ?? def.defaultHidden;
+    })();
+
+    let name = '';
     switch (widget.type) {
-      case 'clock': return '⏰ Horloge';
-      case 'weather': return '🌤️ Météo';
-      case 'quickstats': return '📊 Quick Stats';
-      case 'devices': return '🖥️ Appareils';
-      case 'tailscale': return '🔒 Tailscale';
-      case 'dockeractions': return '🐳 Actions Docker';
-      case 'calendar': return '📅 Calendrier';
-      case 'networkgraph': return '📶 Graphe Réseau';
-      default: return `🧩 Widget Inconnu (${widget.type})`;
+      case 'clock': name = '⏰ Horloge'; break;
+      case 'weather': name = '🌤️ Météo'; break;
+      case 'quickstats': name = '📊 Quick Stats'; break;
+      case 'devices': name = '🖥️ Appareils'; break;
+      case 'tailscale': name = '🔒 Tailscale'; break;
+      case 'dockeractions': name = '🐳 Actions Docker'; break;
+      case 'calendar': name = '📅 Calendrier'; break;
+      case 'networkgraph': name = '📶 Graphe Réseau'; break;
+      case 'dockercontainers': name = '🐳 Conteneurs Docker'; break;
+      default: name = `🧩 Widget Inconnu (${widget.type})`; break;
     }
+
+    return isGloballyHidden ? `${name} (Désactivé)` : name;
   };
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>;
@@ -270,14 +282,29 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
                 return (
                   <div key={col.id} style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
                     
-                    {currentWidgets.map((widget, wIndex) => (
-                      <div key={wIndex} style={{ background: 'var(--nd-bg)', border: '1px solid var(--nd-card-border)', borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minWidth: 0 }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>{renderWidgetPreview(widget)}</span>
-                        <button onClick={() => removeWidgetFromColumn(col.id, wIndex)} className="nd-btn" style={{ padding: 4, color: 'var(--nd-text-muted)' }}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
+                    {currentWidgets.map((widget, wIndex) => {
+                      const def = WIDGET_REGISTRY.find(w => w.id === widget.type);
+                      const isGloballyHidden = def ? ((config?.settings as any)?.[getWidgetConfigKeys(widget.type).hide] ?? def.defaultHidden) : false;
+                      
+                      return (
+                        <div key={wIndex} style={{ 
+                          background: 'var(--nd-bg)', 
+                          border: '1px solid var(--nd-card-border)', 
+                          borderRadius: '8px', 
+                          padding: '16px', 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          minWidth: 0,
+                          opacity: isGloballyHidden ? 0.5 : 1
+                        }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginRight: '8px' }}>{renderWidgetPreview(widget)}</span>
+                          <button onClick={() => removeWidgetFromColumn(col.id, wIndex)} className="nd-btn" style={{ padding: 4, color: 'var(--nd-text-muted)' }}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
 
                     <button 
                       onClick={() => setWidgetSelectorOpenForCol(col.id)}

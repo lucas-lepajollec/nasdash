@@ -3,28 +3,26 @@ import { useConfig } from '@/hooks/useConfig';
 import { SettingsSection } from './SettingsSection';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 
-interface WidgetLayoutConfigProps {
+interface WidgetDockerLayoutConfigProps {
   widgetId: string;
   isOpen?: boolean;
   onToggle?: (open: boolean) => void;
 }
 
-export function WidgetLayoutConfig({ widgetId, isOpen: controlledIsOpen, onToggle: controlledOnToggle }: WidgetLayoutConfigProps) {
+export function WidgetDockerLayoutConfig({ widgetId, isOpen: controlledIsOpen, onToggle: controlledOnToggle }: WidgetDockerLayoutConfigProps) {
   const { config, updateConfig } = useConfig();
   const [localIsOpen, setLocalIsOpen] = useState(false);
 
   const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : localIsOpen;
   const onToggle = controlledOnToggle || setLocalIsOpen;
 
-  const sidebarKey = `${widgetId}Sidebar`;
   const orderKey = `${widgetId}Order`;
+  const tabConf = config?.settings?.tabs?.docker || {};
 
-  const sidebarValue = (config?.settings as any)?.[sidebarKey] || 'right';
-
-  // 1. Resolve clean, unique, sorted list of widgets to establish a unique position index (0 to 8)
+  // 1. Resolve clean, unique, sorted list of widgets to establish a unique position index (0 to 8) on Docker Tab
   const sortedWidgets = WIDGET_REGISTRY.map(w => {
     const keys = getWidgetConfigKeys(w.id);
-    const currentVal = (config?.settings as any)?.[keys.order] ?? w.defaultOrder;
+    const currentVal = (tabConf as any)?.[keys.order] ?? ((config?.settings as any)?.[keys.order] ?? w.defaultOrder);
     return {
       id: w.id,
       orderKey: keys.order,
@@ -40,15 +38,11 @@ export function WidgetLayoutConfig({ widgetId, isOpen: controlledIsOpen, onToggl
 
   const orderValue = sortedWidgets.findIndex(w => w.orderKey === orderKey);
 
-  const handlePosition = async (position: 'left' | 'right' | 'bottom') => {
-    await updateConfig({ [sidebarKey]: position });
-  };
-
   const handleOrder = async (newOrder: number) => {
     // 1. Get current sorted list
     const widgets = WIDGET_REGISTRY.map(w => {
       const keys = getWidgetConfigKeys(w.id);
-      const currentVal = (config?.settings as any)?.[keys.order] ?? w.defaultOrder;
+      const currentVal = (tabConf as any)?.[keys.order] ?? ((config?.settings as any)?.[keys.order] ?? w.defaultOrder);
       return {
         id: w.id,
         orderKey: keys.order,
@@ -77,48 +71,30 @@ export function WidgetLayoutConfig({ widgetId, isOpen: controlledIsOpen, onToggl
     // 4. Insert at new position
     widgets.splice(clampedNewOrder, 0, targetItem);
 
-    // 5. Build updates object mapping each orderKey under settings
-    const updates: Record<string, number> = {};
+    // 5. Build updates object mapping each orderKey under tabs.docker
+    const dockerUpdates: Record<string, number> = {};
     widgets.forEach((w, index) => {
-      updates[w.orderKey] = index;
+      dockerUpdates[w.orderKey] = index;
     });
 
-    await updateConfig(updates);
+    await updateConfig({
+      tabs: {
+        ...config?.settings?.tabs,
+        docker: {
+          ...config?.settings?.tabs?.docker,
+          ...dockerUpdates
+        }
+      }
+    });
   };
 
   return (
     <SettingsSection 
-      title="🏠 Paramètres Spécifiques (Home)"
-      description="Disposition sur l'onglet Home"
+      title="🐳 Paramètres Spécifiques (Docker)"
+      description="Disposition sur l'onglet Docker"
       isOpen={isOpen}
       onToggle={onToggle}
     >
-      <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 600 }}>Panneau d'affichage</h4>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {(['left', 'bottom', 'right'] as const).map((pos) => {
-            const isSelected = sidebarValue === pos;
-            const labels = { left: '👈 Barre Gauche', bottom: '👇 Panneau Inférieur', right: 'Barre Droite 👉' };
-            return (
-              <button
-                key={pos}
-                onClick={() => handlePosition(pos)}
-                style={{
-                  flex: 1, padding: '10px 14px', border: '1px solid',
-                  borderColor: isSelected ? 'var(--nd-accent)' : 'var(--nd-card-border)',
-                  background: isSelected ? 'var(--nd-accent-glow)' : 'rgba(255,255,255,0.01)',
-                  color: isSelected ? 'var(--nd-accent)' : 'var(--nd-text)',
-                  borderRadius: 'var(--nd-card-radius)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                  boxShadow: isSelected ? '0 0 8px var(--nd-accent-glow)' : 'none'
-                }}
-              >
-                {labels[pos]}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <h4 style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: 600 }}>Ordre de priorité verticale</h4>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

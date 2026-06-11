@@ -20,6 +20,17 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
+    // Mock images
+    if (host.url === 'mock' || host.id === 'mock-host-id') {
+      const mockImages = [
+        { id: "nginx-img-id", repoTags: ["nginx:latest"], size: 142000000, created: 1780517682, containers: 1 },
+        { id: "postgres-img-id", repoTags: ["postgres:15-alpine"], size: 234000000, created: 1780517682, containers: 1 },
+        { id: "redis-img-id", repoTags: ["redis:alpine"], size: 32000000, created: 1780517682, containers: 1 },
+        { id: "node-img-id", repoTags: ["node:18-alpine"], size: 180000000, created: 1780517682, containers: 1 },
+      ];
+      return NextResponse.json(mockImages);
+    }
+
     const dockerUrl = `${host.url.replace(/\/$/, '')}/images/json`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
