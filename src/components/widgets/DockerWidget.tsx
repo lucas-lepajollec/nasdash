@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
+import { useWidgetSize } from './WidgetContainer';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
 import { Plus, Pencil, GripVertical, Power, Play, RefreshCw, Layers, Loader2 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -57,6 +58,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
 
 export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
+  const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
 
@@ -130,6 +132,13 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     }
   };
 
+  let listStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+  if (widgetSize === 'wide') {
+    listStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+  } else if (widgetSize === 'medium') {
+    listStyle = { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+  }
+
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-2">
       {(!hideTitles || editMode) && (
@@ -148,14 +157,14 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: (hideTitles && !editMode) ? 0 : 8 }}>
+      <div style={listStyle}>
         {actions.length === 0 && (
           <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
             Aucune action rapide configurée.{!editMode && " Activez le mode édition pour en ajouter."}
           </p>
         )}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={actions.map(a => a.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={actions.map(a => a.id)}>
             {actions.map((action) => (
               <SortableActionItem 
                 key={action.id} 

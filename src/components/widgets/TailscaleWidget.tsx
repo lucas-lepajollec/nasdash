@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { useWidgetSize } from './WidgetContainer';
 
 const getOsIcon = (os: string, hostname: string) => {
   const lower = os?.toLowerCase() || '';
@@ -17,6 +18,7 @@ const getOsIcon = (os: string, hostname: string) => {
 
 export default function TailscaleWidget({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
   const { config } = useConfig();
+  const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [devices, setDevices] = useState<any[] | null>(null);
   const [error, setError] = useState(false);
@@ -94,6 +96,117 @@ export default function TailscaleWidget({ editMode, showSensitive = false }: { e
 
   if (!devices || devices.length === 0) return null;
 
+  // ==================== WIDE LAYOUT (TABLE VIEW) ====================
+  if (widgetSize === 'wide') {
+    return (
+      <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+        {!hideTitles && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div className="nd-section-title" style={{ flex: 1 }}>
+              <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale VPN
+            </div>
+            <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Globe size={10} /> Admin Panel
+            </a>
+          </div>
+        )}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', marginTop: 8 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--nd-border)', color: 'var(--nd-text-muted)', textAlign: 'left' }}>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Appareil</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Adresse IP</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Système</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600, textAlign: 'right' }}>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {devices.map((device: any) => (
+              <tr key={device.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', verticalAlign: 'middle' }}>
+                <td style={{ padding: '8px 10px', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {device.hostname}
+                    {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Hôte</span>}
+                  </div>
+                </td>
+                <td style={{ padding: '8px 10px', fontFamily: 'monospace', color: 'var(--nd-text-muted)' }}>
+                  {!showSensitive ? '•••' : device.ip}
+                </td>
+                <td style={{ padding: '8px 10px', color: 'var(--nd-text-muted)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {getOsIcon(device.os, device.hostname)}
+                    <span style={{ fontSize: '0.68rem' }}>{device.os || 'Linux'}</span>
+                  </div>
+                </td>
+                <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: '0.65rem', color: device.online ? 'var(--nd-green)' : 'var(--nd-text-muted)', fontWeight: 600 }}>
+                      {device.online ? 'En ligne' : 'Hors ligne'}
+                    </span>
+                    <div style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: device.online ? 'var(--nd-green)' : 'var(--nd-border)',
+                      boxShadow: device.online ? '0 0 8px var(--nd-green)' : 'none',
+                    }} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // ==================== MEDIUM LAYOUT (GRID VIEW) ====================
+  if (widgetSize === 'medium') {
+    return (
+      <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
+        {!hideTitles && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div className="nd-section-title" style={{ flex: 1, margin: 0 }}>
+              <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
+            </div>
+            <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <Globe size={10} /> Dashboard
+            </a>
+          </div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {devices.map((device: any) => (
+            <div key={device.id} style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              padding: '8px 10px',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid var(--nd-card-border)',
+              borderRadius: 'var(--nd-card-radius)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, minWidth: 0 }}>
+                <div style={{ opacity: 0.8, display: 'flex', marginTop: 3 }}>{getOsIcon(device.os, device.hostname)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    {device.hostname}
+                    {device.isSelf && <span style={{ fontSize: '0.5rem', padding: '1px 3px', background: 'rgba(255,255,255,0.06)', borderRadius: 3 }}>Hôte</span>}
+                  </div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', fontFamily: 'monospace' }}>{!showSensitive ? '•••' : device.ip}</div>
+                </div>
+              </div>
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: device.online ? 'var(--nd-green)' : 'var(--nd-border)',
+                boxShadow: device.online ? '0 0 8px var(--nd-green)' : 'none',
+                opacity: device.online ? 1 : 0.4,
+                flexShrink: 0
+              }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ==================== NARROW LAYOUT (LIST VIEW - DEFAULT) ====================
   return (
     <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
       {!hideTitles && (

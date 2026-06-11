@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { useConfig } from '@/hooks/useConfig';
-import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw } from 'lucide-react';
+import { useWidgetSize } from './WidgetContainer';
 
 const fetcher = (url: string) => fetch(url).then(r => {
   if (!r.ok) throw new Error('Fetch failed');
@@ -12,6 +13,7 @@ const fetcher = (url: string) => fetch(url).then(r => {
 
 export default function DockerContainersWidget({ editMode }: { editMode?: boolean }) {
   const { config } = useConfig();
+  const { size: widgetSize } = useWidgetSize();
   const hosts = config?.dockerHosts || [];
 
   const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
@@ -19,6 +21,7 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isScrollPaused, setIsScrollPaused] = useState(false);
+  const [actionRunning, setActionRunning] = useState<Record<string, boolean>>({});
 
   const widgetStyle = config?.settings?.dockerContainersStyle || 'standard';
   const autoScroll = config?.settings?.dockerContainersAutoScroll ?? false;
@@ -46,7 +49,7 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
   }, []);
 
   // Fetch containers list for the selected host
-  const { data: containers, error, isLoading } = useSWR(
+  const { data: containers, error, isLoading, mutate } = useSWR(
     selectedHostId ? `/api/docker/${selectedHostId}/containers?all=true` : null,
     fetcher,
     { refreshInterval: 5000 }
@@ -55,10 +58,19 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
   const currentHost = hosts.find(h => h.id === selectedHostId);
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
-  // Handle host change
-  const handleHostChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedHostId(e.target.value);
-    setCurrentPage(1); // Reset to first page
+  // Handle toggling container start/stop
+  const handleToggleContainer = async (containerId: string, currentState: string) => {
+    if (editMode) return;
+    setActionRunning(prev => ({ ...prev, [containerId]: true }));
+    try {
+      const action = currentState === 'running' ? 'stop' : 'start';
+      await fetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
+      await mutate(); // Refresh list immediately
+    } catch (e) {
+      console.error('Failed to change container state:', e);
+    } finally {
+      setActionRunning(prev => ({ ...prev, [containerId]: false }));
+    }
   };
 
   // CSS animation duration for auto-scroll (calculated based on container count)
@@ -122,9 +134,12 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
     }
   };
 
-  // Container item renderer
+  // Container item renderer (for Narrow and Medium layouts)
   const renderContainerItem = (c: any, itemKey?: string) => {
     const containerName = c.names?.[0]?.replace(/^\//, '') || c.id.substring(0, 12);
+    const isRunning = c.state === 'running';
+    const isLoadingAction = !!actionRunning[c.id];
+
     return (
       <div
         key={itemKey || c.id}
@@ -141,37 +156,63 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
           transition: 'all 0.2s',
           gap: '4px 8px'
         }}
+        className="nd-weather-card-hover"
       >
         {/* Left side: status icon + name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: '60px', flex: '1 1 auto' }}>
           <div style={{ display: 'flex', flexShrink: 0 }}>
             {renderStatusIcon(c.state)}
           </div>
-          <span 
-            style={{ 
-              fontSize: '0.72rem', 
-              fontWeight: 600, 
-              color: 'var(--nd-text)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}
-            title={containerName}
-          >
-            {containerName}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <span 
+              style={{ 
+                fontSize: '0.72rem', 
+                fontWeight: 600, 
+                color: 'var(--nd-text)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap'
+              }}
+              title={containerName}
+            >
+              {containerName}
+            </span>
+            <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {c.image.split('@')[0]}
+            </span>
+          </div>
         </div>
 
-        {/* Right side: status duration */}
-        <div 
-          style={{ 
-            fontSize: '0.62rem', 
-            color: 'var(--nd-text-muted)', 
-            whiteSpace: 'nowrap',
-            flexShrink: 0
-          }}
-        >
-          {c.status}
+        {/* Right side: status duration + control action */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap' }}>
+            {c.status}
+          </span>
+          {!editMode && (
+            <button 
+              onClick={() => handleToggleContainer(c.id, c.state)}
+              disabled={isLoadingAction}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: isRunning ? 'var(--nd-red)' : 'var(--nd-green)',
+                cursor: isLoadingAction ? 'not-allowed' : 'pointer',
+                opacity: isLoadingAction ? 0.4 : 0.7,
+                padding: '2px 4px',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title={isRunning ? 'Arrêter' : 'Démarrer'}
+            >
+              {isLoadingAction ? (
+                <Loader2 size={12} className="nd-spin" />
+              ) : isRunning ? (
+                <Square size={10} fill="var(--nd-red)" />
+              ) : (
+                <Play size={10} fill="var(--nd-green)" />
+              )}
+            </button>
+          )}
         </div>
       </div>
     );
@@ -197,7 +238,7 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
           marginBottom: 4
         }}
       >
-        {/* Host Selector — stays left normally, wraps below at full width when compact */}
+        {/* Host Selector */}
         <div ref={dropdownRef} style={{ position: 'relative', flex: '1 1 auto', minWidth: 0 }}>
           {hosts.length > 1 ? (
             <>
@@ -222,16 +263,6 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
                   height: '26px',
                   boxSizing: 'border-box'
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                  e.currentTarget.style.borderColor = 'var(--nd-accent)';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isDropdownOpen) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                    e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                  }
-                }}
               >
                 <span>{activeHost.icon}</span>
                 <span style={{ flex: 1 }}>{activeHost.name}</span>
@@ -244,7 +275,6 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
                 }} />
               </div>
 
-              {/* Premium custom dropdown menu */}
               {isDropdownOpen && (
                 <div style={{
                   position: 'absolute',
@@ -281,31 +311,17 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
                         background: selectedHostId === h.id ? 'rgba(128, 128, 128, 0.08)' : 'transparent',
                         transition: 'all 0.15s',
                       }}
-                      onMouseEnter={(e) => {
-                        if (selectedHostId !== h.id) {
-                          e.currentTarget.style.background = 'rgba(128, 128, 128, 0.05)';
-                          e.currentTarget.style.color = 'var(--nd-text)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedHostId !== h.id) {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.color = 'var(--nd-text-muted)';
-                        }
-                      }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span>{h.icon}</span>
                         <span>{h.name}</span>
                       </div>
-                      {selectedHostId === h.id && <Check size={11} color="var(--nd-accent)" />}
                     </div>
                   ))}
                 </div>
               )}
             </>
           ) : (
-            // Static styled label if only 1 host
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -321,7 +337,7 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
           )}
         </div>
 
-        {/* Pagination Pill — stays right, floats above host when wrapped */}
+        {/* Pagination Pill */}
         {showPagination && (
           <div style={{
             marginLeft: 'auto',
@@ -382,10 +398,9 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
   const minHeight = widgetStyle === 'minimalist' ? 110 : widgetStyle === 'extended' ? 290 : 180;
   const showAutoScroll = autoScroll && containerList.length > ITEMS_PER_PAGE;
 
+  // ==================== MAIN RENDER ====================
   return (
     <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      
-      {/* CSS keyframes for auto-scroll — injected once, GPU-accelerated, zero JS overhead */}
       {showAutoScroll && (
         <style>{`
           @keyframes nd-docker-scroll {
@@ -395,7 +410,7 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
         `}</style>
       )}
 
-      {/* Title Header (Standard behavior, stays clean on top) */}
+      {/* Header */}
       {!hideTitles && (
         <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: '1rem', lineHeight: 1 }}>🐳</span>
@@ -403,58 +418,142 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
         </div>
       )}
 
-      {/* Controls Row (Separate from title, containing selector and pagination) */}
+      {/* Controls Selector */}
       {renderControlsRow()}
 
-      {/* Containers List */}
-      {showAutoScroll ? (
-        <div 
-          onMouseEnter={() => setIsScrollPaused(true)}
-          onMouseLeave={() => setIsScrollPaused(false)}
-          style={{ 
-            overflow: 'hidden', 
-            height: `${ITEMS_PER_PAGE * 42}px`,
-          }}
-        >
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 6,
-            animation: `nd-docker-scroll ${scrollDuration}s linear infinite`,
-            animationPlayState: isScrollPaused ? 'paused' : 'running',
-            willChange: 'transform',
-          }}>
-            {containerList.map((c: any, idx: number) => renderContainerItem(c, `first-${c.id}-${idx}`))}
-            {/* Duplicate for seamless loop */}
-            {containerList.map((c: any, idx: number) => renderContainerItem(c, `clone-${c.id}-${idx}`))}
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minHeight, justifyContent: containerList.length === 0 ? 'center' : 'flex-start' }}>
-          {isLoading && containerList.length === 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-              <Loader2 size={16} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />
-            </div>
-          )}
-
-          {error && (
-            <div style={{ textAlign: 'center', padding: '16px 8px' }}>
-              <AlertCircle size={16} style={{ color: 'var(--nd-red)', marginBottom: 6 }} />
-              <div style={{ fontSize: '0.7rem', color: 'var(--nd-red)', fontWeight: 600 }}>Hôte injoignable</div>
-              <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', marginTop: 2 }}>Vérifiez l'API Docker TCP</div>
-            </div>
-          )}
-
-          {!isLoading && !error && containerList.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '16px 8px', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Aucun conteneur trouvé.
-            </div>
-          )}
-
-          {!error && paginatedContainers.map((c: any) => renderContainerItem(c))}
+      {/* Loading state & Error state */}
+      {isLoading && containerList.length === 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: minHeight }}>
+          <Loader2 size={16} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />
         </div>
       )}
 
+      {error && (
+        <div style={{ textAlign: 'center', padding: '24px 8px', height: minHeight, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <AlertCircle size={20} style={{ color: 'var(--nd-red)', marginBottom: 6 }} />
+          <div style={{ fontSize: '0.75rem', color: 'var(--nd-red)', fontWeight: 600 }}>Hôte injoignable</div>
+          <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', marginTop: 2 }}>Vérifiez la connexion TCP de l'hôte</div>
+        </div>
+      )}
+
+      {!isLoading && !error && containerList.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '24px 8px', fontSize: '0.7rem', color: 'var(--nd-text-muted)', height: minHeight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          Aucun conteneur trouvé sur cet hôte.
+        </div>
+      )}
+
+      {/* WIDE Layout: Full Tabular Grid View */}
+      {widgetSize === 'wide' && !error && containerList.length > 0 && (
+        <div style={{ overflowX: 'auto', width: '100%' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--nd-border)', color: 'var(--nd-text-muted)' }}>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Nom</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Image</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Statut</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedContainers.map((c: any) => {
+                const containerName = c.names?.[0]?.replace(/^\//, '') || c.id.substring(0, 12);
+                const isRunning = c.state === 'running';
+                const isLoadingAction = !!actionRunning[c.id];
+                return (
+                  <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', verticalAlign: 'middle' }} className="nd-weather-card-hover-table">
+                    <td style={{ padding: '8px 10px', fontWeight: 600 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {renderStatusIcon(c.state)}
+                        <span>{containerName}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '8px 10px', fontFamily: 'monospace', color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>
+                      {c.image.split('@')[0]}
+                    </td>
+                    <td style={{ padding: '8px 10px', color: 'var(--nd-text-muted)' }}>
+                      {c.status}
+                    </td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                      {!editMode && (
+                        <button 
+                          onClick={() => handleToggleContainer(c.id, c.state)}
+                          disabled={isLoadingAction}
+                          style={{
+                            background: isRunning ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                            border: `1px solid ${isRunning ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+                            color: isRunning ? 'var(--nd-red)' : 'var(--nd-green)',
+                            borderRadius: '6px',
+                            cursor: isLoadingAction ? 'not-allowed' : 'pointer',
+                            padding: '4px 10px',
+                            fontSize: '0.62rem',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          {isLoadingAction ? (
+                            <Loader2 size={11} className="nd-spin" />
+                          ) : isRunning ? (
+                            <>
+                              <Square size={9} fill="var(--nd-red)" />
+                              <span>Stop</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play size={9} fill="var(--nd-green)" />
+                              <span>Start</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* MEDIUM Layout: 2-Column Grid */}
+      {widgetSize === 'medium' && !error && containerList.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {paginatedContainers.map((c: any) => renderContainerItem(c))}
+        </div>
+      )}
+
+      {/* NARROW Layout: Vertical list / Auto Scroll */}
+      {widgetSize === 'narrow' && !error && containerList.length > 0 && (
+        <>
+          {showAutoScroll ? (
+            <div 
+              onMouseEnter={() => setIsScrollPaused(true)}
+              onMouseLeave={() => setIsScrollPaused(false)}
+              style={{ 
+                overflow: 'hidden', 
+                height: `${ITEMS_PER_PAGE * 42}px`,
+              }}
+            >
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 6,
+                animation: `nd-docker-scroll ${scrollDuration}s linear infinite`,
+                animationPlayState: isScrollPaused ? 'paused' : 'running',
+                willChange: 'transform',
+              }}>
+                {containerList.map((c: any, idx: number) => renderContainerItem(c, `first-${c.id}-${idx}`))}
+                {containerList.map((c: any, idx: number) => renderContainerItem(c, `clone-${c.id}-${idx}`))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minHeight, justifyContent: 'flex-start' }}>
+              {paginatedContainers.map((c: any) => renderContainerItem(c))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

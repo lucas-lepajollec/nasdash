@@ -15,6 +15,7 @@
   --nd-card-bg-opacity: 0.8;
   --nd-card-bg: rgba(var(--nd-card-bg-rgb), var(--nd-card-bg-opacity));
   --nd-card-border: rgba(255, 255, 255, 0.06);
+  --nd-border: var(--nd-card-border);
   --nd-card-hover-border: rgba(255, 255, 255, 0.12);
   --nd-card-radius: 12px;
   --nd-card-shadow: none;
@@ -73,6 +74,7 @@
   --nd-card-bg-opacity: 0.75;
   --nd-card-bg: rgba(var(--nd-card-bg-rgb), var(--nd-card-bg-opacity));
   --nd-card-border: rgba(0, 0, 0, 0.05);
+  --nd-border: var(--nd-card-border);
   --nd-card-hover-border: rgba(0, 0, 0, 0.12);
   --nd-card-shadow: none;
   --nd-dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -2565,5 +2567,25 @@ body {
     display: none !important;
   }
 }
+
+/* ==================== ADAPTABLE WIDGETS SYSTEM ==================== */
+.nd-widget-container {
+  container-type: inline-size;
+  container-name: widget;
+  width: 100%;
+}
+
+@container widget (min-width: 380px) {
+  .nd-widget-narrow-only {
+    display: none !important;
+  }
+}
+
+@container widget (max-width: 379px) {
+  .nd-widget-medium-above {
+    display: none !important;
+  }
+}
+
 
 
