@@ -71,7 +71,7 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
     
     return {
       id: w.id,
-      component: <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={categories} />,
+      component: <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={categories} widgetInstanceId={w.id} widgetProps={(config?.settings as any)?.[`${w.id}Props`]} onUpdateProps={(newProps) => updateConfig({ [`${w.id}Props`]: { ...((config?.settings as any)?.[`${w.id}Props`] || {}), ...newProps } })} />,
       hidden: isGloballyHidden || isTabHidden
     };
   });

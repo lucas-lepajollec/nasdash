@@ -211,11 +211,11 @@ const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const width = entry.contentRect.width;
-        if (width <= 600) setColCount(1);
-        else if (width <= 900) setColCount(2);
-        else if (width <= 1200) setColCount(3);
-        else if (width <= 1500) setColCount(4);
-        else if (width <= 1800) setColCount(5);
+        if (width <= 550) setColCount(1);
+        else if (width <= 800) setColCount(2);
+        else if (width <= 1050) setColCount(3);
+        else if (width <= 1350) setColCount(4);
+        else if (width <= 1650) setColCount(5);
         else setColCount(6);
       }
     });

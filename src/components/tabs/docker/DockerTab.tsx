@@ -695,7 +695,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
 
 // ======================== MAIN DOCKER TAB ========================
 export default function DockerTab({ editMode, searchQuery, isVisible, showSensitive = false }: DockerTabProps) {
-  const { config, refresh } = useConfig();
+  const { config, updateConfig, refresh } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
   const [showHostForm, setShowHostForm] = useState(false);
@@ -829,7 +829,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
       id: w.id,
       visible: !isGloballyHidden && !isTabHidden,
       order: (tabConf as any)?.[orderKey] ?? ((config?.settings as any)?.[orderKey] ?? w.defaultOrder),
-      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config?.categories || []} />
+      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config?.categories || []} widgetInstanceId={w.id} widgetProps={(config?.settings as any)?.[`${w.id}Props`]} onUpdateProps={(newProps) => updateConfig({ [`${w.id}Props`]: { ...((config?.settings as any)?.[`${w.id}Props`] || {}), ...newProps } })} />
     };
   }).filter(w => w.visible).sort((a, b) => a.order - b.order);
 
