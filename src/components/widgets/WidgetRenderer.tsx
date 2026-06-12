@@ -19,6 +19,9 @@ interface WidgetRendererProps {
   editMode?: boolean;
   showSensitive?: boolean;
   categories?: any[]; // Passed down to QuickStats if needed
+  widgetInstanceId?: string;
+  widgetProps?: any;
+  onUpdateProps?: (newProps: any) => void;
 }
 
 export function WidgetRenderer({ 
@@ -26,7 +29,10 @@ export function WidgetRenderer({
   layoutSize = 'medium', 
   editMode = false, 
   showSensitive = false,
-  categories = []
+  categories = [],
+  widgetInstanceId,
+  widgetProps,
+  onUpdateProps
 }: WidgetRendererProps) {
   const { config, setDeviceModal, deleteDevice, reorderDevices } = useConfig();
 
@@ -61,7 +67,7 @@ export function WidgetRenderer({
       case 'networkgraph':
         return <NetworkGraphWidget editMode={editMode} />;
       case 'dockercontainers':
-        return <DockerContainersWidget editMode={editMode} />;
+        return <DockerContainersWidget editMode={editMode} widgetInstanceId={widgetInstanceId} widgetProps={widgetProps} onUpdateProps={onUpdateProps} />;
       default:
         return (
           <div style={{ padding: 20, textAlign: 'center', color: 'var(--nd-text-muted)', background: 'var(--nd-bg)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>

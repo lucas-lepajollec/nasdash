@@ -22,6 +22,7 @@ interface ConfigContextType {
   updateDevice: (id: string, updates: Partial<Device>) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
   updateConfig: (updates: any) => Promise<void>;
+  updateHomeWidgetProps: (widgetId: string, newProps: any) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   
   // Docker Actions
@@ -354,6 +355,26 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     if (res.ok) await fetchConfig();
   };
 
+  const updateHomeWidgetProps = async (widgetId: string, newProps: any) => {
+    setConfig(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        settings: {
+          ...prev.settings,
+          homeWidgets: prev.settings.homeWidgets?.map(w => w.id === widgetId ? { ...w, props: { ...w.props, ...newProps } } : w) || []
+        }
+      };
+    });
+
+    const res = await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'homeWidgetProps', id: widgetId, props: newProps }),
+    });
+    if (!res.ok) await fetchConfig();
+  };
+
   const updateConfig = async (updates: any) => {
     setConfig(prev => {
       if (!prev) return prev;
@@ -463,6 +484,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     updateDevice,
     deleteDevice,
     updateConfig,
+    updateHomeWidgetProps,
     uploadLogo,
     addDockerAction,
     updateDockerAction,

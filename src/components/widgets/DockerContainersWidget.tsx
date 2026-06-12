@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { useConfig } from '@/hooks/useConfig';
-import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw, Pencil } from 'lucide-react';
 import { useWidgetSize } from './WidgetContainer';
 
 const fetcher = (url: string) => fetch(url).then(r => {
@@ -11,7 +11,18 @@ const fetcher = (url: string) => fetch(url).then(r => {
   return r.json();
 });
 
-export default function DockerContainersWidget({ editMode }: { editMode?: boolean }) {
+function getPaddedList(list: any[], targetMultiple: number) {
+  if (list.length === 0) return [];
+  let k = 1;
+  while ((list.length * k) % targetMultiple !== 0 && k < 12) k++;
+  const result = [];
+  for (let i = 0; i < k; i++) {
+    result.push(...list);
+  }
+  return result;
+}
+
+export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void }) {
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hosts = config?.dockerHosts || [];
@@ -20,15 +31,12 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
   const [currentPage, setCurrentPage] = useState(1);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [isScrollPaused, setIsScrollPaused] = useState(false);
+  const [isEditDropdownOpen, setIsEditDropdownOpen] = useState(false);
+  const editDropdownRef = useRef<HTMLDivElement>(null);
   const [actionRunning, setActionRunning] = useState<Record<string, boolean>>({});
+  const [isHovered, setIsHovered] = useState(false);
 
-  const widgetStyle = config?.settings?.dockerContainersStyle || 'standard';
-  const autoScroll = config?.settings?.dockerContainersAutoScroll ?? false;
-
-  let ITEMS_PER_PAGE = 5;
-  if (widgetStyle === 'extended') ITEMS_PER_PAGE = 8;
-  else if (widgetStyle === 'minimalist') ITEMS_PER_PAGE = 3;
+  const allowActions = config?.settings?.allowDockerActions ?? true;
 
   // Set default host ID when hosts load
   useEffect(() => {
@@ -42,6 +50,9 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (editDropdownRef.current && !editDropdownRef.current.contains(e.target as Node)) {
+        setIsEditDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -73,11 +84,6 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
     }
   };
 
-  // CSS animation duration for auto-scroll (calculated based on container count)
-  const scrollItemCount = Array.isArray(containers) ? containers.length : 0;
-  // ~4 seconds per item for a slow, smooth scroll
-  const scrollDuration = Math.max(20, scrollItemCount * 4);
-
   if (hosts.length === 0) {
     return (
       <div className="nd-sidebar-card nd-animate-in" style={{ padding: '16px', textAlign: 'center' }}>
@@ -90,8 +96,33 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
 
   // Pagination calculation
   const containerList = Array.isArray(containers) ? containers : [];
-  const totalPages = Math.max(1, Math.ceil(containerList.length / ITEMS_PER_PAGE));
   
+  // Default to 6 items per page (even number for grids)
+  let ITEMS_PER_PAGE = 6;
+
+  const isGridInWideLayout = widgetSize === 'wide' && containerList.length > 5;
+  if (isGridInWideLayout) {
+    ITEMS_PER_PAGE = 10;
+  }
+
+  // Override from instance props if available
+  let autoScroll = false;
+  if (widgetProps?.autoScroll !== undefined) {
+    autoScroll = widgetProps.autoScroll;
+  }
+  if (widgetProps?.itemsPerPage) {
+    ITEMS_PER_PAGE = widgetProps.itemsPerPage === 'all' ? 9999 : parseInt(widgetProps.itemsPerPage, 10);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(containerList.length / ITEMS_PER_PAGE));
+  const effectiveAutoScroll = autoScroll && containerList.length > ITEMS_PER_PAGE;
+  
+  let scrollMultiple = 1;
+  if (widgetSize === 'medium') scrollMultiple = 2;
+  else if (widgetSize === 'wide') scrollMultiple = 12;
+
+  const paddedList = effectiveAutoScroll ? getPaddedList(containerList, scrollMultiple) : containerList;
+
   // Safe page index guard
   const safePage = Math.min(currentPage, totalPages);
   const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
@@ -184,11 +215,11 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
         </div>
 
         {/* Right side: status duration + control action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: allowActions ? 8 : 12, flexShrink: 0 }}>
+          <span style={{ fontSize: allowActions ? '0.62rem' : '0.68rem', color: allowActions ? 'var(--nd-text-muted)' : 'var(--nd-text-dimmed)', whiteSpace: 'nowrap', fontWeight: allowActions ? 'normal' : 500 }}>
             {c.status}
           </span>
-          {!editMode && (
+          {allowActions && !editMode && (
             <button 
               onClick={() => handleToggleContainer(c.id, c.state)}
               disabled={isLoadingAction}
@@ -220,7 +251,7 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
 
   // Controls Row: Host Selector on the left, Pagination on the right
   const renderControlsRow = () => {
-    const showPagination = !error && containerList.length > ITEMS_PER_PAGE && !autoScroll;
+    const showPagination = !error && containerList.length > ITEMS_PER_PAGE && !effectiveAutoScroll;
     const activeHost = hosts.find(h => h.id === selectedHostId) || hosts[0];
 
     if (!activeHost) return null;
@@ -339,82 +370,184 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
 
         {/* Pagination Pill */}
         {showPagination && (
-          <div style={{
-            marginLeft: 'auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid var(--nd-card-border)',
-            borderRadius: '12px',
-            padding: '0 6px',
-            height: '26px',
-            boxSizing: 'border-box',
-            userSelect: 'none'
-          }}>
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={safePage === 1}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: safePage === 1 ? 'var(--nd-text-dimmed)' : 'var(--nd-text)',
-                cursor: safePage === 1 ? 'not-allowed' : 'pointer',
-                opacity: safePage === 1 ? 0.3 : 0.8,
-                padding: 1,
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <ChevronLeft size={12} />
-            </button>
-            
-            <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', minWidth: 24, textAlign: 'center', fontWeight: 500 }}>
-              {safePage}/{totalPages}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--nd-card-border)',
+              borderRadius: '12px',
+              padding: '0 6px',
+              height: '26px',
+              boxSizing: 'border-box',
+              userSelect: 'none'
+            }}>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={safePage === 1}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: safePage === 1 ? 'var(--nd-text-dimmed)' : 'var(--nd-text)',
+                  cursor: safePage === 1 ? 'not-allowed' : 'pointer',
+                  opacity: safePage === 1 ? 0.3 : 0.8,
+                  padding: 1,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ChevronLeft size={12} />
+              </button>
+              
+              <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', minWidth: 24, textAlign: 'center', fontWeight: 500 }}>
+                {safePage}/{totalPages}
+              </span>
 
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={safePage === totalPages}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: safePage === totalPages ? 'var(--nd-text-dimmed)' : 'var(--nd-text)',
-                cursor: safePage === totalPages ? 'not-allowed' : 'pointer',
-                opacity: safePage === totalPages ? 0.3 : 0.8,
-                padding: 1,
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <ChevronRight size={12} />
-            </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={safePage === totalPages}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: safePage === totalPages ? 'var(--nd-text-dimmed)' : 'var(--nd-text)',
+                  cursor: safePage === totalPages ? 'not-allowed' : 'pointer',
+                  opacity: safePage === totalPages ? 0.3 : 0.8,
+                  padding: 1,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ChevronRight size={12} />
+              </button>
+            </div>
           </div>
         )}
       </div>
     );
   };
 
-  const minHeight = widgetStyle === 'minimalist' ? 110 : widgetStyle === 'extended' ? 290 : 180;
-  const showAutoScroll = autoScroll && containerList.length > ITEMS_PER_PAGE;
+  const minHeight = 180;
 
   // ==================== MAIN RENDER ====================
   return (
     <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {showAutoScroll && (
+
+      {effectiveAutoScroll && (
         <style>{`
-          @keyframes nd-docker-scroll {
+          @keyframes nd-docker-scroll-narrow {
             0% { transform: translateY(0); }
-            100% { transform: translateY(-50%); }
+            100% { transform: translateY(calc(-50% - 3px)); }
+          }
+          @keyframes nd-docker-scroll-grid {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(calc(-50% - 4px)); }
           }
         `}</style>
       )}
 
       {/* Header */}
       {!hideTitles && (
-        <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: '1rem', lineHeight: 1 }}>🐳</span>
-          <span>Conteneurs Docker</span>
+        <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: '1rem', lineHeight: 1 }}>🐳</span>
+            <span>Conteneurs Docker</span>
+          </div>
+          
+          {editMode && widgetInstanceId && onUpdateProps && (
+            <div ref={editDropdownRef} style={{ position: 'relative' }}>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsEditDropdownOpen(!isEditDropdownOpen); }}
+                className="nd-action-icon accent"
+                title="Modifier la pagination de ce widget"
+              >
+                <Pencil size={13} />
+              </button>
+              
+              {isEditDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: 4,
+                  background: 'var(--nd-bg-surface, #1e1e2e)',
+                  border: '1px solid var(--nd-card-border)',
+                  borderRadius: 'var(--nd-card-radius, 8px)',
+                  boxShadow: 'var(--nd-dropdown-shadow, 0 4px 12px rgba(0,0,0,0.3))',
+                  zIndex: 200,
+                  minWidth: '180px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '4px 0',
+                  textTransform: 'none',
+                  letterSpacing: 'normal'
+                }}>
+                  <div style={{ padding: '6px 12px', fontSize: '0.65rem', color: 'var(--nd-text-dimmed)', fontWeight: 600, borderBottom: '1px solid var(--nd-card-border)', marginBottom: 4 }}>
+                    ÉLÉMENTS PAR PAGE
+                  </div>
+                  {[
+                    { label: 'Par défaut', value: null },
+                    { label: 'Tout afficher', value: 'all' },
+                    { label: '4 par page', value: 4 },
+                    { label: '6 par page', value: 6 },
+                    { label: '8 par page', value: 8 },
+                    { label: '12 par page', value: 12 },
+                    { label: '16 par page', value: 16 }
+                  ].map(opt => (
+                    <div
+                      key={String(opt.value)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateProps({ itemsPerPage: opt.value });
+                        setIsEditDropdownOpen(false);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        fontSize: '0.72rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: widgetProps?.itemsPerPage === opt.value || (!widgetProps?.itemsPerPage && opt.value === null) ? 'var(--nd-accent)' : 'var(--nd-text)',
+                        background: widgetProps?.itemsPerPage === opt.value || (!widgetProps?.itemsPerPage && opt.value === null) ? 'rgba(var(--nd-accent-rgb, 128,128,128), 0.1)' : 'transparent',
+                        fontWeight: 500
+                      }}
+                      className="nd-weather-card-hover"
+                    >
+                      {opt.label}
+                      {(widgetProps?.itemsPerPage === opt.value || (!widgetProps?.itemsPerPage && opt.value === null)) && <Check size={12} />}
+                    </div>
+                  ))}
+
+                  <div style={{ padding: '6px 12px', fontSize: '0.65rem', color: 'var(--nd-text-dimmed)', fontWeight: 600, borderBottom: '1px solid var(--nd-card-border)', marginTop: 4, marginBottom: 4 }}>
+                    DÉFILEMENT
+                  </div>
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdateProps({ autoScroll: !(widgetProps?.autoScroll ?? false) });
+                      setIsEditDropdownOpen(false);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      color: widgetProps?.autoScroll ? 'var(--nd-accent)' : 'var(--nd-text)',
+                      background: widgetProps?.autoScroll ? 'rgba(var(--nd-accent-rgb, 128,128,128), 0.1)' : 'transparent',
+                      fontWeight: 500
+                    }}
+                    className="nd-weather-card-hover"
+                  >
+                    Défilement automatique
+                    {widgetProps?.autoScroll && <Check size={12} />}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -442,16 +575,18 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
         </div>
       )}
 
-      {/* WIDE Layout: Full Tabular Grid View */}
+      {/* WIDE Layout: Full Tabular Grid View or Card Grid */}
       {widgetSize === 'wide' && !error && containerList.length > 0 && (
-        <div style={{ overflowX: 'auto', width: '100%' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
+        <div style={{ width: '100%' }}>
+          {!isGridInWideLayout ? (
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--nd-border)', color: 'var(--nd-text-muted)' }}>
                 <th style={{ padding: '8px 10px', fontWeight: 600 }}>Nom</th>
                 <th style={{ padding: '8px 10px', fontWeight: 600 }}>Image</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Statut</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: allowActions ? 'left' : 'right' }}>Statut</th>
+                {allowActions && <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -470,11 +605,12 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
                     <td style={{ padding: '8px 10px', fontFamily: 'monospace', color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>
                       {c.image.split('@')[0]}
                     </td>
-                    <td style={{ padding: '8px 10px', color: 'var(--nd-text-muted)' }}>
+                    <td style={{ padding: '8px 10px', color: 'var(--nd-text-muted)', textAlign: allowActions ? 'left' : 'right' }}>
                       {c.status}
                     </td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>
-                      {!editMode && (
+                    {allowActions && (
+                      <td style={{ padding: '8px 10px', textAlign: 'right' }}>
+                        {!editMode && (
                         <button 
                           onClick={() => handleToggleContainer(c.id, c.state)}
                           disabled={isLoadingAction}
@@ -508,51 +644,93 @@ export default function DockerContainersWidget({ editMode }: { editMode?: boolea
                         </button>
                       )}
                     </td>
+                  )}
                   </tr>
                 );
               })}
             </tbody>
           </table>
+          </div>
+          ) : (
+            effectiveAutoScroll ? (
+              <div 
+                style={{ overflow: 'hidden', height: Math.ceil(ITEMS_PER_PAGE / 3) * 48 - 8, position: 'relative' }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', 
+                  gap: 8, 
+                  willChange: 'transform',
+                  animation: `nd-docker-scroll-grid ${paddedList.length * 1}s linear infinite`,
+                  animationPlayState: isHovered ? 'paused' : 'running'
+                }}>
+                  {paddedList.map((c: any, idx: number) => renderContainerItem(c, `first-${c.id}-${idx}`))}
+                  {paddedList.map((c: any, idx: number) => renderContainerItem(c, `clone-${c.id}-${idx}`))}
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
+                {paginatedContainers.map((c: any) => renderContainerItem(c))}
+              </div>
+            )
+          )}
         </div>
       )}
 
       {/* MEDIUM Layout: 2-Column Grid */}
       {widgetSize === 'medium' && !error && containerList.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {paginatedContainers.map((c: any) => renderContainerItem(c))}
-        </div>
+        effectiveAutoScroll ? (
+          <div 
+            style={{ overflow: 'hidden', height: Math.ceil(ITEMS_PER_PAGE / 2) * 48 - 8, position: 'relative' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: 8, 
+              willChange: 'transform',
+              animation: `nd-docker-scroll-grid ${paddedList.length * 1.5}s linear infinite`,
+              animationPlayState: isHovered ? 'paused' : 'running'
+            }}>
+              {paddedList.map((c: any, idx: number) => renderContainerItem(c, `first-${c.id}-${idx}`))}
+              {paddedList.map((c: any, idx: number) => renderContainerItem(c, `clone-${c.id}-${idx}`))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {paginatedContainers.map((c: any) => renderContainerItem(c))}
+          </div>
+        )
       )}
 
-      {/* NARROW Layout: Vertical list / Auto Scroll */}
+      {/* NARROW Layout: Vertical list */}
       {widgetSize === 'narrow' && !error && containerList.length > 0 && (
-        <>
-          {showAutoScroll ? (
-            <div 
-              onMouseEnter={() => setIsScrollPaused(true)}
-              onMouseLeave={() => setIsScrollPaused(false)}
-              style={{ 
-                overflow: 'hidden', 
-                height: `${ITEMS_PER_PAGE * 42}px`,
-              }}
-            >
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: 6,
-                animation: `nd-docker-scroll ${scrollDuration}s linear infinite`,
-                animationPlayState: isScrollPaused ? 'paused' : 'running',
-                willChange: 'transform',
-              }}>
-                {containerList.map((c: any, idx: number) => renderContainerItem(c, `first-${c.id}-${idx}`))}
-                {containerList.map((c: any, idx: number) => renderContainerItem(c, `clone-${c.id}-${idx}`))}
-              </div>
+        effectiveAutoScroll ? (
+          <div 
+            style={{ overflow: 'hidden', height: ITEMS_PER_PAGE * 46 - 6, position: 'relative' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 6, 
+              willChange: 'transform',
+              animation: `nd-docker-scroll-narrow ${paddedList.length * 2.5}s linear infinite`,
+              animationPlayState: isHovered ? 'paused' : 'running'
+            }}>
+              {paddedList.map((c: any, idx: number) => renderContainerItem(c, `first-${c.id}-${idx}`))}
+              {paddedList.map((c: any, idx: number) => renderContainerItem(c, `clone-${c.id}-${idx}`))}
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minHeight, justifyContent: 'flex-start' }}>
-              {paginatedContainers.map((c: any) => renderContainerItem(c))}
-            </div>
-          )}
-        </>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'flex-start' }}>
+            {paginatedContainers.map((c: any) => renderContainerItem(c))}
+          </div>
+        )
       )}
     </div>
   );

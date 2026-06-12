@@ -453,6 +453,13 @@ body {
   border: 1px solid var(--nd-card-border);
   border-radius: var(--nd-card-radius);
   padding: 14px;
+  position: relative;
+  transition: border-color var(--nd-transition);
+}
+
+.nd-sidebar-card:focus-within,
+.nd-sidebar-card:hover {
+  z-index: 150;
 }
 
 /* ==================== DEVICE STATS GRID ==================== */

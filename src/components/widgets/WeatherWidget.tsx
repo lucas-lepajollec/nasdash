@@ -56,8 +56,7 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
     return locations.length > 0 ? locations : (legacyLocation ? [{id: 'legacy', ...legacyLocation}] : []);
   }, [locations, legacyLocation]);
   
-  const widgetStyleRaw = config?.settings?.weatherWidgetStyle || 'default';
-  const widgetStyle = widgetSize === 'narrow' ? (widgetStyleRaw === 'minimal' ? 'minimal' : 'currentOnly') : widgetStyleRaw;
+  const widgetStyle = config?.settings?.weatherWidgetStyle || 'default';
   
   const initialIndex = availableLocations.findIndex(l => l.id === activeId);
   const [currentIndex, setCurrentIndex] = useState(initialIndex >= 0 ? initialIndex : 0);
@@ -157,117 +156,163 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
           </div>
         ) : weather ? (
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
-            {/* WIDE Layout: 2 Columns */}
+            {/* WIDE Layout: Responsive Styles */}
             {widgetSize === 'wide' && (
-              <div style={{ display: 'flex', gap: 24, alignItems: 'stretch', maxWidth: '850px', margin: '0 auto', width: '100%' }}>
-                {/* Left Panel: Current Weather */}
-                <div style={{ flex: '0 0 240px', borderRight: '1px solid var(--nd-border)', paddingRight: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontSize: '3rem', fontWeight: 700, lineHeight: 1, fontFamily: 'var(--font-outfit), sans-serif', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-                        {Math.round(weather.current.temperature_2m)}°
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--nd-text-muted)', marginTop: 6, fontWeight: 500 }}>
-                        {getWeatherLabel(weather.current.weather_code)}
-                      </div>
-                    </div>
-                    <div className="weather-glow" style={{ padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
-                      <AnimatedWeatherIcon code={weather.current.weather_code} size={54} />
-                    </div>
+              <div style={{ display: 'flex', gap: 32, alignItems: 'stretch', width: '100%', padding: '12px 16px', minHeight: '180px' }}>
+                
+                {/* Current Weather Left Panel */}
+                {(widgetStyle === 'currentOnly' || widgetStyle === 'minimal') ? (
+                  <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-evenly', gap: 48 }}>
+                     <div className="weather-glow" style={{ padding: 24, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
+                       <AnimatedWeatherIcon code={weather.current.weather_code} size={96} />
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                       <div style={{ fontSize: '5rem', fontWeight: 700, lineHeight: 1, fontFamily: 'var(--font-outfit), sans-serif', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                         {Math.round(weather.current.temperature_2m)}°
+                       </div>
+                       <div style={{ fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginTop: 8, fontWeight: 500 }}>
+                         {getWeatherLabel(weather.current.weather_code)}
+                       </div>
+                     </div>
+                     {widgetStyle === 'currentOnly' && (
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, borderLeft: '1px solid var(--nd-border)', paddingLeft: 48 }}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
+                           <Thermometer size={18} className="text-blue-300" />
+                           Ressenti: {Math.round(weather.current.temperature_2m)}° (Min: {Math.round(weather.daily.temperature_2m_min[0])}° / Max: {Math.round(weather.daily.temperature_2m_max[0])}°)
+                         </div>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
+                           <Wind size={18} className="text-gray-400" />
+                           Vent: {Math.round(weather.current.wind_speed_10m)} km/h
+                         </div>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
+                           <Droplets size={18} className="text-blue-400" />
+                           Humidité: {weather.current.relative_humidity_2m}%
+                         </div>
+                       </div>
+                     )}
                   </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
-                      <Thermometer size={14} className="text-blue-300" />
-                      Ressenti : {Math.round(weather.current.temperature_2m)}° (Min: {Math.round(weather.daily.temperature_2m_min[0])}° / Max: {Math.round(weather.daily.temperature_2m_max[0])}°)
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
-                        <Wind size={14} className="text-gray-400" />
-                        {Math.round(weather.current.wind_speed_10m)} km/h
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
-                        <Droplets size={14} className="text-blue-400" />
-                        {weather.current.relative_humidity_2m}% hum
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Panel: Extended 5-Day Forecast Grid */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <h4 style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 16 }}>
-                    Prévisions sur 5 jours
-                  </h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
-                    {[1, 2, 3, 4, 5].map((dayOffset) => {
-                      const date = new Date(weather.daily.time[dayOffset]);
-                      const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
-                      return (
-                        <div key={dayOffset} style={{ 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          alignItems: 'center', 
-                          gap: 10,
-                          padding: '12px 8px',
-                          background: 'rgba(255, 255, 255, 0.01)',
-                          border: '1px solid var(--nd-border)',
-                          borderRadius: '12px',
-                          transition: 'transform 0.2s',
-                        }}
-                        className="nd-weather-card-hover"
-                        >
-                          <span style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>{dayName}</span>
-                          <AnimatedWeatherIcon code={weather.daily.weather_code[dayOffset]} size={24} />
-                          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--nd-text-muted)', marginTop: 4 }}>
-                            {getWeatherLabel(weather.daily.weather_code[dayOffset]).substring(0, 10)}...
-                          </span>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', gap: 4, marginTop: 4 }}>
-                            <span style={{ color: 'var(--nd-text)' }}>{Math.round(weather.daily.temperature_2m_max[dayOffset])}°</span>
-                            <span style={{ color: 'var(--nd-text-muted)', fontWeight: 400 }}>{Math.round(weather.daily.temperature_2m_min[dayOffset])}°</span>
-                          </div>
+                ) : (
+                  <div style={{ flex: '0 0 280px', borderRight: '1px solid var(--nd-border)', paddingRight: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '3.5rem', fontWeight: 700, lineHeight: 1, fontFamily: 'var(--font-outfit), sans-serif', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                          {Math.round(weather.current.temperature_2m)}°
                         </div>
-                      );
-                    })}
+                        <div style={{ fontSize: '0.95rem', color: 'var(--nd-text-muted)', marginTop: 6, fontWeight: 500 }}>
+                          {getWeatherLabel(weather.current.weather_code)}
+                        </div>
+                      </div>
+                      <div className="weather-glow" style={{ padding: 16, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
+                        <AnimatedWeatherIcon code={weather.current.weather_code} size={64} />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
+                        <Thermometer size={16} className="text-blue-300" />
+                        Ressenti : {Math.round(weather.current.temperature_2m)}° (Min: {Math.round(weather.daily.temperature_2m_min[0])}° / Max: {Math.round(weather.daily.temperature_2m_max[0])}°)
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
+                          <Wind size={16} className="text-gray-400" />
+                          {Math.round(weather.current.wind_speed_10m)} km/h
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
+                          <Droplets size={16} className="text-blue-400" />
+                          {weather.current.relative_humidity_2m}%
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Right Panel: Forecast Grid */}
+                {(widgetStyle === 'extended' || widgetStyle === 'default' || !widgetStyle) && (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 20 }}>
+                      Prévisions sur {widgetStyle === 'extended' ? '5' : '3'} jours
+                    </h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${widgetStyle === 'extended' ? 5 : 3}, 1fr)`, gap: 16 }}>
+                      {Array.from({length: widgetStyle === 'extended' ? 5 : 3}, (_, i) => i + 1).map((dayOffset) => {
+                        const date = new Date(weather.daily.time[dayOffset]);
+                        const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                        return (
+                          <div key={dayOffset} style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            gap: 12,
+                            padding: '16px 10px',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid var(--nd-border)',
+                            borderRadius: '16px',
+                            transition: 'transform 0.2s',
+                          }}
+                          className="nd-weather-card-hover"
+                          >
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>{dayName}</span>
+                            <AnimatedWeatherIcon code={weather.daily.weather_code[dayOffset]} size={32} />
+                            <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--nd-text-muted)', marginTop: 4, textAlign: 'center', lineHeight: 1.2 }}>
+                              {getWeatherLabel(weather.daily.weather_code[dayOffset])}
+                            </span>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 700, display: 'flex', gap: 6, marginTop: 4 }}>
+                              <span style={{ color: 'var(--nd-text)' }}>{Math.round(weather.daily.temperature_2m_max[dayOffset])}°</span>
+                              <span style={{ color: 'var(--nd-text-muted)', fontWeight: 400 }}>{Math.round(weather.daily.temperature_2m_min[dayOffset])}°</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* MEDIUM Layout: Horizontal Layout */}
+            {/* MEDIUM Layout */}
             {widgetSize === 'medium' && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: (widgetStyle === 'currentOnly' || widgetStyle === 'minimal') ? 'center' : 'space-between', gap: 24, padding: '16px 12px', minHeight: '140px' }}>
                 {/* Left Panel: Current Weather */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <div className="weather-glow" style={{ padding: 10, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
-                    <AnimatedWeatherIcon code={weather.current.weather_code} size={42} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                  <div className="weather-glow" style={{ padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
+                    <AnimatedWeatherIcon code={weather.current.weather_code} size={56} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>
+                    <div style={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1 }}>
                       {Math.round(weather.current.temperature_2m)}°
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)', marginTop: 4 }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--nd-text-muted)', marginTop: 6, fontWeight: 500 }}>
                       {getWeatherLabel(weather.current.weather_code)}
                     </div>
                   </div>
                 </div>
 
-                {/* Right Panel: Horizontal 3-Day Forecast */}
-                {widgetStyle !== 'minimal' && (
-                  <div style={{ display: 'flex', gap: 16, paddingLeft: 20, borderLeft: '1px solid var(--nd-border)' }}>
-                    {[1, 2, 3].map((dayOffset) => {
+                {/* Right Panel: Horizontal Forecast or Extra Info */}
+                {(widgetStyle === 'extended' || widgetStyle === 'default' || !widgetStyle) && (
+                  <div style={{ display: 'flex', gap: 24, paddingLeft: 24, borderLeft: '1px solid var(--nd-border)' }}>
+                    {Array.from({length: widgetStyle === 'extended' ? 4 : 3}, (_, i) => i + 1).map((dayOffset) => {
                       const date = new Date(weather.daily.time[dayOffset]);
                       const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
                       return (
-                        <div key={dayOffset} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                          <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>{dayName}</span>
-                          <AnimatedWeatherIcon code={weather.daily.weather_code[dayOffset]} size={16} />
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                        <div key={dayOffset} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--nd-text-muted)', fontWeight: 600 }}>{dayName}</span>
+                          <AnimatedWeatherIcon code={weather.daily.weather_code[dayOffset]} size={28} />
+                          <span style={{ fontSize: '0.85rem', fontWeight: 700, marginTop: 4 }}>
                             {Math.round(weather.daily.temperature_2m_max[dayOffset])}°
                           </span>
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {widgetStyle === 'currentOnly' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 32, borderLeft: '1px solid var(--nd-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', color: 'var(--nd-text-muted)' }}>
+                      <Thermometer size={16} className="text-blue-300" /> Ressenti: {Math.round(weather.current.temperature_2m)}°
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9rem', color: 'var(--nd-text-muted)' }}>
+                      <Wind size={16} className="text-gray-400" /> {Math.round(weather.current.wind_speed_10m)} km/h
+                    </div>
                   </div>
                 )}
               </div>

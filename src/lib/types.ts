@@ -265,6 +265,7 @@ export interface DashboardConfig {
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
     dockerContainersStyle?: 'standard' | 'extended' | 'minimalist';
     dockerContainersAutoScroll?: boolean;
+    allowDockerActions?: boolean;
     clockTimezone?: string;
     customCss?: string;
     backgroundImage?: string;

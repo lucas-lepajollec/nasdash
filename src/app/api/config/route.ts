@@ -299,7 +299,7 @@ export async function PUT(req: NextRequest) {
     
     // Dynamically save all widget specific states (hide[Widget], [widget]Sidebar, [widget]Order)
     Object.keys(body).forEach(key => {
-      if (key.startsWith('hide') || key.endsWith('Sidebar') || key.endsWith('Order')) {
+      if (key.startsWith('hide') || key.endsWith('Sidebar') || key.endsWith('Order') || key.endsWith('Props')) {
         (config.settings as any)[key] = body[key];
       }
     });
@@ -309,6 +309,7 @@ export async function PUT(req: NextRequest) {
     if (body.weatherWidgetStyle !== undefined) config.settings.weatherWidgetStyle = body.weatherWidgetStyle;
     if (body.dockerContainersStyle !== undefined) config.settings.dockerContainersStyle = body.dockerContainersStyle;
     if (body.dockerContainersAutoScroll !== undefined) config.settings.dockerContainersAutoScroll = body.dockerContainersAutoScroll;
+    if (body.allowDockerActions !== undefined) config.settings.allowDockerActions = body.allowDockerActions;
     
     // Appearance Profiles
     if (body.appearanceProfiles !== undefined) {
@@ -430,6 +431,16 @@ export async function PUT(req: NextRequest) {
     const safeDevice = JSON.parse(JSON.stringify(device));
     if (safeDevice.api?.token) safeDevice.api.token = '********';
     return NextResponse.json(safeDevice);
+  }
+
+  if (type === 'homeWidgetProps') {
+    if (!config.settings.homeWidgets) config.settings.homeWidgets = [];
+    const widget = config.settings.homeWidgets.find((w: any) => w.id === body.id);
+    if (!widget) return NextResponse.json({ error: 'Widget not found' }, { status: 404 });
+    if (!widget.props) widget.props = {};
+    widget.props = { ...widget.props, ...body.props };
+    writeConfig(config);
+    return NextResponse.json(widget);
   }
 
   if (type === 'reorderDockerActions') {

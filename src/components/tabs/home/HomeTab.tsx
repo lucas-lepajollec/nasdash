@@ -172,7 +172,7 @@ export default function HomeTab({
       visible: !(isGloballyHidden || isTabHidden),
       sidebar: (config.settings as any)?.[sidebarKey] || w.defaultSidebar,
       order: (config.settings as any)?.[orderKey] ?? w.defaultOrder,
-      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config.categories} />
+      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config.categories} widgetInstanceId={w.id} widgetProps={(config.settings as any)?.[`${w.id}Props`]} onUpdateProps={(newProps) => updateConfig({ [`${w.id}Props`]: { ...((config.settings as any)?.[`${w.id}Props`] || {}), ...newProps } })} />
     };
   });
 

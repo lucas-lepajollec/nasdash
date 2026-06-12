@@ -71,7 +71,10 @@ export async function GET(
     }
 
     // Return mock data for demo/mock hosts
-    if (host.url === 'mock' || host.id === 'mock-host-id') {
+    if (host.url.includes('mock') || host.id.includes('mock-host')) {
+      const isLarge = host.url.includes('mock-large') || host.id.includes('mock-host-large');
+      const isSmall = host.url.includes('mock-small') || host.id.includes('mock-host-small');
+      
       const mockContainers = [
         {
           id: "mock11111111",
@@ -98,86 +101,110 @@ export async function GET(
           ports: [{ privatePort: 5432, publicPort: 5432, type: "tcp" }],
           mounts: [],
           labels: {}
-        },
-        {
-          id: "mock33333333",
-          fullId: "mock33333333333333333333333333333333",
-          names: ["redis-cache"],
-          image: "redis:alpine",
-          imageId: "sha256:redis",
-          state: "running",
-          status: "Up 1 hour",
-          created: Math.floor(Date.now() / 1000 - 3600),
-          ports: [{ privatePort: 6379, publicPort: 6379, type: "tcp" }],
-          mounts: [],
-          labels: {}
-        },
-        {
-          id: "mock44444444",
-          fullId: "mock44444444444444444444444444444444",
-          names: ["node-api"],
-          image: "node:18-alpine",
-          imageId: "sha256:node",
-          state: "exited",
-          status: "Exited (137) 10 minutes ago",
-          created: Math.floor(Date.now() / 1000 - 7200),
-          ports: [],
-          mounts: [],
-          labels: {}
-        },
-        {
-          id: "mock55555555",
-          fullId: "mock55555555555555555555555555555555",
-          names: ["prometheus"],
-          image: "prom/prometheus:latest",
-          imageId: "sha256:prometheus",
-          state: "running",
-          status: "Up 45 minutes",
-          created: Math.floor(Date.now() / 1000 - 2700),
-          ports: [{ privatePort: 9090, publicPort: 9090, type: "tcp" }],
-          mounts: [],
-          labels: {}
-        },
-        {
-          id: "mock66666666",
-          fullId: "mock66666666666666666666666666666666",
-          names: ["grafana"],
-          image: "grafana/grafana:latest",
-          imageId: "sha256:grafana",
-          state: "running",
-          status: "Up 45 minutes",
-          created: Math.floor(Date.now() / 1000 - 2700),
-          ports: [{ privatePort: 3000, publicPort: 3000, type: "tcp" }],
-          mounts: [],
-          labels: {}
-        },
-        {
-          id: "mock77777777",
-          fullId: "mock77777777777777777777777777777777",
-          names: ["pihole-dns"],
-          image: "pihole/pihole:latest",
-          imageId: "sha256:pihole",
-          state: "paused",
-          status: "Paused",
-          created: Math.floor(Date.now() / 1000 - 86400),
-          ports: [{ privatePort: 53, publicPort: 53, type: "udp" }],
-          mounts: [],
-          labels: {}
-        },
-        {
-          id: "mock88888888",
-          fullId: "mock88888888888888888888888888888888",
-          names: ["jellyfin-media"],
-          image: "jellyfin/jellyfin:latest",
-          imageId: "sha256:jellyfin",
-          state: "running",
-          status: "Up 2 days",
-          created: Math.floor(Date.now() / 1000 - 172800),
-          ports: [{ privatePort: 8096, publicPort: 8096, type: "tcp" }],
-          mounts: [],
-          labels: {}
         }
       ];
+
+      if (!isSmall) {
+        mockContainers.push(
+          {
+            id: "mock33333333",
+            fullId: "mock33333333333333333333333333333333",
+            names: ["redis-cache"],
+            image: "redis:alpine",
+            imageId: "sha256:redis",
+            state: "running",
+            status: "Up 1 hour",
+            created: Math.floor(Date.now() / 1000 - 3600),
+            ports: [{ privatePort: 6379, publicPort: 6379, type: "tcp" }],
+            mounts: [],
+            labels: {}
+          },
+          {
+            id: "mock44444444",
+            fullId: "mock44444444444444444444444444444444",
+            names: ["node-api"],
+            image: "node:18-alpine",
+            imageId: "sha256:node",
+            state: "exited",
+            status: "Exited (137) 10 minutes ago",
+            created: Math.floor(Date.now() / 1000 - 7200),
+            ports: [],
+            mounts: [],
+            labels: {}
+          },
+          {
+            id: "mock55555555",
+            fullId: "mock55555555555555555555555555555555",
+            names: ["prometheus"],
+            image: "prom/prometheus:latest",
+            imageId: "sha256:prometheus",
+            state: "running",
+            status: "Up 45 minutes",
+            created: Math.floor(Date.now() / 1000 - 2700),
+            ports: [{ privatePort: 9090, publicPort: 9090, type: "tcp" }],
+            mounts: [],
+            labels: {}
+          },
+          {
+            id: "mock66666666",
+            fullId: "mock66666666666666666666666666666666",
+            names: ["grafana"],
+            image: "grafana/grafana:latest",
+            imageId: "sha256:grafana",
+            state: "running",
+            status: "Up 45 minutes",
+            created: Math.floor(Date.now() / 1000 - 2700),
+            ports: [{ privatePort: 3000, publicPort: 3000, type: "tcp" }],
+            mounts: [],
+            labels: {}
+          },
+          {
+            id: "mock77777777",
+            fullId: "mock77777777777777777777777777777777",
+            names: ["pihole-dns"],
+            image: "pihole/pihole:latest",
+            imageId: "sha256:pihole",
+            state: "paused",
+            status: "Paused",
+            created: Math.floor(Date.now() / 1000 - 86400),
+            ports: [{ privatePort: 53, publicPort: 53, type: "udp" }],
+            mounts: [],
+            labels: {}
+          },
+          {
+            id: "mock88888888",
+            fullId: "mock88888888888888888888888888888888",
+            names: ["jellyfin-media"],
+            image: "jellyfin/jellyfin:latest",
+            imageId: "sha256:jellyfin",
+            state: "running",
+            status: "Up 2 days",
+            created: Math.floor(Date.now() / 1000 - 172800),
+            ports: [{ privatePort: 8096, publicPort: 8096, type: "tcp" }],
+            mounts: [],
+            labels: {}
+          }
+        );
+      }
+
+      if (isLarge) {
+        for (let i = 9; i <= 24; i++) {
+          mockContainers.push({
+            id: `mock${i.toString().padStart(8, '0')}`,
+            fullId: `mock${i.toString().padStart(32, '0')}`,
+            names: [`demo-service-${i}`],
+            image: `demo/service-${i}:latest`,
+            imageId: `sha256:fake${i}`,
+            state: i % 4 === 0 ? "exited" : "running",
+            status: i % 4 === 0 ? "Exited (0) 2 hours ago" : `Up ${i} days`,
+            created: Math.floor(Date.now() / 1000 - 86400 * i),
+            ports: [],
+            mounts: [],
+            labels: {}
+          });
+        }
+      }
+
       return NextResponse.json(mockContainers);
     }
 

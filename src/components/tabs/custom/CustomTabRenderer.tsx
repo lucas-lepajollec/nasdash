@@ -68,6 +68,28 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     }
   };
 
+  const handleUpdateWidgetProps = async (rowId: string, colId: string, widgetIndex: number, newProps: any) => {
+    if (!layout) return;
+    const newLayout = JSON.parse(JSON.stringify(layout)); // Deep copy
+    const row = newLayout.rows.find((r: CustomTabRow) => r.id === rowId);
+    if (!row) return;
+    const col = row.columns.find((c: CustomTabColumn) => c.id === colId);
+    if (!col || !col.widgets) return;
+    
+    col.widgets[widgetIndex].props = { ...(col.widgets[widgetIndex].props || {}), ...newProps };
+    setLayout(newLayout);
+
+    try {
+      await fetch('/api/custom-tabs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: tab.id, layout: newLayout })
+      });
+    } catch (e) {
+      console.error('Failed to save widget props', e);
+    }
+  };
+
   const renderWidget = (info: CustomTabWidgetInfo, size: 'small' | 'medium' | 'full', rowId: string, colId: string, index: number) => {
     if (info.type === 'spacer') {
       return (
@@ -105,7 +127,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
       );
     }
     
-    return <WidgetRenderer id={info.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} />;
+    return <WidgetRenderer id={info.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} widgetInstanceId={`${rowId}-${colId}-${index}`} widgetProps={info.props} onUpdateProps={(newProps) => handleUpdateWidgetProps(rowId, colId, index, newProps)} />;
   };
 
   const renderRow = (row: CustomTabRow) => {
@@ -115,8 +137,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
         flexWrap: 'wrap', // Responsive behavior
         gap: '16px',
         marginBottom: '16px',
-        width: '100%',
-        position: 'relative'
+        width: '100%'
       }}>
         {row.columns.map(col => {
           const size = getLayoutSize(col.width);
@@ -131,7 +152,6 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
             <div key={col.id} className="nd-custom-column" style={{
               flex: `1 1 calc(${col.width} - 16px)`,
               minWidth: '280px',
-              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px'

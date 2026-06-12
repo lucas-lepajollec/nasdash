@@ -13,7 +13,7 @@ interface HomeWidgetRendererProps {
 }
 
 export default function HomeWidgetRenderer({ widget, editMode, showSensitive = false, onDelete, onUpdateHeight }: HomeWidgetRendererProps) {
-  const { config } = useConfig();
+  const { config, updateHomeWidgetProps } = useConfig();
   
   // By default, widgets in Home BentoGrid slots occupy the medium slot size
   const size = 'medium';
@@ -57,7 +57,7 @@ export default function HomeWidgetRenderer({ widget, editMode, showSensitive = f
       );
     }
     
-    return <WidgetRenderer id={widget.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} />;
+    return <WidgetRenderer id={widget.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} widgetInstanceId={widget.id} widgetProps={widget.props} onUpdateProps={(newProps) => updateHomeWidgetProps && updateHomeWidgetProps(widget.id, newProps)} />;
   };
 
   return (

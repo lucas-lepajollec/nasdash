@@ -6,7 +6,7 @@ import { useWidgetSize } from './WidgetContainer';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
 import { Plus, Pencil, GripVertical, Power, Play, RefreshCw, Layers, Loader2 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -45,7 +45,9 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
         </div>
       )}
       
-      <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: 600 }}>{action.name}</div>
+      <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={action.name}>
+        {action.name}
+      </div>
       
       {editMode && (
         <button onClick={(e) => { e.stopPropagation(); onEdit(); }} style={{ background: 'none', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer' }}>
@@ -86,7 +88,6 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const executeAction = async (action: DockerActionConfig) => {
     setLoadingActions(prev => ({ ...prev, [action.id]: true }));
     try {
-      // 1. Fetch current status of all target containers
       const containerStates: { hostId: string, containerId: string, running: boolean }[] = [];
       
       await Promise.all(action.targets.map(async (target) => {
@@ -104,19 +105,15 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
         }
       }));
 
-      // 2. Determine target state (start or stop)
       let targetOperation: 'start' | 'stop' = 'start';
       if (action.actionType === 'start') targetOperation = 'start';
       else if (action.actionType === 'stop') targetOperation = 'stop';
       else if (action.actionType === 'switch') {
         const runningCount = containerStates.filter(c => c.running).length;
-        // Majority rule: if more than half are running, stop them all. Otherwise, start them all.
         targetOperation = runningCount > (containerStates.length / 2) ? 'stop' : 'start';
       }
 
-      // 3. Execute action
       await Promise.all(containerStates.map(async (c) => {
-        // Skip if already in desired state
         if (targetOperation === 'start' && c.running) return;
         if (targetOperation === 'stop' && !c.running) return;
 
@@ -133,10 +130,19 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   };
 
   let listStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+  
+  const actionsCount = actions.length;
   if (widgetSize === 'wide') {
-    listStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+    let gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))';
+    if (actionsCount === 1) gridTemplateColumns = '1fr';
+    else if (actionsCount === 2) gridTemplateColumns = 'repeat(2, 1fr)';
+    else if (actionsCount === 3) gridTemplateColumns = 'repeat(3, 1fr)';
+    else if (actionsCount === 4) gridTemplateColumns = 'repeat(4, 1fr)';
+    
+    listStyle = { display: 'grid', gridTemplateColumns, gap: 10, marginTop: (hideTitles && !editMode) ? 0 : 8 };
   } else if (widgetSize === 'medium') {
-    listStyle = { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+    const cols = actionsCount === 1 ? 1 : 2;
+    listStyle = { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginTop: (hideTitles && !editMode) ? 0 : 8 };
   }
 
   return (
@@ -164,7 +170,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
           </p>
         )}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={actions.map(a => a.id)}>
+          <SortableContext items={actions.map(a => a.id)} strategy={rectSortingStrategy}>
             {actions.map((action) => (
               <SortableActionItem 
                 key={action.id} 

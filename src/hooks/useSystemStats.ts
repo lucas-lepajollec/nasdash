@@ -1,74 +1,99 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { SystemStats } from '@/lib/types';
 
-export function useSystemStats() {
-  const [stats, setStats] = useState<SystemStats | null>(null);
-  const [history, setHistory] = useState<{ cpu: number; latency: number; time: string }[]>([]);
-  const eventSourceRef = useRef<EventSource | null>(null);
+let globalEventSource: EventSource | null = null;
+let globalStats: SystemStats | null = null;
+let globalHistory: { cpu: number; latency: number; time: string }[] = [];
+let listeners = new Set<() => void>();
+let reconnectTimer: NodeJS.Timeout | null = null;
+let isConnecting = false;
+let visibilityHandlerAdded = false;
 
-  const connect = useCallback(() => {
-    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+function notify() {
+  listeners.forEach((l) => l());
+}
 
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
+function connect() {
+  if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+  if (globalEventSource || isConnecting) return;
+
+  isConnecting = true;
+  const es = new EventSource('/api/system');
+  globalEventSource = es;
+
+  es.onopen = () => {
+    isConnecting = false;
+  };
+
+  es.onmessage = (event) => {
+    try {
+      const data: SystemStats = JSON.parse(event.data);
+      globalStats = data;
+      const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const latency = data.network?.latency || 0;
+      globalHistory = [...globalHistory, { cpu: 0, latency, time: now }].slice(-60);
+      notify();
+    } catch {
+      // ignore
     }
+  };
 
-    const es = new EventSource('/api/system');
-    eventSourceRef.current = es;
+  es.onerror = () => {
+    disconnect();
+    reconnectTimer = setTimeout(() => {
+      if (listeners.size > 0) connect();
+    }, 5000);
+  };
+}
 
-    es.onmessage = (event) => {
-      try {
-        const data: SystemStats = JSON.parse(event.data);
-        setStats(data);
-        setHistory(prev => {
-          const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-          const latency = data.network?.latency || 0;
-          const next = [...prev, { cpu: 0, latency, time: now }];
-          return next.slice(-60); // Keep last 60 data points (2 min)
-        });
-      } catch {
-        // ignore parse errors
+function disconnect() {
+  if (globalEventSource) {
+    globalEventSource.close();
+    globalEventSource = null;
+  }
+  isConnecting = false;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
+
+// Add global visibility listener once
+if (typeof document !== 'undefined' && !visibilityHandlerAdded) {
+  visibilityHandlerAdded = true;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      disconnect();
+    } else {
+      if (listeners.size > 0) {
+        connect();
       }
-    };
+    }
+  });
+}
 
-    es.onerror = () => {
-      es.close();
-      // Reconnect after 5 seconds
-      setTimeout(connect, 5000);
+export function useSystemStats() {
+  const [, forceRender] = useState({});
+
+  useEffect(() => {
+    const listener = () => forceRender({});
+    listeners.add(listener);
+
+    if (listeners.size === 1) {
+      connect();
+    }
+    
+    forceRender({});
+
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) {
+        disconnect();
+      }
     };
   }, []);
 
-  useEffect(() => {
-    // Initial connection if visible
-    if (document.visibilityState === 'visible') {
-      connect();
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        // Disconnect immediately to save server resources
-        if (eventSourceRef.current) {
-          eventSourceRef.current.close();
-          eventSourceRef.current = null;
-        }
-      } else {
-        // Reconnect instantly when returning to the tab
-        connect();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
-    };
-  }, [connect]);
-
-  return { stats, history };
+  return { stats: globalStats, history: globalHistory };
 }
