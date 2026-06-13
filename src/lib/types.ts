@@ -53,10 +53,11 @@ export interface Device {
   icon: string;
   api?: DeviceApiConfig;
   stats?: DeviceStat[];
-  statStyle?: 'horizontal' | 'vertical' | 'circle';
+  statStyle?: 'horizontal' | 'vertical' | 'graph';
   hideValues?: boolean;
   colsDesktop?: number;
   colsMobile?: number;
+  enableAlerts?: boolean;
 }
 
 // ==================== DOCKER ====================

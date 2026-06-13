@@ -6,6 +6,13 @@
       "icon": "⌨️",
       "description": "Onglet personnalisé",
       "isCustom": true
+    },
+    {
+      "id": "custom_a4bc8d8f-c1f0-4152-8037-ac2abca5fc15",
+      "name": "appareils",
+      "icon": "📝",
+      "description": "Onglet personnalisé",
+      "isCustom": true
     }
   ],
   "layouts": {
@@ -87,6 +94,154 @@
         }
       ],
       "id": "custom_685ff317-feb2-4597-91a8-7ffff7fa9043"
+    },
+    "custom_a4bc8d8f-c1f0-4152-8037-ac2abca5fc15": {
+      "rows": [
+        {
+          "id": "6d51274e-0eaf-46da-bb2f-7b79479bf297",
+          "type": "1-col",
+          "columns": [
+            {
+              "id": "03655a4c-cb47-4b0c-93d8-4ea02ea15ebd",
+              "width": "100%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "devices",
+                  "props": {
+                    "deviceConfigs": {
+                      "7ffe15df-3668-45b5-bf5c-c8c008c718e0": {
+                        "statStyle": "graph",
+                        "colsDesktop": 2,
+                        "colsMobile": 2,
+                        "hideValues": false,
+                        "visibleStats": [],
+                        "enableAlerts": true,
+                        "coloredGraphs": true
+                      },
+                      "cd153e42-8d69-43ea-9e2f-c97816c056c9": {
+                        "statStyle": "vertical",
+                        "colsDesktop": 3,
+                        "colsMobile": 3,
+                        "hideValues": false,
+                        "visibleStats": [],
+                        "enableAlerts": true,
+                        "coloredGraphs": false
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "networkgraph"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "1517a603-57ed-4a08-86b3-1fcb6d33ff44",
+          "type": "75-25",
+          "columns": [
+            {
+              "id": "45f204d8-6e2f-4fd9-be64-ca1ea27244a3",
+              "width": "75%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "devices",
+                  "props": {
+                    "deviceConfigs": {
+                      "7ffe15df-3668-45b5-bf5c-c8c008c718e0": {
+                        "statStyle": "horizontal",
+                        "colsDesktop": 1,
+                        "colsMobile": 3,
+                        "hideValues": false,
+                        "visibleStats": [],
+                        "enableAlerts": true,
+                        "coloredGraphs": false
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "id": "83f5a444-3210-42a9-903c-4070ab877784",
+              "width": "25%",
+              "content": null
+            }
+          ]
+        },
+        {
+          "id": "ee7e8b14-a45c-4d75-86d5-a13ab9f75ba5",
+          "type": "50-50",
+          "columns": [
+            {
+              "id": "766a250c-56c3-4c0d-bfa5-c4a8eb62f68b",
+              "width": "50%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "devices"
+                }
+              ]
+            },
+            {
+              "id": "b886ba2d-19f0-48f3-b0b3-ace21d8e37be",
+              "width": "50%",
+              "content": null
+            }
+          ]
+        },
+        {
+          "id": "2c49dcc8-f9df-443c-b48e-a732865aaae1",
+          "type": "3-col",
+          "columns": [
+            {
+              "id": "502a712a-69fd-48ea-85b9-788415c7bf06",
+              "width": "33.33%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "devices"
+                }
+              ]
+            },
+            {
+              "id": "92f9bc43-a0cc-4dfb-894b-8ab36e571d25",
+              "width": "33.33%",
+              "content": null
+            },
+            {
+              "id": "1f4b1bb2-2209-4ae9-9f6e-dc2bf9548f8a",
+              "width": "33.33%",
+              "content": null
+            }
+          ]
+        },
+        {
+          "id": "595579d8-248f-402f-aa2d-2902129580ef",
+          "type": "25-75",
+          "columns": [
+            {
+              "id": "a48027a5-bff9-412e-88e6-f7f2917af070",
+              "width": "25%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "devices"
+                }
+              ]
+            },
+            {
+              "id": "ad064eb9-4f0d-42d5-8e53-ee215a5a3abd",
+              "width": "75%",
+              "content": null
+            }
+          ]
+        }
+      ],
+      "id": "custom_a4bc8d8f-c1f0-4152-8037-ac2abca5fc15"
     }
   }
 }

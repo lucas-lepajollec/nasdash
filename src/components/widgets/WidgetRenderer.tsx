@@ -52,6 +52,9 @@ export function WidgetRenderer({
           <DevicesWidget 
             devices={config?.devices || []} 
             editMode={editMode} 
+            widgetInstanceId={widgetInstanceId}
+            widgetProps={widgetProps}
+            onUpdateProps={onUpdateProps}
             onAddDevice={() => setDeviceModal({ open: true })}
             onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
             onDeleteDevice={async (deviceId) => { await deleteDevice(deviceId); setDeviceModal({ open: false }); }}

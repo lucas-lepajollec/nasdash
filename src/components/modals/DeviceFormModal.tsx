@@ -79,11 +79,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const [nodeName, setNodeName] = useState(device?.api?.nodeName || 'pve');
   const [vmid, setVmid] = useState(device?.api?.vmid || '');
   const [vmType, setVmType] = useState(device?.api?.vmType || 'qemu');
-  const [statStyle, setStatStyle] = useState<Device['statStyle']>(device?.statStyle || 'horizontal');
-  const [hideValues, setHideValues] = useState<boolean>(device?.hideValues || false);
-  const [colsDesktop, setColsDesktop] = useState<number>(device?.colsDesktop || 3);
-  const [colsMobile, setColsMobile] = useState<number>(device?.colsMobile || 3);
-
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -106,10 +101,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
         name,
         host,
         icon,
-        statStyle,
-        hideValues,
-        colsDesktop: statStyle !== 'horizontal' ? colsDesktop : undefined,
-        colsMobile: statStyle !== 'horizontal' ? colsMobile : undefined,
         api: {
           type: apiType,
           ip,
@@ -163,7 +154,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
           </div>
 
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ flex: 1 }}>
               <label className="nd-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Label OS/Description <span style={{ opacity: 0.5, fontSize: '0.8em', fontWeight: 'normal' }}>(Optionnel)</span></label>
               <input
                 type="text"
@@ -173,57 +164,6 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                 placeholder="Ex: Windows 11"
               />
             </div>
-            <div style={{ flex: 1 }}>
-              <label className="nd-label">Style d&apos;affichage</label>
-              <CustomSelect
-                value={statStyle as string}
-                onChange={val => setStatStyle(val as any)}
-                options={[
-                  { value: 'horizontal', label: 'Barres classiques' },
-                  { value: 'vertical', label: 'Barres verticales' },
-                  { value: 'circle', label: 'Cercles' }
-                ]}
-              />
-            </div>
-          </div>
-
-          {statStyle !== 'horizontal' && (
-            <div style={{ display: 'flex', gap: 12, padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
-              <div style={{ flex: 1 }}>
-                <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Desktop)</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={6}
-                  className="nd-input"
-                  value={colsDesktop}
-                  onChange={e => setColsDesktop(Math.max(1, Math.min(6, parseInt(e.target.value) || 3)))}
-                  required
-                />
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <label className="nd-label" style={{ fontSize: '0.6rem' }}>Cols (Mobile)</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={6}
-                  className="nd-input"
-                  value={colsMobile}
-                  onChange={e => setColsMobile(Math.max(1, Math.min(6, parseInt(e.target.value) || 3)))}
-                  required
-                />
-              </div>
-            </div>
-          )}
-
-          <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
-            <ToggleSwitch
-              checked={hideValues}
-              onChange={setHideValues}
-              label="Mode minimaliste"
-              sublabel="Masquer les valeurs numériques (préserve le nom des disques)"
-            />
           </div>
 
           <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 4 }}>
