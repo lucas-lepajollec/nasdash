@@ -167,12 +167,30 @@ export default function HomeTab({
     const isGloballyHidden = (config.settings as any)?.[hideKey] ?? w.defaultHidden;
     const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
 
+    const instanceId = `home-${w.id}`;
+    const instanceProps = (config.settings as any)?.[`${instanceId}Props`] || (config.settings as any)?.[`${w.id}Props`];
+
     return {
       id: w.id,
       visible: !(isGloballyHidden || isTabHidden),
       sidebar: (config.settings as any)?.[sidebarKey] || w.defaultSidebar,
       order: (config.settings as any)?.[orderKey] ?? w.defaultOrder,
-      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config.categories} widgetInstanceId={w.id} widgetProps={(config.settings as any)?.[`${w.id}Props`]} onUpdateProps={(newProps) => updateConfig({ [`${w.id}Props`]: { ...((config.settings as any)?.[`${w.id}Props`] || {}), ...newProps } })} />
+      render: () => (
+        <WidgetRenderer 
+          id={w.id} 
+          editMode={editMode} 
+          showSensitive={showSensitive} 
+          categories={config.categories} 
+          widgetInstanceId={instanceId} 
+          widgetProps={instanceProps} 
+          onUpdateProps={(newProps) => updateConfig({ 
+            [`${instanceId}Props`]: { 
+              ...(instanceProps || {}), 
+              ...newProps 
+            } 
+          })} 
+        />
+      )
     };
   });
 

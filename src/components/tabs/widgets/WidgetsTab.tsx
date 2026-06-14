@@ -69,9 +69,27 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
     const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
     const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
     
+    const instanceId = `widgets-${w.id}`;
+    const instanceProps = (config?.settings as any)?.[`${instanceId}Props`] || (config?.settings as any)?.[`${w.id}Props`];
+
     return {
       id: w.id,
-      component: <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={categories} widgetInstanceId={w.id} widgetProps={(config?.settings as any)?.[`${w.id}Props`]} onUpdateProps={(newProps) => updateConfig({ [`${w.id}Props`]: { ...((config?.settings as any)?.[`${w.id}Props`] || {}), ...newProps } })} />,
+      component: (
+        <WidgetRenderer 
+          id={w.id} 
+          editMode={editMode} 
+          showSensitive={showSensitive} 
+          categories={categories} 
+          widgetInstanceId={instanceId} 
+          widgetProps={instanceProps} 
+          onUpdateProps={(newProps) => updateConfig({ 
+            [`${instanceId}Props`]: { 
+              ...(instanceProps || {}), 
+              ...newProps 
+            } 
+          })} 
+        />
+      ),
       hidden: isGloballyHidden || isTabHidden
     };
   });

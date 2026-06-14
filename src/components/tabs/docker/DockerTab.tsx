@@ -825,11 +825,29 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
     const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
 
+    const instanceId = `docker-${w.id}`;
+    const instanceProps = (config?.settings as any)?.[`${instanceId}Props`] || (config?.settings as any)?.[`${w.id}Props`];
+
     return {
       id: w.id,
       visible: !isGloballyHidden && !isTabHidden,
       order: (tabConf as any)?.[orderKey] ?? ((config?.settings as any)?.[orderKey] ?? w.defaultOrder),
-      render: () => <WidgetRenderer id={w.id} editMode={editMode} showSensitive={showSensitive} categories={config?.categories || []} widgetInstanceId={w.id} widgetProps={(config?.settings as any)?.[`${w.id}Props`]} onUpdateProps={(newProps) => updateConfig({ [`${w.id}Props`]: { ...((config?.settings as any)?.[`${w.id}Props`] || {}), ...newProps } })} />
+      render: () => (
+        <WidgetRenderer 
+          id={w.id} 
+          editMode={editMode} 
+          showSensitive={showSensitive} 
+          categories={config?.categories || []} 
+          widgetInstanceId={instanceId} 
+          widgetProps={instanceProps} 
+          onUpdateProps={(newProps) => updateConfig({ 
+            [`${instanceId}Props`]: { 
+              ...(instanceProps || {}), 
+              ...newProps 
+            } 
+          })} 
+        />
+      )
     };
   }).filter(w => w.visible).sort((a, b) => a.order - b.order);
 
@@ -894,7 +912,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           </div>
 
           {/* Container List */}
-          <div className={activeTab !== 'containers' ? 'nd-mobile-hidden' : ''} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 10 }}>
+          <div className={`nd-mobile-scroll ${activeTab !== 'containers' ? 'nd-mobile-hidden' : ''}`} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 10 }}>
             {containersLoading && containers.length === 0 && (
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <Loader2 size={16} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />

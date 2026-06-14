@@ -666,7 +666,7 @@ function DeviceMonitorCardContent({
 
                 return (
                   <div key={i} className="nd-stat-card" style={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }}>
-                    <div className="nd-stat-row" style={{ fontSize: 'var(--stat-label-size, 0.68rem)', flexWrap: 'wrap', gap: '2px 8px', marginBottom: 2, alignItems: 'center' }}>
+                    <div className="nd-stat-row" style={{ fontSize: 'var(--stat-label-size, 0.68rem)', flexWrap: 'wrap', gap: '2px 8px', marginBottom: 2, alignItems: 'baseline' }}>
                       <span
                         className="nd-stat-label"
                         style={{
@@ -685,14 +685,14 @@ function DeviceMonitorCardContent({
                         {shortLabel}
                       </span>
                       {!currentHideValues && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+                        <div style={{ marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
                           {capacityStr && (
-                            <span style={{ fontSize: 'var(--stat-detail-size, 0.62rem)', color: 'var(--nd-text-dimmed)' }}>
+                            <span style={{ fontSize: 'var(--stat-detail-size, 0.62rem)', color: 'var(--nd-text-dimmed)', marginRight: 6 }}>
                               {capacityStr.replace(/[()]/g, '')}
                             </span>
                           )}
                           {tempStr && (
-                            <span style={{ fontSize: 'var(--stat-detail-size, 0.62rem)', fontWeight: 600, color: getTemperatureColor(tempStr, currentEnableAlerts) }}>
+                            <span style={{ fontSize: 'var(--stat-detail-size, 0.62rem)', fontWeight: 600, color: getTemperatureColor(tempStr, currentEnableAlerts), marginRight: 6 }}>
                               {tempStr}
                             </span>
                           )}

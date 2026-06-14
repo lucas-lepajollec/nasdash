@@ -111,7 +111,7 @@
                   "props": {
                     "deviceConfigs": {
                       "7ffe15df-3668-45b5-bf5c-c8c008c718e0": {
-                        "statStyle": "graph",
+                        "statStyle": "horizontal",
                         "colsDesktop": 2,
                         "colsMobile": 2,
                         "hideValues": false,
@@ -120,7 +120,7 @@
                         "coloredGraphs": true
                       },
                       "cd153e42-8d69-43ea-9e2f-c97816c056c9": {
-                        "statStyle": "vertical",
+                        "statStyle": "horizontal",
                         "colsDesktop": 3,
                         "colsMobile": 3,
                         "hideValues": false,
