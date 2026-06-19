@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
+import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import { Pencil, Trash2, Plus, HardDrive, Monitor, ShieldAlert } from 'lucide-react';
 import ConfirmModal from '../../../ConfirmModal';
 import { Device } from '@/lib/types';
@@ -46,6 +47,7 @@ export function DevicesWidgetTab() {
         <>
           <WidgetLayoutConfig widgetId="devices" />
           <WidgetDockerLayoutConfig widgetId="devices" />
+          <WidgetNetworksLayoutConfig widgetId="devices" />
 
           {/* Centralized Devices Manager */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>

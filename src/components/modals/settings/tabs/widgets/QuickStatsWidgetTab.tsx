@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
+import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 
 export function QuickStatsWidgetTab() {
   const { config, updateConfig } = useConfig();
@@ -28,6 +29,7 @@ export function QuickStatsWidgetTab() {
         <>
           <WidgetLayoutConfig widgetId="quickStats" />
           <WidgetDockerLayoutConfig widgetId="quickStats" />
+          <WidgetNetworksLayoutConfig widgetId="quickStats" />
         </>
       )}
     </div>

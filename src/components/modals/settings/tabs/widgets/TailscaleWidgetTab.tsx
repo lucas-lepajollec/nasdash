@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
+import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 
 export function TailscaleWidgetTab() {
   const { config, updateConfig } = useConfig();
@@ -42,6 +43,7 @@ export function TailscaleWidgetTab() {
         <>
           <WidgetLayoutConfig widgetId="tailscale" />
           <WidgetDockerLayoutConfig widgetId="tailscale" />
+          <WidgetNetworksLayoutConfig widgetId="tailscale" />
 
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Authentification API Tailscale</h4>

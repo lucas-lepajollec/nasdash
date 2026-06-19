@@ -14,9 +14,10 @@ interface CustomSelectProps {
   onChange: (val: string) => void;
   className?: string;
   style?: React.CSSProperties;
+  disabled?: boolean;
 }
 
-export default function CustomSelect({ value, options, onChange, className, style }: CustomSelectProps) {
+export default function CustomSelect({ value, options, onChange, className, style, disabled }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -51,10 +52,11 @@ export default function CustomSelect({ value, options, onChange, className, styl
   const selectedOption = options.find(o => o.value === value) || options[0];
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%', ...style }} className={className}>
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', opacity: disabled ? 0.6 : 1, ...style }} className={className}>
       <div 
         className="nd-input" 
         onClick={() => {
+          if (disabled) return;
           const nextState = !isOpen;
           setIsOpen(nextState);
           if (nextState) {
@@ -65,12 +67,12 @@ export default function CustomSelect({ value, options, onChange, className, styl
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between', 
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
           borderColor: isOpen ? 'var(--nd-accent)' : undefined
         }}
       >
         <span>{selectedOption?.label}</span>
-        <ChevronDown size={14} style={{ opacity: 0.5, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+        {!disabled && <ChevronDown size={14} style={{ opacity: 0.5, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />}
       </div>
 
       {isOpen && (

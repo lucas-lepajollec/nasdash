@@ -242,10 +242,25 @@ export interface DashboardConfig {
         widgetsSidebarPosition?: 'left' | 'right';
         dockerPanelPosition?: 'left' | 'right';
       };
+      networks?: {
+        hideDockerActions?: boolean;
+        hideTailscaleStatus?: boolean;
+        hideDevices?: boolean;
+        hideQuickStats?: boolean;
+        hideClock?: boolean;
+        hideCalendar?: boolean;
+        hideWeather?: boolean;
+        hideNetworkGraph?: boolean;
+        hideDockerContainers?: boolean;
+        hideWidgetsSidebar?: boolean;
+        widgetsSidebarPosition?: 'left' | 'right';
+        networksPanelPosition?: 'left' | 'right';
+      };
     };
     widgetsOrder?: string[];
     widgetsTotalSlots?: number;
     homeWidgets?: (CustomTabWidgetInfo & { id: string, order: number })[];
+    networkTopology?: NetworkTopology;
     // Advanced Customization
     hideDockerActions?: boolean;
     hideTailscaleStatus?: boolean;
@@ -340,3 +355,41 @@ export interface CustomTabLayout {
   id: string; // matches the TabDef id
   rows: CustomTabRow[];
 }
+
+// ==================== NETWORKS ====================
+
+export interface NetworkNode {
+  id: string;
+  name: string;
+  type: 'infra' | 'device' | 'netsvc' | 'stdsvc';
+  icon: string;
+  ip?: string;
+  ports?: number[];
+  groupId?: string;
+  linkedServiceId?: string;
+  linkedDeviceId?: string;
+  linkedContainerId?: string;
+}
+
+export interface NetworkGroup {
+  id: string;
+  name: string;
+  type: 'infra' | 'device' | 'netsvc' | 'stdsvc';
+}
+
+export interface NetworkConnection {
+  id: string;
+  fromId: string;
+  toId: string;
+  label?: string;
+  type?: 'directional' | 'bidirectional';
+  fromPort?: 'auto' | 'top' | 'bottom' | 'left' | 'right';
+  toPort?: 'auto' | 'top' | 'bottom' | 'left' | 'right';
+}
+
+export interface NetworkTopology {
+  nodes: NetworkNode[];
+  groups: NetworkGroup[];
+  connections: NetworkConnection[];
+}
+

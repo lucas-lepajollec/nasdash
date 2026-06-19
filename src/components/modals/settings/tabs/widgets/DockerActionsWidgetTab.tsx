@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
+import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 
 export function DockerActionsWidgetTab() {
   const { config, updateConfig } = useConfig();
@@ -28,6 +29,7 @@ export function DockerActionsWidgetTab() {
         <>
           <WidgetLayoutConfig widgetId="dockerActions" />
           <WidgetDockerLayoutConfig widgetId="dockerActions" />
+          <WidgetNetworksLayoutConfig widgetId="dockerActions" />
         </>
       )}
     </div>

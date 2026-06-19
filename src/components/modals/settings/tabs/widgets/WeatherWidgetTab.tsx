@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
+import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import { CheckCircle2, Trash2 } from 'lucide-react';
 
 export function WeatherWidgetTab() {
@@ -93,6 +94,7 @@ export function WeatherWidgetTab() {
         <>
           <WidgetLayoutConfig widgetId="weather" />
           <WidgetDockerLayoutConfig widgetId="weather" />
+          <WidgetNetworksLayoutConfig widgetId="weather" />
 
           {/* Weather Location Search */}
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>

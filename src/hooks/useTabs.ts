@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-export type TabId = 'dashboard' | 'widgets' | 'docker' | string;
+export type TabId = 'dashboard' | 'widgets' | 'docker' | 'networks' | string;
 
 export interface TabDef {
   id: TabId;
@@ -16,6 +16,7 @@ export const TABS: TabDef[] = [
   { id: 'dashboard', name: 'Home', icon: '🏠', description: 'Services & monitoring' },
   { id: 'widgets', name: 'Widgets', icon: '🎛️', description: 'Grille de widgets fluide' },
   { id: 'docker', name: 'Docker', icon: '🐳', description: 'Conteneurs & images' },
+  { id: 'networks', name: 'Réseaux', icon: '📶', description: 'Cartographie & outils réseau' },
 ];
 
 const STORAGE_KEY = 'nasdash-active-tab';

@@ -286,6 +286,7 @@ export async function PUT(req: NextRequest) {
     if (body.theme !== undefined) config.settings.theme = body.theme;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
     if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
+    if (body.networkTopology !== undefined) config.settings.networkTopology = body.networkTopology;
 
     // Advanced UI Customization Toggles
     if (body.hideWidgetTitles !== undefined) config.settings.hideWidgetTitles = body.hideWidgetTitles;

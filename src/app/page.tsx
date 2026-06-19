@@ -21,6 +21,7 @@ import { WidgetSelectionModal } from '@/components/modals/settings/tabs/custom/W
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
+const NetworksTab = lazy(() => import('@/components/tabs/networks/NetworksTab'));
 
 export default function Shell() {
   const { activeTab, switchTab, tabs, ready } = useTabs();
@@ -188,6 +189,13 @@ export default function Shell() {
           <div className="flex-1" style={{ display: activeTab === 'docker' ? 'block' : 'none' }}>
             <Suspense fallback={<LoadingView text="Chargement Docker…" />}>
               <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} showSensitive={showSensitive} />
+            </Suspense>
+          </div>
+
+          {/* Networks */}
+          <div className="flex-1" style={{ display: activeTab === 'networks' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+            <Suspense fallback={<LoadingView text="Chargement Réseaux…" />}>
+              <NetworksTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'networks'} showSensitive={showSensitive} />
             </Suspense>
           </div>
 

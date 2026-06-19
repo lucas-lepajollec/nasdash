@@ -112,17 +112,18 @@ export default function Header(props: HeaderProps) {
     
     return (
       <nav className="nd-header-menu" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        {tabsToRender.map(tab => {
+        {tabsToRender.map((tab, index) => {
           const isActive = tab.id === props.activeTab;
           const showIcons = config?.settings?.showHeaderMenuIcons;
           const iconVal = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
+          const isFirstInHeader = index === 0 && startIndex === 0 && layoutDesktop?.left === 'menu' && layoutDesktop?.splitMenuAround === 'none';
           return (
             <button
               key={tab.id}
               onClick={() => props.onSwitchTab?.(tab.id)}
               className="nd-btn-menu-link"
               style={{
-                padding: '6px 12px',
+                padding: isFirstInHeader ? '6px 12px 6px 0' : '6px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',

@@ -141,6 +141,7 @@ import { TabsHomeTab } from './settings/tabs/onglets/TabsHomeTab';
 import { TabsWidgetsTab } from './settings/tabs/onglets/TabsWidgetsTab';
 import { TabsGeneralTab } from './settings/tabs/onglets/TabsGeneralTab';
 import { TabsDockerTab } from './settings/tabs/onglets/TabsDockerTab';
+import { TabsNetworksTab } from './settings/tabs/onglets/TabsNetworksTab';
 import { DevicesWidgetTab } from './settings/tabs/widgets/DevicesWidgetTab';
 import { QuickStatsWidgetTab } from './settings/tabs/widgets/QuickStatsWidgetTab';
 import { TailscaleWidgetTab } from './settings/tabs/widgets/TailscaleWidgetTab';
@@ -430,6 +431,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
               {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
               {currentTab === 'tabs-docker' && '🐳 Paramètres — Onglet Docker'}
+              {currentTab === 'tabs-networks' && '📶 Paramètres — Onglet Réseaux'}
               {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
               {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
               {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
@@ -477,6 +479,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           {(currentTab as string) === 'tabs-widgets' && <TabsWidgetsTab />}
 
           {(currentTab as string) === 'tabs-docker' && <TabsDockerTab />}
+
+          {(currentTab as string) === 'tabs-networks' && <TabsNetworksTab />}
 
           {(currentTab as string) === 'tabs-general' && <TabsGeneralTab />}
 
