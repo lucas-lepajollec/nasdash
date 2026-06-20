@@ -58,11 +58,12 @@ export function NetworkSidebar() {
     }
   };
 
+  const dockerHostsSerialized = JSON.stringify(config?.dockerHosts || []);
   useEffect(() => {
     if (config?.dockerHosts) {
       fetchDockerPorts();
     }
-  }, [config?.dockerHosts]);
+  }, [dockerHostsSerialized]);
 
   // Aggregate all ports from NasDash services config and Docker containers
   const activePorts = useMemo((): ActivePortItem[] => {

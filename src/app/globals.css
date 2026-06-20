@@ -2702,15 +2702,12 @@ body {
 }
 
 .nd-topology-node {
-  background: var(--nd-bg-surface) !important;
   border: 1px solid var(--nd-card-border);
   transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .nd-topology-node:hover {
   transform: translateY(-1px);
-  border-color: var(--nd-accent) !important;
-  background: var(--nd-bg-surface) !important;
 }
 
 .nd-topology-node--dimmed {

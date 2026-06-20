@@ -255,6 +255,7 @@ export interface DashboardConfig {
         hideWidgetsSidebar?: boolean;
         widgetsSidebarPosition?: 'left' | 'right';
         networksPanelPosition?: 'left' | 'right';
+        cardSize?: 'auto' | 'standard' | 'compact' | 'mini';
       };
     };
     widgetsOrder?: string[];
@@ -375,6 +376,7 @@ export interface NetworkGroup {
   id: string;
   name: string;
   type: 'infra' | 'device' | 'netsvc' | 'stdsvc';
+  mergeIncomingLinks?: boolean;
 }
 
 export interface NetworkConnection {

@@ -355,6 +355,19 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     return config?.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
   }, [config?.settings?.networkTopology]);
 
+  // Resolve card size based on configuration or auto-detection
+  const cardSizeSetting = config?.settings?.tabs?.networks?.cardSize || 'auto';
+  
+  const resolvedCardSize = useMemo(() => {
+    if (cardSizeSetting !== 'auto') return cardSizeSetting as 'standard' | 'compact' | 'mini';
+    
+    // Auto-detection based on the number of services
+    const serviceCount = topology.nodes.filter(n => n.type === 'stdsvc').length;
+    if (serviceCount <= 8) return 'standard';
+    if (serviceCount <= 24) return 'compact';
+    return 'mini';
+  }, [cardSizeSetting, topology.nodes]);
+
   // Compute horizontal gap center dynamically to route crossing vertical lines
   const gapCenterX = useMemo(() => {
     const leftRange = (() => {
@@ -424,11 +437,19 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   // Recalculate coordinates of all nodes relative to the map canvas
   const updateCoordinates = () => {
     if (typeof window !== 'undefined') {
-      setIsMobileLayout(window.innerWidth <= 960);
+      const isMobile = window.innerWidth <= 960;
+      setIsMobileLayout(prev => prev !== isMobile ? isMobile : prev);
     }
     if (!containerRef.current || !innerRef.current) return;
     const parentRect = innerRef.current.getBoundingClientRect();
-    setCanvasSize({ width: parentRect.width, height: parentRect.height });
+    const newWidth = parentRect.width;
+    const newHeight = parentRect.height;
+    
+    setCanvasSize(prev => {
+      if (prev.width === newWidth && prev.height === newHeight) return prev;
+      return { width: newWidth, height: newHeight };
+    });
+
     const newCoords: typeof coords = {};
 
     // Get position of all nodes
@@ -459,7 +480,24 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       }
     });
 
-    setCoords(newCoords);
+    setCoords(prev => {
+      const prevKeys = Object.keys(prev);
+      const newKeys = Object.keys(newCoords);
+      if (prevKeys.length !== newKeys.length) return newCoords;
+      
+      const hasChanged = newKeys.some(key => {
+        const p = prev[key];
+        const n = newCoords[key];
+        if (!p) return true;
+        return (
+          Math.abs(p.x - n.x) > 0.5 ||
+          Math.abs(p.y - n.y) > 0.5 ||
+          Math.abs(p.width - n.width) > 0.5 ||
+          Math.abs(p.height - n.height) > 0.5
+        );
+      });
+      return hasChanged ? newCoords : prev;
+    });
   };
 
   // Trigger recalculation on state changes, layout changes, or resizing
@@ -689,7 +727,8 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           groups.push({
             id: groupStdId,
             name: cat.title,
-            type: 'stdsvc'
+            type: 'stdsvc',
+            mergeIncomingLinks: true
           });
         }
         if (hasNet) {
@@ -697,7 +736,8 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           groups.push({
             id: groupNetId,
             name: cat.title,
-            type: 'netsvc'
+            type: 'netsvc',
+            mergeIncomingLinks: true
           });
         }
       }
@@ -760,6 +800,51 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           });
         }
       });
+    });
+
+    // 4. Merge connections pointing to nodes in the same category group
+    groups.forEach(g => {
+      // Find nodes belonging to this group
+      const groupNodeIds = nodes.filter(n => n.groupId === g.id).map(n => n.id);
+      if (groupNodeIds.length === 0) return;
+
+      // Find all incoming connections from outside the group targeting nodes inside the group
+      const incoming = connections.filter(c => 
+        groupNodeIds.includes(c.toId) && !groupNodeIds.includes(c.fromId)
+      );
+
+      if (incoming.length > 0) {
+        // Group incoming by fromId
+        const groupedByFrom: Record<string, typeof incoming> = {};
+        incoming.forEach(c => {
+          if (!groupedByFrom[c.fromId]) groupedByFrom[c.fromId] = [];
+          groupedByFrom[c.fromId].push(c);
+        });
+
+        // Remove these incoming connections from the connections list
+        const incomingIds = new Set(incoming.map(c => c.id));
+        for (let i = connections.length - 1; i >= 0; i--) {
+          if (incomingIds.has(connections[i].id)) {
+            connections.splice(i, 1);
+          }
+        }
+
+        // Add a single consolidated connection for each fromId to the groupId
+        Object.entries(groupedByFrom).forEach(([fromId, conns]) => {
+          const labels = conns.map(c => c.label?.trim()).filter(Boolean) as string[];
+          const uniqueLabels = Array.from(new Set(labels));
+          const mergedLabel = uniqueLabels.length > 0 ? uniqueLabels.join(', ') : undefined;
+          const hasBidirectional = conns.some(c => c.type === 'bidirectional');
+
+          connections.push({
+            id: `auto-conn-${genId()}`,
+            fromId,
+            toId: g.id,
+            type: hasBidirectional ? 'bidirectional' : 'directional',
+            label: mergedLabel
+          });
+        });
+      }
     });
 
     // Update settings
@@ -1548,6 +1633,71 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       })() : false);
     const isDimmed = (hoveredNodeId || hoveredConnectionId) ? !isHighlighted : false;
 
+    // Resolve sizing and aesthetics
+    const size = resolvedCardSize;
+    
+    const typeColors = {
+      infra: 'var(--nd-accent)',
+      device: '#9b5de5', // Professional violet
+      netsvc: '#f15bb5', // Professional magenta/orange
+      stdsvc: 'rgba(255, 255, 255, 0.15)' // Semi-transparent clean gray
+    };
+    
+    const borderColor = isHighlighted 
+      ? 'var(--nd-accent)' 
+      : 'var(--nd-card-border)';
+      
+    const borderLeftColor = isHighlighted
+      ? 'var(--nd-accent)'
+      : typeColors[n.type];
+
+    const baseStyles: React.CSSProperties = {
+      background: 'rgba(255, 255, 255, 0.015)',
+      border: `1px solid ${borderColor}`,
+      borderLeft: `3px solid ${borderLeftColor}`,
+      borderRadius: 'calc(var(--nd-card-radius) * 0.4)',
+      boxShadow: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative',
+      zIndex: 3,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      width: '100%',
+      boxSizing: 'border-box',
+      pointerEvents: 'auto',
+      flexDirection: 'row'
+    };
+
+    let height = 60;
+    let padding = '8px 14px';
+    let gap = 10;
+    let iconSize = '1.15rem';
+    let nameFontSize = '0.68rem';
+    let ipFontSize = '0.54rem';
+
+    if (size === 'mini') {
+      height = 36;
+      padding = '4px 10px';
+      gap = 6;
+      iconSize = '0.85rem';
+      nameFontSize = '0.62rem';
+    } else if (size === 'compact') {
+      height = 48;
+      padding = '6px 12px';
+      gap = 8;
+      iconSize = '1.02rem';
+      nameFontSize = '0.65rem';
+      ipFontSize = '0.5rem';
+    }
+
+    const cardStyles = {
+      ...baseStyles,
+      height,
+      padding,
+      gap
+    };
+
     return (
       <div
         key={n.id}
@@ -1570,49 +1720,29 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             setLinkedServiceId(n.linkedServiceId || '');
           }
         }}
-        style={{
-          padding: '12px 16px',
-          background: 'var(--nd-card-bg)',
-          border: `1px solid ${isHighlighted ? 'var(--nd-accent)' : 'var(--nd-card-border)'}`,
-          boxShadow: 'none',
-          borderRadius: 'calc(var(--nd-card-radius) * 0.4)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 4,
-          position: 'relative',
-          zIndex: 3,
-          cursor: 'pointer',
-          transition: 'all 0.25s ease',
-          height: 68,
-          width: '100%',
-          boxSizing: 'border-box',
-          pointerEvents: 'auto'
-        }}
+        style={cardStyles}
       >
-        <span style={{ fontSize: '1.05rem', flexShrink: 0, lineHeight: 1 }}>{n.icon}</span>
-        <div style={{ minWidth: 0, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <span style={{ fontSize: iconSize, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{n.icon}</span>
+        <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', justifyContent: 'center' }}>
           <div 
             style={{ 
-              fontSize: '0.6rem', 
+              fontSize: nameFontSize, 
               fontWeight: 700, 
               color: 'var(--nd-text)', 
               width: '100%',
               overflow: 'hidden', 
               textOverflow: 'ellipsis', 
               whiteSpace: 'nowrap',
-              padding: '0 2px',
-              lineHeight: 1.1
+              lineHeight: 1.2
             }} 
             title={n.name}
           >
             {n.name}
           </div>
-          {showSensitive && n.ip ? (
+          {size !== 'mini' && showSensitive && n.ip ? (
             <div 
               style={{ 
-                fontSize: '0.45rem', 
+                fontSize: ipFontSize, 
                 color: 'var(--nd-text-muted)', 
                 fontFamily: 'monospace', 
                 width: '100%',
@@ -1620,7 +1750,6 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                 textOverflow: 'ellipsis', 
                 whiteSpace: 'nowrap', 
                 marginTop: 1,
-                padding: '0 2px',
                 lineHeight: 1
               }} 
               title={`${n.ip}${n.ports && n.ports.length > 0 ? `:${n.ports[0]}` : ''}`}
@@ -1637,6 +1766,180 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             <TopologyAnchor nodeId={n.id} corner="bottom" isParentHovered={hoveredNodeId === n.id} onDragStart={handleDragStart} />
             <TopologyAnchor nodeId={n.id} corner="left" isParentHovered={hoveredNodeId === n.id} onDragStart={handleDragStart} />
           </>
+        )}
+      </div>
+    );
+  };
+
+  const renderGroup = (g: NetworkGroup, groupedNodes: Record<string, NetworkNode[]>) => {
+    const isGroupHighlighted = (hoveredNodeId ? (
+      topology.nodes.find(n => n.id === hoveredNodeId)?.groupId === g.id ||
+      highlightedNodeIds.has(g.id)
+    ) : false) || (dragOverId === g.id) || (hoveredConnectionId ? (
+      topology.connections.find(c => c.id === hoveredConnectionId)?.fromId === g.id ||
+      topology.connections.find(c => c.id === hoveredConnectionId)?.toId === g.id
+    ) : false);
+    const isGroupDimmed = (hoveredNodeId || hoveredConnectionId) ? !isGroupHighlighted : false;
+
+    return (
+      <div 
+        key={g.id}
+        id={`group-box-${g.id}`}
+        data-group-id={g.id}
+        onMouseEnter={() => setHoveredGroupId(g.id)}
+        onMouseLeave={() => setHoveredGroupId(null)}
+        onClick={(e) => {
+          if (editMode) {
+            setEditingGroup(g);
+            setGroupName(g.name);
+            setGroupType(g.type);
+            setSelectedNodeIds(topology.nodes.filter(n => n.groupId === g.id).map(n => n.id));
+            setMergeIncomingLinks(false);
+          }
+        }}
+        style={{
+          border: isGroupHighlighted 
+            ? '1px solid var(--nd-accent)' 
+            : '1px dashed rgba(255,255,255,0.15)',
+          borderRadius: 'var(--nd-card-radius)',
+          background: isGroupHighlighted 
+            ? 'var(--nd-accent-glow)' 
+            : 'rgba(0,0,0,0.1)',
+          padding: '14px 12px 14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          position: 'relative',
+          transition: 'all 0.25s ease',
+          opacity: isGroupDimmed ? 0.15 : 1,
+          pointerEvents: isGroupDimmed ? 'none' : 'auto',
+          boxShadow: 'none',
+          cursor: editMode ? 'pointer' : 'default'
+        }}
+      >
+        <div 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            height: 16
+          }}
+        >
+          <span 
+            style={{ 
+              fontSize: '0.62rem', 
+              fontWeight: 700, 
+              textTransform: 'uppercase', 
+              letterSpacing: 0.5, 
+              color: isGroupHighlighted ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+              borderBottom: editMode ? '1px dashed rgba(255, 255, 255, 0.25)' : 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              transition: 'color 0.25s ease'
+            }}
+            title={editMode ? "Cliquer pour modifier/supprimer le groupe" : undefined}
+          >
+            {g.name}
+            {editMode && <Edit3 size={8} style={{ opacity: 0.6 }} />}
+          </span>
+        </div>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
+          gap: 10,
+          width: '100%',
+          minHeight: (groupedNodes[g.id] && groupedNodes[g.id].length > 0) ? 0 : 36,
+          pointerEvents: 'auto'
+        }}>
+          {groupedNodes[g.id]?.map(n => renderNodeCard(n))}
+          {(!groupedNodes[g.id] || groupedNodes[g.id].length === 0) && (
+            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+              <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>
+                Groupe vide
+              </span>
+            </div>
+          )}
+        </div>
+
+        {editMode && (
+          <>
+            <TopologyAnchor nodeId={g.id} corner="top" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
+            <TopologyAnchor nodeId={g.id} corner="right" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
+            <TopologyAnchor nodeId={g.id} corner="bottom" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
+            <TopologyAnchor nodeId={g.id} corner="left" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderColumn = (colType: 'infra' | 'device' | 'netsvc' | 'stdsvc') => {
+    const colInfo = {
+      infra: { title: 'Infrastructure', desc: 'Box, switchs, routeurs' },
+      device: { title: 'Machines / Hôtes', desc: 'Serveurs, NAS, hyperviseurs' },
+      netsvc: { title: 'Services Réseau', desc: 'DNS, AdBlock, VPN, tunnels' },
+      stdsvc: { title: 'Applications', desc: 'Jellyfin, Nextcloud, etc.' }
+    }[colType];
+
+    const categorized = getCategorized(colType);
+
+    return (
+      <div 
+        key={colType} 
+        className="nd-topology-col"
+        style={{
+          flex: 1,
+          minWidth: 200,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 24,
+          pointerEvents: 'none'
+        }}
+      >
+        {/* Column Header */}
+        <div style={{ borderBottom: '1px solid var(--nd-card-border)', paddingBottom: 8, marginBottom: 4, pointerEvents: 'auto' }}>
+          <h4 style={{ margin: 0, fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--nd-text)' }}>
+            {colInfo.title}
+          </h4>
+          <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)' }}>
+            {colInfo.desc}
+          </span>
+        </div>
+
+        {/* Grouped items */}
+        {colType === 'stdsvc' ? (
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: isMobileLayout ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', 
+            gap: 16,
+            width: '100%',
+            pointerEvents: 'none'
+          }}>
+            {categorized.groups.map(g => renderGroup(g, categorized.groupedNodes))}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', pointerEvents: 'none' }}>
+            {categorized.groups.map(g => renderGroup(g, categorized.groupedNodes))}
+          </div>
+        )}
+
+        {/* Ungrouped items */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
+          gap: 12,
+          width: '100%',
+          pointerEvents: 'auto'
+        }}>
+          {categorized.ungroupedNodes.map(n => renderNodeCard(n))}
+        </div>
+
+        {/* Column Empty State */}
+        {categorized.groups.length === 0 && categorized.ungroupedNodes.length === 0 && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80, border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', background: 'rgba(255,255,255,0.01)', pointerEvents: 'auto', position: 'relative' }}>
+            <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)' }}>Vide</span>
+          </div>
         )}
       </div>
     );
@@ -1710,7 +2013,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         )}
       </div>
 
-      {/* Main Map Container */}
+      {/* Main Map Canvas */}
       <div 
         ref={containerRef}
         className="nd-topology-canvas"
@@ -1731,210 +2034,12 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             padding: isMobileLayout ? '24px 36px' : '24px 20px',
             paddingBottom: isMobileLayout ? 60 : 48,
             display: 'grid',
-            gridTemplateColumns: isMobileLayout ? '1fr' : '1fr 1fr',
-            gridTemplateRows: isMobileLayout ? 'repeat(4, auto)' : 'auto auto',
-            gap: isMobileLayout ? '36px' : '72px 148px',
+            gridTemplateColumns: isMobileLayout ? '1fr' : '1.2fr 2.8fr',
+            gap: isMobileLayout ? '36px' : '24px 84px',
             boxSizing: 'border-box'
           }}
         >
-        {/* Dynamic connection lines overlay */}
-        <svg 
-          style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            width: '100%', 
-            height: '100%', 
-            pointerEvents: 'none', 
-            zIndex: 2 
-          }}
-        >
-          <defs>
-            <linearGradient id="conn-grad-default" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--nd-accent)" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="var(--nd-purple)" stopOpacity="0.35" />
-            </linearGradient>
-            <linearGradient id="conn-grad-highlight" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--nd-accent)" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="var(--nd-purple)" stopOpacity="0.85" />
-            </linearGradient>
-          </defs>
-
-          {renderConnectionLines(true)}
-
-          {/* Connection drag preview line */}
-          {draggingConn && (
-            <path
-              d={calculatePreviewD()}
-              fill="none"
-              stroke="var(--nd-accent)"
-              strokeWidth="2"
-              className="nd-connection-preview"
-            />
-          )}
-        </svg>
-
-        {/* 4 Categorized Columns */}
-        {(['infra', 'device', 'netsvc', 'stdsvc'] as const).map((colType) => {
-          const colInfo = {
-            infra: { title: 'Infrastructure', desc: 'Box, switchs, routeurs' },
-            device: { title: 'Machines / Hôtes', desc: 'Serveurs, NAS, hyperviseurs' },
-            netsvc: { title: 'Services Réseau', desc: 'DNS, AdBlock, VPN, tunnels' },
-            stdsvc: { title: 'Applications', desc: 'Jellyfin, Nextcloud, etc.' }
-          }[colType];
-
-          const categorized = getCategorized(colType);
-
-          return (
-            <div 
-              key={colType} 
-              className="nd-topology-col"
-              style={{
-                flex: 1,
-                minWidth: 200,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 24,
-                pointerEvents: 'none'
-              }}
-            >
-              {/* Column Header */}
-              <div style={{ borderBottom: '1px solid var(--nd-card-border)', paddingBottom: 8, marginBottom: 4, pointerEvents: 'auto' }}>
-                <h4 style={{ margin: 0, fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--nd-text)' }}>
-                  {colInfo.title}
-                </h4>
-                <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)' }}>
-                  {colInfo.desc}
-                </span>
-              </div>
-
-              {/* Grouped items */}
-              {categorized.groups.map(g => {
-                const isGroupHighlighted = (hoveredNodeId ? (
-                  topology.nodes.find(n => n.id === hoveredNodeId)?.groupId === g.id ||
-                  highlightedNodeIds.has(g.id)
-                ) : false) || (dragOverId === g.id) || (hoveredConnectionId ? (
-                  topology.connections.find(c => c.id === hoveredConnectionId)?.fromId === g.id ||
-                  topology.connections.find(c => c.id === hoveredConnectionId)?.toId === g.id
-                ) : false);
-                const isGroupDimmed = (hoveredNodeId || hoveredConnectionId) ? !isGroupHighlighted : false;
-
-                return (
-                  <div 
-                    key={g.id}
-                    id={`group-box-${g.id}`}
-                    data-group-id={g.id}
-                    onMouseEnter={() => setHoveredGroupId(g.id)}
-                    onMouseLeave={() => setHoveredGroupId(null)}
-                    style={{
-                      border: isGroupHighlighted 
-                        ? '1px solid var(--nd-accent)' 
-                        : '1px dashed rgba(255,255,255,0.15)',
-                      borderRadius: 'var(--nd-card-radius)',
-                      background: isGroupHighlighted 
-                        ? 'var(--nd-accent-glow)' 
-                        : 'rgba(0,0,0,0.1)',
-                      padding: '14px 12px 14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12,
-                      position: 'relative',
-                      transition: 'all 0.25s ease',
-                      opacity: isGroupDimmed ? 0.15 : 1,
-                      pointerEvents: isGroupDimmed ? 'none' : 'auto',
-                      boxShadow: 'none'
-                    }}
-                  >
-                    <div 
-                      onClick={(e) => {
-                        if (editMode) {
-                          e.stopPropagation();
-                          setEditingGroup(g);
-                          setGroupName(g.name);
-                          setGroupType(g.type);
-                          setSelectedNodeIds(topology.nodes.filter(n => n.groupId === g.id).map(n => n.id));
-                          setMergeIncomingLinks(false);
-                        }
-                      }}
-                      style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        height: 16,
-                        cursor: editMode ? 'pointer' : 'default'
-                      }}
-                    >
-                      <span 
-                        style={{ 
-                          fontSize: '0.62rem', 
-                          fontWeight: 700, 
-                          textTransform: 'uppercase', 
-                          letterSpacing: 0.5, 
-                          color: isGroupHighlighted ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
-                          borderBottom: editMode ? '1px dashed rgba(255, 255, 255, 0.25)' : 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          transition: 'color 0.25s ease'
-                        }}
-                        title={editMode ? "Cliquer pour modifier/supprimer le groupe" : undefined}
-                      >
-                        {g.name}
-                        {editMode && <Edit3 size={8} style={{ opacity: 0.6 }} />}
-                      </span>
-                    </div>
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
-                      gap: 10,
-                      width: '100%',
-                      minHeight: (categorized.groupedNodes[g.id] && categorized.groupedNodes[g.id].length > 0) ? 0 : 36,
-                      pointerEvents: 'auto'
-                    }}>
-                      {categorized.groupedNodes[g.id]?.map(n => renderNodeCard(n))}
-                      {(!categorized.groupedNodes[g.id] || categorized.groupedNodes[g.id].length === 0) && (
-                        <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                          <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>
-                            Groupe vide
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {editMode && (
-                      <>
-                        <TopologyAnchor nodeId={g.id} corner="top" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
-                        <TopologyAnchor nodeId={g.id} corner="right" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
-                        <TopologyAnchor nodeId={g.id} corner="bottom" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
-                        <TopologyAnchor nodeId={g.id} corner="left" isParentHovered={hoveredGroupId === g.id} onDragStart={handleDragStart} />
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Ungrouped items */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
-                gap: 12,
-                width: '100%',
-                pointerEvents: 'auto'
-              }}>
-                {categorized.ungroupedNodes.map(n => renderNodeCard(n))}
-              </div>
-
-              {/* Column Empty State */}
-              {categorized.groups.length === 0 && categorized.ungroupedNodes.length === 0 && (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80, border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', background: 'rgba(255,255,255,0.01)', pointerEvents: 'auto', position: 'relative' }}>
-                  <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)' }}>Vide</span>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {/* Interaction/Click targets (On top) */}
-        {editMode && (
+          {/* Dynamic connection lines overlay */}
           <svg 
             style={{ 
               position: 'absolute', 
@@ -1946,9 +2051,59 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               zIndex: 2 
             }}
           >
-            {renderConnectionLines(false)}
+            <defs>
+              <linearGradient id="conn-grad-default" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="var(--nd-accent)" stopOpacity="0.45" />
+                <stop offset="100%" stopColor="var(--nd-purple)" stopOpacity="0.35" />
+              </linearGradient>
+              <linearGradient id="conn-grad-highlight" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="var(--nd-accent)" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="var(--nd-purple)" stopOpacity="0.85" />
+              </linearGradient>
+            </defs>
+
+            {renderConnectionLines(true)}
+
+            {/* Connection drag preview line */}
+            {draggingConn && (
+              <path
+                d={calculatePreviewD()}
+                fill="none"
+                stroke="var(--nd-accent)"
+                strokeWidth="2"
+                className="nd-connection-preview"
+              />
+            )}
           </svg>
-        )}
+
+          {/* Left Main Column: Infrastructure and Network Services */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 48, pointerEvents: 'none' }}>
+            {renderColumn('infra')}
+            {renderColumn('netsvc')}
+          </div>
+
+          {/* Right Main Column: Devices and Applications */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 48, pointerEvents: 'none' }}>
+            {renderColumn('device')}
+            {renderColumn('stdsvc')}
+          </div>
+
+          {/* Interaction/Click targets (On top) */}
+          {editMode && (
+            <svg 
+              style={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                width: '100%', 
+                height: '100%', 
+                pointerEvents: 'none', 
+                zIndex: 2 
+              }}
+            >
+              {renderConnectionLines(false)}
+            </svg>
+          )}
         </div>
       </div>
 
