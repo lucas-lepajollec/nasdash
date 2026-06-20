@@ -2693,13 +2693,6 @@ body {
   gap: 72px 148px;
 }
 
-@media (max-width: 960px) {
-  .nd-topology-canvas-inner {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: repeat(4, auto) !important;
-    gap: 36px !important;
-  }
-}
 
 .nd-topology-node {
   border: 1px solid var(--nd-card-border);

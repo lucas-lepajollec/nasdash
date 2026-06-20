@@ -26,8 +26,9 @@ function generateOrthogonalPath(
   isMobile: boolean,
   canvasWidth: number
 ): string {
-  const margin = 24;
-  const r = 12;
+  const marginX = 24;
+  const marginY = 15;
+  const r = 8;
 
   let x1_start = x1;
   let y1_start = y1;
@@ -47,17 +48,17 @@ function generateOrthogonalPath(
 
   let x1_ext = x1;
   let y1_ext = y1;
-  if (fromPort === 'top') y1_ext = y1 - margin;
-  else if (fromPort === 'bottom') y1_ext = y1 + margin;
-  else if (fromPort === 'left') x1_ext = x1 - margin;
-  else if (fromPort === 'right') x1_ext = x1 + margin;
+  if (fromPort === 'top') y1_ext = y1 - marginY;
+  else if (fromPort === 'bottom') y1_ext = y1 + marginY;
+  else if (fromPort === 'left') x1_ext = x1 - marginX;
+  else if (fromPort === 'right') x1_ext = x1 + marginX;
 
   let x2_ext = x2;
   let y2_ext = y2;
-  if (toPort === 'top') y2_ext = y2 - margin;
-  else if (toPort === 'bottom') y2_ext = y2 + margin;
-  else if (toPort === 'left') x2_ext = x2 - margin;
-  else if (toPort === 'right') x2_ext = x2 + margin;
+  if (toPort === 'top') y2_ext = y2 - marginY;
+  else if (toPort === 'bottom') y2_ext = y2 + marginY;
+  else if (toPort === 'left') x2_ext = x2 - marginX;
+  else if (toPort === 'right') x2_ext = x2 + marginX;
 
   const isFromPortVertical = fromPort === 'top' || fromPort === 'bottom';
   const isToPortVertical = toPort === 'top' || toPort === 'bottom';
@@ -65,18 +66,14 @@ function generateOrthogonalPath(
   let points: { x: number; y: number }[] = [];
 
   if (isFromPortVertical && isToPortVertical) {
-    // Determine midY based on port directions to avoid cutting through cards
     let midY: number;
     const bothBottom = fromPort === 'bottom' && toPort === 'bottom';
     const bothTop = fromPort === 'top' && toPort === 'top';
     if (bothBottom) {
-      // Both exit downward → trunk goes just below BOTH elements (within padding)
       midY = Math.max(y1_ext, y2_ext) + 6 + Math.abs(trunkOffset);
     } else if (bothTop) {
-      // Both exit upward → trunk goes just above BOTH elements
       midY = Math.min(y1_ext, y2_ext) - 6 - Math.abs(trunkOffset);
     } else {
-      // Normal case (bottom→top or top→bottom): average is fine
       midY = (y1_ext + y2_ext) / 2 + trunkOffset;
     }
 
@@ -84,17 +81,26 @@ function generateOrthogonalPath(
     let clampedY2Ext = y2_ext;
     if (!bothBottom && !bothTop) {
       if (fromPort === 'bottom' && toPort === 'top') {
-        clampedY1Ext = Math.min(y1 + margin, midY);
-        clampedY2Ext = Math.max(y2 - margin, midY);
+        if (y1 < y2) {
+          clampedY1Ext = Math.min(y1 + marginY, midY);
+          clampedY2Ext = Math.max(y2 - marginY, midY);
+        } else {
+          clampedY1Ext = y1 + marginY;
+          clampedY2Ext = y2 - marginY;
+        }
       } else if (fromPort === 'top' && toPort === 'bottom') {
-        clampedY1Ext = Math.max(y1 - margin, midY);
-        clampedY2Ext = Math.min(y2 + margin, midY);
+        if (y1 > y2) {
+          clampedY1Ext = Math.max(y1 - marginY, midY);
+          clampedY2Ext = Math.min(y2 + marginY, midY);
+        } else {
+          clampedY1Ext = y1 - marginY;
+          clampedY2Ext = y2 + marginY;
+        }
       }
     }
 
     const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
     if (isOppositeSide) {
-      // Different columns: route vertical trunk through the center gap to avoid card crossings
       points = [
         { x: x1_start, y: y1_start },
         { x: x1, y: clampedY1Ext },
@@ -114,45 +120,45 @@ function generateOrthogonalPath(
       ];
     }
   } else if (!isFromPortVertical && !isToPortVertical) {
-    // Determine midX based on port directions to avoid cutting through cards
     const bothRight = fromPort === 'right' && toPort === 'right';
     const bothLeft = fromPort === 'left' && toPort === 'left';
     let midX: number;
     if (bothRight) {
-      // Both exit rightward → trunk goes just right of BOTH elements
       midX = Math.max(x1_ext, x2_ext) + 6 + Math.abs(trunkOffset);
     } else if (bothLeft) {
-      // Both exit leftward → trunk goes just left of BOTH elements
       midX = Math.min(x1_ext, x2_ext) - 6 - Math.abs(trunkOffset);
     } else {
       midX = (x1_ext + x2_ext) / 2 + trunkOffset;
     }
-    if (isMobile && !bothRight && !bothLeft) {
-      // On mobile, route through the canvas side margins (left or right gutter) to avoid columns and borders
-      if (fromPort === 'left') {
-        midX = 24 + trunkOffset;
+    if (isMobile) {
+      if (fromPort === 'left' || toPort === 'left') {
+        midX = 16 + trunkOffset;
       } else {
-        midX = canvasWidth - 24 + trunkOffset;
+        midX = canvasWidth - 16 + trunkOffset;
       }
     } else if (!bothRight && !bothLeft && (x1 < gapCenterX) !== (x2 < gapCenterX)) {
       midX = gapCenterX + trunkOffset;
     }
 
-    // Check if the path goes backwards through the source or target card (wrong way)
-    const isFromPortWrongWay = (fromPort === 'right' && x2 < x1) || (fromPort === 'left' && x2 > x1);
-    const isToPortWrongWay = (toPort === 'right' && x1 < x2) || (toPort === 'left' && x1 > x2);
-    const isWrongWayOrSameCol = isFromPortWrongWay || isToPortWrongWay || (Math.abs(x1 - x2) < 50 && (fromPort !== toPort)) || ((bothRight || bothLeft) && Math.abs(y1 - y2) < 50);
+    const isWrongWay = (fromPort === 'right' && toPort === 'left' && x2 < x1) ||
+                       (fromPort === 'left' && toPort === 'right' && x2 > x1);
+
+    // On mobile viewports, stack columns and always route cleanly via screen margins (no midY zig-zags)
+    const isWrongWayOrSameCol = !isMobile && (
+      isWrongWay ||
+      (Math.abs(x1 - x2) < 50 && (fromPort !== toPort)) ||
+      ((bothRight || bothLeft) && Math.abs(y1 - y2) < 50)
+    );
 
     if (isWrongWayOrSameCol) {
-      // The line needs to contour the elements vertically to avoid passing through them
       let midY: number;
       if (Math.abs(y1 - y2) > 100) {
         midY = (y1 + y2) / 2;
       } else {
         if (Math.min(y1, y2) < 200) {
-          midY = Math.max(y1, y2) + 68 + 24; // go below the row (68 is card height)
+          midY = Math.max(y1, y2) + 68 + 24;
         } else {
-          midY = Math.min(y1, y2) - 24; // go above the row
+          midY = Math.min(y1, y2) - 24;
         }
       }
 
@@ -165,16 +171,37 @@ function generateOrthogonalPath(
         { x: x2_end, y: y2_end }
       ];
     } else {
-      // Normal opposite ports (right -> left or left -> right)
-      // Clamp extension points to midX to prevent horizontal double-backs
       let clampedX1Ext = x1_ext;
       let clampedX2Ext = x2_ext;
       if (fromPort === 'right' && toPort === 'left') {
-        clampedX1Ext = Math.min(x1 + margin, midX);
-        clampedX2Ext = Math.max(x2 - margin, midX);
+        if (x1 < x2) {
+          clampedX1Ext = Math.min(x1 + marginX, midX);
+          clampedX2Ext = Math.max(x2 - marginX, midX);
+        } else {
+          clampedX1Ext = x1 + marginX;
+          clampedX2Ext = x2 - marginX;
+        }
       } else if (fromPort === 'left' && toPort === 'right') {
-        clampedX1Ext = Math.max(x1 - margin, midX);
-        clampedX2Ext = Math.min(x2 + margin, midX);
+        if (x1 > x2) {
+          clampedX1Ext = Math.max(x1 - marginX, midX);
+          clampedX2Ext = Math.min(x2 + marginX, midX);
+        } else {
+          clampedX1Ext = x1 - marginX;
+          clampedX2Ext = x2 + marginX;
+        }
+      }
+
+      // Clamp extension points to midX to prevent 180-degree loop-backs when they cross the vertical bus line
+      if (fromPort === 'left') {
+        clampedX1Ext = Math.max(clampedX1Ext, midX);
+      } else if (fromPort === 'right') {
+        clampedX1Ext = Math.min(clampedX1Ext, midX);
+      }
+
+      if (toPort === 'left') {
+        clampedX2Ext = Math.max(clampedX2Ext, midX);
+      } else if (toPort === 'right') {
+        clampedX2Ext = Math.min(clampedX2Ext, midX);
       }
 
       points = [
@@ -187,27 +214,65 @@ function generateOrthogonalPath(
       ];
     }
   } else if (isFromPortVertical && !isToPortVertical) {
-    points = [
-      { x: x1_start, y: y1_start },
-      { x: x1, y: y1_ext },
-      { x: x2_ext, y: y1_ext },
-      { x: x2_ext, y: y2 },
-      { x: x2_end, y: y2_end }
-    ];
+    const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
+    if (isOppositeSide) {
+      points = [
+        { x: x1_start, y: y1_start },
+        { x: x1, y: y1_ext },
+        { x: gapCenterX + trunkOffset, y: y1_ext },
+        { x: gapCenterX + trunkOffset, y: y2 },
+        { x: x2_ext, y: y2 },
+        { x: x2_end, y: y2_end }
+      ];
+    } else {
+      points = [
+        { x: x1_start, y: y1_start },
+        { x: x1, y: y1_ext },
+        { x: x2_ext, y: y1_ext },
+        { x: x2_ext, y: y2 },
+        { x: x2_end, y: y2_end }
+      ];
+    }
   } else {
-    points = [
-      { x: x1_start, y: y1_start },
-      { x: x1_ext, y: y1 },
-      { x: x1_ext, y: y2_ext },
-      { x: x2, y: y2_ext },
-      { x: x2_end, y: y2_end }
-    ];
+    const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
+    if (isOppositeSide) {
+      points = [
+        { x: x1_start, y: y1_start },
+        { x: x1_ext, y: y1 },
+        { x: gapCenterX + trunkOffset, y: y1 },
+        { x: gapCenterX + trunkOffset, y: y2_ext },
+        { x: x2, y: y2_ext },
+        { x: x2_end, y: y2_end }
+      ];
+    } else {
+      points = [
+        { x: x1_start, y: y1_start },
+        { x: x1_ext, y: y1 },
+        { x: x1_ext, y: y2_ext },
+        { x: x2, y: y2_ext },
+        { x: x2_end, y: y2_end }
+      ];
+    }
   }
 
   // Clamp intermediate points (all except start and end) to canvas margins to prevent horizontal overflow
   for (let i = 1; i < points.length - 1; i++) {
     points[i].x = Math.max(12, Math.min(points[i].x, canvasWidth - 12));
   }
+
+  // Remove consecutive duplicate points (which can happen due to clamping) to preserve rounded corner curves
+  const uniquePoints: typeof points = [];
+  for (const p of points) {
+    if (uniquePoints.length === 0) {
+      uniquePoints.push(p);
+    } else {
+      const last = uniquePoints[uniquePoints.length - 1];
+      if (Math.abs(last.x - p.x) > 0.01 || Math.abs(last.y - p.y) > 0.01) {
+        uniquePoints.push(p);
+      }
+    }
+  }
+  points = uniquePoints;
 
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length - 1; i++) {
@@ -401,7 +466,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           const node = topology.nodes.find(n => n.id === id);
           const group = topology.groups.find(g => g.id === id);
           const nodeType = node?.type || group?.type;
-          return nodeType === 'infra' || nodeType === 'netsvc';
+          return nodeType === 'infra' || nodeType === 'netsvc' || nodeType === 'device';
         })
         .map(([_, coord]) => coord);
 
@@ -417,7 +482,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           const node = topology.nodes.find(n => n.id === id);
           const group = topology.groups.find(g => g.id === id);
           const nodeType = node?.type || group?.type;
-          return nodeType === 'device' || nodeType === 'stdsvc';
+          return nodeType === 'stdsvc';
         })
         .map(([_, coord]) => coord);
 
@@ -530,8 +595,16 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     updateCoordinates();
     const t = setTimeout(updateCoordinates, 100);
 
+    const handleWindowResize = () => {
+      updateCoordinates();
+    };
+    window.addEventListener('resize', handleWindowResize);
+
     if (!containerRef.current) {
-      return () => clearTimeout(t);
+      return () => {
+        clearTimeout(t);
+        window.removeEventListener('resize', handleWindowResize);
+      };
     }
 
     const observer = new ResizeObserver(() => {
@@ -544,6 +617,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
     return () => {
       clearTimeout(t);
+      window.removeEventListener('resize', handleWindowResize);
       observer.disconnect();
     };
   }, [topology, refreshTrigger, editMode, searchQuery, showSensitive]);
@@ -1278,8 +1352,8 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       const toType = toNode?.type || toGroup?.type;
 
       const sameColumn = (
-        ((fromType === 'infra' || fromType === 'netsvc') && (toType === 'infra' || toType === 'netsvc')) ||
-        ((fromType === 'device' || fromType === 'stdsvc') && (toType === 'device' || toType === 'stdsvc'))
+        ((fromType === 'infra' || fromType === 'netsvc' || fromType === 'device') && (toType === 'infra' || toType === 'netsvc' || toType === 'device')) ||
+        (fromType === 'stdsvc' && toType === 'stdsvc')
       );
 
       const fromCoord = coords[conn.fromId];
@@ -1296,17 +1370,17 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           isVertical = Math.abs(fromCoord.y - toCoord.y) > Math.abs(fromCoord.x - toCoord.x);
         }
       } else {
-        const isFromLeft = fromType === 'infra' || fromType === 'netsvc';
-        const isToLeft = toType === 'infra' || toType === 'netsvc';
-        if (isFromLeft === isToLeft) {
-          isVertical = true;
+        if (fromCoord && toCoord) {
+          isVertical = Math.abs(fromCoord.y - toCoord.y) > Math.abs(fromCoord.x - toCoord.x);
         } else {
-          isVertical = false;
+          const isFromLeft = fromType === 'infra' || fromType === 'netsvc' || fromType === 'device';
+          const isToLeft = toType === 'infra' || toType === 'netsvc' || toType === 'device';
+          isVertical = isFromLeft === isToLeft;
         }
       }
 
-      let fromPort = conn.fromPort || 'auto';
-      let toPort = conn.toPort || 'auto';
+      let fromPort = isMobileLayout ? 'auto' : (conn.fromPort || 'auto');
+      let toPort = isMobileLayout ? 'auto' : (conn.toPort || 'auto');
 
       if (fromPort === 'auto' || toPort === 'auto') {
         // If one port is explicitly set and the other is auto, adapt the auto port
@@ -1434,8 +1508,8 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           mobileMarginConns.push(rc);
         }
       } else {
-        const isFromLeft = rc.fromType === 'infra' || rc.fromType === 'netsvc';
-        const isToLeft = rc.toType === 'infra' || rc.toType === 'netsvc';
+        const isFromLeft = rc.fromType === 'infra' || rc.fromType === 'netsvc' || rc.fromType === 'device';
+        const isToLeft = rc.toType === 'infra' || rc.toType === 'netsvc' || rc.toType === 'device';
         if (isFromLeft !== isToLeft) {
           crossingConns.push(rc);
         } else if (isFromLeft) {
@@ -1473,15 +1547,15 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     const trunkOffsets: Record<string, number> = {};
     crossingConns.forEach((rc, idx) => {
       const total = crossingConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 16;
+      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 8;
     });
     leftVerticalConns.forEach((rc, idx) => {
       const total = leftVerticalConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 12;
+      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 6;
     });
     rightVerticalConns.forEach((rc, idx) => {
       const total = rightVerticalConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 12;
+      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 6;
     });
     mobileMarginConns.forEach((rc, idx) => {
       const total = mobileMarginConns.length;
@@ -1655,7 +1729,13 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     const isDimmed = (hoveredNodeId || hoveredConnectionId) ? !isHighlighted : false;
 
     // Resolve sizing and aesthetics
-    const size = resolvedCardSize;
+    const size = (() => {
+      if (cardSizeSetting !== 'auto') return cardSizeSetting as 'standard' | 'compact' | 'mini';
+      const count = topology.nodes.filter(node => node.type === n.type).length;
+      if (count <= 4) return 'standard';
+      if (count <= 12) return 'compact';
+      return 'mini';
+    })();
     
     const typeColors = {
       infra: 'var(--nd-accent)',
@@ -1918,47 +1998,59 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           minWidth: 200,
           display: 'flex',
           flexDirection: 'column',
-          gap: 24,
+          gap: 14,
           pointerEvents: 'none'
         }}
       >
         {/* Column Header */}
-        <div style={{ borderBottom: '1px solid var(--nd-card-border)', paddingBottom: 8, marginBottom: 4, pointerEvents: 'auto' }}>
-          <h4 style={{ margin: 0, fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--nd-text)' }}>
+        <div style={{ 
+          borderBottom: '1px solid var(--nd-card-border)', 
+          paddingBottom: 6, 
+          marginBottom: 4, 
+          pointerEvents: 'auto',
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 6
+        }}>
+          <h4 style={{ margin: 0, fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5, color: 'var(--nd-text)', flexShrink: 0 }}>
             {colInfo.title}
           </h4>
-          <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)' }}>
-            {colInfo.desc}
+          <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            ({colInfo.desc})
           </span>
         </div>
 
         {/* Grouped items */}
-        {colType === 'stdsvc' ? (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: isMobileLayout ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', 
-            gap: 16,
-            width: '100%',
-            pointerEvents: 'none'
-          }}>
-            {categorized.groups.map(g => renderGroup(g, categorized.groupedNodes))}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', pointerEvents: 'none' }}>
-            {categorized.groups.map(g => renderGroup(g, categorized.groupedNodes))}
-          </div>
+        {categorized.groups.length > 0 && (
+          colType === 'stdsvc' ? (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobileLayout ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gap: 16,
+              width: '100%',
+              pointerEvents: 'none'
+            }}>
+              {categorized.groups.map(g => renderGroup(g, categorized.groupedNodes))}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', pointerEvents: 'none' }}>
+              {categorized.groups.map(g => renderGroup(g, categorized.groupedNodes))}
+            </div>
+          )
         )}
 
         {/* Ungrouped items */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
-          gap: 12,
-          width: '100%',
-          pointerEvents: 'auto'
-        }}>
-          {categorized.ungroupedNodes.map(n => renderNodeCard(n))}
-        </div>
+        {categorized.ungroupedNodes.length > 0 && (
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
+            gap: 12,
+            width: '100%',
+            pointerEvents: 'auto'
+          }}>
+            {categorized.ungroupedNodes.map(n => renderNodeCard(n))}
+          </div>
+        )}
 
         {/* Column Empty State */}
         {categorized.groups.length === 0 && categorized.ungroupedNodes.length === 0 && (
@@ -2060,8 +2152,9 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             paddingBottom: isMobileLayout ? 60 : 48,
             display: 'grid',
             gridTemplateColumns: isMobileLayout ? '1fr' : '1.2fr 2.8fr',
-            gap: isMobileLayout ? '36px' : '24px 84px',
-            boxSizing: 'border-box'
+            gap: isMobileLayout ? '36px' : '24px 110px',
+            boxSizing: 'border-box',
+            zIndex: 1
           }}
         >
           {/* Dynamic connection lines overlay */}
@@ -2073,7 +2166,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               width: '100%', 
               height: '100%', 
               pointerEvents: 'none', 
-              zIndex: 2 
+              zIndex: -1 
             }}
           >
             <defs>
@@ -2101,15 +2194,15 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             )}
           </svg>
 
-          {/* Left Main Column: Infrastructure and Network Services */}
+          {/* Left Main Column: Infrastructure, Machines, and Network Services */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 48, pointerEvents: 'none' }}>
             {renderColumn('infra')}
+            {renderColumn('device')}
             {renderColumn('netsvc')}
           </div>
 
-          {/* Right Main Column: Devices and Applications */}
+          {/* Right Main Column: Applications */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 48, pointerEvents: 'none' }}>
-            {renderColumn('device')}
             {renderColumn('stdsvc')}
           </div>
 
