@@ -26,8 +26,8 @@ function generateOrthogonalPath(
   isMobile: boolean,
   canvasWidth: number
 ): string {
-  const margin = 16;
-  const r = 8;
+  const margin = 24;
+  const r = 12;
 
   let x1_start = x1;
   let y1_start = y1;
@@ -80,24 +80,36 @@ function generateOrthogonalPath(
       midY = (y1_ext + y2_ext) / 2 + trunkOffset;
     }
 
+    let clampedY1Ext = y1_ext;
+    let clampedY2Ext = y2_ext;
+    if (!bothBottom && !bothTop) {
+      if (fromPort === 'bottom' && toPort === 'top') {
+        clampedY1Ext = Math.min(y1 + margin, midY);
+        clampedY2Ext = Math.max(y2 - margin, midY);
+      } else if (fromPort === 'top' && toPort === 'bottom') {
+        clampedY1Ext = Math.max(y1 - margin, midY);
+        clampedY2Ext = Math.min(y2 + margin, midY);
+      }
+    }
+
     const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
     if (isOppositeSide) {
       // Different columns: route vertical trunk through the center gap to avoid card crossings
       points = [
         { x: x1_start, y: y1_start },
-        { x: x1, y: y1_ext },
-        { x: gapCenterX + trunkOffset, y: y1_ext },
-        { x: gapCenterX + trunkOffset, y: y2_ext },
-        { x: x2, y: y2_ext },
+        { x: x1, y: clampedY1Ext },
+        { x: gapCenterX + trunkOffset, y: clampedY1Ext },
+        { x: gapCenterX + trunkOffset, y: clampedY2Ext },
+        { x: x2, y: clampedY2Ext },
         { x: x2_end, y: y2_end }
       ];
     } else {
       points = [
         { x: x1_start, y: y1_start },
-        { x: x1, y: y1_ext },
+        { x: x1, y: clampedY1Ext },
         { x: x1, y: midY },
         { x: x2, y: midY },
-        { x: x2, y: y2_ext },
+        { x: x2, y: clampedY2Ext },
         { x: x2_end, y: y2_end }
       ];
     }
@@ -129,8 +141,9 @@ function generateOrthogonalPath(
     // Check if the path goes backwards through the source or target card (wrong way)
     const isFromPortWrongWay = (fromPort === 'right' && x2 < x1) || (fromPort === 'left' && x2 > x1);
     const isToPortWrongWay = (toPort === 'right' && x1 < x2) || (toPort === 'left' && x1 > x2);
+    const isWrongWayOrSameCol = isFromPortWrongWay || isToPortWrongWay || (Math.abs(x1 - x2) < 50 && (fromPort !== toPort)) || ((bothRight || bothLeft) && Math.abs(y1 - y2) < 50);
 
-    if (isFromPortWrongWay || isToPortWrongWay || ((bothRight || bothLeft) && Math.abs(y1 - y2) < 50)) {
+    if (isWrongWayOrSameCol) {
       // The line needs to contour the elements vertically to avoid passing through them
       let midY: number;
       if (Math.abs(y1 - y2) > 100) {
@@ -152,12 +165,24 @@ function generateOrthogonalPath(
         { x: x2_end, y: y2_end }
       ];
     } else {
+      // Normal opposite ports (right -> left or left -> right)
+      // Clamp extension points to midX to prevent horizontal double-backs
+      let clampedX1Ext = x1_ext;
+      let clampedX2Ext = x2_ext;
+      if (fromPort === 'right' && toPort === 'left') {
+        clampedX1Ext = Math.min(x1 + margin, midX);
+        clampedX2Ext = Math.max(x2 - margin, midX);
+      } else if (fromPort === 'left' && toPort === 'right') {
+        clampedX1Ext = Math.max(x1 - margin, midX);
+        clampedX2Ext = Math.min(x2 + margin, midX);
+      }
+
       points = [
         { x: x1_start, y: y1_start },
-        { x: x1_ext, y: y1 },
+        { x: clampedX1Ext, y: y1 },
         { x: midX, y: y1 },
         { x: midX, y: y2 },
-        { x: x2_ext, y: y2 },
+        { x: clampedX2Ext, y: y2 },
         { x: x2_end, y: y2_end }
       ];
     }
@@ -1271,16 +1296,12 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           isVertical = Math.abs(fromCoord.y - toCoord.y) > Math.abs(fromCoord.x - toCoord.x);
         }
       } else {
-        const leftCol = (fromType === 'infra' || fromType === 'netsvc') && (toType === 'infra' || toType === 'netsvc');
-        const rightCol = (fromType === 'device' || fromType === 'stdsvc') && (toType === 'device' || toType === 'stdsvc');
-        const sameColGroup = leftCol || rightCol;
-        if (sameColGroup) {
-          isVertical = (
-            ((fromType === 'infra' || fromType === 'device') && (toType === 'netsvc' || toType === 'stdsvc')) ||
-            ((fromType === 'netsvc' || fromType === 'stdsvc') && (toType === 'infra' || toType === 'device'))
-          );
-        } else if (fromType === toType && fromCoord && toCoord) {
-          isVertical = Math.abs(fromCoord.y - toCoord.y) > Math.abs(fromCoord.x - toCoord.x);
+        const isFromLeft = fromType === 'infra' || fromType === 'netsvc';
+        const isToLeft = toType === 'infra' || toType === 'netsvc';
+        if (isFromLeft === isToLeft) {
+          isVertical = true;
+        } else {
+          isVertical = false;
         }
       }
 
@@ -1564,7 +1585,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                 pointerEvents: 'none',
                 ...strokeStyle
               }}
-              className={!isDimmed ? 'nd-topology-conn-flow' : ''}
+              className={isHighlighted ? 'nd-topology-conn-flow' : ''}
             />
 
             {!isDimmed && (
@@ -1652,7 +1673,11 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       : typeColors[n.type];
 
     const baseStyles: React.CSSProperties = {
-      background: 'rgba(255, 255, 255, 0.015)',
+      background: isHighlighted
+        ? 'color-mix(in srgb, var(--nd-bg-surface) 75%, transparent)'
+        : 'color-mix(in srgb, var(--nd-bg-surface) 40%, transparent)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
       border: `1px solid ${borderColor}`,
       borderLeft: `3px solid ${borderLeftColor}`,
       borderRadius: 'calc(var(--nd-card-radius) * 0.4)',
