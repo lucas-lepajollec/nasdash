@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
@@ -10,14 +12,15 @@ export async function GET(request: Request) {
 
   try {
     const start = Date.now();
-    // Use AbortController for a 3-second timeout to avoid hanging requests
+    // Use AbortController for a 5-second timeout to avoid hanging requests (e.g. DNS timeouts on private IPs)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     // We do a GET instead of HEAD because some minimal self-hosted servers block HEAD requests
     const response = await fetch(url, {
       method: 'GET',
       signal: controller.signal,
+      cache: 'no-store',
       // Do not follow redirects if it crosses domains, but normally follow is ok.
       // But we just want to know if it responds.
     });

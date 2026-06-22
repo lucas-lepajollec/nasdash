@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDocker } from '@/hooks/useDocker';
@@ -695,11 +695,40 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
 
 // ======================== MAIN DOCKER TAB ========================
 export default function DockerTab({ editMode, searchQuery, isVisible, showSensitive = false }: DockerTabProps) {
-  const { config, updateConfig, refresh } = useConfig();
+  const { config, updateConfig, refresh, showSecretSections } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
   const [showHostForm, setShowHostForm] = useState(false);
   const [localSearch, setLocalSearch] = useState('');
+
+  const sidebarRef = useRef<HTMLElement>(null);
+  const widgetsSidebarRef = useRef<HTMLElement>(null);
+  const [sidebarSticky, setSidebarSticky] = useState(true);
+  const [widgetsSticky, setWidgetsSticky] = useState(true);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const checkSticky = () => {
+      if (sidebarRef.current) {
+        setSidebarSticky(sidebarRef.current.scrollHeight + 40 < window.innerHeight);
+      }
+      if (widgetsSidebarRef.current) {
+        setWidgetsSticky(widgetsSidebarRef.current.scrollHeight + 40 < window.innerHeight);
+      }
+    };
+
+    checkSticky();
+    window.addEventListener('resize', checkSticky);
+    
+    const observer = new ResizeObserver(checkSticky);
+    if (sidebarRef.current) observer.observe(sidebarRef.current);
+    if (widgetsSidebarRef.current) observer.observe(widgetsSidebarRef.current);
+
+    return () => {
+      window.removeEventListener('resize', checkSticky);
+      observer.disconnect();
+    };
+  }, [config, editMode, isVisible]);
 
   const {
     activeHostId, setActiveHostId, activeHost,
@@ -710,6 +739,28 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     volumes, volumesLoading, refreshVolumes,
     containerAction, actionLoading,
   } = useDocker(hosts);
+
+  const visibleContainers = useMemo(() => {
+    if (showSecretSections || !config?.categories) return containers;
+
+    const secretServiceNames = new Set<string>();
+    config.categories.forEach(cat => {
+      if (cat.isSecret) {
+        cat.services.forEach(svc => {
+          secretServiceNames.add(svc.name.toLowerCase().trim());
+        });
+      }
+    });
+
+    return containers.filter((c: any) => {
+      const isSecretContainer = (c.names || []).some((n: string) => {
+        const name = n.replace(/^\//, '').toLowerCase().trim();
+        return secretServiceNames.has(name);
+      }) || secretServiceNames.has((c.names?.[0] || '').replace(/^\//, '').toLowerCase().trim());
+
+      return !isSecretContainer;
+    });
+  }, [containers, config?.categories, showSecretSections]);
 
   const [pendingConfirm, setPendingConfirm] = useState<{ id: string; action: 'start' | 'stop' | 'restart' | 'remove'; name: string } | null>(null);
   const [pendingDeleteHost, setPendingDeleteHost] = useState<{ id: string; name: string } | null>(null);
@@ -733,10 +784,10 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
 
   // Auto-select first container if none active and containers loaded
   useEffect(() => {
-    if (activeTab === 'containers' && !selectedContainerId && containers.length > 0) {
-      setSelectedContainerId(containers[0].fullId);
+    if (activeTab === 'containers' && !selectedContainerId && visibleContainers.length > 0) {
+      setSelectedContainerId(visibleContainers[0].fullId);
     }
-  }, [activeTab, containers, selectedContainerId, setSelectedContainerId]);
+  }, [activeTab, visibleContainers, selectedContainerId, setSelectedContainerId]);
 
   // Add docker host
   const handleAddHost = async (data: { name: string; icon: string; url: string }) => {
@@ -778,7 +829,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
   }
 
   // Filter containers
-  const filteredContainers = containers.filter((c: any) => {
+  const filteredContainers = visibleContainers.filter((c: any) => {
     if (!effectiveSearch) return true;
     const q = effectiveSearch.toLowerCase();
     return c.names?.some((n: string) => n.toLowerCase().includes(q)) 
@@ -786,8 +837,8 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
       || c.id?.toLowerCase().includes(q);
   });
 
-  const runningCount = containers.filter((c: any) => c.state === 'running').length;
-  const stoppedCount = containers.filter((c: any) => c.state === 'exited').length;
+  const runningCount = visibleContainers.filter((c: any) => c.state === 'running').length;
+  const stoppedCount = visibleContainers.filter((c: any) => c.state === 'exited').length;
 
   const tabConf = config?.settings?.tabs?.docker || {};
   const dockerPanelPos = tabConf.dockerPanelPosition || 'left';
@@ -855,7 +906,16 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     <>
       <div className="nd-docker-layout nd-animate-in">
         {/* Sidebar — Host selector + Container list */}
-        <aside className="nd-docker-sidebar" style={{ overflowY: 'hidden', order: dockerSidebarOrder }}>
+        <aside 
+          ref={sidebarRef}
+          className="nd-docker-sidebar" 
+          style={{ 
+            order: dockerSidebarOrder,
+            position: sidebarSticky ? 'sticky' : 'static',
+            maxHeight: 'none',
+            overflowY: 'visible'
+          }}
+        >
           {/* Host Selector */}
           <div className="nd-sidebar-card">
             <div className="nd-section-title" style={{ marginBottom: 8 }}>
@@ -913,7 +973,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
 
           {/* Container List */}
           <div className={`nd-mobile-scroll ${activeTab !== 'containers' ? 'nd-mobile-hidden' : ''}`} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 10 }}>
-            {containersLoading && containers.length === 0 && (
+            {containersLoading && visibleContainers.length === 0 && (
               <div style={{ textAlign: 'center', padding: 20 }}>
                 <Loader2 size={16} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />
               </div>
@@ -983,7 +1043,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
         <div className="nd-docker-main" style={{ order: dockerMainOrder }}>
           <div className="nd-docker-tabs" style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 12 }}>
               <button className={`nd-docker-tab ${activeTab === 'containers' ? 'nd-docker-tab--active' : ''}`} onClick={() => setActiveTab('containers')} style={{ flexShrink: 0 }}>
-                <Container size={12} /> Conteneurs ({containers.length})
+                <Container size={12} /> Conteneurs ({visibleContainers.length})
               </button>
               <button className={`nd-docker-tab ${activeTab === 'images' ? 'nd-docker-tab--active' : ''}`} onClick={() => setActiveTab('images')} style={{ flexShrink: 0 }}>
                 <Layers size={12} /> Images ({images.length})
@@ -1024,16 +1084,25 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           )}
 
           {activeTab === 'images' && (
-            <ImagesTab images={images} loading={imagesLoading} containers={containers} hostId={activeHostId!} refreshImages={() => refreshImages()} selectedContainer={containers.find((c: any) => c.fullId === selectedContainerId)} />
+            <ImagesTab images={images} loading={imagesLoading} containers={visibleContainers} hostId={activeHostId!} refreshImages={() => refreshImages()} selectedContainer={visibleContainers.find((c: any) => c.fullId === selectedContainerId)} />
           )}
 
           {activeTab === 'volumes' && (
-            <VolumesTab volumes={volumes} loading={volumesLoading} containers={containers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={containers.find((c: any) => c.fullId === selectedContainerId)} />
+            <VolumesTab volumes={volumes} loading={volumesLoading} containers={visibleContainers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={visibleContainers.find((c: any) => c.fullId === selectedContainerId)} />
           )}
         </div>
 
         {showWidgets && activeWidgets.length > 0 && (
-          <aside className="nd-docker-widgets-sidebar" style={{ order: widgetsSidebarOrder }}>
+          <aside 
+            ref={widgetsSidebarRef}
+            className="nd-docker-widgets-sidebar" 
+            style={{ 
+              order: widgetsSidebarOrder,
+              position: widgetsSticky ? 'sticky' : 'static',
+              maxHeight: 'none',
+              overflowY: 'visible'
+            }}
+          >
             {activeWidgets.map(w => (
               <React.Fragment key={w.id}>{w.render()}</React.Fragment>
             ))}

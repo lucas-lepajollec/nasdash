@@ -12,7 +12,7 @@ interface ActivePortItem {
 }
 
 export function NetworkSidebar() {
-  const { config } = useConfig();
+  const { config, showSecretSections } = useConfig();
   const [dockerContainers, setDockerContainers] = useState<any[]>([]);
   const [loadingDocker, setLoadingDocker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,6 +70,17 @@ export function NetworkSidebar() {
     const list: ActivePortItem[] = [];
     const seenKeys = new Set<string>();
 
+    const secretServiceNames = new Set<string>();
+    if (!showSecretSections && config?.categories) {
+      config.categories.forEach(cat => {
+        if (cat.isSecret) {
+          cat.services.forEach(svc => {
+            secretServiceNames.add(svc.name.toLowerCase().trim());
+          });
+        }
+      });
+    }
+
     const addPortItem = (item: ActivePortItem) => {
       const key = `${item.ip}:${item.port}-${item.source}`;
       if (!seenKeys.has(key)) {
@@ -106,6 +117,7 @@ export function NetworkSidebar() {
     // 1. Extract ports from configured NasDash Services
     const categories = config?.categories || [];
     categories.forEach(cat => {
+      if (!showSecretSections && cat.isSecret) return;
       cat.services.forEach(svc => {
         if (svc.localUrl) {
           const parsed = parseUrl(svc.localUrl);
@@ -137,6 +149,15 @@ export function NetworkSidebar() {
     // 2. Extract ports from Docker hosts containers
     dockerContainers.forEach((c) => {
       const containerName = c.names?.[0] || c.id;
+
+      if (!showSecretSections && secretServiceNames.size > 0) {
+        const isSecretContainer = (c.names || []).some((n: string) => {
+          const name = n.replace(/^\//, '').toLowerCase().trim();
+          return secretServiceNames.has(name);
+        }) || secretServiceNames.has((c.names?.[0] || '').replace(/^\//, '').toLowerCase().trim());
+
+        if (isSecretContainer) return;
+      }
       const hostIp = (() => {
         try {
           const u = new URL(c.hostUrl);
@@ -162,7 +183,7 @@ export function NetworkSidebar() {
     });
 
     return list.sort((a, b) => a.port - b.port);
-  }, [config?.categories, dockerContainers]);
+  }, [config?.categories, dockerContainers, showSecretSections]);
 
   // Filtered active ports
   const filteredPorts = useMemo(() => {

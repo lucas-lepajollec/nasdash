@@ -390,8 +390,13 @@ export async function PUT(req: NextRequest) {
         }
 
         if (updatingCredentials) {
-          if (body.api.username || body.api.password) {
-            const authStr = `${body.api.username || ''}:${body.api.password || ''}`;
+          const oldToken = !isChangingPlatform ? (oldApiObj.token || '') : '';
+          const colonIdx = oldToken.indexOf(':');
+          const oldPassword = colonIdx !== -1 ? oldToken.substring(colonIdx + 1) : '';
+          const newPassword = body.api.password || oldPassword;
+
+          if (body.api.username || newPassword) {
+            const authStr = `${body.api.username || ''}:${newPassword}`;
             device.api.token = authStr;
           } else {
             device.api.token = undefined; // Cleared
@@ -400,7 +405,8 @@ export async function PUT(req: NextRequest) {
       } else if (body.api.type === 'homeassistant') {
         device.api.url = `http://${body.api.ip}:${body.api.port || 8123}/api/states`;
         if (updatingCredentials) {
-          device.api.token = body.api.password || undefined;
+          const newPassword = body.api.password || (!isChangingPlatform ? oldApiObj.token : '');
+          device.api.token = newPassword || undefined;
         }
       } else if (body.api.type === 'proxmox') {
         const baseUrl = `https://${body.api.ip}:${body.api.port || 8006}/api2/json/nodes/${body.api.nodeName || 'pve'}`;
@@ -410,8 +416,13 @@ export async function PUT(req: NextRequest) {
           device.api.url = `${baseUrl}/status`;
         }
         if (updatingCredentials) {
-          if (body.api.username && body.api.password) {
-            const fullToken = `${body.api.username}=${body.api.password}`;
+          const oldToken = !isChangingPlatform ? (oldApiObj.token || '') : '';
+          const eqIdx = oldToken.indexOf('=');
+          const oldPassword = eqIdx !== -1 ? oldToken.substring(eqIdx + 1) : '';
+          const newPassword = body.api.password || oldPassword;
+
+          if (body.api.username && newPassword) {
+            const fullToken = `${body.api.username}=${newPassword}`;
             device.api.token = fullToken;
           } else {
             device.api.token = undefined; // Cleared

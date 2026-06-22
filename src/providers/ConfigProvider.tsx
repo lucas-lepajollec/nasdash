@@ -7,6 +7,8 @@ interface ConfigContextType {
   config: DashboardConfig | null;
   loading: boolean;
   refresh: () => Promise<void>;
+  showSecretSections: boolean;
+  setShowSecretSections: React.Dispatch<React.SetStateAction<boolean>>;
   addCategory: (title: string, emoji: string, isSecret?: boolean, layout?: Category['layout']) => Promise<void>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
@@ -59,6 +61,7 @@ export const ConfigContext = createContext<ConfigContextType | undefined>(undefi
 export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<DashboardConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSecretSections, setShowSecretSections] = useState(false);
   const [activeBgUrl, setActiveBgUrl] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [bgStyle, setBgStyle] = useState({ top: '-10vh', height: '120vh' });
@@ -469,6 +472,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     config,
     loading,
     refresh: fetchConfig,
+    showSecretSections,
+    setShowSecretSections,
     addCategory,
     updateCategory,
     deleteCategory,

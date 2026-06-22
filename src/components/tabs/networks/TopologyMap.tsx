@@ -101,11 +101,12 @@ function generateOrthogonalPath(
 
     const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
     if (isOppositeSide) {
+      let midX = gapCenterX + trunkOffset;
       points = [
         { x: x1_start, y: y1_start },
         { x: x1, y: clampedY1Ext },
-        { x: gapCenterX + trunkOffset, y: clampedY1Ext },
-        { x: gapCenterX + trunkOffset, y: clampedY2Ext },
+        { x: midX, y: clampedY1Ext },
+        { x: midX, y: clampedY2Ext },
         { x: x2, y: clampedY2Ext },
         { x: x2_end, y: y2_end }
       ];
@@ -130,6 +131,7 @@ function generateOrthogonalPath(
     } else {
       midX = (x1_ext + x2_ext) / 2 + trunkOffset;
     }
+
     if (isMobile) {
       if (fromPort === 'left' || toPort === 'left') {
         midX = 16 + trunkOffset;
@@ -140,10 +142,21 @@ function generateOrthogonalPath(
       midX = gapCenterX + trunkOffset;
     }
 
+    // Apply safety clearance to midX for horizontal ports to prevent sharp corners/bevels
+    if (fromPort === 'right') {
+      midX = Math.max(midX, x1_start + 24);
+    } else if (fromPort === 'left') {
+      midX = Math.min(midX, x1_start - 24);
+    }
+    if (toPort === 'right') {
+      midX = Math.max(midX, x2_end + 24);
+    } else if (toPort === 'left') {
+      midX = Math.min(midX, x2_end - 24);
+    }
+
     const isWrongWay = (fromPort === 'right' && toPort === 'left' && x2 < x1) ||
                        (fromPort === 'left' && toPort === 'right' && x2 > x1);
 
-    // On mobile viewports, stack columns and always route cleanly via screen margins (no midY zig-zags)
     const isWrongWayOrSameCol = !isMobile && (
       isWrongWay ||
       (Math.abs(x1 - x2) < 50 && (fromPort !== toPort)) ||
@@ -191,7 +204,6 @@ function generateOrthogonalPath(
         }
       }
 
-      // Clamp extension points to midX to prevent 180-degree loop-backs when they cross the vertical bus line
       if (fromPort === 'left') {
         clampedX1Ext = Math.max(clampedX1Ext, midX);
       } else if (fromPort === 'right') {
@@ -216,11 +228,28 @@ function generateOrthogonalPath(
   } else if (isFromPortVertical && !isToPortVertical) {
     const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
     if (isOppositeSide) {
+      let midX = gapCenterX + trunkOffset;
+      if (!isMobile) {
+        const dy = Math.abs(y1 - y2);
+        const factor = Math.min(1, dy / 600);
+        const minX = gapCenterX - 35;
+        const maxX = gapCenterX + 35;
+        midX = minX + factor * (maxX - minX) + trunkOffset;
+        midX = Math.max(minX, Math.min(midX, maxX));
+      }
+
+      // Safety clearance clamping for the target horizontal port
+      if (toPort === 'right') {
+        midX = Math.max(midX, x2_end + 24);
+      } else if (toPort === 'left') {
+        midX = Math.min(midX, x2_end - 24);
+      }
+
       points = [
         { x: x1_start, y: y1_start },
         { x: x1, y: y1_ext },
-        { x: gapCenterX + trunkOffset, y: y1_ext },
-        { x: gapCenterX + trunkOffset, y: y2 },
+        { x: midX, y: y1_ext },
+        { x: midX, y: y2 },
         { x: x2_ext, y: y2 },
         { x: x2_end, y: y2_end }
       ];
@@ -236,11 +265,20 @@ function generateOrthogonalPath(
   } else {
     const isOppositeSide = (x1 < gapCenterX) !== (x2 < gapCenterX);
     if (isOppositeSide) {
+      let midX = gapCenterX + trunkOffset;
+
+      // Safety clearance clamping for the source horizontal port
+      if (fromPort === 'right') {
+        midX = Math.max(midX, x1_start + 24);
+      } else if (fromPort === 'left') {
+        midX = Math.min(midX, x1_start - 24);
+      }
+
       points = [
         { x: x1_start, y: y1_start },
         { x: x1_ext, y: y1 },
-        { x: gapCenterX + trunkOffset, y: y1 },
-        { x: gapCenterX + trunkOffset, y: y2_ext },
+        { x: midX, y: y1 },
+        { x: midX, y: y2_ext },
         { x: x2, y: y2_ext },
         { x: x2_end, y: y2_end }
       ];
@@ -272,7 +310,22 @@ function generateOrthogonalPath(
       }
     }
   }
-  points = uniquePoints;
+
+  // Remove collinear intermediate points to ensure accurate corner radius calculations
+  const filteredPoints: typeof points = [];
+  if (uniquePoints.length > 0) filteredPoints.push(uniquePoints[0]);
+  for (let i = 1; i < uniquePoints.length - 1; i++) {
+    const prev = uniquePoints[i - 1];
+    const curr = uniquePoints[i];
+    const next = uniquePoints[i + 1];
+    const isCollinear = (Math.abs(prev.x - curr.x) < 0.01 && Math.abs(curr.x - next.x) < 0.01) ||
+                        (Math.abs(prev.y - curr.y) < 0.01 && Math.abs(curr.y - next.y) < 0.01);
+    if (!isCollinear) {
+      filteredPoints.push(curr);
+    }
+  }
+  if (uniquePoints.length > 1) filteredPoints.push(uniquePoints[uniquePoints.length - 1]);
+  points = filteredPoints;
 
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length - 1; i++) {
@@ -371,7 +424,7 @@ function TopologyAnchor({ nodeId, corner, isParentHovered, onDragStart }: Topolo
 }
 
 export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMapProps) {
-  const { config, updateConfig } = useConfig();
+  const { config, updateConfig, showSecretSections } = useConfig();
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null);
   const [hoveredConnectionId, setHoveredConnectionId] = useState<string | null>(null);
@@ -441,9 +494,74 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Retrieve current topology data from settings (with defaults if empty)
-  const topology: NetworkTopology = useMemo(() => {
+  const rawTopology: NetworkTopology = useMemo(() => {
     return config?.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
   }, [config?.settings?.networkTopology]);
+
+  // Compute secret categories and services maps
+  const secretData = useMemo(() => {
+    if (!config?.categories) {
+      return { serviceIds: new Set<string>(), serviceNames: new Set<string>(), categoryTitles: new Set<string>() };
+    }
+    const serviceIds = new Set<string>();
+    const serviceNames = new Set<string>();
+    const categoryTitles = new Set<string>();
+
+    config.categories.forEach(c => {
+      if (c.isSecret) {
+        categoryTitles.add(c.title.toLowerCase().trim());
+        c.services.forEach(s => {
+          serviceIds.add(s.id);
+          serviceNames.add(s.name.toLowerCase().trim());
+        });
+      }
+    });
+
+    return { serviceIds, serviceNames, categoryTitles };
+  }, [config?.categories]);
+
+  // Apply filtering based on showSecretSections state
+  const topology = useMemo(() => {
+    if (showSecretSections) return rawTopology;
+
+    const { serviceIds, serviceNames, categoryTitles } = secretData;
+
+    // Filter nodes
+    const filteredNodes = rawTopology.nodes.filter(node => {
+      if (node.linkedServiceId && serviceIds.has(node.linkedServiceId)) {
+        return false;
+      }
+      if (node.name && serviceNames.has(node.name.toLowerCase().trim())) {
+        return false;
+      }
+      return true;
+    });
+
+    const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
+
+    // Filter groups
+    const filteredGroups = rawTopology.groups.filter(group => {
+      if (group.name && categoryTitles.has(group.name.toLowerCase().trim())) {
+        return false;
+      }
+      return true;
+    });
+
+    const visibleGroupIds = new Set(filteredGroups.map(g => g.id));
+
+    // Filter connections: only keep connections where both endpoints are visible
+    const filteredConnections = rawTopology.connections.filter(conn => {
+      const fromVisible = visibleNodeIds.has(conn.fromId) || visibleGroupIds.has(conn.fromId);
+      const toVisible = visibleNodeIds.has(conn.toId) || visibleGroupIds.has(conn.toId);
+      return fromVisible && toVisible;
+    });
+
+    return {
+      nodes: filteredNodes,
+      groups: filteredGroups,
+      connections: filteredConnections
+    };
+  }, [rawTopology, showSecretSections, secretData]);
 
   // Resolve card size based on configuration or auto-detection
   const cardSizeSetting = config?.settings?.tabs?.networks?.cardSize || 'auto';
@@ -1544,23 +1662,155 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       return ay - by;
     });
 
-    const trunkOffsets: Record<string, number> = {};
-    crossingConns.forEach((rc, idx) => {
-      const total = crossingConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 8;
-    });
-    leftVerticalConns.forEach((rc, idx) => {
-      const total = leftVerticalConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 6;
-    });
-    rightVerticalConns.forEach((rc, idx) => {
-      const total = rightVerticalConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 6;
-    });
-    mobileMarginConns.forEach((rc, idx) => {
-      const total = mobileMarginConns.length;
-      trunkOffsets[rc.conn.id] = (idx - (total - 1) / 2) * 4;
-    });
+    const assignCrossingLanes = (conns: typeof resolvedConns) => {
+      const offsets: Record<string, number> = {};
+      if (conns.length === 0) return offsets;
+
+      const sorted = [...conns].sort((a, b) => {
+        const ay = Math.min(a.fromCoord!.y, a.toCoord!.y);
+        const by = Math.min(b.fromCoord!.y, b.toCoord!.y);
+        return ay - by;
+      });
+
+      const assignedLanes: Record<string, number> = {};
+
+      sorted.forEach(c => {
+        const dy = Math.abs(c.fromCoord!.y - c.toCoord!.y);
+        const factor = Math.min(1, dy / 600);
+
+        let preferredLane = 3;
+        if (c.fromCoord!.x < gapCenterX) {
+          preferredLane = Math.round(factor * 6);
+        } else {
+          preferredLane = Math.round((1 - factor) * 6);
+        }
+
+        const colliders = sorted.filter(other => {
+          if (other.conn.id === c.conn.id) return false;
+          if (assignedLanes[other.conn.id] === undefined) return false;
+
+          const v_A = [Math.min(c.fromCoord!.y, c.toCoord!.y), Math.max(c.fromCoord!.y, c.toCoord!.y)];
+          const v_B = [Math.min(other.fromCoord!.y, other.toCoord!.y), Math.max(other.fromCoord!.y, other.toCoord!.y)];
+
+          return Math.max(v_A[0], v_B[0]) <= Math.min(v_A[1], v_B[1]) + 15;
+        });
+
+        const usedLanes = new Set(colliders.map(other => assignedLanes[other.conn.id]));
+
+        let bestLane = -1;
+        const searchOrder = [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6];
+        for (let offset of searchOrder) {
+          const l = preferredLane + offset;
+          if (l >= 0 && l <= 6 && !usedLanes.has(l)) {
+            bestLane = l;
+            break;
+          }
+        }
+
+        if (bestLane === -1) {
+          const laneCounts = [0, 0, 0, 0, 0, 0, 0];
+          colliders.forEach(other => {
+            const l = assignedLanes[other.conn.id];
+            if (l >= 0 && l <= 6) {
+              laneCounts[l]++;
+            }
+          });
+          let minCount = Infinity;
+          for (let i = 0; i < 7; i++) {
+            if (laneCounts[i] < minCount) {
+              minCount = laneCounts[i];
+              bestLane = i;
+            }
+          }
+        }
+
+        assignedLanes[c.conn.id] = bestLane;
+      });
+
+      sorted.forEach(c => {
+        const lane = assignedLanes[c.conn.id] ?? 3;
+        offsets[c.conn.id] = -30 + lane * 10;
+      });
+
+      return offsets;
+    };
+
+    const assignOffsets = (conns: typeof resolvedConns, step: number) => {
+      const offsets: Record<string, number> = {};
+      if (conns.length === 0) return offsets;
+
+      const sorted = [...conns].sort((a, b) => {
+        const ay = Math.min(a.fromCoord!.y, a.toCoord!.y);
+        const by = Math.min(b.fromCoord!.y, b.toCoord!.y);
+        return ay - by;
+      });
+
+      const assignedColors: Record<string, number> = {};
+
+      sorted.forEach(c => {
+        const colliders = sorted.filter(other => {
+          if (other.conn.id === c.conn.id) return false;
+          if (assignedColors[other.conn.id] === undefined) return false;
+
+          const v_A = [Math.min(c.fromCoord!.y, c.toCoord!.y), Math.max(c.fromCoord!.y, c.toCoord!.y)];
+          const v_B = [Math.min(other.fromCoord!.y, other.toCoord!.y), Math.max(other.fromCoord!.y, other.toCoord!.y)];
+          const h_A = [Math.min(c.fromCoord!.x, c.toCoord!.x), Math.max(c.fromCoord!.x, c.toCoord!.x)];
+          const h_B = [Math.min(other.fromCoord!.x, other.toCoord!.x), Math.max(other.fromCoord!.x, other.toCoord!.x)];
+
+          const v_overlap = Math.max(v_A[0], v_B[0]) <= Math.min(v_A[1], v_B[1]) + 15;
+          const h_overlap = Math.max(h_A[0], h_B[0]) <= Math.min(h_A[1], h_B[1]) + 15;
+
+          return v_overlap && h_overlap;
+        });
+
+        const colorCounts = [0, 0, 0];
+        colliders.forEach(other => {
+          const color = assignedColors[other.conn.id];
+          if (color >= 0 && color < 3) {
+            colorCounts[color]++;
+          }
+        });
+
+        let bestColor = 1;
+        if (colorCounts[1] === 0) {
+          bestColor = 1;
+        } else if (colorCounts[0] === 0) {
+          bestColor = 0;
+        } else if (colorCounts[2] === 0) {
+          bestColor = 2;
+        } else {
+          let minCount = Infinity;
+          const order = [1, 0, 2];
+          order.forEach(col => {
+            if (colorCounts[col] < minCount) {
+              minCount = colorCounts[col];
+              bestColor = col;
+            }
+          });
+        }
+
+        assignedColors[c.conn.id] = bestColor;
+      });
+
+      sorted.forEach(c => {
+        const color = assignedColors[c.conn.id] ?? 1;
+        offsets[c.conn.id] = (color - 1) * step;
+      });
+
+      return offsets;
+    };
+
+    const crossingOffsets = assignCrossingLanes(crossingConns);
+    const leftVerticalOffsets = assignOffsets(leftVerticalConns, 12);
+    const rightVerticalOffsets = assignOffsets(rightVerticalConns, 12);
+    const mobileMarginOffsets = assignOffsets(mobileMarginConns, 8);
+
+    const trunkOffsets: Record<string, number> = {
+      ...crossingOffsets,
+      ...leftVerticalOffsets,
+      ...rightVerticalOffsets,
+      ...mobileMarginOffsets
+    };
 
     return resolvedConns.map((rc) => {
       const { conn, fromType, toType, sameColumn, isVertical, fromPort, toPort, isFromGroup, isToGroup, fromCoord, toCoord } = rc;

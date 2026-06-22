@@ -1,35 +1,54 @@
 {
   "tabs": [
     {
-      "id": "custom_685ff317-feb2-4597-91a8-7ffff7fa9043",
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
       "name": "test",
-      "icon": "⌨️",
-      "description": "Onglet personnalisé",
-      "isCustom": true
-    },
-    {
-      "id": "custom_a4bc8d8f-c1f0-4152-8037-ac2abca5fc15",
-      "name": "appareils",
       "icon": "📝",
       "description": "Onglet personnalisé",
       "isCustom": true
     }
   ],
   "layouts": {
-    "custom_685ff317-feb2-4597-91a8-7ffff7fa9043": {
+    "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": {
       "rows": [
         {
-          "id": "9376e4b1-2b5a-4014-bbc0-ebde2320f336",
+          "id": "97765567-ec25-4a10-86e7-65d439060925",
           "type": "1-col",
           "columns": [
             {
-              "id": "b28e58f9-2b26-4b92-a8b7-0fb9acf4cc66",
+              "id": "ac3b34e6-7a7b-4349-90d6-9902c4003c33",
               "width": "100%",
               "content": null,
               "widgets": [
                 {
                   "type": "clock"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "02174d81-192d-4f40-8855-1b502f926f4b",
+          "type": "25-75",
+          "columns": [
+            {
+              "id": "69120891-ece6-4ab5-9757-05e190483969",
+              "width": "25%",
+              "content": null,
+              "widgets": [
+                {
+                  "type": "dockeractions"
                 },
+                {
+                  "type": "quickstats"
+                }
+              ]
+            },
+            {
+              "id": "c2cf9484-65d9-4141-aa13-3bb91525edca",
+              "width": "75%",
+              "content": null,
+              "widgets": [
                 {
                   "type": "weather"
                 }
@@ -38,210 +57,37 @@
           ]
         },
         {
-          "id": "3220056f-f39a-4ad5-9aab-a9fe94e1c86f",
+          "id": "02479ac7-5a75-4bcf-b939-9bc3e5bd2294",
           "type": "50-50",
           "columns": [
             {
-              "id": "c40c5246-b4fe-4d6a-a78a-423938ade684",
+              "id": "227fc6e9-295f-4c04-8634-6aec3747061d",
               "width": "50%",
               "content": null,
               "widgets": [
                 {
-                  "type": "tailscale"
+                  "type": "dockercontainers",
+                  "props": {
+                    "itemsPerPage": 16,
+                    "autoScroll": true
+                  }
                 }
               ]
             },
             {
-              "id": "420648da-cf00-4675-85f4-318b21b0ec60",
+              "id": "75e79b85-c29b-4f07-994a-1d1fed93b10b",
               "width": "50%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "spacer"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "c79167f6-a528-4f1f-869a-4aef31866833",
-          "type": "75-25",
-          "columns": [
-            {
-              "id": "d4ae1a6e-4a03-44a3-9ec6-3cff835d2925",
-              "width": "75%",
               "content": null,
               "widgets": [
                 {
                   "type": "devices"
-                },
-                {
-                  "type": "networkgraph"
-                }
-              ]
-            },
-            {
-              "id": "fc39e65e-c1ec-42d4-9bbd-9e119833f829",
-              "width": "25%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "dockeractions"
                 }
               ]
             }
           ]
         }
       ],
-      "id": "custom_685ff317-feb2-4597-91a8-7ffff7fa9043"
-    },
-    "custom_a4bc8d8f-c1f0-4152-8037-ac2abca5fc15": {
-      "rows": [
-        {
-          "id": "6d51274e-0eaf-46da-bb2f-7b79479bf297",
-          "type": "1-col",
-          "columns": [
-            {
-              "id": "03655a4c-cb47-4b0c-93d8-4ea02ea15ebd",
-              "width": "100%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "devices",
-                  "props": {
-                    "deviceConfigs": {
-                      "7ffe15df-3668-45b5-bf5c-c8c008c718e0": {
-                        "statStyle": "horizontal",
-                        "colsDesktop": 2,
-                        "colsMobile": 2,
-                        "hideValues": false,
-                        "visibleStats": [],
-                        "enableAlerts": true,
-                        "coloredGraphs": true
-                      },
-                      "cd153e42-8d69-43ea-9e2f-c97816c056c9": {
-                        "statStyle": "horizontal",
-                        "colsDesktop": 3,
-                        "colsMobile": 3,
-                        "hideValues": false,
-                        "visibleStats": [],
-                        "enableAlerts": true,
-                        "coloredGraphs": false
-                      }
-                    }
-                  }
-                },
-                {
-                  "type": "networkgraph"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "1517a603-57ed-4a08-86b3-1fcb6d33ff44",
-          "type": "75-25",
-          "columns": [
-            {
-              "id": "45f204d8-6e2f-4fd9-be64-ca1ea27244a3",
-              "width": "75%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "devices",
-                  "props": {
-                    "deviceConfigs": {
-                      "7ffe15df-3668-45b5-bf5c-c8c008c718e0": {
-                        "statStyle": "horizontal",
-                        "colsDesktop": 1,
-                        "colsMobile": 3,
-                        "hideValues": false,
-                        "visibleStats": [],
-                        "enableAlerts": true,
-                        "coloredGraphs": false
-                      }
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "id": "83f5a444-3210-42a9-903c-4070ab877784",
-              "width": "25%",
-              "content": null
-            }
-          ]
-        },
-        {
-          "id": "ee7e8b14-a45c-4d75-86d5-a13ab9f75ba5",
-          "type": "50-50",
-          "columns": [
-            {
-              "id": "766a250c-56c3-4c0d-bfa5-c4a8eb62f68b",
-              "width": "50%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "devices"
-                }
-              ]
-            },
-            {
-              "id": "b886ba2d-19f0-48f3-b0b3-ace21d8e37be",
-              "width": "50%",
-              "content": null
-            }
-          ]
-        },
-        {
-          "id": "2c49dcc8-f9df-443c-b48e-a732865aaae1",
-          "type": "3-col",
-          "columns": [
-            {
-              "id": "502a712a-69fd-48ea-85b9-788415c7bf06",
-              "width": "33.33%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "devices"
-                }
-              ]
-            },
-            {
-              "id": "92f9bc43-a0cc-4dfb-894b-8ab36e571d25",
-              "width": "33.33%",
-              "content": null
-            },
-            {
-              "id": "1f4b1bb2-2209-4ae9-9f6e-dc2bf9548f8a",
-              "width": "33.33%",
-              "content": null
-            }
-          ]
-        },
-        {
-          "id": "595579d8-248f-402f-aa2d-2902129580ef",
-          "type": "25-75",
-          "columns": [
-            {
-              "id": "a48027a5-bff9-412e-88e6-f7f2917af070",
-              "width": "25%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "devices"
-                }
-              ]
-            },
-            {
-              "id": "ad064eb9-4f0d-42d5-8e53-ee215a5a3abd",
-              "width": "75%",
-              "content": null
-            }
-          ]
-        }
-      ],
-      "id": "custom_a4bc8d8f-c1f0-4152-8037-ac2abca5fc15"
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2"
     }
   }
 }

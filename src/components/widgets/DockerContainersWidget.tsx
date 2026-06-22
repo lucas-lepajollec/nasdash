@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import useSWR from 'swr';
 import { useConfig } from '@/hooks/useConfig';
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw, Pencil } from 'lucide-react';
@@ -23,7 +23,7 @@ function getPaddedList(list: any[], targetMultiple: number) {
 }
 
 export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void }) {
-  const { config } = useConfig();
+  const { config, showSecretSections } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hosts = config?.dockerHosts || [];
 
@@ -95,7 +95,28 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
   }
 
   // Pagination calculation
-  const containerList = Array.isArray(containers) ? containers : [];
+  const containerList = useMemo(() => {
+    const rawList = Array.isArray(containers) ? containers : [];
+    if (showSecretSections || !config?.categories) return rawList;
+
+    const secretServiceNames = new Set<string>();
+    config.categories.forEach(cat => {
+      if (cat.isSecret) {
+        cat.services.forEach(svc => {
+          secretServiceNames.add(svc.name.toLowerCase().trim());
+        });
+      }
+    });
+
+    return rawList.filter((c: any) => {
+      const isSecretContainer = (c.names || []).some((n: string) => {
+        const name = n.replace(/^\//, '').toLowerCase().trim();
+        return secretServiceNames.has(name);
+      }) || secretServiceNames.has((c.names?.[0] || '').replace(/^\//, '').toLowerCase().trim());
+
+      return !isSecretContainer;
+    });
+  }, [containers, config?.categories, showSecretSections]);
   
   // Default to 6 items per page (even number for grids)
   let ITEMS_PER_PAGE = 6;

@@ -15,6 +15,35 @@ interface NetworksTabProps {
 export default function NetworksTab({ editMode, searchQuery, isVisible, showSensitive = true }: NetworksTabProps) {
   const { config, updateConfig } = useConfig();
 
+  const sidebarRef = React.useRef<HTMLElement>(null);
+  const widgetsSidebarRef = React.useRef<HTMLElement>(null);
+  const [sidebarSticky, setSidebarSticky] = React.useState(true);
+  const [widgetsSticky, setWidgetsSticky] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!isVisible) return;
+    const checkSticky = () => {
+      if (sidebarRef.current) {
+        setSidebarSticky(sidebarRef.current.scrollHeight + 40 < window.innerHeight);
+      }
+      if (widgetsSidebarRef.current) {
+        setWidgetsSticky(widgetsSidebarRef.current.scrollHeight + 40 < window.innerHeight);
+      }
+    };
+
+    checkSticky();
+    window.addEventListener('resize', checkSticky);
+    
+    const observer = new ResizeObserver(checkSticky);
+    if (sidebarRef.current) observer.observe(sidebarRef.current);
+    if (widgetsSidebarRef.current) observer.observe(widgetsSidebarRef.current);
+
+    return () => {
+      window.removeEventListener('resize', checkSticky);
+      observer.disconnect();
+    };
+  }, [config, editMode, isVisible]);
+
   if (!isVisible) return null;
 
   const tabConf = config?.settings?.tabs?.networks || {};
@@ -83,7 +112,16 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
     <div className="nd-networks-layout nd-animate-in">
       
       {/* 1. Left Sidebar: Ports & tools */}
-      <aside className="nd-networks-sidebar" style={{ order: networksSidebarOrder }}>
+      <aside 
+        ref={sidebarRef}
+        className="nd-networks-sidebar" 
+        style={{ 
+          order: networksSidebarOrder,
+          position: sidebarSticky ? 'sticky' : 'static',
+          maxHeight: 'none',
+          overflowY: 'visible'
+        }}
+      >
         <NetworkSidebar />
       </aside>
 
@@ -94,7 +132,16 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
 
       {/* 3. Optional Sidebar: Active Widgets */}
       {showWidgets && activeWidgets.length > 0 && (
-        <aside className="nd-networks-widgets-sidebar" style={{ order: widgetsSidebarOrder }}>
+        <aside 
+          ref={widgetsSidebarRef}
+          className="nd-networks-widgets-sidebar" 
+          style={{ 
+            order: widgetsSidebarOrder,
+            position: widgetsSticky ? 'sticky' : 'static',
+            maxHeight: 'none',
+            overflowY: 'visible'
+          }}
+        >
           {activeWidgets.map(w => (
             <React.Fragment key={w.id}>{w.render()}</React.Fragment>
           ))}

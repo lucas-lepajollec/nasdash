@@ -31,14 +31,14 @@ export default function Shell() {
     serviceModal, setServiceModal, addService, updateService, deleteService, uploadLogo,
     categoryModal, setCategoryModal, addCategory, updateCategory, deleteCategory,
     deviceModal, setDeviceModal, addDevice, updateDevice, deleteDevice,
-    dockerActionModal, setDockerActionModal, addDockerAction, updateDockerAction, deleteDockerAction
+    dockerActionModal, setDockerActionModal, addDockerAction, updateDockerAction, deleteDockerAction,
+    showSecretSections, setShowSecretSections
   } = useConfig();
 
   const [isDark, setIsDark] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [widgetModalOpen, setWidgetModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSecretSections, setShowSecretSections] = useState(false);
   const [showSensitive, setShowSensitive] = useState(true);
   const toggleTheme = useCallback(() => {
     setIsDark(prev => {
