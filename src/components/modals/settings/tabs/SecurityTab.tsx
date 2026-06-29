@@ -7,6 +7,7 @@ import { WIDGET_REGISTRY } from '@/lib/widgetRegistry';
 import CustomSelect from '@/components/shared/CustomSelect';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
+import { Emoji } from '../../../shared/Emoji';
 
 interface LocalUser {
   username: string;
@@ -561,7 +562,7 @@ export function SecurityTab() {
                         }
                       }}
                     >
-                      <span style={{ fontSize: '1rem' }}>{emoji}</span>
+                      <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}><Emoji emoji={emoji} /></span>
                       <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 600 : 500, color: isSelected ? 'var(--nd-accent)' : 'var(--nd-text)' }}>
                         {tab.name}
                       </span>

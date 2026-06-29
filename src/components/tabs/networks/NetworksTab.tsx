@@ -70,9 +70,8 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
       
       {/* 1. Left Sidebar: Ports & tools */}
       <aside 
-        ref={sidebarRef}
         className="nd-networks-sidebar" 
-        style={{ order: networksSidebarOrder, position: sidebarSticky ? 'sticky' : 'static' }}
+        style={{ order: networksSidebarOrder }}
       >
         <NetworkSidebar />
       </aside>
@@ -87,7 +86,12 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
         <aside 
           ref={widgetsSidebarRef}
           className="nd-networks-widgets-sidebar" 
-          style={{ order: widgetsSidebarOrder, position: widgetsSticky ? 'sticky' : 'static' }}
+          style={{ 
+            order: widgetsSidebarOrder, 
+            position: widgetsSticky ? 'sticky' : 'static',
+            maxHeight: 'none',
+            overflowY: 'visible',
+          }}
         >
           <WidgetPanel panelId="networks-widgets" editMode={editMode} showSensitive={showSensitive} />
         </aside>

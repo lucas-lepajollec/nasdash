@@ -15,11 +15,18 @@ export default function Footer({ categories, showSecretSections, showSensitive, 
   const isAdmin = user?.role === 'admin';
   const ports = new Set<string>();
 
-  categories.forEach(cat => {
-    cat.services.forEach(svc => {
+  (categories || []).forEach(cat => {
+    cat.services?.forEach(svc => {
       [svc.localUrl, svc.tailscaleUrl].forEach(url => {
         if (!url) return;
-        try { const p = new URL(url).port; if (p) ports.add(p); } catch { /* */ }
+        try { 
+          let cleanUrl = url;
+          if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+            cleanUrl = 'http://' + cleanUrl;
+          }
+          const p = new URL(cleanUrl).port; 
+          if (p) ports.add(p); 
+        } catch { /* */ }
       });
     });
   });

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { TabDef, TabId } from '@/hooks/useTabs';
 import { ChevronRight, ChevronLeft, ArrowUp, ArrowDown, Eye, EyeOff, Settings } from 'lucide-react';
+import { useConfig } from '@/hooks/useConfig';
+import { Emoji } from '../shared/Emoji';
 
 interface TabDockProps {
   tabs: TabDef[];
@@ -28,6 +30,7 @@ export default function TabDock({
 }: TabDockProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { config } = useConfig();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -47,6 +50,7 @@ export default function TabDock({
         {visibleTabs.map((ext, index) => {
           const isActive = ext.id === activeTab;
           const isHidden = hiddenIds.includes(ext.id);
+          const resolvedIcon = config?.settings?.tabIcons?.[ext.id] || ext.icon;
           
           return (
             <div key={ext.id} className="nd-dock-item-wrapper">
@@ -62,7 +66,7 @@ export default function TabDock({
                 disabled={isHidden && !editMode}
                 title={ext.name}
               >
-                <span className="nd-dock-item-icon">{ext.icon}</span>
+                <span className="nd-dock-item-icon"><Emoji emoji={resolvedIcon} /></span>
                 <span className="nd-dock-item-label">{ext.name}</span>
                 {isActive && <span className="nd-dock-item-indicator" />}
               </button>

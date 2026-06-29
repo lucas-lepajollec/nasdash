@@ -32,15 +32,7 @@ export function LibraryTab({ setActiveTab }: LibraryTabProps) {
         </p>
       </div>
 
-      {/* Options globales de la bibliothèque */}
-      <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-        <ToggleSwitch
-          checked={!hideWidgetTitles}
-          onChange={(val) => handleToggleWidget('hideWidgetTitles', !val)}
-          label="Afficher les titres des widgets"
-          sublabel="Masque ou affiche les titres (ex: APPAREILS, CALENDRIER, HORLOGE) au-dessus de tous vos widgets."
-        />
-      </div>
+
 
       {/* Section 1: Active Widgets */}
       <div>

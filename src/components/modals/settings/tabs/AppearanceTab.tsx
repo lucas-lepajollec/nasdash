@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Layout, Layers, Monitor, X, Trash2 } from 'lucide-react';
+import { Palette, Layout, Layers, Monitor, X, Trash2, Type } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../../../shared/CustomSelect';
+import { ToggleSwitch } from '../shared/ToggleSwitch';
 import ConfirmModal from '../../ConfirmModal';
 import { THEME_PRESETS } from '../../SettingsModal';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
@@ -505,6 +506,81 @@ export function AppearanceTab() {
                 onTouchEnd={() => handleOpacitySave(cardOpacity)}
                 style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
               />
+            </div>
+          </div>
+        </SettingsAccordion>
+
+        {/* Accordion 4: Titles and Emojis */}
+        <SettingsAccordion
+          title="Titres & Emojis"
+          description="Masquage des titres et style graphique des emojis"
+          icon={<Type size={18} />}
+          isOpen={openAccordions.includes('titles')}
+          onToggle={() => toggleAccordion('titles')}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <ToggleSwitch
+              checked={!(config?.settings?.hideWidgetTitles ?? false)}
+              onChange={(val) => updateConfig({ hideWidgetTitles: !val })}
+              label="Afficher les titres des widgets"
+              sublabel="Affiche ou masque les titres au-dessus de tous vos widgets (ex: APPAREILS, CALENDRIER)."
+            />
+
+            <ToggleSwitch
+              checked={!(config?.settings?.hideCategoryTitles ?? false)}
+              onChange={(val) => updateConfig({ hideCategoryTitles: !val })}
+              label="Afficher les titres des catégories"
+              sublabel="Affiche ou masque le nom des catégories de services dans la section principale."
+            />
+
+            {/* Position Select Card */}
+            <div className="nd-settings-card">
+              <div className="nd-settings-card-row">
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', color: 'var(--nd-text)' }}>
+                    Position du titre des catégories
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 2 }}>
+                    Afficher le titre à l'intérieur de sa carte ou séparé au-dessus.
+                  </span>
+                </div>
+                <div className="nd-settings-select-wrap" style={{ flexShrink: 0, width: 180 }}>
+                  <CustomSelect
+                    value={config?.settings?.categoryTitlePosition || 'inside'}
+                    onChange={(val) => updateConfig({ categoryTitlePosition: val })}
+                    options={[
+                      { value: 'inside', label: 'Dans la carte (Défaut)' },
+                      { value: 'above', label: 'Au-dessus de la carte' }
+                    ]}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Emoji style select card */}
+            <div className="nd-settings-card">
+              <div className="nd-settings-card-row">
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', color: 'var(--nd-text)' }}>
+                    Style des Emojis / Icônes
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 2 }}>
+                    Uniformise l'apparence de tous les emojis du tableau de bord.
+                  </span>
+                </div>
+                <div className="nd-settings-select-wrap" style={{ flexShrink: 0, width: 180 }}>
+                  <CustomSelect
+                    value={config?.settings?.emojiTheme || 'native'}
+                    onChange={(val) => updateConfig({ emojiTheme: val })}
+                    options={[
+                      { value: 'native', label: 'Native (Système)' },
+                      { value: 'twemoji', label: 'Twemoji (Twitter)' },
+                      { value: 'blobmoji', label: 'Blobmoji (Google)' },
+                      { value: 'openmoji', label: 'OpenMoji (Dessiné)' }
+                    ]}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </SettingsAccordion>

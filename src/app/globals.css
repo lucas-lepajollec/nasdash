@@ -652,6 +652,19 @@ body {
   gap: 6px;
 }
 
+.nd-category-title-above {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--nd-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
 .nd-category-emoji {
   font-size: 0.85rem;
 }
@@ -2560,8 +2573,6 @@ body {
   .nd-docker-widgets-sidebar {
     position: sticky;
     top: 20px;
-    max-height: calc(100vh - 110px);
-    overflow-y: auto;
   }
 }
 

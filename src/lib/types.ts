@@ -284,6 +284,8 @@ export interface DashboardConfig {
     hideNetworkGraph?: boolean;
     hideDockerContainers?: boolean;
     hideWidgetTitles?: boolean;
+    hideCategoryTitles?: boolean;
+    categoryTitlePosition?: 'inside' | 'above';
     weatherLocation?: { lat: number; lon: number; name: string };
     weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
     weatherWidgetStyle?: 'default' | 'currentOnly' | 'minimal' | 'extended';

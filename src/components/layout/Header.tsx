@@ -5,6 +5,7 @@ import { Search, Pencil, Settings, Plus, X, Shield, Eye, EyeOff, Menu, LogIn, Lo
 import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
+import { Emoji } from '../shared/Emoji';
 
 interface HeaderProps {
   title: string;
@@ -137,7 +138,7 @@ export default function Header(props: HeaderProps) {
                 marginBottom: '-2px' // Compense la bordure du bas pour ne pas décaler le layout
               }}
             >
-              {iconVal && <span>{iconVal}</span>}
+              {iconVal && <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji={iconVal} /></span>}
               <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>{tab.name}</span>
             </button>
           )
@@ -360,7 +361,7 @@ export default function Header(props: HeaderProps) {
                       }}
                       style={{ justifyContent: 'flex-start', padding: '10px 12px', width: '100%', border: isActive ? '1px solid var(--nd-accent)' : '1px solid transparent' }}
                     >
-                      <span className="nd-dock-item-icon" style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--nd-accent)' : 'inherit', fontSize: '16px' }}>{tab.icon}</span>
+                      <span className="nd-dock-item-icon" style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: isActive ? 'var(--nd-accent)' : 'inherit', fontSize: '16px' }}><Emoji emoji={config?.settings?.tabIcons?.[tab.id] || tab.icon} /></span>
                       <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{tab.name}</span>
                     </button>
                   );

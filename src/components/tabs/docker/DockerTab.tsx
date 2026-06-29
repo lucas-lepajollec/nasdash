@@ -863,11 +863,9 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
       <div className="nd-docker-layout nd-animate-in">
         {/* Sidebar — Host selector + Container list */}
         <aside 
-          ref={sidebarRef}
           className="nd-docker-sidebar" 
           style={{ 
             order: dockerSidebarOrder,
-            position: sidebarSticky ? 'sticky' : 'static',
           }}
         >
           {/* Host Selector */}
@@ -1053,6 +1051,8 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
             style={{ 
               order: widgetsSidebarOrder,
               position: widgetsSticky ? 'sticky' : 'static',
+              maxHeight: 'none',
+              overflowY: 'visible',
             }}
           >
             <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} />

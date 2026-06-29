@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Ban } from 'lucide-react';
 import { EMOJI_CATEGORIES } from '@/lib/constants';
+import { Emoji } from '../shared/Emoji';
 
 interface EmojiPickerModalProps {
   initialEmoji?: string;
@@ -98,7 +99,7 @@ export default function EmojiPickerModal({
                     transition: 'all 0.1s ease-in-out'
                   }}
                 >
-                  {e}
+                  <Emoji emoji={e} />
                 </button>
               ))}
             </div>

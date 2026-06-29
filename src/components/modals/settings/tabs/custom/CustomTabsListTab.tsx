@@ -2,6 +2,7 @@ import React from 'react';
 import { useTabs } from '@/hooks/useTabs';
 import { Layout, Plus, Trash2, Edit2 } from 'lucide-react';
 import ConfirmModal from '../../../ConfirmModal';
+import { Emoji } from '../../../../shared/Emoji';
 
 interface CustomTabsListTabProps {
   onEditTab: (tabId?: string) => void;
@@ -48,7 +49,7 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
             <div key={tab.id} className="nd-settings-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 150, flex: 1 }}>
                 <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 'var(--nd-card-radius)', background: 'var(--nd-bg)', border: '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-                  {tab.icon}
+                  <Emoji emoji={tab.icon} />
                 </div>
                 <div style={{ minWidth: 0, overflow: 'hidden' }}>
                   <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tab.name}</h4>

@@ -324,6 +324,8 @@ export async function PUT(req: NextRequest) {
 
     // Advanced UI Customization Toggles
     if (body.hideWidgetTitles !== undefined) config.settings.hideWidgetTitles = body.hideWidgetTitles;
+    if (body.hideCategoryTitles !== undefined) config.settings.hideCategoryTitles = body.hideCategoryTitles;
+    if (body.categoryTitlePosition !== undefined) config.settings.categoryTitlePosition = body.categoryTitlePosition;
     if (body.calendarUrl !== undefined) config.settings.calendarUrl = body.calendarUrl;
     if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
     if (body.clockTimezone !== undefined) config.settings.clockTimezone = body.clockTimezone;

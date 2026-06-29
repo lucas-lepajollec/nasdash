@@ -5,6 +5,8 @@ import { Pencil, Trash2, Plus, GripVertical } from 'lucide-react';
 import { Category, Service } from '@/lib/types';
 import ServiceItem from './ServiceItem';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useConfig } from '@/hooks/useConfig';
+import { Emoji } from '../../shared/Emoji';
 
 interface CategoryCardProps {
   category: Category;
@@ -20,6 +22,10 @@ export default function CategoryCard({
   category, editMode, searchQuery,
   onEditCategory, onDeleteCategory, onAddService, showSensitive,
 }: CategoryCardProps) {
+  const { config } = useConfig();
+  const hideCategoryTitles = config?.settings?.hideCategoryTitles ?? false;
+  const categoryTitlePosition = config?.settings?.categoryTitlePosition || 'inside';
+
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
     id: `drag-cat-${category.id}`, disabled: !editMode, data: { type: 'category', category }
   });
@@ -47,30 +53,38 @@ export default function CategoryCard({
 
   const showDropGap = editMode && (category.layout !== 'bento' && category.layout !== 'grid' && !category.layout?.startsWith('bento-logo'));
 
-  return (
-    <div ref={setNodeRef} style={{ ...style, position: 'relative' }} className="nd-card nd-animate-in">
-      <div className="nd-category-title">
-        {editMode && (
-          <button {...attributes} {...listeners} style={{ cursor: 'grab', background: 'none', border: 'none', color: 'var(--nd-text-dimmed)', padding: 2 }}>
-            <GripVertical size={13} />
+  const showTitle = !hideCategoryTitles || editMode;
+
+  const titleElement = showTitle && (
+    <div className={categoryTitlePosition === 'above' ? 'nd-category-title-above' : 'nd-category-title'}>
+      {editMode && (
+        <button {...attributes} {...listeners} style={{ cursor: 'grab', background: 'none', border: 'none', color: 'var(--nd-text-dimmed)', padding: 2 }}>
+          <GripVertical size={13} />
+        </button>
+      )}
+      <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
+      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category.title}</span>
+      {editMode && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title="Ajouter un service">
+            <Plus size={13} />
           </button>
-        )}
-        <span className="nd-category-emoji">{category.emoji}</span>
-        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category.title}</span>
-        {editMode && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title="Ajouter un service">
-              <Plus size={13} />
-            </button>
-            <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title="Modifier la catégorie">
-              <Pencil size={13} />
-            </button>
-            <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title="Supprimer la catégorie">
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
-      </div>
+          <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title="Modifier la catégorie">
+            <Pencil size={13} />
+          </button>
+          <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title="Supprimer la catégorie">
+            <Trash2 size={13} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div ref={setNodeRef} style={{ ...style, position: 'relative' }} className="nd-animate-in">
+      {categoryTitlePosition === 'above' && titleElement}
+      <div className="nd-card" style={{ position: 'relative' }}>
+        {categoryTitlePosition === 'inside' && titleElement}
       <div 
         ref={setDroppable} 
         className={`nd-services-grid nd-services-grid--${category.layout || 'standard'}`} 
@@ -121,7 +135,8 @@ export default function CategoryCard({
         )}
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 const DropGap = ({ categoryId, index, isVertical, isLast }: { categoryId: string, index: number, isVertical?: boolean, isLast?: boolean }) => {

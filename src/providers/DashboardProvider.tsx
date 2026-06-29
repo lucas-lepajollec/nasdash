@@ -84,6 +84,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/config');
+      if (res.status === 401) {
+        const isLoginPage = window.location.pathname === '/login';
+        if (!isLoginPage) {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        }
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(`Failed to fetch config: ${res.status}`);
+      }
       const data = await res.json();
       if (!data.devices) data.devices = [];
       setConfig(data);

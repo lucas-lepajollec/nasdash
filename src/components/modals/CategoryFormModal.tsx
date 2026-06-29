@@ -6,6 +6,7 @@ import { EMOJI_CATEGORIES } from '@/lib/constants';
 import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '../shared/CustomSelect';
+import { Emoji } from '../shared/Emoji';
 
 interface CategoryFormModalProps {
   category?: Category;
@@ -144,7 +145,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                     outline: emoji === e ? '2px solid var(--nd-accent)' : 'none',
                   }}
                 >
-                  {e}
+                  <Emoji emoji={e} />
                 </button>
               ))}
             </div>
