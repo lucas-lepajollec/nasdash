@@ -1046,7 +1046,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           )}
         </div>
 
-        {showWidgets && hasWidgets('docker-widgets') && (
+        {showWidgets && (hasWidgets('docker-widgets') || editMode) && (
           <aside 
             ref={widgetsSidebarRef}
             className="nd-docker-widgets-sidebar" 

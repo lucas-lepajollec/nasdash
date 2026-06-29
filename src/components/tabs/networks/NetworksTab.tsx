@@ -83,7 +83,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
       </div>
 
       {/* 3. Optional Sidebar: Active Widgets */}
-      {showWidgets && hasWidgets('networks-widgets') && (
+      {showWidgets && (hasWidgets('networks-widgets') || editMode) && (
         <aside 
           ref={widgetsSidebarRef}
           className="nd-networks-widgets-sidebar" 

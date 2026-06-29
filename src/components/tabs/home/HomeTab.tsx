@@ -180,7 +180,7 @@ export default function HomeTab({
   const leftSidebars = [];
   const rightSidebars = [];
 
-  if (showLeftPanel && hasWidgets('home-left')) {
+  if (showLeftPanel && (hasWidgets('home-left') || editMode)) {
     const el = (
       <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static' }}>
         <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} />
@@ -190,7 +190,7 @@ export default function HomeTab({
     else rightSidebars.push(el);
   }
 
-  if (showRightPanel && hasWidgets('home-right')) {
+  if (showRightPanel && (hasWidgets('home-right') || editMode)) {
     const el = (
       <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static' }}>
         <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} />
