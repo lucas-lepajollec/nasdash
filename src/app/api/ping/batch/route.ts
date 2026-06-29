@@ -26,9 +26,8 @@ async function pingOne(url: string, allowedHosts: Set<string>) {
   try {
     const start = Date.now();
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    // We do a GET request
     const response = await fetch(url, {
       method: 'GET',
       signal: controller.signal,
@@ -43,17 +42,18 @@ async function pingOne(url: string, allowedHosts: Set<string>) {
     const latency = Date.now() - start;
 
     if (response.ok || response.status < 400 || response.status === 401 || response.status === 403) {
-      // 401/403 means the service is active but requires auth
       return { url, status: 'online', statusText: 'OK', latency };
     } else {
       return { url, status: 'offline', statusText: `Error ${response.status}`, latency };
     }
   } catch (error: any) {
-    let statusText = 'Client Error';
+    let statusText = 'Offline';
     if (error.name === 'AbortError') {
       statusText = 'Timeout';
     } else if (error.code === 'ECONNREFUSED') {
-      statusText = 'Connection Refused';
+      statusText = 'Refusé';
+    } else if (error.code === 'ECONNRESET') {
+      statusText = 'Offline';
     }
     return { url, status: 'offline', statusText, latency: 0 };
   }

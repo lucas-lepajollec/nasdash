@@ -21,6 +21,10 @@ services:
       - HOSTNAME=0.0.0.0
     depends_on:
       - docker-proxy
+    extra_hosts:
+      # Permet d'accéder aux services de la machine hôte (ex: WatchYourLAN) via host.docker.internal
+      # Utile sur Linux où cette entrée n'est pas créée automatiquement par Docker Desktop
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   # Proxy sécurisé pour la socket Docker (évite de monter la socket Docker directement dans le conteneur NasDash)
