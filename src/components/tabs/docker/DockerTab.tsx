@@ -893,8 +893,6 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           style={{ 
             order: dockerSidebarOrder,
             position: sidebarSticky ? 'sticky' : 'static',
-            maxHeight: 'none',
-            overflowY: 'visible'
           }}
         >
           {/* Host Selector */}
@@ -1080,8 +1078,6 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
             style={{ 
               order: widgetsSidebarOrder,
               position: widgetsSticky ? 'sticky' : 'static',
-              maxHeight: 'none',
-              overflowY: 'visible'
             }}
           >
             <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} />

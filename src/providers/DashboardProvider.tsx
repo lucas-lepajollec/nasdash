@@ -130,6 +130,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
+    if (activeBg) {
+      document.body.style.backgroundColor = 'transparent';
+    } else {
+      document.body.style.backgroundColor = '';
+    }
     document.body.style.backgroundImage = '';
     document.body.style.backgroundSize = '';
     document.body.style.backgroundAttachment = '';

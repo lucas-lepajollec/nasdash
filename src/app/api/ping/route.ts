@@ -72,8 +72,10 @@ export async function GET(request: Request) {
       method: 'GET',
       signal: controller.signal,
       cache: 'no-store',
-      // Do not follow redirects if it crosses domains, but normally follow is ok.
-      // But we just want to know if it responds.
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Connection': 'close',
+      }
     });
 
     clearTimeout(timeoutId);
