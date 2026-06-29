@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import useSWR from 'swr';
 import { Globe, Pencil, Trash2, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Service } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
-
-const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 interface ServiceItemProps {
   service: Service;
@@ -19,28 +16,35 @@ interface ServiceItemProps {
 
 export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard' }: ServiceItemProps) {
   const [imgError, setImgError] = useState(false);
-  const { config } = useConfig();
+  const { config, pingResults } = useConfig();
 
   const pingIndicatorMode = config?.settings?.pingIndicatorMode || 'all';
   const showUrl = layout !== 'compact' && layout !== 'grid' && layout !== 'bento' && !layout?.startsWith('bento-logo');
   const showPingText = showUrl && config?.settings?.showPingDetails;
-  
-  const [shouldFetch, setShouldFetch] = useState(false);
-  
+
+  const [delayedStatus, setDelayedStatus] = useState<{ status: string; statusText: string; latency: number } | null>(null);
+
   useEffect(() => {
-    // Stagger ping requests to avoid hitting the browser's 6-connection limit per origin
-    const delay = 500 + Math.random() * 3000;
-    const timer = setTimeout(() => setShouldFetch(true), delay);
+    const rawStatus = service.localUrl ? pingResults[service.localUrl] : null;
+    if (!rawStatus) {
+      setDelayedStatus(null);
+      return;
+    }
+
+    // Hash stable de l'id du service pour échelonner l'affichage (cascade de 0ms à 500ms)
+    let hash = 0;
+    const str = service.id || '';
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const delay = Math.abs(hash % 11) * 45;
+
+    const timer = setTimeout(() => {
+      setDelayedStatus(rawStatus);
+    }, delay);
+
     return () => clearTimeout(timer);
-  }, []);
-
-  const shouldPing = service.localUrl && !editMode && (pingIndicatorMode !== 'none' || showPingText);
-  const pingUrl = shouldPing && shouldFetch ? `/api/ping?url=${encodeURIComponent(service.localUrl)}` : null;
-
-  const { data: pingStatus } = useSWR(pingUrl, fetcher, { 
-    refreshInterval: 30000, 
-    revalidateOnFocus: false 
-  });
+  }, [pingResults, service.id, service.localUrl]);
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
     id: `drag-srv-${service.id}`,
@@ -72,7 +76,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
   const activeLayout = layout === 'grid' ? 'bento' : layout;
   const isLogoOnly = activeLayout?.startsWith('bento-logo');
   const statusIconSize = activeLayout === 'compact' ? 16 : 20;
-  const statusColor = pingStatus?.status === 'online' ? 'var(--nd-green)' : (pingStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
+  const statusColor = delayedStatus?.status === 'online' ? 'var(--nd-green)' : (delayedStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
 
   const renderStatusIndicator = () => {
     if (!service.localUrl || editMode) return null;
@@ -90,7 +94,9 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
           height: 8,
           borderRadius: '50%',
           background: statusColor,
-          opacity: pingStatus?.status === 'online' ? 0.45 : (pingStatus?.status === 'offline' ? 0.6 : 0.3),
+          opacity: delayedStatus ? (delayedStatus.status === 'online' ? 0.45 : 0.6) : 0,
+          transform: delayedStatus ? 'scale(1)' : 'scale(0)',
+          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
           zIndex: 5
         }} />
       );
@@ -98,13 +104,21 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
 
     // Pour standard et compact, l'icône de succès ronde ou croix rouge tout à droite
     return (
-      <div style={{ marginLeft: 'auto', paddingLeft: 8, display: 'flex', alignItems: 'center' }}>
-        {pingStatus?.status === 'online' ? (
+      <div style={{ 
+        marginLeft: 'auto', 
+        paddingLeft: 8, 
+        display: 'flex', 
+        alignItems: 'center',
+        transform: delayedStatus ? 'scale(1)' : 'scale(0.8)',
+        opacity: delayedStatus ? 1 : 0.3,
+        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+      }}>
+        {delayedStatus?.status === 'online' ? (
           <CheckCircle2 size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%', opacity: 0.45 }} />
-        ) : pingStatus?.status === 'offline' ? (
+        ) : delayedStatus?.status === 'offline' ? (
           <XCircle size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%', opacity: 0.6 }} />
         ) : (
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, opacity: 0.3 }} />
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--nd-text-dimmed)', opacity: 0.3 }} />
         )}
       </div>
     );
@@ -137,9 +151,9 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
           showUrl && service.localUrl ? (
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, gap: 1 }}>
               <span className="nd-service-name">{service.name}</span>
-              {showPingText && pingStatus ? (
+              {showPingText && delayedStatus ? (
                 <span className="nd-service-url">
-                  {pingStatus.status === 'online' ? 'OK' : pingStatus.statusText} - {pingStatus.latency}ms
+                  {delayedStatus.status === 'online' ? 'OK' : delayedStatus.statusText} - {delayedStatus.latency}ms
                 </span>
               ) : (
                 <span className="nd-service-url">

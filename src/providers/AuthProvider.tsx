@@ -1,0 +1,84 @@
+'use client';
+
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+export interface AuthContextType {
+  user: { username: string; role: 'admin' | 'viewer'; allowedTabs?: string[]; allowedWidgets?: string[]; isAnonymous?: boolean } | null;
+  authLoading: boolean;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
+}
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<{ username: string; role: 'admin' | 'viewer'; allowedTabs?: string[]; allowedWidgets?: string[]; isAnonymous?: boolean } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      const data = await res.json();
+      setUser(data.user);
+    } catch (e) {
+      console.error('Erreur vérification session:', e);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    await fetchUser();
+  }, [fetchUser]);
+
+  const logout = async () => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).globalEventSource) {
+        try {
+          (window as any).globalEventSource.close();
+          (window as any).globalEventSource = null;
+        } catch {}
+      }
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setUser(null);
+      window.location.href = '/login';
+    } catch (e) {
+      console.error('Erreur déconnexion:', e);
+      window.location.href = '/login';
+    }
+  };
+
+  const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}) => {
+    try {
+      const res = await fetch(url, options);
+      if (res.status === 401 || res.status === 403) {
+        alert("Accès refusé. Session administrateur requise.");
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+        throw new Error('Unauthorized');
+      }
+      return res;
+    } catch (err) {
+      console.error('Erreur Fetch sécurisé:', err);
+      throw err;
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  return (
+    <AuthContext.Provider value={{ user, authLoading, logout, refreshUser, fetchWithAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

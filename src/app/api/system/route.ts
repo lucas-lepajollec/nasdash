@@ -21,10 +21,12 @@ export async function GET(req: Request) {
 
   incrementActiveClients();
 
+  let interval: NodeJS.Timeout | any = null;
   const cleanup = () => {
     if (active) {
       active = false;
       decrementActiveClients();
+      if (interval) clearInterval(interval);
     }
   };
 
@@ -50,9 +52,9 @@ export async function GET(req: Request) {
       }
 
       // Then poll every 5 seconds
-      const interval = setInterval(async () => {
+      interval = setInterval(async () => {
         if (!active) {
-          clearInterval(interval);
+          if (interval) clearInterval(interval);
           return;
         }
         try {
