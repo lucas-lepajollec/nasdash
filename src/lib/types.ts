@@ -162,6 +162,16 @@ export interface HeaderLayoutMobile {
 }
 
 
+export interface PanelWidgetConfig {
+  id: string;
+  type: string;
+  props?: Record<string, any>;
+}
+
+export interface PanelConfig {
+  widgets: PanelWidgetConfig[];
+}
+
 export interface DashboardConfig {
   version: number;
   categories: Category[];
@@ -171,6 +181,7 @@ export interface DashboardConfig {
   appearanceProfiles?: AppearanceProfile[];
   localEvents?: LocalCalendarEvent[];
   settings: {
+    panels?: Record<string, PanelConfig>;
     title: string;
     titleMobile?: string;
     titleLogo?: string;
@@ -283,6 +294,7 @@ export interface DashboardConfig {
     dockerContainersStyle?: 'standard' | 'extended' | 'minimalist';
     dockerContainersAutoScroll?: boolean;
     allowDockerActions?: boolean;
+    securityMode?: 'public' | 'private';
     clockTimezone?: string;
     customCss?: string;
     backgroundImage?: string;

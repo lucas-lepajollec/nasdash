@@ -8,7 +8,7 @@ import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Sear
 import ConfirmModal from '../../modals/ConfirmModal';
 import useSWR from 'swr';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
-import { WidgetRenderer } from '../../widgets/WidgetRenderer';
+import { WidgetPanel } from '../../shared/WidgetPanel';
 
 const fetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : null);
 
@@ -695,7 +695,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
 
 // ======================== MAIN DOCKER TAB ========================
 export default function DockerTab({ editMode, searchQuery, isVisible, showSensitive = false }: DockerTabProps) {
-  const { config, updateConfig, refresh, showSecretSections } = useConfig();
+  const { config, updateConfig, refresh, showSecretSections, user } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
   const [showHostForm, setShowHostForm] = useState(false);
@@ -868,39 +868,20 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     dockerSidebarOrder = 3;
   }
 
-  // Active widgets list for Docker tab
-  const activeWidgets = WIDGET_REGISTRY.map(w => {
-    const hideKey = getWidgetConfigKeys(w.id).hide;
-    const orderKey = getWidgetConfigKeys(w.id).order;
-
-    const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
-    const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
-
-    const instanceId = `docker-${w.id}`;
-    const instanceProps = (config?.settings as any)?.[`${instanceId}Props`] || (config?.settings as any)?.[`${w.id}Props`];
-
-    return {
-      id: w.id,
-      visible: !isGloballyHidden && !isTabHidden,
-      order: (tabConf as any)?.[orderKey] ?? ((config?.settings as any)?.[orderKey] ?? w.defaultOrder),
-      render: () => (
-        <WidgetRenderer 
-          id={w.id} 
-          editMode={editMode} 
-          showSensitive={showSensitive} 
-          categories={config?.categories || []} 
-          widgetInstanceId={instanceId} 
-          widgetProps={instanceProps} 
-          onUpdateProps={(newProps) => updateConfig({ 
-            [`${instanceId}Props`]: { 
-              ...(instanceProps || {}), 
-              ...newProps 
-            } 
-          })} 
-        />
-      )
-    };
-  }).filter(w => w.visible).sort((a, b) => a.order - b.order);
+  const hasWidgets = (panelId: string) => {
+    const p = config?.settings?.panels?.[panelId];
+    if (!p || !p.widgets || p.widgets.length === 0) return false;
+    return p.widgets.some((w: any) => {
+      if (user && user.role !== 'admin' && user.allowedWidgets && user.allowedWidgets.length > 0) {
+        if (!user.allowedWidgets.includes(w.type)) return false;
+      }
+      const def = WIDGET_REGISTRY.find(x => x.id === w.type);
+      if (!def) return false;
+      const hideKey = getWidgetConfigKeys(w.type).hide;
+      const isGloballyHidden = (config.settings as any)?.[hideKey] ?? def.defaultHidden;
+      return !isGloballyHidden;
+    });
+  };
 
   return (
     <>
@@ -1092,7 +1073,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           )}
         </div>
 
-        {showWidgets && activeWidgets.length > 0 && (
+        {showWidgets && hasWidgets('docker-widgets') && (
           <aside 
             ref={widgetsSidebarRef}
             className="nd-docker-widgets-sidebar" 
@@ -1103,9 +1084,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               overflowY: 'visible'
             }}
           >
-            {activeWidgets.map(w => (
-              <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-            ))}
+            <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} />
           </aside>
         )}
       </div>

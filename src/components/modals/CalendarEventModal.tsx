@@ -4,14 +4,14 @@ import { useConfig } from '@/hooks/useConfig';
 import ConfirmModal from './ConfirmModal';
 
 export default function CalendarEventModal() {
-  const { config, calendarEventModal, setCalendarEventModal, addLocalEvent, deleteLocalEvent } = useConfig();
+  const { config, calendarEventModal, setCalendarEventModal, addLocalEvent, deleteLocalEvent, user } = useConfig();
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [time, setTime] = useState('12:00');
   const [isAllDay, setIsAllDay] = useState(false);
 
-  if (!calendarEventModal.open || !calendarEventModal.date) return null;
+  if (!calendarEventModal.open || !calendarEventModal.date || user?.role !== 'admin') return null;
 
   const dateParts = calendarEventModal.date.split('-');
   const displayDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));

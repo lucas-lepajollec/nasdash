@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { readConfig } from '@/lib/config';
+import { verifyToken, getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+function checkAdmin(request: Request): boolean {
+  const cookieHeader = request.headers.get('cookie') || '';
+  const match = cookieHeader.match(/nasdash_session=([^;]+)/);
+  const token = match ? match[1] : null;
+  if (!token) return false;
+  const payload = verifyToken(token);
+  return payload?.role === 'admin';
+}
+
 function getDockerHost(hostId: string) {
-  const configPath = path.join(process.cwd(), 'data', 'config.json');
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const config = readConfig();
   return (config.dockerHosts || []).find((h: any) => h.id === hostId);
 }
 
@@ -15,6 +23,16 @@ export async function GET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
+  const config = readConfig();
+
+  // Bloquer l'accès en mode privé si non authentifié
+  if (config.settings?.securityMode === 'private') {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+    }
+  }
+
   try {
     const { hostId } = await segmentData.params;
     const host = getDockerHost(hostId);
@@ -61,6 +79,10 @@ export async function DELETE(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
+  if (!checkAdmin(request)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   try {
     const { hostId } = await segmentData.params;
     const host = getDockerHost(hostId);

@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
-import { devicesStatusCache } from '@/lib/config';
+import { devicesStatusCache, readConfig } from '@/lib/config';
+import { getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, segmentData: { params: Promise<{ id: string }> }) {
   try {
+    const config = readConfig();
+
+    // Bloquer l'accès en mode privé si non authentifié
+    if (config.settings?.securityMode === 'private') {
+      const session = getSessionFromRequest(request);
+      if (!session) {
+        return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+      }
+    }
+
     const { id } = await segmentData.params;
     
     // Retourne les données en cache ultra rapidement sans aucun ping/calcul

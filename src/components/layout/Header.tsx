@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Pencil, Settings, Plus, X, Shield, Eye, EyeOff, Menu } from 'lucide-react';
+import { Search, Pencil, Settings, Plus, X, Shield, Eye, EyeOff, Menu, LogIn, LogOut, User } from 'lucide-react';
 import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
@@ -29,7 +29,7 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
-  const { config, setSettingsModal } = useConfig();
+  const { config, setSettingsModal, user } = useConfig();
   const isHome = !props.activeTab || props.activeTab === 'dashboard';
   const currentTabDef = props.tabs?.find(t => t.id === props.activeTab);
   const isCustomTab = currentTabDef?.isCustom === true;
@@ -170,58 +170,88 @@ export default function Header(props: HeaderProps) {
     );
   };
 
-  const ActionsDesktop = () => (
-    <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0" style={{ display: 'flex', gap: 8 }}>
-      {props.editMode && (isHome || props.activeTab === 'widgets' || isCustomTab) && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          {(isHome || props.activeTab === 'widgets') && (
-            <>
-              <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
-                <Plus size={12} />
-                Emplacement
-              </button>
-              {isHome && (
-                <button className="nd-btn" onClick={props.onAddWidget} title="Ajouter un widget">
+  const ActionsDesktop = () => {
+    const { user, logout } = useConfig();
+    return (
+      <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {props.editMode && (isHome || props.activeTab === 'widgets' || isCustomTab) && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(isHome || props.activeTab === 'widgets') && (
+              <>
+                <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
                   <Plus size={12} />
-                  Widget
+                  Emplacement
                 </button>
-              )}
-            </>
-          )}
-          {isHome && (
-            <button className="nd-btn" onClick={props.onAddCategory}>
-              <Plus size={12} />
-              Catégorie
+                {isHome && (
+                  <button className="nd-btn" onClick={props.onAddWidget} title="Ajouter un widget">
+                    <Plus size={12} />
+                    Widget
+                  </button>
+                )}
+              </>
+            )}
+            {isHome && (
+              <button className="nd-btn" onClick={props.onAddCategory}>
+                <Plus size={12} />
+                Catégorie
+              </button>
+            )}
+            {isCustomTab && (
+              <button className="nd-btn" onClick={() => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab })}>
+                <Pencil size={12} />
+                Structure
+              </button>
+            )}
+            <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px', alignSelf: 'center' }} />
+          </div>
+        )}
+        <button
+          className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`}
+          onClick={props.onToggleSecret}
+          title={props.secretMode ? 'Masquer les infos' : 'Afficher les infos'}
+        >
+          {props.secretMode ? <Eye size={14} /> : <EyeOff size={14} />}
+        </button>
+        {user?.role === 'admin' && (
+          <>
+            <button
+              className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`}
+              onClick={props.onToggleEdit}
+              title="Mode édition"
+            >
+              <Pencil size={14} />
             </button>
-          )}
-          {isCustomTab && (
-            <button className="nd-btn" onClick={() => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab })}>
-              <Pencil size={12} />
-              Structure
+            <button className="nd-btn" onClick={props.onOpenSettings} title="Paramètres globaux">
+              <Settings size={14} />
             </button>
-          )}
-          <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px', alignSelf: 'center' }} />
-        </div>
-      )}
-      <button
-        className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`}
-        onClick={props.onToggleSecret}
-        title={props.secretMode ? 'Masquer les infos' : 'Afficher les infos'}
-      >
-        {props.secretMode ? <Eye size={14} /> : <EyeOff size={14} />}
-      </button>
-      <button
-        className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`}
-        onClick={props.onToggleEdit}
-        title="Mode édition"
-      >
-        <Pencil size={14} />
-      </button>
-      <button className="nd-btn" onClick={props.onOpenSettings} title="Paramètres globaux">
-        <Settings size={14} />
-      </button>
-    </div>
-  );
+          </>
+        )}
+        
+        <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px' }} />
+
+        {user && !user.isAnonymous ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 10px', borderRadius: 'var(--nd-card-radius)',
+              background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)',
+              color: '#10b981', fontSize: '0.72rem', fontWeight: 600, height: 36
+            }}>
+              <User size={12} />
+              <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
+            </div>
+            <button className="nd-btn" onClick={logout} title="Se déconnecter" style={{ padding: 6, minWidth: 0, justifyContent: 'center' }}>
+              <LogOut size={14} />
+            </button>
+          </div>
+        ) : (
+          <a href="/login" className="nd-btn" title="Se connecter" style={{ textDecoration: 'none', minWidth: 0, justifyContent: 'center' }}>
+            <LogIn size={14} />
+          </a>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -295,9 +325,23 @@ export default function Header(props: HeaderProps) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Menu</h3>
-              <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 6 }}>
-                <X size={16} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {(() => {
+                  const { user, logout } = useConfig();
+                  return user && !user.isAnonymous ? (
+                    <button className="nd-btn" onClick={logout} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
+                      <LogOut size={12} /> {user.username}
+                    </button>
+                  ) : (
+                    <a href="/login" className="nd-btn" style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px', textDecoration: 'none', display: 'inline-flex' }}>
+                      <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> Connexion
+                    </a>
+                  );
+                })()}
+                <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 6 }}>
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Tabs List */}
@@ -327,19 +371,23 @@ export default function Header(props: HeaderProps) {
             <div style={{ height: 1, background: 'var(--nd-border)', margin: '0' }} />
 
             {/* Global Actions */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'admin' ? 'repeat(3, 1fr)' : '1fr', gap: 8 }}>
               <button className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleSecret} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                 {props.secretMode ? <Eye size={18} /> : <EyeOff size={18} />}
                 <span style={{ fontSize: '0.75rem' }}>{props.secretMode ? 'Cacher' : 'Visible'}</span>
               </button>
-              <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleEdit} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
-                <Pencil size={18} />
-                <span style={{ fontSize: '0.75rem' }}>Éditer</span>
-              </button>
-              <button className="nd-btn" onClick={() => { props.onOpenSettings(); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
-                <Settings size={18} />
-                <span style={{ fontSize: '0.75rem' }}>Paramètres</span>
-              </button>
+              {user?.role === 'admin' && (
+                <>
+                  <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleEdit} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                    <Pencil size={18} />
+                    <span style={{ fontSize: '0.75rem' }}>Éditer</span>
+                  </button>
+                  <button className="nd-btn" onClick={() => { props.onOpenSettings(); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                    <Settings size={18} />
+                    <span style={{ fontSize: '0.75rem' }}>Paramètres</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {props.editMode && (

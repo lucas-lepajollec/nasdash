@@ -7,6 +7,7 @@ import BentoGrid from './BentoGrid';
 import Footer from '../../layout/Footer';
 import { useConfig } from '@/hooks/useConfig';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
+import { WidgetPanel } from '../../shared/WidgetPanel';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
@@ -58,6 +59,7 @@ export default function HomeTab({
     settingsModal,
     setSettingsModal,
     updateConfig,
+    user
   } = useConfig();
 
   const leftSidebarRef = useRef<HTMLElement>(null);
@@ -159,40 +161,20 @@ export default function HomeTab({
 
   const tabConf = config.settings?.tabs?.home || {};
 
-  const widgets = WIDGET_REGISTRY.map(w => {
-    const hideKey = getWidgetConfigKeys(w.id).hide;
-    const sidebarKey = getWidgetConfigKeys(w.id).sidebar;
-    const orderKey = getWidgetConfigKeys(w.id).order;
-
-    const isGloballyHidden = (config.settings as any)?.[hideKey] ?? w.defaultHidden;
-    const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
-
-    const instanceId = `home-${w.id}`;
-    const instanceProps = (config.settings as any)?.[`${instanceId}Props`] || (config.settings as any)?.[`${w.id}Props`];
-
-    return {
-      id: w.id,
-      visible: !(isGloballyHidden || isTabHidden),
-      sidebar: (config.settings as any)?.[sidebarKey] || w.defaultSidebar,
-      order: (config.settings as any)?.[orderKey] ?? w.defaultOrder,
-      render: () => (
-        <WidgetRenderer 
-          id={w.id} 
-          editMode={editMode} 
-          showSensitive={showSensitive} 
-          categories={config.categories} 
-          widgetInstanceId={instanceId} 
-          widgetProps={instanceProps} 
-          onUpdateProps={(newProps) => updateConfig({ 
-            [`${instanceId}Props`]: { 
-              ...(instanceProps || {}), 
-              ...newProps 
-            } 
-          })} 
-        />
-      )
-    };
-  });
+  const hasWidgets = (panelId: string) => {
+    const p = config?.settings?.panels?.[panelId];
+    if (!p || !p.widgets || p.widgets.length === 0) return false;
+    return p.widgets.some((w: any) => {
+      if (user && user.role !== 'admin' && user.allowedWidgets && user.allowedWidgets.length > 0) {
+        if (!user.allowedWidgets.includes(w.type)) return false;
+      }
+      const def = WIDGET_REGISTRY.find(x => x.id === w.type);
+      if (!def) return false;
+      const hideKey = getWidgetConfigKeys(w.type).hide;
+      const isGloballyHidden = (config.settings as any)?.[hideKey] ?? def.defaultHidden;
+      return !isGloballyHidden;
+    });
+  };
 
   const onUpdateWidgetHeight = useCallback(async (id: string, height: number) => {
     if (!config) return;
@@ -219,31 +201,23 @@ export default function HomeTab({
   const leftPanelPos = tabConf.leftSidebarPosition || 'left';
   const rightPanelPos = tabConf.rightSidebarPosition || 'right';
 
-  const baseLeftWidgets = widgets.filter(w => w.visible && w.sidebar === 'left').sort((a, b) => a.order - b.order);
-  const baseRightWidgets = widgets.filter(w => w.visible && w.sidebar === 'right').sort((a, b) => a.order - b.order);
-  const baseBottomWidgets = widgets.filter(w => w.visible && w.sidebar === 'bottom').sort((a, b) => a.order - b.order);
-
   const leftSidebars = [];
   const rightSidebars = [];
 
-  if (showLeftPanel && baseLeftWidgets.length > 0) {
+  if (showLeftPanel && hasWidgets('home-left')) {
     const el = (
       <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
-        {baseLeftWidgets.map(w => (
-          <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-        ))}
+        <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} />
       </aside>
     );
     if (leftPanelPos === 'left') leftSidebars.push(el);
     else rightSidebars.push(el);
   }
 
-  if (showRightPanel && baseRightWidgets.length > 0) {
+  if (showRightPanel && hasWidgets('home-right')) {
     const el = (
       <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
-        {baseRightWidgets.map(w => (
-          <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-        ))}
+        <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} />
       </aside>
     );
     if (rightPanelPos === 'left') leftSidebars.push(el);
@@ -271,6 +245,9 @@ export default function HomeTab({
             <BentoGrid
               categories={config?.categories || []}
               homeWidgets={(config?.settings?.homeWidgets || []).filter(w => {
+                if (user && user.role !== 'admin' && user.allowedWidgets && user.allowedWidgets.length > 0) {
+                  if (!user.allowedWidgets.includes(w.type)) return false;
+                }
                 const def = WIDGET_REGISTRY.find(x => x.id === w.type);
                 if (!def) return true; // spacer or unknown
                 const hideKey = getWidgetConfigKeys(w.type).hide;
@@ -292,7 +269,7 @@ export default function HomeTab({
               onDeleteSlot={removeSlot}
             />
 
-            {!tabConf.hideBottomPanel && baseBottomWidgets.length > 0 && (
+            {!tabConf.hideBottomPanel && hasWidgets('home-bottom') && (
               <section className="nd-bottom-panel" style={{ marginTop: 24, marginBottom: 24 }}>
                 {(tabConf.bottomPanelTitle ?? 'Activité réseau') && (
                   <div className="nd-section-title" style={{ marginBottom: 16 }}>
@@ -305,9 +282,7 @@ export default function HomeTab({
                   gap: 16,
                   alignItems: 'stretch'
                 }}>
-                  {baseBottomWidgets.map(w => (
-                    <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-                  ))}
+                  <WidgetPanel panelId="home-bottom" editMode={editMode} showSensitive={showSensitive} />
                 </div>
               </section>
             )}

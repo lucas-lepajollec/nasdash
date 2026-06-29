@@ -75,8 +75,16 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
     setActionRunning(prev => ({ ...prev, [containerId]: true }));
     try {
       const action = currentState === 'running' ? 'stop' : 'start';
-      await fetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
-      await mutate(); // Refresh list immediately
+      const res = await fetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          alert("Action refusée. Session administrateur requise (veuillez vous connecter via le bouton Connexion en haut).");
+          return;
+        }
+        const data = await res.json();
+        throw new Error(data.error || 'Action échouée');
+      }
+      await mutate();
     } catch (e) {
       console.error('Failed to change container state:', e);
     } finally {

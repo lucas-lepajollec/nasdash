@@ -1,0 +1,16 @@
+[
+  {
+    "username": "admin",
+    "role": "admin",
+    "passwordHash": "__GENERATED_AT_STARTUP__",
+    "allowedTabs": [],
+    "allowedWidgets": []
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "passwordHash": "__GENERATED_AT_STARTUP__",
+    "allowedTabs": [],
+    "allowedWidgets": []
+  }
+]

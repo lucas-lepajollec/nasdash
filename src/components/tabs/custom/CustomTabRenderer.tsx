@@ -14,7 +14,7 @@ interface CustomTabRendererProps {
 }
 
 export default function CustomTabRenderer({ tab, editMode, showSensitive = false }: CustomTabRendererProps) {
-  const { config, setSettingsModal } = useConfig();
+  const { config, setSettingsModal, user } = useConfig();
   const [layout, setLayout] = useState<CustomTabLayout | null>(null);
 
   useEffect(() => {
@@ -167,6 +167,10 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
                 if (w.type === 'spacer') return true;
                 const def = WIDGET_REGISTRY.find(x => x.id === w.type);
                 if (!def) return false;
+                
+                const isAllowed = !user || user.role === 'admin' || !user.allowedWidgets || user.allowedWidgets.length === 0 || user.allowedWidgets.includes(w.type);
+                if (!isAllowed) return false;
+
                 const hideKey = getWidgetConfigKeys(w.type).hide;
                 const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? def.defaultHidden;
                 return !isGloballyHidden;

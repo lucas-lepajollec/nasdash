@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "settings": {
     "title": "MON HOME LAB",
     "showMonitor": true,
@@ -6,31 +7,90 @@
     "hiddenTabs": [],
     "theme": "nasdash",
     "dockPosition": "right",
-    "tabOrder": [
-      "dashboard",
-      "docker"
-    ],
+    "tabOrder": ["dashboard", "docker"],
+    "tabIcons": {},
     "hiddenSections": [],
+    "hideHeaderTitle": false,
+    "hideHeaderSearch": false,
+    "hideHeaderMenu": false,
+    "headerLayoutDesktop": { "left": "title", "center": "menu", "right": "search", "splitMenuAround": "none" },
+    "headerLayoutMobile": { "left": "title", "center": "menu" },
+    "showHeaderMenuIcons": false,
+    "showPingDetails": true,
+    "pingIndicatorMode": "all",
     "hideDevices": false,
     "hideQuickStats": false,
     "hideTailscaleStatus": false,
     "hideDockerActions": false,
-    "pingIndicatorMode": "all",
-    "showPingDetails": true,
+    "hideClock": false,
+    "hideCalendar": false,
+    "hideWeather": false,
+    "hideNetworkGraph": false,
+    "hideDockerContainers": false,
+    "hideWidgetTitles": false,
+    "hideDock": false,
     "customCss": "",
     "enablePerfMonitor": false,
     "backgroundImage": "",
     "borderRadius": 12,
-    "devicesOrder": 0,
-    "devicesSidebar": "left",
-    "globalFont": "Outfit",
     "cardOpacity": 0.8,
-    "quickStatsSidebar": "right",
-    "quickStatsOrder": 1,
-    "tailscaleSidebar": "right",
-    "tailscaleOrder": 2,
-    "dockerActionsSidebar": "right",
-    "dockerActionsOrder": 3
+    "globalFont": "Outfit",
+    "titleMobile": "",
+    "titleLogo": "",
+    "titleFont": "outfit",
+    "titleAnimation": "none",
+    "clockDesign": "default",
+    "clockTimezone": "",
+    "calendarUrl": "",
+    "dockerContainersStyle": "standard",
+    "dockerContainersAutoScroll": false,
+    "allowDockerActions": false,
+    "securityMode": "public",
+    "mobileWallpaper": "",
+    "mobileTheme": "",
+    "mobileGlobalFont": "",
+    "mobileBorderRadius": 12,
+    "mobileCardOpacity": 0.8,
+    "mobileTitleAnimation": "none",
+    "weatherLocation": { "lat": 48.85341, "lon": 2.3488, "name": "Paris" },
+    "weatherWidgetStyle": "default",
+    "tabs": {
+      "home": { "hideClock": false, "hideCalendar": false, "hideWeather": false },
+      "docker": { "hideClock": false, "hideCalendar": false, "hideWeather": false },
+      "networks": { "hideClock": false, "hideCalendar": false, "hideWeather": false }
+    },
+    "panels": {
+      "home-left": {
+        "widgets": [
+          { "id": "quickstats-1", "type": "quickstats", "props": {} },
+          { "id": "weather-1", "type": "weather", "props": {} },
+          { "id": "calendar-1", "type": "calendar", "props": {} }
+        ]
+      },
+      "home-right": {
+        "widgets": [
+          { "id": "clock-1", "type": "clock", "props": {} },
+          { "id": "devices-1", "type": "devices", "props": {} }
+        ]
+      },
+      "home-bottom": {
+        "widgets": [
+          { "id": "networkgraph-1", "type": "networkgraph", "props": {} }
+        ]
+      },
+      "docker-widgets": {
+        "widgets": [
+          { "id": "dockercontainers-1", "type": "dockercontainers", "props": {} },
+          { "id": "dockeractions-1", "type": "dockeractions", "props": {} }
+        ]
+      },
+      "networks-widgets": {
+        "widgets": [
+          { "id": "networkgraph-networks-1", "type": "networkgraph", "props": {} },
+          { "id": "tailscale-networks-1", "type": "tailscale", "props": {} }
+        ]
+      }
+    }
   },
   "devices": [
     {
@@ -65,6 +125,17 @@
       }
     }
   ],
+  "dockerHosts": [
+    {
+      "id": "docker-host-1",
+      "name": "Local Docker",
+      "icon": "🐳",
+      "type": "tcp",
+      "url": "http://192.168.1.20:2375"
+    }
+  ],
+  "dockerActions": [],
+  "appearanceProfiles": [],
   "categories": [
     {
       "id": "category-1",
@@ -89,15 +160,6 @@
           "secondaryUrl": "http://100.100.100.100:8080"
         }
       ]
-    }
-  ],
-  "dockerHosts": [
-    {
-      "id": "docker-host-1",
-      "name": "Local Docker",
-      "icon": "🐳",
-      "type": "tcp",
-      "url": "http://192.168.1.20:2375"
     }
   ],
   "slots": [
@@ -130,5 +192,6 @@
         ]
       }
     }
-  ]
+  ],
+  "localEvents": []
 }

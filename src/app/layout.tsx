@@ -23,7 +23,28 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${outfit.variable} ${spaceGrotesk.variable} ${syne.variable} ${righteous.variable} ${montserrat.variable} ${outfit.className}`} data-theme="dark">
+      <body className={`${outfit.variable} ${spaceGrotesk.variable} ${syne.variable} ${righteous.variable} ${montserrat.variable} ${outfit.className}`} data-theme="dark" suppressHydrationWarning>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('nd-theme-preset');
+                  if (theme && theme !== 'nasdash') {
+                    document.body.classList.add('theme-' + theme);
+                  }
+                  var bg = localStorage.getItem('nd-bg-preset');
+                  if (bg) {
+                    document.body.style.backgroundImage = 'url(' + bg + ')';
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundPosition = 'center';
+                    document.body.style.backgroundAttachment = 'fixed';
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
         <ConfigProvider>
           {children}
         </ConfigProvider>

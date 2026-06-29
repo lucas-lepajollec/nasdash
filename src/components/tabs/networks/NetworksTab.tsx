@@ -1,9 +1,9 @@
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
-import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 import { NetworkSidebar } from './NetworkSidebar';
 import { TopologyMap } from './TopologyMap';
+import { WidgetPanel } from '../../shared/WidgetPanel';
 
 interface NetworksTabProps {
   editMode: boolean;
@@ -13,7 +13,7 @@ interface NetworksTabProps {
 }
 
 export default function NetworksTab({ editMode, searchQuery, isVisible, showSensitive = true }: NetworksTabProps) {
-  const { config, updateConfig } = useConfig();
+  const { config, user } = useConfig();
 
   const sidebarRef = React.useRef<HTMLElement>(null);
   const widgetsSidebarRef = React.useRef<HTMLElement>(null);
@@ -74,39 +74,20 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
     networksSidebarOrder = 3;
   }
 
-  // Active widgets list for Networks tab
-  const activeWidgets = WIDGET_REGISTRY.map(w => {
-    const hideKey = getWidgetConfigKeys(w.id).hide;
-    const orderKey = getWidgetConfigKeys(w.id).order;
-
-    const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
-    const isTabHidden = (tabConf as any)?.[hideKey] ?? false;
-
-    const instanceId = `networks-${w.id}`;
-    const instanceProps = (config?.settings as any)?.[`${instanceId}Props`] || (config?.settings as any)?.[`${w.id}Props`];
-
-    return {
-      id: w.id,
-      visible: !isGloballyHidden && !isTabHidden,
-      order: (tabConf as any)?.[orderKey] ?? ((config?.settings as any)?.[orderKey] ?? w.defaultOrder),
-      render: () => (
-        <WidgetRenderer 
-          id={w.id} 
-          editMode={editMode} 
-          showSensitive={showSensitive} 
-          categories={config?.categories || []} 
-          widgetInstanceId={instanceId} 
-          widgetProps={instanceProps} 
-          onUpdateProps={(newProps) => updateConfig({ 
-            [`${instanceId}Props`]: { 
-              ...(instanceProps || {}), 
-              ...newProps 
-            } 
-          })} 
-        />
-      )
-    };
-  }).filter(w => w.visible).sort((a, b) => a.order - b.order);
+  const hasWidgets = (panelId: string) => {
+    const p = config?.settings?.panels?.[panelId];
+    if (!p || !p.widgets || p.widgets.length === 0) return false;
+    return p.widgets.some((w: any) => {
+      if (user && user.role !== 'admin' && user.allowedWidgets && user.allowedWidgets.length > 0) {
+        if (!user.allowedWidgets.includes(w.type)) return false;
+      }
+      const def = WIDGET_REGISTRY.find(x => x.id === w.type);
+      if (!def) return false;
+      const hideKey = getWidgetConfigKeys(w.type).hide;
+      const isGloballyHidden = (config.settings as any)?.[hideKey] ?? def.defaultHidden;
+      return !isGloballyHidden;
+    });
+  };
 
   return (
     <div className="nd-networks-layout nd-animate-in">
@@ -131,7 +112,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
       </div>
 
       {/* 3. Optional Sidebar: Active Widgets */}
-      {showWidgets && activeWidgets.length > 0 && (
+      {showWidgets && hasWidgets('networks-widgets') && (
         <aside 
           ref={widgetsSidebarRef}
           className="nd-networks-widgets-sidebar" 
@@ -142,9 +123,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
             overflowY: 'visible'
           }}
         >
-          {activeWidgets.map(w => (
-            <React.Fragment key={w.id}>{w.render()}</React.Fragment>
-          ))}
+          <WidgetPanel panelId="networks-widgets" editMode={editMode} showSensitive={showSensitive} />
         </aside>
       )}
 

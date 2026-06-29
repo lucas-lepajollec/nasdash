@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, Suspense, lazy } from 'react';
+import { useState, useCallback, Suspense, lazy, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import TabDock from '@/components/layout/TabDock';
 import HomeTab from '@/components/tabs/home/HomeTab';
@@ -32,11 +32,13 @@ export default function Shell() {
     categoryModal, setCategoryModal, addCategory, updateCategory, deleteCategory,
     deviceModal, setDeviceModal, addDevice, updateDevice, deleteDevice,
     dockerActionModal, setDockerActionModal, addDockerAction, updateDockerAction, deleteDockerAction,
-    showSecretSections, setShowSecretSections
+    showSecretSections, setShowSecretSections,
+    user
   } = useConfig();
 
   const [isDark, setIsDark] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+  const [editModeState, setEditModeState] = useState(false);
+  const editMode = user?.role === 'admin' && editModeState;
   const [widgetModalOpen, setWidgetModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSensitive, setShowSensitive] = useState(true);
@@ -48,6 +50,17 @@ export default function Shell() {
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (!loading && ready && user && user.role !== 'admin' && user.allowedTabs && user.allowedTabs.length > 0) {
+      if (!user.allowedTabs.includes(activeTab)) {
+        const firstAllowed = user.allowedTabs[0];
+        if (firstAllowed) {
+          switchTab(firstAllowed);
+        }
+      }
+    }
+  }, [user, activeTab, switchTab, loading, ready]);
 
   const dockPosition = config?.settings?.dockPosition || 'left';
   const hiddenIds = config?.settings?.hiddenTabs || [];
@@ -64,7 +77,15 @@ export default function Shell() {
       const idxB = tabOrder.indexOf(b.id);
       return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
     });
-    return sorted.map(t => ({ ...t, icon: customIcons[t.id] !== undefined ? customIcons[t.id] : t.icon }));
+    
+    let mapped = sorted.map(t => ({ ...t, icon: customIcons[t.id] !== undefined ? customIcons[t.id] : t.icon }));
+
+    // Filter based on user allowedTabs
+    if (user && user.role !== 'admin' && user.allowedTabs && user.allowedTabs.length > 0) {
+      mapped = mapped.filter(t => user.allowedTabs!.includes(t.id));
+    }
+    
+    return mapped;
   })();
 
   const handleToggleTabHidden = async (id: TabId) => {
@@ -159,7 +180,7 @@ export default function Shell() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           editMode={editMode}
-          onToggleEdit={() => setEditMode(prev => !prev)}
+          onToggleEdit={() => setEditModeState(prev => !prev)}
           onOpenSettings={() => setSettingsModal({ open: true })}
           onAddCategory={() => setCategoryModal({ open: true })} 
           onAddSlot={() => activeTab === 'widgets' ? addWidgetsSlot() : addSlot()}
@@ -215,11 +236,11 @@ export default function Shell() {
         </div>
       </div>
 
-      {settingsModal.open && (
+      {settingsModal.open && user?.role === 'admin' && (
         <SettingsModal onClose={() => setSettingsModal({ open: false })} />
       )}
 
-      {serviceModal.open && (
+      {serviceModal.open && user?.role === 'admin' && (
         <ServiceFormModal
           service={serviceModal.service}
           categoryId={serviceModal.categoryId}
@@ -235,7 +256,7 @@ export default function Shell() {
         />
       )}
 
-      {categoryModal.open && (
+      {categoryModal.open && user?.role === 'admin' && (
         <CategoryFormModal
           category={categoryModal.category}
           onClose={() => setCategoryModal({ open: false })}
@@ -250,7 +271,7 @@ export default function Shell() {
         />
       )}
 
-      {deviceModal.open && (
+      {deviceModal.open && user?.role === 'admin' && (
         <DeviceFormModal
           device={deviceModal.device}
           onClose={() => setDeviceModal({ open: false })}
@@ -264,7 +285,7 @@ export default function Shell() {
         />
       )}
 
-      {dockerActionModal.open && (
+      {dockerActionModal.open && user?.role === 'admin' && (
         <DockerActionFormModal
           action={dockerActionModal.action}
           onClose={() => setDockerActionModal({ open: false })}
@@ -283,7 +304,7 @@ export default function Shell() {
       {/* Performance Monitor — petit bouton en bas à droite */}
       <PerfMonitor />
 
-      {widgetModalOpen && (
+      {widgetModalOpen && user?.role === 'admin' && (
         <WidgetSelectionModal
           onClose={() => setWidgetModalOpen(false)}
           onSelect={(widgetInfo) => {

@@ -2,10 +2,20 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import { DashboardConfig } from './types';
+import { encrypt, decrypt } from './crypto';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
+const SERVICES_PATH = path.join(DATA_DIR, 'services.json');
+const TOPOLOGY_PATH = path.join(DATA_DIR, 'topology.json');
+const CALENDAR_PATH = path.join(DATA_DIR, 'calendar.json');
 const LOGOS_DIR = path.join(DATA_DIR, 'logos');
+
+const globalAny: any = global;
+if (!globalAny.__cachedConfig) globalAny.__cachedConfig = null;
+if (!globalAny.__cachedServices) globalAny.__cachedServices = null;
+if (!globalAny.__cachedTopology) globalAny.__cachedTopology = null;
+if (!globalAny.__cachedCalendar) globalAny.__cachedCalendar = null;
 
 export function ensureDataDir() {
   try {
@@ -18,50 +28,175 @@ export function ensureDataDir() {
 
 export function readConfig(): DashboardConfig {
   ensureDataDir();
-  let needDefault = false;
-  let configData = null;
 
-  if (!fs.existsSync(CONFIG_PATH)) {
-    needDefault = true;
+  // 1. Lire la configuration de base (avec cache)
+  let configData: any = null;
+  let needDefault = false;
+
+  if (globalAny.__cachedConfig) {
+    configData = JSON.parse(JSON.stringify(globalAny.__cachedConfig));
   } else {
-    const raw = fs.readFileSync(CONFIG_PATH, 'utf-8').trim();
-    if (!raw || raw === '{}' || raw === '[]') {
+    if (!fs.existsSync(CONFIG_PATH)) {
       needDefault = true;
     } else {
-      try {
-        configData = JSON.parse(raw);
-        // Minimal validation to consider it's not "empty"
-        if (!configData || (!configData.categories && !configData.devices)) {
+      const raw = fs.readFileSync(CONFIG_PATH, 'utf-8').trim();
+      if (!raw || raw === '{}' || raw === '[]') {
+        needDefault = true;
+      } else {
+        try {
+          configData = JSON.parse(raw);
+          // Minimal validation to consider it's not "empty"
+          if (!configData || (!configData.categories && !configData.devices && !configData.settings)) {
+            needDefault = true;
+          }
+        } catch (e) {
           needDefault = true;
         }
-      } catch (e) {
-        needDefault = true;
       }
     }
-  }
 
-  if (needDefault || !configData) {
-    const examplePath = path.join(DATA_DIR, 'config.example.json');
-    if (fs.existsSync(examplePath)) {
+    if (needDefault || !configData) {
+      const examplePath = path.join(DATA_DIR, 'config.example.json');
+      if (fs.existsSync(examplePath)) {
+        try {
+          fs.copyFileSync(examplePath, CONFIG_PATH);
+          configData = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+        } catch (e) {
+          console.error('⚠️ ERREUR DE PERMISSION ou de lecture lors de la copie de config.example.json :', e);
+        }
+      }
+
+      if (!configData) {
+        configData = getDefaultConfig();
+        try {
+          fs.writeFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+        } catch (e) {
+          console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
+        }
+      }
+    }
+
+    // --- MIGRATION AUTOMATIQUE TRANSPARENTE EN 4 FICHIERS ---
+    let migrated = false;
+
+    // A. Migration des catégories/services vers services.json
+    if (configData.categories && configData.categories.length > 0) {
+      if (!fs.existsSync(SERVICES_PATH)) {
+        fs.writeFileSync(SERVICES_PATH, JSON.stringify(configData.categories, null, 2));
+      }
+      delete configData.categories;
+      migrated = true;
+    }
+
+    // B. Migration de networkTopology vers topology.json
+    if (configData.settings && configData.settings.networkTopology) {
+      if (!fs.existsSync(TOPOLOGY_PATH)) {
+        fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(configData.settings.networkTopology, null, 2));
+      }
+      delete configData.settings.networkTopology;
+      migrated = true;
+    }
+
+    // C. Migration des localEvents vers calendar.json
+    if (configData.localEvents && configData.localEvents.length > 0) {
+      if (!fs.existsSync(CALENDAR_PATH)) {
+        fs.writeFileSync(CALENDAR_PATH, JSON.stringify(configData.localEvents, null, 2));
+      }
+      delete configData.localEvents;
+      migrated = true;
+    }
+
+    // D. Migration vers la configuration par panneaux (panels)
+    if (configData.settings && !configData.settings.panels) {
+      migrateConfigToPanels(configData);
+      migrated = true;
+    }
+
+    if (migrated) {
       try {
-        fs.copyFileSync(examplePath, CONFIG_PATH);
-        return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
       } catch (e) {
-        console.error('⚠️ ERREUR DE PERMISSION ou de lecture lors de la copie de config.example.json :', e);
+        console.error('⚠️ ERREUR : Impossible d\'enregistrer la configuration migrée.', e);
       }
     }
 
-    const defaultConfig = getDefaultConfig();
-    try {
-      fs.writeFileSync(CONFIG_PATH, JSON.stringify(defaultConfig, null, 2));
-    } catch (e) {
-      console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
+    // Déchiffrer les paramètres sensibles avant la mise en cache en mémoire
+    if (configData.settings?.tailscaleClientSecret) {
+      configData.settings.tailscaleClientSecret = decrypt(configData.settings.tailscaleClientSecret);
     }
-    return defaultConfig;
+    if (configData.devices) {
+      configData.devices.forEach((device: any) => {
+        if (device.api?.token) {
+          device.api.token = decrypt(device.api.token);
+        }
+      });
+    }
+
+    globalAny.__cachedConfig = JSON.parse(JSON.stringify(configData));
   }
 
-  if (configData && configData.categories) {
-    configData.categories.forEach((cat: any) => {
+  // 2. Charger les Services / Catégories (avec cache)
+  let categories: any[] = [];
+  if (globalAny.__cachedServices) {
+    categories = JSON.parse(JSON.stringify(globalAny.__cachedServices));
+  } else {
+    if (fs.existsSync(SERVICES_PATH)) {
+      try {
+        categories = JSON.parse(fs.readFileSync(SERVICES_PATH, 'utf-8'));
+      } catch (e) {
+        console.error('Erreur lecture services.json', e);
+      }
+    } else {
+      categories = [];
+    }
+    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+  }
+
+  // 3. Charger la Topologie (avec cache)
+  let topology: any = { nodes: [], groups: [], connections: [] };
+  if (globalAny.__cachedTopology) {
+    topology = JSON.parse(JSON.stringify(globalAny.__cachedTopology));
+  } else {
+    if (fs.existsSync(TOPOLOGY_PATH)) {
+      try {
+        topology = JSON.parse(fs.readFileSync(TOPOLOGY_PATH, 'utf-8'));
+      } catch (e) {
+        console.error('Erreur lecture topology.json', e);
+      }
+    }
+    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+  }
+
+  // 4. Charger le Calendrier (avec cache)
+  let localEvents: any[] = [];
+  if (globalAny.__cachedCalendar) {
+    localEvents = JSON.parse(JSON.stringify(globalAny.__cachedCalendar));
+  } else {
+    if (fs.existsSync(CALENDAR_PATH)) {
+      try {
+        localEvents = JSON.parse(fs.readFileSync(CALENDAR_PATH, 'utf-8'));
+      } catch (e) {
+        console.error('Erreur lecture calendar.json', e);
+      }
+    } else {
+      localEvents = [];
+    }
+    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
+  }
+
+  // 5. Assembler pour assurer la compatibilité
+  const fullConfig: DashboardConfig = {
+    ...configData,
+    categories,
+    localEvents,
+    settings: {
+      ...configData.settings,
+      networkTopology: topology
+    }
+  };
+
+  if (fullConfig.categories) {
+    fullConfig.categories.forEach((cat: any) => {
       if (cat.services) {
         cat.services.forEach((svc: any) => {
           if (svc.tailscaleUrl && !svc.secondaryUrl) {
@@ -72,15 +207,99 @@ export function readConfig(): DashboardConfig {
     });
   }
 
-  return configData;
+  return fullConfig;
 }
 
 export function writeConfig(config: DashboardConfig) {
   ensureDataDir();
+
+  const baseConfig = JSON.parse(JSON.stringify(config));
+  const categories = baseConfig.categories || [];
+  const topology = baseConfig.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
+  const localEvents = baseConfig.localEvents || [];
+
+  delete baseConfig.categories;
+  delete baseConfig.localEvents;
+  if (baseConfig.settings) {
+    delete baseConfig.settings.networkTopology;
+  }
+
+  // Chiffrer les secrets avant l'écriture sur le disque
+  if (baseConfig.settings?.tailscaleClientSecret) {
+    baseConfig.settings.tailscaleClientSecret = encrypt(baseConfig.settings.tailscaleClientSecret);
+  }
+  if (baseConfig.devices) {
+    baseConfig.devices.forEach((device: any) => {
+      if (device.api?.token && device.api.token !== '********') {
+        device.api.token = encrypt(device.api.token);
+      }
+    });
+  }
+
   try {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(baseConfig, null, 2));
+    
+    // Mettre en cache la version déchiffrée en mémoire
+    const cacheConfig = JSON.parse(JSON.stringify(config));
+    delete cacheConfig.categories;
+    delete cacheConfig.localEvents;
+    if (cacheConfig.settings) {
+      delete cacheConfig.settings.networkTopology;
+    }
+    globalAny.__cachedConfig = cacheConfig;
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/config.json', e);
+  }
+
+  try {
+    fs.writeFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
+    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
+  }
+
+  try {
+    fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
+    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
+  }
+
+  try {
+    fs.writeFileSync(CALENDAR_PATH, JSON.stringify(localEvents, null, 2));
+    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
+  }
+}
+
+export function writeServices(categories: any[]) {
+  ensureDataDir();
+  try {
+    fs.writeFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
+    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
+  }
+}
+
+export function writeTopology(topology: any) {
+  ensureDataDir();
+  try {
+    fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
+    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
+  }
+}
+
+export function writeCalendar(calendar: any[]) {
+  ensureDataDir();
+  try {
+    fs.writeFileSync(CALENDAR_PATH, JSON.stringify(calendar, null, 2));
+    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
+  } catch (e) {
+    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
   }
 }
 
@@ -93,7 +312,11 @@ function getDefaultConfig(): DashboardConfig {
   const examplePath = path.join(DATA_DIR, 'config.example.json');
   if (fs.existsSync(examplePath)) {
     try {
-      return JSON.parse(fs.readFileSync(examplePath, 'utf-8'));
+      const parsed = JSON.parse(fs.readFileSync(examplePath, 'utf-8'));
+      delete parsed.categories;
+      delete parsed.localEvents;
+      if (parsed.settings) delete parsed.settings.networkTopology;
+      return parsed;
     } catch (e) {
       console.error('Erreur lecture config.example.json', e);
     }
@@ -115,7 +338,6 @@ function getDefaultConfig(): DashboardConfig {
 }
 
 // --- Smart Logger to avoid spamming errors ---
-const globalAny: any = global;
 if (!globalAny.__errorLogCache) globalAny.__errorLogCache = new Map<string, string>();
 const errorLogCache: Map<string, string> = globalAny.__errorLogCache;
 
@@ -139,20 +361,25 @@ if (globalAny.activeClients === undefined) globalAny.activeClients = 0;
 
 export function incrementActiveClients() {
   globalAny.activeClients++;
-  if (globalAny.activeClients === 1 && globalAny.triggerPoll) {
-    globalAny.triggerPoll();
+  if (globalAny.activeClients === 1) {
+    startBackgroundMonitoring();
   }
 }
 
 export function decrementActiveClients() {
   globalAny.activeClients = Math.max(0, globalAny.activeClients - 1);
+  if (globalAny.activeClients === 0 && globalAny.__monitoringInterval) {
+    clearInterval(globalAny.__monitoringInterval);
+    globalAny.__monitoringInterval = null;
+    console.log('🛑 Arrêt du Background Monitoring des appareils (Aucun client actif)...');
+  }
 }
 
 if (!globalAny.__glancesUrlCache) globalAny.__glancesUrlCache = {};
 const glancesUrlCache: Record<string, string> = globalAny.__glancesUrlCache;
 export function startBackgroundMonitoring() {
   if (globalAny.__monitoringInterval) {
-    clearInterval(globalAny.__monitoringInterval);
+    return;
   }
   console.log('🚀 Démarrage du Background Monitoring des appareils (Toutes les 10s)...');
 
@@ -220,9 +447,10 @@ export function startBackgroundMonitoring() {
           let baseUrl = apiUrl;
           if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
-          let fetchUrls: string[] = [];
-          if (glancesUrlCache[id]) fetchUrls.push(glancesUrlCache[id]);
-          if (baseUrl.endsWith('/all')) {
+           let fetchUrls: string[] = [];
+          if (glancesUrlCache[id]) {
+            fetchUrls.push(glancesUrlCache[id]);
+          } else if (baseUrl.endsWith('/all')) {
             fetchUrls.push(baseUrl);
           } else {
             let base = baseUrl;
@@ -593,12 +821,42 @@ export function startBackgroundMonitoring() {
   globalAny.__monitoringInterval = setInterval(doPoll, 10000);
 }
 
-// Auto-start on server load
-if (typeof window === 'undefined') {
-  try {
-    startBackgroundMonitoring();
-  } catch (err) {
-    console.error('Failed to start background monitoring:', err);
+export function migrateConfigToPanels(configData: any) {
+  if (configData.settings && !configData.settings.panels) {
+    configData.settings.panels = {
+      'home-left': {
+        widgets: [
+          { id: 'quickstats-1', type: 'quickstats', props: {} },
+          { id: 'weather-1', type: 'weather', props: {} },
+          { id: 'calendar-1', type: 'calendar', props: {} }
+        ]
+      },
+      'home-right': {
+        widgets: [
+          { id: 'clock-1', type: 'clock', props: {} },
+          { id: 'devices-1', type: 'devices', props: {} }
+        ]
+      },
+      'home-bottom': {
+        widgets: [
+          { id: 'networkgraph-1', type: 'networkgraph', props: {} }
+        ]
+      },
+      'docker-widgets': {
+        widgets: [
+          { id: 'dockercontainers-1', type: 'dockercontainers', props: {} },
+          { id: 'dockeractions-1', type: 'dockeractions', props: {} }
+        ]
+      },
+      'networks-widgets': {
+        widgets: [
+          { id: 'networkgraph-networks-1', type: 'networkgraph', props: {} },
+          { id: 'tailscale-networks-1', type: 'tailscale', props: {} }
+        ]
+      }
+    };
   }
 }
+
+// Auto-start on server load disabled (handled dynamically on client connection)
 

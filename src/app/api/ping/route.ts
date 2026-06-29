@@ -1,13 +1,64 @@
 import { NextResponse } from 'next/server';
+import { readConfig } from '@/lib/config';
+import { getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+function getHostAndPort(urlStr: string): string | null {
+  try {
+    let clean = urlStr;
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+      clean = 'http://' + clean;
+    }
+    const parsed = new URL(clean);
+    return parsed.host;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(request: Request) {
+  const config = readConfig();
+
+  // Bloquer l'accès en mode privé si non authentifié
+  if (config.settings?.securityMode === 'private') {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+    }
+  }
+
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
 
   if (!url) {
     return NextResponse.json({ status: 'offline', statusText: 'Invalid URL', latency: 0 }, { status: 400 });
+  }
+
+  // Prévention SSRF: Valider que l'URL demandée est configurée dans les services ou devices
+  const allowedHosts = new Set<string>();
+  if (config.devices) {
+    config.devices.forEach((d: any) => {
+      if (d.host) { const h = getHostAndPort(d.host); if (h) allowedHosts.add(h); }
+      if (d.api?.url) { const h = getHostAndPort(d.api.url); if (h) allowedHosts.add(h); }
+      if (d.api?.ip) { const h = getHostAndPort(d.api.ip); if (h) allowedHosts.add(h); }
+    });
+  }
+  if (config.categories) {
+    config.categories.forEach((cat: any) => {
+      if (cat.services) {
+        cat.services.forEach((svc: any) => {
+          if (svc.localUrl) { const h = getHostAndPort(svc.localUrl); if (h) allowedHosts.add(h); }
+          if (svc.secondaryUrl) { const h = getHostAndPort(svc.secondaryUrl); if (h) allowedHosts.add(h); }
+          if (svc.tailscaleUrl) { const h = getHostAndPort(svc.tailscaleUrl); if (h) allowedHosts.add(h); }
+        });
+      }
+    });
+  }
+
+  const requestedHost = getHostAndPort(url);
+  if (!requestedHost || !allowedHosts.has(requestedHost)) {
+    return NextResponse.json({ status: 'offline', statusText: 'Accès interdit (URL non configurée)', latency: 0 }, { status: 403 });
   }
 
   try {

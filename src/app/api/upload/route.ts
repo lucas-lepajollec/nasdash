@@ -1,15 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogosDir } from '@/lib/config';
+import { verifyToken } from '@/lib/auth';
 import path from 'path';
 import fs from 'fs';
 
+function checkAdmin(req: NextRequest): boolean {
+  const token = req.cookies.get('nasdash_session')?.value;
+  if (!token) return false;
+  const payload = verifyToken(token);
+  return payload?.role === 'admin';
+}
+
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
   const type = formData.get('type') as string | null;
 
   if (!file) {
     return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+  }
+
+  // Limitation de taille à 5 Mo
+  if (file.size > 5 * 1024 * 1024) {
+    return NextResponse.json({ error: 'Le fichier dépasse la limite autorisée (5 Mo).' }, { status: 400 });
   }
 
   const bytes = await file.arrayBuffer();

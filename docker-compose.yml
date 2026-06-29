@@ -1,12 +1,20 @@
+# Configuration Docker Compose pour NasDash
+# Ce fichier décrit le déploiement multi-conteneurs de NasDash et de son proxy sécurisé pour la socket Docker.
+
 services:
+  # Service principal NasDash
   nasdash:
     build: .
     container_name: nasdash
     ports:
+      # Port exposé sur la machine hôte : port interne de l'application
       - "2504:2504"
-    pid: "host"  # Required for systeminformation to read real host stats
+    # Permet à la bibliothèque 'systeminformation' d'accéder aux statistiques réelles de la machine hôte (CPU, RAM, Disques)
+    # au lieu de lire uniquement les limites du conteneur de l'application.
+    pid: "host"
     volumes:
-      - ./data:/app/data  # Persistent config + uploaded logos
+      # Persistance de la configuration du tableau de bord (config, services, utilisateurs) et des logos importés
+      - ./data:/app/data
     environment:
       - NODE_ENV=production
       - PORT=2504
@@ -15,20 +23,35 @@ services:
       - docker-proxy
     restart: unless-stopped
 
+  # Proxy sécurisé pour la socket Docker (évite de monter la socket Docker directement dans le conteneur NasDash)
   docker-proxy:
     image: tecnativa/docker-socket-proxy
     container_name: nasdash-docker-proxy
     volumes:
+      # Montage en lecture seule de la socket Docker de l'hôte
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      # Allowed
+      # --- ACTIONS AUTORISÉES (1 = Actif, 0 = Inactif) ---
+      # Permet de lister les conteneurs et de lire leur statut
       - CONTAINERS=1
+      # Permet de lister les images Docker locales
       - IMAGES=1
+      # Permet de lister les volumes Docker
       - VOLUMES=1
+      # Permet de lire les configurations réseau de Docker
       - NETWORKS=1
+      # Permet de récupérer les informations globales du moteur Docker
       - INFO=1
-      - POST=1        # Required for restart/stop/start actions
-      # Blocked
+      # Requis pour démarrer, arrêter et redémarrer les conteneurs (actions POST)
+      - POST=1
+      
+      # --- SÉCURITÉ CONCERNANT LA SUPPRESSION (DELETE) ---
+      # REMARQUE : Définir 'DELETE=1' permet de supprimer des images, des volumes et des conteneurs depuis l'UI de NasDash.
+      # Pour interdire toute suppression accidentelle ou malveillante de vos ressources Docker locales,
+      # vous pouvez désactiver ce droit en changeant la valeur par 'DELETE=0' ou en supprimant simplement la ligne ci-dessous.
+      - DELETE=1
+
+      # --- ACTIONS COMPLÈTEMENT BLOQUÉES (Par défaut) ---
       - AUTH=0
       - BUILD=0
       - EXEC=0

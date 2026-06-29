@@ -1,6 +1,7 @@
 'use client';
 
 import { Category } from '@/lib/types';
+import { useConfig } from '@/hooks/useConfig';
 
 interface FooterProps {
   categories: Category[];
@@ -10,7 +11,10 @@ interface FooterProps {
 }
 
 export default function Footer({ categories, showSecretSections, showSensitive, onToggleSecretSections }: FooterProps) {
+  const { user } = useConfig();
+  const isAdmin = user?.role === 'admin';
   const ports = new Set<string>();
+
   categories.forEach(cat => {
     cat.services.forEach(svc => {
       [svc.localUrl, svc.tailscaleUrl].forEach(url => {
@@ -34,9 +38,9 @@ export default function Footer({ categories, showSecretSections, showSensitive, 
         ))}
       </div>
       <div 
-        onClick={onToggleSecretSections}
-        style={{ cursor: 'pointer', display: 'inline-block', marginTop: 8 }}
-        title="Activez ou désactivez les sections secrètes"
+        onClick={isAdmin ? onToggleSecretSections : undefined}
+        style={{ cursor: isAdmin ? 'pointer' : 'default', display: 'inline-block', marginTop: 8 }}
+        title={isAdmin ? "Activez ou désactivez les sections secrètes" : undefined}
       >
         <small style={{ opacity: 0.6, fontSize: '0.65rem', fontWeight: 500, letterSpacing: '2px', userSelect: 'none', color: 'var(--nd-text-muted)', textTransform: 'uppercase', transition: 'opacity 0.2s' }}>
           NASDASH — Dashboard Privé

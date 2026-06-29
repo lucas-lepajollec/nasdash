@@ -51,6 +51,9 @@ export function useDocker(hosts: DockerHost[]) {
         method: 'POST',
       });
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error("Session administrateur requise. Veuillez vous connecter en haut à droite.");
+        }
         const data = await res.json();
         throw new Error(data.error || 'Action failed');
       }

@@ -1,20 +1,30 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { readConfig } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
 function getDockerHost(hostId: string) {
-  const configPath = path.join(process.cwd(), 'data', 'config.json');
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  const config = readConfig();
   return (config.dockerHosts || []).find((h: any) => h.id === hostId);
 }
+
+import { getSessionFromRequest } from '@/lib/auth';
 
 // GET /api/docker/[hostId]/containers/[id]/logs
 export async function GET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
+  const config = readConfig();
+
+  // Bloquer l'accès en mode privé si non authentifié
+  if (config.settings?.securityMode === 'private') {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+    }
+  }
+
   try {
     const { hostId, id } = await segmentData.params;
     const host = getDockerHost(hostId);

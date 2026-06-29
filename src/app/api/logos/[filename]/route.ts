@@ -17,13 +17,14 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
-  const filePath = path.join(getLogosDir(), filename);
+  const safeFilename = path.basename(filename);
+  const filePath = path.join(getLogosDir(), safeFilename);
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const ext = path.extname(filename).toLowerCase();
+  const ext = path.extname(safeFilename).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
   const buffer = fs.readFileSync(filePath);
 
@@ -40,7 +41,8 @@ export async function DELETE(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   const { filename } = await params;
-  const filePath = path.join(getLogosDir(), filename);
+  const safeFilename = path.basename(filename);
+  const filePath = path.join(getLogosDir(), safeFilename);
 
   if (!fs.existsSync(filePath)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

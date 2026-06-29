@@ -1,12 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readConfig, writeConfig } from '@/lib/config';
+import { readConfig, writeConfig, writeServices, writeCalendar } from '@/lib/config';
+import { verifyToken } from '@/lib/auth';
+import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
 import { Category, Service, Device } from '@/lib/types';
 import fs from 'fs';
 import path from 'path';
 
-export async function GET() {
+function checkAdmin(req: NextRequest): boolean {
+  const token = req.cookies.get('nasdash_session')?.value;
+  if (!token) return false;
+  const payload = verifyToken(token);
+  return payload?.role === 'admin';
+}
+
+import { getSessionFromRequest } from '@/lib/auth';
+
+export async function GET(req: NextRequest) {
   const config = readConfig();
+
+  // Bloquer l'accès en mode privé si non authentifié
+  if (config.settings?.securityMode === 'private') {
+    const session = getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+    }
+  }
+
   // Ensure devices array exists (backward compat)
   if (!config.devices) (config as any).devices = [];
   if (!config.dockerHosts) (config as any).dockerHosts = [];
@@ -27,6 +47,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const body = await req.json();
   const config = readConfig();
   const { type } = body;
@@ -50,6 +74,7 @@ export async function POST(req: NextRequest) {
        config.settings.totalSlots = config.categories.length + 1;
     }
 
+    // Écrit à la fois la config (slots) et les services
     writeConfig(config);
     return NextResponse.json(newCategory, { status: 201 });
   }
@@ -67,7 +92,9 @@ export async function POST(req: NextRequest) {
       secondaryLogo: body.secondaryLogo || '',
     };
     config.categories[catIndex].services.push(newService);
-    writeConfig(config);
+    
+    // N'écrit que le fichier services.json
+    writeServices(config.categories);
     return NextResponse.json(newService, { status: 201 });
   }
 
@@ -187,7 +214,9 @@ export async function POST(req: NextRequest) {
       isAllDay: body.isAllDay || false
     };
     config.localEvents.push(newEvent);
-    writeConfig(config);
+    
+    // N'écrit que le calendrier
+    writeCalendar(config.localEvents);
     return NextResponse.json(newEvent, { status: 201 });
   }
 
@@ -195,13 +224,17 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const body = await req.json();
   const config = readConfig();
   const { type } = body;
 
   if (type === 'reorder') {
     config.categories = body.categories;
-    writeConfig(config);
+    writeServices(config.categories);
     return NextResponse.json({ ok: true });
   }
 
@@ -231,7 +264,7 @@ export async function PUT(req: NextRequest) {
     if (body.isSecret !== undefined) cat.isSecret = body.isSecret;
     if (body.services !== undefined) cat.services = body.services;
     if (body.layout !== undefined) cat.layout = body.layout;
-    writeConfig(config);
+    writeServices(config.categories);
     return NextResponse.json(cat);
   }
 
@@ -246,7 +279,7 @@ export async function PUT(req: NextRequest) {
         if (body.secondaryLogo !== undefined) svc.secondaryLogo = body.secondaryLogo;
         // Keep tailscaleUrl setter for backwards compatibility if clients still send it
         if (body.tailscaleUrl !== undefined) svc.tailscaleUrl = body.tailscaleUrl;
-        writeConfig(config);
+        writeServices(config.categories);
         return NextResponse.json(svc);
       }
     }
@@ -286,6 +319,7 @@ export async function PUT(req: NextRequest) {
     if (body.theme !== undefined) config.settings.theme = body.theme;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
     if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
+    if (body.panels !== undefined) config.settings.panels = body.panels;
     if (body.networkTopology !== undefined) config.settings.networkTopology = body.networkTopology;
 
     // Advanced UI Customization Toggles
@@ -293,7 +327,7 @@ export async function PUT(req: NextRequest) {
     if (body.calendarUrl !== undefined) config.settings.calendarUrl = body.calendarUrl;
     if (body.clockDesign !== undefined) config.settings.clockDesign = body.clockDesign;
     if (body.clockTimezone !== undefined) config.settings.clockTimezone = body.clockTimezone;
-    if (body.customCss !== undefined) config.settings.customCss = body.customCss;
+    if (body.customCss !== undefined) config.settings.customCss = sanitizeCustomCss(body.customCss);
     if (body.backgroundImage !== undefined) config.settings.backgroundImage = body.backgroundImage;
     if (body.mobileWallpaper !== undefined) config.settings.mobileWallpaper = body.mobileWallpaper;
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
@@ -339,6 +373,7 @@ export async function PUT(req: NextRequest) {
     if (body.mobileBorderRadius !== undefined) config.settings.mobileBorderRadius = body.mobileBorderRadius;
     if (body.mobileCardOpacity !== undefined) config.settings.mobileCardOpacity = body.mobileCardOpacity;
     if (body.mobileTitleAnimation !== undefined) config.settings.mobileTitleAnimation = body.mobileTitleAnimation;
+    if (body.securityMode !== undefined) config.settings.securityMode = body.securityMode;
     
     writeConfig(config);
     return NextResponse.json(config.settings);
@@ -487,7 +522,7 @@ export async function PUT(req: NextRequest) {
     if (body.description !== undefined) event.description = body.description;
     if (body.isAllDay !== undefined) event.isAllDay = body.isAllDay;
 
-    writeConfig(config);
+    writeCalendar(config.localEvents);
     return NextResponse.json(event);
   }
 
@@ -495,6 +530,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type');
   const id = searchParams.get('id');
@@ -505,7 +544,7 @@ export async function DELETE(req: NextRequest) {
 
   if (type === 'category') {
     config.categories = config.categories.filter(c => c.id !== id);
-    writeConfig(config);
+    writeConfig(config); // Écrit la config de base et services
     return NextResponse.json({ ok: true });
   }
 
@@ -513,7 +552,7 @@ export async function DELETE(req: NextRequest) {
     for (const cat of config.categories) {
       cat.services = cat.services.filter(s => s.id !== id);
     }
-    writeConfig(config);
+    writeServices(config.categories);
     return NextResponse.json({ ok: true });
   }
 
@@ -541,7 +580,7 @@ export async function DELETE(req: NextRequest) {
   if (type === 'localEvent') {
     if (!config.localEvents) config.localEvents = [];
     config.localEvents = config.localEvents.filter((e: any) => e.id !== id);
-    writeConfig(config);
+    writeCalendar(config.localEvents);
     return NextResponse.json({ ok: true });
   }
 

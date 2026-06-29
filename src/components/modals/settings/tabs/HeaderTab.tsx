@@ -11,10 +11,10 @@ import { ToggleSwitch } from '../shared/ToggleSwitch';
 export function HeaderTab() {
   const { config, updateConfig } = useConfig();
   
-  const [openAccordions, setOpenAccordions] = useState<string[]>(['header-layout', 'title']);
+  const [openAccordions, setOpenAccordions] = useState<string[]>(['header-layout']);
 
   const toggleAccordion = (id: string) => {
-    setOpenAccordions(prev => prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]);
+    setOpenAccordions(prev => prev.includes(id) ? [] : [id]);
   };
 
   // Visibility states

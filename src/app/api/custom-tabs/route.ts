@@ -1,14 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readCustomTabs, writeCustomTabs } from '@/lib/customTabs';
+import { verifyToken } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { TabDef } from '@/hooks/useTabs';
 
-export async function GET() {
+function checkAdmin(req: NextRequest): boolean {
+  const token = req.cookies.get('nasdash_session')?.value;
+  if (!token) return false;
+  const payload = verifyToken(token);
+  return payload?.role === 'admin';
+}
+
+import { readConfig } from '@/lib/config';
+import { getSessionFromRequest } from '@/lib/auth';
+
+export async function GET(req: NextRequest) {
+  const config = readConfig();
+
+  // Bloquer l'accès en mode privé si non authentifié
+  if (config.settings?.securityMode === 'private') {
+    const session = getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+    }
+  }
+
   const data = readCustomTabs();
   return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const body = await req.json();
   const { type } = body;
   const data = readCustomTabs();
@@ -43,6 +68,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const body = await req.json();
   const { type, id, tabUpdates, layoutUpdates, layout } = body;
   
@@ -71,6 +100,10 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!checkAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
 

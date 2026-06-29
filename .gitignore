@@ -34,8 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
-# Custom Data
-data/config.json
+# Custom Data — only *.example.json and .gitkeep are committed;
+# all real data files (which may contain tokens, password hashes, topology, etc.) are local-only.
+data/*
+!data/*.example.json
 data/.env
 data/logos/*
 !data/logos/.gitkeep
@@ -46,3 +48,8 @@ data/logos/*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local context (not for GitHub)
+roadmap.md
+context.md
+

@@ -36,7 +36,8 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
     refresh,
     setDeviceModal,
     deleteDevice,
-    reorderDevices
+    reorderDevices,
+    user
   } = useConfig();
   
   const [activeWidgetId, setActiveWidgetId] = React.useState<string | null>(null);
@@ -94,7 +95,11 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
     };
   });
 
-  const visibleWidgets = widgetsList.filter(w => !w.hidden);
+  const visibleWidgets = widgetsList.filter(w => {
+    if (w.hidden) return false;
+    const isAllowed = !user || user.role === 'admin' || !user.allowedWidgets || user.allowedWidgets.length === 0 || user.allowedWidgets.includes(w.id);
+    return isAllowed;
+  });
   
   // Implementation of Freeform Grid with dynamic slots
   const TOTAL_SLOTS = config?.settings?.widgetsTotalSlots || Math.max(5, visibleWidgets.length);

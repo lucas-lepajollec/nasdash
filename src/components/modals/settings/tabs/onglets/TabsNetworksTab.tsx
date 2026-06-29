@@ -121,39 +121,7 @@ export function TabsNetworksTab() {
         </div>
       </SettingsSection>
 
-      {/* Specific Widgets Configuration */}
-      <SettingsSection 
-        title="Widgets Spécifiques" 
-        description="Affichez ou masquez les widgets actifs spécifiquement sur l'onglet Réseaux."
-        isOpen={openSection === 'widgets'}
-        onToggle={(open) => { if(open) setOpenSection('widgets'); else if(openSection === 'widgets') setOpenSection(''); }}
-      >
-        {WIDGET_REGISTRY.map(w => {
-          const hideKey = getWidgetConfigKeys(w.id).hide;
-          const isGloballyHidden = (config?.settings as any)?.[hideKey] ?? w.defaultHidden;
-          
-          if (isGloballyHidden) return null;
 
-          return (
-            <div key={w.id} style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <ToggleSwitch
-                checked={!((tabConf as any)?.[hideKey])}
-                onChange={async (val) => await updateConfig({ 
-                  tabs: { 
-                    ...config?.settings?.tabs, 
-                    networks: { 
-                      ...tabConf, 
-                      [hideKey]: !val 
-                    } 
-                  } 
-                })}
-                label={`${w.icon} ${w.name}`}
-                sublabel="Afficher le widget sur cet onglet"
-              />
-            </div>
-          );
-        })}
-      </SettingsSection>
 
       {/* Network Schema Actions */}
       <SettingsSection 

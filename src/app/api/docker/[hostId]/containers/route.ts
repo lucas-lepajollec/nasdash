@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { readConfig } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,13 +21,8 @@ function clearErrorSmartly(hostId: string, context: string) {
 }
 // ---------------------------------------------
 
-function getConfig() {
-  const configPath = path.join(process.cwd(), 'data', 'config.json');
-  return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-}
-
 function getDockerHost(hostId: string) {
-  const config = getConfig();
+  const config = readConfig();
   const hosts = config.dockerHosts || [];
   return hosts.find((h: any) => h.id === hostId);
 }
@@ -56,11 +50,23 @@ async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET') {
   }
 }
 
+import { getSessionFromRequest } from '@/lib/auth';
+
 // GET /api/docker/[hostId]/containers — list all containers
 export async function GET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
+  const config = readConfig();
+
+  // Bloquer l'accès en mode privé si non authentifié
+  if (config.settings?.securityMode === 'private') {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+    }
+  }
+
   let resolvedHostId = 'unknown';
   try {
     const { hostId } = await segmentData.params;

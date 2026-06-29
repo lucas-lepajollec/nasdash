@@ -1,0 +1,35 @@
+[
+  {
+    "id": "category-1",
+    "title": "Applications",
+    "emoji": "🚀",
+    "order": 0,
+    "layout": "bento",
+    "isSecret": false,
+    "services": [
+      {
+        "id": "service-1",
+        "name": "Service Exemple 1",
+        "logo": "/api/logos/logo.png",
+        "localUrl": "http://192.168.1.10:3000",
+        "secondaryUrl": "http://100.100.100.100:3000"
+      },
+      {
+        "id": "service-2",
+        "name": "Service Exemple 2",
+        "logo": "/api/logos/logo.png",
+        "localUrl": "http://192.168.1.10:8080",
+        "secondaryUrl": "http://100.100.100.100:8080"
+      }
+    ]
+  },
+  {
+    "id": "category-2",
+    "title": "Outils",
+    "emoji": "🛠️",
+    "order": 1,
+    "layout": "standard",
+    "isSecret": false,
+    "services": []
+  }
+]

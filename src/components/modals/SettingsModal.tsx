@@ -136,6 +136,7 @@ import { AppearanceTab } from './settings/tabs/AppearanceTab';
 import { HeaderTab } from './settings/tabs/HeaderTab';
 import { MobileTab } from './settings/tabs/MobileTab';
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
+import { SecurityTab } from './settings/tabs/SecurityTab';
 import { LibraryTab } from './settings/tabs/LibraryTab';
 import { TabsHomeTab } from './settings/tabs/onglets/TabsHomeTab';
 import { TabsWidgetsTab } from './settings/tabs/onglets/TabsWidgetsTab';
@@ -426,6 +427,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               {currentTab === 'header' && '📋 En-tête'}
               {currentTab === 'mobile' && '📱 Mobile'}
               {currentTab === 'developer' && '⚙️ Menu Développeur'}
+              {currentTab === 'security' && '🔑 Sécurité & Utilisateurs'}
               {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
               {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
               {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
@@ -465,6 +467,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
              TAB: DEVELOPER
              ========================================== */}
           {currentTab === 'developer' && <DeveloperTab />}
+
+          {/* ==========================================
+             TAB: SECURITY
+             ========================================== */}
+          {currentTab === 'security' && <SecurityTab />}
 
           {/* ==========================================
              TAB 2: LIBRARY OVERVIEW (WIDGET LIBRARY)

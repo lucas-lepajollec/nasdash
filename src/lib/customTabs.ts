@@ -17,7 +17,16 @@ const DEFAULT_DATA: CustomTabsData = {
 
 const EXAMPLE_TABS_FILE = path.join(process.cwd(), 'data', 'custom_tabs.example.json');
 
+const globalAny: any = global;
+if (!globalAny.__cachedCustomTabs) {
+  globalAny.__cachedCustomTabs = null;
+}
+
 export function readCustomTabs(): CustomTabsData {
+  if (globalAny.__cachedCustomTabs) {
+    return JSON.parse(JSON.stringify(globalAny.__cachedCustomTabs));
+  }
+
   try {
     if (!fs.existsSync(CUSTOM_TABS_FILE)) {
       if (fs.existsSync(EXAMPLE_TABS_FILE)) {
@@ -28,7 +37,9 @@ export function readCustomTabs(): CustomTabsData {
     
     if (fs.existsSync(CUSTOM_TABS_FILE)) {
       const data = fs.readFileSync(CUSTOM_TABS_FILE, 'utf-8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      globalAny.__cachedCustomTabs = JSON.parse(JSON.stringify(parsed));
+      return parsed;
     }
   } catch (error) {
     console.error('Error reading custom tabs:', error);
@@ -43,6 +54,7 @@ export function writeCustomTabs(data: CustomTabsData): void {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(CUSTOM_TABS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    globalAny.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
   } catch (error) {
     console.error('Error writing custom tabs:', error);
   }

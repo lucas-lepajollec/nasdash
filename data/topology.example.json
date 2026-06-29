@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {
+      "id": "node-router",
+      "name": "Routeur",
+      "type": "infra",
+      "icon": "🌐",
+      "ip": "192.168.1.1"
+    },
+    {
+      "id": "node-server",
+      "name": "Serveur Principal",
+      "type": "device",
+      "icon": "🖥️",
+      "ip": "192.168.1.20"
+    },
+    {
+      "id": "node-nas",
+      "name": "NAS",
+      "type": "device",
+      "icon": "💾",
+      "ip": "192.168.1.30"
+    },
+    {
+      "id": "node-immich",
+      "name": "Immich",
+      "type": "stdsvc",
+      "icon": "📦",
+      "ip": "192.168.1.30",
+      "ports": [2283]
+    }
+  ],
+  "groups": [],
+  "connections": [
+    {
+      "id": "conn-1",
+      "fromId": "node-router",
+      "toId": "node-server",
+      "label": "1 Gbps",
+      "type": "bidirectional"
+    },
+    {
+      "id": "conn-2",
+      "fromId": "node-router",
+      "toId": "node-nas",
+      "label": "1 Gbps",
+      "type": "bidirectional"
+    },
+    {
+      "id": "conn-3",
+      "fromId": "node-nas",
+      "toId": "node-immich",
+      "type": "directional"
+    }
+  ]
+}

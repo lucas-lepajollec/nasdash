@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
+import { getSessionFromRequest } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const config = readConfig();
+
+    // Bloquer l'accès en mode privé si non authentifié
+    if (config.settings?.securityMode === 'private') {
+      const session = getSessionFromRequest(request);
+      if (!session) {
+        return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+      }
+    }
+
     const { tailscaleTailnet, tailscaleClientId, tailscaleClientSecret } = config.settings;
 
     if (!tailscaleTailnet || !tailscaleClientId || !tailscaleClientSecret) {

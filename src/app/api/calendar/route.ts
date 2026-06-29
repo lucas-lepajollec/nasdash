@@ -1,14 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readConfig } from '@/lib/config';
+import { getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    const config = readConfig();
+
+    // Bloquer l'accès en mode privé si non authentifié
+    if (config.settings?.securityMode === 'private') {
+      const session = getSessionFromRequest(request);
+      if (!session) {
+        return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+      }
+    }
+
     const { searchParams } = new URL(request.url);
     const url = searchParams.get('url');
 
     if (!url) {
       return NextResponse.json({ error: 'Missing calendar URL' }, { status: 400 });
+    }
+
+    // Prévention SSRF: Valider que l'URL demandée est bien celle configurée par l'admin
+    const configUrl = config.settings?.calendarUrl;
+    if (url !== configUrl) {
+      return NextResponse.json({ error: 'Accès non autorisé à cette URL.' }, { status: 403 });
     }
 
     // Fetch natively

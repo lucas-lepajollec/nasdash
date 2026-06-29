@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { DashboardConfig, Category, Service, Device } from '@/lib/types';
+import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 
 interface ConfigContextType {
   config: DashboardConfig | null;
@@ -54,6 +55,12 @@ interface ConfigContextType {
   setCalendarEventModal: (state: { open: boolean; date?: string; events?: any[] }) => void;
   viewEventModal: { open: boolean; event?: any };
   setViewEventModal: (state: { open: boolean; event?: any }) => void;
+
+  // Authentification
+  user: { username: string; role: 'admin' | 'viewer'; allowedTabs?: string[]; allowedWidgets?: string[]; isAnonymous?: boolean } | null;
+  authLoading: boolean;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -62,14 +69,86 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const [config, setConfig] = useState<DashboardConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSecretSections, setShowSecretSections] = useState(false);
-  const [activeBgUrl, setActiveBgUrl] = useState('');
+  const [activeBgUrl, setActiveBgUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('nd-bg-preset') || '';
+    }
+    return '';
+  });
   const [isMobile, setIsMobile] = useState(false);
   const [bgStyle, setBgStyle] = useState({ top: '-10vh', height: '120vh' });
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('nd-theme-preset');
+      if (savedTheme && savedTheme !== 'nasdash') {
+        document.body.classList.add(`theme-${savedTheme}`);
+        if (document.body.classList.contains('light')) {
+          document.body.classList.remove('light');
+          localStorage.setItem('nd-theme', 'dark');
+        }
+      }
+    }
+  }, []);
+
+  // Authentification
+  const [user, setUser] = useState<{ username: string; role: 'admin' | 'viewer'; allowedTabs?: string[]; allowedWidgets?: string[]; isAnonymous?: boolean } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      const data = await res.json();
+      setUser(data.user);
+    } catch (e) {
+      console.error('Erreur vérification session:', e);
+    } finally {
+      setAuthLoading(false);
+    }
+  }, []);
+
+  const logout = async () => {
+    try {
+      // Fermer l'EventSource de manière proactive pour libérer immédiatement le slot de connexion du navigateur
+      if (typeof window !== 'undefined' && (window as any).globalEventSource) {
+        try {
+          (window as any).globalEventSource.close();
+          (window as any).globalEventSource = null;
+        } catch {}
+      }
+      // Attendre la suppression effective du cookie de session
+      await fetch('/api/auth/logout', { method: 'POST' });
+      
+      // Mettre à jour l'état local uniquement après la suppression réussie du cookie
+      setUser(null);
+      
+      // Rediriger vers la page de connexion
+      window.location.href = '/login';
+    } catch (e) {
+      console.error('Erreur déconnexion:', e);
+      window.location.href = '/login';
+    }
+  };
+
+  // Wrapper Fetch avec validation de session (intercepte les codes 401 et 403)
+  const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}) => {
+    try {
+      const res = await fetch(url, options);
+      if (res.status === 401 || res.status === 403) {
+        // Alerte et redirection
+        alert("Accès refusé. Session administrateur requise.");
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+        throw new Error('Unauthorized');
+      }
+      return res;
+    } catch (err) {
+      console.error('Erreur Fetch sécurisé:', err);
+      throw err;
+    }
+  }, []);
+
+  useEffect(() => {
     if (window.innerWidth <= 768) {
-      // Use screen.height to get a stable value that doesn't change
-      // when the mobile browser address bar appears/disappears
       const h = window.screen.height;
       setBgStyle({
         top: `-${h * 0.1}px`,
@@ -77,6 +156,12 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      setShowSecretSections(false);
+    }
+  }, [user]);
 
   // Modals
   const [serviceModal, setServiceModal] = useState<{
@@ -127,7 +212,20 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchConfig();
-  }, [fetchConfig]);
+    fetchUser();
+  }, [fetchConfig, fetchUser]);
+
+  // Redirection automatique vers /login en mode privé si non authentifié
+  useEffect(() => {
+    if (loading || authLoading || !config) return;
+    
+    const securityMode = config.settings?.securityMode || 'public';
+    const isLoginPage = window.location.pathname === '/login';
+    
+    if (securityMode === 'private' && !user && !isLoginPage) {
+      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    }
+  }, [config, user, loading, authLoading]);
 
   useEffect(() => {
     if (!config) return;
@@ -140,6 +238,14 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     const activeBg = (isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || '');
     
     setActiveBgUrl(activeBg);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nd-theme-preset', activeTheme);
+      if (activeBg) {
+        localStorage.setItem('nd-bg-preset', activeBg);
+      } else {
+        localStorage.removeItem('nd-bg-preset');
+      }
+    }
     
     // Clean up legacy inline styles if they exist
     document.body.style.backgroundImage = '';
@@ -211,7 +317,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addCategory = async (title: string, emoji: string, isSecret = false, layout?: Category['layout']) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'category', title, emoji, isSecret, layout }),
@@ -220,7 +326,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'category', id, ...updates }),
@@ -229,12 +335,12 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteCategory = async (id: string) => {
-    const res = await fetch(`/api/config?type=category&id=${id}`, { method: 'DELETE' });
+    const res = await fetchWithAuth(`/api/config?type=category&id=${id}`, { method: 'DELETE' });
     if (res.ok) await fetchConfig();
   };
 
   const addService = async (categoryId: string, service: Omit<Service, 'id'>) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'service', categoryId, ...service }),
@@ -243,7 +349,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateService = async (id: string, updates: Partial<Service>) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'service', id, ...updates }),
@@ -252,14 +358,14 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteService = async (id: string) => {
-    const res = await fetch(`/api/config?type=service&id=${id}`, { method: 'DELETE' });
+    const res = await fetchWithAuth(`/api/config?type=service&id=${id}`, { method: 'DELETE' });
     if (res.ok) await fetchConfig();
   };
 
   const saveCategories = async (newCategories: Category[]) => {
     if (!config) return;
     setConfig(prev => prev ? { ...prev, categories: newCategories } : prev);
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'reorder', categories: newCategories }),
@@ -271,7 +377,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     if (!config) return;
     const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length);
     setConfig(prev => prev ? { ...prev, settings: { ...prev.settings, totalSlots: currentSlots + 1 } } : prev);
-    await fetch('/api/config', {
+    await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'settings', totalSlots: currentSlots + 1 }),
@@ -289,7 +395,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       settings: { ...prev.settings, widgetsTotalSlots: currentSlots + 1, widgetsOrder: newGrid }
     } : prev);
 
-    await fetch('/api/config', {
+    await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'settings', widgetsTotalSlots: currentSlots + 1, widgetsOrder: newGrid }),
@@ -311,13 +417,13 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       categories: newCategories
     } : prev);
 
-    await fetch('/api/config', {
+    await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'settings', totalSlots: newTotalSlots }),
     });
 
-    await fetch('/api/config', {
+    await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'reorder', categories: newCategories }),
@@ -325,7 +431,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addDevice = async (device: Omit<Device, 'id'>) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'device', ...device }),
@@ -336,7 +442,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const reorderDevices = async (newDevices: Device[]) => {
     if (!config) return;
     setConfig(prev => prev ? { ...prev, devices: newDevices } : prev);
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'reorderDevices', devices: newDevices }),
@@ -345,7 +451,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateDevice = async (id: string, updates: Partial<Device>) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'device', id, ...updates }),
@@ -354,7 +460,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteDevice = async (id: string) => {
-    const res = await fetch(`/api/config?type=device&id=${id}`, { method: 'DELETE' });
+    const res = await fetchWithAuth(`/api/config?type=device&id=${id}`, { method: 'DELETE' });
     if (res.ok) await fetchConfig();
   };
 
@@ -370,7 +476,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'homeWidgetProps', id: widgetId, props: newProps }),
@@ -390,7 +496,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'settings', ...updates }),
@@ -406,13 +512,13 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   const uploadLogo = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const res = await fetchWithAuth('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     return data.url;
   };
 
   const addDockerAction = async (action: any) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'dockerAction', ...action }),
@@ -421,7 +527,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateDockerAction = async (id: string, updates: any) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'dockerAction', id, ...updates }),
@@ -430,14 +536,14 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteDockerAction = async (id: string) => {
-    const res = await fetch(`/api/config?type=dockerAction&id=${id}`, { method: 'DELETE' });
+    const res = await fetchWithAuth(`/api/config?type=dockerAction&id=${id}`, { method: 'DELETE' });
     if (res.ok) await fetchConfig();
   };
 
   const reorderDockerActions = async (newActions: any[]) => {
     if (!config) return;
     setConfig(prev => prev ? { ...prev, dockerActions: newActions } : prev);
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'reorderDockerActions', dockerActions: newActions }),
@@ -446,25 +552,25 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addLocalEvent = async (event: Omit<any, 'id'>) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config/calendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'localEvent', ...event }),
+      body: JSON.stringify(event),
     });
     if (res.ok) await fetchConfig();
   };
 
   const updateLocalEvent = async (id: string, updates: any) => {
-    const res = await fetch('/api/config', {
+    const res = await fetchWithAuth('/api/config/calendar', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'localEvent', id, ...updates }),
+      body: JSON.stringify({ id, ...updates }),
     });
     if (res.ok) await fetchConfig();
   };
 
   const deleteLocalEvent = async (id: string) => {
-    const res = await fetch(`/api/config?type=localEvent&id=${id}`, { method: 'DELETE' });
+    const res = await fetchWithAuth(`/api/config/calendar?id=${id}`, { method: 'DELETE' });
     if (res.ok) await fetchConfig();
   };
 
@@ -472,8 +578,8 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     config,
     loading,
     refresh: fetchConfig,
-    showSecretSections,
-    setShowSecretSections,
+    showSecretSections: user?.role === 'admin' ? showSecretSections : false,
+    setShowSecretSections: user?.role === 'admin' ? setShowSecretSections : () => {},
     addCategory,
     updateCategory,
     deleteCategory,
@@ -513,6 +619,12 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
     setCalendarEventModal,
     viewEventModal,
     setViewEventModal,
+
+    // Auth exports
+    user,
+    authLoading,
+    logout,
+    refreshUser: fetchUser
   };
 
   return (
@@ -534,7 +646,7 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
         }}
       />
       {config?.settings?.customCss && (
-        <style dangerouslySetInnerHTML={{ __html: config.settings.customCss }} />
+        <style dangerouslySetInnerHTML={{ __html: sanitizeCustomCss(config.settings.customCss) }} />
       )}
       {children}
     </ConfigContext.Provider>
