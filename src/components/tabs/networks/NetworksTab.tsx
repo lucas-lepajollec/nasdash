@@ -1,5 +1,6 @@
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
+import { useStickyRef } from '@/hooks/useStickyRef';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { NetworkSidebar } from './NetworkSidebar';
 import { TopologyMap } from './TopologyMap';
@@ -15,34 +16,9 @@ interface NetworksTabProps {
 export default function NetworksTab({ editMode, searchQuery, isVisible, showSensitive = true }: NetworksTabProps) {
   const { config, user } = useConfig();
 
-  const sidebarRef = React.useRef<HTMLElement>(null);
-  const widgetsSidebarRef = React.useRef<HTMLElement>(null);
-  const [sidebarSticky, setSidebarSticky] = React.useState(true);
-  const [widgetsSticky, setWidgetsSticky] = React.useState(true);
+  const [sidebarRef, sidebarSticky] = useStickyRef<HTMLElement>([config, editMode, isVisible]);
+  const [widgetsSidebarRef, widgetsSticky] = useStickyRef<HTMLElement>([config, editMode, isVisible]);
 
-  React.useEffect(() => {
-    if (!isVisible) return;
-    const checkSticky = () => {
-      if (sidebarRef.current) {
-        setSidebarSticky(sidebarRef.current.scrollHeight + 40 < window.innerHeight);
-      }
-      if (widgetsSidebarRef.current) {
-        setWidgetsSticky(widgetsSidebarRef.current.scrollHeight + 40 < window.innerHeight);
-      }
-    };
-
-    checkSticky();
-    window.addEventListener('resize', checkSticky);
-    
-    const observer = new ResizeObserver(checkSticky);
-    if (sidebarRef.current) observer.observe(sidebarRef.current);
-    if (widgetsSidebarRef.current) observer.observe(widgetsSidebarRef.current);
-
-    return () => {
-      window.removeEventListener('resize', checkSticky);
-      observer.disconnect();
-    };
-  }, [config, editMode, isVisible]);
 
   if (!isVisible) return null;
 
@@ -96,12 +72,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
       <aside 
         ref={sidebarRef}
         className="nd-networks-sidebar" 
-        style={{ 
-          order: networksSidebarOrder,
-          position: sidebarSticky ? 'sticky' : 'static',
-          maxHeight: 'none',
-          overflowY: 'visible'
-        }}
+        style={{ order: networksSidebarOrder, position: sidebarSticky ? 'sticky' : 'static' }}
       >
         <NetworkSidebar />
       </aside>
@@ -116,12 +87,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
         <aside 
           ref={widgetsSidebarRef}
           className="nd-networks-widgets-sidebar" 
-          style={{ 
-            order: widgetsSidebarOrder,
-            position: widgetsSticky ? 'sticky' : 'static',
-            maxHeight: 'none',
-            overflowY: 'visible'
-          }}
+          style={{ order: widgetsSidebarOrder, position: widgetsSticky ? 'sticky' : 'static' }}
         >
           <WidgetPanel panelId="networks-widgets" editMode={editMode} showSensitive={showSensitive} />
         </aside>

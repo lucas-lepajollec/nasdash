@@ -214,7 +214,7 @@ export default function Shell() {
           </div>
 
           {/* Networks */}
-          <div className="flex-1" style={{ display: activeTab === 'networks' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <div className="flex-1" style={{ display: activeTab === 'networks' ? 'block' : 'none' }}>
             <Suspense fallback={<LoadingView text="Chargement Réseaux…" />}>
               <NetworksTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'networks'} showSensitive={showSensitive} />
             </Suspense>

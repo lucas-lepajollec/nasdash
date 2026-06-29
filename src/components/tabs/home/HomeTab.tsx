@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import BentoGrid from './BentoGrid';
 import Footer from '../../layout/Footer';
 import { useConfig } from '@/hooks/useConfig';
+import { useStickyRef } from '@/hooks/useStickyRef';
 import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { WidgetPanel } from '../../shared/WidgetPanel';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
@@ -62,34 +63,9 @@ export default function HomeTab({
     user
   } = useConfig();
 
-  const leftSidebarRef = useRef<HTMLElement>(null);
-  const rightSidebarRef = useRef<HTMLElement>(null);
-  const [leftSticky, setLeftSticky] = useState(true);
-  const [rightSticky, setRightSticky] = useState(true);
+  const [leftSidebarRef, leftSticky] = useStickyRef<HTMLElement>([config, editMode]);
+  const [rightSidebarRef, rightSticky] = useStickyRef<HTMLElement>([config, editMode]);
 
-  useEffect(() => {
-    const checkSticky = () => {
-      if (leftSidebarRef.current) {
-        setLeftSticky(leftSidebarRef.current.scrollHeight + 40 < window.innerHeight);
-      }
-      if (rightSidebarRef.current) {
-        setRightSticky(rightSidebarRef.current.scrollHeight + 40 < window.innerHeight);
-      }
-    };
-
-    checkSticky();
-    window.addEventListener('resize', checkSticky);
-    
-    // Check when DOM updates
-    const observer = new ResizeObserver(checkSticky);
-    if (leftSidebarRef.current) observer.observe(leftSidebarRef.current);
-    if (rightSidebarRef.current) observer.observe(rightSidebarRef.current);
-
-    return () => {
-      window.removeEventListener('resize', checkSticky);
-      observer.disconnect();
-    };
-  }, [config, editMode]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -206,7 +182,7 @@ export default function HomeTab({
 
   if (showLeftPanel && hasWidgets('home-left')) {
     const el = (
-      <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
+      <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static' }}>
         <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} />
       </aside>
     );
@@ -216,7 +192,7 @@ export default function HomeTab({
 
   if (showRightPanel && hasWidgets('home-right')) {
     const el = (
-      <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static', maxHeight: 'none', overflowY: 'visible' }}>
+      <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static' }}>
         <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} />
       </aside>
     );

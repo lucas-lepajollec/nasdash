@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDocker } from '@/hooks/useDocker';
+import { useStickyRef } from '@/hooks/useStickyRef';
 import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Search, Loader2, AlertCircle, ChevronDown, Terminal, Layers, Database, Plus, X, RefreshCw } from 'lucide-react';
 import ConfirmModal from '../../modals/ConfirmModal';
 import useSWR from 'swr';
@@ -701,34 +702,8 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
   const [showHostForm, setShowHostForm] = useState(false);
   const [localSearch, setLocalSearch] = useState('');
 
-  const sidebarRef = useRef<HTMLElement>(null);
-  const widgetsSidebarRef = useRef<HTMLElement>(null);
-  const [sidebarSticky, setSidebarSticky] = useState(true);
-  const [widgetsSticky, setWidgetsSticky] = useState(true);
-
-  useEffect(() => {
-    if (!isVisible) return;
-    const checkSticky = () => {
-      if (sidebarRef.current) {
-        setSidebarSticky(sidebarRef.current.scrollHeight + 40 < window.innerHeight);
-      }
-      if (widgetsSidebarRef.current) {
-        setWidgetsSticky(widgetsSidebarRef.current.scrollHeight + 40 < window.innerHeight);
-      }
-    };
-
-    checkSticky();
-    window.addEventListener('resize', checkSticky);
-    
-    const observer = new ResizeObserver(checkSticky);
-    if (sidebarRef.current) observer.observe(sidebarRef.current);
-    if (widgetsSidebarRef.current) observer.observe(widgetsSidebarRef.current);
-
-    return () => {
-      window.removeEventListener('resize', checkSticky);
-      observer.disconnect();
-    };
-  }, [config, editMode, isVisible]);
+  const [sidebarRef, sidebarSticky] = useStickyRef<HTMLElement>([config, editMode, isVisible]);
+  const [widgetsSidebarRef, widgetsSticky] = useStickyRef<HTMLElement>([config, editMode, isVisible]);
 
   const {
     activeHostId, setActiveHostId, activeHost,
