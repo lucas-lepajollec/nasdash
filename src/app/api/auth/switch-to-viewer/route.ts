@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       name: 'nasdash_session',
       value: newToken,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       path: '/',
       maxAge: 30 * 24 * 60 * 60, // 30 jours
       sameSite: 'lax'

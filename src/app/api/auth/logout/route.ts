@@ -8,7 +8,7 @@ export async function POST() {
     name: 'nasdash_session',
     value: '',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     path: '/',
     maxAge: 0, // Expirer immédiatement
     sameSite: 'lax'
