@@ -1290,7 +1290,7 @@ body {
   .nd-header {
     position: relative;
     gap: 8px;
-    padding: 12px 20px;
+    padding: 12px 12px;
     margin-bottom: 8px;
   }
 
@@ -1328,11 +1328,14 @@ body {
   }
 
   .nd-search {
-    flex: 0 0 auto;
-    width: 135px;
+    flex: 1;
+    width: 100%;
+    min-width: 100px;
+    max-width: 340px;
   }
 
   .nd-search input {
+    width: 100%;
     font-size: 16px !important;
     padding: 0 10px 0 30px;
   }
@@ -2671,7 +2674,7 @@ body {
   .nd-networks-layout {
     flex-direction: column;
     gap: 16px;
-    padding: 0 10px 20px;
+    padding: 0 12px 20px;
     align-items: stretch;
   }
   .nd-networks-widgets-sidebar {
@@ -2849,6 +2852,24 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   stroke-dasharray: 6, 4;
   animation: nd-dash-flow 1.5s linear infinite;
   pointer-events: none;
+}
+
+/* Mobile Edit Actions Toolbar */
+.nd-mobile-edit-toolbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nd-mobile-edit-toolbar {
+    display: flex;
+    padding: 0 12px;
+    background: transparent;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 10;
+    margin-bottom: 16px;
+  }
 }
 
 

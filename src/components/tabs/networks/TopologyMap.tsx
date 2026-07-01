@@ -445,6 +445,47 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       setIsMobileLayout(window.innerWidth <= 960);
     }
   }, []);
+
+  // Listen for edit action toolbar events dispatched from the Header
+  useEffect(() => {
+    const onAddGroup = () => {
+      setGroupName('');
+      setGroupType('infra');
+      setSelectedNodeIds([]);
+      setMergeIncomingLinks(false);
+      setShowAddGroup(true);
+    };
+    const onAddLink = () => {
+      setLinkFrom('');
+      setLinkTo('');
+      setLinkLabel('');
+      setLinkDir('directional');
+      setLinkFromPort('auto');
+      setLinkToPort('auto');
+      setShowAddLink(true);
+    };
+    const onAddNode = () => {
+      setNodeName('');
+      setNodeType('stdsvc');
+      setNodeIcon('📦');
+      setNodeIp('');
+      setNodePorts('');
+      setNodeGroupId('');
+      setLinkedServiceId('');
+      setLinkedDeviceId('');
+      setShowAddNode(true);
+    };
+
+    window.addEventListener('networkActionAddGroup', onAddGroup);
+    window.addEventListener('networkActionAddLink', onAddLink);
+    window.addEventListener('networkActionAddNode', onAddNode);
+
+    return () => {
+      window.removeEventListener('networkActionAddGroup', onAddGroup);
+      window.removeEventListener('networkActionAddLink', onAddLink);
+      window.removeEventListener('networkActionAddNode', onAddNode);
+    };
+  }, []);
   
   // Modals / forms state
   const [showAddNode, setShowAddNode] = useState(false);
@@ -2315,47 +2356,9 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
       
-      {/* Topology Toolbar */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Network size={16} style={{ color: 'var(--nd-accent)' }} />
-          <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>Cartographie Réseau</span>
-        </div>
-
-        {editMode && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button 
-              className="nd-btn" 
-              onClick={() => {
-                setGroupName('');
-                setGroupType('infra');
-                setSelectedNodeIds([]);
-                setMergeIncomingLinks(false);
-                setShowAddGroup(true);
-              }} 
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', fontSize: '0.68rem', height: 26 }}
-            >
-              <Layers size={12} /> Groupe
-            </button>
-            <button className="nd-btn" onClick={() => {
-              setLinkFrom('');
-              setLinkTo('');
-              setLinkLabel('');
-              setLinkDir('directional');
-              setLinkFromPort('auto');
-              setLinkToPort('auto');
-              setShowAddLink(true);
-            }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', fontSize: '0.68rem', height: 26 }}>
-              <PlusCircle size={12} /> Lier
-            </button>
-            <button className="nd-btn nd-btn-accent" onClick={() => setShowAddNode(true)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', fontSize: '0.68rem', height: 26 }}>
-              <Plus size={12} /> Nœud
-            </button>
-          </div>
-        )}
-
-        {/* Empty state importer trigger */}
-        {topology.nodes.length === 0 && (
+      {/* Empty state importer trigger */}
+      {topology.nodes.length === 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '0 4px', marginBottom: 12 }}>
           <button 
             className="nd-btn" 
             onClick={() => {
@@ -2377,8 +2380,8 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             <Sparkles size={13} />
             <span>Générer la carte automatiquement</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Map Canvas */}
       <div 

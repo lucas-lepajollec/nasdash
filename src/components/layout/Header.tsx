@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Pencil, Settings, Plus, X, Shield, Eye, EyeOff, Menu, LogIn, LogOut, User } from 'lucide-react';
+import { Search, Pencil, Settings, Plus, X, Shield, Eye, EyeOff, Menu, LogIn, LogOut, User, ChevronDown } from 'lucide-react';
 import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
@@ -35,6 +35,62 @@ export default function Header(props: HeaderProps) {
   const currentTabDef = props.tabs?.find(t => t.id === props.activeTab);
   const isCustomTab = currentTabDef?.isCustom === true;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
+
+  interface EditAction {
+    label: string;
+    onClick: () => void;
+  }
+
+  const getEditActions = (): EditAction[] => {
+    if (!props.editMode) return [];
+
+    if (props.activeTab === 'dashboard' || !props.activeTab) {
+      return [
+        {
+          label: 'Créer un emplacement',
+          onClick: () => props.onAddSlot?.(),
+        },
+        {
+          label: 'Ajouter un widget',
+          onClick: () => props.onAddWidget?.(),
+        },
+        {
+          label: 'Créer une catégorie',
+          onClick: () => props.onAddCategory?.(),
+        }
+      ];
+    }
+
+    if (props.activeTab === 'networks') {
+      return [
+        {
+          label: 'Créer un groupe',
+          onClick: () => window.dispatchEvent(new Event('networkActionAddGroup')),
+        },
+        {
+          label: 'Lier des nœuds',
+          onClick: () => window.dispatchEvent(new Event('networkActionAddLink')),
+        },
+        {
+          label: 'Créer un nœud',
+          onClick: () => window.dispatchEvent(new Event('networkActionAddNode')),
+        }
+      ];
+    }
+
+    if (isCustomTab) {
+      return [
+        {
+          label: 'Structure',
+          onClick: () => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }),
+        }
+      ];
+    }
+
+    return [];
+  };
 
   // Settings
   const hideHeaderTitle = config?.settings?.hideHeaderTitle;
@@ -173,35 +229,90 @@ export default function Header(props: HeaderProps) {
 
   const ActionsDesktop = () => {
     const { user, logout } = useConfig();
+    const actions = getEditActions();
+
     return (
       <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {props.editMode && (isHome || props.activeTab === 'widgets' || isCustomTab) && (
+        {props.editMode && actions.length > 0 && (
           <div style={{ display: 'flex', gap: 8 }}>
-            {(isHome || props.activeTab === 'widgets') && (
-              <>
-                <button className="nd-btn" onClick={props.onAddSlot} title="Ajouter un emplacement">
-                  <Plus size={12} />
-                  Emplacement
-                </button>
-                {isHome && (
-                  <button className="nd-btn" onClick={props.onAddWidget} title="Ajouter un widget">
-                    <Plus size={12} />
-                    Widget
-                  </button>
-                )}
-              </>
-            )}
-            {isHome && (
-              <button className="nd-btn" onClick={props.onAddCategory}>
+            {actions.length === 1 ? (
+              <button className="nd-btn" onClick={actions[0].onClick}>
                 <Plus size={12} />
-                Catégorie
+                {actions[0].label}
               </button>
-            )}
-            {isCustomTab && (
-              <button className="nd-btn" onClick={() => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab })}>
-                <Pencil size={12} />
-                Structure
-              </button>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <button 
+                  className="nd-btn" 
+                  onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
+                >
+                  <Plus size={12} />
+                  Actions
+                  <ChevronDown size={12} style={{ transform: desktopDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+                {desktopDropdownOpen && (
+                  <>
+                    <div 
+                      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
+                      onClick={() => setDesktopDropdownOpen(false)} 
+                    />
+                    <div 
+                      style={{ 
+                        position: 'absolute', 
+                        top: 'calc(100% + 6px)', 
+                        right: 0, 
+                        background: 'var(--nd-card-bg)', 
+                        border: '1px solid var(--nd-card-border)', 
+                        borderRadius: 'var(--nd-card-radius)', 
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
+                        zIndex: 1000, 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        padding: '4px',
+                        minWidth: '160px',
+                        animation: 'nd-fade-in 0.15s ease-out'
+                      }}
+                    >
+                      {actions.map((act, idx) => (
+                        <button
+                          key={idx}
+                          className="nd-dropdown-item"
+                          onClick={() => {
+                            act.onClick();
+                            setDesktopDropdownOpen(false);
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--nd-text-muted)',
+                            fontSize: '0.72rem',
+                            fontWeight: 500,
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderRadius: 'calc(var(--nd-card-radius) * 0.8)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            width: '100%',
+                            transition: 'background 0.15s, color 0.15s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                            e.currentTarget.style.color = 'var(--nd-text)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                            e.currentTarget.style.color = 'var(--nd-text-muted)';
+                          }}
+                        >
+                          {act.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
             <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px', alignSelf: 'center' }} />
           </div>
@@ -277,21 +388,145 @@ export default function Header(props: HeaderProps) {
         </div>
 
         {/* Mobile Layout */}
-        <div className="nd-header-mobile" style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: '12px' }}>
-            {renderElement(layoutMobile.left || 'title', true)}
-            {renderElement(layoutMobile.center || 'search', true)}
-          </div>
+        {(() => {
+          const leftType = layoutMobile.left || 'title';
+          const centerType = layoutMobile.center || 'search';
+          const hasLeft = leftType !== 'none';
+          const hasCenter = centerType !== 'none';
+          return (
+            <div className="nd-header-mobile" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              {/* Left Element */}
+              {hasLeft && (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  flex: leftType === 'search' ? '1 1 340px' : '1 1 0%', 
+                  maxWidth: leftType === 'search' ? '340px' : 'none', 
+                  minWidth: leftType === 'search' ? '100px' : 'max-content', 
+                  justifyContent: 'flex-start' 
+                }}>
+                  {renderElement(leftType, true)}
+                </div>
+              )}
 
-          <div className="nd-header-actions nd-mobile-actions pr-2">
-            <button className={`nd-btn ${mobileMenuOpen ? 'nd-btn-active' : ''}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              <Menu size={16} />
-            </button>
-          </div>
-        </div>
+              {/* Center Element */}
+              {hasCenter && (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  flex: centerType === 'search' ? '1 1 340px' : '0 0 auto', 
+                  maxWidth: centerType === 'search' ? '340px' : 'none', 
+                  minWidth: 0, 
+                  justifyContent: 'center' 
+                }}>
+                  {renderElement(centerType, true)}
+                </div>
+              )}
+
+              {/* Right Element (Burger menu) */}
+              <div className="nd-header-actions nd-mobile-actions pr-2" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                flex: '1 1 0%', 
+                minWidth: 'max-content', 
+                justifyContent: 'flex-end' 
+              }}>
+                <button className={`nd-btn ${mobileMenuOpen ? 'nd-btn-active' : ''}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                  <Menu size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
       </header>
+
+      {/* Mobile Edit Actions Toolbar (rendered below header in editMode for dashboard, networks, custom tabs) */}
+      {props.editMode && (() => {
+        const actions = getEditActions();
+        if (actions.length === 0) return null;
+        return (
+          <div className="flex md:hidden nd-mobile-edit-toolbar" style={{ width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ position: 'relative', width: '100%' }}>
+              {actions.length === 1 ? (
+                <button 
+                  className="nd-btn" 
+                  onClick={actions[0].onClick}
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  <Plus size={12} />
+                  {actions[0].label}
+                </button>
+              ) : (
+                <>
+                  <button 
+                    className="nd-btn" 
+                    onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    <Plus size={12} />
+                    Actions
+                    <ChevronDown size={12} style={{ transform: mobileDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 'auto' }} />
+                  </button>
+                  {mobileDropdownOpen && (
+                    <>
+                      <div 
+                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
+                        onClick={() => setMobileDropdownOpen(false)} 
+                      />
+                      <div 
+                        style={{ 
+                          position: 'absolute', 
+                          top: 'calc(100% + 6px)', 
+                          left: 0, 
+                          right: 0, 
+                          background: 'var(--nd-card-bg)', 
+                          border: '1px solid var(--nd-card-border)', 
+                          borderRadius: 'var(--nd-card-radius)', 
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
+                          zIndex: 1000, 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          padding: '4px',
+                          animation: 'nd-fade-in 0.15s ease-out'
+                        }}
+                      >
+                        {actions.map((act, idx) => (
+                          <button
+                            key={idx}
+                            className="nd-dropdown-item"
+                            onClick={() => {
+                              act.onClick();
+                              setMobileDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: '10px 14px',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--nd-text-muted)',
+                              fontSize: '0.8rem',
+                              fontWeight: 500,
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              borderRadius: 'calc(var(--nd-card-radius) * 0.8)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              width: '100%'
+                            }}
+                          >
+                            {act.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
@@ -391,38 +626,6 @@ export default function Header(props: HeaderProps) {
               )}
             </div>
 
-            {props.editMode && (
-              <>
-                <div style={{ height: 1, background: 'var(--nd-border)', margin: '0' }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>Édition</span>
-                  {(isHome || props.activeTab === 'widgets') && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <button className="nd-btn" onClick={() => { props.onAddSlot?.(); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
-                        <Plus size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Emplacement
-                      </button>
-                      {isHome && (
-                        <>
-                          <button className="nd-btn" onClick={() => { props.onAddWidget?.(); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
-                            <Plus size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Widget
-                          </button>
-                          <button className="nd-btn" onClick={() => { props.onAddCategory(); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
-                            <Plus size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Catégorie
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  )}
-                  {isCustomTab && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <button className="nd-btn" onClick={() => { setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }); setMobileMenuOpen(false); }} style={{ justifyContent: 'flex-start', padding: '10px 12px' }}>
-                        <Pencil size={14} style={{ marginRight: 8, color: 'var(--nd-accent)' }} /> Modifier la structure
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
           </div>
         </div>
       )}

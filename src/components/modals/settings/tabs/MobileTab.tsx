@@ -31,6 +31,7 @@ export function MobileTab() {
   // Header Layout Mobile
   const [leftElement, setLeftElement] = useState<'title' | 'search' | 'none'>('title');
   const [centerElement, setCenterElement] = useState<'title' | 'search' | 'none'>('search');
+  const [itemsOrder, setItemsOrder] = useState<('title' | 'search')[]>([]);
 
   const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
   const [bgToDelete, setBgToDelete] = useState<string | null>(null);
@@ -57,8 +58,14 @@ export function MobileTab() {
       const ml = config.settings?.headerLayoutMobile || { left: 'title', center: 'search' };
       setLeftElement(ml.left || 'title');
       setCenterElement(ml.center || 'search');
+
+      if (itemsOrder.length === 0) {
+        const active = [ml.left, ml.center].filter(x => x && x !== 'none') as ('title' | 'search')[];
+        const inactive = ['title', 'search'].filter(x => !active.includes(x as any)) as ('title' | 'search')[];
+        setItemsOrder([...active, ...inactive]);
+      }
     }
-  }, [config]);
+  }, [config, itemsOrder]);
 
   const fetchUploadedBgs = async () => {
     try {
@@ -143,23 +150,15 @@ export function MobileTab() {
     setConfirmDeleteMobileProfile(null);
   };
 
-  const getMobileOrder = () => {
-    const defaultItems = ['title', 'search'];
-    const current = [leftElement, centerElement].filter(x => x !== 'none');
-    defaultItems.forEach(item => { if (!current.includes(item as any)) current.push(item as any); });
-    return current as ('title' | 'search')[];
-  };
-
   const toggleMobileVisibility = async (item: 'title' | 'search', visible: boolean) => {
-    let current = getMobileOrder();
-    if (visible) {
-      if (!current.includes(item)) current.push(item);
-    } else {
-      current = current.filter(x => x !== item);
-    }
+    const activeItems = itemsOrder.filter(x => {
+      if (x === item) return visible;
+      const currentActive = [leftElement, centerElement].filter(y => y !== 'none');
+      return currentActive.includes(x);
+    });
     
-    const newLeft = current[0] || 'none';
-    const newCenter = current[1] || 'none';
+    const newLeft = activeItems[0] || 'none';
+    const newCenter = activeItems[1] || 'none';
     
     setLeftElement(newLeft);
     setCenterElement(newCenter);
@@ -169,16 +168,23 @@ export function MobileTab() {
   };
 
   const moveItem = async (index: number, direction: -1 | 1) => {
-    const currentOrder = getMobileOrder();
     const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= currentOrder.length) return;
+    if (newIndex < 0 || newIndex >= itemsOrder.length) return;
     
-    const temp = currentOrder[index];
-    currentOrder[index] = currentOrder[newIndex];
-    currentOrder[newIndex] = temp;
+    const newOrder = [...itemsOrder];
+    const temp = newOrder[index];
+    newOrder[index] = newOrder[newIndex];
+    newOrder[newIndex] = temp;
 
-    const newLeft = currentOrder[0] || 'none';
-    const newCenter = currentOrder[1] || 'none';
+    setItemsOrder(newOrder);
+
+    const activeItems = newOrder.filter(x => {
+      const currentActive = [leftElement, centerElement].filter(y => y !== 'none');
+      return currentActive.includes(x);
+    });
+
+    const newLeft = activeItems[0] || 'none';
+    const newCenter = activeItems[1] || 'none';
 
     setLeftElement(newLeft);
     setCenterElement(newCenter);
@@ -212,10 +218,10 @@ export function MobileTab() {
               </p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {getMobileOrder().map((item, i) => {
+                {itemsOrder.map((item, i) => {
                   const currentLayout = [leftElement, centerElement].filter(x => x !== 'none');
                   const isHidden = !currentLayout.includes(item);
-                  const toggleAction = (val: boolean) => toggleMobileVisibility(item, !val);
+                  const toggleAction = (val: boolean) => toggleMobileVisibility(item, val);
 
                   const label = item === 'title' ? 'Titre / Logo' : 'Barre de Recherche';
                   const zoneLabel = i === 0 ? 'Zone Gauche' : 'Zone Centrale';
