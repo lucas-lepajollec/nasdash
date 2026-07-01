@@ -29,11 +29,20 @@ export function ensureDataDir() {
 export function readConfig(): DashboardConfig {
   ensureDataDir();
 
-  // 1. Lire la configuration de base (avec cache)
+  // 1. Lire la configuration de base (avec cache + mtime)
+  let shouldReadConfig = !globalAny.__cachedConfig;
+  try {
+    const mtime = fs.statSync(CONFIG_PATH).mtimeMs;
+    if (!globalAny.__cachedConfigMtime || mtime !== globalAny.__cachedConfigMtime) {
+      shouldReadConfig = true;
+      globalAny.__cachedConfigMtime = mtime;
+    }
+  } catch {}
+
   let configData: any = null;
   let needDefault = false;
 
-  if (globalAny.__cachedConfig) {
+  if (globalAny.__cachedConfig && !shouldReadConfig) {
     configData = JSON.parse(JSON.stringify(globalAny.__cachedConfig));
   } else {
     if (!fs.existsSync(CONFIG_PATH)) {
@@ -61,6 +70,10 @@ export function readConfig(): DashboardConfig {
         try {
           fs.copyFileSync(examplePath, CONFIG_PATH);
           configData = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+          // Set mtime to cache
+          try {
+            globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
+          } catch {}
         } catch (e) {
           console.error('⚠️ ERREUR DE PERMISSION ou de lecture lors de la copie de config.example.json :', e);
         }
@@ -70,6 +83,9 @@ export function readConfig(): DashboardConfig {
         configData = getDefaultConfig();
         try {
           fs.writeFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+          try {
+            globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
+          } catch {}
         } catch (e) {
           console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
         }
@@ -115,6 +131,9 @@ export function readConfig(): DashboardConfig {
     if (migrated) {
       try {
         fs.writeFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+        try {
+          globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
+        } catch {}
       } catch (e) {
         console.error('⚠️ ERREUR : Impossible d\'enregistrer la configuration migrée.', e);
       }
@@ -135,9 +154,18 @@ export function readConfig(): DashboardConfig {
     globalAny.__cachedConfig = JSON.parse(JSON.stringify(configData));
   }
 
-  // 2. Charger les Services / Catégories (avec cache)
+  // 2. Charger les Services / Catégories (avec cache + mtime)
+  let shouldReadServices = !globalAny.__cachedServices;
+  try {
+    const mtime = fs.statSync(SERVICES_PATH).mtimeMs;
+    if (!globalAny.__cachedServicesMtime || mtime !== globalAny.__cachedServicesMtime) {
+      shouldReadServices = true;
+      globalAny.__cachedServicesMtime = mtime;
+    }
+  } catch {}
+
   let categories: any[] = [];
-  if (globalAny.__cachedServices) {
+  if (globalAny.__cachedServices && !shouldReadServices) {
     categories = JSON.parse(JSON.stringify(globalAny.__cachedServices));
   } else {
     if (fs.existsSync(SERVICES_PATH)) {
@@ -152,9 +180,18 @@ export function readConfig(): DashboardConfig {
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
   }
 
-  // 3. Charger la Topologie (avec cache)
+  // 3. Charger la Topologie (avec cache + mtime)
+  let shouldReadTopology = !globalAny.__cachedTopology;
+  try {
+    const mtime = fs.statSync(TOPOLOGY_PATH).mtimeMs;
+    if (!globalAny.__cachedTopologyMtime || mtime !== globalAny.__cachedTopologyMtime) {
+      shouldReadTopology = true;
+      globalAny.__cachedTopologyMtime = mtime;
+    }
+  } catch {}
+
   let topology: any = { nodes: [], groups: [], connections: [] };
-  if (globalAny.__cachedTopology) {
+  if (globalAny.__cachedTopology && !shouldReadTopology) {
     topology = JSON.parse(JSON.stringify(globalAny.__cachedTopology));
   } else {
     if (fs.existsSync(TOPOLOGY_PATH)) {
@@ -167,9 +204,18 @@ export function readConfig(): DashboardConfig {
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
   }
 
-  // 4. Charger le Calendrier (avec cache)
+  // 4. Charger le Calendrier (avec cache + mtime)
+  let shouldReadCalendar = !globalAny.__cachedCalendar;
+  try {
+    const mtime = fs.statSync(CALENDAR_PATH).mtimeMs;
+    if (!globalAny.__cachedCalendarMtime || mtime !== globalAny.__cachedCalendarMtime) {
+      shouldReadCalendar = true;
+      globalAny.__cachedCalendarMtime = mtime;
+    }
+  } catch {}
+
   let localEvents: any[] = [];
-  if (globalAny.__cachedCalendar) {
+  if (globalAny.__cachedCalendar && !shouldReadCalendar) {
     localEvents = JSON.parse(JSON.stringify(globalAny.__cachedCalendar));
   } else {
     if (fs.existsSync(CALENDAR_PATH)) {
@@ -211,12 +257,26 @@ export function readConfig(): DashboardConfig {
 }
 
 export function writeConfig(config: DashboardConfig) {
-  ensureDataDir();
-
   const baseConfig = JSON.parse(JSON.stringify(config));
   const categories = baseConfig.categories || [];
   const topology = baseConfig.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
   const localEvents = baseConfig.localEvents || [];
+
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    const cacheConfig = JSON.parse(JSON.stringify(config));
+    delete cacheConfig.categories;
+    delete cacheConfig.localEvents;
+    if (cacheConfig.settings) {
+      delete cacheConfig.settings.networkTopology;
+    }
+    globalAny.__cachedConfig = cacheConfig;
+    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
+    return;
+  }
+
+  ensureDataDir();
 
   delete baseConfig.categories;
   delete baseConfig.localEvents;
@@ -274,30 +334,39 @@ export function writeConfig(config: DashboardConfig) {
 }
 
 export function writeServices(categories: any[]) {
+  globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return;
+  }
   ensureDataDir();
   try {
     fs.writeFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
-    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
   }
 }
 
 export function writeTopology(topology: any) {
+  globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return;
+  }
   ensureDataDir();
   try {
     fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
-    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
   }
 }
 
 export function writeCalendar(calendar: any[]) {
+  globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    return;
+  }
   ensureDataDir();
   try {
     fs.writeFileSync(CALENDAR_PATH, JSON.stringify(calendar, null, 2));
-    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
   }

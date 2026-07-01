@@ -205,9 +205,9 @@ export default function Header(props: HeaderProps) {
 
   const renderElement = (type: HeaderElementDesktop | HeaderElementMobile, isMobile: boolean) => {
     switch(type) {
-      case 'title': return <BrandElement isMobile={isMobile} />;
-      case 'search': return <SearchElement isMobile={isMobile} />;
-      case 'menu': return (!isMobile && layoutDesktop?.splitMenuAround === 'none') || isMobile ? <MenuElement isMobile={isMobile} /> : null;
+      case 'title': return BrandElement({ isMobile });
+      case 'search': return SearchElement({ isMobile });
+      case 'menu': return (!isMobile && layoutDesktop?.splitMenuAround === 'none') || isMobile ? MenuElement({ isMobile }) : null;
       default: return null;
     }
   };
@@ -220,9 +220,9 @@ export default function Header(props: HeaderProps) {
     
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <MenuElement startIndex={0} endIndex={mid} />
-        {layoutDesktop.splitMenuAround === 'title' ? <BrandElement isMobile={false} /> : <SearchElement />}
-        <MenuElement startIndex={mid} endIndex={tabsCount} />
+        {MenuElement({ startIndex: 0, endIndex: mid })}
+        {layoutDesktop.splitMenuAround === 'title' ? BrandElement({ isMobile: false }) : SearchElement({})}
+        {MenuElement({ startIndex: mid, endIndex: tabsCount })}
       </div>
     );
   };

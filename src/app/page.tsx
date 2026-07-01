@@ -11,7 +11,12 @@ import SettingsModal from '@/components/modals/SettingsModal';
 import CalendarEventModal from '@/components/modals/CalendarEventModal';
 import ViewEventModal from '@/components/modals/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
-import CustomTabRenderer from '@/components/tabs/custom/CustomTabRenderer';
+import dynamic from 'next/dynamic';
+
+const CustomTabRenderer = dynamic(
+  () => import('@/components/tabs/custom/CustomTabRenderer'),
+  { ssr: false }
+);
 
 import ServiceFormModal from '@/components/modals/ServiceFormModal';
 import CategoryFormModal from '@/components/modals/CategoryFormModal';

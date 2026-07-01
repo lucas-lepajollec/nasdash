@@ -8,6 +8,9 @@ const globalAny: any = global;
 if (!globalAny.__dockerErrorLogCache) globalAny.__dockerErrorLogCache = new Map<string, string>();
 const errorLogCache: Map<string, string> = globalAny.__dockerErrorLogCache;
 
+if (!globalAny.__mockContainerStates) globalAny.__mockContainerStates = new Map<string, string>();
+const mockStates: Map<string, string> = globalAny.__mockContainerStates;
+
 function logErrorSmartly(hostId: string, context: string, errorMsg: string) {
   const key = `${hostId}-${context}`;
   if (errorLogCache.get(key) !== errorMsg) {
@@ -77,10 +80,25 @@ export async function GET(
     }
 
     // Return mock data for demo/mock hosts
-    if (host.url.includes('mock') || host.id.includes('mock-host')) {
+    const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host');
+    if (isMockMode) {
       const isLarge = host.url.includes('mock-large') || host.id.includes('mock-host-large');
       const isSmall = host.url.includes('mock-small') || host.id.includes('mock-host-small');
       
+      const getContainerState = (id: string, defaultState: string) => {
+        const stored = mockStates.get(id);
+        if (stored) {
+          return {
+            state: stored,
+            status: stored === 'running' ? 'Up 5 minutes' : stored === 'paused' ? 'Paused' : 'Exited (0) 5 minutes ago'
+          };
+        }
+        return {
+          state: defaultState,
+          status: defaultState === 'running' ? 'Up 3 hours' : defaultState === 'paused' ? 'Paused' : 'Exited (137) 10 minutes ago'
+        };
+      };
+
       const mockContainers = [
         {
           id: "mock11111111",
@@ -88,8 +106,7 @@ export async function GET(
           names: ["web-server"],
           image: "nginx:latest",
           imageId: "sha256:nginx",
-          state: "running",
-          status: "Up 3 hours",
+          ...getContainerState("mock11111111", "running"),
           created: Math.floor(Date.now() / 1000 - 10800),
           ports: [{ privatePort: 80, publicPort: 80, type: "tcp" }],
           mounts: [],
@@ -101,15 +118,14 @@ export async function GET(
           names: ["postgres-db"],
           image: "postgres:15-alpine",
           imageId: "sha256:postgres",
-          state: "running",
-          status: "Up 5 hours",
+          ...getContainerState("mock22222222", "running"),
           created: Math.floor(Date.now() / 1000 - 18000),
           ports: [{ privatePort: 5432, publicPort: 5432, type: "tcp" }],
           mounts: [],
           labels: {}
         }
       ];
-
+ 
       if (!isSmall) {
         mockContainers.push(
           {
@@ -118,8 +134,7 @@ export async function GET(
             names: ["redis-cache"],
             image: "redis:alpine",
             imageId: "sha256:redis",
-            state: "running",
-            status: "Up 1 hour",
+            ...getContainerState("mock33333333", "running"),
             created: Math.floor(Date.now() / 1000 - 3600),
             ports: [{ privatePort: 6379, publicPort: 6379, type: "tcp" }],
             mounts: [],
@@ -131,8 +146,7 @@ export async function GET(
             names: ["node-api"],
             image: "node:18-alpine",
             imageId: "sha256:node",
-            state: "exited",
-            status: "Exited (137) 10 minutes ago",
+            ...getContainerState("mock44444444", "exited"),
             created: Math.floor(Date.now() / 1000 - 7200),
             ports: [],
             mounts: [],
@@ -144,8 +158,7 @@ export async function GET(
             names: ["prometheus"],
             image: "prom/prometheus:latest",
             imageId: "sha256:prometheus",
-            state: "running",
-            status: "Up 45 minutes",
+            ...getContainerState("mock55555555", "running"),
             created: Math.floor(Date.now() / 1000 - 2700),
             ports: [{ privatePort: 9090, publicPort: 9090, type: "tcp" }],
             mounts: [],
@@ -157,8 +170,7 @@ export async function GET(
             names: ["grafana"],
             image: "grafana/grafana:latest",
             imageId: "sha256:grafana",
-            state: "running",
-            status: "Up 45 minutes",
+            ...getContainerState("mock66666666", "running"),
             created: Math.floor(Date.now() / 1000 - 2700),
             ports: [{ privatePort: 3000, publicPort: 3000, type: "tcp" }],
             mounts: [],
@@ -170,8 +182,7 @@ export async function GET(
             names: ["pihole-dns"],
             image: "pihole/pihole:latest",
             imageId: "sha256:pihole",
-            state: "paused",
-            status: "Paused",
+            ...getContainerState("mock77777777", "paused"),
             created: Math.floor(Date.now() / 1000 - 86400),
             ports: [{ privatePort: 53, publicPort: 53, type: "udp" }],
             mounts: [],
@@ -183,8 +194,7 @@ export async function GET(
             names: ["jellyfin-media"],
             image: "jellyfin/jellyfin:latest",
             imageId: "sha256:jellyfin",
-            state: "running",
-            status: "Up 2 days",
+            ...getContainerState("mock88888888", "running"),
             created: Math.floor(Date.now() / 1000 - 172800),
             ports: [{ privatePort: 8096, publicPort: 8096, type: "tcp" }],
             mounts: [],
@@ -195,14 +205,15 @@ export async function GET(
 
       if (isLarge) {
         for (let i = 9; i <= 24; i++) {
+          const containerId = `mock${i.toString().padStart(8, '0')}`;
+          const defaultState = i % 4 === 0 ? "exited" : "running";
           mockContainers.push({
-            id: `mock${i.toString().padStart(8, '0')}`,
+            id: containerId,
             fullId: `mock${i.toString().padStart(32, '0')}`,
             names: [`demo-service-${i}`],
             image: `demo/service-${i}:latest`,
             imageId: `sha256:fake${i}`,
-            state: i % 4 === 0 ? "exited" : "running",
-            status: i % 4 === 0 ? "Exited (0) 2 hours ago" : `Up ${i} days`,
+            ...getContainerState(containerId, defaultState),
             created: Math.floor(Date.now() / 1000 - 86400 * i),
             ports: [],
             mounts: [],

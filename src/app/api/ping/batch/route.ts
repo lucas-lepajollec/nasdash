@@ -74,6 +74,20 @@ export async function POST(request: Request) {
     const body = await request.json();
     const urls: string[] = body.urls || [];
 
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      const resultMap: Record<string, any> = {};
+      urls.forEach(url => {
+        const isOffline = url.includes('offline') || url.includes('10.0.30.22'); // camera offline
+        const latency = isOffline ? 0 : Math.round(3 + Math.random() * 12);
+        resultMap[url] = {
+          status: isOffline ? 'offline' : 'online',
+          statusText: isOffline ? 'Timeout' : 'OK',
+          latency
+        };
+      });
+      return NextResponse.json(resultMap);
+    }
+
     if (!Array.isArray(urls) || urls.length === 0) {
       return NextResponse.json({});
     }

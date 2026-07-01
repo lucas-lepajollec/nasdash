@@ -4,6 +4,10 @@ import { verifyToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
+const globalAny: any = global;
+if (!globalAny.__mockContainerStates) globalAny.__mockContainerStates = new Map<string, string>();
+const mockStates: Map<string, string> = globalAny.__mockContainerStates;
+
 function checkAdmin(request: Request): boolean {
   const cookieHeader = request.headers.get('cookie') || '';
   const match = cookieHeader.match(/nasdash_session=([^;]+)/);
@@ -67,27 +71,42 @@ export async function GET(
     const isAdminUser = checkAdmin(request);
 
     // Mock details
-    if (host.url === 'mock' || host.id === 'mock-host-id') {
+    const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    if (isMockMode) {
       const mockContainers = [
-        { id: "mock11111111", name: "web-server", image: "nginx:latest", state: "running", status: "running", startedAt: "2026-06-11T07:00:00Z" },
-        { id: "mock22222222", name: "postgres-db", image: "postgres:15-alpine", state: "running", status: "running", startedAt: "2026-06-11T05:00:00Z" },
-        { id: "mock33333333", name: "redis-cache", image: "redis:alpine", state: "running", status: "running", startedAt: "2026-06-11T09:00:00Z" },
-        { id: "mock44444444", name: "node-api", image: "node:18-alpine", state: "exited", status: "exited", startedAt: "2026-06-11T08:00:00Z", finishedAt: "2026-06-11T08:50:00Z" },
-        { id: "mock55555555", name: "prometheus", image: "prom/prometheus:latest", state: "running", status: "running", startedAt: "2026-06-11T09:15:00Z" },
-        { id: "mock66666666", name: "grafana", image: "grafana/grafana:latest", state: "running", status: "running", startedAt: "2026-06-11T09:15:00Z" },
-        { id: "mock77777777", name: "pihole-dns", image: "pihole/pihole:latest", state: "paused", status: "paused", startedAt: "2026-06-10T10:00:00Z" },
-        { id: "mock88888888", name: "jellyfin-media", image: "jellyfin/jellyfin:latest", state: "running", status: "running", startedAt: "2026-06-09T10:00:00Z" },
+        { id: "mock11111111", name: "web-server", image: "nginx:latest", defaultState: "running", startedAt: "2026-06-11T07:00:00Z" },
+        { id: "mock22222222", name: "postgres-db", image: "postgres:15-alpine", defaultState: "running", startedAt: "2026-06-11T05:00:00Z" },
+        { id: "mock33333333", name: "redis-cache", image: "redis:alpine", defaultState: "running", startedAt: "2026-06-11T09:00:00Z" },
+        { id: "mock44444444", name: "node-api", image: "node:18-alpine", defaultState: "exited", startedAt: "2026-06-11T08:00:00Z", finishedAt: "2026-06-11T08:50:00Z" },
+        { id: "mock55555555", name: "prometheus", image: "prom/prometheus:latest", defaultState: "running", startedAt: "2026-06-11T09:15:00Z" },
+        { id: "mock66666666", name: "grafana", image: "grafana/grafana:latest", defaultState: "running", startedAt: "2026-06-11T09:15:00Z" },
+        { id: "mock77777777", name: "pihole-dns", image: "pihole/pihole:latest", defaultState: "paused", startedAt: "2026-06-10T10:00:00Z" },
+        { id: "mock88888888", name: "jellyfin-media", image: "jellyfin/jellyfin:latest", defaultState: "running", startedAt: "2026-06-09T10:00:00Z" },
       ];
+      
+      if (id.startsWith('mock') && parseInt(id.replace('mock', ''), 10) >= 9) {
+        const index = parseInt(id.replace('mock', ''), 10);
+        mockContainers.push({
+          id,
+          name: `demo-service-${index}`,
+          image: `demo/service-${index}:latest`,
+          defaultState: index % 4 === 0 ? "exited" : "running",
+          startedAt: "2026-06-09T10:00:00Z"
+        });
+      }
+
       const found = mockContainers.find(c => c.id === id);
       if (!found) return NextResponse.json({ error: 'Container not found' }, { status: 404 });
       
+      const state = mockStates.get(id) || found.defaultState;
+
       const result = {
         id: found.id,
         fullId: found.id.padEnd(64, '0'),
         name: found.name,
         image: found.image,
-        state: found.state,
-        status: found.status,
+        state: state,
+        status: state === 'running' ? 'Up 5 minutes' : state === 'paused' ? 'Paused' : 'Exited (0) 5 minutes ago',
         startedAt: found.startedAt,
         finishedAt: found.finishedAt || '',
         created: 1780517682,
@@ -97,12 +116,12 @@ export async function GET(
         env: isAdminUser ? ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"] : ["<MASQUÉ - ADMINISTRATEUR UNIQUEMENT>"],
         labels: {},
         stats: {
-          cpuPercent: found.state === 'running' ? 1.2 : 0,
-          memUsage: found.state === 'running' ? 24 * 1024 * 1024 : 0,
+          cpuPercent: state === 'running' ? 1.2 : 0,
+          memUsage: state === 'running' ? 24 * 1024 * 1024 : 0,
           memLimit: 1024 * 1024 * 1024,
-          memPercent: found.state === 'running' ? 2.3 : 0,
-          netInput: found.state === 'running' ? 124500 : 0,
-          netOutput: found.state === 'running' ? 987000 : 0,
+          memPercent: state === 'running' ? 2.3 : 0,
+          netInput: state === 'running' ? 124500 : 0,
+          netOutput: state === 'running' ? 987000 : 0,
         }
       };
       return NextResponse.json(result);
@@ -197,7 +216,10 @@ export async function POST(
     }
 
     // Mock action success
-    if (host.url === 'mock' || host.id === 'mock-host-id') {
+    const isMockModePost = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    if (isMockModePost) {
+      const newState = action === 'start' ? 'running' : action === 'stop' ? 'exited' : action === 'restart' ? 'running' : 'exited';
+      mockStates.set(id, newState);
       return NextResponse.json({ ok: true, action });
     }
 

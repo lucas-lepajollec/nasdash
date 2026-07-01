@@ -30,15 +30,15 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
-    // Mock logs
-    if (host.url === 'mock' || host.id === 'mock-host-id') {
+    const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    if (isMockMode) {
       const mockLogs = {
         lines: [
-          `[2026-06-11 10:00:00] INFO Starting service...`,
-          `[2026-06-11 10:00:01] INFO Connection to database established.`,
-          `[2026-06-11 10:00:02] INFO Listening on port 80.`,
-          `[2026-06-11 10:05:00] DEBUG Health check passed.`,
-          `[2026-06-11 10:10:00] DEBUG Health check passed.`
+          `[${new Date().toISOString().split('T')[0]} 10:00:00] INFO Starting service...`,
+          `[${new Date().toISOString().split('T')[0]} 10:00:01] INFO Connection to database established.`,
+          `[${new Date().toISOString().split('T')[0]} 10:00:02] INFO Listening on port 80.`,
+          `[${new Date().toISOString().split('T')[0]} 10:05:00] DEBUG Health check passed.`,
+          `[${new Date().toISOString().split('T')[0]} 10:10:00] DEBUG Health check passed.`
         ]
       };
       return NextResponse.json(mockLogs);

@@ -6,7 +6,9 @@
     "dev": "next dev -H 0.0.0.0 --port 2499",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "data:demo": "cp demo-data/*.json data/",
+    "data:real": "cp data-real/*.json data/ && cp data-real/encryption.key data/ 2>/dev/null || true"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

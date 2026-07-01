@@ -52,4 +52,11 @@ next-env.d.ts
 # local context (not for GitHub)
 roadmap.md
 context.md
+commandes.md
+
+# demo data
+/demo-data/
+
+# real data (local-only)
+/data-real/
 
