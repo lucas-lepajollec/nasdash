@@ -207,11 +207,11 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
   };
 
   if (!layout) {
-    return <div style={{ padding: 40, textAlign: 'center', color: 'var(--nd-text-muted)' }}>Chargement du layout...</div>;
+    return <div style={{ padding: '0 20px 40px', textAlign: 'center', color: 'var(--nd-text-muted)' }}>Chargement du layout...</div>;
   }
 
   return (
-    <div style={{ width: '100%', padding: 'clamp(12px, 3vw, 20px)', margin: '0 auto', overflowX: 'hidden' }}>
+    <div className="nd-animate-in" style={{ width: '100%', padding: '0 clamp(12px, 3vw, 20px) 40px', margin: '0 auto', overflowX: 'hidden' }}>
       {layout.rows.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--nd-text-muted)' }}>
           <p>Ce layout est vide.</p>
