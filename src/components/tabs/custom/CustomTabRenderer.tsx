@@ -13,18 +13,26 @@ interface CustomTabRendererProps {
   showSensitive?: boolean;
 }
 
+// Cache global en mémoire pour éviter les flashs lors du switch d'onglets
+const layoutCache: { [tabId: string]: CustomTabLayout } = {};
+
 export default function CustomTabRenderer({ tab, editMode, showSensitive = false }: CustomTabRendererProps) {
   const { config, setSettingsModal, user } = useConfig();
-  const [layout, setLayout] = useState<CustomTabLayout | null>(null);
+  const [layout, setLayout] = useState<CustomTabLayout | null>(layoutCache[tab.id] || null);
 
   useEffect(() => {
+    // Synchroniser immédiatement depuis le cache lors du switch d'onglet
+    setLayout(layoutCache[tab.id] || null);
+
     const fetchLayout = async () => {
       try {
         const res = await fetch('/api/custom-tabs');
         if (res.ok) {
           const data = await res.json();
           if (data.layouts && data.layouts[tab.id]) {
-            setLayout(data.layouts[tab.id]);
+            const fetched = data.layouts[tab.id];
+            layoutCache[tab.id] = fetched;
+            setLayout(fetched);
           }
         }
       } catch (e) {
@@ -54,6 +62,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     if (!col || !col.widgets) return;
     
     col.widgets[widgetIndex].height = newHeight;
+    layoutCache[tab.id] = newLayout;
     setLayout(newLayout);
 
     try {
@@ -77,6 +86,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     if (!col || !col.widgets) return;
     
     col.widgets[widgetIndex].props = { ...(col.widgets[widgetIndex].props || {}), ...newProps };
+    layoutCache[tab.id] = newLayout;
     setLayout(newLayout);
 
     try {
