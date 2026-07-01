@@ -68,7 +68,6 @@ export function NetworkSidebar() {
   // Aggregate all ports from NasDash services config and Docker containers
   const activePorts = useMemo((): ActivePortItem[] => {
     const list: ActivePortItem[] = [];
-    const seenKeys = new Set<string>();
 
     const secretServiceNames = new Set<string>();
     if (!showSecretSections && config?.categories) {
@@ -82,9 +81,36 @@ export function NetworkSidebar() {
     }
 
     const addPortItem = (item: ActivePortItem) => {
-      const key = `${item.ip}:${item.port}-${item.source}`;
-      if (!seenKeys.has(key)) {
-        seenKeys.add(key);
+      // Find an existing item with the same port, serviceName, type, and source
+      const existingIndex = list.findIndex(
+        x => x.port === item.port && 
+             x.serviceName === item.serviceName && 
+             x.type === item.type && 
+             x.source === item.source &&
+             (x.ip === item.ip || x.ip === '0.0.0.0' || x.ip === '::' || item.ip === '0.0.0.0' || item.ip === '::')
+      );
+
+      if (existingIndex >= 0) {
+        const existing = list[existingIndex];
+        // Rules for preferring a cleaner/more specific IP:
+        // - We prefer a specific IP (not '::' and not '0.0.0.0') over '0.0.0.0' or '::'
+        // - We prefer '0.0.0.0' over '::'
+        const isExistingIpWildcardV6 = existing.ip === '::';
+        const isExistingIpWildcardV4 = existing.ip === '0.0.0.0';
+        const isNewIpWildcardV6 = item.ip === '::';
+        const isNewIpWildcardV4 = item.ip === '0.0.0.0';
+
+        let shouldOverwrite = false;
+        if (isExistingIpWildcardV6 && !isNewIpWildcardV6) {
+          shouldOverwrite = true;
+        } else if (isExistingIpWildcardV4 && !isNewIpWildcardV4 && !isNewIpWildcardV6) {
+          shouldOverwrite = true;
+        }
+
+        if (shouldOverwrite) {
+          list[existingIndex].ip = item.ip;
+        }
+      } else {
         list.push(item);
       }
     };
@@ -170,10 +196,13 @@ export function NetworkSidebar() {
       c.ports?.forEach((p: any) => {
         const publicPort = p.publicPort;
         if (publicPort) {
+          // Resolve wildcard binding IPs (0.0.0.0 and ::) to the host's actual IP
+          const resolvedIp = (!p.ip || p.ip === '0.0.0.0' || p.ip === '::') ? hostIp : p.ip;
+
           addPortItem({
             port: publicPort,
             serviceName: containerName,
-            ip: p.ip || hostIp,
+            ip: resolvedIp,
             source: `Conteneur Docker (${c.hostName})`,
             type: p.type?.toUpperCase() || 'TCP',
             status: c.state
