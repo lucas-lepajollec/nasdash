@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { verifyToken, getSessionFromRequest } from '@/lib/auth';
+import { isAdmin, getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-function checkAdmin(request: Request): boolean {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const match = cookieHeader.match(/nasdash_session=([^;]+)/);
-  const token = match ? match[1] : null;
-  if (!token) return false;
-  const payload = verifyToken(token);
-  return payload?.role === 'admin';
-}
 
 function getDockerHost(hostId: string) {
   const config = readConfig();
@@ -78,7 +69,7 @@ export async function DELETE(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
-  if (!checkAdmin(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 

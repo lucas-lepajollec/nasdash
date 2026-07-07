@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { safeWriteFileSync } from './config';
 
 const KEY_FILE = path.join(process.cwd(), 'data', 'encryption.key');
 
@@ -19,11 +20,14 @@ function getEncryptionKey(): Buffer {
         secret = crypto.randomBytes(32).toString('hex');
         const dir = path.dirname(KEY_FILE);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(KEY_FILE, secret, 'utf-8');
+        safeWriteFileSync(KEY_FILE, secret, 'utf-8');
       }
     } catch (e) {
-      console.error('Erreur lors de la création de la clé de chiffrement persistée.', e);
-      secret = 'nasdash-fallback-static-key-unsafe';
+      console.error('⚠️ ERREUR CRITIQUE : Impossible de lire ou d\'écrire la clé de chiffrement persistée.', e);
+      throw new Error(
+        "Sécurité compromise : Impossible d'accéder au fichier de clé de chiffrement (encryption.key) " +
+        "et aucun secret NASDASH_JWT_SECRET n'est configuré dans l'environnement."
+      );
     }
   }
 

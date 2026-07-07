@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogosDir } from '@/lib/config';
+import { isAdmin } from '@/lib/auth';
 import path from 'path';
 import fs from 'fs';
 
@@ -37,9 +38,13 @@ export async function GET(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const { filename } = await params;
   const safeFilename = path.basename(filename);
   const filePath = path.join(getLogosDir(), safeFilename);

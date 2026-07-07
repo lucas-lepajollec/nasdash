@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readUsers, writeUsers, verifyToken, hashPassword } from '@/lib/auth';
-
-function checkAdmin(req: NextRequest): boolean {
-  const token = req.cookies.get('nasdash_session')?.value;
-  if (!token) return false;
-  const payload = verifyToken(token);
-  return payload?.role === 'admin';
-}
+import { readUsers, writeUsers, isAdmin, hashPassword, getSessionFromRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
@@ -24,7 +17,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
@@ -82,7 +75,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
@@ -100,9 +93,7 @@ export async function DELETE(req: NextRequest) {
 
     const users = readUsers();
     
-    // Protection : Ne pas pouvoir supprimer l'admin actuellement connecté pour ne pas se bloquer dehors
-    const token = req.cookies.get('nasdash_session')?.value;
-    const payload = verifyToken(token!);
+    const payload = getSessionFromRequest(req);
     if (payload?.username.toLowerCase() === username.toLowerCase()) {
       return NextResponse.json({ error: 'Vous ne pouvez pas supprimer le compte avec lequel vous êtes connecté.' }, { status: 400 });
     }

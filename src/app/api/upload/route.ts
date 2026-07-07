@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogosDir } from '@/lib/config';
-import { verifyToken } from '@/lib/auth';
+import { isAdmin } from '@/lib/auth';
 import path from 'path';
 import fs from 'fs';
 
-function checkAdmin(req: NextRequest): boolean {
-  const token = req.cookies.get('nasdash_session')?.value;
-  if (!token) return false;
-  const payload = verifyToken(token);
-  return payload?.role === 'admin';
-}
-
 export async function POST(req: NextRequest) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 

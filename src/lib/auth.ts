@@ -1,13 +1,39 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { safeWriteFileSync } from './config';
 
 const USERS_PATH = path.join(process.cwd(), 'data', 'users.json');
+const SECRET_FILE = path.join(process.cwd(), 'data', 'jwt.secret');
 
 // Utiliser une clé persistante ou en générer une nouvelle à chaque démarrage
 const globalAny: any = global;
+
+function getJwtSecret(): string {
+  let secret = process.env.NASDASH_JWT_SECRET;
+  if (!secret) {
+    try {
+      if (fs.existsSync(SECRET_FILE)) {
+        secret = fs.readFileSync(SECRET_FILE, 'utf-8').trim();
+      } else {
+        secret = crypto.randomBytes(32).toString('hex');
+        const dir = path.dirname(SECRET_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        safeWriteFileSync(SECRET_FILE, secret, 'utf-8');
+      }
+    } catch (e) {
+      console.error('Failed to read/write persistent JWT secret:', e);
+      if (!globalAny.__jwtSecretFallback) {
+        globalAny.__jwtSecretFallback = crypto.randomBytes(32).toString('hex');
+      }
+      secret = globalAny.__jwtSecretFallback;
+    }
+  }
+  return secret || 'fallback-jwt-secret';
+}
+
 if (!globalAny.__jwtSecret) {
-  globalAny.__jwtSecret = process.env.NASDASH_JWT_SECRET || crypto.randomBytes(32).toString('hex');
+  globalAny.__jwtSecret = getJwtSecret();
 }
 const JWT_SECRET: string = globalAny.__jwtSecret;
 
@@ -129,9 +155,20 @@ export function readUsers(): User[] {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    let users: User[] = [];
     let fileExists = fs.existsSync(USERS_PATH);
+    if (!fileExists) {
+      const examplePath = path.join(dataDir, 'users.example.json');
+      if (fs.existsSync(examplePath)) {
+        try {
+          fs.copyFileSync(examplePath, USERS_PATH);
+          fileExists = true;
+        } catch (e) {
+          console.error('Erreur copie users.example.json', e);
+        }
+      }
+    }
 
+    let users: User[] = [];
     if (fileExists) {
       const raw = fs.readFileSync(USERS_PATH, 'utf-8');
       users = JSON.parse(raw);
@@ -161,7 +198,7 @@ export function readUsers(): User[] {
     }
 
     if (modified || !fileExists) {
-      fs.writeFileSync(USERS_PATH, JSON.stringify(users, null, 2));
+      safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2));
     }
 
     globalAny.__cachedUsers = JSON.parse(JSON.stringify(users));
@@ -178,7 +215,7 @@ export function writeUsers(users: User[]): boolean {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    fs.writeFileSync(USERS_PATH, JSON.stringify(users, null, 2));
+    safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2));
     globalAny.__cachedUsers = JSON.parse(JSON.stringify(users));
     return true;
   } catch (e) {

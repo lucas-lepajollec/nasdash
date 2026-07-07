@@ -26,6 +26,20 @@ export function ensureDataDir() {
   }
 }
 
+export function safeWriteFileSync(filePath: string, data: string | Buffer, options?: fs.WriteFileOptions) {
+  ensureDataDir();
+  const tempPath = filePath + '.tmp';
+  try {
+    fs.writeFileSync(tempPath, data, options);
+    fs.renameSync(tempPath, filePath);
+  } catch (err) {
+    try {
+      if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+    } catch {}
+    throw err;
+  }
+}
+
 export function readConfig(): DashboardConfig {
   ensureDataDir();
 
@@ -82,7 +96,7 @@ export function readConfig(): DashboardConfig {
       if (!configData) {
         configData = getDefaultConfig();
         try {
-          fs.writeFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+          safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
           try {
             globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
           } catch {}
@@ -98,7 +112,7 @@ export function readConfig(): DashboardConfig {
     // A. Migration des catégories/services vers services.json
     if (configData.categories && configData.categories.length > 0) {
       if (!fs.existsSync(SERVICES_PATH)) {
-        fs.writeFileSync(SERVICES_PATH, JSON.stringify(configData.categories, null, 2));
+        safeWriteFileSync(SERVICES_PATH, JSON.stringify(configData.categories, null, 2));
       }
       delete configData.categories;
       migrated = true;
@@ -107,7 +121,7 @@ export function readConfig(): DashboardConfig {
     // B. Migration de networkTopology vers topology.json
     if (configData.settings && configData.settings.networkTopology) {
       if (!fs.existsSync(TOPOLOGY_PATH)) {
-        fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(configData.settings.networkTopology, null, 2));
+        safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(configData.settings.networkTopology, null, 2));
       }
       delete configData.settings.networkTopology;
       migrated = true;
@@ -116,7 +130,7 @@ export function readConfig(): DashboardConfig {
     // C. Migration des localEvents vers calendar.json
     if (configData.localEvents && configData.localEvents.length > 0) {
       if (!fs.existsSync(CALENDAR_PATH)) {
-        fs.writeFileSync(CALENDAR_PATH, JSON.stringify(configData.localEvents, null, 2));
+        safeWriteFileSync(CALENDAR_PATH, JSON.stringify(configData.localEvents, null, 2));
       }
       delete configData.localEvents;
       migrated = true;
@@ -130,7 +144,7 @@ export function readConfig(): DashboardConfig {
 
     if (migrated) {
       try {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+        safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
         try {
           globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
         } catch {}
@@ -168,6 +182,16 @@ export function readConfig(): DashboardConfig {
   if (globalAny.__cachedServices && !shouldReadServices) {
     categories = JSON.parse(JSON.stringify(globalAny.__cachedServices));
   } else {
+    if (!fs.existsSync(SERVICES_PATH)) {
+      const examplePath = path.join(DATA_DIR, 'services.example.json');
+      if (fs.existsSync(examplePath)) {
+        try {
+          fs.copyFileSync(examplePath, SERVICES_PATH);
+        } catch (e) {
+          console.error('Erreur copie services.example.json', e);
+        }
+      }
+    }
     if (fs.existsSync(SERVICES_PATH)) {
       try {
         categories = JSON.parse(fs.readFileSync(SERVICES_PATH, 'utf-8'));
@@ -194,6 +218,16 @@ export function readConfig(): DashboardConfig {
   if (globalAny.__cachedTopology && !shouldReadTopology) {
     topology = JSON.parse(JSON.stringify(globalAny.__cachedTopology));
   } else {
+    if (!fs.existsSync(TOPOLOGY_PATH)) {
+      const examplePath = path.join(DATA_DIR, 'topology.example.json');
+      if (fs.existsSync(examplePath)) {
+        try {
+          fs.copyFileSync(examplePath, TOPOLOGY_PATH);
+        } catch (e) {
+          console.error('Erreur copie topology.example.json', e);
+        }
+      }
+    }
     if (fs.existsSync(TOPOLOGY_PATH)) {
       try {
         topology = JSON.parse(fs.readFileSync(TOPOLOGY_PATH, 'utf-8'));
@@ -218,6 +252,16 @@ export function readConfig(): DashboardConfig {
   if (globalAny.__cachedCalendar && !shouldReadCalendar) {
     localEvents = JSON.parse(JSON.stringify(globalAny.__cachedCalendar));
   } else {
+    if (!fs.existsSync(CALENDAR_PATH)) {
+      const examplePath = path.join(DATA_DIR, 'calendar.example.json');
+      if (fs.existsSync(examplePath)) {
+        try {
+          fs.copyFileSync(examplePath, CALENDAR_PATH);
+        } catch (e) {
+          console.error('Erreur copie calendar.example.json', e);
+        }
+      }
+    }
     if (fs.existsSync(CALENDAR_PATH)) {
       try {
         localEvents = JSON.parse(fs.readFileSync(CALENDAR_PATH, 'utf-8'));
@@ -297,7 +341,7 @@ export function writeConfig(config: DashboardConfig) {
   }
 
   try {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(baseConfig, null, 2));
+    safeWriteFileSync(CONFIG_PATH, JSON.stringify(baseConfig, null, 2));
     
     // Mettre en cache la version déchiffrée en mémoire
     const cacheConfig = JSON.parse(JSON.stringify(config));
@@ -312,21 +356,21 @@ export function writeConfig(config: DashboardConfig) {
   }
 
   try {
-    fs.writeFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
+    safeWriteFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
   }
 
   try {
-    fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
+    safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
   }
 
   try {
-    fs.writeFileSync(CALENDAR_PATH, JSON.stringify(localEvents, null, 2));
+    safeWriteFileSync(CALENDAR_PATH, JSON.stringify(localEvents, null, 2));
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
@@ -340,7 +384,7 @@ export function writeServices(categories: any[]) {
   }
   ensureDataDir();
   try {
-    fs.writeFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
+    safeWriteFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
   }
@@ -353,7 +397,7 @@ export function writeTopology(topology: any) {
   }
   ensureDataDir();
   try {
-    fs.writeFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
+    safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
   }
@@ -366,7 +410,7 @@ export function writeCalendar(calendar: any[]) {
   }
   ensureDataDir();
   try {
-    fs.writeFileSync(CALENDAR_PATH, JSON.stringify(calendar, null, 2));
+    safeWriteFileSync(CALENDAR_PATH, JSON.stringify(calendar, null, 2));
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
   }

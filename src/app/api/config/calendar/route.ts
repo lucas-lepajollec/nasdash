@@ -1,18 +1,9 @@
 import { NextResponse } from 'next/server';
 import { readConfig, writeCalendar } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
-import { verifyToken } from '@/lib/auth';
+import { isAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
-
-function checkAdmin(request: Request): boolean {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const match = cookieHeader.match(/nasdash_session=([^;]+)/);
-  const token = match ? match[1] : null;
-  if (!token) return false;
-  const payload = verifyToken(token);
-  return payload?.role === 'admin';
-}
 
 export async function GET() {
   const config = readConfig();
@@ -20,7 +11,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
@@ -48,7 +39,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
@@ -74,7 +65,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!checkAdmin(req)) {
+  if (!isAdmin(req)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 

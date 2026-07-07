@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { verifyToken } from '@/lib/auth';
+import { isAdmin, getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,14 +8,6 @@ const globalAny: any = global;
 if (!globalAny.__mockContainerStates) globalAny.__mockContainerStates = new Map<string, string>();
 const mockStates: Map<string, string> = globalAny.__mockContainerStates;
 
-function checkAdmin(request: Request): boolean {
-  const cookieHeader = request.headers.get('cookie') || '';
-  const match = cookieHeader.match(/nasdash_session=([^;]+)/);
-  const token = match ? match[1] : null;
-  if (!token) return false;
-  const payload = verifyToken(token);
-  return payload?.role === 'admin';
-}
 
 function getDockerHost(hostId: string) {
   const config = readConfig();
@@ -45,8 +37,6 @@ async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET') {
   }
 }
 
-import { getSessionFromRequest } from '@/lib/auth';
-
 // GET /api/docker/[hostId]/containers/[id] — container details
 // POST /api/docker/[hostId]/containers/[id]?action=start|stop|restart|remove
 export async function GET(
@@ -68,7 +58,7 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
-    const isAdminUser = checkAdmin(request);
+    const isAdminUser = isAdmin(request);
 
     // Mock details
     const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
@@ -199,7 +189,7 @@ export async function POST(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
-  if (!checkAdmin(request)) {
+  if (!isAdmin(request)) {
     return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 

@@ -53,7 +53,7 @@ services:
       # REMARQUE : Définir 'DELETE=1' permet de supprimer des images, des volumes et des conteneurs depuis l'UI de NasDash.
       # Pour interdire toute suppression accidentelle ou malveillante de vos ressources Docker locales,
       # vous pouvez désactiver ce droit en changeant la valeur par 'DELETE=0' ou en supprimant simplement la ligne ci-dessous.
-      - DELETE=1
+      - DELETE=0
 
       # --- ACTIONS COMPLÈTEMENT BLOQUÉES (Par défaut) ---
       - AUTH=0
