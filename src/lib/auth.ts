@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { safeWriteFileSync } from './config';
+import { NextResponse } from 'next/server';
 
 const USERS_PATH = path.join(process.cwd(), 'data', 'users.json');
 const SECRET_FILE = path.join(process.cwd(), 'data', 'jwt.secret');
@@ -141,6 +142,113 @@ export function isAdmin(req: Request | any): boolean {
   const payload = getSessionFromRequest(req);
   return payload?.role === 'admin';
 }
+
+export function verifyCsrf(req: Request | any): boolean {
+  if (!req) return true;
+  
+  // Only state-changing methods are checked
+  let method = '';
+  if (typeof req.method === 'string') {
+    method = req.method.toUpperCase();
+  } else if (req.req && typeof req.req.method === 'string') {
+    method = req.req.method.toUpperCase();
+  }
+
+  if (!method || ['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    return true;
+  }
+
+  // 1. Sec-Fetch-Site check (extremely robust in modern browsers)
+  const getHeader = (name: string): string | null => {
+    if (req.headers && typeof req.headers.get === 'function') {
+      return req.headers.get(name);
+    }
+    if (req.headers) {
+      return req.headers[name] || req.headers[name.toLowerCase()] || null;
+    }
+    return null;
+  };
+
+  const secFetchSite = getHeader('sec-fetch-site');
+  if (secFetchSite && secFetchSite === 'cross-site') {
+    console.warn(`CSRF attempt blocked by Sec-Fetch-Site: ${secFetchSite}`);
+    return false;
+  }
+
+  // 2. Origin/Referer check
+  const origin = getHeader('origin');
+  const referer = getHeader('referer');
+  const host = getHeader('host') || 'localhost';
+  
+  let targetUrl: URL;
+  try {
+    const urlStr = req.url || '';
+    if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) {
+      targetUrl = new URL(urlStr);
+    } else {
+      targetUrl = new URL(urlStr, `http://${host}`);
+    }
+  } catch {
+    return false;
+  }
+
+  const isLocalhost = (h: string) => ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(h);
+
+  if (origin) {
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.hostname !== targetUrl.hostname) {
+        if (isLocalhost(originUrl.hostname) && isLocalhost(targetUrl.hostname)) {
+          return true;
+        }
+        console.warn(`CSRF attempt blocked by Origin: ${origin} vs target ${targetUrl.hostname}`);
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      if (refererUrl.hostname !== targetUrl.hostname) {
+        if (isLocalhost(refererUrl.hostname) && isLocalhost(targetUrl.hostname)) {
+          return true;
+        }
+        console.warn(`CSRF attempt blocked by Referer: ${referer} vs target ${targetUrl.hostname}`);
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function checkAdmin(req: Request | any): NextResponse | null {
+  if (!verifyCsrf(req)) {
+    return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
+  }
+  if (!isAdmin(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+  return null;
+}
+
+export function checkAuth(req: Request | any): NextResponse | null {
+  if (!verifyCsrf(req)) {
+    return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
+  }
+  if (!isAuthenticated(req)) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+  return null;
+}
+
 
 // --- GESTION DES UTILISATEURS LOCAUX ---
 

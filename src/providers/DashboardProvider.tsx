@@ -81,7 +81,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const fetchConfig = useCallback(async () => {
+  const fetchConfig = useCallback(async (retryCount = 0) => {
     try {
       const res = await fetch('/api/config');
       if (res.status === 401) {
@@ -97,10 +97,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (!data.devices) data.devices = [];
       setConfig(data);
+      setLoading(false);
     } catch (err) {
       console.error('Failed to fetch config:', err);
-    } finally {
-      setLoading(false);
+      if (retryCount < 3) {
+        setTimeout(() => fetchConfig(retryCount + 1), 500);
+      } else {
+        setLoading(false);
+      }
     }
   }, []);
 

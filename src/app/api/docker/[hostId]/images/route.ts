@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { isAdmin, getSessionFromRequest } from '@/lib/auth';
+import { checkAdmin, getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,9 +70,9 @@ export async function DELETE(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
-  if (!isAdmin(request)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(request);
+  if (authError) return authError;
+
 
   try {
     const { hostId } = await segmentData.params;

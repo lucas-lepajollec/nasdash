@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { isAdmin, getSessionFromRequest } from '@/lib/auth';
+import { isAdmin, checkAdmin, getSessionFromRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -189,9 +189,9 @@ export async function POST(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
-  if (!isAdmin(request)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(request);
+  if (authError) return authError;
+
 
   try {
     const { hostId, id } = await segmentData.params;

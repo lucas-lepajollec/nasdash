@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readCustomTabs, writeCustomTabs } from '@/lib/customTabs';
-import { isAdmin, getSessionFromRequest } from '@/lib/auth';
+import { checkAdmin, getSessionFromRequest } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { TabDef } from '@/hooks/useTabs';
 import { readConfig } from '@/lib/config';
@@ -21,9 +21,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const body = await req.json();
   const { type } = body;
@@ -59,9 +59,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const body = await req.json();
   const { type, id, tabUpdates, layoutUpdates, layout } = body;
@@ -91,9 +91,9 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');

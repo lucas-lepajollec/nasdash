@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CustomTabRow, CustomTabColumn, CustomTabWidgetInfo, CustomTabLayout } from '@/lib/types';
-import { TabDef } from '@/hooks/useTabs';
+import { TabDef, globalLayoutCache } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 
 import { WidgetRenderer } from '../../widgets/WidgetRenderer';
@@ -13,16 +13,15 @@ interface CustomTabRendererProps {
   showSensitive?: boolean;
 }
 
-// Cache global en mémoire pour éviter les flashs lors du switch d'onglets
-const layoutCache: { [tabId: string]: CustomTabLayout } = {};
-
 export default function CustomTabRenderer({ tab, editMode, showSensitive = false }: CustomTabRendererProps) {
   const { config, setSettingsModal, user } = useConfig();
-  const [layout, setLayout] = useState<CustomTabLayout | null>(layoutCache[tab.id] || null);
+  const [layout, setLayout] = useState<CustomTabLayout | null>(globalLayoutCache[tab.id] || null);
 
   useEffect(() => {
-    // Synchroniser immédiatement depuis le cache lors du switch d'onglet
-    setLayout(layoutCache[tab.id] || null);
+    // Synchroniser immédiatement depuis le cache global
+    if (globalLayoutCache[tab.id]) {
+      setLayout(globalLayoutCache[tab.id]);
+    }
 
     const fetchLayout = async () => {
       try {
@@ -31,7 +30,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
           const data = await res.json();
           if (data.layouts && data.layouts[tab.id]) {
             const fetched = data.layouts[tab.id];
-            layoutCache[tab.id] = fetched;
+            globalLayoutCache[tab.id] = fetched;
             setLayout(fetched);
           }
         }
@@ -39,12 +38,16 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
         console.error('Failed to fetch custom tab layout', e);
       }
     };
-    fetchLayout();
+
+    if (!globalLayoutCache[tab.id]) {
+      fetchLayout();
+    }
     
     const handleUpdate = () => fetchLayout();
     window.addEventListener('customTabsUpdated', handleUpdate);
     return () => window.removeEventListener('customTabsUpdated', handleUpdate);
   }, [tab.id]);
+
 
   const getLayoutSize = (widthStr: string): 'small' | 'medium' | 'full' => {
     const w = parseInt(widthStr, 10);
@@ -62,7 +65,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     if (!col || !col.widgets) return;
     
     col.widgets[widgetIndex].height = newHeight;
-    layoutCache[tab.id] = newLayout;
+    globalLayoutCache[tab.id] = newLayout;
     setLayout(newLayout);
 
     try {
@@ -86,7 +89,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     if (!col || !col.widgets) return;
     
     col.widgets[widgetIndex].props = { ...(col.widgets[widgetIndex].props || {}), ...newProps };
-    layoutCache[tab.id] = newLayout;
+    globalLayoutCache[tab.id] = newLayout;
     setLayout(newLayout);
 
     try {

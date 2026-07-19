@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readConfig, writeConfig, writeServices, writeCalendar } from '@/lib/config';
-import { isAdmin, getSessionFromRequest } from '@/lib/auth';
+import { checkAdmin, getSessionFromRequest } from '@/lib/auth';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
 import { Category, Service, Device } from '@/lib/types';
@@ -38,9 +38,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const body = await req.json();
   const config = readConfig();
@@ -215,9 +215,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const body = await req.json();
   const config = readConfig();
@@ -325,10 +325,40 @@ export async function PUT(req: NextRequest) {
     if (body.mobileWallpaper !== undefined) config.settings.mobileWallpaper = body.mobileWallpaper;
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
     
-    // Dynamically save all widget specific states (hide[Widget], [widget]Sidebar, [widget]Order)
+    // Dynamically save all widget specific states (hide[Widget], [widget]Sidebar, [widget]Order, [widget]Props) with validation
     Object.keys(body).forEach(key => {
       if (key.startsWith('hide') || key.endsWith('Sidebar') || key.endsWith('Order') || key.endsWith('Props')) {
-        (config.settings as any)[key] = body[key];
+        // Validation of key format to prevent prototype pollution or other injections
+        if (!/^[a-zA-Z0-9_]+$/.test(key)) return;
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') return;
+        
+        const val = body[key];
+        // Validate values
+        if (key.startsWith('hide') || key.endsWith('Sidebar')) {
+          if (typeof val === 'boolean') {
+            (config.settings as any)[key] = val;
+          }
+        } else if (key.endsWith('Order')) {
+          if (typeof val === 'number' || (Array.isArray(val) && val.every(item => typeof item === 'string' || typeof item === 'number'))) {
+            (config.settings as any)[key] = val;
+          }
+        } else if (key.endsWith('Props')) {
+          if (val && typeof val === 'object' && !Array.isArray(val)) {
+            // Simple check: make sure keys of Props are safe alphanumeric strings
+            const safeProps: any = {};
+            let isSafe = true;
+            Object.keys(val).forEach(propKey => {
+              if (!/^[a-zA-Z0-9_-]+$/.test(propKey) || propKey === '__proto__' || propKey === 'constructor' || propKey === 'prototype') {
+                isSafe = false;
+                return;
+              }
+              safeProps[propKey] = val[propKey];
+            });
+            if (isSafe) {
+              (config.settings as any)[key] = safeProps;
+            }
+          }
+        }
       }
     });
     if (body.weatherLocation !== undefined) config.settings.weatherLocation = body.weatherLocation;
@@ -523,9 +553,9 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type');

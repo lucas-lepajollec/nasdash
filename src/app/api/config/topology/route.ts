@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readConfig, writeTopology } from '@/lib/config';
-import { isAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,9 +10,9 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   try {
     const body = await req.json();

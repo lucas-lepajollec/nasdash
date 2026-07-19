@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { CustomTabLayout } from '@/lib/types';
 
 export type TabId = 'dashboard' | 'widgets' | 'docker' | 'networks' | string;
 
@@ -21,6 +22,8 @@ export const TABS: TabDef[] = [
 
 const STORAGE_KEY = 'nasdash-active-tab';
 
+export const globalLayoutCache: Record<string, CustomTabLayout> = {};
+
 export function useTabs() {
   const [activeTab, setActiveTab] = useState<TabId>('dashboard');
   const [ready, setReady] = useState(false);
@@ -31,10 +34,22 @@ export function useTabs() {
       const res = await fetch('/api/custom-tabs');
       if (res.ok) {
         const data = await res.json();
-        setCustomTabs(data.tabs || []);
+        const loadedTabs = data.tabs || [];
+        const loadedLayouts = data.layouts || {};
+
+        Object.assign(globalLayoutCache, loadedLayouts);
+        setCustomTabs(loadedTabs);
+
+        const saved = typeof window !== 'undefined' ? (localStorage.getItem(STORAGE_KEY) as TabId | null) : null;
+        const allTabs = [...TABS, ...loadedTabs];
+        if (saved && allTabs.some(e => e.id === saved)) {
+          setActiveTab(saved);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch custom tabs:', e);
+    } finally {
+      setReady(true);
     }
   }, []);
 
@@ -45,14 +60,6 @@ export function useTabs() {
     return () => window.removeEventListener('customTabsUpdated', handleUpdate);
   }, [fetchCustomTabs]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as TabId | null;
-    const allTabs = [...TABS, ...customTabs];
-    if (saved && allTabs.some(e => e.id === saved)) {
-      setActiveTab(saved);
-    }
-    setReady(true);
-  }, [customTabs]);
 
   const switchTab = useCallback((id: TabId) => {
     setActiveTab(id);

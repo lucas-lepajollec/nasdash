@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readUsers, writeUsers, isAdmin, hashPassword, getSessionFromRequest } from '@/lib/auth';
+import { readUsers, writeUsers, checkAdmin, hashPassword, getSessionFromRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const users = readUsers();
   const safeUsers = users.map(u => ({ 
@@ -17,9 +17,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   try {
     const { username, password, role, allowedTabs, allowedWidgets } = await req.json();
@@ -75,9 +75,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   try {
     const { searchParams } = new URL(req.url);

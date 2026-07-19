@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogosDir } from '@/lib/config';
-import { isAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import path from 'path';
 import fs from 'fs';
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   const formData = await req.formData();
   const file = formData.get('file') as File | null;

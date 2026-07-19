@@ -397,7 +397,7 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '100px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: widgetSize === 'wide' ? '180px' : '140px' }}>
             <div className="nd-spinner" style={{ width: 24, height: 24 }} />
           </div>
         )}

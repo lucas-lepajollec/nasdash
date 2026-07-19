@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 import { Category, Service, CustomTabWidgetInfo } from '@/lib/types';
 import { GripHorizontal, Trash2 } from 'lucide-react';
 import CategoryCard from './CategoryCard';
@@ -204,19 +205,38 @@ const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, 
     }
   };
 
-  const [colCount, setColCount] = useState(4);
+
+  const [colCount, setColCount] = useState(() => {
+    if (typeof window === 'undefined') return 4;
+    const estimatedWidth = window.innerWidth - 600;
+    if (estimatedWidth <= 550) return 1;
+    if (estimatedWidth <= 800) return 2;
+    if (estimatedWidth <= 1100) return 3;
+    if (estimatedWidth <= 1420) return 4;
+    if (estimatedWidth <= 1750) return 5;
+    return 6;
+  });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
+    const updateCols = (width: number) => {
+      if (width <= 0) return;
+      if (width <= 550) setColCount(1);
+      else if (width <= 800) setColCount(2);
+      else if (width <= 1100) setColCount(3);
+      else if (width <= 1420) setColCount(4);
+      else if (width <= 1750) setColCount(5);
+      else setColCount(6);
+    };
+
+    if (containerRef.current) {
+      const initialWidth = containerRef.current.clientWidth;
+      updateCols(initialWidth);
+    }
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const width = entry.contentRect.width;
-        if (width <= 550) setColCount(1);
-        else if (width <= 800) setColCount(2);
-        else if (width <= 1050) setColCount(3);
-        else if (width <= 1350) setColCount(4);
-        else if (width <= 1650) setColCount(5);
-        else setColCount(6);
+        updateCols(entry.contentRect.width);
       }
     });
 

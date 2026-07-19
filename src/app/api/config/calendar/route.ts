@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readConfig, writeCalendar } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
-import { isAdmin } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +11,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   try {
     const body = await req.json();
@@ -39,9 +39,9 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   try {
     const body = await req.json();
@@ -65,9 +65,9 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!isAdmin(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
 
   try {
     const { searchParams } = new URL(req.url);
