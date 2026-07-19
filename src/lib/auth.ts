@@ -140,7 +140,26 @@ export function isAuthenticated(req: Request | any): boolean {
 
 export function isAdmin(req: Request | any): boolean {
   const payload = getSessionFromRequest(req);
-  return payload?.role === 'admin';
+  if (payload) {
+    return payload.role === 'admin';
+  }
+  
+  try {
+    const configPath = path.join(process.cwd(), 'data', 'config.json');
+    if (fs.existsSync(configPath)) {
+      const raw = fs.readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(raw);
+      const mode = config.settings?.securityMode;
+      if (mode === 'private' || mode === 'semi-private') {
+        return false;
+      }
+      return true;
+    }
+  } catch (e) {
+    console.error('Failed to read config in isAdmin check:', e);
+  }
+  
+  return true;
 }
 
 export function verifyCsrf(req: Request | any): boolean {
@@ -192,19 +211,26 @@ export function verifyCsrf(req: Request | any): boolean {
     return false;
   }
 
-  const isLocalhost = (h: string) => ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(h);
+  const hostHeader = host.split(':')[0].toLowerCase();
+  const isLocalhost = (h: string) => ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(h.toLowerCase());
 
   if (origin) {
     try {
       const originUrl = new URL(origin);
-      if (originUrl.hostname !== targetUrl.hostname) {
-        if (isLocalhost(originUrl.hostname) && isLocalhost(targetUrl.hostname)) {
-          return true;
-        }
-        console.warn(`CSRF attempt blocked by Origin: ${origin} vs target ${targetUrl.hostname}`);
-        return false;
+      const originHost = originUrl.hostname.toLowerCase();
+      const targetHost = targetUrl.hostname.toLowerCase();
+      
+      if (originHost === targetHost || originHost === hostHeader) {
+        return true;
       }
-      return true;
+      if (isLocalhost(originHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
+        return true;
+      }
+      if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(originHost)) {
+        return true;
+      }
+      console.warn(`CSRF attempt blocked by Origin: ${origin} vs target ${targetHost} / host ${hostHeader}`);
+      return false;
     } catch {
       return false;
     }
@@ -213,14 +239,20 @@ export function verifyCsrf(req: Request | any): boolean {
   if (referer) {
     try {
       const refererUrl = new URL(referer);
-      if (refererUrl.hostname !== targetUrl.hostname) {
-        if (isLocalhost(refererUrl.hostname) && isLocalhost(targetUrl.hostname)) {
-          return true;
-        }
-        console.warn(`CSRF attempt blocked by Referer: ${referer} vs target ${targetUrl.hostname}`);
-        return false;
+      const refererHost = refererUrl.hostname.toLowerCase();
+      const targetHost = targetUrl.hostname.toLowerCase();
+      
+      if (refererHost === targetHost || refererHost === hostHeader) {
+        return true;
       }
-      return true;
+      if (isLocalhost(refererHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
+        return true;
+      }
+      if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(refererHost)) {
+        return true;
+      }
+      console.warn(`CSRF attempt blocked by Referer: ${referer} vs target ${targetHost} / host ${hostHeader}`);
+      return false;
     } catch {
       return false;
     }

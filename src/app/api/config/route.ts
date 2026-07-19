@@ -334,8 +334,12 @@ export async function PUT(req: NextRequest) {
         
         const val = body[key];
         // Validate values
-        if (key.startsWith('hide') || key.endsWith('Sidebar')) {
+        if (key.startsWith('hide')) {
           if (typeof val === 'boolean') {
+            (config.settings as any)[key] = val;
+          }
+        } else if (key.endsWith('Sidebar')) {
+          if (typeof val === 'string' || typeof val === 'boolean') {
             (config.settings as any)[key] = val;
           }
         } else if (key.endsWith('Order')) {
