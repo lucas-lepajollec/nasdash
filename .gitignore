@@ -60,3 +60,6 @@ commandes.md
 # real data (local-only)
 /data-real/
 
+# agent configs
+.agents/
+
