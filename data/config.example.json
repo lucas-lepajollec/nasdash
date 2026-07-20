@@ -6,6 +6,7 @@
     "totalSlots": 10,
     "hiddenTabs": [],
     "theme": "nasdash",
+    "mode": "dark",
     "dockPosition": "right",
     "tabOrder": ["dashboard", "docker"],
     "tabIcons": {},
