@@ -1,0 +1,748 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import { Search, Check, Palette, X, Sun, Moon, Sparkles } from 'lucide-react';
+
+export interface ThemeDefinition {
+  key: string;
+  name: string;
+  category: 'dark' | 'light';
+  bg: string;
+  cardBg: string;
+  subcardBg: string;
+  text: string;
+  accent: string;
+  description: string;
+  tags: string[];
+}
+
+export const THEME_GALLERY: ThemeDefinition[] = [
+  // DEFAULT
+  {
+    key: 'nasdash',
+    name: 'NasDash (Défaut)',
+    category: 'dark',
+    bg: '#090d16',
+    cardBg: '#161b22',
+    subcardBg: '#0f141d',
+    text: '#f5f5f7',
+    accent: '#00e5ff',
+    description: 'Thème emblématique NasDash bleu cyan & verre dépoli.',
+    tags: ['défaut', 'cyan', 'nasdash', 'glass', 'dark']
+  },
+
+  // APPLE
+  {
+    key: 'apple-dark',
+    name: 'Apple Dark 🍏',
+    category: 'dark',
+    bg: '#000000',
+    cardBg: '#1c1c1e',
+    subcardBg: '#2c2c2e',
+    text: '#f5f5f7',
+    accent: '#2997ff',
+    description: 'Design officiel macOS/iOS Dark Mode avec verre dépoli et grands arrondis (Squircle).',
+    tags: ['apple', 'macos', 'ios', 'dark', 'black', 'oled', 'blue']
+  },
+  {
+    key: 'apple-light',
+    name: 'Apple Light 🍏',
+    category: 'light',
+    bg: '#f5f5f7',
+    cardBg: '#ffffff',
+    subcardBg: '#f5f5f7',
+    text: '#1d1d1f',
+    accent: '#0071e3',
+    description: 'Design officiel Apple Store & macOS Light System net et minimaliste.',
+    tags: ['apple', 'macos', 'ios', 'light', 'store', 'minimal', 'white']
+  },
+
+  // GITHUB
+  {
+    key: 'github-dark',
+    name: 'GitHub Dark 🐙',
+    category: 'dark',
+    bg: '#0d1117',
+    cardBg: '#161b22',
+    subcardBg: '#21262d',
+    text: '#c9d1d9',
+    accent: '#58a6ff',
+    description: 'Thème sombre officiel GitHub Primer avec accent bleu azure.',
+    tags: ['github', 'primer', 'dark', 'code', 'blue']
+  },
+  {
+    key: 'github-light',
+    name: 'GitHub Light 🐙',
+    category: 'light',
+    bg: '#f6f8fa',
+    cardBg: '#ffffff',
+    subcardBg: '#f6f8fa',
+    text: '#1f2328',
+    accent: '#0969da',
+    description: 'Thème clair officiel GitHub Primer net et ultra lisible.',
+    tags: ['github', 'primer', 'light', 'code', 'blue']
+  },
+
+  // GREEN & FOREST
+  {
+    key: 'everforest-dark',
+    name: 'Everforest Dark 🌲',
+    category: 'dark',
+    bg: '#2b3339',
+    cardBg: '#323c41',
+    subcardBg: '#272e33',
+    text: '#d3c6aa',
+    accent: '#a7c080',
+    description: 'Vert sauge sombre apaisant pour une réduction maximale de la fatigue visuelle.',
+    tags: ['everforest', 'green', 'vert', 'sauge', 'dark', 'nature', 'soothing']
+  },
+  {
+    key: 'everforest-light',
+    name: 'Everforest Light 🌲',
+    category: 'light',
+    bg: '#f2efdf',
+    cardBg: '#fffbef',
+    subcardBg: '#e8e5d5',
+    text: '#5c6a72',
+    accent: '#8da101',
+    description: 'Parchemin naturel et vert forêt pour des sessions de travail prolongées.',
+    tags: ['everforest', 'green', 'vert', 'parchemin', 'light', 'nature']
+  },
+  {
+    key: 'tokyo-night-day',
+    name: 'Tokyo Night Day 🏙️',
+    category: 'light',
+    bg: '#e1e2e7',
+    cardBg: '#e9e9ed',
+    subcardBg: '#d5d6db',
+    text: '#3760bf',
+    accent: '#2e7de9',
+    description: 'Style lumineux et contrasté du centre-ville de Tokyo.',
+    tags: ['tokyo', 'night', 'day', 'blue', 'light']
+  },
+  {
+    key: 'gruvbox-light',
+    name: 'Gruvbox Light 🪵',
+    category: 'light',
+    bg: '#fbf1c7',
+    cardBg: '#f2e5bc',
+    subcardBg: '#ebdbb2',
+    text: '#3c3836',
+    accent: '#af3a03',
+    description: 'Style rétro vintage parchemin et terre d’ombre chaleureuse.',
+    tags: ['gruvbox', 'retro', 'light', 'amber', 'parchment']
+  },
+  {
+    key: 'nord-light',
+    name: 'Nord Light ❄️',
+    category: 'light',
+    bg: '#e5e9f0',
+    cardBg: '#eceff4',
+    subcardBg: '#d8dee9',
+    text: '#2e3440',
+    accent: '#5e81ac',
+    description: 'Ambiance givre polaire et tempête de neige arctique.',
+    tags: ['nord', 'light', 'snow', 'arctic', 'blue']
+  },
+  {
+    key: 'matrix-cyber',
+    name: 'Matrix Hacker 📟',
+    category: 'dark',
+    bg: '#070c0a',
+    cardBg: '#0f1a14',
+    subcardBg: '#14241b',
+    text: '#e0f8eb',
+    accent: '#00ff88',
+    description: 'Esthétique hacker cyberspatial en vert néon sur fond noir matrice.',
+    tags: ['matrix', 'hacker', 'neon', 'green', 'vert', 'cyber', 'dark']
+  },
+
+  // COMMUNITY FAVORITES (DARK)
+  {
+    key: 'one-dark-pro',
+    name: 'One Dark Pro ⚛️',
+    category: 'dark',
+    bg: '#21252b',
+    cardBg: '#282c34',
+    subcardBg: '#21252b',
+    text: '#abb2bf',
+    accent: '#61afef',
+    description: 'Le classique culte d’Atom aux nuances charbon et bleu cyan.',
+    tags: ['atom', 'one dark', 'pro', 'vscode', 'dark', 'popular']
+  },
+  {
+    key: 'tokyo-night',
+    name: 'Tokyo Night 🏙️',
+    category: 'dark',
+    bg: '#1a1b26',
+    cardBg: '#24283b',
+    subcardBg: '#1f2335',
+    text: '#a9b1d6',
+    accent: '#7aa2f7',
+    description: 'Ambiance nuit du centre-ville de Tokyo en bleu nuit saphir.',
+    tags: ['tokyo', 'night', 'sapphire', 'blue', 'neovim', 'dark']
+  },
+  {
+    key: 'kanagawa-wave',
+    name: 'Kanagawa Wave 🌊',
+    category: 'dark',
+    bg: '#1f1f28',
+    cardBg: '#2a2a37',
+    subcardBg: '#22242e',
+    text: '#dcd7ba',
+    accent: '#7e9cd8',
+    description: 'Palette artistique aux nuances de l’estampe La Grande Vague.',
+    tags: ['kanagawa', 'wave', 'japanese', 'art', 'parchment', 'dark']
+  },
+
+  // ROSÉ PINE
+  {
+    key: 'rose-pine-dark',
+    name: 'Rosé Pine Main 🌸',
+    category: 'dark',
+    bg: '#191724',
+    cardBg: '#1f1d2e',
+    subcardBg: '#191724',
+    text: '#e0def4',
+    accent: '#eb6f92',
+    description: 'Palette vintage SoHo aux teintes rose quartz, prune et iris.',
+    tags: ['rose', 'pine', 'soho', 'pink', 'dark']
+  },
+  {
+    key: 'rose-pine-dawn',
+    name: 'Rosé Pine Dawn 🌸',
+    category: 'light',
+    bg: '#faf4ed',
+    cardBg: '#fffaf3',
+    subcardBg: '#faf4ed',
+    text: '#464261',
+    accent: '#d7827e',
+    description: 'Quartz rosé poudré et crème douce pour un look élégant.',
+    tags: ['rose', 'pine', 'dawn', 'pink', 'light', 'cream']
+  },
+
+  // SOLARIZED
+  {
+    key: 'solarized-dark',
+    name: 'Solarized Dark ☀️',
+    category: 'dark',
+    bg: '#002b36',
+    cardBg: '#073642',
+    subcardBg: '#002b36',
+    text: '#839496',
+    accent: '#268bd2',
+    description: 'Thème sombre légendaire Solarized aux nuances bleutées précises.',
+    tags: ['solarized', 'dark', 'cyan', 'teal', 'classic']
+  },
+  {
+    key: 'solarized-light',
+    name: 'Solarized Light ☀️',
+    category: 'light',
+    bg: '#fdf6e3',
+    cardBg: '#fffcf0',
+    subcardBg: '#eee8d5',
+    text: '#002b36',
+    accent: '#268bd2',
+    description: 'Parchemin ambré chaud et bleu cyan solaire.',
+    tags: ['solarized', 'light', 'amber', 'amber', 'parchment']
+  },
+
+  // CATPPUCCIN
+  {
+    key: 'catppuccin-latte',
+    name: 'Catppuccin Latte 🐱',
+    category: 'light',
+    bg: '#eff1f5',
+    cardBg: '#e6e9ef',
+    subcardBg: '#dce0e8',
+    text: '#4c4f69',
+    accent: '#8839ef',
+    description: 'Douceur pastel et accent mauve signature de Catppuccin.',
+    tags: ['catppuccin', 'latte', 'mauve', 'purple', 'light']
+  },
+  {
+    key: 'catppuccin-macchiato',
+    name: 'Catppuccin Macchiato 🐱',
+    category: 'dark',
+    bg: '#181926',
+    cardBg: '#24273a',
+    subcardBg: '#1e2030',
+    text: '#cad3f5',
+    accent: '#8aadf4',
+    description: 'Thème sombre pastel aux teintes lavande et bleu poudre.',
+    tags: ['catppuccin', 'macchiato', 'lavender', 'blue', 'dark']
+  },
+
+  // CLASSIC DARK THEMES
+  {
+    key: 'gruvbox-dark',
+    name: 'Gruvbox Dark 🪵',
+    category: 'dark',
+    bg: '#282828',
+    cardBg: '#3c3836',
+    subcardBg: '#32302f',
+    text: '#ebdbb2',
+    accent: '#fe8019',
+    description: 'Style rétro vintage terre d’ombre et ambre chaleureux.',
+    tags: ['gruvbox', 'retro', 'warm', 'orange', 'dark']
+  },
+  {
+    key: 'nord',
+    name: 'Nord Ice ❄️',
+    category: 'dark',
+    bg: '#20242c',
+    cardBg: '#2e3440',
+    subcardBg: '#272c36',
+    text: '#d8dee9',
+    accent: '#88c0d0',
+    description: 'Inspiré du givre polaire et des aurores boréales arctiques.',
+    tags: ['nord', 'ice', 'arctic', 'blue', 'dark']
+  },
+  {
+    key: 'dracula',
+    name: 'Dracula Gothic 🧛',
+    category: 'dark',
+    bg: '#282a36',
+    cardBg: '#44475a',
+    subcardBg: '#343746',
+    text: '#f8f8f2',
+    accent: '#bd93f9',
+    description: 'Thème culte gothique violet & rose néon.',
+    tags: ['dracula', 'gothic', 'purple', 'pink', 'neon', 'dark']
+  },
+  {
+    key: 'ocean',
+    name: 'Ocean Deep Glow 🌊',
+    category: 'dark',
+    bg: '#0f172a',
+    cardBg: '#1e293b',
+    subcardBg: '#0f172a',
+    text: '#f8fafc',
+    accent: '#38bdf8',
+    description: 'Bleus abyssaux profonds et accents lagon.',
+    tags: ['ocean', 'blue', 'deep', 'cyan', 'dark']
+  },
+  {
+    key: 'midnight',
+    name: 'Midnight OLED 🌑',
+    category: 'dark',
+    bg: '#09090b',
+    cardBg: '#121215',
+    subcardBg: '#18181b',
+    text: '#fafafa',
+    accent: '#6366f1',
+    description: 'Noir absolu optimisé pour économiser l’énergie sur écrans OLED.',
+    tags: ['midnight', 'oled', 'black', 'indigo', 'dark']
+  },
+  {
+    key: 'cyberpunk',
+    name: 'Retro Cyberpunk 🤖',
+    category: 'dark',
+    bg: '#120024',
+    cardBg: '#230038',
+    subcardBg: '#180029',
+    text: '#00ffff',
+    accent: '#ff007f',
+    description: 'Néons magenta et cyan rétro-futuriste Synthwave.',
+    tags: ['cyberpunk', 'retro', 'synthwave', 'neon', 'pink', 'dark']
+  }
+];
+
+interface ThemePickerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentTheme: string;
+  onSelectTheme: (themeKey: string) => Promise<void>;
+}
+
+export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSelectTheme }: ThemePickerModalProps) {
+  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'dark' | 'light'>('all');
+
+  const filteredThemes = useMemo(() => {
+    return THEME_GALLERY.filter(t => {
+      const matchesTab = activeTab === 'all' || t.category === activeTab;
+      const q = search.toLowerCase().trim();
+      const matchesSearch = !q || 
+        t.name.toLowerCase().includes(q) || 
+        t.description.toLowerCase().includes(q) || 
+        t.tags.some(tag => tag.includes(q));
+      return matchesTab && matchesSearch;
+    });
+  }, [search, activeTab]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      backdropFilter: 'blur(16px)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px'
+    }}
+    onClick={onClose}
+    >
+      <div 
+        style={{
+          width: '100%',
+          maxWidth: '920px',
+          height: '740px',
+          maxHeight: '88vh',
+          background: 'var(--nd-card-bg)',
+          border: '1px solid var(--nd-card-border)',
+          borderRadius: '24px',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          animation: 'modalAppear 0.25s ease-out'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{
+          padding: '20px 24px',
+          borderBottom: '1px solid var(--nd-card-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 38,
+                height: 38,
+                borderRadius: 12,
+                background: 'var(--nd-accent-glow)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--nd-accent)'
+              }}>
+                <Palette size={20} />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--nd-text)' }}>
+                  Galerie de Thèmes Visuels
+                </h2>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
+                  Personnalisez l’ambiance de NasDash parmi {THEME_GALLERY.length} thèmes uniques.
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={onClose}
+              className="nd-btn"
+              style={{ width: 36, height: 36, padding: 0, borderRadius: '50%' }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Search + Category Tabs Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            {/* Search Input */}
+            <div style={{
+              flex: 1,
+              minWidth: 240,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, color: 'var(--nd-text-muted)' }} />
+              <input 
+                type="text"
+                placeholder="Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: 38,
+                  paddingLeft: 36,
+                  paddingRight: 12,
+                  borderRadius: 12,
+                  border: '1px solid var(--nd-card-border)',
+                  background: 'var(--nd-subcard-bg)',
+                  color: 'var(--nd-text)',
+                  fontSize: '0.82rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Filter Tabs */}
+            <div style={{
+              display: 'flex',
+              background: 'var(--nd-subcard-bg)',
+              padding: 3,
+              borderRadius: 12,
+              border: '1px solid var(--nd-card-border)'
+            }}>
+              <button
+                onClick={() => setActiveTab('all')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: activeTab === 'all' ? 'var(--nd-card-bg)' : 'transparent',
+                  color: activeTab === 'all' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
+                  fontWeight: activeTab === 'all' ? 600 : 400,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sparkles size={13} color={activeTab === 'all' ? 'var(--nd-accent)' : undefined} />
+                Tous ({THEME_GALLERY.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('dark')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: activeTab === 'dark' ? 'var(--nd-card-bg)' : 'transparent',
+                  color: activeTab === 'dark' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
+                  fontWeight: activeTab === 'dark' ? 600 : 400,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Moon size={13} color={activeTab === 'dark' ? 'var(--nd-accent)' : undefined} />
+                Sombres ({THEME_GALLERY.filter(t => t.category === 'dark').length})
+              </button>
+              <button
+                onClick={() => setActiveTab('light')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: activeTab === 'light' ? 'var(--nd-card-bg)' : 'transparent',
+                  color: activeTab === 'light' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
+                  fontWeight: activeTab === 'light' ? 600 : 400,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sun size={13} color={activeTab === 'light' ? 'var(--nd-accent)' : undefined} />
+                Clairs ({THEME_GALLERY.filter(t => t.category === 'light').length})
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Gallery Grid Content */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '20px 24px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gridAutoRows: '195px',
+          gap: 16,
+          alignContent: 'start'
+        }}>
+          {filteredThemes.length === 0 ? (
+            <div style={{
+              gridColumn: '1 / -1',
+              padding: '60px 20px',
+              textAlign: 'center',
+              color: 'var(--nd-text-muted)'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.95rem' }}>Aucun thème ne correspond à votre recherche "{search}".</p>
+            </div>
+          ) : (
+            filteredThemes.map((theme) => {
+              const isSelected = currentTheme === theme.key;
+
+              return (
+                <div
+                  key={theme.key}
+                  onClick={() => onSelectTheme(theme.key)}
+                  style={{
+                    borderRadius: 16,
+                    border: isSelected 
+                      ? '2px solid var(--nd-accent)' 
+                      : '1px solid var(--nd-card-border)',
+                    background: 'var(--nd-subcard-bg)',
+                    padding: 12,
+                    height: 195,
+                    minHeight: 195,
+                    boxSizing: 'border-box',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = 'var(--nd-accent)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = 'var(--nd-card-border)';
+                      e.currentTarget.style.transform = 'none';
+                    }
+                  }}
+                >
+                  {/* Live Theme Preview Card */}
+                  <div style={{
+                    width: '100%',
+                    height: 90,
+                    borderRadius: 10,
+                    background: theme.bg,
+                    padding: 8,
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    border: '1px solid rgba(128, 128, 128, 0.15)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Simulated Header Bar */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent }} />
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(128,128,128,0.3)' }} />
+                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(128,128,128,0.3)' }} />
+                      </div>
+                      <div style={{
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        background: theme.subcardBg,
+                        color: theme.text,
+                        fontSize: '0.55rem',
+                        fontWeight: 700
+                      }}>
+                        NasDash
+                      </div>
+                    </div>
+
+                    {/* Simulated Widget Card */}
+                    <div style={{
+                      background: theme.cardBg,
+                      borderRadius: 6,
+                      padding: 6,
+                      border: '1px solid rgba(128,128,128,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}>
+                      <div style={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: 4,
+                        background: theme.accent
+                      }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ height: 4, width: '60%', background: theme.text, opacity: 0.8, borderRadius: 2, marginBottom: 3 }} />
+                        <div style={{ height: 3, width: '40%', background: theme.text, opacity: 0.4, borderRadius: 2 }} />
+                      </div>
+                    </div>
+
+                    {/* Color Swatch Badges */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 6,
+                      right: 6,
+                      display: 'flex',
+                      gap: 3,
+                      padding: 2,
+                      background: 'rgba(0,0,0,0.3)',
+                      borderRadius: 10,
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title="Canvas BG" />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title="Card Surface" />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title="Text Color" />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title="Accent Color" />
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--nd-text)' }}>
+                        {theme.name}
+                      </span>
+                      {isSelected && (
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '2px 8px',
+                          borderRadius: 20,
+                          background: 'var(--nd-accent)',
+                          color: '#ffffff',
+                          fontSize: '0.62rem',
+                          fontWeight: 700
+                        }}>
+                          <Check size={11} /> Actif
+                        </div>
+                      )}
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: '1.25' }}>
+                      {theme.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: '14px 24px',
+          borderTop: '1px solid var(--nd-card-border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'var(--nd-subcard-bg)'
+        }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
+            {filteredThemes.length} sur {THEME_GALLERY.length} thèmes affichés
+          </span>
+          <button
+            onClick={onClose}
+            className="nd-btn"
+            style={{ padding: '0 20px', height: 34 }}
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

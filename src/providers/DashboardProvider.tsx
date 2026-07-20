@@ -91,6 +91,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         }
         return;
       }
+      if (res.status === 429) {
+        setLoading(false);
+        return;
+      }
       if (!res.ok) {
         throw new Error(`Failed to fetch config: ${res.status}`);
       }
@@ -155,15 +159,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     document.body.style.backgroundPosition = '';
     document.body.style.backgroundRepeat = '';
 
+    const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
+    const activeMode = config?.settings?.mode || (typeof window !== 'undefined' ? localStorage.getItem('nd-theme') : 'dark');
+    const isLightTheme = LIGHT_THEMES.includes(activeTheme) || (activeTheme === 'nasdash' && activeMode === 'light');
+
     const themeClasses = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
     themeClasses.forEach(cls => document.body.classList.remove(cls));
     
     if (activeTheme !== 'nasdash') {
       document.body.classList.add(`theme-${activeTheme}`);
-      if (document.body.classList.contains('light')) {
-        document.body.classList.remove('light');
-        localStorage.setItem('nd-theme', 'dark');
-      }
+    }
+
+    if (isLightTheme) {
+      document.body.classList.add('light');
+      localStorage.setItem('nd-theme', 'light');
+    } else {
+      document.body.classList.remove('light');
+      localStorage.setItem('nd-theme', 'dark');
     }
 
     if (activeRadius !== undefined) {
@@ -430,6 +442,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'homeWidgetProps', id: widgetId, props: newProps }),
     });
+    if (res.status === 429) {
+      setLoading(false);
+      return;
+    }
     if (!res.ok) await fetchConfig();
   };
 
@@ -445,15 +461,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    const res = await fetchWithAuth('/api/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'settings', ...updates }),
-    });
-    if (res.ok) {
-      await fetchConfig();
-    } else {
-      await fetchConfig();
+    try {
+      await fetchWithAuth('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'settings', ...updates }),
+      });
+    } catch (err) {
+      console.warn('Failed to persist config update:', err);
     }
   };
 

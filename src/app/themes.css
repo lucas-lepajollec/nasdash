@@ -5,63 +5,544 @@
 /* Apple Dark — True Glassmorphism
    Ultra-transparent cards + heavy blur = frosted glass effect.
    Reworked: Multi-layered macOS ambient mesh glow (lavender and blue) */
+/* Apple Dark — Official macOS/iOS Dark Mode Design System
+   OLED Black canvas + #1c1c1e macOS dark cards + #2997ff Apple Dark Blue accent + 20px squircle radius */
 .theme-apple-dark {
-  --nd-bg: #030305;
-  --nd-bg-surface: #101014;
-  --nd-bg-gradient: linear-gradient(135deg, #020204 0%, #0d0d12 40%, #171722 100%),
-                    radial-gradient(circle at 10% 20%, rgba(10, 132, 255, 0.12) 0%, transparent 45%),
-                    radial-gradient(circle at 90% 80%, rgba(191, 90, 242, 0.1) 0%, transparent 45%);
+  --nd-bg: #000000;
+  --nd-bg-surface: #1c1c1e;
+  --nd-bg-gradient: linear-gradient(135deg, #000000 0%, #0c0c0e 50%, #161618 100%),
+                    radial-gradient(circle at 15% 15%, rgba(41, 151, 255, 0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 85% 85%, rgba(191, 90, 242, 0.1) 0%, transparent 50%);
   --nd-card-bg-rgb: 28, 28, 30;
+  --nd-card-bg-opacity: 0.95;
   --nd-card-border: rgba(255, 255, 255, 0.08);
-  --nd-card-hover-border: rgba(255, 255, 255, 0.18);
+  --nd-card-hover-border: rgba(41, 151, 255, 0.5);
+  --nd-subcard-bg: #2c2c2e;
   --nd-card-shadow: none;
-  --nd-card-radius: 14px;
+  --nd-card-radius: 20px;
   --nd-text: #f5f5f7;
-  --nd-text-muted: #98989d;
-  --nd-text-dimmed: rgba(152, 152, 157, 0.5);
-  --nd-accent: #0a84ff;
-  --nd-accent-glow: rgba(10, 132, 255, 0.12);
-  --nd-accent-dim: rgba(10, 132, 255, 0.5);
+  --nd-text-muted: #86868b;
+  --nd-text-dimmed: rgba(134, 134, 139, 0.5);
+  --nd-accent: #2997ff;
+  --nd-accent-glow: rgba(41, 151, 255, 0.16);
+  --nd-accent-dim: rgba(41, 151, 255, 0.5);
   --nd-blur: 40px;
   --nd-purple: #bf5af2;
-  --nd-blue: #0a84ff;
+  --nd-blue: #2997ff;
   --nd-orange: #ff9f0a;
   --nd-green: #30d158;
   --nd-red: #ff453a;
   --nd-yellow: #ffd60a;
   --nd-progress-bg: rgba(255, 255, 255, 0.08);
-  --nd-icon-bg: rgba(255, 255, 255, 0.04);
-  --nd-icon-border: rgba(255, 255, 255, 0.06);
+  --nd-icon-bg: rgba(255, 255, 255, 0.05);
+  --nd-icon-border: rgba(255, 255, 255, 0.08);
 }
 
-/* Apple Light — Premium Glassmorphism */
+/* Apple Light — Official Apple Store & macOS Light Design System
+   #f5f5f7 Canvas + Pure White #ffffff cards + #0071e3 Apple Store Blue accent + #1d1d1f high-contrast SF Pro text + 20px squircle radius */
 .theme-apple-light {
-  --nd-bg: #eef1f5;
+  --nd-bg: #f5f5f7;
   --nd-bg-surface: #ffffff;
-  --nd-bg-gradient: linear-gradient(135deg, #eef1f5 0%, #e2e8f0 100%),
-                    radial-gradient(circle at 15% 0%, rgba(10, 132, 255, 0.18) 0%, transparent 50%),
-                    radial-gradient(circle at 85% 100%, rgba(255, 59, 48, 0.15) 0%, transparent 50%);
+  --nd-bg-gradient: linear-gradient(135deg, #f5f5f7 0%, #ebebeb 100%);
   --nd-card-bg-rgb: 255, 255, 255;
-  --nd-card-border: rgba(255, 255, 255, 0.8);
-  --nd-card-hover-border: rgba(255, 255, 255, 1);
-  --nd-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-  --nd-card-radius: 14px;
+  --nd-card-bg-opacity: 1;
+  --nd-card-border: rgba(0, 0, 0, 0.05);
+  --nd-subcard-bg: #f5f5f7;
+  --nd-card-hover-border: #0071e3;
+  --nd-card-shadow: none;
+  --nd-card-radius: 20px;
   --nd-text: #1d1d1f;
-  --nd-text-muted: #86868b;
-  --nd-text-dimmed: rgba(134, 134, 139, 0.6);
-  --nd-accent: #007aff;
-  --nd-accent-glow: rgba(0, 122, 255, 0.12);
-  --nd-accent-dim: rgba(0, 122, 255, 0.4);
-  --nd-blur: 40px;
+  --nd-text-muted: #6e6e73;
+  --nd-text-dimmed: #86868b;
+  --nd-accent: #0071e3;
+  --nd-accent-glow: rgba(0, 113, 227, 0.12);
+  --nd-accent-dim: rgba(0, 113, 227, 0.45);
+  --nd-blur: 20px;
   --nd-purple: #af52de;
-  --nd-blue: #007aff;
+  --nd-blue: #0071e3;
   --nd-orange: #ff9500;
   --nd-green: #34c759;
   --nd-red: #ff3b30;
   --nd-yellow: #ffcc00;
   --nd-progress-bg: rgba(0, 0, 0, 0.05);
-  --nd-icon-bg: rgba(255, 255, 255, 0.6);
-  --nd-icon-border: rgba(255, 255, 255, 0.9);
+  --nd-icon-bg: #f5f5f7;
+  --nd-icon-border: rgba(0, 0, 0, 0.05);
+}
+
+/* Rosé Pine Dawn — Soft Blush Quartz & Warm Rose Cream */
+.theme-rose-pine-dawn {
+  --nd-bg: #faf4ed;
+  --nd-bg-surface: #fffaf3;
+  --nd-bg-gradient: linear-gradient(135deg, #faf4ed 0%, #f4ece1 100%);
+  --nd-card-bg-rgb: 255, 250, 243;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #e8dfd5;
+  --nd-subcard-bg: #f2e9e1;
+  --nd-card-hover-border: #d7827e;
+  --nd-card-shadow: none;
+  --nd-card-radius: 14px;
+  --nd-text: #464261;
+  --nd-text-muted: #6e6a86;
+  --nd-text-dimmed: #907aa9;
+  --nd-accent: #d7827e;
+  --nd-accent-glow: rgba(215, 130, 126, 0.18);
+  --nd-accent-dim: rgba(215, 130, 126, 0.5);
+  --nd-purple: #907aa9;
+  --nd-blue: #286983;
+  --nd-orange: #ea9d34;
+  --nd-green: #56949f;
+  --nd-red: #b4637a;
+  --nd-yellow: #ea9d34;
+  --nd-progress-bg: rgba(70, 66, 97, 0.1);
+  --nd-icon-bg: rgba(242, 233, 225, 0.9);
+  --nd-icon-border: #e8dfd5;
+}
+
+/* Solarized Light — Amber Parchment & Deep Solar Teal */
+.theme-solarized-light {
+  --nd-bg: #fdf6e3;
+  --nd-bg-surface: #eee8d5;
+  --nd-bg-gradient: linear-gradient(135deg, #fdf6e3 0%, #f4ebd0 100%);
+  --nd-card-bg-rgb: 238, 232, 213;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #d3c7a6;
+  --nd-subcard-bg: #e7dfc6;
+  --nd-card-hover-border: #268bd2;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #002b36;
+  --nd-text-muted: #586e75;
+  --nd-text-dimmed: #657b83;
+  --nd-accent: #268bd2;
+  --nd-accent-glow: rgba(38, 139, 210, 0.15);
+  --nd-accent-dim: rgba(38, 139, 210, 0.5);
+  --nd-purple: #6c71c4;
+  --nd-blue: #268bd2;
+  --nd-orange: #cb4b16;
+  --nd-green: #859900;
+  --nd-red: #dc322f;
+  --nd-yellow: #b58900;
+  --nd-progress-bg: rgba(0, 43, 54, 0.1);
+  --nd-icon-bg: rgba(231, 223, 198, 0.9);
+  --nd-icon-border: #d3c7a6;
+}
+
+/* Catppuccin Latte — Soothing Soft Cream & Signature Pastel Mauve */
+.theme-catppuccin-latte {
+  --nd-bg: #eff1f5;
+  --nd-bg-surface: #e6e9ef;
+  --nd-bg-gradient: linear-gradient(135deg, #eff1f5 0%, #e6e9ef 100%);
+  --nd-card-bg-rgb: 230, 233, 239;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #ccd0da;
+  --nd-subcard-bg: #dce0e8;
+  --nd-card-hover-border: #8839ef;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #4c4f69;
+  --nd-text-muted: #6c6f85;
+  --nd-text-dimmed: #9ca0b0;
+  --nd-accent: #8839ef;
+  --nd-accent-glow: rgba(136, 57, 239, 0.16);
+  --nd-accent-dim: rgba(136, 57, 239, 0.5);
+  --nd-purple: #8839ef;
+  --nd-blue: #1e66f5;
+  --nd-orange: #fe641b;
+  --nd-green: #40a02b;
+  --nd-red: #d20f39;
+  --nd-yellow: #df8e1d;
+  --nd-progress-bg: rgba(76, 79, 105, 0.12);
+  --nd-icon-bg: rgba(220, 224, 232, 0.9);
+  --nd-icon-border: #ccd0da;
+}
+
+/* GitHub Light — Crisp Neutral & Ocean Azure Blue */
+.theme-github-light {
+  --nd-bg: #f6f8fa;
+  --nd-bg-surface: #ffffff;
+  --nd-bg-gradient: linear-gradient(135deg, #f6f8fa 0%, #eaeef2 100%);
+  --nd-card-bg-rgb: 255, 255, 255;
+  --nd-card-bg-opacity: 1;
+  --nd-card-border: #d0d7de;
+  --nd-subcard-bg: #f6f8fa;
+  --nd-card-hover-border: #0969da;
+  --nd-card-shadow: none;
+  --nd-card-radius: 10px;
+  --nd-text: #1f2328;
+  --nd-text-muted: #57606a;
+  --nd-text-dimmed: #8c959f;
+  --nd-accent: #0969da;
+  --nd-accent-glow: rgba(9, 105, 218, 0.15);
+  --nd-accent-dim: rgba(9, 105, 218, 0.5);
+  --nd-purple: #8250df;
+  --nd-blue: #0969da;
+  --nd-orange: #cf222e;
+  --nd-green: #1a7f37;
+  --nd-red: #cf222e;
+  --nd-yellow: #9a6700;
+  --nd-progress-bg: #eaeef2;
+  --nd-icon-bg: #f6f8fa;
+  --nd-icon-border: #d0d7de;
+}
+
+/* Tokyo Night Day — Downtown Tokyo Crisp Light */
+.theme-tokyo-night-day {
+  --nd-bg: #e1e2e7;
+  --nd-bg-surface: #e9e9ed;
+  --nd-bg-gradient: linear-gradient(135deg, #e1e2e7 0%, #d5d6db 100%);
+  --nd-card-bg-rgb: 233, 233, 237;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #c4c8d4;
+  --nd-subcard-bg: #d5d6db;
+  --nd-card-hover-border: #2e7de9;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #3760bf;
+  --nd-text-muted: #6172b0;
+  --nd-text-dimmed: #8490c0;
+  --nd-accent: #2e7de9;
+  --nd-accent-glow: rgba(46, 125, 233, 0.15);
+  --nd-accent-dim: rgba(46, 125, 233, 0.5);
+  --nd-purple: #9854f1;
+  --nd-blue: #2e7de9;
+  --nd-orange: #b15c00;
+  --nd-green: #587539;
+  --nd-red: #f52a65;
+  --nd-yellow: #8c6c00;
+  --nd-progress-bg: rgba(55, 96, 191, 0.1);
+  --nd-icon-bg: #d5d6db;
+  --nd-icon-border: #c4c8d4;
+}
+
+/* Gruvbox Light — Retro Earthy Warm Parchment Light */
+.theme-gruvbox-light {
+  --nd-bg: #fbf1c7;
+  --nd-bg-surface: #f2e5bc;
+  --nd-bg-gradient: linear-gradient(135deg, #fbf1c7 0%, #ebdbb2 100%);
+  --nd-card-bg-rgb: 242, 229, 188;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #d5c4a1;
+  --nd-subcard-bg: #ebdbb2;
+  --nd-card-hover-border: #af3a03;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #3c3836;
+  --nd-text-muted: #665c54;
+  --nd-text-dimmed: #7c6f64;
+  --nd-accent: #af3a03;
+  --nd-accent-glow: rgba(175, 58, 3, 0.15);
+  --nd-accent-dim: rgba(175, 58, 3, 0.5);
+  --nd-purple: #8f3f71;
+  --nd-blue: #076678;
+  --nd-orange: #af3a03;
+  --nd-green: #79740e;
+  --nd-red: #9d0006;
+  --nd-yellow: #b57614;
+  --nd-progress-bg: rgba(60, 56, 54, 0.1);
+  --nd-icon-bg: #ebdbb2;
+  --nd-icon-border: #d5c4a1;
+}
+
+/* Nord Light — Snow Storm Arctic Frost */
+.theme-nord-light {
+  --nd-bg: #e5e9f0;
+  --nd-bg-surface: #eceff4;
+  --nd-bg-gradient: linear-gradient(135deg, #e5e9f0 0%, #d8dee9 100%);
+  --nd-card-bg-rgb: 236, 239, 244;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #c8d0e0;
+  --nd-subcard-bg: #d8dee9;
+  --nd-card-hover-border: #5e81ac;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #2e3440;
+  --nd-text-muted: #3b4252;
+  --nd-text-dimmed: #5c677d;
+  --nd-accent: #5e81ac;
+  --nd-accent-glow: rgba(94, 129, 172, 0.15);
+  --nd-accent-dim: rgba(94, 129, 172, 0.5);
+  --nd-purple: #b48ead;
+  --nd-blue: #5e81ac;
+  --nd-orange: #d08770;
+  --nd-green: #a3be8c;
+  --nd-red: #bf616a;
+  --nd-yellow: #ebcb8b;
+  --nd-progress-bg: rgba(46, 52, 64, 0.1);
+  --nd-icon-bg: #d8dee9;
+  --nd-icon-border: #c8d0e0;
+}
+
+/* Everforest Light — Calming Forest Sage Parchment */
+.theme-everforest-light {
+  --nd-bg: #f2efdf;
+  --nd-bg-surface: #fffbef;
+  --nd-bg-gradient: linear-gradient(135deg, #f2efdf 0%, #e6e3d1 100%);
+  --nd-card-bg-rgb: 255, 251, 239;
+  --nd-card-bg-opacity: 0.98;
+  --nd-card-border: #e0dcc9;
+  --nd-subcard-bg: #e8e5d5;
+  --nd-card-hover-border: #8da101;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #5c6a72;
+  --nd-text-muted: #7f8c8d;
+  --nd-text-dimmed: #a6b0a1;
+  --nd-accent: #8da101;
+  --nd-accent-glow: rgba(141, 161, 1, 0.15);
+  --nd-accent-dim: rgba(141, 161, 1, 0.5);
+  --nd-purple: #df69ba;
+  --nd-blue: #3a94c5;
+  --nd-orange: #f57d00;
+  --nd-green: #8da101;
+  --nd-red: #f85552;
+  --nd-yellow: #dfa000;
+  --nd-progress-bg: rgba(92, 106, 114, 0.1);
+  --nd-icon-bg: #e8e5d5;
+  --nd-icon-border: #e0dcc9;
+}
+
+/* GitHub Dark — Official GitHub Dark Mode Canvas & Azure Accent */
+.theme-github-dark {
+  --nd-bg: #0d1117;
+  --nd-bg-surface: #161b22;
+  --nd-bg-gradient: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+  --nd-card-bg-rgb: 22, 27, 34;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #30363d;
+  --nd-subcard-bg: #21262d;
+  --nd-card-hover-border: #58a6ff;
+  --nd-card-shadow: none;
+  --nd-card-radius: 10px;
+  --nd-text: #c9d1d9;
+  --nd-text-muted: #8b949e;
+  --nd-text-dimmed: #484f58;
+  --nd-accent: #58a6ff;
+  --nd-accent-glow: rgba(88, 166, 255, 0.15);
+  --nd-accent-dim: rgba(88, 166, 255, 0.5);
+  --nd-purple: #bc8cff;
+  --nd-blue: #58a6ff;
+  --nd-orange: #f0883e;
+  --nd-green: #3fb950;
+  --nd-red: #f85149;
+  --nd-yellow: #d29922;
+  --nd-progress-bg: #21262d;
+  --nd-icon-bg: #161b22;
+  --nd-icon-border: #30363d;
+}
+
+/* Everforest Dark — Deep Forest Sage & Earthy Green */
+.theme-everforest-dark {
+  --nd-bg: #2b3339;
+  --nd-bg-surface: #323c41;
+  --nd-bg-gradient: linear-gradient(135deg, #2b3339 0%, #323c41 100%);
+  --nd-card-bg-rgb: 50, 60, 65;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #414b50;
+  --nd-subcard-bg: #272e33;
+  --nd-card-hover-border: #a7c080;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #d3c6aa;
+  --nd-text-muted: #859289;
+  --nd-text-dimmed: #5c6762;
+  --nd-accent: #a7c080;
+  --nd-accent-glow: rgba(167, 192, 128, 0.16);
+  --nd-accent-dim: rgba(167, 192, 128, 0.5);
+  --nd-purple: #d699b6;
+  --nd-blue: #7fbbb3;
+  --nd-orange: #e69875;
+  --nd-green: #a7c080;
+  --nd-red: #e67e80;
+  --nd-yellow: #dbbc7f;
+  --nd-progress-bg: #272e33;
+  --nd-icon-bg: #323c41;
+  --nd-icon-border: #414b50;
+}
+
+/* Matrix Cyber — High-Contrast Neon Hacker Green */
+.theme-matrix-cyber {
+  --nd-bg: #070c0a;
+  --nd-bg-surface: #0f1a14;
+  --nd-bg-gradient: linear-gradient(135deg, #070c0a 0%, #0f1a14 50%, #15261d 100%),
+                    radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.08) 0%, transparent 50%);
+  --nd-card-bg-rgb: 15, 26, 20;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #1b3325;
+  --nd-subcard-bg: #14241b;
+  --nd-card-hover-border: #00ff88;
+  --nd-card-shadow: none;
+  --nd-card-radius: 10px;
+  --nd-text: #e0f8eb;
+  --nd-text-muted: #5ca37a;
+  --nd-text-dimmed: #336146;
+  --nd-accent: #00ff88;
+  --nd-accent-glow: rgba(0, 255, 136, 0.18);
+  --nd-accent-dim: rgba(0, 255, 136, 0.5);
+  --nd-purple: #a855f7;
+  --nd-blue: #38bdf8;
+  --nd-orange: #fb923c;
+  --nd-green: #00ff88;
+  --nd-red: #f43f5e;
+  --nd-yellow: #facc15;
+  --nd-progress-bg: #14241b;
+  --nd-icon-bg: #0f1a14;
+  --nd-icon-border: #1b3325;
+}
+
+/* Rosé Pine Main — Soho Vintage Rose Quartz Dark */
+.theme-rose-pine-dark {
+  --nd-bg: #191724;
+  --nd-bg-surface: #1f1d2e;
+  --nd-bg-gradient: linear-gradient(135deg, #191724 0%, #1f1d2e 100%);
+  --nd-card-bg-rgb: 31, 29, 46;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #26233a;
+  --nd-subcard-bg: #191724;
+  --nd-card-hover-border: #eb6f92;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #e0def4;
+  --nd-text-muted: #908caa;
+  --nd-text-dimmed: #6e6a86;
+  --nd-accent: #eb6f92;
+  --nd-accent-glow: rgba(235, 111, 146, 0.16);
+  --nd-accent-dim: rgba(235, 111, 146, 0.5);
+  --nd-purple: #c4a7e7;
+  --nd-blue: #9ccfd8;
+  --nd-orange: #f6c177;
+  --nd-green: #31748f;
+  --nd-red: #eb6f92;
+  --nd-yellow: #f6c177;
+}
+
+/* Solarized Dark — Deep Obsidian Solar Teal */
+.theme-solarized-dark {
+  --nd-bg: #002b36;
+  --nd-bg-surface: #073642;
+  --nd-bg-gradient: linear-gradient(135deg, #002b36 0%, #073642 100%);
+  --nd-card-bg-rgb: 7, 54, 66;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #586e75;
+  --nd-subcard-bg: #002b36;
+  --nd-card-hover-border: #268bd2;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #839496;
+  --nd-text-muted: #657b83;
+  --nd-text-dimmed: #586e75;
+  --nd-accent: #268bd2;
+  --nd-accent-glow: rgba(38, 139, 210, 0.16);
+  --nd-accent-dim: rgba(38, 139, 210, 0.5);
+  --nd-purple: #6c71c4;
+  --nd-blue: #268bd2;
+  --nd-orange: #cb4b16;
+  --nd-green: #859900;
+  --nd-red: #dc322f;
+  --nd-yellow: #b58900;
+}
+
+/* Gruvbox Dark — Retro Earthy Warm Parchment */
+.theme-gruvbox-dark {
+  --nd-bg: #282828;
+  --nd-bg-surface: #3c3836;
+  --nd-bg-gradient: linear-gradient(135deg, #282828 0%, #3c3836 100%);
+  --nd-card-bg-rgb: 60, 56, 54;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #504945;
+  --nd-subcard-bg: #32302f;
+  --nd-card-hover-border: #fe8019;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #ebdbb2;
+  --nd-text-muted: #a89984;
+  --nd-text-dimmed: #7c6f64;
+  --nd-accent: #fe8019;
+  --nd-accent-glow: rgba(254, 128, 25, 0.16);
+  --nd-accent-dim: rgba(254, 128, 25, 0.5);
+  --nd-purple: #d3869b;
+  --nd-blue: #83a598;
+  --nd-orange: #fe8019;
+  --nd-green: #b8bb26;
+  --nd-red: #fb4934;
+  --nd-yellow: #fabd2f;
+}
+
+/* One Dark Pro — Iconic Atom One Dark Scheme */
+.theme-one-dark-pro {
+  --nd-bg: #21252b;
+  --nd-bg-surface: #282c34;
+  --nd-bg-gradient: linear-gradient(135deg, #21252b 0%, #282c34 100%);
+  --nd-card-bg-rgb: 40, 44, 52;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #3e4451;
+  --nd-subcard-bg: #21252b;
+  --nd-card-hover-border: #61afef;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #abb2bf;
+  --nd-text-muted: #828997;
+  --nd-text-dimmed: #5c6370;
+  --nd-accent: #61afef;
+  --nd-accent-glow: rgba(97, 175, 239, 0.15);
+  --nd-accent-dim: rgba(97, 175, 239, 0.5);
+  --nd-purple: #c678dd;
+  --nd-blue: #61afef;
+  --nd-orange: #d19a66;
+  --nd-green: #98c379;
+  --nd-red: #e06c75;
+  --nd-yellow: #e5c07b;
+}
+
+/* Tokyo Night — Downtown Tokyo Dark Sapphire */
+.theme-tokyo-night {
+  --nd-bg: #1a1b26;
+  --nd-bg-surface: #24283b;
+  --nd-bg-gradient: linear-gradient(135deg, #1a1b26 0%, #24283b 100%);
+  --nd-card-bg-rgb: 36, 40, 59;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #292e42;
+  --nd-subcard-bg: #1f2335;
+  --nd-card-hover-border: #7aa2f7;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #a9b1d6;
+  --nd-text-muted: #787c99;
+  --nd-text-dimmed: #565f89;
+  --nd-accent: #7aa2f7;
+  --nd-accent-glow: rgba(122, 162, 247, 0.15);
+  --nd-accent-dim: rgba(122, 162, 247, 0.5);
+  --nd-purple: #bb9af7;
+  --nd-blue: #7aa2f7;
+  --nd-orange: #ff9e64;
+  --nd-green: #9ece6a;
+  --nd-red: #f7768e;
+  --nd-yellow: #e0af68;
+}
+
+/* Kanagawa Wave — Japanese Woodblock Art Scheme */
+.theme-kanagawa-wave {
+  --nd-bg: #1f1f28;
+  --nd-bg-surface: #2a2a37;
+  --nd-bg-gradient: linear-gradient(135deg, #1f1f28 0%, #2a2a37 100%);
+  --nd-card-bg-rgb: 42, 42, 55;
+  --nd-card-bg-opacity: 0.95;
+  --nd-card-border: #363646;
+  --nd-subcard-bg: #22242e;
+  --nd-card-hover-border: #7e9cd8;
+  --nd-card-shadow: none;
+  --nd-card-radius: 12px;
+  --nd-text: #dcd7ba;
+  --nd-text-muted: #9a9682;
+  --nd-text-dimmed: #727169;
+  --nd-accent: #7e9cd8;
+  --nd-accent-glow: rgba(126, 156, 216, 0.15);
+  --nd-accent-dim: rgba(126, 156, 216, 0.5);
+  --nd-purple: #957fb8;
+  --nd-blue: #7e9cd8;
+  --nd-orange: #ffa066;
+  --nd-green: #76946a;
+  --nd-red: #c34043;
+  --nd-yellow: #c0a36e;
 }
 
 /* Catppuccin Macchiato */

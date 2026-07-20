@@ -145,6 +145,34 @@ function parseTelemetry(value: string, percent?: number) {
   };
 }
 
+// Hardcoded distinct colors for each metric type.
+// We do NOT use CSS variables here because in some themes
+// (e.g. orange/amber themes) --nd-accent and --nd-orange
+// resolve to the same color, making CPU and Temp identical.
+// The originalColor from the backend is used as a category hint
+// when the label doesn't match known patterns.
+function getMetricDistinctColor(label: string, originalColor?: string): string {
+  const l = label.toLowerCase();
+  // 1. Try label matching first (most reliable) using CSS variables with fallback colors
+  if (l.includes('cpu') || l.includes('processeur') || l.includes('processor')) return 'var(--nd-blue, #38bdf8)'; // CPU → Blue
+  if (l.includes('ram') || l.includes('mem') || l.includes('mémoire') || l.includes('memory')) return 'var(--nd-green, #4ade80)'; // RAM → Green
+  if (l.includes('disque') || l.includes('disk') || l.includes('storage') || l.includes('ceph') || l.includes('root') || l.includes('(/)') || l.includes('stockage') || l.includes('swap') || l.includes('ssd') || l.includes('hdd') || l.includes('nvme') || l.includes('/dev/') || l.includes('zfs') || l.includes('volume') || l.includes('partition') || l.includes('montage') || l.includes('nas')) return 'var(--nd-orange, #fb923c)'; // Disk → Orange
+  if (l.includes('gpu') || l.includes('carte graphique') || l.includes('vram') || l.includes('nvidia') || l.includes('geforce') || l.includes('rtx') || l.includes('gtx') || l.includes('radeon') || l.includes('intel gpu') || l.includes('graphics')) return 'var(--nd-purple, #c084fc)'; // GPU → Purple
+  if (l.includes('temp') || l.includes('°c') || l.includes('température') || l.includes('chaleur') || l.includes('temperature')) return 'var(--nd-red, #f87171)'; // Temp → Red
+  if (l.includes('réseau') || l.includes('network') || l.includes('rx') || l.includes('tx') || l.includes('upload') || l.includes('download') || l.includes('ping') || l.includes('lan') || l.includes('wan')) return 'var(--nd-accent, #22d3ee)'; // Accent
+
+  // 2. Fallback: use the backend-assigned CSS variable as a category hint
+  if (originalColor) {
+    if (originalColor.includes('accent') || originalColor.includes('blue')) return 'var(--nd-blue, #38bdf8)';   // CPU → Blue
+    if (originalColor.includes('purple') || originalColor.includes('violet')) return 'var(--nd-purple, #c084fc)';  // GPU → Purple
+    if (originalColor.includes('green') || originalColor.includes('emerald')) return 'var(--nd-green, #4ade80)';   // RAM → Green
+    if (originalColor.includes('orange') || originalColor.includes('amber')) return 'var(--nd-orange, #fb923c)';   // Disk → Orange
+    if (originalColor.includes('red') || originalColor.includes('danger')) return 'var(--nd-red, #f87171)';        // Temp → Red
+  }
+  
+  return 'var(--nd-yellow, #fbbf24)'; // Yellow fallback
+}
+
 // Sparkline component with local history
 function DeviceStatGraph({
   label,
@@ -178,10 +206,7 @@ function DeviceStatGraph({
     }
   }, [percent]);
 
-  let strokeColor = 'var(--nd-accent, #00e5ff)';
-  if (colored && color) {
-    strokeColor = color;
-  }
+  let strokeColor = colored ? getMetricDistinctColor(label, color) : 'var(--nd-accent, #00e5ff)';
 
   const { size: widgetSize } = useWidgetSize();
   let height = 36;
@@ -378,10 +403,8 @@ function DeviceStatVerticalBars({
     }
   }, [percent, barCount]);
 
-  let strokeColor = 'var(--nd-accent, #00e5ff)';
-  if (colored && color) {
-    strokeColor = color;
-  }
+  let strokeColor = getMetricDistinctColor(label, color);
+  if (!colored) strokeColor = 'var(--nd-accent)';
 
   const { percentStr, tempStr, capacityStr } = parseTelemetry(value, percent);
 
@@ -441,10 +464,7 @@ function DeviceStatVerticalBars({
         }}>
           {history.map((val, idx) => {
             const isLatest = idx === history.length - 1;
-            let segmentColor = 'var(--nd-accent)';
-            if (colored && color) {
-              segmentColor = color;
-            }
+            let segmentColor = strokeColor;
             // Non-linear scale to expand lower range (5% vs 10%) so fluctuations are highly visible
             const barHeight = val === 0 ? '3px' : `calc(${Math.round(Math.pow(val / 100, 0.65) * 100)}% + 2px)`;
             return (
@@ -648,19 +668,9 @@ function DeviceMonitorCardContent({
                   else shortLabel = shortLabel.replace(/disque|disk/i, '').trim();
                 }
 
-                let barColor = 'var(--nd-accent)';
-                if (currentColoredGraphs && stat.color) {
-                  barColor = stat.color;
-                }
-                const glowColor = barColor.includes('red') || barColor.includes('danger')
-                  ? 'rgba(248, 81, 73, 0.15)'
-                  : barColor.includes('orange') || barColor.includes('warn')
-                    ? 'rgba(240, 136, 62, 0.15)'
-                    : barColor.includes('green')
-                      ? 'rgba(46, 160, 67, 0.15)'
-                      : barColor.includes('purple')
-                        ? 'rgba(137, 87, 229, 0.15)'
-                        : 'rgba(0, 229, 255, 0.15)';
+                const barColor = currentColoredGraphs ? getMetricDistinctColor(stat.label, stat.color) : 'var(--nd-accent)';
+                // Derive glow using color-mix dynamically
+                const glowColor = `color-mix(in srgb, ${barColor} 15%, transparent)`;
 
                 const { percentStr, tempStr, capacityStr } = parseTelemetry(stat.value, stat.percent);
 

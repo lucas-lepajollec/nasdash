@@ -106,6 +106,8 @@ export default function CategoryCard({
                   editMode={editMode}
                   showSensitive={showSensitive}
                   layout={category.layout}
+                  index={index}
+                  total={filteredServices.length}
                 />
                 {index === filteredServices.length - 1 && (
                   <DropGap categoryId={category.id} index={index + 1} isVertical isLast />
@@ -123,6 +125,8 @@ export default function CategoryCard({
                 editMode={editMode}
                 showSensitive={showSensitive}
                 layout={category.layout}
+                index={index}
+                total={filteredServices.length}
               />
             </React.Fragment>
           );

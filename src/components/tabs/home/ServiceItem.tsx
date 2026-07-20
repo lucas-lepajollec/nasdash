@@ -12,9 +12,11 @@ interface ServiceItemProps {
   editMode?: boolean;
   showSensitive?: boolean;
   layout?: 'standard' | 'compact' | 'bento' | 'grid' | 'bento-logo-large' | 'bento-logo-medium' | 'bento-logo-small';
+  index?: number;
+  total?: number;
 }
 
-export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard' }: ServiceItemProps) {
+export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard', index, total }: ServiceItemProps) {
   const [imgError, setImgError] = useState(false);
   const { config, pingResults } = useConfig();
 
@@ -75,6 +77,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
 
   const activeLayout = layout === 'grid' ? 'bento' : layout;
   const isLogoOnly = activeLayout?.startsWith('bento-logo');
+  const isBento = activeLayout === 'bento' || isLogoOnly;
   const statusIconSize = activeLayout === 'compact' ? 16 : 20;
   const statusColor = delayedStatus?.status === 'online' ? 'var(--nd-green)' : (delayedStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
 

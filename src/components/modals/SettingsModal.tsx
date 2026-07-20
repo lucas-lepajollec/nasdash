@@ -41,25 +41,201 @@ export const THEME_PRESETS: Record<string, {
   },
   'apple-dark': {
     name: 'Apple Dark',
-    primaryColor: '#0a84ff',
-    accentColor: '#0a84ff',
-    cardBg: 'rgba(28, 28, 30, 0.35)',
+    primaryColor: '#2997ff',
+    accentColor: '#2997ff',
+    cardBg: 'rgba(28, 28, 30, 0.95)',
     cardBorder: 'rgba(255, 255, 255, 0.08)',
     text: '#f5f5f7',
-    textMuted: '#98989d',
-    bgGradient: 'linear-gradient(135deg, #020204 0%, #0d0d12 40%, #171722 100%)',
-    borderRadius: '14px',
+    textMuted: '#86868b',
+    bgGradient: 'linear-gradient(135deg, #000000 0%, #0c0c0e 50%, #161618 100%)',
+    borderRadius: '20px',
   },
   'apple-light': {
     name: 'Apple Light',
-    primaryColor: '#007aff',
-    accentColor: '#007aff',
-    cardBg: 'rgba(255, 255, 255, 0.5)',
-    cardBorder: 'rgba(255, 255, 255, 0.8)',
+    primaryColor: '#0071e3',
+    accentColor: '#0071e3',
+    cardBg: '#ffffff',
+    cardBorder: 'rgba(0, 0, 0, 0.05)',
     text: '#1d1d1f',
-    textMuted: '#86868b',
-    bgGradient: 'linear-gradient(135deg, #eef1f5 0%, #e2e8f0 100%)',
+    textMuted: '#6e6e73',
+    bgGradient: 'linear-gradient(135deg, #f5f5f7 0%, #ebebeb 100%)',
+    borderRadius: '20px',
+  },
+  'rose-pine-dawn': {
+    name: 'Rosé Pine Dawn',
+    primaryColor: '#d7827e',
+    accentColor: '#d7827e',
+    cardBg: '#fffaf3',
+    cardBorder: '#e8dfd5',
+    text: '#464261',
+    textMuted: '#6e6a86',
+    bgGradient: 'linear-gradient(135deg, #faf4ed 0%, #f4ece1 100%)',
     borderRadius: '14px',
+  },
+  'solarized-light': {
+    name: 'Solarized Light',
+    primaryColor: '#268bd2',
+    accentColor: '#268bd2',
+    cardBg: '#eee8d5',
+    cardBorder: '#d3c7a6',
+    text: '#002b36',
+    textMuted: '#586e75',
+    bgGradient: 'linear-gradient(135deg, #fdf6e3 0%, #f4ebd0 100%)',
+    borderRadius: '12px',
+  },
+  'catppuccin-latte': {
+    name: 'Catppuccin Latte',
+    primaryColor: '#8839ef',
+    accentColor: '#8839ef',
+    cardBg: '#e6e9ef',
+    cardBorder: '#ccd0da',
+    text: '#4c4f69',
+    textMuted: '#6c6f85',
+    bgGradient: 'linear-gradient(135deg, #eff1f5 0%, #e6e9ef 100%)',
+    borderRadius: '12px',
+  },
+  'github-light': {
+    name: 'GitHub Light',
+    primaryColor: '#0969da',
+    accentColor: '#0969da',
+    cardBg: '#ffffff',
+    cardBorder: '#d0d7de',
+    text: '#1f2328',
+    textMuted: '#57606a',
+    bgGradient: 'linear-gradient(135deg, #f6f8fa 0%, #eaeef2 100%)',
+    borderRadius: '10px',
+  },
+  'github-dark': {
+    name: 'GitHub Dark',
+    primaryColor: '#58a6ff',
+    accentColor: '#58a6ff',
+    cardBg: '#161b22',
+    cardBorder: '#30363d',
+    text: '#c9d1d9',
+    textMuted: '#8b949e',
+    bgGradient: 'linear-gradient(135deg, #0d1117 0%, #161b22 100%)',
+    borderRadius: '10px',
+  },
+  'everforest-dark': {
+    name: 'Everforest Dark',
+    primaryColor: '#a7c080',
+    accentColor: '#a7c080',
+    cardBg: '#323c41',
+    cardBorder: '#414b50',
+    text: '#d3c6aa',
+    textMuted: '#859289',
+    bgGradient: 'linear-gradient(135deg, #2b3339 0%, #323c41 100%)',
+    borderRadius: '12px',
+  },
+  'matrix-cyber': {
+    name: 'Matrix Cyber',
+    primaryColor: '#00ff88',
+    accentColor: '#00ff88',
+    cardBg: '#0f1a14',
+    cardBorder: '#1b3325',
+    text: '#e0f8eb',
+    textMuted: '#5ca37a',
+    bgGradient: 'linear-gradient(135deg, #070c0a 0%, #0f1a14 50%, #15261d 100%)',
+    borderRadius: '10px',
+  },
+  'everforest-light': {
+    name: 'Everforest Light',
+    primaryColor: '#8da101',
+    accentColor: '#8da101',
+    cardBg: '#fffbef',
+    cardBorder: '#e0dcc9',
+    text: '#5c6a72',
+    textMuted: '#7f8c8d',
+    bgGradient: 'linear-gradient(135deg, #f2efdf 0%, #e6e3d1 100%)',
+    borderRadius: '12px',
+  },
+  'tokyo-night-day': {
+    name: 'Tokyo Night Day',
+    primaryColor: '#2e7de9',
+    accentColor: '#2e7de9',
+    cardBg: '#e9e9ed',
+    cardBorder: '#c4c8d4',
+    text: '#3760bf',
+    textMuted: '#6172b0',
+    bgGradient: 'linear-gradient(135deg, #e1e2e7 0%, #d5d6db 100%)',
+    borderRadius: '12px',
+  },
+  'gruvbox-light': {
+    name: 'Gruvbox Light',
+    primaryColor: '#af3a03',
+    accentColor: '#af3a03',
+    cardBg: '#f2e5bc',
+    cardBorder: '#d5c4a1',
+    text: '#3c3836',
+    textMuted: '#665c54',
+    bgGradient: 'linear-gradient(135deg, #fbf1c7 0%, #ebdbb2 100%)',
+    borderRadius: '12px',
+  },
+  'nord-light': {
+    name: 'Nord Light',
+    primaryColor: '#5e81ac',
+    accentColor: '#5e81ac',
+    cardBg: '#eceff4',
+    cardBorder: '#c8d0e0',
+    text: '#2e3440',
+    textMuted: '#4c566a',
+    bgGradient: 'linear-gradient(135deg, #e5e9f0 0%, #d8dee9 100%)',
+    borderRadius: '12px',
+  },
+  'one-dark-pro': {
+    name: 'One Dark Pro',
+    primaryColor: '#61afef',
+    accentColor: '#61afef',
+    cardBg: '#282c34',
+    cardBorder: '#3e4451',
+    text: '#abb2bf',
+    textMuted: '#828997',
+    bgGradient: 'linear-gradient(135deg, #21252b 0%, #282c34 100%)',
+    borderRadius: '12px',
+  },
+  'tokyo-night': {
+    name: 'Tokyo Night',
+    primaryColor: '#7aa2f7',
+    accentColor: '#7aa2f7',
+    cardBg: '#24283b',
+    cardBorder: '#292e42',
+    text: '#a9b1d6',
+    textMuted: '#787c99',
+    bgGradient: 'linear-gradient(135deg, #1a1b26 0%, #24283b 100%)',
+    borderRadius: '12px',
+  },
+  'kanagawa-wave': {
+    name: 'Kanagawa Wave',
+    primaryColor: '#7e9cd8',
+    accentColor: '#7e9cd8',
+    cardBg: '#2a2a37',
+    cardBorder: '#363646',
+    text: '#dcd7ba',
+    textMuted: '#9a9682',
+    bgGradient: 'linear-gradient(135deg, #1f1f28 0%, #2a2a37 100%)',
+    borderRadius: '12px',
+  },
+  'swiss-paper': {
+    name: 'Swiss Paper Minimal',
+    primaryColor: '#2563eb',
+    accentColor: '#2563eb',
+    cardBg: '#ffffff',
+    cardBorder: '#e4e4e7',
+    text: '#09090b',
+    textMuted: '#27272a',
+    bgGradient: 'none',
+    borderRadius: '10px',
+  },
+  'tokyo-day': {
+    name: 'Tokyo Night Day',
+    primaryColor: '#34548a',
+    accentColor: '#7aa2f7',
+    cardBg: 'rgba(255, 255, 255, 0.92)',
+    cardBorder: 'rgba(203, 213, 225, 0.8)',
+    text: '#343b58',
+    textMuted: '#565f89',
+    bgGradient: 'linear-gradient(135deg, #e1e9e3 0%, #f5f6f8 100%)',
+    borderRadius: '12px',
   },
   'catppuccin-macchiato': {
     name: 'Catppuccin Macchiato',
@@ -155,9 +331,35 @@ import { DockerContainersWidgetTab } from './settings/tabs/widgets/DockerContain
 import { CustomTabsListTab } from './settings/tabs/custom/CustomTabsListTab';
 import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab';
 
+import ThemeGalleryView from './ThemeGalleryView';
+
 export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { config, updateConfig, settingsModal } = useConfig();
   const { tabs } = useTabs();
+  const [isThemeGalleryOpen, setIsThemeGalleryOpen] = useState(false);
+
+  const activeTheme = config?.settings?.theme || 'nasdash';
+  const activeMode = config?.settings?.mode || 'dark';
+
+  const handleGalleryThemeChange = async (newTheme: string) => {
+    const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
+    const isLight = LIGHT_THEMES.includes(newTheme) || (newTheme === 'nasdash' && activeMode === 'light');
+
+    const classesToRemove = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
+    classesToRemove.forEach(cls => document.body.classList.remove(cls));
+    if (newTheme !== 'nasdash') {
+      document.body.classList.add(`theme-${newTheme}`);
+    }
+
+    if (isLight) {
+      document.body.classList.add('light');
+      localStorage.setItem('nd-theme', 'light');
+    } else {
+      document.body.classList.remove('light');
+      localStorage.setItem('nd-theme', 'dark');
+    }
+    await updateConfig({ theme: newTheme, mode: isLight ? 'light' : 'dark' });
+  };
   
   const tabOrder = (() => {
     const savedOrder = config?.settings?.tabOrder || [];
@@ -382,26 +584,35 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         }}
       >
         {/* ==========================================
-           LEFT SIDEBAR
+           LEFT SIDEBAR (Hidden when gallery is open)
            ========================================== */}
-        <SettingsSidebar 
-          currentTab={currentTab}
-          setActiveTab={setActiveTab}
-          onClose={onClose}
-        />
-
-
+        {!isThemeGalleryOpen && (
+          <SettingsSidebar 
+            currentTab={currentTab}
+            setActiveTab={(tab) => {
+              setIsThemeGalleryOpen(false);
+              setActiveTab(tab);
+            }}
+            onClose={onClose}
+          />
+        )}
 
         {/* ==========================================
            RIGHT CONTENT WRAPPER
            ========================================== */}
-        <div className="nd-settings-content">
+        <div className="nd-settings-content" style={isThemeGalleryOpen ? { width: '100%', flex: 1, padding: '24px 28px' } : undefined}>
           
           {/* Header */}
           <div className="nd-settings-header" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0, gap: '12px 16px' }}>
             <button 
               className="nd-settings-back-btn" 
-              onClick={() => setActiveTab(null)}
+              onClick={() => {
+                if (isThemeGalleryOpen) {
+                  setIsThemeGalleryOpen(false);
+                } else {
+                  setActiveTab(null);
+                }
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -419,32 +630,36 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 flexShrink: 0
               }}
             >
-              ← Retour
+              ← {isThemeGalleryOpen ? 'Apparence' : 'Retour'}
             </button>
             
             <h3 className="nd-settings-title" style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, wordBreak: 'break-word', lineHeight: 1.3 }}>
-              {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
-              {currentTab === 'header' && '📋 En-tête'}
-              {currentTab === 'mobile' && '📱 Mobile'}
-              {currentTab === 'developer' && '⚙️ Menu Développeur'}
-              {currentTab === 'security' && '🔑 Sécurité & Utilisateurs'}
-              {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
-              {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
-              {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
-              {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
-              {currentTab === 'tabs-docker' && '🐳 Paramètres — Onglet Docker'}
-              {currentTab === 'tabs-networks' && '📶 Paramètres — Onglet Réseaux'}
-              {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
-              {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
-              {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
-              {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
-              {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
-              {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
-              {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
-              {currentTab === 'widget-networkgraph' && '📶 Configuration — Graphe Réseau'}
-              {currentTab === 'widget-dockercontainers' && '🐳 Configuration — Conteneurs Docker'}
-              {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
-              {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
+              {isThemeGalleryOpen ? '🎨 Galerie de Thèmes Visuels (26 Thèmes)' : (
+                <>
+                  {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
+                  {currentTab === 'header' && '📋 En-tête'}
+                  {currentTab === 'mobile' && '📱 Mobile'}
+                  {currentTab === 'developer' && '⚙️ Menu Développeur'}
+                  {currentTab === 'security' && '🔑 Sécurité & Utilisateurs'}
+                  {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
+                  {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
+                  {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
+                  {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
+                  {currentTab === 'tabs-docker' && '🐳 Paramètres — Onglet Docker'}
+                  {currentTab === 'tabs-networks' && '📶 Paramètres — Onglet Réseaux'}
+                  {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
+                  {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
+                  {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
+                  {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
+                  {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
+                  {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
+                  {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
+                  {currentTab === 'widget-networkgraph' && '📶 Configuration — Graphe Réseau'}
+                  {currentTab === 'widget-dockercontainers' && '🐳 Configuration — Conteneurs Docker'}
+                  {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
+                  {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
+                </>
+              )}
             </h3>
 
             <button className="nd-settings-close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
@@ -453,11 +668,21 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           </div>
 
           {/* ==========================================
-             TAB 1: APPARENCE
+             THEME GALLERY FULL-WIDTH EMBEDDED VIEW
              ========================================== */}
-          {currentTab === 'apparence' && <AppearanceTab />}
-          {currentTab === 'header' && <HeaderTab />}
-          {currentTab === 'mobile' && <MobileTab />}
+          {isThemeGalleryOpen ? (
+            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <ThemeGalleryView 
+                currentTheme={activeTheme}
+                onSelectTheme={handleGalleryThemeChange}
+                onClose={() => setIsThemeGalleryOpen(false)}
+              />
+            </div>
+          ) : (
+            <>
+              {currentTab === 'apparence' && <AppearanceTab onOpenThemeGallery={() => setIsThemeGalleryOpen(true)} />}
+              {currentTab === 'header' && <HeaderTab />}
+              {currentTab === 'mobile' && <MobileTab />}
 
           {currentTab === 'widget-networkgraph' && <NetworkGraphWidgetTab />}
           {currentTab === 'widget-dockercontainers' && <DockerContainersWidgetTab />}
@@ -528,6 +753,8 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
              ========================================== */}
           {currentTab === 'custom-tabs' && <CustomTabsListTab onEditTab={(id) => { setEditingTabId(id); setActiveTab('custom-tab-builder'); }} />}
           {currentTab === 'custom-tab-builder' && <CustomTabBuilderTab tabId={editingTabId} onBack={() => { setEditingTabId(undefined); setActiveTab('custom-tabs'); }} onSuccess={() => { setEditingTabId(undefined); setActiveTab('custom-tabs'); }} />}
+            </>
+          )}
         </div>
       </div>
 

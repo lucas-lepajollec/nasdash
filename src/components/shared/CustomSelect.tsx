@@ -6,6 +6,7 @@ import { ChevronDown, Check } from 'lucide-react';
 interface Option {
   value: string;
   label: string;
+  isHeader?: boolean;
 }
 
 interface CustomSelectProps {
@@ -49,7 +50,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
     };
   }, [isOpen, id]);
 
-  const selectedOption = options.find(o => o.value === value) || options[0];
+  const selectedOption = options.find(o => o.value === value) || options.find(o => !o.isHeader) || options[0];
 
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%', opacity: disabled ? 0.6 : 1, ...style }} className={className}>
@@ -81,52 +82,77 @@ export default function CustomSelect({ value, options, onChange, className, styl
           top: 'calc(100% + 4px)',
           left: 0,
           right: 0,
-          background: 'var(--nd-bg-surface)',
+          background: 'var(--nd-card-bg)',
           border: '1px solid var(--nd-card-border)',
           borderRadius: 'var(--nd-card-radius)',
-          boxShadow: 'var(--nd-dropdown-shadow, 0 4px 12px rgba(0,0,0,0.15))',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
           zIndex: 100,
           overflowY: 'auto',
-          maxHeight: '250px',
+          maxHeight: '280px',
+          padding: '6px',
           display: 'flex',
           flexDirection: 'column',
+          gap: 2
         }}>
-          {options.map((opt, idx) => (
-            <div
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              style={{
-                padding: '10px 12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: value === opt.value ? 'rgba(128, 128, 128, 0.08)' : 'transparent',
-                borderBottom: idx === options.length - 1 ? 'none' : '1px solid var(--nd-card-border)',
-                fontSize: '0.8rem',
-                color: value === opt.value ? 'var(--nd-text)' : 'var(--nd-text-muted)',
-                transition: 'background 0.2s, color 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                if (value !== opt.value) {
-                  e.currentTarget.style.background = 'rgba(128, 128, 128, 0.05)';
-                  e.currentTarget.style.color = 'var(--nd-text)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (value !== opt.value) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--nd-text-muted)';
-                }
-              }}
-            >
-              <span>{opt.label}</span>
-              {value === opt.value && <Check size={14} color="var(--nd-accent)" />}
-            </div>
-          ))}
+          {options.map((opt) => {
+            if (opt.isHeader) {
+              return (
+                <div
+                  key={opt.value}
+                  style={{
+                    padding: '8px 10px 4px 10px',
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.8px',
+                    color: 'var(--nd-text-dimmed)',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    pointerEvents: 'none'
+                  }}
+                >
+                  {opt.label}
+                </div>
+              );
+            }
+
+            const isSelected = value === opt.value;
+
+            return (
+              <div
+                key={opt.value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 'calc(var(--nd-card-radius) * 0.6)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: isSelected ? 'var(--nd-accent-glow)' : 'transparent',
+                  fontSize: '0.78rem',
+                  fontWeight: isSelected ? 600 : 400,
+                  color: isSelected ? 'var(--nd-accent)' : 'var(--nd-text)',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = 'var(--nd-subcard-bg)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check size={14} color="var(--nd-accent)" />}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

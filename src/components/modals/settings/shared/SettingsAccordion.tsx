@@ -12,7 +12,7 @@ export interface SettingsAccordionProps {
 
 export function SettingsAccordion({ title, description, icon, isOpen, onToggle, children }: SettingsAccordionProps) {
   return (
-    <div className="nd-settings-card" style={{ padding: 0, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column' }}>
+    <div className="nd-settings-card" style={{ padding: 0, background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column' }}>
       <button 
         onClick={onToggle}
         style={{
@@ -37,7 +37,7 @@ export function SettingsAccordion({ title, description, icon, isOpen, onToggle, 
         <ChevronRight size={16} style={{ color: 'var(--nd-text-muted)', transform: isOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s ease', flexShrink: 0 }} />
       </button>
       {isOpen && (
-        <div style={{ padding: '20px 14px 14px 14px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ padding: '20px 14px 14px 14px', borderTop: '1px solid var(--nd-card-border)' }}>
           {children}
         </div>
       )}

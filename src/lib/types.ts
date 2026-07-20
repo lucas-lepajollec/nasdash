@@ -205,6 +205,7 @@ export interface DashboardConfig {
     tailscaleClientSecret?: string;
 
     theme?: string;
+    mode?: 'light' | 'dark';
     // Tab customization
     tabOrder?: string[];
     hiddenTabs?: string[];

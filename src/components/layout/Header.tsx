@@ -345,12 +345,14 @@ export default function Header(props: HeaderProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 10px', borderRadius: 'var(--nd-card-radius)',
-              background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.2)',
-              color: '#10b981', fontSize: '0.72rem', fontWeight: 600, height: 36
+              padding: '6px 12px', borderRadius: 'var(--nd-card-radius)',
+              background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)',
+              color: 'var(--nd-text)', fontSize: '0.72rem', fontWeight: 600, height: 36,
+              backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+              boxShadow: 'none'
             }}>
-              <User size={12} />
-              <span style={{ maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
+              <User size={13} style={{ color: 'var(--nd-accent)' }} />
+              <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
             </div>
             <button className="nd-btn" onClick={logout} title="Se déconnecter" style={{ padding: 6, minWidth: 0, justifyContent: 'center' }}>
               <LogOut size={14} />

@@ -28,12 +28,11 @@ export function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitc
           width: '36px',
           height: '18px',
           borderRadius: '9px',
-          background: checked ? 'var(--nd-green)' : 'rgba(255,255,255,0.08)',
+          background: checked ? 'var(--nd-green)' : 'var(--nd-toggle-bg, rgba(120, 120, 128, 0.25))',
           border: checked ? 'none' : '1px solid var(--nd-card-border)',
           position: 'relative',
           transition: 'all 0.2s ease',
-          flexShrink: 0,
-          boxShadow: checked ? '0 0 8px rgba(63, 185, 80, 0.3)' : 'none'
+          flexShrink: 0
         }}
       >
         <div 
@@ -41,7 +40,7 @@ export function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitc
             width: '12px',
             height: '12px',
             borderRadius: '50%',
-            background: checked ? '#ffffff' : '#888888',
+            background: checked ? '#ffffff' : 'var(--nd-text-muted)',
             position: 'absolute',
             top: checked ? '3px' : '2px',
             left: checked ? '21px' : '3px',

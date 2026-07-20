@@ -6,9 +6,14 @@ import CustomSelect from '../../../shared/CustomSelect';
 import { ToggleSwitch } from '../shared/ToggleSwitch';
 import ConfirmModal from '../../ConfirmModal';
 import { THEME_PRESETS } from '../../SettingsModal';
+import ThemeGalleryView, { THEME_GALLERY } from '../../ThemeGalleryView';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
 
-export function AppearanceTab() {
+interface AppearanceTabProps {
+  onOpenThemeGallery?: () => void;
+}
+
+export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
   const { config, updateConfig } = useConfig();
   
   // Accordions states
@@ -25,6 +30,7 @@ export function AppearanceTab() {
   
   const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
   const [bgToDelete, setBgToDelete] = useState<string | null>(null);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Appearance Profiles
   const [appearanceProfiles, setAppearanceProfiles] = useState<AppearanceProfile[]>([]);
@@ -59,7 +65,7 @@ export function AppearanceTab() {
     }
   }, []);
 
-  const toggleMode = () => {
+  const toggleMode = async () => {
     const newMode = mode === 'light' ? 'dark' : 'light';
     setMode(newMode);
     if (newMode === 'light') {
@@ -69,19 +75,28 @@ export function AppearanceTab() {
       document.body.classList.remove('light');
       localStorage.setItem('nd-theme', 'dark');
     }
+    await updateConfig({ mode: newMode });
   };
 
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
+    const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
+    const isLight = LIGHT_THEMES.includes(newTheme) || (newTheme === 'nasdash' && mode === 'light');
+
     const classesToRemove = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
     classesToRemove.forEach(cls => document.body.classList.remove(cls));
     if (newTheme !== 'nasdash') {
       document.body.classList.add(`theme-${newTheme}`);
-      if (document.body.classList.contains('light')) {
-        document.body.classList.remove('light');
-        setMode('dark');
-        localStorage.setItem('nd-theme', 'dark');
-      }
+    }
+
+    if (isLight) {
+      document.body.classList.add('light');
+      setMode('light');
+      localStorage.setItem('nd-theme', 'light');
+    } else {
+      document.body.classList.remove('light');
+      setMode('dark');
+      localStorage.setItem('nd-theme', 'dark');
     }
     await updateConfig({ theme: newTheme });
   };
@@ -98,7 +113,7 @@ export function AppearanceTab() {
         setUploadedBgs(data.files);
       }
     } catch (err) {
-      console.error('Failed to fetch background images:', err);
+      console.error(err);
     }
   };
 
@@ -133,11 +148,11 @@ export function AppearanceTab() {
     await updateConfig({ cardOpacity: val });
   };
 
+  const currentThemeObj = THEME_GALLERY.find(t => t.key === theme) || THEME_GALLERY[0];
+
   const handleSaveBackground = async () => {
     await updateConfig({ backgroundImage });
   };
-
-
 
   const handleConfirmBgDelete = async () => {
     const targetUrl = bgToDelete || backgroundImage;
@@ -159,8 +174,6 @@ export function AppearanceTab() {
     setBgToDelete(null);
     setIsConfirmBgDeleteOpen(false);
   };
-
-
 
   const handleSaveProfile = async () => {
     if (!newProfileName.trim()) return;
@@ -194,8 +207,6 @@ export function AppearanceTab() {
     setConfirmDeleteProfile(null);
   };
 
-
-
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -208,22 +219,56 @@ export function AppearanceTab() {
           onToggle={() => toggleAccordion('theme')}
         >
           <div style={{ marginBottom: 16 }}>
-            <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Thème (Couleurs globales)</h4>
-            <CustomSelect
-              value={theme}
-              onChange={handleThemeChange}
-              options={[
-                { value: 'nasdash', label: 'NasDash (Défaut)' },
-                { value: 'apple-dark', label: 'Apple Dark (Frosted)' },
-                { value: 'apple-light', label: 'Apple Light (Premium)' },
-                { value: 'catppuccin-macchiato', label: 'Catppuccin Macchiato' },
-                { value: 'nord', label: 'Nord Ice' },
-                { value: 'dracula', label: 'Dracula Gothic' },
-                { value: 'ocean', label: 'Ocean deep glow' },
-                { value: 'midnight', label: 'Midnight OLED' },
-                { value: 'cyberpunk', label: 'Retro Cyberpunk 🤖' }
-              ]}
-            />
+            <div style={{ marginBottom: 10 }}>
+              <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>Thème Actif</h4>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
+                {currentThemeObj.name} — {currentThemeObj.description}
+              </p>
+            </div>
+
+            <div 
+              onClick={() => {
+                if (onOpenThemeGallery) {
+                  onOpenThemeGallery();
+                } else {
+                  setIsThemeModalOpen(true);
+                }
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: 14,
+                border: '1px solid var(--nd-card-border)',
+                background: 'var(--nd-subcard-bg)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--nd-accent)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--nd-card-border)'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  display: 'flex',
+                  gap: 4,
+                  padding: 4,
+                  borderRadius: 8,
+                  background: 'rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentThemeObj.bg, border: '1px solid #fff' }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentThemeObj.cardBg, border: '1px solid #fff' }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentThemeObj.text, border: '1px solid #fff' }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: currentThemeObj.accent, border: '1px solid #fff' }} />
+                </div>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)' }}>
+                  {currentThemeObj.name}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
+                Ouvrir la galerie →
+              </span>
+            </div>
           </div>
 
           {theme === 'nasdash' && (

@@ -30,7 +30,7 @@
   --nd-accent-dim: rgba(0, 229, 255, 0.5);
 
   --nd-purple: #a855f7;
-  --nd-blue: #58a6ff;
+  --nd-blue: #38bdf8;
   --nd-orange: #f0883e;
   --nd-green: #3fb950;
   --nd-red: #f85149;
@@ -66,30 +66,192 @@
 }
 
 .light {
-  --nd-bg: #f5f5f7;
+  color-scheme: light;
+  --nd-bg: #f0f4f8;
   --nd-bg-surface: #ffffff;
-  --nd-bg-gradient: radial-gradient(ellipse at top center, #ffffff 0%, #f5f5f7 70%);
+  --nd-bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #e2e9f0 100%),
+                    radial-gradient(circle at 10% 20%, rgba(2, 132, 199, 0.08) 0%, transparent 45%),
+                    radial-gradient(circle at 90% 80%, rgba(56, 189, 248, 0.06) 0%, transparent 45%);
 
   --nd-card-bg-rgb: 255, 255, 255;
-  --nd-card-bg-opacity: 0.75;
+  --nd-card-bg-opacity: 0.96;
   --nd-card-bg: rgba(var(--nd-card-bg-rgb), var(--nd-card-bg-opacity));
-  --nd-card-border: rgba(0, 0, 0, 0.05);
+  --nd-card-border: rgba(0, 0, 0, 0.12);
+  --nd-subcard-bg: #f8fafc;
   --nd-border: var(--nd-card-border);
-  --nd-card-hover-border: rgba(0, 0, 0, 0.12);
+  --nd-card-hover-border: #0284c7;
   --nd-card-shadow: none;
-  --nd-dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --nd-dropdown-shadow: none;
 
-  --nd-text: #1d1d1f;
-  --nd-text-muted: #86868b;
-  --nd-text-dimmed: rgba(134, 134, 139, 0.5);
+  --nd-text: #0f172a;
+  --nd-text-muted: #334155;
+  --nd-text-dimmed: #64748b;
 
-  --nd-accent: #007aff;
-  --nd-accent-glow: rgba(0, 122, 255, 0.1);
+  --nd-accent: #0284c7;
+  --nd-accent-glow: rgba(2, 132, 199, 0.12);
+  --nd-accent-dim: rgba(2, 132, 199, 0.4);
 
-  --nd-progress-bg: rgba(0, 0, 0, 0.05);
+  --nd-progress-bg: rgba(15, 23, 42, 0.08);
 
-  --nd-icon-bg: rgba(0, 0, 0, 0.03);
-  --nd-icon-border: rgba(0, 0, 0, 0.05);
+  --nd-icon-bg: rgba(15, 23, 42, 0.05);
+  --nd-icon-border: rgba(0, 0, 0, 0.08);
+}
+
+/* Light Mode Overrides for Modals, Dropdowns, Inputs, Dock and Controls */
+.light input,
+.light textarea,
+.light select,
+.light .nd-input {
+  background: var(--nd-card-bg) !important;
+  color: var(--nd-text) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.15)) !important;
+  box-shadow: none !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: var(--nd-text-dimmed, rgba(60, 60, 67, 0.4)) !important;
+}
+
+.light .nd-search input {
+  background: var(--nd-card-bg) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.12)) !important;
+  color: var(--nd-text) !important;
+  box-shadow: none !important;
+}
+
+.light .nd-modal-card,
+.light .nd-modal-content,
+.light .nd-settings-modal,
+.light dialog {
+  background: var(--nd-card-bg) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.15)) !important;
+  box-shadow: none !important;
+  color: var(--nd-text) !important;
+}
+
+.light .nd-settings-sidebar {
+  background: var(--nd-subcard-bg, #f8fafc) !important;
+  border-right: 1px solid var(--nd-card-border, rgba(0, 0, 0, 0.12)) !important;
+}
+
+.light .nd-settings-content {
+  background: var(--nd-card-bg) !important;
+}
+
+.light .nd-settings-nav-item {
+  background: var(--nd-card-bg) !important;
+  border: 1px solid var(--nd-card-border, rgba(0, 0, 0, 0.12)) !important;
+  color: var(--nd-text) !important;
+}
+
+.light .nd-settings-nav-item:hover {
+  background: var(--nd-subcard-bg, #f1f5f9) !important;
+  border-color: var(--nd-card-hover-border, rgba(0, 0, 0, 0.22)) !important;
+}
+
+.light .nd-settings-nav-item--active {
+  background: var(--nd-card-bg) !important;
+  border: 2px solid var(--nd-accent) !important;
+  box-shadow: none !important;
+}
+
+.light .nd-settings-card {
+  background: var(--nd-card-bg) !important;
+  border: 1px solid var(--nd-card-border, rgba(0, 0, 0, 0.12)) !important;
+}
+
+/* Eliminate dirty hardcoded dark overlays and stark white buttons inside light settings panels */
+.light div[style*="rgba(0,0,0,0.2)"],
+.light div[style*="rgba(0, 0, 0, 0.2)"],
+.light div[style*="rgba(0,0,0,0.12)"],
+.light div[style*="rgba(0, 0, 0, 0.12)"],
+.light button[style*="rgba(0,0,0,0.2)"],
+.light button[style*="rgba(0, 0, 0, 0.2)"],
+.light button[style*="rgba(0,0,0,0.12)"],
+.light button[style*="rgba(0, 0, 0, 0.12)"] {
+  background: var(--nd-subcard-bg, #f8fafc) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.12)) !important;
+  color: var(--nd-text) !important;
+}
+
+.light button[style*="#fff"],
+.light button[style*="#ffffff"],
+.light button[style*="background: #fff"],
+.light button[style*="background: #ffffff"],
+.light button[style*="var(--nd-bg-alt)"] {
+  background: var(--nd-card-bg) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.15)) !important;
+  color: var(--nd-text) !important;
+}
+
+.light .nd-modal-overlay {
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.light .nd-dock {
+  background: var(--nd-card-bg) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.08)) !important;
+  box-shadow: none !important;
+}
+
+.light .nd-dock-item {
+  color: var(--nd-text-muted) !important;
+}
+
+.light .nd-dock-item:hover {
+  background: var(--nd-subcard-bg) !important;
+  color: var(--nd-text) !important;
+}
+
+/* Zero drop-shadows and text-shadows across ALL light mode elements */
+.light *,
+.light *::before,
+.light *::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.light .nd-select-dropdown,
+.light .nd-dropdown {
+  background: var(--nd-card-bg) !important;
+  border-color: var(--nd-card-border, rgba(0, 0, 0, 0.12)) !important;
+  box-shadow: none !important;
+  color: var(--nd-text) !important;
+}
+
+.light .nd-select-option:hover,
+.light .nd-menu-item:hover {
+  background: var(--nd-subcard-bg) !important;
+  color: var(--nd-text) !important;
+}
+
+.light .nd-tooltip {
+  background: var(--nd-card-bg) !important;
+  color: var(--nd-text) !important;
+  border-color: var(--nd-card-border) !important;
+  box-shadow: none !important;
+}
+
+.light .nd-btn {
+  background: var(--nd-card-bg) !important;
+  border-color: var(--nd-card-border) !important;
+  color: var(--nd-text-muted) !important;
+  box-shadow: none !important;
+}
+
+.light .nd-btn:hover {
+  background: var(--nd-subcard-bg) !important;
+  border-color: var(--nd-card-hover-border) !important;
+  color: var(--nd-text) !important;
+}
+
+.light .nd-btn-active,
+.light .nd-btn-accent {
+  background: var(--nd-accent) !important;
+  border-color: var(--nd-accent) !important;
+  color: #ffffff !important;
 }
 
 /* ==================== BASE ==================== */
@@ -148,6 +310,13 @@ body {
 
 .nd-center {
   min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure any layout column containing a hovered service stands above all others */
+.nd-layout > *:has(.nd-service:hover) {
+  z-index: 30 !important;
 }
 
 .nd-sidebar-right {
@@ -636,7 +805,17 @@ body {
   z-index: 50 !important;
 }
 
-.nd-card:hover, .nd-sidebar-card:hover {
+.nd-card {
+  position: relative;
+  transition: border-color var(--nd-transition), box-shadow var(--nd-transition), z-index 0s;
+}
+
+.nd-card:hover, .nd-card:has(.nd-service:hover) {
+  border-color: var(--nd-card-hover-border);
+  z-index: 50 !important;
+}
+
+.nd-sidebar-card:hover {
   border-color: var(--nd-card-hover-border);
 }
 
@@ -694,7 +873,6 @@ body {
   background: rgba(0, 0, 0, 0.03);
 }
 
-/* ==================== SECONDARY LINK TOOLTIP ==================== */
 .nd-service-tooltip-wrapper {
   position: absolute;
   top: 0;
@@ -702,12 +880,12 @@ body {
   right: 0;
   bottom: 0;
   pointer-events: none;
-  z-index: 10;
+  z-index: 50;
 }
 
 .nd-service-tooltip {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%) translateY(10px);
   background: var(--nd-card-bg);
@@ -718,36 +896,39 @@ body {
   align-items: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: all 0.2s ease-in-out;
-  transition-delay: 0.4s;
+  transition: opacity 0.15s ease, transform 0.15s ease;
   pointer-events: auto;
   text-decoration: none;
-  /* Bridge the gap so hover doesn't drop */
-  margin-bottom: 8px;
+  white-space: nowrap;
+  z-index: 50;
 }
 
-/* Flèche sous la bulle */
-.nd-service-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: var(--nd-card-bg) transparent transparent transparent;
-}
-
-/* Transparent bridge area */
+/* Invisible hover bridge spanning below the tooltip to keep hover active */
 .nd-service-tooltip::before {
   content: '';
   position: absolute;
-  top: 100%;
-  left: -50px;
-  right: -50px;
-  height: 25px;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  height: 12px;
   background: transparent;
-  z-index: -2;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* Rotated square acting as a matching pointer arrow */
+.nd-service-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--nd-card-bg);
+  border-right: 1px solid var(--nd-card-border);
+  border-bottom: 1px solid var(--nd-card-border);
+  z-index: 2;
 }
 
 .nd-service:hover .nd-service-tooltip {
@@ -773,6 +954,42 @@ body {
 }
 
 .nd-service-tooltip-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--nd-text);
+  white-space: nowrap;
+}
+
+/* Portal tooltip animation */
+@keyframes nd-tooltip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 12px));
+  }
+}
+
+.nd-service-tooltip-portal .nd-service-tooltip-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nd-service-tooltip-portal .nd-service-tooltip-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.nd-service-tooltip-portal .nd-service-tooltip-text {
   font-size: 0.7rem;
   font-weight: 500;
   color: var(--nd-text);
