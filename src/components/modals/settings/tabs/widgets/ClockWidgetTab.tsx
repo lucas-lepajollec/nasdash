@@ -5,6 +5,7 @@ import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import CustomSelect from '../../../../shared/CustomSelect';
+import { Emoji } from '../../../../shared/Emoji';
 
 export function ClockWidgetTab() {
   const { config, updateConfig } = useConfig();
@@ -19,14 +20,12 @@ export function ClockWidgetTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-        <ToggleSwitch
-          checked={!hideClock}
-          onChange={(val) => handleToggleWidget('hideClock', !val)}
-          label="Activer le widget Horloge / Date"
-          sublabel="Choisissez si l'horloge doit s'afficher sur votre tableau de bord."
-        />
-      </div>
+      <ToggleSwitch
+        checked={!hideClock}
+        onChange={(val) => handleToggleWidget('hideClock', !val)}
+        label="Activer le widget Horloge / Date"
+        sublabel="Choisissez si l'horloge doit s'afficher sur votre tableau de bord."
+      />
 
       {!hideClock && (
         <>
@@ -46,7 +45,7 @@ export function ClockWidgetTab() {
                 await updateConfig({ clockTimezone: val });
               }}
               options={[
-                { value: '', label: '🏠 Heure locale (Défaut)' },
+                { value: '', label: <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Emoji emoji="🏠" /> Heure locale (Défaut)</span> },
                 ...(Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone').map(tz => ({
                   value: tz,
                   label: tz.replace('_', ' ')

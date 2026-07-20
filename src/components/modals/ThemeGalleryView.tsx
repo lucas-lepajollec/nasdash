@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Search, Check, Sun, Moon, Sparkles } from 'lucide-react';
+import { Search, Check, Sun, Moon, Sparkles, Palette, Smile } from 'lucide-react';
+import { useConfig } from '@/hooks/useConfig';
+import { Emoji } from '../shared/Emoji';
 
 export interface ThemeDefinition {
   key: string;
@@ -348,15 +350,55 @@ export const THEME_GALLERY: ThemeDefinition[] = [
   }
 ];
 
+const EMOJI_STYLES = [
+  {
+    key: 'native',
+    name: 'Native (Système)',
+    description: 'Emojis par défaut de votre système d’exploitation. Ultra léger et familier.',
+    samples: ['🏠', '🐳', '🖥️', '🚀', '🧩']
+  },
+  {
+    key: 'twemoji',
+    name: 'Twemoji (Twitter)',
+    description: 'Emojis plats, colorés et modernes créés par Twitter. Idéal pour un design épuré.',
+    samples: ['🏠', '🐳', '🖥️', '🚀', '🧩']
+  },
+  {
+    key: 'blobmoji',
+    name: 'Blobmoji (Google Blobs)',
+    description: 'Les célèbres blobs rétro et sympathiques de Google. Un look unique et amusant.',
+    samples: ['🏠', '🐳', '🖥️', '🚀', '🧩']
+  },
+  {
+    key: 'openmoji',
+    name: 'OpenMoji (Dessiné)',
+    description: 'Emojis au contour noir dessiné à la main. Idéal pour un design schématique.',
+    samples: ['🏠', '🐳', '🖥️', '🚀', '🧩']
+  },
+  {
+    key: 'lucide',
+    name: 'Icônes Vectorielles (Lucide)',
+    description: 'Remplace tous les émojis par leur équivalent vectoriel moderne de la bibliothèque Lucide.',
+    samples: ['lucide:Home', 'lucide:Container', 'lucide:Monitor', 'lucide:Rocket', 'lucide:Puzzle']
+  }
+];
+
 interface ThemeGalleryViewProps {
   currentTheme: string;
   onSelectTheme: (themeKey: string) => Promise<void>;
   onClose?: () => void;
+  initialTab?: 'themes' | 'emojis';
 }
 
-export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose }: ThemeGalleryViewProps) {
+export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose, initialTab = 'themes' }: ThemeGalleryViewProps) {
+  const { config, updateConfig } = useConfig();
+  const [galleryMode, setGalleryMode] = useState<'themes' | 'emojis'>(initialTab);
+  
+  // Theme list state
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'dark' | 'light'>('all');
+
+  const currentEmojiTheme = config?.settings?.emojiTheme || 'native';
 
   const filteredThemes = useMemo(() => {
     return THEME_GALLERY.filter(t => {
@@ -379,137 +421,354 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose 
       boxSizing: 'border-box',
       gap: 16
     }}>
-      {/* Search + Category Tabs Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', flexShrink: 0 }}>
-        {/* Search Input */}
-        <div style={{
-          flex: 1,
-          minWidth: 240,
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, color: 'var(--nd-text-muted)' }} />
-          <input 
-            type="text"
-            placeholder="Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              height: 38,
-              paddingLeft: 36,
-              paddingRight: 12,
-              borderRadius: 12,
-              border: '1px solid var(--nd-card-border)',
-              background: 'var(--nd-subcard-bg)',
-              color: 'var(--nd-text)',
-              fontSize: '0.82rem',
-              outline: 'none',
-              boxSizing: 'border-box'
-            }}
-          />
-        </div>
-
-        {/* Filter Tabs */}
-        <div style={{
-          display: 'flex',
-          background: 'var(--nd-subcard-bg)',
-          padding: 3,
-          borderRadius: 12,
-          border: '1px solid var(--nd-card-border)'
-        }}>
-          <button
-            onClick={() => setActiveTab('all')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 9,
-              border: 'none',
-              background: activeTab === 'all' ? 'var(--nd-card-bg)' : 'transparent',
-              color: activeTab === 'all' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
-              fontWeight: activeTab === 'all' ? 600 : 400,
-              fontSize: '0.78rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Sparkles size={13} color={activeTab === 'all' ? 'var(--nd-accent)' : undefined} />
-            Tous ({THEME_GALLERY.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('dark')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 9,
-              border: 'none',
-              background: activeTab === 'dark' ? 'var(--nd-card-bg)' : 'transparent',
-              color: activeTab === 'dark' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
-              fontWeight: activeTab === 'dark' ? 600 : 400,
-              fontSize: '0.78rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Moon size={13} color={activeTab === 'dark' ? 'var(--nd-accent)' : undefined} />
-            Sombres ({THEME_GALLERY.filter(t => t.category === 'dark').length})
-          </button>
-          <button
-            onClick={() => setActiveTab('light')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 9,
-              border: 'none',
-              background: activeTab === 'light' ? 'var(--nd-card-bg)' : 'transparent',
-              color: activeTab === 'light' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
-              fontWeight: activeTab === 'light' ? 600 : 400,
-              fontSize: '0.78rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Sun size={13} color={activeTab === 'light' ? 'var(--nd-accent)' : undefined} />
-            Clairs ({THEME_GALLERY.filter(t => t.category === 'light').length})
-          </button>
-        </div>
+      {/* Gallery Section Tab Selection */}
+      <div style={{
+        display: 'flex',
+        borderBottom: '1px solid var(--nd-card-border)',
+        paddingBottom: 12,
+        gap: 12,
+        flexShrink: 0
+      }}>
+        <button
+          onClick={() => setGalleryMode('themes')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: galleryMode === 'themes' ? 'var(--nd-accent-glow)' : 'transparent',
+            color: galleryMode === 'themes' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+            fontWeight: galleryMode === 'themes' ? 700 : 500,
+            fontSize: '0.82rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Palette size={15} />
+          Thèmes Visuels
+        </button>
+        <button
+          onClick={() => setGalleryMode('emojis')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: galleryMode === 'emojis' ? 'var(--nd-accent-glow)' : 'transparent',
+            color: galleryMode === 'emojis' ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
+            fontWeight: galleryMode === 'emojis' ? 700 : 500,
+            fontSize: '0.82rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <Smile size={15} />
+          Style des Emojis & Icônes
+        </button>
       </div>
 
-      {/* Gallery Grid Content */}
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '8px 6px 8px 4px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-        gridAutoRows: '190px',
-        gap: 14,
-        alignContent: 'start'
-      }}>
-        {filteredThemes.length === 0 ? (
-          <div style={{
-            gridColumn: '1 / -1',
-            padding: '60px 20px',
-            textAlign: 'center',
-            color: 'var(--nd-text-muted)'
-          }}>
-            <p style={{ margin: 0, fontSize: '0.95rem' }}>Aucun thème ne correspond à votre recherche "{search}".</p>
+      {galleryMode === 'themes' ? (
+        <>
+          {/* Search + Category Tabs Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', flexShrink: 0 }}>
+            {/* Search Input */}
+            <div style={{
+              flex: 1,
+              minWidth: 240,
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, color: 'var(--nd-text-muted)' }} />
+              <input 
+                type="text"
+                placeholder="Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: 38,
+                  paddingLeft: 36,
+                  paddingRight: 12,
+                  borderRadius: 12,
+                  border: '1px solid var(--nd-card-border)',
+                  background: 'var(--nd-subcard-bg)',
+                  color: 'var(--nd-text)',
+                  fontSize: '0.82rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Filter Tabs */}
+            <div style={{
+              display: 'flex',
+              background: 'var(--nd-subcard-bg)',
+              padding: 3,
+              borderRadius: 12,
+              border: '1px solid var(--nd-card-border)'
+            }}>
+              <button
+                onClick={() => setActiveTab('all')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: activeTab === 'all' ? 'var(--nd-card-bg)' : 'transparent',
+                  color: activeTab === 'all' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
+                  fontWeight: activeTab === 'all' ? 600 : 400,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sparkles size={13} color={activeTab === 'all' ? 'var(--nd-accent)' : undefined} />
+                Tous ({THEME_GALLERY.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('dark')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: activeTab === 'dark' ? 'var(--nd-card-bg)' : 'transparent',
+                  color: activeTab === 'dark' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
+                  fontWeight: activeTab === 'dark' ? 600 : 400,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Moon size={13} color={activeTab === 'dark' ? 'var(--nd-accent)' : undefined} />
+                Sombres ({THEME_GALLERY.filter(t => t.category === 'dark').length})
+              </button>
+              <button
+                onClick={() => setActiveTab('light')}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 9,
+                  border: 'none',
+                  background: activeTab === 'light' ? 'var(--nd-card-bg)' : 'transparent',
+                  color: activeTab === 'light' ? 'var(--nd-text)' : 'var(--nd-text-muted)',
+                  fontWeight: activeTab === 'light' ? 600 : 400,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sun size={13} color={activeTab === 'light' ? 'var(--nd-accent)' : undefined} />
+                Clairs ({THEME_GALLERY.filter(t => t.category === 'light').length})
+              </button>
+            </div>
           </div>
-        ) : (
-          filteredThemes.map((theme) => {
-            const isSelected = currentTheme === theme.key;
+
+          {/* Gallery Grid Content */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '8px 6px 8px 4px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+            gridAutoRows: '190px',
+            gap: 14,
+            alignContent: 'start'
+          }}>
+            {filteredThemes.length === 0 ? (
+              <div style={{
+                gridColumn: '1 / -1',
+                padding: '60px 20px',
+                textAlign: 'center',
+                color: 'var(--nd-text-muted)'
+              }}>
+                <p style={{ margin: 0, fontSize: '0.95rem' }}>Aucun thème ne correspond à votre recherche "{search}".</p>
+              </div>
+            ) : (
+              filteredThemes.map((theme) => {
+                const isSelected = currentTheme === theme.key;
+
+                return (
+                  <div
+                    key={theme.key}
+                    onClick={() => onSelectTheme(theme.key)}
+                    style={{
+                      borderRadius: 16,
+                      border: isSelected 
+                        ? '2px solid var(--nd-accent)' 
+                        : '1px solid var(--nd-card-border)',
+                      background: 'var(--nd-subcard-bg)',
+                      padding: 12,
+                      height: 190,
+                      boxSizing: 'border-box',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = 'var(--nd-accent)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = 'var(--nd-card-border)';
+                        e.currentTarget.style.transform = 'none';
+                      }
+                    }}
+                  >
+                    {/* Live Theme Preview Card */}
+                    <div style={{
+                      width: '100%',
+                      height: 85,
+                      borderRadius: 10,
+                      background: theme.bg,
+                      padding: 8,
+                      boxSizing: 'border-box',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      border: '1px solid rgba(128, 128, 128, 0.15)',
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Simulated Header Bar */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent }} />
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(128,128,128,0.3)' }} />
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(128,128,128,0.3)' }} />
+                        </div>
+                        <div style={{
+                          padding: '2px 6px',
+                          borderRadius: 4,
+                          background: theme.subcardBg,
+                          color: theme.text,
+                          fontSize: '0.55rem',
+                          fontWeight: 700
+                        }}>
+                          NasDash
+                        </div>
+                      </div>
+
+                      {/* Simulated Widget Card — Positioned higher above color dots */}
+                      <div style={{
+                        background: theme.cardBg,
+                        borderRadius: 6,
+                        padding: 5,
+                        border: '1px solid rgba(128,128,128,0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginBottom: 20,
+                        paddingRight: 10
+                      }}>
+                        <div style={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: 4,
+                          background: theme.accent
+                        }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ height: 3, width: '55%', background: theme.text, opacity: 0.8, borderRadius: 2, marginBottom: 2 }} />
+                          <div style={{ height: 2, width: '35%', background: theme.text, opacity: 0.4, borderRadius: 2 }} />
+                        </div>
+                      </div>
+
+                      {/* Color Swatch Badges */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 5,
+                        right: 6,
+                        display: 'flex',
+                        gap: 3,
+                        padding: 2,
+                        background: 'rgba(0,0,0,0.3)',
+                        borderRadius: 10,
+                        backdropFilter: 'blur(4px)'
+                      }}>
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title="Canvas BG" />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title="Card Surface" />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title="Text Color" />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title="Accent Color" />
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--nd-text)' }}>
+                          {theme.name}
+                        </span>
+                        {isSelected && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '2px 8px',
+                            borderRadius: 20,
+                            background: 'var(--nd-accent)',
+                            color: '#ffffff',
+                            fontSize: '0.62rem',
+                            fontWeight: 700
+                          }}>
+                            <Check size={11} /> Actif
+                          </div>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: '1.25' }}>
+                        {theme.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
+      ) : (
+        /* EMOJIS & ICONS GALLERY MODE */
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '8px 6px 8px 4px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gridAutoRows: '190px',
+          gap: 14,
+          alignContent: 'start'
+        }}>
+          {EMOJI_STYLES.map((style) => {
+            const isSelected = currentEmojiTheme === style.key;
 
             return (
               <div
-                key={theme.key}
-                onClick={() => onSelectTheme(theme.key)}
+                key={style.key}
+                onClick={async () => {
+                  await updateConfig({ emojiTheme: style.key });
+                }}
                 style={{
                   borderRadius: 16,
                   border: isSelected 
@@ -541,92 +800,32 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose 
                   }
                 }}
               >
-                {/* Live Theme Preview Card */}
+                {/* Live Emoji Preview Card */}
                 <div style={{
                   width: '100%',
                   height: 85,
                   borderRadius: 10,
-                  background: theme.bg,
-                  padding: 8,
-                  boxSizing: 'border-box',
+                  background: 'var(--nd-card-bg)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 10,
                   border: '1px solid rgba(128, 128, 128, 0.15)',
                   position: 'relative',
                   overflow: 'hidden'
                 }}>
-                  {/* Simulated Header Bar */}
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent }} />
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(128,128,128,0.3)' }} />
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(128,128,128,0.3)' }} />
+                  {style.samples.map((char, index) => (
+                    <div key={index} style={{ fontSize: '1.6rem', display: 'flex', alignItems: 'center' }}>
+                      <Emoji emoji={char} forcedTheme={style.key as any} />
                     </div>
-                    <div style={{
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      background: theme.subcardBg,
-                      color: theme.text,
-                      fontSize: '0.55rem',
-                      fontWeight: 700
-                    }}>
-                      NasDash
-                    </div>
-                  </div>
-
-                  {/* Simulated Widget Card — Positioned higher above color dots */}
-                  <div style={{
-                    background: theme.cardBg,
-                    borderRadius: 6,
-                    padding: 5,
-                    border: '1px solid rgba(128,128,128,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    marginBottom: 20,
-                    paddingRight: 10
-                  }}>
-                    <div style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: 4,
-                      background: theme.accent
-                    }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ height: 3, width: '55%', background: theme.text, opacity: 0.8, borderRadius: 2, marginBottom: 2 }} />
-                      <div style={{ height: 2, width: '35%', background: theme.text, opacity: 0.4, borderRadius: 2 }} />
-                    </div>
-                  </div>
-
-                  {/* Color Swatch Badges */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 5,
-                    right: 6,
-                    display: 'flex',
-                    gap: 3,
-                    padding: 2,
-                    background: 'rgba(0,0,0,0.3)',
-                    borderRadius: 10,
-                    backdropFilter: 'blur(4px)'
-                  }}>
-                    <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title="Canvas BG" />
-                    <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title="Card Surface" />
-                    <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title="Text Color" />
-                    <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title="Accent Color" />
-                  </div>
+                  ))}
                 </div>
 
                 {/* Info */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--nd-text)' }}>
-                      {theme.name}
+                      {style.name}
                     </span>
                     {isSelected && (
                       <div style={{
@@ -645,14 +844,14 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose 
                     )}
                   </div>
                   <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: '1.25' }}>
-                    {theme.description}
+                    {style.description}
                   </p>
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       {/* Footer Info & Fermer Button */}
       <div style={{
@@ -664,7 +863,10 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose 
         flexShrink: 0
       }}>
         <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
-          {filteredThemes.length} sur {THEME_GALLERY.length} thèmes affichés
+          {galleryMode === 'themes' 
+            ? `${filteredThemes.length} sur ${THEME_GALLERY.length} thèmes affichés`
+            : `${EMOJI_STYLES.length} styles d'emojis disponibles`
+          }
         </span>
         {onClose && (
           <button

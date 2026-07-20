@@ -452,13 +452,23 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const updateConfig = async (updates: any) => {
     setConfig(prev => {
       if (!prev) return prev;
-      return {
-        ...prev,
-        settings: {
-          ...prev.settings,
-          ...updates
+      const next = { ...prev };
+      const settingsUpdates: any = {};
+
+      Object.keys(updates).forEach(key => {
+        if (key === 'appearanceProfiles' || key === 'categories' || key === 'devices' || key === 'dockerHosts' || key === 'dockerActions' || key === 'localEvents') {
+          (next as any)[key] = updates[key];
+        } else {
+          settingsUpdates[key] = updates[key];
         }
+      });
+
+      next.settings = {
+        ...next.settings,
+        ...settingsUpdates
       };
+
+      return next;
     });
 
     try {

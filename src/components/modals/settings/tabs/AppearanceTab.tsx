@@ -8,9 +8,10 @@ import ConfirmModal from '../../ConfirmModal';
 import { THEME_PRESETS } from '../../SettingsModal';
 import ThemeGalleryView, { THEME_GALLERY } from '../../ThemeGalleryView';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
+import { Emoji } from '../../../shared/Emoji';
 
 interface AppearanceTabProps {
-  onOpenThemeGallery?: () => void;
+  onOpenThemeGallery?: (tab: 'themes' | 'emojis') => void;
 }
 
 export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
@@ -212,8 +213,8 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Appearance Profiles */}
         <SettingsAccordion
-          title="Profils & Thème Global"
-          description="Couleurs globales et gestion des profils"
+          title="Profils, Thèmes & Emojis"
+          description="Thèmes visuels, style d'émojis globaux et profils d'apparence"
           icon={<Palette size={18} />}
           isOpen={openAccordions.includes('theme')}
           onToggle={() => toggleAccordion('theme')}
@@ -229,7 +230,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             <div 
               onClick={() => {
                 if (onOpenThemeGallery) {
-                  onOpenThemeGallery();
+                  onOpenThemeGallery('themes');
                 } else {
                   setIsThemeModalOpen(true);
                 }
@@ -283,6 +284,66 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
               </div>
             </div>
           )}
+
+          {/* Style des Emojis / Icônes */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 8 }}>
+              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Style des Emojis & Icônes</h4>
+              <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
+                Dans la galerie interactive, vous pouvez choisir entre plusieurs styles d'émojis ou les icônes Lucide.
+              </p>
+            </div>
+            
+            <div 
+              onClick={() => {
+                if (onOpenThemeGallery) {
+                  onOpenThemeGallery('emojis');
+                }
+              }}
+              style={{
+                padding: '10px 14px',
+                borderRadius: 14,
+                border: '1px solid var(--nd-card-border)',
+                background: 'var(--nd-subcard-bg)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--nd-accent)'}
+              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--nd-card-border)'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  display: 'flex',
+                  gap: 6,
+                  padding: '2px 8px',
+                  borderRadius: 8,
+                  background: 'rgba(0,0,0,0.2)',
+                  alignItems: 'center'
+                }}>
+                  <Emoji emoji="🏠" />
+                  <Emoji emoji="🐳" />
+                  <Emoji emoji="🖥️" />
+                  <Emoji emoji="🚀" />
+                </div>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--nd-text)' }}>
+                  {(() => {
+                    const theme = config?.settings?.emojiTheme || 'native';
+                    if (theme === 'twemoji') return 'Twemoji (Twitter)';
+                    if (theme === 'blobmoji') return 'Blobmoji (Google)';
+                    if (theme === 'openmoji') return 'OpenMoji (Dessiné)';
+                    if (theme === 'lucide') return 'Icônes Vectorielles (Lucide)';
+                    return 'Native (Système)';
+                  })()}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.72rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
+                Ouvrir la galerie →
+              </span>
+            </div>
+          </div>
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
             <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Profils d'Apparence</h4>
@@ -555,10 +616,10 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
           </div>
         </SettingsAccordion>
 
-        {/* Accordion 4: Titles and Emojis */}
+        {/* Accordion 4: Titles */}
         <SettingsAccordion
-          title="Titres & Emojis"
-          description="Masquage des titres et style graphique des emojis"
+          title="Titres"
+          description="Affichage, masquage et position des titres de widgets et catégories"
           icon={<Type size={18} />}
           isOpen={openAccordions.includes('titles')}
           onToggle={() => toggleAccordion('titles')}
@@ -596,32 +657,6 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                     options={[
                       { value: 'inside', label: 'Dans la carte (Défaut)' },
                       { value: 'above', label: 'Au-dessus de la carte' }
-                    ]}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Emoji style select card */}
-            <div className="nd-settings-card">
-              <div className="nd-settings-card-row">
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', color: 'var(--nd-text)' }}>
-                    Style des Emojis / Icônes
-                  </span>
-                  <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 2 }}>
-                    Uniformise l'apparence de tous les emojis du tableau de bord.
-                  </span>
-                </div>
-                <div className="nd-settings-select-wrap" style={{ flexShrink: 0, width: 180 }}>
-                  <CustomSelect
-                    value={config?.settings?.emojiTheme || 'native'}
-                    onChange={(val) => updateConfig({ emojiTheme: val })}
-                    options={[
-                      { value: 'native', label: 'Native (Système)' },
-                      { value: 'twemoji', label: 'Twemoji (Twitter)' },
-                      { value: 'blobmoji', label: 'Blobmoji (Google)' },
-                      { value: 'openmoji', label: 'OpenMoji (Dessiné)' }
                     ]}
                   />
                 </div>

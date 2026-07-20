@@ -12,6 +12,7 @@ import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../shared/CustomSelect';
 import ConfirmModal from './ConfirmModal';
 import EmojiPickerModal from './EmojiPickerModal';
+import { Emoji } from '../shared/Emoji';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -337,6 +338,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const { config, updateConfig, settingsModal } = useConfig();
   const { tabs } = useTabs();
   const [isThemeGalleryOpen, setIsThemeGalleryOpen] = useState(false);
+  const [galleryInitialTab, setGalleryInitialTab] = useState<'themes' | 'emojis'>('themes');
 
   const activeTheme = config?.settings?.theme || 'nasdash';
   const activeMode = config?.settings?.mode || 'dark';
@@ -632,32 +634,37 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
             >
               ← {isThemeGalleryOpen ? 'Apparence' : 'Retour'}
             </button>
-            
-            <h3 className="nd-settings-title" style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, wordBreak: 'break-word', lineHeight: 1.3 }}>
-              {isThemeGalleryOpen ? '🎨 Galerie de Thèmes Visuels (26 Thèmes)' : (
+                       <h3 className="nd-settings-title" style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, wordBreak: 'break-word', lineHeight: 1.3 }}>
+              {isThemeGalleryOpen ? (
+                galleryInitialTab === 'themes' ? (
+                  <><Emoji emoji="🎨" /> Galerie de Thèmes Visuels</>
+                ) : (
+                  <><Emoji emoji="✨" /> Style des Emojis & Icônes</>
+                )
+              ) : (
                 <>
-                  {currentTab === 'apparence' && '🎨 Apparence, Fonds & CSS'}
-                  {currentTab === 'header' && '📋 En-tête'}
-                  {currentTab === 'mobile' && '📱 Mobile'}
-                  {currentTab === 'developer' && '⚙️ Menu Développeur'}
-                  {currentTab === 'security' && '🔑 Sécurité & Utilisateurs'}
-                  {currentTab === 'library' && '🎛️ Bibliothèque Globale des Widgets'}
-                  {currentTab === 'tabs-general' && '🌐 Général (Dock & Onglets)'}
-                  {currentTab === 'tabs-home' && '🏠 Paramètres — Onglet Home'}
-                  {currentTab === 'tabs-widgets' && '🧩 Paramètres — Onglet Widgets'}
-                  {currentTab === 'tabs-docker' && '🐳 Paramètres — Onglet Docker'}
-                  {currentTab === 'tabs-networks' && '📶 Paramètres — Onglet Réseaux'}
-                  {currentTab === 'widget-devices' && '🖥️ Configuration — Appareils'}
-                  {currentTab === 'widget-quickstats' && '📊 Configuration — Vue d\'ensemble'}
-                  {currentTab === 'widget-tailscale' && '🛡️ Configuration — VPN Tailscale'}
-                  {currentTab === 'widget-dockeractions' && '🐳 Configuration — Actions Docker'}
-                  {currentTab === 'widget-clock' && '🕒 Configuration — Horloge / Date'}
-                  {currentTab === 'widget-calendar' && '📅 Configuration — Calendrier'}
-                  {currentTab === 'widget-weather' && '☁️ Configuration — Météo'}
-                  {currentTab === 'widget-networkgraph' && '📶 Configuration — Graphe Réseau'}
-                  {currentTab === 'widget-dockercontainers' && '🐳 Configuration — Conteneurs Docker'}
-                  {currentTab === 'custom-tabs' && '🎨 Onglets Personnalisés'}
-                  {currentTab === 'custom-tab-builder' && '🛠️ Éditeur d\'Onglet'}
+                  {currentTab === 'apparence' && <><Emoji emoji="🎨" /> Apparence, Fonds & CSS</>}
+                  {currentTab === 'header' && <><Emoji emoji="📋" /> En-tête</>}
+                  {currentTab === 'mobile' && <><Emoji emoji="📱" /> Mobile</>}
+                  {currentTab === 'developer' && <><Emoji emoji="⚙️" /> Menu Développeur</>}
+                  {currentTab === 'security' && <><Emoji emoji="🔑" /> Sécurité & Utilisateurs</>}
+                  {currentTab === 'library' && <><Emoji emoji="🎛️" /> Bibliothèque Globale des Widgets</>}
+                  {currentTab === 'tabs-general' && <><Emoji emoji="🌐" /> Général (Dock & Onglets)</>}
+                  {currentTab === 'tabs-home' && <><Emoji emoji="🏠" /> Paramètres — Onglet Home</>}
+                  {currentTab === 'tabs-widgets' && <><Emoji emoji="🧩" /> Paramètres — Onglet Widgets</>}
+                  {currentTab === 'tabs-docker' && <><Emoji emoji="🐳" /> Paramètres — Onglet Docker</>}
+                  {currentTab === 'tabs-networks' && <><Emoji emoji="📶" /> Paramètres — Onglet Réseaux</>}
+                  {currentTab === 'widget-devices' && <><Emoji emoji="🖥️" /> Configuration — Appareils</>}
+                  {currentTab === 'widget-quickstats' && <><Emoji emoji="📊" /> Configuration — Vue d'ensemble</>}
+                  {currentTab === 'widget-tailscale' && <><Emoji emoji="🛡️" /> Configuration — VPN Tailscale</>}
+                  {currentTab === 'widget-dockeractions' && <><Emoji emoji="🐳" /> Configuration — Actions Docker</>}
+                  {currentTab === 'widget-clock' && <><Emoji emoji="🕒" /> Configuration — Horloge / Date</>}
+                  {currentTab === 'widget-calendar' && <><Emoji emoji="📅" /> Configuration — Calendrier</>}
+                  {currentTab === 'widget-weather' && <><Emoji emoji="☁️" /> Configuration — Météo</>}
+                  {currentTab === 'widget-networkgraph' && <><Emoji emoji="📶" /> Configuration — Graphe Réseau</>}
+                  {currentTab === 'widget-dockercontainers' && <><Emoji emoji="🐳" /> Configuration — Conteneurs Docker</>}
+                  {currentTab === 'custom-tabs' && <><Emoji emoji="🎨" /> Onglets Personnalisés</>}
+                  {currentTab === 'custom-tab-builder' && <><Emoji emoji="🛠️" /> Éditeur d'Onglet</>}
                 </>
               )}
             </h3>
@@ -676,11 +683,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 currentTheme={activeTheme}
                 onSelectTheme={handleGalleryThemeChange}
                 onClose={() => setIsThemeGalleryOpen(false)}
+                initialTab={galleryInitialTab}
               />
             </div>
           ) : (
             <>
-              {currentTab === 'apparence' && <AppearanceTab onOpenThemeGallery={() => setIsThemeGalleryOpen(true)} />}
+              {currentTab === 'apparence' && (
+                <AppearanceTab 
+                  onOpenThemeGallery={(tab) => {
+                    setGalleryInitialTab(tab);
+                    setIsThemeGalleryOpen(true);
+                  }} 
+                />
+              )}
               {currentTab === 'header' && <HeaderTab />}
               {currentTab === 'mobile' && <MobileTab />}
 

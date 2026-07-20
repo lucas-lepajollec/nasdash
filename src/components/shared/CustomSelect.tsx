@@ -5,7 +5,7 @@ import { ChevronDown, Check } from 'lucide-react';
 
 interface Option {
   value: string;
-  label: string;
+  label: React.ReactNode;
   isHeader?: boolean;
 }
 

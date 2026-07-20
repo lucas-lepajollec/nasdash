@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Palette, Cpu, Sliders, ChevronRight, Monitor, Activity, Shield, Container, Clipboard, Calendar, Cloud, Home, Layout, Layers, X, Smartphone, PanelTop, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { Emoji } from '../../shared/Emoji';
 
 interface SettingsSidebarProps {
   currentTab: string;
@@ -166,7 +167,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   return {
                     ...w,
                     active: !isHidden,
-                    iconNode: <span style={{ fontSize: '1rem', lineHeight: 1 }}>{w.icon}</span>
+                    iconNode: <Emoji emoji={w.icon} />
                   };
                 }).sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1)).map((w, index, array) => {
                   const isFirstInactive = !w.active && (index === 0 || array[index - 1].active);

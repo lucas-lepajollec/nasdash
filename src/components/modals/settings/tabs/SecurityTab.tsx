@@ -264,7 +264,7 @@ export function SecurityTab() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1rem' }}>🌐</span>
+                <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}><Emoji emoji="🌐" /></span>
                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: securityMode === 'public' ? 'var(--nd-accent)' : 'var(--nd-text)' }}>Public (Lecture seule)</span>
               </div>
               <div 
@@ -312,7 +312,7 @@ export function SecurityTab() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '1rem' }}>🔒</span>
+                <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}><Emoji emoji="🔒" /></span>
                 <span style={{ fontSize: '0.8rem', fontWeight: 700, color: securityMode === 'private' ? 'var(--nd-accent)' : 'var(--nd-text)' }}>Privé strict</span>
               </div>
               <div 

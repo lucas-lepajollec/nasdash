@@ -4,6 +4,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useTabs } from '@/hooks/useTabs';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import EmojiPickerModal from '../../../EmojiPickerModal';
+import { Emoji } from '../../../../shared/Emoji';
 
 export function TabsGeneralTab() {
   const { config, updateConfig } = useConfig();
@@ -51,16 +52,16 @@ export function TabsGeneralTab() {
           <button 
             onClick={() => updateConfig({ dockPosition: 'left' })}
             className={`nd-btn ${config?.settings?.dockPosition !== 'right' ? 'nd-settings-nav-item--active' : ''}`}
-            style={{ flex: 1, padding: '8px 12px', fontSize: '0.75rem', justifyContent: 'center', border: config?.settings?.dockPosition !== 'right' ? '1px solid var(--nd-accent)' : '1px solid var(--nd-card-border)' }}
+            style={{ flex: 1, padding: '8px 12px', fontSize: '0.75rem', justifyContent: 'center', border: config?.settings?.dockPosition !== 'right' ? '1px solid var(--nd-accent)' : '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            ⬅️ À gauche
+            <Emoji emoji="⬅️" /> À gauche
           </button>
           <button 
             onClick={() => updateConfig({ dockPosition: 'right' })}
             className={`nd-btn ${config?.settings?.dockPosition === 'right' ? 'nd-settings-nav-item--active' : ''}`}
-            style={{ flex: 1, padding: '8px 12px', fontSize: '0.75rem', justifyContent: 'center', border: config?.settings?.dockPosition === 'right' ? '1px solid var(--nd-accent)' : '1px solid var(--nd-card-border)' }}
+            style={{ flex: 1, padding: '8px 12px', fontSize: '0.75rem', justifyContent: 'center', border: config?.settings?.dockPosition === 'right' ? '1px solid var(--nd-accent)' : '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            À droite ➡️
+            À droite <Emoji emoji="➡️" />
           </button>
         </div>
         <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16 }}>
@@ -121,7 +122,7 @@ export function TabsGeneralTab() {
                      >
                        {(() => {
                          const iconVal = config?.settings?.tabIcons?.[t.id] !== undefined ? config?.settings?.tabIcons?.[t.id] : t.icon;
-                         return iconVal ? <span style={{ fontSize: '1rem' }}>{iconVal}</span> : <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--nd-text-muted)' }}><Ban size={14} /><span style={{ fontSize: '0.75rem' }}>Aucune</span></div>;
+                         return iconVal ? <Emoji emoji={iconVal} /> : <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--nd-text-muted)' }}><Ban size={14} /><span style={{ fontSize: '0.75rem' }}>Aucune</span></div>;
                        })()}
                        <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginLeft: 6 }}>Modifier</span>
                      </button>

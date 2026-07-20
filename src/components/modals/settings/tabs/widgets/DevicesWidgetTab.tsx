@@ -7,6 +7,7 @@ import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutCon
 import { Pencil, Trash2, Plus, HardDrive, Monitor, ShieldAlert } from 'lucide-react';
 import ConfirmModal from '../../../ConfirmModal';
 import { Device } from '@/lib/types';
+import { Emoji } from '../../../../shared/Emoji';
 
 export function DevicesWidgetTab() {
   const { config, updateConfig, setDeviceModal, deleteDevice } = useConfig();
@@ -91,7 +92,7 @@ export function DevicesWidgetTab() {
                     className="nd-weather-card-hover"
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                      <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{dev.icon || '🖥️'}</span>
+                      <span style={{ fontSize: '1.1rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}><Emoji emoji={dev.icon || '🖥️'} /></span>
                       <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                         <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {dev.name}

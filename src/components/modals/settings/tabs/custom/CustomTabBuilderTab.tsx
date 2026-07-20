@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CustomTabRow, CustomTabColumn, CustomTabRowType, CustomTabWidgetInfo } from '@/lib/types';
 import { ChevronLeft, Plus, Save, Trash2, Layout, Type, GripVertical, Settings2 } from 'lucide-react';
 import EmojiPickerModal from '../../../EmojiPickerModal';
+import { Emoji } from '../../../../shared/Emoji';
 import { useConfig } from '@/hooks/useConfig';
 import { WidgetSelectionModal } from './WidgetSelectionModal';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
@@ -167,7 +168,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
     })));
   };
 
-  const renderWidgetPreview = (widget: CustomTabWidgetInfo) => {
+  const renderWidgetPreview = (widget: CustomTabWidgetInfo): React.ReactNode => {
     const def = WIDGET_REGISTRY.find(w => w.id === widget.type);
     const isGloballyHidden = (() => {
       if (!def) return false;
@@ -175,21 +176,28 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
       return (config?.settings as any)?.[hideKey] ?? def.defaultHidden;
     })();
 
-    let name = '';
+    let emoji = '🧩';
+    let name = 'Widget';
     switch (widget.type) {
-      case 'clock': name = '⏰ Horloge'; break;
-      case 'weather': name = '🌤️ Météo'; break;
-      case 'quickstats': name = '📊 Quick Stats'; break;
-      case 'devices': name = '🖥️ Appareils'; break;
-      case 'tailscale': name = '🔒 Tailscale'; break;
-      case 'dockeractions': name = '🐳 Actions Docker'; break;
-      case 'calendar': name = '📅 Calendrier'; break;
-      case 'networkgraph': name = '📶 Graphe Réseau'; break;
-      case 'dockercontainers': name = '🐳 Conteneurs Docker'; break;
-      default: name = `🧩 Widget Inconnu (${widget.type})`; break;
+      case 'clock': emoji = '🕒'; name = 'Horloge'; break;
+      case 'weather': emoji = '🌤️'; name = 'Météo'; break;
+      case 'quickstats': emoji = '📊'; name = 'Vue d\'ensemble'; break;
+      case 'devices': emoji = '🖥️'; name = 'Appareils'; break;
+      case 'tailscale': emoji = '🛡️'; name = 'Tailscale'; break;
+      case 'dockeractions': emoji = '🐳'; name = 'Actions Docker'; break;
+      case 'calendar': emoji = '📅'; name = 'Calendrier'; break;
+      case 'networkgraph': emoji = '📶'; name = 'Graphe Réseau'; break;
+      case 'dockercontainers': emoji = '🐳'; name = 'Conteneurs Docker'; break;
+      default: emoji = '🧩'; name = `Widget Inconnu (${widget.type})`; break;
     }
 
-    return isGloballyHidden ? `${name} (Désactivé)` : name;
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Emoji emoji={emoji} />
+        <span>{name}</span>
+        {isGloballyHidden && <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>(Désactivé)</span>}
+      </span>
+    );
   };
 
   if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>;
@@ -198,19 +206,36 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
     <div className="nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       
       {/* Propriétés de base */}
-      <div className="nd-settings-card" style={{ padding: '20px', display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'flex-end', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-          <label className="nd-label">Nom de l'onglet</label>
-          <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Multimédia" />
+      <div className="nd-settings-card" style={{ padding: '20px', display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'flex-end', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <label className="nd-label">Nom de l&apos;onglet</label>
+          <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Multimédia" style={{ width: '100%', boxSizing: 'border-box' }} />
         </div>
-        <div>
-          <label className="nd-label">Icône</label>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+          <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
           <button 
-            className="nd-btn" 
-            style={{ width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', padding: 0 }}
+            type="button"
+            className="nd-btn-hover-glow" 
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: '10px',
+              border: '1px solid var(--nd-card-border)',
+              background: 'var(--nd-subcard-bg)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              color: 'var(--nd-text)',
+              transition: 'all 0.2s',
+              outline: 'none',
+              padding: 0,
+              boxSizing: 'border-box'
+            }}
             onClick={() => setIsEmojiPickerOpen(true)}
           >
-            {icon}
+            <Emoji emoji={icon} />
           </button>
         </div>
         <button 

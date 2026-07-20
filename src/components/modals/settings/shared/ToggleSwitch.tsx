@@ -3,7 +3,7 @@ import React from 'react';
 export interface ToggleSwitchProps {
   checked: boolean;
   onChange: (val: boolean) => void;
-  label?: string;
+  label?: React.ReactNode;
   sublabel?: string;
 }
 

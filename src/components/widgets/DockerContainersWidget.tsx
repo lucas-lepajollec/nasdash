@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import { useConfig } from '@/hooks/useConfig';
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw, Pencil } from 'lucide-react';
 import { useWidgetSize } from './WidgetContainer';
+import { Emoji } from '../shared/Emoji';
 
 const fetcher = (url: string) => fetch(url).then(r => {
   if (!r.ok) throw new Error('Fetch failed');
@@ -391,7 +392,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
               padding: '4px 0',
               fontWeight: 500
             }}>
-              <span>{activeHost.icon}</span>
+              <span><Emoji emoji={activeHost.icon} /></span>
               <span>Hôte : {activeHost.name}</span>
             </div>
           )}
@@ -479,7 +480,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
       {!hideTitles && (
         <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: '1rem', lineHeight: 1 }}>🐳</span>
+            <span style={{ fontSize: '1rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji="🐳" /></span>
             <span>Conteneurs Docker</span>
           </div>
           

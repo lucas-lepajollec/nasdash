@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Category, Service } from '@/lib/types';
-import { EMOJI_CATEGORIES } from '@/lib/constants';
-import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings } from 'lucide-react';
+import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings, Ban } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '../shared/CustomSelect';
 import { Emoji } from '../shared/Emoji';
+import EmojiPickerModal from './EmojiPickerModal';
 
 interface CategoryFormModalProps {
   category?: Category;
@@ -32,7 +32,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [layout, setLayout] = useState<Category['layout']>(
     category?.layout === 'grid' ? 'bento' : (category?.layout || 'standard')
   );
-  const [selectedCategory, setSelectedCategory] = useState<string>(Object.keys(EMOJI_CATEGORIES)[0]);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
   
   const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState(false);
@@ -103,51 +103,36 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label className="nd-label">Nom</label>
-            <input className="nd-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Médias" />
-          </div>
-
-          <div>
-            <label className="nd-label">Emoji</label>
-            {/* Category tabs */}
-            <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
-              {Object.keys(EMOJI_CATEGORIES).map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  style={{
-                    fontSize: '0.65rem',
-                    padding: '4px 8px',
-                    borderRadius: 4,
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: selectedCategory === cat ? 'var(--nd-accent)' : 'var(--nd-bg-alt)',
-                    color: selectedCategory === cat ? 'var(--nd-bg)' : 'var(--nd-text-muted)',
-                    fontWeight: selectedCategory === cat ? 600 : 400,
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <label className="nd-label">Nom de la catégorie</label>
+              <input className="nd-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Médias" style={{ width: '100%', boxSizing: 'border-box' }} />
             </div>
-            {/* Emoji grid */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {EMOJI_CATEGORIES[selectedCategory].map((e) => (
-                <button
-                  key={e}
-                  onClick={() => setEmoji(e)}
-                  style={{
-                    width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', fontSize: '1rem',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', border: 'none',
-                    background: emoji === e ? 'var(--nd-accent-glow)' : 'transparent',
-                    outline: emoji === e ? '2px solid var(--nd-accent)' : 'none',
-                  }}
-                >
-                  <Emoji emoji={e} />
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+              <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
+              <button
+                type="button"
+                onClick={() => setIsPickerOpen(true)}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '10px',
+                  border: '1px solid var(--nd-card-border)',
+                  background: 'var(--nd-subcard-bg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  color: 'var(--nd-text)',
+                  transition: 'all 0.2s',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+                className="nd-btn-hover-glow"
+              >
+                {emoji ? <Emoji emoji={emoji} /> : <Ban size={16} style={{ color: 'var(--nd-text-muted)' }} />}
+              </button>
             </div>
           </div>
 
@@ -323,6 +308,16 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
         title="Supprimer le logo ?"
         description="Voulez-vous vraiment retirer le logo de ce service ? L'image sera définitivement supprimée lors de la sauvegarde."
       />
+
+      {isPickerOpen && (
+        <EmojiPickerModal
+          initialEmoji={emoji}
+          onSelect={(newEmoji) => setEmoji(newEmoji)}
+          onClose={() => setIsPickerOpen(false)}
+          allowNone={false}
+          title="Sélectionner l'icône de la catégorie"
+        />
+      )}
     </div>
   );
 }

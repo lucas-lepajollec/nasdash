@@ -10,6 +10,7 @@ import ConfirmModal from '../../modals/ConfirmModal';
 import useSWR from 'swr';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { WidgetPanel } from '../../shared/WidgetPanel';
+import { Emoji } from '../../shared/Emoji';
 
 const fetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : null);
 
@@ -789,7 +790,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', minHeight: 'calc(100vh - 120px)' }}>
         <div className="nd-docker-empty nd-card" style={{ borderStyle: 'dashed', borderWidth: 2, width: '100%', maxWidth: 560, boxSizing: 'border-box' }}>
-          <div className="nd-docker-empty-icon mb-6" style={{ fontSize: '4rem', opacity: 0.9 }}>🐳</div>
+          <div className="nd-docker-empty-icon mb-6" style={{ fontSize: '4rem', opacity: 0.9, display: 'flex', justifyContent: 'center' }}><Emoji emoji="🐳" /></div>
           <div className="nd-docker-empty-title" style={{ fontSize: '1.25rem', marginBottom: 12 }}>Docker Manager</div>
           <div className="nd-docker-empty-desc" style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: 32, lineHeight: 1.6 }}>
             Aucun hôte Docker configuré. Ajoutez un hôte pour commencer à gérer vos conteneurs, images et volumes depuis votre dashboard.
@@ -885,8 +886,9 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
                   key={h.id}
                   className={`nd-host-btn ${activeHostId === h.id ? 'nd-host-btn--active' : ''}`}
                   onClick={() => { setActiveHostId(h.id); setSelectedContainerId(null); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                 >
-                  <span>{h.icon}</span> {h.name}
+                  <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji={h.icon} /></span> {h.name}
                   {editMode && (
                     <span onClick={(e) => { e.stopPropagation(); setPendingDeleteHost({ id: h.id, name: h.name }); }} style={{ marginLeft: 4, cursor: 'pointer', opacity: 0.5 }}>
                       <X size={10} />

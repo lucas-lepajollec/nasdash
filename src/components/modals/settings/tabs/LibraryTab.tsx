@@ -2,6 +2,7 @@ import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../shared/ToggleSwitch';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { Emoji } from '../../../shared/Emoji';
 
 interface LibraryTabProps {
   setActiveTab: (tabId: string) => void;
@@ -47,7 +48,10 @@ export function LibraryTab({ setActiveTab }: LibraryTabProps) {
               <div key={w.id} style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>{w.icon} {w.name}</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Emoji emoji={w.icon} />
+                      {w.name}
+                    </span>
                     <span style={{ fontSize: '0.6rem', background: w.bg, color: w.color, padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>{w.category}</span>
                   </div>
                   <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>
@@ -84,7 +88,10 @@ export function LibraryTab({ setActiveTab }: LibraryTabProps) {
               <div key={w.id} style={{ padding: '14px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--nd-text-muted)' }}>{w.icon} {w.name}</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, color: 'var(--nd-text-muted)' }}>
+                      <Emoji emoji={w.icon} />
+                      {w.name}
+                    </span>
                     <span style={{ fontSize: '0.6rem', background: 'rgba(255,255,255,0.05)', color: 'var(--nd-text-muted)', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>{w.category}</span>
                   </div>
                   <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.3 }}>

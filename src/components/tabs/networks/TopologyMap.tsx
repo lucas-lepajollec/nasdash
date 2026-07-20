@@ -6,6 +6,7 @@ import { NetworkNode, NetworkGroup, NetworkConnection, NetworkTopology } from '@
 import ConfirmModal from '../../modals/ConfirmModal';
 import EmojiPickerModal from '../../modals/EmojiPickerModal';
 import CustomSelect from '../../shared/CustomSelect';
+import { Emoji } from '../../shared/Emoji';
 
 interface TopologyMapProps {
   editMode: boolean;
@@ -2118,7 +2119,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         }}
         style={cardStyles}
       >
-        <span style={{ fontSize: iconSize, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{n.icon}</span>
+        <span style={{ fontSize: iconSize, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji={n.icon} /></span>
         <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', justifyContent: 'center' }}>
           <div 
             style={{ 
@@ -2490,50 +2491,44 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               
-              <div>
-                <label className="nd-label">Nom du Nœud & Icône</label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <label className="nd-label">Nom du Nœud</label>
+                  <input
+                    className="nd-input"
+                    style={{ width: '100%', height: 38, boxSizing: 'border-box' }}
+                    value={nodeName}
+                    onChange={e => setNodeName(e.target.value)}
+                    placeholder="Ex: Proxmox Hypervisor, DNS local..."
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                  <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
                   <button
                     onClick={() => setShowIconPicker(true)}
-                    className="nd-input"
                     style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: '10px',
+                      border: '1px solid var(--nd-card-border)',
+                      background: 'var(--nd-subcard-bg)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
                       fontSize: '1.2rem',
-                      height: 38,
-                      width: 42,
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      border: '1px solid var(--nd-card-border)',
-                      borderRadius: 'var(--nd-card-radius)',
+                      color: 'var(--nd-text)',
+                      transition: 'all 0.2s',
+                      outline: 'none',
                       padding: 0,
-                      flexShrink: 0,
-                      boxSizing: 'border-box',
-                      transition: 'all 0.2s ease'
+                      boxSizing: 'border-box'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                      e.currentTarget.style.borderColor = 'var(--nd-accent)';
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
-                      e.currentTarget.style.borderColor = 'var(--nd-card-border)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
+                    className="nd-btn-hover-glow"
                     type="button"
-                    title="Choisir une icône (Emoji)"
+                    title="Choisir une icône"
                   >
-                    {nodeIcon || '📦'}
+                    <Emoji emoji={nodeIcon || '📦'} />
                   </button>
-                  <input
-                    className="nd-input"
-                    style={{ flex: 1, height: 38, boxSizing: 'border-box' }}
-                    value={nodeName}
-                    onChange={e => setNodeName(e.target.value)}
-                    placeholder="Ex: Proxmox Hypervisor, DNS local..."
-                  />
                 </div>
               </div>
 
@@ -2722,7 +2717,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                           }}>
                             {isSelected && <Check size={10} strokeWidth={3} />}
                           </div>
-                          <span style={{ fontSize: '1rem', lineHeight: 1 }}>{n.icon}</span>
+                          <span style={{ fontSize: '1rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji={n.icon} /></span>
                           <span style={{ fontSize: '0.68rem', color: isSelected ? 'var(--nd-text)' : 'var(--nd-text-dimmed)', fontWeight: isSelected ? 600 : 400 }}>
                             {n.name}
                           </span>
@@ -2839,11 +2834,11 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, justifyContent: 'flex-end' }}>
                     {fromLabel ? (
                       <>
-                        <span style={{ fontSize: '1rem', flexShrink: 0 }}>{fromIcon}</span>
+                        <span style={{ fontSize: '1rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}><Emoji emoji={fromIcon} /></span>
                         <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fromLabel}</span>
                       </>
                     ) : (
-                      <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>Source ?</span>
+                      <span style={{ fontSize: '0.6', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>Source ?</span>
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, color: 'var(--nd-accent)' }}>
@@ -2858,7 +2853,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
                     {toLabel ? (
                       <>
-                        <span style={{ fontSize: '1rem', flexShrink: 0 }}>{toIcon}</span>
+                        <span style={{ fontSize: '1rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}><Emoji emoji={toIcon} /></span>
                         <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{toLabel}</span>
                       </>
                     ) : (

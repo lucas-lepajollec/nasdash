@@ -11,6 +11,7 @@ import { useConfig } from '@/hooks/useConfig';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { createPortal } from 'react-dom';
 import { useWidgetSize } from './WidgetContainer';
+import { Emoji } from '../shared/Emoji';
 
 interface DevicesWidgetProps {
   devices: Device[];
@@ -610,7 +611,7 @@ function DeviceMonitorCardContent({
               <GripVertical size={12} style={{ color: 'var(--nd-text-dimmed)' }} />
             </div>
           )}
-          <span style={{ flexShrink: 0, fontSize: '0.75rem', marginTop: 1 }}>{device.icon}</span>
+          <span style={{ flexShrink: 0, fontSize: '0.75rem', marginTop: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji={device.icon} /></span>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '2px 6px', flex: 1, minWidth: 0 }}>
             <span style={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
               {device.name}
@@ -1201,7 +1202,7 @@ export default function DevicesWidget({
           <div className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>⚙️</span> Configurer le widget Appareils
+                <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="⚙️" /></span> Configurer le widget Appareils
               </h2>
               <button className="nd-action-icon" onClick={() => setIsWidgetConfigOpen(false)}>
                 <X size={16} />
@@ -1251,7 +1252,7 @@ export default function DevicesWidget({
                         className="nd-btn-hover-glow"
                       >
                         {isChecked && <span style={{ fontWeight: 'bold', fontSize: '0.75rem' }}>✓</span>}
-                        <span style={{ fontSize: '0.85rem' }}>{d.icon}</span>
+                        <span style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}><Emoji emoji={d.icon} /></span>
                         <span>{d.name}</span>
                       </button>
                     );
@@ -1298,7 +1299,7 @@ export default function DevicesWidget({
           <div className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>🖥️</span> Configuration d'affichage - {configuringDevice.name}
+                <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="🖥️" /></span> Configuration d'affichage - {configuringDevice.name}
               </h2>
               <button className="nd-action-icon" onClick={() => setConfiguringDevice(null)}>
                 <X size={16} />
@@ -1516,7 +1517,7 @@ export default function DevicesWidget({
                   setConfiguringDevice(null);
                 }}
               >
-                ⚙️ Modifier les paramètres de connexion globale
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Emoji emoji="⚙️" /> Modifier les paramètres de connexion globale</span>
               </button>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>

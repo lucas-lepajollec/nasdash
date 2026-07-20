@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { SettingsSection } from '../../shared/SettingsSection';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { Emoji } from '../../../../shared/Emoji';
 
 export function TabsWidgetsTab() {
   const { config, updateConfig } = useConfig();
@@ -27,7 +28,12 @@ export function TabsWidgetsTab() {
               <ToggleSwitch
                 checked={!((config?.settings?.tabs?.widgets as any)?.[hideKey])}
                 onChange={async (val) => await updateConfig({ tabs: { ...config?.settings?.tabs, widgets: { ...config?.settings?.tabs?.widgets, [hideKey]: !val } } })}
-                label={`${w.icon} ${w.name}`}
+                label={
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Emoji emoji={w.icon} />
+                    {w.name}
+                  </span>
+                }
                 sublabel="Afficher le widget sur cet onglet"
               />
             </div>
