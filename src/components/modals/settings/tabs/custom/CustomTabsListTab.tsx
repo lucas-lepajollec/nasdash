@@ -1,17 +1,21 @@
 import React from 'react';
 import { useTabs } from '@/hooks/useTabs';
-import { Layout, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Layout, Trash2, Edit2 } from 'lucide-react';
 import ConfirmModal from '../../../ConfirmModal';
+import EmojiPickerModal from '../../../EmojiPickerModal';
 import { Emoji } from '../../../../shared/Emoji';
+import { useConfig } from '@/hooks/useConfig';
 
 interface CustomTabsListTabProps {
   onEditTab: (tabId?: string) => void;
 }
 
 export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
+  const { config, updateConfig } = useConfig();
   const { tabs, refreshTabs } = useTabs();
   const customTabs = tabs.filter(t => t.isCustom);
   const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
+  const [iconPickerTabId, setIconPickerTabId] = React.useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     try {
@@ -48,9 +52,33 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
           customTabs.map(tab => (
             <div key={tab.id} className="nd-settings-card" style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 150, flex: 1 }}>
-                <div style={{ width: 40, height: 40, flexShrink: 0, borderRadius: 'var(--nd-card-radius)', background: 'var(--nd-bg)', border: '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
-                  <Emoji emoji={tab.icon} />
-                </div>
+                {/* Icon button — same style as CategoryFormModal / CustomTabBuilderTab */}
+                <button
+                  type="button"
+                  onClick={() => setIconPickerTabId(tab.id)}
+                  title="Changer l'icône"
+                  className="nd-btn-hover-glow"
+                  style={{
+                    width: 38,
+                    height: 38,
+                    flexShrink: 0,
+                    borderRadius: '10px',
+                    border: '1px solid var(--nd-card-border)',
+                    background: 'var(--nd-subcard-bg)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '1.2rem',
+                    color: 'var(--nd-text)',
+                    transition: 'all 0.2s',
+                    outline: 'none',
+                    padding: 0,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <Emoji emoji={config?.settings?.tabIcons?.[tab.id] || tab.icon} />
+                </button>
                 <div style={{ minWidth: 0, overflow: 'hidden' }}>
                   <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tab.name}</h4>
                 </div>
@@ -67,6 +95,29 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
           ))
         )}
       </div>
+
+      {/* Icon Picker Modal */}
+      {iconPickerTabId && (
+        <EmojiPickerModal
+          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] || customTabs.find(t => t.id === iconPickerTabId)?.icon || ''}
+          onSelect={async (emoji) => {
+            await updateConfig({ tabIcons: { ...(config?.settings?.tabIcons || {}), [iconPickerTabId]: emoji } });
+            // Also update the custom tab source of truth
+            try {
+              await fetch('/api/custom-tabs', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'updateTab', id: iconPickerTabId, tabUpdates: { icon: emoji } }),
+              });
+              refreshTabs();
+            } catch (e) {
+              console.error(e);
+            }
+            setIconPickerTabId(null);
+          }}
+          onClose={() => setIconPickerTabId(null)}
+        />
+      )}
 
       <ConfirmModal
         isOpen={deleteConfirm !== null}

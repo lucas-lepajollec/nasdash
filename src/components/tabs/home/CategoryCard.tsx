@@ -96,29 +96,10 @@ export default function CategoryCard({
         {filteredServices.map((service, index) => {
           const isGrid = category.layout === 'bento' || category.layout === 'grid' || category.layout?.startsWith('bento-logo');
           
-          if (isGrid && editMode) {
-            return (
-              <div key={service.id} style={{ position: 'relative' }}>
-                <DropGap categoryId={category.id} index={index} isVertical />
-                <ServiceItem
-                  service={service}
-                  categoryId={category.id}
-                  editMode={editMode}
-                  showSensitive={showSensitive}
-                  layout={category.layout}
-                  index={index}
-                  total={filteredServices.length}
-                />
-                {index === filteredServices.length - 1 && (
-                  <DropGap categoryId={category.id} index={index + 1} isVertical isLast />
-                )}
-              </div>
-            );
-          }
-
           return (
-            <React.Fragment key={service.id}>
-              {showDropGap && <DropGap categoryId={category.id} index={index} />}
+            <div key={service.id} style={{ position: 'relative' }}>
+              {isGrid && editMode && <DropGap categoryId={category.id} index={index} isVertical />}
+              {!isGrid && showDropGap && <DropGap categoryId={category.id} index={index} />}
               <ServiceItem
                 service={service}
                 categoryId={category.id}
@@ -128,7 +109,10 @@ export default function CategoryCard({
                 index={index}
                 total={filteredServices.length}
               />
-            </React.Fragment>
+              {isGrid && editMode && index === filteredServices.length - 1 && (
+                <DropGap categoryId={category.id} index={index + 1} isVertical isLast />
+              )}
+            </div>
           );
         })}
         {showDropGap && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}

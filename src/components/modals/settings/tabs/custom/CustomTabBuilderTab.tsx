@@ -35,7 +35,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
           const tabDef = data.tabs.find((t: any) => t.id === currentTabId);
           if (tabDef) {
             setName(tabDef.name);
-            setIcon(tabDef.icon || '📝');
+            setIcon(config?.settings?.tabIcons?.[currentTabId] || tabDef.icon || '📝');
           }
           const savedLayout = data.layouts[currentTabId];
           if (savedLayout && savedLayout.rows) {
@@ -239,20 +239,25 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
           </button>
         </div>
         <button 
-          className="nd-btn nd-btn-outline-accent" 
+          type="button"
+          className="nd-btn"
           onClick={handleSave} 
-          disabled={isSaving} 
+          disabled={isSaving}
           style={{ 
-            flex: '1 1 auto', 
-            height: '42px', 
-            padding: '0 24px', 
-            justifyContent: 'center',
-            background: saveSuccess ? 'var(--nd-success, #2ea043)' : undefined,
-            borderColor: saveSuccess ? 'var(--nd-success, #2ea043)' : undefined,
-            color: saveSuccess ? '#fff' : undefined,
+            alignSelf: 'flex-end',
+            height: 38,
+            padding: '0 18px',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            flexShrink: 0,
+            opacity: isSaving ? 0.6 : 1,
           }}
         >
-          <Save size={16} style={{ marginRight: 8 }} /> {isSaving ? 'Enregistrement...' : saveSuccess ? 'Enregistré !' : 'Enregistrer'}
+          <Save size={14} />
+          {isSaving ? 'Enregistrement...' : saveSuccess ? 'Enregistré !' : 'Enregistrer'}
         </button>
       </div>
 
