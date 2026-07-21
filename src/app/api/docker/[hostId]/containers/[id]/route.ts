@@ -17,7 +17,9 @@ function getDockerHost(hostId: string) {
 async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET') {
   const url = `${hostUrl.replace(/\/$/, '')}${endpoint}`;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  // 5 seconds is fine for GET detail/stats, but actions (POST/DELETE) can take up to 30s
+  const timeoutMs = method === 'GET' ? 5000 : 30000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const res = await fetch(url, { method, signal: controller.signal });
     clearTimeout(timeout);
