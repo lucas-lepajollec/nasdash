@@ -1,37 +1,32 @@
 {
   "tabs": [
     {
-      "id": "custom_example_system",
-      "name": "Supervision",
-      "icon": "🖥️",
-      "description": "Exemple d'onglet personnalisé",
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
+      "name": "Calendrier",
+      "icon": "lucide:Calendar",
+      "description": "Onglet personnalisé",
       "isCustom": true
     }
   ],
   "layouts": {
-    "custom_example_system": {
-      "id": "custom_example_system",
+    "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": {
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
       "rows": [
         {
-          "id": "row-1",
-          "type": "50-50",
+          "id": "97765567-ec25-4a10-86e7-65d439060925",
+          "type": "1-col",
           "columns": [
             {
-              "id": "col-1",
-              "width": "50%",
+              "id": "ac3b34e6-7a7b-4349-90d6-9902c4003c33",
+              "width": "100%",
               "content": null,
               "widgets": [
-                { "type": "clock" },
-                { "type": "quickstats" }
-              ]
-            },
-            {
-              "id": "col-2",
-              "width": "50%",
-              "content": null,
-              "widgets": [
-                { "type": "weather" },
-                { "type": "devices" }
+                {
+                  "type": "clock"
+                },
+                {
+                  "type": "calendar"
+                }
               ]
             }
           ]

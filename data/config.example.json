@@ -8,14 +8,23 @@
     "theme": "nasdash",
     "mode": "dark",
     "dockPosition": "right",
-    "tabOrder": ["dashboard", "docker"],
-    "tabIcons": {},
+    "tabOrder": [
+      "dashboard",
+      "docker",
+      "networks",
+      "widgets",
+      "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2"
+    ],
+    "tabIcons": {
+      "widgets": "🕹️",
+      "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": "lucide:Calendar"
+    },
     "hiddenSections": [],
-    "hideHeaderTitle": false,
+    "hideHeaderTitle": true,
     "hideHeaderSearch": false,
     "hideHeaderMenu": false,
-    "headerLayoutDesktop": { "left": "title", "center": "menu", "right": "search", "splitMenuAround": "none" },
-    "headerLayoutMobile": { "left": "title", "center": "menu" },
+    "headerLayoutDesktop": { "left": "search", "center": "menu", "right": "none", "splitMenuAround": "none" },
+    "headerLayoutMobile": { "left": "title", "center": "search" },
     "showHeaderMenuIcons": false,
     "showPingDetails": true,
     "pingIndicatorMode": "all",
@@ -28,8 +37,8 @@
     "hideWeather": false,
     "hideNetworkGraph": false,
     "hideDockerContainers": false,
-    "hideWidgetTitles": false,
-    "hideDock": false,
+    "hideWidgetTitles": true,
+    "hideDock": true,
     "customCss": "",
     "enablePerfMonitor": false,
     "backgroundImage": "",
@@ -43,8 +52,8 @@
     "clockDesign": "default",
     "clockTimezone": "",
     "calendarUrl": "",
-    "dockerContainersStyle": "standard",
-    "dockerContainersAutoScroll": false,
+    "dockerContainersStyle": "extended",
+    "dockerContainersAutoScroll": true,
     "allowDockerActions": false,
     "securityMode": "public",
     "emojiTheme": "native",
@@ -62,37 +71,45 @@
     "weatherWidgetStyle": "default",
     "tabs": {
       "home": {
-        "hideClock": false,
-        "hideCalendar": false,
+        "hideCalendar": true,
         "hideWeather": false,
-        "hideDevices": false,
         "hideQuickStats": false,
-        "hideTailscaleStatus": false,
-        "hideDockerActions": false,
-        "hideNetworkGraph": false,
-        "hideDockerContainers": false,
+        "leftSidebarPosition": "left",
         "hideLeftSidebar": false,
         "hideRightSidebar": false,
-        "leftSidebarPosition": "left",
-        "rightSidebarPosition": "right"
+        "hideDevices": false,
+        "rightSidebarPosition": "right",
+        "hideDockerContainers": true,
+        "hideClock": false,
+        "hideTailscaleStatus": false,
+        "hideDockerActions": false,
+        "hideNetworkGraph": false
       },
       "docker": {
-        "hideClock": false,
+        "hideWidgetsSidebar": false,
+        "hideDevices": true,
+        "hideQuickStats": true,
+        "hideTailscaleStatus": true,
+        "hideClock": true,
         "hideCalendar": false,
-        "hideWeather": false,
+        "hideWeather": true,
+        "hideNetworkGraph": true,
         "hideDockerActions": false,
         "hideDockerContainers": false,
-        "hideWidgetsSidebar": true,
         "widgetsSidebarPosition": "right",
         "dockerPanelPosition": "left"
       },
       "networks": {
-        "hideClock": false,
+        "hideWidgetsSidebar": false,
+        "hideDockerContainers": true,
+        "hideNetworkGraph": false,
+        "hideWeather": true,
         "hideCalendar": false,
-        "hideWeather": false,
-        "hideDockerActions": false,
-        "hideDockerContainers": false,
-        "hideWidgetsSidebar": true,
+        "hideClock": true,
+        "hideDockerActions": true,
+        "hideQuickStats": false,
+        "hideDevices": true,
+        "cardSize": "compact",
         "widgetsSidebarPosition": "right",
         "networksPanelPosition": "left"
       }
@@ -100,15 +117,15 @@
     "panels": {
       "home-left": {
         "widgets": [
-          { "id": "quickstats-1", "type": "quickstats", "props": {} },
-          { "id": "weather-1", "type": "weather", "props": {} },
-          { "id": "calendar-1", "type": "calendar", "props": {} }
+          { "id": "clock-1", "type": "clock", "props": {} },
+          { "id": "devices-1", "type": "devices", "props": {} }
         ]
       },
       "home-right": {
         "widgets": [
-          { "id": "clock-1", "type": "clock", "props": {} },
-          { "id": "devices-1", "type": "devices", "props": {} }
+          { "id": "quickstats-1", "type": "quickstats", "props": {} },
+          { "id": "calendar-1", "type": "calendar", "props": {} },
+          { "id": "weather-1", "type": "weather", "props": {} }
         ]
       },
       "home-bottom": {
@@ -118,7 +135,7 @@
       },
       "docker-widgets": {
         "widgets": [
-          { "id": "dockercontainers-1", "type": "dockercontainers", "props": {} },
+          { "id": "dockercontainers-1", "type": "dockercontainers", "props": { "autoScroll": true, "itemsPerPage": 12 } },
           { "id": "dockeractions-1", "type": "dockeractions", "props": {} }
         ]
       },

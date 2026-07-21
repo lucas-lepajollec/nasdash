@@ -73,7 +73,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
         className="nd-networks-sidebar" 
         style={{ order: networksSidebarOrder }}
       >
-        <NetworkSidebar />
+        <NetworkSidebar showSensitive={showSensitive} />
       </aside>
 
       {/* 2. Main Content: Topology Map */}

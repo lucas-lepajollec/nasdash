@@ -66,10 +66,10 @@ export function TabsGeneralTab() {
         </div>
         <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16 }}>
           <ToggleSwitch 
-            checked={!!config?.settings?.hideDock}
-            onChange={(val) => updateConfig({ hideDock: val })}
-            label="Désactiver le Dock"
-            sublabel="Masque complètement le dock (mode plein écran)."
+            checked={!config?.settings?.hideDock}
+            onChange={(val) => updateConfig({ hideDock: !val })}
+            label="Activer le Dock"
+            sublabel="Affiche la barre de navigation principale (mode Dock)."
           />
         </div>
       </div>

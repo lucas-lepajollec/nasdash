@@ -11,7 +11,7 @@ interface ActivePortItem {
   status?: string; // e.g. 'running', 'active', 'offline'
 }
 
-export function NetworkSidebar() {
+export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boolean }) {
   const { config, showSecretSections } = useConfig();
   const [dockerContainers, setDockerContainers] = useState<any[]>([]);
   const [loadingDocker, setLoadingDocker] = useState(false);
@@ -407,14 +407,14 @@ export function NetworkSidebar() {
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span className="nd-port-tag">
-                        {item.port}
+                        {!showSensitive ? '•••' : item.port}
                       </span>
                       <span style={{ fontWeight: 600, color: 'var(--nd-text)', fontSize: '0.68rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.serviceName}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.58rem', color: 'var(--nd-text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontFamily: 'monospace', opacity: 0.85 }}>{item.ip}</span>
+                      <span style={{ fontFamily: 'monospace', opacity: 0.85 }}>{!showSensitive ? '•••' : item.ip}</span>
                       <span style={{ opacity: 0.3 }}>•</span>
                       <span style={{ opacity: 0.65 }}>{cleanSource(item.source)}</span>
                     </div>
@@ -479,7 +479,7 @@ export function NetworkSidebar() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, color: 'var(--nd-text)', fontSize: '0.6rem' }}>
                 {checkResult.collisions.map((item, idx) => (
                   <div key={idx} style={{ opacity: 0.85 }}>
-                    Occupé par <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> sur <code>{item.ip}</code> ({item.source})
+                    Occupé par <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> sur <code>{!showSensitive ? '•••' : item.ip}</code> ({item.source})
                   </div>
                 ))}
               </div>

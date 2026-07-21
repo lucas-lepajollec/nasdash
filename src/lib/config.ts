@@ -496,7 +496,11 @@ function getDefaultConfig(): DashboardConfig {
       showMonitor: true,
       totalSlots: 10,
       hideDockerActions: true,
-      hideCalendar: true
+      hideCalendar: true,
+      hideDock: true,
+      hideHeaderTitle: true,
+      headerLayoutDesktop: { left: 'search', center: 'menu', right: 'none', splitMenuAround: 'none' },
+      headerLayoutMobile: { left: 'title', center: 'search' }
     },
     devices: [],
     categories: [],
