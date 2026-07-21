@@ -2603,15 +2603,23 @@ body {
   justify-content: center;
   aspect-ratio: 1 / 1;
   min-width: 0;
-  border: none !important;
-  background: transparent !important;
+  border: 1px solid var(--nd-card-border);
+  background: rgba(255, 255, 255, 0.01);
   border-radius: var(--nd-card-radius);
-  transition: transform 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.light .nd-service--bento-logo-large,
+.light .nd-service--bento-logo-medium,
+.light .nd-service--bento-logo-small {
+  background: rgba(0, 0, 0, 0.01);
 }
 
 .nd-service--bento-logo-large:hover,
 .nd-service--bento-logo-medium:hover,
 .nd-service--bento-logo-small:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--nd-accent);
   transform: translateY(-2px);
 }
 
@@ -2627,47 +2635,36 @@ body {
 }
 
 .nd-service--bento-logo-large .nd-service-icon {
-  width: 88% !important;
-  height: 88% !important;
-  padding: 12px !important;
+  width: 78% !important;
+  height: 78% !important;
+  padding: 10px !important;
   box-sizing: border-box !important;
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
   border-radius: var(--nd-card-radius) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
 .nd-service--bento-logo-medium .nd-service-icon {
-  width: 88% !important;
-  height: 88% !important;
-  padding: 9px !important;
-  box-sizing: border-box !important;
-  background: var(--nd-icon-bg) !important;
-  border: 1px solid var(--nd-icon-border) !important;
-  border-radius: calc(var(--nd-card-radius) * 0.8) !important;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25) !important;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.nd-service--bento-logo-small .nd-service-icon {
-  width: 88% !important;
-  height: 88% !important;
-  padding: 7px !important;
+  width: 78% !important;
+  height: 78% !important;
+  padding: 8px !important;
   box-sizing: border-box !important;
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
   border-radius: calc(var(--nd-card-radius) * 0.7) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
-.nd-service--bento-logo-large:hover .nd-service-icon,
-.nd-service--bento-logo-medium:hover .nd-service-icon,
-.nd-service--bento-logo-small:hover .nd-service-icon {
-  border-color: var(--nd-accent) !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 0 15px var(--nd-accent-glow), 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+.nd-service--bento-logo-small .nd-service-icon {
+  width: 80% !important;
+  height: 80% !important;
+  padding: 6px !important;
+  box-sizing: border-box !important;
+  background: var(--nd-icon-bg) !important;
+  border: 1px solid var(--nd-icon-border) !important;
+  border-radius: calc(var(--nd-card-radius) * 0.6) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
 .nd-service--bento-logo-large .nd-service-icon img,
