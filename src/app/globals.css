@@ -2635,23 +2635,35 @@ body {
 }
 
 .nd-service--bento-logo-large .nd-service-icon {
-  width: 50%;
-  height: 50%;
+  width: 68%;
+  height: 68%;
+  padding: 14px;
+  box-sizing: border-box;
+  background: var(--nd-icon-bg);
+  border: 1px solid var(--nd-icon-border);
   border-radius: var(--nd-card-radius);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .nd-service--bento-logo-medium .nd-service-icon {
-  width: 55%;
-  height: 55%;
-  border-radius: calc(var(--nd-card-radius) * 0.5);
+  width: 72%;
+  height: 72%;
+  padding: 10px;
+  box-sizing: border-box;
+  background: var(--nd-icon-bg);
+  border: 1px solid var(--nd-icon-border);
+  border-radius: calc(var(--nd-card-radius) * 0.7);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
 }
 
 .nd-service--bento-logo-small .nd-service-icon {
-  width: 60%;
-  height: 60%;
-  border-radius: calc(var(--nd-card-radius) * 0.4);
+  width: 76%;
+  height: 76%;
+  padding: 7px;
+  box-sizing: border-box;
+  background: var(--nd-icon-bg);
+  border: 1px solid var(--nd-icon-border);
+  border-radius: calc(var(--nd-card-radius) * 0.6);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
