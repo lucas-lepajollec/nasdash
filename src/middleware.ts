@@ -4,9 +4,8 @@ import type { NextRequest } from 'next/server';
 // Rate limiter en mémoire compatible Edge Runtime
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-function isRateLimited(ip: string): boolean {
+function isRateLimited(ip: string, limit: number = 5): boolean {
   const now = Date.now();
-  const limit = 5; // 5 req/s
   const windowMs = 1000;
   
   if (rateLimitMap.size > 1000) {
@@ -36,8 +35,13 @@ export function middleware(req: NextRequest) {
   const pathName = url.pathname;
   
   // Rate Limiting sur les routes d'API critiques
-  if (pathName.startsWith('/api/config') || pathName.startsWith('/api/docker') || pathName.startsWith('/api/auth/login')) {
-    if (isRateLimited(ip)) {
+  if (pathName.startsWith('/api/config') || pathName.startsWith('/api/auth/login')) {
+    if (isRateLimited(ip, 5)) {
+      return NextResponse.json({ error: 'Trop de requêtes. Veuillez patienter.' }, { status: 429 });
+    }
+  } else if (pathName.startsWith('/api/docker')) {
+    // Les actions Docker par lot (ex: démarrer/arrêter une stack) peuvent envoyer de nombreuses requêtes simultanées.
+    if (isRateLimited(ip, 40)) {
       return NextResponse.json({ error: 'Trop de requêtes. Veuillez patienter.' }, { status: 429 });
     }
   }

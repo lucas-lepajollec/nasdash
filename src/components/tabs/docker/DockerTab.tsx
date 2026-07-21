@@ -7,6 +7,7 @@ import { useDocker } from '@/hooks/useDocker';
 import { useStickyRef } from '@/hooks/useStickyRef';
 import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Search, Loader2, AlertCircle, ChevronDown, Terminal, Layers, Database, Plus, X, RefreshCw } from 'lucide-react';
 import ConfirmModal from '../../modals/ConfirmModal';
+import EmojiPickerModal from '../../modals/EmojiPickerModal';
 import useSWR from 'swr';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { WidgetPanel } from '../../shared/WidgetPanel';
@@ -150,27 +151,55 @@ function DockerHostFormModal({ onClose, onSave }: {
   const [icon, setIcon] = useState('🐳');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('2375');
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal">
+      <div className="nd-modal" style={{ maxWidth: 420 }}>
         <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Ajouter un hôte Docker</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label className="nd-label">Nom</label>
-            <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder="Mon NAS" />
+          
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <label className="nd-label">Nom de l&apos;hôte</label>
+              <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder="Mon NAS" style={{ width: '100%', boxSizing: 'border-box' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+              <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
+              <button
+                type="button"
+                onClick={() => setIsPickerOpen(true)}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: '10px',
+                  border: '1px solid var(--nd-card-border)',
+                  background: 'var(--nd-subcard-bg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                  color: 'var(--nd-text)',
+                  transition: 'all 0.2s',
+                  outline: 'none',
+                  padding: 0,
+                  boxSizing: 'border-box'
+                }}
+                className="nd-btn-hover-glow"
+              >
+                <Emoji emoji={icon} />
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="nd-label">Icône (emoji)</label>
-            <input className="nd-input" value={icon} onChange={e => setIcon(e.target.value)} placeholder="🐳" style={{ width: 80 }} />
-          </div>
+
           <div>
             <label className="nd-label">Adresse / Hôte Docker</label>
-            <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder="docker-proxy ou 192.168.0.200" />
+            <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder="docker-proxy ou 192.168.0.200" style={{ width: '100%', boxSizing: 'border-box' }} />
           </div>
           <div>
             <label className="nd-label">Port API Docker</label>
-            <input className="nd-input" value={port} onChange={e => setPort(e.target.value)} placeholder="2375" />
+            <input className="nd-input" value={port} onChange={e => setPort(e.target.value)} placeholder="2375" style={{ width: '100%', boxSizing: 'border-box' }} />
           </div>
           <p style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', lineHeight: 1.5 }}>
             Pour des raisons de sécurité, veuillez utiliser un conteneur proxy local (ex: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '1px 4px', borderRadius: 3 }}>docker-socket-proxy</code>) et indiquez son nom d&apos;hôte.
@@ -184,6 +213,17 @@ function DockerHostFormModal({ onClose, onSave }: {
             }}>Ajouter</button>
           </div>
         </div>
+
+        {isPickerOpen && (
+          <EmojiPickerModal
+            initialEmoji={icon}
+            onSelect={(emoji: string) => {
+              setIcon(emoji);
+              setIsPickerOpen(false);
+            }}
+            onClose={() => setIsPickerOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

@@ -90,20 +90,55 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     try {
       const containerStates: { hostId: string, containerId: string, running: boolean }[] = [];
       
-      await Promise.all(action.targets.map(async (target) => {
+      // 1. Group targets by hostId to fetch container lists only once per host
+      const uniqueHostIds = Array.from(new Set(action.targets.map(t => t.hostId)));
+      const hostContainersMap: Record<string, DockerContainer[]> = {};
+
+      await Promise.all(uniqueHostIds.map(async (hostId) => {
         try {
-          const res = await fetch(`/api/docker/${target.hostId}/containers?all=true`);
+          const res = await fetch(`/api/docker/${hostId}/containers?all=true`, { credentials: 'include' });
           if (res.ok) {
-            const containers = await res.json() as DockerContainer[];
-            const c = containers.find(c => c.names.some(n => n.replace(/^\//, '') === target.containerName));
-            if (c) {
-              containerStates.push({ hostId: target.hostId, containerId: c.id, running: c.state === 'running' });
-            }
+            hostContainersMap[hostId] = await res.json() as DockerContainer[];
+          } else {
+            console.error(`[DockerActions] Failed to fetch containers for host ${hostId}: ${res.status}`);
           }
         } catch (e) {
-          console.error(`Error fetching container ${target.containerName}`, e);
+          console.error(`[DockerActions] Error fetching containers for host ${hostId}`, e);
         }
       }));
+
+      // 2. Map targets to their container IDs
+      action.targets.forEach((target) => {
+        const containers = hostContainersMap[target.hostId];
+        if (!containers) return;
+
+        const normalize = (s: string) => s.replace(/^\//, '').toLowerCase().trim();
+        const targetNorm = normalize(target.containerName);
+
+        // Find match: try exact first, then partial/ends-with for Docker Compose project patterns
+        let c = containers.find(c => c.names.some(n => normalize(n) === targetNorm));
+        if (!c) {
+          c = containers.find(c => c.names.some(n => {
+            const nn = normalize(n);
+            return nn.endsWith(`-${targetNorm}`) || nn.endsWith(`-${targetNorm}-1`) || nn.includes(targetNorm);
+          }));
+        }
+
+        if (c) {
+          containerStates.push({ 
+            hostId: target.hostId, 
+            containerId: c.fullId || c.id, 
+            running: c.state === 'running' 
+          });
+        } else {
+          console.warn(`[DockerActions] Container not found: "${target.containerName}" on host ${target.hostId}`);
+        }
+      });
+
+      if (containerStates.length === 0) {
+        console.warn('[DockerActions] No containers matched — action aborted');
+        return;
+      }
 
       let targetOperation: 'start' | 'stop' = 'start';
       if (action.actionType === 'start') targetOperation = 'start';
@@ -113,16 +148,24 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
         targetOperation = runningCount > (containerStates.length / 2) ? 'stop' : 'start';
       }
 
-      await Promise.all(containerStates.map(async (c) => {
-        if (targetOperation === 'start' && c.running) return;
-        if (targetOperation === 'stop' && !c.running) return;
+      // 3. Execute actions sequentially to avoid flooding the network and hitting rate limits
+      for (const c of containerStates) {
+        if (targetOperation === 'start' && c.running) continue;
+        if (targetOperation === 'stop' && !c.running) continue;
 
         try {
-          await fetch(`/api/docker/${c.hostId}/containers/${c.containerId}?action=${targetOperation}`, { method: 'POST' });
+          const res = await fetch(`/api/docker/${c.hostId}/containers/${c.containerId}?action=${targetOperation}`, { 
+            method: 'POST', 
+            credentials: 'include' 
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            console.error(`[DockerActions] Failed to ${targetOperation} container ${c.containerId}:`, data.error || res.status);
+          }
         } catch (e) {
-          console.error(`Failed to ${targetOperation} container ${c.containerId}`, e);
+          console.error(`[DockerActions] Network error on ${targetOperation} for ${c.containerId}:`, e);
         }
-      }));
+      }
 
     } finally {
       setLoadingActions(prev => ({ ...prev, [action.id]: false }));

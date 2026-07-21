@@ -86,6 +86,7 @@ export interface DockerContainerMount {
 
 export interface DockerContainer {
   id: string;
+  fullId?: string;
   names: string[];
   image: string;
   imageId: string;
