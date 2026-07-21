@@ -380,6 +380,24 @@ const EMOJI_STYLES = [
     name: 'Icônes Vectorielles (Lucide)',
     description: 'Remplace tous les émojis par leur équivalent vectoriel moderne de la bibliothèque Lucide.',
     samples: ['lucide:Home', 'lucide:Container', 'lucide:Monitor', 'lucide:Rocket', 'lucide:Puzzle']
+  },
+  {
+    key: 'tabler',
+    name: 'Icônes Tabler',
+    description: 'Icônes vectorielles modernes et légèrement arrondies de la bibliothèque Tabler.',
+    samples: ['lucide:Home', 'lucide:Container', 'lucide:Monitor', 'lucide:Rocket', 'lucide:Puzzle']
+  },
+  {
+    key: 'bootstrap',
+    name: 'Icônes Bootstrap',
+    description: 'Le set d’icônes officiel de Bootstrap. Moderne, robuste et complet.',
+    samples: ['lucide:Home', 'lucide:Container', 'lucide:Monitor', 'lucide:Rocket', 'lucide:Puzzle']
+  },
+  {
+    key: 'mdi',
+    name: 'Material Design Icons',
+    description: 'Le set d’icônes Material de Google. Très familier et universel.',
+    samples: ['lucide:Home', 'lucide:Container', 'lucide:Monitor', 'lucide:Rocket', 'lucide:Puzzle']
   }
 ];
 

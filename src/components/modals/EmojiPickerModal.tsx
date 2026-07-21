@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Ban, Search } from 'lucide-react';
+import { X, Ban, Search, Palette } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { EMOJI_CATEGORIES } from '@/lib/constants';
 import { Emoji, EMOJI_TO_LUCIDE, normalizeEmoji } from '../shared/Emoji';
 import { useConfig } from '@/hooks/useConfig';
+import ThemeGalleryView from './ThemeGalleryView';
 
 interface EmojiPickerModalProps {
   initialEmoji?: string;
@@ -34,6 +35,7 @@ export default function EmojiPickerModal({
   
   const [searchQuery, setSearchQuery] = useState('');
   const [emoji, setEmoji] = useState(initialEmoji || '');
+  const [showGallery, setShowGallery] = useState(false);
 
   // Filter Emojis semantically
   const filteredEmojis = useMemo(() => {
@@ -117,7 +119,7 @@ export default function EmojiPickerModal({
         </div>
 
         {/* Scrollable grid area */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 4 }}>
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingLeft: 4, paddingRight: 8 }}>
           {allowNone && !searchQuery && (
             <button 
               onClick={() => handleSelect('')}
@@ -203,6 +205,57 @@ export default function EmojiPickerModal({
             </div>
           )}
         </div>
+
+        {/* Footer Link to Icon & Emoji Gallery */}
+        <div style={{
+          borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+          paddingTop: 8,
+          marginTop: -4,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0
+        }}>
+          <button
+            onClick={() => setShowGallery(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--nd-text-muted)',
+              fontSize: '0.72rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              opacity: 0.7,
+              transition: 'all 0.2s ease-in-out'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--nd-accent)';
+              e.currentTarget.style.opacity = '1';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--nd-text-muted)';
+              e.currentTarget.style.opacity = '0.7';
+            }}
+          >
+            <Palette size={12} /> Galerie des bibliothèques d'icônes
+          </button>
+        </div>
+
+        {showGallery && (
+          <div className="nd-modal-overlay" onClick={() => setShowGallery(false)} style={{ zIndex: 10001 }}>
+            <div className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 850, maxWidth: '95%', height: '85vh', padding: 0, overflow: 'hidden' }}>
+              <ThemeGalleryView
+                currentTheme={config?.settings?.theme || 'default'}
+                onSelectTheme={async () => {}}
+                onClose={() => setShowGallery(false)}
+                initialTab="emojis"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
