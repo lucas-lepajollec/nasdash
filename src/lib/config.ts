@@ -153,6 +153,60 @@ export function readConfig(): DashboardConfig {
       }
     }
 
+    // E. Backfill missing settings from config.example.json to keep it up to date on disk
+    try {
+      const examplePath = path.join(DATA_DIR, 'config.example.json');
+      if (fs.existsSync(examplePath)) {
+        const exampleData = JSON.parse(fs.readFileSync(examplePath, 'utf-8'));
+        if (exampleData && exampleData.settings) {
+          let settingsChanged = false;
+          if (!configData.settings) {
+            configData.settings = {};
+            settingsChanged = true;
+          }
+          
+          for (const [key, value] of Object.entries(exampleData.settings)) {
+            if (configData.settings[key] === undefined) {
+              configData.settings[key] = value;
+              settingsChanged = true;
+            }
+          }
+          
+          // Deep backfill for tabs settings
+          if (exampleData.settings.tabs) {
+            if (!configData.settings.tabs) {
+              configData.settings.tabs = { ...exampleData.settings.tabs };
+              settingsChanged = true;
+            } else {
+              for (const [key, value] of Object.entries(exampleData.settings.tabs)) {
+                if (configData.settings.tabs[key] === undefined) {
+                  configData.settings.tabs[key] = value;
+                  settingsChanged = true;
+                } else if (typeof value === 'object' && value !== null) {
+                  for (const [subKey, subValue] of Object.entries(value)) {
+                    if (configData.settings.tabs[key][subKey] === undefined) {
+                      configData.settings.tabs[key][subKey] = subValue;
+                      settingsChanged = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if (settingsChanged) {
+            safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+            try {
+              globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
+            } catch {}
+            console.log('[NASDASH] ✅ Configuration settings backfilled with new default keys on disk.');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[NASDASH] Failed to backfill missing settings:', e);
+    }
+
     // Déchiffrer les paramètres sensibles avant la mise en cache en mémoire
     if (configData.settings?.tailscaleClientSecret) {
       configData.settings.tailscaleClientSecret = decrypt(configData.settings.tailscaleClientSecret);

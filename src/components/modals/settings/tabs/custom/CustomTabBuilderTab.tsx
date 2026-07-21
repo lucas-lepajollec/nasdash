@@ -5,6 +5,7 @@ import { ChevronLeft, Plus, Save, Trash2, Layout, Type, GripVertical, Settings2 
 import EmojiPickerModal from '../../../EmojiPickerModal';
 import { Emoji } from '../../../../shared/Emoji';
 import { useConfig } from '@/hooks/useConfig';
+import { useTabs } from '@/hooks/useTabs';
 import { WidgetSelectionModal } from './WidgetSelectionModal';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 
@@ -16,6 +17,7 @@ interface CustomTabBuilderTabProps {
 
 export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuilderTabProps) {
   const { config, updateConfig } = useConfig();
+  const { refreshTabs } = useTabs();
   const [currentTabId, setCurrentTabId] = useState<string | undefined>(tabId);
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('📝');
@@ -99,6 +101,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
           await updateConfig({ tabIcons: { ...config?.settings?.tabIcons, [savedTabId]: icon } });
         }
 
+        refreshTabs();
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2000);
       } else {
