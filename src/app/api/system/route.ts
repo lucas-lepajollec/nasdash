@@ -1,20 +1,17 @@
 import { getSystemStats } from '@/lib/system';
 import { incrementActiveClients, decrementActiveClients, readConfig } from '@/lib/config';
-import { getSessionFromRequest } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(req);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
-  }
+  const access = checkReadAccess(
+    req,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.devices
+  );
+  if (access.error) return access.error;
 
   const encoder = new TextEncoder();
   let active = true;

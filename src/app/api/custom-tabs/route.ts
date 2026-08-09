@@ -1,23 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readCustomTabs, writeCustomTabs } from '@/lib/customTabs';
-import { checkAdmin, getSessionFromRequest } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { TabDef } from '@/hooks/useTabs';
 import { readConfig } from '@/lib/config';
+import { canAccessTab, resolveAccessPrincipal } from '@/lib/access';
 
 export async function GET(req: NextRequest) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(req);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
+  const principal = resolveAccessPrincipal(req, config.settings?.securityMode || 'public');
+  if (!principal) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
   const data = readCustomTabs();
-  return NextResponse.json(data);
+  if (principal.role === 'admin') return NextResponse.json(data);
+
+  const tabs = data.tabs.filter(tab => canAccessTab(principal, tab.id));
+  const allowedIds = new Set(tabs.map(tab => tab.id));
+  const layouts = Object.fromEntries(
+    Object.entries(data.layouts).filter(([tabId]) => allowedIds.has(tabId))
+  );
+
+  return NextResponse.json({ ...data, tabs, layouts });
 }
 
 export async function POST(req: NextRequest) {

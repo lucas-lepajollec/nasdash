@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,22 +54,18 @@ async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET') {
   }
 }
 
-import { getSessionFromRequest } from '@/lib/auth';
-
 // GET /api/docker/[hostId]/containers — list all containers
 export async function GET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
-  }
+  const access = checkReadAccess(
+    request,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.dockerContainers
+  );
+  if (access.error) return access.error;
 
   let resolvedHostId = 'unknown';
   try {

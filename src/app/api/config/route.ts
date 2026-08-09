@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readConfig, writeConfig, writeServices, writeCalendar } from '@/lib/config';
-import { checkAdmin, getSessionFromRequest } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
+import { resolveAccessPrincipal } from '@/lib/access';
+import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
 import { Category, Service, Device } from '@/lib/types';
@@ -9,32 +11,13 @@ import path from 'path';
 
 export async function GET(req: NextRequest) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(req);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
+  const securityMode = config.settings?.securityMode || 'public';
+  const principal = resolveAccessPrincipal(req, securityMode);
+  if (!principal) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
-  // Ensure devices array exists (backward compat)
-  if (!config.devices) (config as any).devices = [];
-  if (!config.dockerHosts) (config as any).dockerHosts = [];
-  if (!config.localEvents) config.localEvents = [];
-
-  // Strip out sensitive tokens before sending to client
-  const safeConfig = JSON.parse(JSON.stringify(config));
-  safeConfig.devices.forEach((device: any) => {
-    if (device.api && device.api.token) {
-      device.api.token = '********';
-    }
-  });
-  if (safeConfig.settings && safeConfig.settings.tailscaleClientSecret) {
-    safeConfig.settings.tailscaleClientSecret = '********';
-  }
-
-  return NextResponse.json(safeConfig);
+  return NextResponse.json(buildConfigForPrincipal(config, principal));
 }
 
 export async function POST(req: NextRequest) {

@@ -1,20 +1,18 @@
 import { NextResponse } from 'next/server';
 import { devicesStatusCache, readConfig } from '@/lib/config';
-import { getSessionFromRequest } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request, segmentData: { params: Promise<{ id: string }> }) {
   try {
     const config = readConfig();
-
-    // Bloquer l'accès en mode privé si non authentifié
-    if (config.settings?.securityMode === 'private') {
-      const session = getSessionFromRequest(request);
-      if (!session) {
-        return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-      }
-    }
+    const access = checkReadAccess(
+      request,
+      config.settings?.securityMode || 'public',
+      READ_ACCESS.devices
+    );
+    if (access.error) return access.error;
 
     const { id } = await segmentData.params;
 

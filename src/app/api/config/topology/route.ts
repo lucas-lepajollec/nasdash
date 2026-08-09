@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import { readConfig, writeTopology } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   const config = readConfig();
+  const access = checkReadAccess(
+    req,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.topology
+  );
+  if (access.error) return access.error;
+
   return NextResponse.json(config.settings?.networkTopology || { nodes: [], groups: [], connections: [] });
 }
 

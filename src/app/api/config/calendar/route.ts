@@ -2,11 +2,19 @@ import { NextResponse } from 'next/server';
 import { readConfig, writeCalendar } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
 import { checkAdmin } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   const config = readConfig();
+  const access = checkReadAccess(
+    req,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.calendar
+  );
+  if (access.error) return access.error;
+
   return NextResponse.json(config.localEvents || []);
 }
 
