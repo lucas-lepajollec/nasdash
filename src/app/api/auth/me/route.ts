@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, readUsers, isSecureRequest } from '@/lib/auth';
+import { getSessionFromRequest, readUsers, isSecureRequest } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
 
 function jsonNoCache(data: any, init?: ResponseInit) {
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     return jsonNoCache({ user: null });
   }
 
-  const payload = verifyToken(token);
+  const payload = getSessionFromRequest(req);
 
   if (!payload) {
     // Session invalide ou expirée, effacer le cookie et renvoyer le viewer si public

@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readUsers, writeUsers, checkAdmin, hashPassword, getSessionFromRequest } from '@/lib/auth';
 
+function normalizePermissionList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter(item => typeof item === 'string' && item.length > 0))];
+}
+
+function samePermissions(left: string[] | undefined, right: string[]): boolean {
+  const normalizedLeft = normalizePermissionList(left);
+  return normalizedLeft.length === right.length && normalizedLeft.every((value, index) => value === right[index]);
+}
+
 export async function GET(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
@@ -34,24 +44,37 @@ export async function POST(req: NextRequest) {
 
     const users = readUsers();
     const userIndex = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+    const nextAllowedTabs = normalizePermissionList(allowedTabs);
+    const nextAllowedWidgets = normalizePermissionList(allowedWidgets);
 
     if (userIndex !== -1) {
       // Modification
+      const existingUser = users[userIndex];
+      let revokeExistingSessions = false;
       if (password) {
-        users[userIndex].passwordHash = hashPassword(password);
+        existingUser.passwordHash = hashPassword(password);
+        revokeExistingSessions = true;
       }
       
       // Protection: Ne pas pouvoir modifier le rôle des comptes système admin et viewer
       if (username.toLowerCase() === 'admin') {
-        users[userIndex].role = 'admin';
+        if (existingUser.role !== 'admin') revokeExistingSessions = true;
+        existingUser.role = 'admin';
       } else if (username.toLowerCase() === 'viewer') {
-        users[userIndex].role = 'viewer';
+        if (existingUser.role !== 'viewer') revokeExistingSessions = true;
+        existingUser.role = 'viewer';
       } else {
-        users[userIndex].role = role;
+        if (existingUser.role !== role) revokeExistingSessions = true;
+        existingUser.role = role;
       }
-      
-      users[userIndex].allowedTabs = allowedTabs || [];
-      users[userIndex].allowedWidgets = allowedWidgets || [];
+
+      if (!samePermissions(existingUser.allowedTabs, nextAllowedTabs)) revokeExistingSessions = true;
+      if (!samePermissions(existingUser.allowedWidgets, nextAllowedWidgets)) revokeExistingSessions = true;
+      existingUser.allowedTabs = nextAllowedTabs;
+      existingUser.allowedWidgets = nextAllowedWidgets;
+      if (revokeExistingSessions) {
+        existingUser.sessionVersion = (existingUser.sessionVersion || 0) + 1;
+      }
     } else {
       // Ajout
       if (!password) {
@@ -61,12 +84,15 @@ export async function POST(req: NextRequest) {
         username,
         role,
         passwordHash: hashPassword(password),
-        allowedTabs: allowedTabs || [],
-        allowedWidgets: allowedWidgets || []
+        allowedTabs: nextAllowedTabs,
+        allowedWidgets: nextAllowedWidgets,
+        sessionVersion: 0
       });
     }
 
-    writeUsers(users);
+    if (!writeUsers(users)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer les utilisateurs.' }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('Erreur API Users (POST):', e);
@@ -111,7 +137,9 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Utilisateur non trouvé.' }, { status: 404 });
     }
 
-    writeUsers(filteredUsers);
+    if (!writeUsers(filteredUsers)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer les utilisateurs.' }, { status: 500 });
+    }
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('Erreur API Users (DELETE):', e);

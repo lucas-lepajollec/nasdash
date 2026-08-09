@@ -42,3 +42,9 @@ For every principal, credential values are masked. For non-admin principals, Nas
 - removes custom-tab definitions and layouts that are not allowed.
 
 Further URL/IP minimization should be decided per product feature so that legitimate service links and explicitly authorized network views keep working.
+
+## Revocable sessions
+
+Each user has a monotonic `sessionVersion`, also embedded in newly issued JWTs. Existing installations are migrated to version `0`, which keeps pre-migration JWTs compatible because a missing legacy claim is interpreted as `0`.
+
+NasDash increments the stored version when an administrator changes a password, role, tab allowlist or widget allowlist. Every authenticated API request compares the JWT version with the current stored user. A deleted user or mismatched version is rejected immediately, and current role/permission values replace stale claims from the token.

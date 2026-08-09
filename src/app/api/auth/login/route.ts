@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
       username: user.username, 
       role: user.role,
       allowedTabs: user.allowedTabs,
-      allowedWidgets: user.allowedWidgets
+      allowedWidgets: user.allowedWidgets,
+      sessionVersion: user.sessionVersion
     });
 
     const response = NextResponse.json({

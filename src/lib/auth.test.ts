@@ -6,7 +6,8 @@ import {
   verifyToken, 
   verifyCsrf,
   isAdmin,
-  isSecureRequest
+  isSecureRequest,
+  isSessionCurrentForUser
 } from './auth';
 
 describe('Auth Utility Tests', () => {
@@ -30,6 +31,7 @@ describe('Auth Utility Tests', () => {
       expect(verified).not.toBeNull();
       expect(verified?.username).toBe('testuser');
       expect(verified?.role).toBe('viewer');
+      expect(verified?.sessionVersion).toBe(0);
     });
 
     it('should return null for invalid or expired tokens', () => {
@@ -41,6 +43,31 @@ describe('Auth Utility Tests', () => {
       const parts = token.split('.');
       parts[2] = `${parts[2].slice(0, -1)}${parts[2].endsWith('a') ? 'b' : 'a'}`;
       expect(verifyToken(parts.join('.'))).toBeNull();
+    });
+
+    it('should carry and validate a non-negative session version', () => {
+      const token = generateToken({ username: 'viewer', role: 'viewer', sessionVersion: 4 });
+      expect(verifyToken(token)?.sessionVersion).toBe(4);
+
+      const invalidToken = generateToken({ username: 'viewer', role: 'viewer', sessionVersion: -1 });
+      expect(verifyToken(invalidToken)).toBeNull();
+    });
+
+    it('should revoke a token when the stored session version changes', () => {
+      const payload = verifyToken(generateToken({ username: 'viewer', role: 'viewer', sessionVersion: 2 }));
+      expect(payload).not.toBeNull();
+
+      const user = {
+        username: 'viewer',
+        role: 'viewer' as const,
+        passwordHash: 'unused:test-hash',
+        allowedTabs: [],
+        allowedWidgets: [],
+        sessionVersion: 3,
+      };
+
+      expect(isSessionCurrentForUser(payload!, user)).toBe(false);
+      expect(isSessionCurrentForUser({ ...payload!, sessionVersion: 3 }, user)).toBe(true);
     });
   });
 

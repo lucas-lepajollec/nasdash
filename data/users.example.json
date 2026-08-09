@@ -4,13 +4,15 @@
     "role": "admin",
     "passwordHash": "__GENERATED_AT_STARTUP__",
     "allowedTabs": [],
-    "allowedWidgets": []
+    "allowedWidgets": [],
+    "sessionVersion": 0
   },
   {
     "username": "viewer",
     "role": "viewer",
     "passwordHash": "__GENERATED_AT_STARTUP__",
     "allowedTabs": [],
-    "allowedWidgets": []
+    "allowedWidgets": [],
+    "sessionVersion": 0
   }
 ]

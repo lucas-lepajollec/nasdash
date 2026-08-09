@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readUsers, verifyToken, generateToken, isSecureRequest } from '@/lib/auth';
+import { readUsers, getSessionFromRequest, generateToken, isSecureRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get('nasdash_session')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
-
-    const payload = verifyToken(token);
+    const payload = getSessionFromRequest(req);
     if (payload?.role !== 'admin') {
       return NextResponse.json({ error: 'Seul un administrateur peut basculer en mode spectateur.' }, { status: 403 });
     }
@@ -27,7 +22,8 @@ export async function POST(req: NextRequest) {
       username: viewerUser.username,
       role: viewerUser.role,
       allowedTabs: viewerUser.allowedTabs || [],
-      allowedWidgets: viewerUser.allowedWidgets || []
+      allowedWidgets: viewerUser.allowedWidgets || [],
+      sessionVersion: viewerUser.sessionVersion
     });
 
     const response = NextResponse.json({ success: true });

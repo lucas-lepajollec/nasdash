@@ -21,6 +21,7 @@ describe('request principal resolution', () => {
         passwordHash: 'unused:test-hash',
         allowedTabs: ['dashboard'],
         allowedWidgets: ['calendar'],
+        sessionVersion: 0,
       },
     ]);
   });
@@ -49,6 +50,7 @@ describe('request principal resolution', () => {
       role: 'admin',
       allowedTabs: [],
       allowedWidgets: [],
+      sessionVersion: 0,
       exp: Math.floor(Date.now() / 1000) + 60,
     });
 
@@ -64,6 +66,7 @@ describe('request principal resolution', () => {
     mockedSession.mockReturnValue({
       username: 'deleted-user',
       role: 'viewer',
+      sessionVersion: 0,
       exp: Math.floor(Date.now() / 1000) + 60,
     });
 

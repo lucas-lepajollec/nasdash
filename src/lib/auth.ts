@@ -48,6 +48,7 @@ export interface User {
   passwordHash: string;
   allowedTabs?: string[];
   allowedWidgets?: string[];
+  sessionVersion: number;
 }
 
 export interface SessionPayload {
@@ -55,6 +56,7 @@ export interface SessionPayload {
   role: 'admin' | 'viewer';
   allowedTabs?: string[];
   allowedWidgets?: string[];
+  sessionVersion: number;
   exp: number;
 }
 
@@ -90,10 +92,17 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 
 // --- SESSION JWT NATIVE ---
 
-export function generateToken(payload: Omit<SessionPayload, 'exp'>, expiresInDays = 30): string {
+export function generateToken(
+  payload: Omit<SessionPayload, 'exp' | 'sessionVersion'> & { sessionVersion?: number },
+  expiresInDays = 30
+): string {
   const exp = Math.floor(Date.now() / 1000) + (expiresInDays * 24 * 60 * 60);
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const body = Buffer.from(JSON.stringify({ ...payload, exp })).toString('base64url');
+  const body = Buffer.from(JSON.stringify({
+    ...payload,
+    sessionVersion: payload.sessionVersion ?? 0,
+    exp,
+  })).toString('base64url');
   
   const signature = crypto
     .createHmac('sha256', JWT_SECRET)
@@ -131,19 +140,37 @@ export function verifyToken(token: string): SessionPayload | null {
   }
   
   try {
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as SessionPayload;
+    const decoded = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as Partial<SessionPayload>;
+    const sessionVersion = decoded.sessionVersion ?? 0;
     if (
-      typeof payload.username !== 'string' ||
-      !['admin', 'viewer'].includes(payload.role) ||
-      typeof payload.exp !== 'number' ||
-      payload.exp < Math.floor(Date.now() / 1000)
+      typeof decoded.username !== 'string' ||
+      !decoded.role ||
+      !['admin', 'viewer'].includes(decoded.role) ||
+      typeof decoded.exp !== 'number' ||
+      decoded.exp < Math.floor(Date.now() / 1000) ||
+      !Number.isInteger(sessionVersion) ||
+      sessionVersion < 0
     ) {
       return null; // Expiré
     }
-    return payload;
+    return {
+      username: decoded.username,
+      role: decoded.role,
+      allowedTabs: decoded.allowedTabs,
+      allowedWidgets: decoded.allowedWidgets,
+      sessionVersion,
+      exp: decoded.exp,
+    };
   } catch {
     return null;
   }
+}
+
+export function isSessionCurrentForUser(payload: SessionPayload, user: User): boolean {
+  return (
+    payload.username.toLowerCase() === user.username.toLowerCase() &&
+    payload.sessionVersion === user.sessionVersion
+  );
 }
 
 export function getSessionFromRequest(req: Request | any): SessionPayload | null {
@@ -159,7 +186,20 @@ export function getSessionFromRequest(req: Request | any): SessionPayload | null
   }
   
   if (!token) return null;
-  return verifyToken(token);
+  const payload = verifyToken(token);
+  if (!payload) return null;
+
+  const user = readUsers().find(
+    candidate => candidate.username.toLowerCase() === payload.username.toLowerCase()
+  );
+  if (!user || !isSessionCurrentForUser(payload, user)) return null;
+
+  return {
+    ...payload,
+    role: user.role,
+    allowedTabs: user.allowedTabs || [],
+    allowedWidgets: user.allowedWidgets || [],
+  };
 }
 
 export function isAuthenticated(req: Request | any): boolean {
@@ -338,6 +378,12 @@ export function readUsers(): User[] {
     }
 
     let modified = false;
+    for (const user of users) {
+      if (!Number.isInteger(user.sessionVersion) || user.sessionVersion < 0) {
+        user.sessionVersion = 0;
+        modified = true;
+      }
+    }
     const adminUser = users.find(u => u.username.toLowerCase() === 'admin');
     if (!adminUser) {
       users.push({
@@ -345,7 +391,8 @@ export function readUsers(): User[] {
         role: 'admin',
         passwordHash: hashPassword(getInitialPassword('admin')),
         allowedTabs: [],
-        allowedWidgets: []
+        allowedWidgets: [],
+        sessionVersion: 0
       });
       modified = true;
     } else if (adminUser.passwordHash === '__GENERATED_AT_STARTUP__') {
@@ -360,7 +407,8 @@ export function readUsers(): User[] {
         role: 'viewer',
         passwordHash: hashPassword(getInitialPassword('viewer')),
         allowedTabs: [],
-        allowedWidgets: []
+        allowedWidgets: [],
+        sessionVersion: 0
       });
       modified = true;
     } else if (viewerUser.passwordHash === '__GENERATED_AT_STARTUP__') {
