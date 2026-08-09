@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readUsers, verifyToken, generateToken } from '@/lib/auth';
+import { readUsers, verifyToken, generateToken, isSecureRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       name: 'nasdash_session',
       value: newToken,
       httpOnly: true,
-      secure: false,
+      secure: isSecureRequest(req),
       path: '/',
       maxAge: 30 * 24 * 60 * 60, // 30 jours
       sameSite: 'lax'

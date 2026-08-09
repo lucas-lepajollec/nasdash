@@ -56,7 +56,8 @@ export function encrypt(text: string): string {
     return `enc:aes256:${iv.toString('hex')}:${tag}:${encrypted}`;
   } catch (e) {
     console.error('Erreur de chiffrement :', e);
-    return text; // Retourne le texte en clair en cas d'échec pour ne pas bloquer l'écriture
+    // Ne jamais enregistrer silencieusement un secret en clair.
+    throw e instanceof Error ? e : new Error('Impossible de chiffrer la valeur sensible.');
   }
 }
 
@@ -73,8 +74,11 @@ export function decrypt(text: string): string {
     const key = getEncryptionKey();
     const iv = Buffer.from(ivHex, 'hex');
     const tag = Buffer.from(tagHex, 'hex');
+    if (iv.length !== 12 || tag.length !== 16 || !/^(?:[0-9a-f]{2})+$/i.test(encryptedText)) {
+      return '';
+    }
     
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: 16 });
     decipher.setAuthTag(tag);
     
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');

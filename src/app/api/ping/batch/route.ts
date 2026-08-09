@@ -74,6 +74,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     const urls: string[] = body.urls || [];
 
+    if (!Array.isArray(urls) || urls.some(url => typeof url !== 'string')) {
+      return NextResponse.json({ error: 'Liste d’URL invalide.' }, { status: 400 });
+    }
+    if (urls.length > 50) {
+      return NextResponse.json({ error: 'Un maximum de 50 adresses est autorisé par requête.' }, { status: 413 });
+    }
+    if (urls.some(url => url.length > 2048)) {
+      return NextResponse.json({ error: 'Une URL dépasse la taille autorisée.' }, { status: 400 });
+    }
+
     if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
       const resultMap: Record<string, any> = {};
       urls.forEach(url => {
@@ -88,7 +98,7 @@ export async function POST(request: Request) {
       return NextResponse.json(resultMap);
     }
 
-    if (!Array.isArray(urls) || urls.length === 0) {
+    if (urls.length === 0) {
       return NextResponse.json({});
     }
 

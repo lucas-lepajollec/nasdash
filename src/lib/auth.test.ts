@@ -4,7 +4,9 @@ import {
   verifyPassword, 
   generateToken, 
   verifyToken, 
-  verifyCsrf 
+  verifyCsrf,
+  isAdmin,
+  isSecureRequest
 } from './auth';
 
 describe('Auth Utility Tests', () => {
@@ -32,6 +34,26 @@ describe('Auth Utility Tests', () => {
 
     it('should return null for invalid or expired tokens', () => {
       expect(verifyToken('invalid.token.here')).toBeNull();
+    });
+
+    it('should reject a token with a modified signature', () => {
+      const token = generateToken({ username: 'admin', role: 'admin' });
+      const parts = token.split('.');
+      parts[2] = `${parts[2].slice(0, -1)}${parts[2].endsWith('a') ? 'b' : 'a'}`;
+      expect(verifyToken(parts.join('.'))).toBeNull();
+    });
+  });
+
+  describe('Authorization', () => {
+    it('should never grant admin rights without an authenticated admin session', () => {
+      const req = { headers: new Map() } as any;
+      expect(isAdmin(req)).toBe(false);
+    });
+
+    it('should detect HTTPS behind a trusted reverse proxy header', () => {
+      const headers = new Map([['x-forwarded-proto', 'https']]);
+      expect(isSecureRequest({ headers })).toBe(true);
+      expect(isSecureRequest({ url: 'http://localhost' })).toBe(false);
     });
   });
 

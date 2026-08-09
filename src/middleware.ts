@@ -30,7 +30,7 @@ function isRateLimited(ip: string, limit: number = 5): boolean {
 }
 
 export function middleware(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
   const url = req.nextUrl;
   const pathName = url.pathname;
   
@@ -42,6 +42,10 @@ export function middleware(req: NextRequest) {
   } else if (pathName.startsWith('/api/docker')) {
     // Les actions Docker par lot (ex: démarrer/arrêter une stack) peuvent envoyer de nombreuses requêtes simultanées.
     if (isRateLimited(ip, 40)) {
+      return NextResponse.json({ error: 'Trop de requêtes. Veuillez patienter.' }, { status: 429 });
+    }
+  } else if (pathName.startsWith('/api/ping') || pathName.startsWith('/api/calendar')) {
+    if (isRateLimited(ip, 10)) {
       return NextResponse.json({ error: 'Trop de requêtes. Veuillez patienter.' }, { status: 429 });
     }
   }
@@ -57,6 +61,8 @@ export const config = {
   matcher: [
     '/api/config/:path*',
     '/api/docker/:path*',
+    '/api/ping/:path*',
+    '/api/calendar',
     '/api/auth/login'
   ],
 };

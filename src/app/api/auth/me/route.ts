@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, readUsers } from '@/lib/auth';
+import { verifyToken, readUsers, isSecureRequest } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
 
 function jsonNoCache(data: any, init?: ResponseInit) {
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       name: 'nasdash_session',
       value: '',
       httpOnly: true,
-      secure: false,
+      secure: isSecureRequest(req),
       path: '/',
       maxAge: 0,
       sameSite: 'lax'

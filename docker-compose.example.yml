@@ -19,6 +19,11 @@ services:
       - NODE_ENV=production
       - PORT=2504
       - HOSTNAME=0.0.0.0
+      # À définir dans un fichier .env. Si les mots de passe sont absents,
+      # NasDash en génère de robustes et les affiche une fois dans ses logs.
+      - NASDASH_ADMIN_PASSWORD=${NASDASH_ADMIN_PASSWORD:-}
+      - NASDASH_VIEWER_PASSWORD=${NASDASH_VIEWER_PASSWORD:-}
+      - NASDASH_JWT_SECRET=${NASDASH_JWT_SECRET:-}
     depends_on:
       - docker-proxy
     extra_hosts:

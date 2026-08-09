@@ -29,12 +29,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Accès non autorisé à cette URL.' }, { status: 403 });
     }
 
-    // Fetch natively
-    const response = await fetch(url);
+    let calendarUrl: URL;
+    try {
+      calendarUrl = new URL(url);
+    } catch {
+      return NextResponse.json({ error: 'URL de calendrier invalide.' }, { status: 400 });
+    }
+    if (!['http:', 'https:'].includes(calendarUrl.protocol)) {
+      return NextResponse.json({ error: 'Protocole de calendrier non autorisé.' }, { status: 400 });
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let response: Response;
+    try {
+      response = await fetch(calendarUrl, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
     if (!response.ok) {
       throw new Error(`Failed to fetch ICS: ${response.status} ${response.statusText}`);
     }
-    const textData = await response.text();
+
+    const maxCalendarBytes = 2 * 1024 * 1024;
+    const declaredLength = Number(response.headers.get('content-length') || 0);
+    if (declaredLength > maxCalendarBytes) {
+      return NextResponse.json({ error: 'Le calendrier dépasse la taille autorisée (2 Mo).' }, { status: 413 });
+    }
+    const calendarBuffer = await response.arrayBuffer();
+    if (calendarBuffer.byteLength > maxCalendarBytes) {
+      return NextResponse.json({ error: 'Le calendrier dépasse la taille autorisée (2 Mo).' }, { status: 413 });
+    }
+    const textData = new TextDecoder().decode(calendarBuffer);
 
     // Simple native iCal parser to avoid Next.js node-ical crashes (BigInt errors)
     const processedEvents = [];

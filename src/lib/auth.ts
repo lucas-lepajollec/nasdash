@@ -58,6 +58,17 @@ export interface SessionPayload {
   exp: number;
 }
 
+function getInitialPassword(username: 'admin' | 'viewer'): string {
+  const envName = username === 'admin' ? 'NASDASH_ADMIN_PASSWORD' : 'NASDASH_VIEWER_PASSWORD';
+  const configuredPassword = process.env[envName];
+  if (configuredPassword) return configuredPassword;
+
+  const generatedPassword = crypto.randomBytes(18).toString('base64url');
+  console.warn(`[NASDASH] Mot de passe initial généré pour ${username}: ${generatedPassword}`);
+  console.warn(`[NASDASH] Connectez-vous puis remplacez immédiatement ce mot de passe (${envName}).`);
+  return generatedPassword;
+}
+
 // --- HACHAGE DE MOT DE PASSE (SCRYPT) ---
 
 export function hashPassword(password: string): string {
@@ -98,18 +109,35 @@ export function verifyToken(token: string): SessionPayload | null {
   if (parts.length !== 3) return null;
   
   const [header, body, signature] = parts;
+  try {
+    const parsedHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8'));
+    if (parsedHeader.alg !== 'HS256' || parsedHeader.typ !== 'JWT') return null;
+  } catch {
+    return null;
+  }
+
   const expectedSignature = crypto
     .createHmac('sha256', JWT_SECRET)
     .update(`${header}.${body}`)
     .digest('base64url');
     
-  if (signature !== expectedSignature) {
+  const signatureBuffer = Buffer.from(signature);
+  const expectedSignatureBuffer = Buffer.from(expectedSignature);
+  if (
+    signatureBuffer.length !== expectedSignatureBuffer.length ||
+    !crypto.timingSafeEqual(signatureBuffer, expectedSignatureBuffer)
+  ) {
     return null;
   }
   
   try {
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as SessionPayload;
-    if (payload.exp < Math.floor(Date.now() / 1000)) {
+    if (
+      typeof payload.username !== 'string' ||
+      !['admin', 'viewer'].includes(payload.role) ||
+      typeof payload.exp !== 'number' ||
+      payload.exp < Math.floor(Date.now() / 1000)
+    ) {
       return null; // Expiré
     }
     return payload;
@@ -140,26 +168,21 @@ export function isAuthenticated(req: Request | any): boolean {
 
 export function isAdmin(req: Request | any): boolean {
   const payload = getSessionFromRequest(req);
-  if (payload) {
-    return payload.role === 'admin';
-  }
-  
+  return payload?.role === 'admin';
+}
+
+export function isSecureRequest(req?: Request | any): boolean {
+  const forwardedProto = req?.headers?.get?.('x-forwarded-proto')
+    ?.split(',')[0]
+    ?.trim()
+    ?.toLowerCase();
+  if (forwardedProto) return forwardedProto === 'https';
+
   try {
-    const configPath = path.join(process.cwd(), 'data', 'config.json');
-    if (fs.existsSync(configPath)) {
-      const raw = fs.readFileSync(configPath, 'utf-8');
-      const config = JSON.parse(raw);
-      const mode = config.settings?.securityMode;
-      if (mode === 'private' || mode === 'semi-private') {
-        return false;
-      }
-      return true;
-    }
-  } catch (e) {
-    console.error('Failed to read config in isAdmin check:', e);
+    return new URL(req?.url || '').protocol === 'https:';
+  } catch {
+    return false;
   }
-  
-  return true;
 }
 
 export function verifyCsrf(req: Request | any): boolean {
@@ -315,26 +338,44 @@ export function readUsers(): User[] {
     }
 
     let modified = false;
-    if (!users.some(u => u.username.toLowerCase() === 'admin')) {
+    const adminUser = users.find(u => u.username.toLowerCase() === 'admin');
+    if (!adminUser) {
       users.push({
         username: 'admin',
         role: 'admin',
-        passwordHash: hashPassword('admin'),
+        passwordHash: hashPassword(getInitialPassword('admin')),
         allowedTabs: [],
         allowedWidgets: []
       });
+      modified = true;
+    } else if (adminUser.passwordHash === '__GENERATED_AT_STARTUP__') {
+      adminUser.passwordHash = hashPassword(getInitialPassword('admin'));
       modified = true;
     }
 
-    if (!users.some(u => u.username.toLowerCase() === 'viewer')) {
+    const viewerUser = users.find(u => u.username.toLowerCase() === 'viewer');
+    if (!viewerUser) {
       users.push({
         username: 'viewer',
         role: 'viewer',
-        passwordHash: hashPassword('viewer'),
+        passwordHash: hashPassword(getInitialPassword('viewer')),
         allowedTabs: [],
         allowedWidgets: []
       });
       modified = true;
+    } else if (viewerUser.passwordHash === '__GENERATED_AT_STARTUP__') {
+      viewerUser.passwordHash = hashPassword(getInitialPassword('viewer'));
+      modified = true;
+    }
+
+    if (!globalAny.__warnedAboutDefaultPasswords) {
+      if (adminUser?.passwordHash && verifyPassword('admin', adminUser.passwordHash)) {
+        console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte admin utilise encore le mot de passe par défaut « admin ».');
+      }
+      if (viewerUser?.passwordHash && verifyPassword('viewer', viewerUser.passwordHash)) {
+        console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte viewer utilise encore le mot de passe par défaut « viewer ».');
+      }
+      globalAny.__warnedAboutDefaultPasswords = true;
     }
 
     if (modified || !fileExists) {

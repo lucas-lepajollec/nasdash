@@ -60,6 +60,9 @@ commandes.md
 # real data (local-only)
 /data-real/
 
+# test data generated locally
+/data_test*/
+/data_test_crypto_temp
+
 # agent configs
 .agents/
-

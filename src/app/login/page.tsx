@@ -33,7 +33,10 @@ function LoginForm() {
   const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const requestedRedirect = searchParams.get('redirect');
+  const redirectTo = requestedRedirect && /^\/(?!\/)/.test(requestedRedirect) && !requestedRedirect.includes('\\')
+    ? requestedRedirect
+    : '/';
 
   // Vérifier si déjà connecté au montage
   useEffect(() => {

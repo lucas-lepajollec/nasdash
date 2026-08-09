@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readUsers, verifyPassword, generateToken } from '@/lib/auth';
+import { readUsers, verifyPassword, generateToken, isSecureRequest } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       name: 'nasdash_session',
       value: token,
       httpOnly: true,
-      secure: false,
+      secure: isSecureRequest(req),
       path: '/',
       maxAge: 30 * 24 * 60 * 60, // 30 jours
       sameSite: 'lax'
