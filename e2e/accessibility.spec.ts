@@ -21,6 +21,14 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
   await expect(dialog).toHaveAttribute('aria-modal', 'true');
   expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
 
+  const sidebar = dialog.locator('.nd-settings-sidebar');
+  await sidebar.getByRole('button', { name: 'Général', exact: true }).click();
+  await expect(dialog.getByText('Position du Dock', { exact: true })).toBeVisible();
+
+  await sidebar.getByRole('button', { name: 'Configuration Widgets', exact: true }).click();
+  await sidebar.getByRole('button', { name: /Météo/ }).click();
+  await expect(dialog.getByText('Activer le widget Météo', { exact: true })).toBeVisible();
+
   const lastButton = dialog.locator('button:not([disabled])').last();
   await lastButton.focus();
   await page.keyboard.press('Tab');
