@@ -9,6 +9,8 @@
     "lint": "eslint",
     "data:demo": "node scripts/copy-data.js demo",
     "data:real": "node scripts/copy-data.js real",
+    "data:backup": "node scripts/data-snapshot.mjs backup",
+    "data:restore": "node scripts/data-snapshot.mjs restore",
     "test": "vitest run",
     "data:demo:old": "cp demo-data/*.json data/",
     "data:real:old": "cp data-real/*.json data/ && cp data-real/encryption.key data/ 2>/dev/null || true"

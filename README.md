@@ -142,6 +142,7 @@ The application will be available at **http://localhost:2504**. To connect to yo
 - **Secrets**: Use a reverse proxy (Nginx, Traefik, Caddy) with SSL/TLS to access NasDash securely over the internet.
 - **Volume permissions**: The container runs as the non-root UID/GID `1001:1001`. Ensure the mounted `./data` directory is writable by that account on the host.
 - **Access model**: See [`ACCESS_CONTROL.md`](ACCESS_CONTROL.md) for public, authenticated viewer, and administrator behavior.
+- **Backups**: Back up the complete `data/` directory, including keys and logos. See [`BACKUP_AND_RESTORE.md`](BACKUP_AND_RESTORE.md) for the tested backup and restore commands.
 
 ---
 
