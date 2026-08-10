@@ -183,7 +183,7 @@ export default function HomeTab({
   if (showLeftPanel && (hasWidgets('home-left') || editMode)) {
     const el = (
       <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static' }}>
-        <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} />
+        <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
       </aside>
     );
     if (leftPanelPos === 'left') leftSidebars.push(el);
@@ -193,7 +193,7 @@ export default function HomeTab({
   if (showRightPanel && (hasWidgets('home-right') || editMode)) {
     const el = (
       <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static' }}>
-        <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} />
+        <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
       </aside>
     );
     if (rightPanelPos === 'left') leftSidebars.push(el);
@@ -235,6 +235,7 @@ export default function HomeTab({
               searchQuery={searchQuery}
               showSecretSections={showSecretSections}
               showSensitive={showSensitive}
+              isVisible={isVisible}
               onReorder={saveCategories}
               onReorderWidgets={onReorderWidgets}
               onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
@@ -258,7 +259,7 @@ export default function HomeTab({
                   gap: 16,
                   alignItems: 'stretch'
                 }}>
-                  <WidgetPanel panelId="home-bottom" editMode={editMode} showSensitive={showSensitive} />
+                  <WidgetPanel panelId="home-bottom" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
                 </div>
               </section>
             )}

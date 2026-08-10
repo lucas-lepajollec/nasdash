@@ -13,9 +13,10 @@ interface WidgetPanelProps {
   panelId: string;
   editMode: boolean;
   showSensitive: boolean;
+  isVisible?: boolean;
 }
 
-export function WidgetPanel({ panelId, editMode, showSensitive }: WidgetPanelProps) {
+export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true }: WidgetPanelProps) {
   const { config, updateConfig, user } = useConfig();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
@@ -169,6 +170,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive }: WidgetPanelPro
                 categories={config.categories}
                 widgetInstanceId={instanceId}
                 widgetProps={instanceProps}
+                isVisible={isVisible}
                 onUpdateProps={(newProps) => {
                   const currentPanels = config.settings?.panels || {};
                   const currentPanel = currentPanels[panelId] || { widgets: [] };

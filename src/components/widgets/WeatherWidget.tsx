@@ -43,7 +43,7 @@ const getWeatherLabel = (code: number) => {
   return "Inconnu";
 };
 
-export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
+export default function WeatherWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { config, setSettingsModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -83,6 +83,7 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (!isVisible) return;
     if (!location) return;
     if (location.lat === undefined || location.lon === undefined) {
       console.warn("Weather location is missing lat/lon:", location);
@@ -111,7 +112,7 @@ export default function WeatherWidget({ editMode }: { editMode?: boolean }) {
     fetchWeather();
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [location?.id, location?.lat, location?.lon]);
+  }, [isVisible, location?.id, location?.lat, location?.lon]);
 
   if (!location) {
     return (

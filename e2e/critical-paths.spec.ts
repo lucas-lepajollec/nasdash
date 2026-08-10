@@ -39,9 +39,24 @@ test.describe.serial('critical self-hosted paths', () => {
     expect(forbiddenWrite.status()).toBe(401);
     await anonymous.dispose();
 
+    const dockerRequests: string[] = [];
+    page.on('request', request => {
+      const pathname = new URL(request.url()).pathname;
+      if (pathname.startsWith('/api/docker/')) dockerRequests.push(pathname);
+    });
+
     await page.goto('/');
     await expect(page.locator('.nd-shell')).toBeVisible({ timeout: 30_000 });
     await expect(page).toHaveURL(/\/$/);
+    await page.waitForTimeout(750);
+    expect(dockerRequests).toEqual([]);
+
+    const visibleDockerRequest = page.waitForRequest(request => (
+      new URL(request.url()).pathname.startsWith('/api/docker/')
+    ));
+    await page.evaluate(() => localStorage.setItem('nasdash-active-tab', 'docker'));
+    await page.reload();
+    await visibleDockerRequest;
   });
 
   test('admin login through the UI persists a normal settings update', async ({ page }) => {

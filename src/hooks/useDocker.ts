@@ -9,35 +9,51 @@ const fetcher = (url: string) => fetch(url).then(r => {
   return r.json();
 });
 
-export function useDocker(hosts: DockerHost[]) {
+export function getDockerRequestKeys(
+  activeHostId: string | null,
+  selectedContainerId: string | null,
+  enabled: boolean,
+) {
+  const hostBase = enabled && activeHostId ? `/api/docker/${activeHostId}` : null;
+
+  return {
+    containers: hostBase ? `${hostBase}/containers?all=true` : null,
+    detail: hostBase && selectedContainerId ? `${hostBase}/containers/${selectedContainerId}` : null,
+    images: hostBase ? `${hostBase}/images` : null,
+    volumes: hostBase ? `${hostBase}/volumes` : null,
+  };
+}
+
+export function useDocker(hosts: DockerHost[], enabled = true) {
   const [activeHostId, setActiveHostId] = useState<string | null>(hosts[0]?.id || null);
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const requestKeys = getDockerRequestKeys(activeHostId, selectedContainerId, enabled);
 
   // Containers list
   const { data: containers, error: containersError, isLoading: containersLoading, mutate: refreshContainers } = useSWR(
-    activeHostId ? `/api/docker/${activeHostId}/containers?all=true` : null,
+    requestKeys.containers,
     fetcher,
     { refreshInterval: 5000 }
   );
 
   // Container detail (only when one is selected)
   const { data: containerDetail, error: detailError, mutate: refreshDetail } = useSWR(
-    activeHostId && selectedContainerId ? `/api/docker/${activeHostId}/containers/${selectedContainerId}` : null,
+    requestKeys.detail,
     fetcher,
     { refreshInterval: 3000 }
   );
 
   // Images
   const { data: images, error: imagesError, isLoading: imagesLoading, mutate: refreshImages } = useSWR(
-    activeHostId ? `/api/docker/${activeHostId}/images` : null,
+    requestKeys.images,
     fetcher,
     { refreshInterval: 30000 } // Refresh every 30s — images don't change often
   );
 
   // Volumes
   const { data: volumes, error: volumesError, isLoading: volumesLoading, mutate: refreshVolumes } = useSWR(
-    activeHostId ? `/api/docker/${activeHostId}/volumes` : null,
+    requestKeys.volumes,
     fetcher,
     { refreshInterval: 30000 }
   );

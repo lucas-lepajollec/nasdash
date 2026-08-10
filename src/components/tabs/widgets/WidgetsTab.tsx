@@ -79,7 +79,8 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
         <WidgetRenderer 
           id={w.id} 
           editMode={editMode} 
-          showSensitive={showSensitive} 
+          showSensitive={showSensitive}
+          isVisible={isVisible}
           categories={categories} 
           widgetInstanceId={instanceId} 
           widgetProps={instanceProps} 

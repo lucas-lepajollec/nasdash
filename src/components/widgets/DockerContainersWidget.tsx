@@ -23,7 +23,7 @@ function getPaddedList(list: any[], targetMultiple: number) {
   return result;
 }
 
-export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void }) {
+export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps, isVisible = true }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void, isVisible?: boolean }) {
   const { config, showSecretSections } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hosts = config?.dockerHosts || [];
@@ -62,7 +62,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
 
   // Fetch containers list for the selected host
   const { data: containers, error, isLoading, mutate } = useSWR(
-    selectedHostId ? `/api/docker/${selectedHostId}/containers?all=true` : null,
+    isVisible && selectedHostId ? `/api/docker/${selectedHostId}/containers?all=true` : null,
     fetcher,
     { refreshInterval: 5000 }
   );

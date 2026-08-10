@@ -235,7 +235,7 @@ export default function Shell() {
           {/* Custom Tabs */}
           {tabs.filter(t => t.isCustom).map(t => (
             <div key={t.id} className="flex-1" style={{ display: activeTab === t.id ? 'block' : 'none', minHeight: '100%', position: 'relative' }}>
-              <CustomTabRenderer tab={t} editMode={editMode} showSensitive={showSensitive} />
+              <CustomTabRenderer tab={t} editMode={editMode} showSensitive={showSensitive} isVisible={activeTab === t.id} />
             </div>
           ))}
         </div>

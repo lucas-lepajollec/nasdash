@@ -23,6 +23,7 @@ interface DevicesWidgetProps {
   onEditDevice?: (device: Device) => void;
   onDeleteDevice?: (id: string) => void;
   onReorderDevices?: (devices: Device[]) => void;
+  isVisible?: boolean;
 }
 
 // Composant pour chaque carte d'appareil avec drag & drop
@@ -35,6 +36,7 @@ function SortableDeviceCard({
   onDelete,
   isFirst,
   isLast,
+  isVisible,
 }: {
   device: Device;
   editMode: boolean;
@@ -44,6 +46,7 @@ function SortableDeviceCard({
   onDelete?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  isVisible: boolean;
 }) {
   const {
     attributes,
@@ -78,6 +81,7 @@ function SortableDeviceCard({
         onDelete={onDelete}
         isFirst={isFirst}
         isLast={isLast}
+        isVisible={isVisible}
       />
     </div>
   );
@@ -517,6 +521,7 @@ function DeviceMonitorCardContent({
   onDelete,
   isFirst,
   isLast,
+  isVisible,
 }: {
   device: Device;
   editMode: boolean;
@@ -526,13 +531,14 @@ function DeviceMonitorCardContent({
   onDelete?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  isVisible: boolean;
 }) {
   const { config } = useConfig();
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const isApiDevice = !!device.api;
   const { data: stats, error, isLoading } = useSWR<DeviceStat[] | { error: string, isOffline?: boolean }>(
-    isApiDevice ? `/api/devices/${device.id}` : null,
+    isVisible && isApiDevice ? `/api/devices/${device.id}` : null,
     fetcher,
     { refreshInterval: 5000 } // Poll every 5s
   );
@@ -813,6 +819,7 @@ export default function DevicesWidget({
   onEditDevice,
   onDeleteDevice,
   onReorderDevices,
+  isVisible = true,
 }: DevicesWidgetProps) {
   const { config, setDeviceModal, updateConfig } = useConfig();
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
@@ -840,7 +847,7 @@ export default function DevicesWidget({
 
   // Fetch metrics list for the configuring device
   const { data: configStats } = useSWR(
-    configuringDevice ? `/api/devices/${configuringDevice.id}` : null,
+    isVisible && configuringDevice ? `/api/devices/${configuringDevice.id}` : null,
     fetcher
   );
 
@@ -1177,6 +1184,7 @@ export default function DevicesWidget({
               onDelete={() => handleCardDelete(device)}
               isFirst={idx === 0}
               isLast={idx === filteredDevices.length - 1}
+              isVisible={isVisible}
             />
           ))}
         </div>

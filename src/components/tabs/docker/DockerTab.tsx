@@ -230,9 +230,9 @@ function DockerHostFormModal({ onClose, onSave }: {
 }
 
 // ======================== CONTAINER LOGS ========================
-function ContainerLogs({ hostId, containerId, showSensitive }: { hostId: string; containerId: string; showSensitive: boolean }) {
+function ContainerLogs({ hostId, containerId, showSensitive, enabled }: { hostId: string; containerId: string; showSensitive: boolean; enabled: boolean }) {
   const { data, error } = useSWR(
-    `/api/docker/${hostId}/containers/${containerId}/logs?tail=150`,
+    enabled ? `/api/docker/${hostId}/containers/${containerId}/logs?tail=150` : null,
     fetcher,
     { refreshInterval: 3000 }
   );
@@ -290,12 +290,13 @@ function ContainerLogs({ hostId, containerId, showSensitive }: { hostId: string;
 }
 
 // ======================== CONTAINER DETAIL VIEW ========================
-function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSensitive }: {
+function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSensitive, isVisible }: {
   hostId: string;
   detail: any;
   onAction: (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => void;
   actionLoading: string | null;
   showSensitive: boolean;
+  isVisible: boolean;
 }) {
   if (!detail) return null;
 
@@ -402,7 +403,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
 
       {/* Logs */}
       {isRunning && (
-        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSensitive={showSensitive} />
+        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSensitive={showSensitive} enabled={isVisible} />
       )}
     </div>
   );
@@ -754,7 +755,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     images, imagesLoading, refreshImages,
     volumes, volumesLoading, refreshVolumes,
     containerAction, actionLoading,
-  } = useDocker(hosts);
+  } = useDocker(hosts, isVisible);
 
   const visibleContainers = useMemo(() => {
     if (showSecretSections || !config?.categories) return containers;
@@ -1064,6 +1065,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
                 onAction={(id, action) => handleActionRequest(id, action, containerDetail?.name || id)}
                 actionLoading={actionLoading}
                 showSensitive={showSensitive}
+                isVisible={isVisible}
               />
             ) : (
               <div className="nd-docker-detail" style={{ minHeight: 300 }}>
@@ -1097,7 +1099,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               overflowY: 'visible',
             }}
           >
-            <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} />
+            <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
           </aside>
         )}
       </div>

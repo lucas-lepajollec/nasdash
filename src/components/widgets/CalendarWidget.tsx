@@ -15,7 +15,7 @@ interface CalendarEvent {
   isAllDay?: boolean;
 }
 
-export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
+export default function CalendarWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { config, setCalendarEventModal, setViewEventModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const calendarUrl = config?.settings?.calendarUrl;
@@ -33,6 +33,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
   }, []);
 
   useEffect(() => {
+    if (!isVisible) return;
     const fetchEvents = async () => {
       let combinedEvents: CalendarEvent[] = localEvents.map(e => ({
         ...e,
@@ -60,7 +61,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
     };
 
     fetchEvents();
-  }, [calendarUrl, localEvents]);
+  }, [calendarUrl, isVisible, localEvents]);
 
   const daysOfWeek = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
   const monthNames = [
