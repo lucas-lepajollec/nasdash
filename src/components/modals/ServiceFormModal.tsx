@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Service } from '@/lib/types';
 import { X, Upload, Trash2 } from 'lucide-react';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface ServiceFormModalProps {
   service?: Service;
@@ -15,17 +16,12 @@ interface ServiceFormModalProps {
 }
 
 export default function ServiceFormModal({ service, categoryId, onClose, onSave, onDelete, onUploadLogo, showSensitive = false }: ServiceFormModalProps) {
+  const dialogRef = useDialogAccessibility(onClose);
   const [name, setName] = useState(service?.name || '');
   const [localUrl, setLocalUrl] = useState(service?.localUrl || '');
   const [secondaryUrl, setSecondaryUrl] = useState(service?.secondaryUrl || service?.tailscaleUrl || '');
   const [logo, setLogo] = useState(service?.logo || '');
   const [secondaryLogo, setSecondaryLogo] = useState(service?.secondaryLogo || '');
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,10 +37,10 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={service ? 'Modifier un service' : 'Ajouter un service'} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{service ? 'Modifier' : 'Ajouter'} un service</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
+          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
             <X size={16} />
           </button>
         </div>

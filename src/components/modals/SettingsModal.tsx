@@ -13,9 +13,11 @@ import CustomSelect from '../shared/CustomSelect';
 import ConfirmModal from './ConfirmModal';
 import EmojiPickerModal from './EmojiPickerModal';
 import { Emoji } from '../shared/Emoji';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface SettingsModalProps {
   onClose: () => void;
+  restoreFocus?: () => HTMLElement | null;
 }
 
 export const THEME_PRESETS: Record<string, {
@@ -334,7 +336,8 @@ import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab'
 
 import ThemeGalleryView from './ThemeGalleryView';
 
-export default function SettingsModal({ onClose }: SettingsModalProps) {
+export default function SettingsModal({ onClose, restoreFocus }: SettingsModalProps) {
+  const dialogRef = useDialogAccessibility(onClose, true, restoreFocus);
   const { config, updateConfig, settingsModal } = useConfig();
   const { tabs } = useTabs();
   const [isThemeGalleryOpen, setIsThemeGalleryOpen] = useState(false);
@@ -579,6 +582,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div 
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Paramètres NasDash"
+        tabIndex={-1}
         className={`nd-modal nd-settings-modal nd-animate-in ${activeTab ? 'nd-settings-modal--detail' : 'nd-settings-modal--menu'}`}
         onClick={(e) => e.stopPropagation()} 
         style={{ 
@@ -669,7 +677,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
               )}
             </h3>
 
-            <button className="nd-settings-close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
+            <button aria-label="Fermer les paramètres" className="nd-settings-close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
               <X size={18} />
             </button>
           </div>

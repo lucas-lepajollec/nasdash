@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useId } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -21,17 +22,25 @@ export default function ConfirmModal({
   confirmLabel = 'Supprimer',
   cancelLabel = 'Annuler'
 }: ConfirmModalProps) {
-  const [mounted, setMounted] = useState(false);
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useDialogAccessibility(onClose, isOpen);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!isOpen || !mounted) return null;
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ zIndex: 99999 }}>
-      <div className="nd-modal nd-animate-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, textAlign: 'center', padding: '32px 24px' }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
+        tabIndex={-1}
+        className="nd-modal nd-animate-in"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 400, textAlign: 'center', padding: '32px 24px' }}
+      >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
           <div style={{ 
             width: 48, height: 48, borderRadius: '50%', 
@@ -43,10 +52,10 @@ export default function ConfirmModal({
           </div>
         </div>
 
-        <h2 className="nd-modal-title" style={{ margin: '0 0 8px 0', fontSize: '1.25rem', lineHeight: 1.2 }}>{title}</h2>
+        <h2 id={titleId} className="nd-modal-title" style={{ margin: '0 0 8px 0', fontSize: '1.25rem', lineHeight: 1.2 }}>{title}</h2>
 
         {description && (
-          <p style={{ color: 'var(--nd-text-muted)', fontSize: '0.95rem', marginBottom: 32, lineHeight: 1.5 }}>
+          <p id={descriptionId} style={{ color: 'var(--nd-text-muted)', fontSize: '0.95rem', marginBottom: 32, lineHeight: 1.5 }}>
             {description}
           </p>
         )}

@@ -194,10 +194,10 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             {monthNames[month]} {year}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
+            <button aria-label="Mois précédent" onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
               <ChevronLeft size={13} />
             </button>
-            <button onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
+            <button aria-label="Mois suivant" onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
               <ChevronRight size={13} />
             </button>
           </div>
@@ -417,7 +417,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             <span style={{ color: 'var(--nd-accent)' }}>●</span> {monthNames[month]} {year}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={prevMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
+            <button aria-label="Mois précédent" onClick={prevMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
               <ChevronLeft size={14} />
             </button>
             {!isCurrentMonth && (
@@ -425,7 +425,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                 <RotateCcw size={10} /> Revenir
               </button>
             )}
-            <button onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
+            <button aria-label="Mois suivant" onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
               <ChevronRight size={14} />
             </button>
           </div>

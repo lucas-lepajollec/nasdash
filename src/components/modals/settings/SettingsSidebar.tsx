@@ -20,6 +20,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
       <div className="nd-settings-sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 12px 4px' }}>
         <h2 className="nd-settings-sidebar-title" style={{ fontSize: '0.78rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
         <button 
+          aria-label="Fermer les paramètres"
           className="nd-settings-sidebar-close-btn" 
           onClick={onClose} 
           style={{ 

@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { CustomTabWidgetInfo } from '@/lib/types';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { useConfig } from '@/hooks/useConfig';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface WidgetSelectionModalProps {
   onClose: () => void;
@@ -11,13 +12,9 @@ interface WidgetSelectionModalProps {
 }
 
 export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModalProps) {
-  const [mounted, setMounted] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
   const { config } = useConfig();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const dialogRef = useDialogAccessibility(onClose);
 
   const availableWidgets = [
     ...WIDGET_REGISTRY.filter(w => {
@@ -55,8 +52,6 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
     { id: 'Gadget', label: 'Gadgets & Espace', count: availableWidgets.filter(w => w.category === 'Gadget').length },
   ];
 
-  if (!mounted) return null;
-
   return createPortal(
     <div 
       className="nd-modal-overlay" 
@@ -81,6 +76,11 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
 
       {/* Modal — uses same nd-modal base + nd-animate-in */}
       <div 
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Bibliothèque de widgets"
+        tabIndex={-1}
         className="nd-modal nd-animate-in" 
         onClick={e => e.stopPropagation()}
         style={{ 
@@ -110,6 +110,7 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
             </p>
           </div>
           <button 
+            aria-label="Fermer"
             onClick={onClose} 
             style={{ 
               background: 'rgba(255,255,255,0.03)', 

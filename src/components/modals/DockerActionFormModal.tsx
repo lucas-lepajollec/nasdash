@@ -5,6 +5,7 @@ import { X, Search, Check, Trash2, Server, Power, Play, RefreshCw, Layers } from
 import { useConfig } from '@/hooks/useConfig';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
 import CustomSelect from '@/components/shared/CustomSelect';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface DockerActionFormModalProps {
   action?: DockerActionConfig;
@@ -21,6 +22,7 @@ const ACTION_ICONS = [
 ];
 
 export default function DockerActionFormModal({ action, onClose, onSave, onDelete }: DockerActionFormModalProps) {
+  const dialogRef = useDialogAccessibility(onClose);
   const { config } = useConfig();
   const [name, setName] = useState(action?.name || '');
   const [icon, setIcon] = useState(action?.icon || 'Play');
@@ -30,12 +32,6 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
   const [searchQuery, setSearchQuery] = useState('');
   const [availableContainers, setAvailableContainers] = useState<{ hostId: string; hostName: string; container: DockerContainer }[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   useEffect(() => {
     // Fetch all containers from all hosts
@@ -97,10 +93,10 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 450, maxWidth: '90vw' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={action ? 'Modifier une action Docker' : 'Ajouter une action Docker'} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 450, maxWidth: '90vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{action ? 'Modifier' : 'Ajouter'} une action Docker</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
+          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
             <X size={16} />
           </button>
         </div>

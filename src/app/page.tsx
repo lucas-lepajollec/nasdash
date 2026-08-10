@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, Suspense, lazy, useEffect } from 'react';
+import { useState, useCallback, Suspense, lazy, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import TabDock from '@/components/layout/TabDock';
 import HomeTab from '@/components/tabs/home/HomeTab';
@@ -45,6 +45,7 @@ export default function Shell() {
   const [editModeState, setEditModeState] = useState(false);
   const editMode = user?.role === 'admin' && editModeState;
   const [widgetModalOpen, setWidgetModalOpen] = useState(false);
+  const settingsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSensitive, setShowSensitive] = useState(true);
   const toggleTheme = useCallback(() => {
@@ -176,6 +177,9 @@ export default function Shell() {
 
       {/* Main content area */}
       <div className="nd-shell-content">
+        <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+          {title}
+        </h1>
         <Header
           title={title}
           titleLogo={config?.settings?.titleLogo}
@@ -186,7 +190,10 @@ export default function Shell() {
           onSearchChange={setSearchQuery}
           editMode={editMode}
           onToggleEdit={() => setEditModeState(prev => !prev)}
-          onOpenSettings={() => setSettingsModal({ open: true })}
+          onOpenSettings={(trigger) => {
+            settingsTriggerRef.current = trigger ?? null;
+            setSettingsModal({ open: true });
+          }}
           onAddCategory={() => setCategoryModal({ open: true })} 
           onAddSlot={() => activeTab === 'widgets' ? addWidgetsSlot() : addSlot()}
           onAddWidget={() => setWidgetModalOpen(true)}
@@ -242,7 +249,13 @@ export default function Shell() {
       </div>
 
       {settingsModal.open && user?.role === 'admin' && (
-        <SettingsModal onClose={() => setSettingsModal({ open: false })} />
+        <SettingsModal onClose={() => {
+          setSettingsModal({ open: false });
+        }} restoreFocus={() => {
+          if (settingsTriggerRef.current?.isConnected) return settingsTriggerRef.current;
+          return Array.from(document.querySelectorAll<HTMLButtonElement>('button[title="Paramètres globaux"]'))
+            .find(button => button.getClientRects().length > 0) ?? null;
+        }} />
       )}
 
       {serviceModal.open && user?.role === 'admin' && (

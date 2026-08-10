@@ -17,7 +17,7 @@ interface HeaderProps {
   onSearchChange: (q: string) => void;
   editMode: boolean;
   onToggleEdit: () => void;
-  onOpenSettings: () => void;
+  onOpenSettings: (trigger?: HTMLButtonElement) => void;
   onAddCategory: () => void;
   onAddSlot?: () => Promise<void> | void;
   secretMode: boolean;
@@ -143,12 +143,14 @@ export default function Header(props: HeaderProps) {
         <Search size={13} className="nd-search-icon" />
         <input
           type="text"
+          aria-label="Rechercher dans le tableau de bord"
           value={props.searchQuery}
           onChange={(e) => props.onSearchChange(e.target.value)}
           placeholder="Rechercher..."
         />
         {props.searchQuery && (
           <button
+            aria-label="Effacer la recherche"
             onClick={() => props.onSearchChange('')}
             style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
@@ -177,6 +179,7 @@ export default function Header(props: HeaderProps) {
           return (
             <button
               key={tab.id}
+              aria-current={isActive ? 'page' : undefined}
               onClick={() => props.onSwitchTab?.(tab.id)}
               className="nd-btn-menu-link"
               style={{
@@ -333,7 +336,7 @@ export default function Header(props: HeaderProps) {
             >
               <Pencil size={14} />
             </button>
-            <button className="nd-btn" onClick={props.onOpenSettings} title="Paramètres globaux">
+            <button className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title="Paramètres globaux">
               <Settings size={14} />
             </button>
           </>
@@ -620,7 +623,7 @@ export default function Header(props: HeaderProps) {
                     <Pencil size={18} />
                     <span style={{ fontSize: '0.75rem' }}>Éditer</span>
                   </button>
-                  <button className="nd-btn" onClick={() => { props.onOpenSettings(); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                  <button className="nd-btn" onClick={(event) => { props.onOpenSettings(event.currentTarget); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                     <Settings size={18} />
                     <span style={{ fontSize: '0.75rem' }}>Paramètres</span>
                   </button>
