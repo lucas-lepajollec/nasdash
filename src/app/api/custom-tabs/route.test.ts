@@ -11,7 +11,7 @@ vi.mock('@/lib/customTabs', () => ({
 
 import { checkAdmin } from '@/lib/auth';
 import { readCustomTabs, writeCustomTabs } from '@/lib/customTabs';
-import { POST } from './route';
+import { POST, PUT } from './route';
 
 const mockedCheckAdmin = vi.mocked(checkAdmin);
 const mockedReadCustomTabs = vi.mocked(readCustomTabs);
@@ -41,5 +41,40 @@ describe('custom tab persistence', () => {
     expect(await response.json()).toEqual({
       error: 'Impossible d’enregistrer les onglets personnalisés.',
     });
+  });
+
+  it('keeps accepting layout-only saves sent by the live custom tab renderer', async () => {
+    mockedWriteCustomTabs.mockReturnValue(true);
+    mockedReadCustomTabs.mockReturnValue({
+      tabs: [{
+        id: 'custom_status',
+        name: 'Status',
+        icon: '📊',
+        description: 'Monitoring',
+        isCustom: true,
+      }],
+      layouts: { custom_status: { id: 'custom_status', rows: [] } },
+    });
+    const layout = {
+      id: 'custom_status',
+      rows: [{
+        id: 'row_1',
+        type: 'full',
+        columns: [{
+          id: 'column_1',
+          width: 100,
+          widgets: [{ id: 'widget_1', type: 'clock', props: { timezone: 'Europe/Paris' } }],
+        }],
+      }],
+    };
+
+    const response = await PUT(new Request('http://localhost/api/custom-tabs', {
+      method: 'PUT',
+      body: JSON.stringify({ id: 'custom_status', layout }),
+    }) as never);
+
+    expect(response.status).toBe(200);
+    expect(mockedWriteCustomTabs).toHaveBeenCalledOnce();
+    expect(mockedWriteCustomTabs.mock.calls[0][0].layouts.custom_status.rows).toHaveLength(1);
   });
 });

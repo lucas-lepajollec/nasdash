@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { DashboardConfig, Category, Service, Device } from '@/lib/types';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
+import { fetchPingBatches } from '@/lib/pingBatches';
 
 export interface DashboardContextType {
   config: DashboardConfig | null;
@@ -254,26 +255,25 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const urlsArray = Array.from(urlsToPing);
     if (urlsArray.length === 0) return;
 
+    let cancelled = false;
+    let nextRun: ReturnType<typeof setTimeout> | undefined;
+
     const runBatchPing = async () => {
       try {
-        const res = await fetch('/api/ping/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ urls: urlsArray })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setPingResults(data);
-        }
+        const results = await fetchPingBatches(urlsArray);
+        if (!cancelled) setPingResults(results);
       } catch (err) {
         console.error('Failed to run batch ping:', err);
+      } finally {
+        if (!cancelled) nextRun = setTimeout(runBatchPing, 30000);
       }
     };
 
     runBatchPing();
-    const intervalId = setInterval(runBatchPing, 30000);
-
-    return () => clearInterval(intervalId);
+    return () => {
+      cancelled = true;
+      if (nextRun) clearTimeout(nextRun);
+    };
   }, [config, user]);
 
   // API operations
