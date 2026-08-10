@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readUsers, writeUsers, checkAdmin, hashPassword, getSessionFromRequest } from '@/lib/auth';
+import {
+  RequestValidationError,
+  readEnum,
+  readJsonObject,
+  readString,
+  readStringArray,
+} from '@/lib/requestValidation';
+
+const MAX_USERS_BODY_BYTES = 16 * 1024;
+
+function validateUsername(username: string): string {
+  if (/[\u0000-\u001F\u007F]/.test(username)) {
+    throw new RequestValidationError('Le nom d’utilisateur contient des caractères invalides.');
+  }
+  return username;
+}
 
 function normalizePermissionList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -32,15 +48,12 @@ export async function POST(req: NextRequest) {
 
 
   try {
-    const { username, password, role, allowedTabs, allowedWidgets } = await req.json();
-
-    if (!username || !role) {
-      return NextResponse.json({ error: 'Informations incomplètes.' }, { status: 400 });
-    }
-
-    if (role !== 'admin' && role !== 'viewer') {
-      return NextResponse.json({ error: 'Rôle invalide.' }, { status: 400 });
-    }
+    const body = await readJsonObject(req, MAX_USERS_BODY_BYTES);
+    const username = validateUsername(readString(body, 'username', { required: true, maxLength: 64 })!);
+    const password = readString(body, 'password', { maxLength: 1024, trim: false });
+    const role = readEnum(body, 'role', ['admin', 'viewer'] as const, true)!;
+    const allowedTabs = readStringArray(body, 'allowedTabs', { maxItems: 100, maxItemLength: 128 }) || [];
+    const allowedWidgets = readStringArray(body, 'allowedWidgets', { maxItems: 100, maxItemLength: 128 }) || [];
 
     const users = readUsers();
     const userIndex = users.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
@@ -95,6 +108,9 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ success: true });
   } catch (e) {
+    if (e instanceof RequestValidationError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     console.error('Erreur API Users (POST):', e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
@@ -112,6 +128,7 @@ export async function DELETE(req: NextRequest) {
     if (!username) {
       return NextResponse.json({ error: 'Nom d\'utilisateur manquant.' }, { status: 400 });
     }
+    validateUsername(readString({ username }, 'username', { required: true, maxLength: 64 })!);
 
     if (username.toLowerCase() === 'admin' || username.toLowerCase() === 'viewer') {
       return NextResponse.json({ error: 'Les utilisateurs système par défaut (admin et viewer) ne peuvent pas être supprimés.' }, { status: 400 });
@@ -142,6 +159,9 @@ export async function DELETE(req: NextRequest) {
     }
     return NextResponse.json({ success: true });
   } catch (e) {
+    if (e instanceof RequestValidationError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     console.error('Erreur API Users (DELETE):', e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }

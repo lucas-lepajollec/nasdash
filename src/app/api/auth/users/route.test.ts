@@ -31,14 +31,15 @@ describe('user session revocation', () => {
   });
 
   it('increments the session version when permissions change', async () => {
-    const request = {
-      json: async () => ({
+    const request = new Request('http://localhost/api/auth/users', {
+      method: 'POST',
+      body: JSON.stringify({
         username: 'alice',
         role: 'viewer',
         allowedTabs: ['dashboard', 'docker'],
         allowedWidgets: ['calendar'],
       }),
-    };
+    });
 
     const response = await POST(request as never);
 
@@ -52,18 +53,36 @@ describe('user session revocation', () => {
 
   it('surfaces a persistence failure instead of reporting success', async () => {
     mockedWriteUsers.mockReturnValue(false);
-    const request = {
-      json: async () => ({
+    const request = new Request('http://localhost/api/auth/users', {
+      method: 'POST',
+      body: JSON.stringify({
         username: 'alice',
         role: 'viewer',
         allowedTabs: ['dashboard'],
         allowedWidgets: ['calendar'],
       }),
-    };
+    });
 
     const response = await POST(request as never);
 
     expect(response.status).toBe(500);
     expect(await response.json()).toEqual({ error: 'Impossible d’enregistrer les utilisateurs.' });
+  });
+
+  it('rejects an oversized body before reading or changing users', async () => {
+    const request = new Request('http://localhost/api/auth/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: 'alice',
+        role: 'viewer',
+        allowedTabs: ['x'.repeat(17 * 1024)],
+      }),
+    });
+
+    const response = await POST(request as never);
+
+    expect(response.status).toBe(413);
+    expect(mockedReadUsers).not.toHaveBeenCalled();
+    expect(mockedWriteUsers).not.toHaveBeenCalled();
   });
 });

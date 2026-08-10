@@ -6,8 +6,44 @@ import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
 import { Category, Service, Device } from '@/lib/types';
-import fs from 'fs';
-import path from 'path';
+import {
+  RequestValidationError,
+  assertSafeIdentifier,
+  readEnum,
+  readJsonObject,
+} from '@/lib/requestValidation';
+
+const MAX_CONFIG_BODY_BYTES = 2 * 1024 * 1024;
+const CONFIG_POST_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
+const CONFIG_PUT_TYPES = [
+  'reorder',
+  'reorderDevices',
+  'category',
+  'service',
+  'settings',
+  'device',
+  'homeWidgetProps',
+  'reorderDockerActions',
+  'dockerAction',
+  'localEvent',
+] as const;
+const CONFIG_DELETE_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
+
+async function parseConfigBody<const T extends readonly string[]>(req: NextRequest, allowedTypes: T) {
+  try {
+    const body = await readJsonObject(req, MAX_CONFIG_BODY_BYTES) as unknown as Awaited<ReturnType<NextRequest['json']>>;
+    const type = readEnum(body, 'type', allowedTypes, true)!;
+    return { ok: true as const, body, type };
+  } catch (error: unknown) {
+    if (error instanceof RequestValidationError) {
+      return {
+        ok: false as const,
+        response: NextResponse.json({ error: error.message }, { status: error.status }),
+      };
+    }
+    throw error;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const config = readConfig();
@@ -25,9 +61,11 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
 
-  const body = await req.json();
+  const parsed = await parseConfigBody(req, CONFIG_POST_TYPES);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body;
   const config = readConfig();
-  const { type } = body;
+  const type = parsed.type;
 
   if (type === 'category') {
     const newCategory: Category = {
@@ -202,9 +240,11 @@ export async function PUT(req: NextRequest) {
   if (authError) return authError;
 
 
-  const body = await req.json();
+  const parsed = await parseConfigBody(req, CONFIG_PUT_TYPES);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body;
   const config = readConfig();
-  const { type } = body;
+  const type = parsed.type;
 
   if (type === 'reorder') {
     config.categories = body.categories;
@@ -545,10 +585,22 @@ export async function DELETE(req: NextRequest) {
 
 
   const { searchParams } = new URL(req.url);
-  const type = searchParams.get('type');
-  const id = searchParams.get('id');
+  const rawType = searchParams.get('type');
+  const rawId = searchParams.get('id');
 
-  if (!type || !id) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
+  if (!rawType || !rawId) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
+
+  let type: typeof CONFIG_DELETE_TYPES[number];
+  let id: string;
+  try {
+    type = readEnum({ type: rawType }, 'type', CONFIG_DELETE_TYPES, true)!;
+    id = assertSafeIdentifier(rawId);
+  } catch (error: unknown) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 
   const config = readConfig();
 

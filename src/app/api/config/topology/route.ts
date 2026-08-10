@@ -2,8 +2,29 @@ import { NextResponse } from 'next/server';
 import { readConfig, writeTopology } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import { RequestValidationError, isJsonObject, readJsonObject } from '@/lib/requestValidation';
 
 export const dynamic = 'force-dynamic';
+const MAX_TOPOLOGY_BODY_BYTES = 1024 * 1024;
+
+function validateTopology(value: unknown) {
+  if (!isJsonObject(value)) {
+    throw new RequestValidationError('La topologie doit être un objet.');
+  }
+
+  const limits = { nodes: 500, groups: 200, connections: 2000 } as const;
+  for (const [key, limit] of Object.entries(limits)) {
+    const collection = value[key];
+    if (!Array.isArray(collection) || collection.some(item => !isJsonObject(item))) {
+      throw new RequestValidationError(`Le champ « ${key} » doit être une liste d’objets.`);
+    }
+    if (collection.length > limit) {
+      throw new RequestValidationError(`Le champ « ${key} » contient trop d’éléments.`, 413);
+    }
+  }
+
+  return value;
+}
 
 export async function GET(req: Request) {
   const config = readConfig();
@@ -23,13 +44,16 @@ export async function PUT(req: Request) {
 
 
   try {
-    const body = await req.json();
+    const body = await readJsonObject(req, MAX_TOPOLOGY_BODY_BYTES);
     const topology = body.networkTopology !== undefined ? body.networkTopology : body;
-    
-    writeTopology(topology);
+
+    writeTopology(validateTopology(topology));
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    if (e instanceof RequestValidationError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     console.error('Erreur API Topology PUT:', e);
-    return NextResponse.json({ error: e.message || 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }
