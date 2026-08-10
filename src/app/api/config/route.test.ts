@@ -64,6 +64,30 @@ describe('configuration write contracts', () => {
     expect(mockedWriteConfig.mock.calls[0][0].settings.networkTopology?.connections).toHaveLength(1000);
   });
 
+  it('persists the light or dark mode sent by the appearance UI', async () => {
+    const response = await PUT(new Request('http://localhost/api/config', {
+      method: 'PUT',
+      body: JSON.stringify({ type: 'settings', mode: 'light' }),
+    }) as never);
+
+    expect(response.status).toBe(200);
+    expect(mockedWriteConfig).toHaveBeenCalledOnce();
+    expect(mockedWriteConfig.mock.calls[0][0].settings.mode).toBe('light');
+  });
+
+  it('rejects malformed deep settings without writing partial configuration', async () => {
+    const response = await PUT(new Request('http://localhost/api/config', {
+      method: 'PUT',
+      body: JSON.stringify({
+        type: 'settings',
+        panels: { 'home-left': { widgets: 'not-an-array' } },
+      }),
+    }) as never);
+
+    expect(response.status).toBe(400);
+    expect(mockedWriteConfig).not.toHaveBeenCalled();
+  });
+
   it('returns a validation error instead of crashing on a malformed device reorder', async () => {
     const response = await PUT(new Request('http://localhost/api/config', {
       method: 'PUT',

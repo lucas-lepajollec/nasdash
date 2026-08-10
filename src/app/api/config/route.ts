@@ -341,6 +341,7 @@ export async function PUT(req: NextRequest) {
     if (body.hiddenTabs !== undefined) config.settings.hiddenTabs = body.hiddenTabs;
     if (body.tabIcons !== undefined) config.settings.tabIcons = body.tabIcons;
     if (body.theme !== undefined) config.settings.theme = body.theme;
+    if (body.mode !== undefined) config.settings.mode = body.mode;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
     if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
     if (body.panels !== undefined) config.settings.panels = body.panels;

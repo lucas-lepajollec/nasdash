@@ -456,6 +456,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       const settingsUpdates: any = {};
 
       Object.keys(updates).forEach(key => {
+        if (key === 'type') {
+          return;
+        }
         if (key === 'appearanceProfiles' || key === 'categories' || key === 'devices' || key === 'dockerHosts' || key === 'dockerActions' || key === 'localEvents') {
           (next as any)[key] = updates[key];
         } else {
@@ -472,13 +475,20 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     });
 
     try {
-      await fetchWithAuth('/api/config', {
+      const response = await fetchWithAuth('/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'settings', ...updates }),
       });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || `Échec de sauvegarde de la configuration (${response.status}).`);
+      }
     } catch (err) {
       console.warn('Failed to persist config update:', err);
+      // The UI updates optimistically. Restore the last persisted state when
+      // validation, authentication, persistence or the network rejects it.
+      await fetchConfig();
     }
   };
 

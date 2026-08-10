@@ -7,6 +7,7 @@ import {
   readEnum,
   readObject,
   readString,
+  readStringArray,
 } from './requestValidation';
 import { validateDockerHostUrl } from './dockerClient';
 
@@ -22,6 +23,32 @@ const CATEGORY_LAYOUTS = [
 const DEVICE_API_TYPES = ['homeassistant', 'proxmox', 'custom', 'glances', 'lhm'] as const;
 const DEVICE_STAT_STYLES = ['horizontal', 'vertical', 'graph', 'circle'] as const;
 const DOCKER_ACTION_TYPES = ['start', 'stop', 'switch'] as const;
+const NETWORK_NODE_TYPES = ['infra', 'device', 'netsvc', 'stdsvc'] as const;
+const CONNECTION_TYPES = ['directional', 'bidirectional'] as const;
+const CONNECTION_PORTS = ['auto', 'top', 'bottom', 'left', 'right'] as const;
+const HEADER_DESKTOP_ELEMENTS = ['title', 'search', 'menu', 'none'] as const;
+const HEADER_MOBILE_ELEMENTS = ['title', 'search', 'none'] as const;
+
+const SETTINGS_BOOLEAN_KEYS = [
+  'showMonitor', 'hideDock', 'hideWidgetTitles', 'hideCategoryTitles',
+  'enablePerfMonitor', 'dockerContainersAutoScroll', 'allowDockerActions',
+  'hideHeaderTitle', 'hideHeaderSearch', 'hideHeaderMenu', 'showHeaderMenuIcons',
+  'showPingDetails',
+] as const;
+
+const SETTINGS_STRING_KEYS: ReadonlyArray<readonly [string, number]> = [
+  ['title', 200], ['titleMobile', 200], ['tailscaleTailnet', 512],
+  ['tailscaleClientId', 2_048], ['tailscaleClientSecret', 8_192],
+  ['theme', 128], ['calendarUrl', 4_096], ['clockTimezone', 256],
+  ['globalFont', 128], ['emojiTheme', 128], ['mobileTheme', 128],
+  ['mobileGlobalFont', 128], ['mobileTitleAnimation', 128],
+  ['activeWeatherLocationId', 128],
+] as const;
+
+const SETTINGS_LARGE_STRING_KEYS: ReadonlyArray<readonly [string, number]> = [
+  ['titleLogo', 1_900_000], ['backgroundImage', 1_900_000],
+  ['mobileWallpaper', 1_900_000], ['customCss', 1_000_000],
+] as const;
 
 type MutationMethod = 'POST' | 'PUT';
 
@@ -93,6 +120,244 @@ function assertBoundedJson(value: unknown, label: string, depth = 0): void {
       throw new RequestValidationError(`Le champ « ${label} » contient une propriété invalide.`);
     }
     assertBoundedJson(nestedValue, label, depth + 1);
+  }
+}
+
+function requireObject(value: unknown, label: string): JsonObject {
+  if (!isJsonObject(value)) throw new RequestValidationError(`Le champ « ${label} » doit être un objet.`);
+  return value;
+}
+
+function validateStringRecord(value: unknown, label: string, maxEntries: number, maxValueLength: number): void {
+  const record = requireObject(value, label);
+  const entries = Object.entries(record);
+  if (entries.length > maxEntries) throw new RequestValidationError(`Le champ « ${label} » contient trop de propriétés.`, 413);
+  for (const [key, entryValue] of entries) {
+    assertSafeIdentifier(key);
+    if (typeof entryValue !== 'string' || entryValue.length > maxValueLength) {
+      throw new RequestValidationError(`Le champ « ${label} » contient une valeur invalide.`);
+    }
+  }
+}
+
+function validateHeaderLayouts(body: JsonObject): void {
+  if (body.headerLayoutDesktop !== undefined) {
+    const layout = requireObject(body.headerLayoutDesktop, 'headerLayoutDesktop');
+    readEnum(layout, 'left', HEADER_DESKTOP_ELEMENTS);
+    readEnum(layout, 'center', HEADER_DESKTOP_ELEMENTS);
+    readEnum(layout, 'right', HEADER_DESKTOP_ELEMENTS);
+    readEnum(layout, 'splitMenuAround', ['title', 'search', 'none'] as const);
+  }
+  if (body.headerLayoutMobile !== undefined) {
+    const layout = requireObject(body.headerLayoutMobile, 'headerLayoutMobile');
+    readEnum(layout, 'left', HEADER_MOBILE_ELEMENTS);
+    readEnum(layout, 'center', HEADER_MOBILE_ELEMENTS);
+  }
+}
+
+const TAB_WIDGET_BOOLEAN_KEYS = [
+  'hideDockerActions', 'hideTailscaleStatus', 'hideDevices', 'hideQuickStats',
+  'hideClock', 'hideCalendar', 'hideWeather', 'hideNetworkGraph',
+  'hideDockerContainers', 'hideWidgetsSidebar', 'hideLeftSidebar',
+  'hideRightSidebar', 'hideBottomPanel',
+] as const;
+
+function validateTabs(value: unknown): void {
+  const tabs = requireObject(value, 'tabs');
+  if (Object.keys(tabs).length > 32) throw new RequestValidationError('Le champ « tabs » contient trop de propriétés.');
+
+  for (const [tabId, rawTab] of Object.entries(tabs)) {
+    assertSafeIdentifier(tabId);
+    const tab = requireObject(rawTab, `tabs.${tabId}`);
+    assertBoundedJson(tab, `tabs.${tabId}`);
+    for (const key of TAB_WIDGET_BOOLEAN_KEYS) readBoolean(tab, key);
+    readEnum(tab, 'leftSidebarPosition', ['left', 'right'] as const);
+    readEnum(tab, 'rightSidebarPosition', ['left', 'right'] as const);
+    readEnum(tab, 'widgetsSidebarPosition', ['left', 'right'] as const);
+    readEnum(tab, 'dockerPanelPosition', ['left', 'right'] as const);
+    readEnum(tab, 'networksPanelPosition', ['left', 'right'] as const);
+    readEnum(tab, 'cardSize', ['auto', 'standard', 'compact', 'mini'] as const);
+    readString(tab, 'bottomPanelTitle', { maxLength: 200, trim: false });
+  }
+}
+
+function validateWidget(value: unknown, label: string, requireOrder: boolean): void {
+  const widget = requireObject(value, label);
+  readIdentifier(widget);
+  readString(widget, 'type', { required: true, maxLength: 128 });
+  readNumber(widget, 'height', { min: 0, max: 100_000 });
+  const order = readNumber(widget, 'order', { min: -10_000, max: 10_000, integer: true });
+  if (requireOrder && order === undefined) {
+    throw new RequestValidationError(`Le champ « ${label}.order » est requis.`);
+  }
+  if (widget.props !== undefined) assertBoundedJson(widget.props, `${label}.props`);
+}
+
+function validateHomeWidgets(value: unknown): void {
+  if (!Array.isArray(value)) throw new RequestValidationError('Le champ « homeWidgets » doit être une liste.');
+  if (value.length > 500) throw new RequestValidationError('Le champ « homeWidgets » contient trop d’éléments.', 413);
+  value.forEach((widget, index) => validateWidget(widget, `homeWidgets.${index}`, true));
+}
+
+function validatePanels(value: unknown): void {
+  const panels = requireObject(value, 'panels');
+  const entries = Object.entries(panels);
+  if (entries.length > 100) throw new RequestValidationError('Le champ « panels » contient trop de panneaux.', 413);
+  for (const [panelId, rawPanel] of entries) {
+    assertSafeIdentifier(panelId);
+    const panel = requireObject(rawPanel, `panels.${panelId}`);
+    const widgets = readArray(panel, 'widgets', 500, true)!;
+    widgets.forEach((widget, index) => validateWidget(widget, `panels.${panelId}.widgets.${index}`, false));
+  }
+}
+
+function validateNetworkTopology(value: unknown): void {
+  const topology = requireObject(value, 'networkTopology');
+  const nodes = readArray(topology, 'nodes', 2_000, true)!;
+  const groups = readArray(topology, 'groups', 500, true)!;
+  const connections = readArray(topology, 'connections', 10_000, true)!;
+
+  nodes.forEach((rawNode, index) => {
+    const node = requireObject(rawNode, `networkTopology.nodes.${index}`);
+    readIdentifier(node);
+    readString(node, 'name', { required: true, maxLength: 200 });
+    readEnum(node, 'type', NETWORK_NODE_TYPES, true);
+    readString(node, 'icon', { maxLength: 128, trim: false });
+    readString(node, 'ip', { maxLength: 2_048, trim: false });
+    for (const key of ['groupId', 'linkedServiceId', 'linkedDeviceId', 'linkedContainerId'] as const) {
+      if (node[key] !== undefined) readIdentifier(node, key);
+    }
+    const ports = readArray(node, 'ports', 1_000);
+    ports?.forEach(port => {
+      if (typeof port !== 'number' || !Number.isInteger(port) || port < 0 || port > 65_535) {
+        throw new RequestValidationError('La topologie contient un port invalide.');
+      }
+    });
+  });
+
+  groups.forEach((rawGroup, index) => {
+    const group = requireObject(rawGroup, `networkTopology.groups.${index}`);
+    readIdentifier(group);
+    readString(group, 'name', { required: true, maxLength: 200 });
+    readEnum(group, 'type', NETWORK_NODE_TYPES, true);
+    readBoolean(group, 'mergeIncomingLinks');
+  });
+
+  connections.forEach((rawConnection, index) => {
+    const connection = requireObject(rawConnection, `networkTopology.connections.${index}`);
+    readIdentifier(connection);
+    readIdentifier(connection, 'fromId');
+    readIdentifier(connection, 'toId');
+    readString(connection, 'label', { maxLength: 500, trim: false });
+    readEnum(connection, 'type', CONNECTION_TYPES);
+    readEnum(connection, 'fromPort', CONNECTION_PORTS);
+    readEnum(connection, 'toPort', CONNECTION_PORTS);
+  });
+}
+
+function validateWeatherLocation(value: unknown, requireId: boolean, label: string): void {
+  const location = requireObject(value, label);
+  if (requireId) readIdentifier(location);
+  const latitude = readNumber(location, 'lat', { min: -90, max: 90 });
+  const longitude = readNumber(location, 'lon', { min: -180, max: 180 });
+  if (latitude === undefined || longitude === undefined) {
+    throw new RequestValidationError(`Les coordonnées du champ « ${label} » sont requises.`);
+  }
+  readString(location, 'name', { required: true, maxLength: 200 });
+}
+
+function validateAppearanceProfiles(value: unknown, label: string): void {
+  if (!Array.isArray(value)) throw new RequestValidationError(`Le champ « ${label} » doit être une liste.`);
+  if (value.length > 100) throw new RequestValidationError(`Le champ « ${label} » contient trop d’éléments.`, 413);
+  value.forEach((rawProfile, index) => {
+    const profile = requireObject(rawProfile, `${label}.${index}`);
+    readIdentifier(profile);
+    readString(profile, 'name', { required: true, maxLength: 200 });
+    const settings = requireObject(profile.settings, `${label}.${index}.settings`);
+    assertBoundedJson(settings, `${label}.${index}.settings`);
+    validateSettingsPayload(settings, false);
+  });
+}
+
+function validateDynamicWidgetSetting(key: string, value: unknown): void {
+  if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
+    throw new RequestValidationError(`Le réglage dynamique « ${key} » est invalide.`);
+  }
+  if (key.startsWith('hide')) {
+    if (typeof value !== 'boolean') throw new RequestValidationError(`Le champ « ${key} » doit être un booléen.`);
+  } else if (key.endsWith('Sidebar')) {
+    if (typeof value !== 'boolean' && (typeof value !== 'string' || value.length > 32)) {
+      throw new RequestValidationError(`Le champ « ${key} » contient une position invalide.`);
+    }
+  } else if (key.endsWith('Order')) {
+    if (typeof value === 'number') {
+      if (!Number.isInteger(value) || value < -10_000 || value > 10_000) {
+        throw new RequestValidationError(`Le champ « ${key} » contient un ordre invalide.`);
+      }
+    } else if (Array.isArray(value)) {
+      if (value.length > 1_000 || value.some(item =>
+        (typeof item !== 'string' && typeof item !== 'number')
+        || (typeof item === 'string' && item.length > 128)
+        || (typeof item === 'number' && !Number.isFinite(item)))) {
+        throw new RequestValidationError(`Le champ « ${key} » contient un ordre invalide.`);
+      }
+    } else {
+      throw new RequestValidationError(`Le champ « ${key} » contient un ordre invalide.`);
+    }
+  } else if (key.endsWith('Props')) {
+    assertBoundedJson(value, key);
+  }
+}
+
+function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
+  for (const [key, maxLength] of SETTINGS_STRING_KEYS) readString(body, key, { maxLength, trim: false });
+  for (const [key, maxLength] of SETTINGS_LARGE_STRING_KEYS) readString(body, key, { maxLength, trim: false });
+  for (const key of SETTINGS_BOOLEAN_KEYS) readBoolean(body, key);
+
+  readEnum(body, 'titleFont', ['outfit', 'space-grotesk', 'syne', 'righteous', 'montserrat'] as const);
+  readEnum(body, 'titleAnimation', ['none', 'spotlight-silver'] as const);
+  readEnum(body, 'mode', ['light', 'dark'] as const);
+  readEnum(body, 'dockPosition', ['left', 'right'] as const);
+  readEnum(body, 'categoryTitlePosition', ['inside', 'above'] as const);
+  readEnum(body, 'clockDesign', ['default', 'minimal', 'glow', 'split'] as const);
+  readEnum(body, 'weatherWidgetStyle', ['default', 'currentOnly', 'minimal', 'extended'] as const);
+  readEnum(body, 'dockerContainersStyle', ['standard', 'extended', 'minimalist', 'grid'] as const);
+  readEnum(body, 'pingIndicatorMode', ['none', 'standard_only', 'all'] as const);
+  readEnum(body, 'securityMode', ['public', 'private'] as const);
+
+  readNumber(body, 'totalSlots', { min: 0, max: 10_000, integer: true });
+  readNumber(body, 'widgetsTotalSlots', { min: 0, max: 10_000, integer: true });
+  readNumber(body, 'borderRadius', { min: 0, max: 100 });
+  readNumber(body, 'cardOpacity', { min: 0, max: 1 });
+  readNumber(body, 'mobileBorderRadius', { min: 0, max: 100 });
+  readNumber(body, 'mobileCardOpacity', { min: 0, max: 1 });
+
+  for (const key of ['tabOrder', 'extensionOrder', 'widgetsOrder', 'hiddenTabs', 'hiddenExtensions'] as const) {
+    readStringArray(body, key, { maxItems: 1_000, maxItemLength: 128 });
+  }
+
+  if (body.tabIcons !== undefined) validateStringRecord(body.tabIcons, 'tabIcons', 500, 128);
+  if (body.tabs !== undefined) validateTabs(body.tabs);
+  if (body.panels !== undefined) validatePanels(body.panels);
+  if (body.homeWidgets !== undefined) validateHomeWidgets(body.homeWidgets);
+  if (body.networkTopology !== undefined) validateNetworkTopology(body.networkTopology);
+  validateHeaderLayouts(body);
+
+  if (body.weatherLocation !== undefined) validateWeatherLocation(body.weatherLocation, false, 'weatherLocation');
+  if (body.weatherLocations !== undefined) {
+    if (!Array.isArray(body.weatherLocations)) throw new RequestValidationError('Le champ « weatherLocations » doit être une liste.');
+    if (body.weatherLocations.length > 100) throw new RequestValidationError('Le champ « weatherLocations » contient trop d’éléments.');
+    body.weatherLocations.forEach((location, index) => validateWeatherLocation(location, true, `weatherLocations.${index}`));
+  }
+
+  if (allowProfiles && body.appearanceProfiles !== undefined) validateAppearanceProfiles(body.appearanceProfiles, 'appearanceProfiles');
+  if (allowProfiles && body.mobileAppearanceProfiles !== undefined) validateAppearanceProfiles(body.mobileAppearanceProfiles, 'mobileAppearanceProfiles');
+
+  for (const [key, value] of Object.entries(body)) {
+    const isDynamicHide = key.startsWith('hide') && key !== 'hiddenTabs' && key !== 'hiddenExtensions';
+    if (isDynamicHide || key.endsWith('Sidebar') || key.endsWith('Order') || key.endsWith('Props')) {
+      validateDynamicWidgetSetting(key, value);
+    }
   }
 }
 
@@ -183,6 +448,11 @@ export function validateConfigMutationBody(
   type: string,
   method: MutationMethod,
 ): void {
+  if (type === 'settings') {
+    validateSettingsPayload(body);
+    return;
+  }
+
   if (type === 'reorder') {
     const categories = readArray(body, 'categories', 500, true)!;
     categories.forEach(validateCategory);

@@ -295,7 +295,7 @@ export interface DashboardConfig {
     hideDock?: boolean;
     calendarUrl?: string;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
-    dockerContainersStyle?: 'standard' | 'extended' | 'minimalist';
+    dockerContainersStyle?: 'standard' | 'extended' | 'minimalist' | 'grid'; // grid: legacy demo/config compatibility
     dockerContainersAutoScroll?: boolean;
     allowDockerActions?: boolean;
     securityMode?: 'public' | 'private';

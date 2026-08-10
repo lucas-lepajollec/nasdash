@@ -70,13 +70,28 @@ test.describe.serial('critical self-hosted paths', () => {
 
     await page.waitForTimeout(1_100);
     const update = await page.request.put('/api/config', {
-      data: { type: 'settings', title: 'NASDASH E2E' },
+      data: {
+        type: 'settings',
+        title: 'NASDASH E2E',
+        mode: 'light',
+        headerLayoutMobile: { left: 'title', center: 'search' },
+        tabs: { widgets: { hideClock: false } },
+        weatherLocations: [{ id: 'e2e-paris', lat: 48.8566, lon: 2.3522, name: 'Paris' }],
+        activeWeatherLocationId: 'e2e-paris',
+      },
     });
     expect(update.status()).toBe(200);
 
     const persisted = await page.request.get('/api/config');
     expect(persisted.status()).toBe(200);
-    expect((await persisted.json()).settings.title).toBe('NASDASH E2E');
+    expect((await persisted.json()).settings).toMatchObject({
+      title: 'NASDASH E2E',
+      mode: 'light',
+      headerLayoutMobile: { left: 'title', center: 'search' },
+      tabs: { widgets: { hideClock: false } },
+      weatherLocations: [{ id: 'e2e-paris', lat: 48.8566, lon: 2.3522, name: 'Paris' }],
+      activeWeatherLocationId: 'e2e-paris',
+    });
   });
 
   test('admin can persist a custom-tab layout through its real API contract', async () => {
