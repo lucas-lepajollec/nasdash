@@ -3,9 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import { safeWriteFileSync } from './config';
 import { NextResponse } from 'next/server';
+import { getDataPath } from './dataDirectory';
 
-const USERS_PATH = path.join(process.cwd(), 'data', 'users.json');
-const SECRET_FILE = path.join(process.cwd(), 'data', 'jwt.secret');
+const USERS_PATH = getDataPath('users.json');
+const SECRET_FILE = getDataPath('jwt.secret');
 
 // Utiliser une clé persistante ou en générer une nouvelle à chaque démarrage
 const globalAny: any = global;

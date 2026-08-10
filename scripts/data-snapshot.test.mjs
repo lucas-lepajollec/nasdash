@@ -1,8 +1,15 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { createDataBackup, restoreDataBackup } from './data-snapshot.mjs';
+import { afterEach, describe, expect, it } from 'vitest';
+import { createDataBackup, getDefaultDataDirectory, restoreDataBackup } from './data-snapshot.mjs';
+
+const previousDataDirectory = process.env.NASDASH_DATA_DIR;
+
+afterEach(() => {
+  if (previousDataDirectory === undefined) delete process.env.NASDASH_DATA_DIR;
+  else process.env.NASDASH_DATA_DIR = previousDataDirectory;
+});
 
 function withTemporaryDirectory(run) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nasdash-snapshot-'));
@@ -14,6 +21,11 @@ function withTemporaryDirectory(run) {
 }
 
 describe('data backup and restore', () => {
+  it('uses the configured isolated data directory by default', () => {
+    process.env.NASDASH_DATA_DIR = path.join('.e2e', 'backup-target');
+    expect(getDefaultDataDirectory()).toBe(path.resolve('.e2e', 'backup-target'));
+  });
+
   it('backs up and restores JSON, secrets, and uploaded logos', () => {
     withTemporaryDirectory(directory => {
       const data = path.join(directory, 'data');

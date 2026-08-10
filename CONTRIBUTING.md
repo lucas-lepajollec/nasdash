@@ -24,6 +24,18 @@ Welcome to the NasDash project! We'd love your help to make this the ultimate ho
    ```
    NasDash will be running at `http://localhost:2499`.
 
+## Testing
+
+Before opening a pull request, run the unit/API suite and the isolated browser suite:
+
+```bash
+npm test
+npx playwright install chromium
+npm run test:e2e
+```
+
+The browser suite uses disposable data and can run beside the normal development server. See [TESTING.md](TESTING.md) for the covered paths and production-mode command.
+
 ### Note on Testing Docker Features
 If you are developing features related to the Docker integration, we highly recommend spinning up a local `docker-socket-proxy` container as described in the README, rather than exposing your own host's Docker socket directly to the dev environment.
 

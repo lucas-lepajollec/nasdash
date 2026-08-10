@@ -81,8 +81,8 @@ function LoginForm() {
 
       // Recharger pour que le ConfigProvider récupère la session
       window.location.href = redirectTo;
-    } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue lors de la connexion.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion.');
     } finally {
       setLoading(false);
     }
@@ -184,10 +184,11 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Nom d'utilisateur
+            <label htmlFor="login-username" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Nom d&apos;utilisateur
             </label>
             <input
+              id="login-username"
               type="text"
               className="nd-input"
               value={username}
@@ -210,10 +211,11 @@ function LoginForm() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label htmlFor="login-password" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Mot de passe
             </label>
             <input
+              id="login-password"
               type="password"
               className="nd-input"
               value={password}

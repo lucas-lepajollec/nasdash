@@ -4,8 +4,9 @@ import https from 'https';
 import { Category, DashboardConfig, LocalCalendarEvent, NetworkTopology } from './types';
 import { encrypt, decrypt } from './crypto';
 import { migrateLegacySplitFiles } from './configMigration';
+import { getDataDirectory } from './dataDirectory';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = getDataDirectory();
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const SERVICES_PATH = path.join(DATA_DIR, 'services.json');
 const TOPOLOGY_PATH = path.join(DATA_DIR, 'topology.json');

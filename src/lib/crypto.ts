@@ -2,8 +2,9 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { safeWriteFileSync } from './config';
+import { getDataPath } from './dataDirectory';
 
-const KEY_FILE = path.join(process.cwd(), 'data', 'encryption.key');
+const KEY_FILE = getDataPath('encryption.key');
 
 /**
  * Obtient ou génère une clé de chiffrement stable persistée sur le disque

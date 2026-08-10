@@ -4,6 +4,13 @@ import { pathToFileURL } from 'node:url';
 
 const FORMAT_VERSION = 1;
 
+export function getDefaultDataDirectory() {
+  const configuredDirectory = process.env.NASDASH_DATA_DIR?.trim();
+  return configuredDirectory
+    ? path.resolve(configuredDirectory)
+    : path.join(process.cwd(), 'data');
+}
+
 function timestamp() {
   return new Date().toISOString().replace(/[:.]/g, '-');
 }
@@ -105,7 +112,7 @@ function runCli() {
   if (command === 'backup') {
     const output = args.output || path.join(process.cwd(), 'backups', `nasdash-${timestamp()}`);
     const result = createDataBackup({
-      source: args.source || path.join(process.cwd(), 'data'),
+      source: args.source || getDefaultDataDirectory(),
       output,
       appVersion: readAppVersion(),
     });
@@ -116,7 +123,7 @@ function runCli() {
     if (!args.from) throw new Error('Usage : data:restore -- --from <dossier> --force');
     const result = restoreDataBackup({
       backup: args.from,
-      target: args.target || path.join(process.cwd(), 'data'),
+      target: args.target || getDefaultDataDirectory(),
       force: args.force,
     });
     console.log(`[NASDASH] Données restaurées : ${result.target}`);

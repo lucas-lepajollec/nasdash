@@ -3,20 +3,22 @@ import path from 'path';
 import { CustomTabLayout } from './types';
 import { TabDef } from '@/hooks/useTabs';
 import { safeWriteFileSync } from './config';
+import { getDataDirectory } from './dataDirectory';
 
 export interface CustomTabsData {
   tabs: TabDef[];
   layouts: Record<string, CustomTabLayout>;
 }
 
-const CUSTOM_TABS_FILE = path.join(process.cwd(), 'data', 'custom_tabs.json');
+const DATA_DIR = getDataDirectory();
+const CUSTOM_TABS_FILE = path.join(DATA_DIR, 'custom_tabs.json');
 
 const DEFAULT_DATA: CustomTabsData = {
   tabs: [],
   layouts: {}
 };
 
-const EXAMPLE_TABS_FILE = path.join(process.cwd(), 'data', 'custom_tabs.example.json');
+const EXAMPLE_TABS_FILE = path.join(DATA_DIR, 'custom_tabs.example.json');
 
 const globalCache = globalThis as typeof globalThis & {
   __cachedCustomTabs?: CustomTabsData | null;
@@ -44,7 +46,7 @@ export function readCustomTabs(): CustomTabsData {
     if (!fs.existsSync(CUSTOM_TABS_FILE)) {
       if (fs.existsSync(EXAMPLE_TABS_FILE)) {
         const exampleData = fs.readFileSync(EXAMPLE_TABS_FILE, 'utf-8');
-        fs.writeFileSync(CUSTOM_TABS_FILE, exampleData, 'utf-8');
+        safeWriteFileSync(CUSTOM_TABS_FILE, exampleData, 'utf-8');
         try {
           globalCache.__cachedCustomTabsMtime = fs.statSync(CUSTOM_TABS_FILE).mtimeMs;
         } catch {}
