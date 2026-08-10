@@ -42,7 +42,7 @@ NasDash is a high-performance, unapologetically information-dense web dashboard 
 
 | Category         | Technologies Used                                                                 |
 | ---------------- | --------------------------------------------------------------------------------- |
-| **Frontend Core**| Next.js 14+ (App Router), React 18, TypeScript                                    |
+| **Frontend Core**| Next.js 16 (App Router), React 19, TypeScript                                     |
 | **Styling**      | Custom Vanilla CSS (Design System `nd-*`), Lucide React (Icons)                   |
 | **State & Data** | SWR (Data Fetching), Dynamic local memory caching, `dnd-kit` (Drag & Drop)        |
 | **Backend API**  | Next.js Route Handlers (REST Proxies, Glances payloads, Tailscale execution)      |
@@ -67,7 +67,7 @@ cd nasdash
 
 **2. Install dependencies:**
 ```bash
-npm install
+npm ci
 ```
 
 **3. Environment Setup:**
@@ -140,6 +140,8 @@ The application will be available at **http://localhost:2504**. To connect to yo
 
 - **Data Persistence**: The `data/config.json` file contains your server IPs and API keys. Ensure your `./data` volume is properly secured and excluded from public git repositories (handled by the default `.gitignore`).
 - **Secrets**: Use a reverse proxy (Nginx, Traefik, Caddy) with SSL/TLS to access NasDash securely over the internet.
+- **Volume permissions**: The container runs as the non-root UID/GID `1001:1001`. Ensure the mounted `./data` directory is writable by that account on the host.
+- **Access model**: See [`ACCESS_CONTROL.md`](ACCESS_CONTROL.md) for public, authenticated viewer, and administrator behavior.
 
 ---
 

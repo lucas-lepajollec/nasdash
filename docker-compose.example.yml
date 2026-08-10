@@ -4,7 +4,7 @@
 services:
   # Service principal NasDash
   nasdash:
-    image: lucas-lepajollec/nasdash:latest
+    image: ghcr.io/lucas-lepajollec/nasdash:latest
     container_name: nasdash
     ports:
       # Port exposé sur la machine hôte : port interne de l'application
