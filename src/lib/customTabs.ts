@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { CustomTabLayout } from './types';
 import { TabDef } from '@/hooks/useTabs';
+import { safeWriteFileSync } from './config';
 
 export interface CustomTabsData {
   tabs: TabDef[];
@@ -17,23 +18,26 @@ const DEFAULT_DATA: CustomTabsData = {
 
 const EXAMPLE_TABS_FILE = path.join(process.cwd(), 'data', 'custom_tabs.example.json');
 
-const globalAny: any = global;
-if (!globalAny.__cachedCustomTabs) {
-  globalAny.__cachedCustomTabs = null;
+const globalCache = globalThis as typeof globalThis & {
+  __cachedCustomTabs?: CustomTabsData | null;
+  __cachedCustomTabsMtime?: number;
+};
+if (!globalCache.__cachedCustomTabs) {
+  globalCache.__cachedCustomTabs = null;
 }
 
 export function readCustomTabs(): CustomTabsData {
-  let shouldReadTabs = !globalAny.__cachedCustomTabs;
+  let shouldReadTabs = !globalCache.__cachedCustomTabs;
   try {
     const mtime = fs.statSync(CUSTOM_TABS_FILE).mtimeMs;
-    if (!globalAny.__cachedCustomTabsMtime || mtime !== globalAny.__cachedCustomTabsMtime) {
+    if (!globalCache.__cachedCustomTabsMtime || mtime !== globalCache.__cachedCustomTabsMtime) {
       shouldReadTabs = true;
-      globalAny.__cachedCustomTabsMtime = mtime;
+      globalCache.__cachedCustomTabsMtime = mtime;
     }
   } catch {}
 
-  if (globalAny.__cachedCustomTabs && !shouldReadTabs) {
-    return JSON.parse(JSON.stringify(globalAny.__cachedCustomTabs));
+  if (globalCache.__cachedCustomTabs && !shouldReadTabs) {
+    return JSON.parse(JSON.stringify(globalCache.__cachedCustomTabs));
   }
 
   try {
@@ -42,7 +46,7 @@ export function readCustomTabs(): CustomTabsData {
         const exampleData = fs.readFileSync(EXAMPLE_TABS_FILE, 'utf-8');
         fs.writeFileSync(CUSTOM_TABS_FILE, exampleData, 'utf-8');
         try {
-          globalAny.__cachedCustomTabsMtime = fs.statSync(CUSTOM_TABS_FILE).mtimeMs;
+          globalCache.__cachedCustomTabsMtime = fs.statSync(CUSTOM_TABS_FILE).mtimeMs;
         } catch {}
       }
     }
@@ -50,7 +54,7 @@ export function readCustomTabs(): CustomTabsData {
     if (fs.existsSync(CUSTOM_TABS_FILE)) {
       const data = fs.readFileSync(CUSTOM_TABS_FILE, 'utf-8');
       const parsed = JSON.parse(data);
-      globalAny.__cachedCustomTabs = JSON.parse(JSON.stringify(parsed));
+      globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(parsed));
       return parsed;
     }
   } catch (error) {
@@ -59,18 +63,21 @@ export function readCustomTabs(): CustomTabsData {
   return DEFAULT_DATA;
 }
 
-export function writeCustomTabs(data: CustomTabsData): void {
+export function writeCustomTabs(data: CustomTabsData): boolean {
   try {
-    globalAny.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
     if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-      return;
+      globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
+      return true;
     }
     const dir = path.dirname(CUSTOM_TABS_FILE);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(CUSTOM_TABS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    safeWriteFileSync(CUSTOM_TABS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
+    return true;
   } catch (error) {
     console.error('Error writing custom tabs:', error);
+    return false;
   }
 }

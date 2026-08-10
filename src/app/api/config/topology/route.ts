@@ -3,11 +3,12 @@ import { readConfig, writeTopology } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, isJsonObject, readJsonObject } from '@/lib/requestValidation';
+import { NetworkTopology } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 const MAX_TOPOLOGY_BODY_BYTES = 1024 * 1024;
 
-function validateTopology(value: unknown) {
+function validateTopology(value: unknown): NetworkTopology {
   if (!isJsonObject(value)) {
     throw new RequestValidationError('La topologie doit être un objet.');
   }
@@ -23,7 +24,7 @@ function validateTopology(value: unknown) {
     }
   }
 
-  return value;
+  return value as unknown as NetworkTopology;
 }
 
 export async function GET(req: Request) {
@@ -47,7 +48,9 @@ export async function PUT(req: Request) {
     const body = await readJsonObject(req, MAX_TOPOLOGY_BODY_BYTES);
     const topology = body.networkTopology !== undefined ? body.networkTopology : body;
 
-    writeTopology(validateTopology(topology));
+    if (!writeTopology(validateTopology(topology))) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer la topologie.' }, { status: 500 });
+    }
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
     if (e instanceof RequestValidationError) {

@@ -84,7 +84,9 @@ export async function POST(req: NextRequest) {
       data.tabs.push(newTab);
       data.layouts[newId] = layout ? { ...layout, id: newId } : { id: newId, rows: [] };
 
-      writeCustomTabs(data);
+      if (!writeCustomTabs(data)) {
+        return NextResponse.json({ error: 'Impossible d’enregistrer les onglets personnalisés.' }, { status: 500 });
+      }
       return NextResponse.json({ tab: newTab, layout: data.layouts[newId] }, { status: 201 });
     }
 
@@ -131,7 +133,9 @@ export async function PUT(req: NextRequest) {
         const finalLayout = validateLayout(layoutValue);
         data.layouts[id] = { ...data.layouts[id], ...finalLayout, id };
       }
-      writeCustomTabs(data);
+      if (!writeCustomTabs(data)) {
+        return NextResponse.json({ error: 'Impossible d’enregistrer les onglets personnalisés.' }, { status: 500 });
+      }
       return NextResponse.json({ tab: data.tabs[tabIndex], layout: data.layouts[id] });
     }
 
@@ -159,7 +163,9 @@ export async function DELETE(req: NextRequest) {
     data.tabs = data.tabs.filter(t => t.id !== id);
     delete data.layouts[id];
 
-    writeCustomTabs(data);
+    if (!writeCustomTabs(data)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer les onglets personnalisés.' }, { status: 500 });
+    }
     return NextResponse.json({ ok: true });
   } catch (error: unknown) {
     const response = validationResponse(error);

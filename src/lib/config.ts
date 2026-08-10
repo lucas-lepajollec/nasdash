@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
-import { DashboardConfig } from './types';
+import { Category, DashboardConfig, LocalCalendarEvent, NetworkTopology } from './types';
 import { encrypt, decrypt } from './crypto';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -28,7 +28,7 @@ export function ensureDataDir() {
 
 export function safeWriteFileSync(filePath: string, data: string | Buffer, options?: fs.WriteFileOptions) {
   ensureDataDir();
-  const tempPath = filePath + '.tmp';
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
   try {
     fs.writeFileSync(tempPath, data, options);
     fs.renameSync(tempPath, filePath);
@@ -354,7 +354,7 @@ export function readConfig(): DashboardConfig {
   return fullConfig;
 }
 
-export function writeConfig(config: DashboardConfig) {
+export function writeConfig(config: DashboardConfig): boolean {
   const baseConfig = JSON.parse(JSON.stringify(config));
   const categories = baseConfig.categories || [];
   const topology = baseConfig.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
@@ -371,7 +371,7 @@ export function writeConfig(config: DashboardConfig) {
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
-    return;
+    return true;
   }
 
   ensureDataDir();
@@ -394,6 +394,8 @@ export function writeConfig(config: DashboardConfig) {
     });
   }
 
+  let success = true;
+
   try {
     safeWriteFileSync(CONFIG_PATH, JSON.stringify(baseConfig, null, 2));
     
@@ -406,6 +408,7 @@ export function writeConfig(config: DashboardConfig) {
     }
     globalAny.__cachedConfig = cacheConfig;
   } catch (e) {
+    success = false;
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/config.json', e);
   }
 
@@ -413,6 +416,7 @@ export function writeConfig(config: DashboardConfig) {
     safeWriteFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
   } catch (e) {
+    success = false;
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
   }
 
@@ -420,6 +424,7 @@ export function writeConfig(config: DashboardConfig) {
     safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
   } catch (e) {
+    success = false;
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
   }
 
@@ -427,46 +432,58 @@ export function writeConfig(config: DashboardConfig) {
     safeWriteFileSync(CALENDAR_PATH, JSON.stringify(localEvents, null, 2));
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
   } catch (e) {
+    success = false;
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
   }
+
+  return success;
 }
 
-export function writeServices(categories: any[]) {
-  globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+export function writeServices(categories: Category[]): boolean {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-    return;
+    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+    return true;
   }
   ensureDataDir();
   try {
     safeWriteFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
+    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
+    return true;
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
+    return false;
   }
 }
 
-export function writeTopology(topology: any) {
-  globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+export function writeTopology(topology: NetworkTopology): boolean {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-    return;
+    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+    return true;
   }
   ensureDataDir();
   try {
     safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
+    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
+    return true;
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
+    return false;
   }
 }
 
-export function writeCalendar(calendar: any[]) {
-  globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
+export function writeCalendar(calendar: LocalCalendarEvent[]): boolean {
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-    return;
+    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
+    return true;
   }
   ensureDataDir();
   try {
     safeWriteFileSync(CALENDAR_PATH, JSON.stringify(calendar, null, 2));
+    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
+    return true;
   } catch (e) {
     console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
+    return false;
   }
 }
 

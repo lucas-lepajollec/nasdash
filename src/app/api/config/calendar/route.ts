@@ -59,7 +59,9 @@ export async function POST(req: Request) {
     };
 
     config.localEvents.push(newEvent);
-    writeCalendar(config.localEvents);
+    if (!writeCalendar(config.localEvents)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer le calendrier.' }, { status: 500 });
+    }
 
     return NextResponse.json(newEvent, { status: 201 });
   } catch (e: unknown) {
@@ -96,7 +98,9 @@ export async function PUT(req: Request) {
     if (description !== undefined) event.description = description;
     if (isAllDay !== undefined) event.isAllDay = isAllDay;
 
-    writeCalendar(config.localEvents);
+    if (!writeCalendar(config.localEvents)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer le calendrier.' }, { status: 500 });
+    }
     return NextResponse.json(event);
   } catch (e: unknown) {
     const response = validationResponse(e);
@@ -122,7 +126,9 @@ export async function DELETE(req: Request) {
     if (!config.localEvents) config.localEvents = [];
 
     const filtered = config.localEvents.filter(e => e.id !== id);
-    writeCalendar(filtered);
+    if (!writeCalendar(filtered)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer le calendrier.' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {
