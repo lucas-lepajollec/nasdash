@@ -24,17 +24,47 @@ for (const entry of fs.readdirSync(sourceDataDirectory, { withFileTypes: true })
 }
 
 const productionMode = process.env.NASDASH_E2E_SERVER_MODE === 'production';
-const nextArguments = [
-  path.join(projectDirectory, 'node_modules', 'next', 'dist', 'bin', 'next'),
-  productionMode ? 'start' : 'dev',
-  '-H',
-  '127.0.0.1',
-  '-p',
-  '2510',
-];
+let serverDirectory = projectDirectory;
+let serverArguments;
 
-const child = spawn(process.execPath, nextArguments, {
-  cwd: projectDirectory,
+if (productionMode) {
+  const configuredDistDirectory = process.env.NASDASH_NEXT_DIST_DIR?.trim() || '.next';
+  const distDirectory = path.resolve(projectDirectory, configuredDistDirectory);
+  const relativeDistDirectory = path.relative(projectDirectory, distDirectory);
+  if (relativeDistDirectory.startsWith('..') || path.isAbsolute(relativeDistDirectory)) {
+    throw new Error('The production E2E build directory must stay inside the project.');
+  }
+
+  serverDirectory = path.join(distDirectory, 'standalone');
+  const standaloneServer = path.join(serverDirectory, 'server.js');
+  if (!fs.existsSync(standaloneServer)) {
+    throw new Error(`Standalone build not found: ${standaloneServer}`);
+  }
+
+  fs.cpSync(
+    path.join(distDirectory, 'static'),
+    path.join(serverDirectory, relativeDistDirectory, 'static'),
+    { recursive: true, force: true },
+  );
+  fs.cpSync(
+    path.join(projectDirectory, 'public'),
+    path.join(serverDirectory, 'public'),
+    { recursive: true, force: true },
+  );
+  serverArguments = [standaloneServer];
+} else {
+  serverArguments = [
+    path.join(projectDirectory, 'node_modules', 'next', 'dist', 'bin', 'next'),
+    'dev',
+    '-H',
+    '127.0.0.1',
+    '-p',
+    '2510',
+  ];
+}
+
+const child = spawn(process.execPath, serverArguments, {
+  cwd: serverDirectory,
   env: {
     ...process.env,
     NASDASH_DATA_DIR: dataDirectory,
@@ -42,6 +72,8 @@ const child = spawn(process.execPath, nextArguments, {
     NASDASH_VIEWER_PASSWORD: 'playwright-viewer-password',
     NASDASH_JWT_SECRET: 'playwright-only-secret-never-used-in-production',
     NEXT_TELEMETRY_DISABLED: '1',
+    PORT: '2510',
+    HOSTNAME: '127.0.0.1',
     ...(productionMode ? {} : { NASDASH_NEXT_DIST_DIR: '.next-e2e' }),
   },
   stdio: 'inherit',
