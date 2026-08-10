@@ -27,6 +27,7 @@ The initial suite covers:
 - server-side rejection of anonymous writes;
 - admin login through the real login page;
 - settings persistence and reload through the API;
+- category and service creation/editing with the real UI payload shape;
 - custom-tab layout persistence;
 - viewer read access and write rejection;
 - anonymous rejection and browser redirection in private mode.

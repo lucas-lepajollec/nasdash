@@ -102,6 +102,68 @@ test.describe.serial('critical self-hosted paths', () => {
     await admin.dispose();
   });
 
+  test('admin can create and edit a category with a service using UI payloads', async () => {
+    const admin = await isolatedRequest(25);
+    await login(admin, 'admin', ADMIN_PASSWORD);
+
+    const createCategory = await admin.post('/api/config', {
+      data: {
+        type: 'category',
+        title: 'E2E Applications',
+        emoji: '🚀',
+        isSecret: false,
+        layout: 'bento-logo-medium',
+      },
+    });
+    expect(createCategory.status()).toBe(201);
+    const category = await createCategory.json();
+
+    const createService = await admin.post('/api/config', {
+      data: {
+        type: 'service',
+        categoryId: category.id,
+        name: 'E2E Service',
+        logo: '',
+        localUrl: 'http://127.0.0.1:65534',
+        secondaryUrl: 'https://service.example.test',
+        secondaryLogo: '',
+      },
+    });
+    expect(createService.status()).toBe(201);
+
+    const configResponse = await admin.get('/api/config');
+    expect(configResponse.status()).toBe(200);
+    const config = await configResponse.json();
+    const persistedCategory = config.categories.find((item: { id: string }) => item.id === category.id);
+    expect(persistedCategory.services).toHaveLength(1);
+
+    const updateCategory = await admin.put('/api/config', {
+      data: {
+        type: 'category',
+        id: category.id,
+        title: 'E2E Applications updated',
+        emoji: '🚀',
+        isSecret: false,
+        layout: 'compact',
+        services: persistedCategory.services,
+      },
+    });
+    expect(updateCategory.status()).toBe(200);
+
+    const reloaded = await admin.get('/api/config');
+    const updatedConfig = await reloaded.json();
+    const updatedCategory = updatedConfig.categories.find((item: { id: string }) => item.id === category.id);
+    expect(updatedCategory).toMatchObject({
+      title: 'E2E Applications updated',
+      layout: 'compact',
+    });
+    expect(updatedCategory.services[0]).toMatchObject({
+      name: 'E2E Service',
+      secondaryUrl: 'https://service.example.test',
+    });
+    await admin.dispose();
+  });
+
   test('viewer can read but cannot mutate configuration', async () => {
     const viewer = await isolatedRequest(30);
     await login(viewer, 'viewer', VIEWER_PASSWORD);

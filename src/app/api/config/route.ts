@@ -6,6 +6,7 @@ import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
 import { Category, Service, Device } from '@/lib/types';
+import { validateConfigMutationBody } from '@/lib/configEntityValidation';
 import {
   RequestValidationError,
   assertSafeIdentifier,
@@ -33,10 +34,15 @@ function persistenceError() {
   return NextResponse.json({ error: 'Impossible d’enregistrer la configuration.' }, { status: 500 });
 }
 
-async function parseConfigBody<const T extends readonly string[]>(req: NextRequest, allowedTypes: T) {
+async function parseConfigBody<const T extends readonly string[]>(
+  req: NextRequest,
+  allowedTypes: T,
+  method: 'POST' | 'PUT',
+) {
   try {
     const body = await readJsonObject(req, MAX_CONFIG_BODY_BYTES) as unknown as Awaited<ReturnType<NextRequest['json']>>;
     const type = readEnum(body, 'type', allowedTypes, true)!;
+    validateConfigMutationBody(body, type, method);
     return { ok: true as const, body, type };
   } catch (error: unknown) {
     if (error instanceof RequestValidationError) {
@@ -65,7 +71,7 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
 
-  const parsed = await parseConfigBody(req, CONFIG_POST_TYPES);
+  const parsed = await parseConfigBody(req, CONFIG_POST_TYPES, 'POST');
   if (!parsed.ok) return parsed.response;
   const body = parsed.body;
   const config = readConfig();
@@ -244,7 +250,7 @@ export async function PUT(req: NextRequest) {
   if (authError) return authError;
 
 
-  const parsed = await parseConfigBody(req, CONFIG_PUT_TYPES);
+  const parsed = await parseConfigBody(req, CONFIG_PUT_TYPES, 'PUT');
   if (!parsed.ok) return parsed.response;
   const body = parsed.body;
   const config = readConfig();
