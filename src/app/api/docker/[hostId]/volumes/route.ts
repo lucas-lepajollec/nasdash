@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import {
+  classifyDockerError,
+  dockerFailureStatus,
+  fetchDockerApi,
+  readDockerJson,
+  reportDockerFailure,
+  reportDockerSuccess,
+} from '@/lib/dockerClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +31,10 @@ export async function GET(
   );
   if (access.error) return access.error;
 
+  let resolvedHostId = 'unknown';
   try {
     const { hostId } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -37,15 +47,8 @@ export async function GET(
       return NextResponse.json(mockVolumes);
     }
 
-    const dockerUrl = `${host.url.replace(/\/$/, '')}/volumes`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch(dockerUrl, { signal: controller.signal });
-    clearTimeout(timeout);
-    
-    if (!res.ok) throw new Error(`Docker volumes error ${res.status}`);
-    const raw = await res.json();
+    const response = await fetchDockerApi(host.url, '/volumes');
+    const raw = await readDockerJson(response) as { Volumes?: any[] };
 
     const volumes = (raw.Volumes || []).map((v: any) => ({
       name: v.Name,
@@ -57,9 +60,10 @@ export async function GET(
     }));
 
     return NextResponse.json(volumes);
-  } catch (e: any) {
-    console.error('Docker volumes error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }
 
@@ -72,8 +76,10 @@ export async function DELETE(
   if (authError) return authError;
 
 
+  let resolvedHostId = 'unknown';
   try {
     const { hostId } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -81,26 +87,26 @@ export async function DELETE(
     const volumeName = url.searchParams.get('name');
     if (!volumeName) return NextResponse.json({ error: 'Volume name required' }, { status: 400 });
 
-    const dockerUrl = `${host.url.replace(/\/$/, '')}/volumes/${encodeURIComponent(volumeName)}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    // Attempt deletion
-    const res = await fetch(dockerUrl, { method: 'DELETE', signal: controller.signal });
-    clearTimeout(timeout);
-    
-    // Status 204 means successful deletion, 404 means no such volume, 409 means volume is in use
+    const res = await fetchDockerApi(
+      host.url,
+      `/volumes/${encodeURIComponent(volumeName)}`,
+      { method: 'DELETE' },
+      5_000,
+      [404, 409],
+    );
+
+    if (res.status === 404) {
+      return NextResponse.json({ error: 'Volume Docker introuvable.' }, { status: 404 });
+    }
     if (res.status === 409) {
       return NextResponse.json({ error: 'Le volume est en cours d\'utilisation et ne peut pas être supprimé.' }, { status: 409 });
     }
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Docker API error ${res.status}: ${text}`);
-    }
 
+    reportDockerSuccess(hostId);
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    console.error('Docker volume delete error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }

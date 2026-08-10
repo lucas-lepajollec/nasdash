@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import {
+  classifyDockerError,
+  dockerFailureStatus,
+  fetchDockerApi,
+  reportDockerFailure,
+} from '@/lib/dockerClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +28,10 @@ export async function GET(
   );
   if (access.error) return access.error;
 
+  let resolvedHostId = 'unknown';
   try {
     const { hostId, id } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -45,18 +53,13 @@ export async function GET(
     const tail = url.searchParams.get('tail') || '100';
     const timestamps = url.searchParams.get('timestamps') !== 'false';
 
-    const dockerUrl = `${host.url.replace(/\/$/, '')}/containers/${id}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=${timestamps}`;
-    
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    
-    const res = await fetch(dockerUrl, { signal: controller.signal });
-    clearTimeout(timeout);
-    
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Docker logs error ${res.status}: ${text}`);
-    }
+    const query = new URLSearchParams({ stdout: 'true', stderr: 'true', tail, timestamps: String(timestamps) });
+    const res = await fetchDockerApi(
+      host.url,
+      `/containers/${encodeURIComponent(id)}/logs?${query.toString()}`,
+      {},
+      8_000,
+    );
 
     const raw = await res.arrayBuffer();
     const buffer = new Uint8Array(raw);
@@ -90,8 +93,9 @@ export async function GET(
     }
 
     return NextResponse.json({ lines });
-  } catch (e: any) {
-    console.error('Docker logs error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }

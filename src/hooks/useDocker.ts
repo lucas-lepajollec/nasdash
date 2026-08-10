@@ -3,11 +3,7 @@
 import { useState, useCallback } from 'react';
 import useSWR from 'swr';
 import { DockerHost } from '@/lib/types';
-
-const fetcher = (url: string) => fetch(url).then(r => {
-  if (!r.ok) throw new Error('Fetch failed');
-  return r.json();
-});
+import { dockerJsonFetcher } from '@/lib/dockerErrorContract';
 
 export function getDockerRequestKeys(
   activeHostId: string | null,
@@ -33,28 +29,28 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
   // Containers list
   const { data: containers, error: containersError, isLoading: containersLoading, mutate: refreshContainers } = useSWR(
     requestKeys.containers,
-    fetcher,
+    dockerJsonFetcher,
     { refreshInterval: 5000 }
   );
 
   // Container detail (only when one is selected)
   const { data: containerDetail, error: detailError, mutate: refreshDetail } = useSWR(
     requestKeys.detail,
-    fetcher,
+    dockerJsonFetcher,
     { refreshInterval: 3000 }
   );
 
   // Images
   const { data: images, error: imagesError, isLoading: imagesLoading, mutate: refreshImages } = useSWR(
     requestKeys.images,
-    fetcher,
+    dockerJsonFetcher,
     { refreshInterval: 30000 } // Refresh every 30s — images don't change often
   );
 
   // Volumes
   const { data: volumes, error: volumesError, isLoading: volumesLoading, mutate: refreshVolumes } = useSWR(
     requestKeys.volumes,
-    fetcher,
+    dockerJsonFetcher,
     { refreshInterval: 30000 }
   );
 

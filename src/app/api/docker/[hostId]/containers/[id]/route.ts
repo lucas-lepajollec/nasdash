@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { isAdmin, checkAdmin } from '@/lib/auth';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import {
+  classifyDockerError,
+  dockerFailureStatus,
+  fetchDockerApi,
+  readDockerJson,
+  reportDockerFailure,
+  reportDockerSuccess,
+} from '@/lib/dockerClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,29 +23,13 @@ function getDockerHost(hostId: string) {
   return (config.dockerHosts || []).find((h: any) => h.id === hostId);
 }
 
-async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET') {
-  const url = `${hostUrl.replace(/\/$/, '')}${endpoint}`;
-  const controller = new AbortController();
-  // 5 seconds is fine for GET detail/stats, but actions (POST/DELETE) can take up to 30s
+async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET'): Promise<any> {
   const timeoutMs = method === 'GET' ? 5000 : 30000;
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { method, signal: controller.signal });
-    clearTimeout(timeout);
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Docker API error ${res.status}: ${text}`);
-    }
-    // Some Docker endpoints return empty body on success (e.g. POST start/stop)
-    const contentType = res.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      return await res.json();
-    }
-    return { ok: true };
-  } catch (e: any) {
-    clearTimeout(timeout);
-    throw e;
-  }
+  const response = await fetchDockerApi(hostUrl, endpoint, { method }, timeoutMs);
+  const contentType = response.headers.get('content-type');
+  return contentType?.includes('application/json')
+    ? readDockerJson(response)
+    : { ok: true };
 }
 
 // GET /api/docker/[hostId]/containers/[id] — container details
@@ -46,6 +38,7 @@ export async function GET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
+  let resolvedHostId = 'unknown';
   try {
     const config = readConfig();
     const access = checkReadAccess(
@@ -56,6 +49,7 @@ export async function GET(
     if (access.error) return access.error;
 
     const { hostId, id } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -178,10 +172,12 @@ export async function GET(
       },
     };
 
+    reportDockerSuccess(resolvedHostId);
     return NextResponse.json(result);
-  } catch (e: any) {
-    console.error('Docker container detail error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }
 
@@ -201,8 +197,10 @@ export async function POST(
     );
   }
 
+  let resolvedHostId = 'unknown';
   try {
     const { hostId, id } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -228,19 +226,15 @@ export async function POST(
 
     // For DELETE we need a custom fetch
     if (action === 'remove') {
-      const deleteUrl = `${host.url.replace(/\/$/, '')}${endpoint}`;
-      const res = await fetch(deleteUrl, { method: 'DELETE' });
-      if (!res.ok && res.status !== 304) {
-        const text = await res.text();
-        throw new Error(`Docker API error ${res.status}: ${text}`);
-      }
+      await fetchDockerApi(host.url, endpoint, { method: 'DELETE' }, 30_000, [304]);
       return NextResponse.json({ ok: true, action });
     }
 
     await dockerFetch(host.url, endpoint, method);
     return NextResponse.json({ ok: true, action });
-  } catch (e: any) {
-    console.error('Docker action error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }

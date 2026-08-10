@@ -1,57 +1,25 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import {
+  classifyDockerError,
+  dockerFailureStatus,
+  fetchDockerApi,
+  readDockerJson,
+  reportDockerFailure,
+  reportDockerSuccess,
+} from '@/lib/dockerClient';
 
 export const dynamic = 'force-dynamic';
 
-// --- Smart Logger to avoid spamming errors ---
 const globalAny: any = global;
-if (!globalAny.__dockerErrorLogCache) globalAny.__dockerErrorLogCache = new Map<string, string>();
-const errorLogCache: Map<string, string> = globalAny.__dockerErrorLogCache;
-
 if (!globalAny.__mockContainerStates) globalAny.__mockContainerStates = new Map<string, string>();
 const mockStates: Map<string, string> = globalAny.__mockContainerStates;
-
-function logErrorSmartly(hostId: string, context: string, errorMsg: string) {
-  const key = `${hostId}-${context}`;
-  if (errorLogCache.get(key) !== errorMsg) {
-    console.error(`🔴 [${context}]`, errorMsg);
-    errorLogCache.set(key, errorMsg);
-  }
-}
-
-function clearErrorSmartly(hostId: string, context: string) {
-  errorLogCache.delete(`${hostId}-${context}`);
-}
-// ---------------------------------------------
 
 function getDockerHost(hostId: string) {
   const config = readConfig();
   const hosts = config.dockerHosts || [];
   return hosts.find((h: any) => h.id === hostId);
-}
-
-async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET') {
-  const url = `${hostUrl.replace(/\/$/, '')}${endpoint}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-  
-  try {
-    const res = await fetch(url, {
-      method,
-      signal: controller.signal,
-      headers: { 'Content-Type': 'application/json' },
-    });
-    clearTimeout(timeout);
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Docker API error ${res.status}: ${text}`);
-    }
-    return await res.json();
-  } catch (e: any) {
-    clearTimeout(timeout);
-    throw e;
-  }
 }
 
 // GET /api/docker/[hostId]/containers — list all containers
@@ -225,7 +193,8 @@ export async function GET(
     const url = new URL(request.url);
     const all = url.searchParams.get('all') !== 'false'; // default true
     
-    const rawContainers = await dockerFetch(host.url, `/containers/json?all=${all}&size=false`);
+    const response = await fetchDockerApi(host.url, `/containers/json?all=${all}&size=false`);
+    const rawContainers = await readDockerJson(response) as any[];
     
     const containers = rawContainers.map((c: any) => ({
       id: c.Id?.substring(0, 12) || c.Id,
@@ -252,13 +221,11 @@ export async function GET(
       labels: c.Labels || {},
     }));
 
-    clearErrorSmartly(resolvedHostId, 'Docker');
+    reportDockerSuccess(resolvedHostId);
     return NextResponse.json(containers);
-  } catch (e: any) {
-    logErrorSmartly(resolvedHostId, 'Docker', e.message || 'Unknown error');
-    return NextResponse.json(
-      { error: e.message || 'Failed to fetch containers', isOffline: true },
-      { status: 502 }
-    );
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }

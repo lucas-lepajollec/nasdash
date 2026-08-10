@@ -8,6 +8,7 @@ import {
   readObject,
   readString,
 } from './requestValidation';
+import { validateDockerHostUrl } from './dockerClient';
 
 const CATEGORY_LAYOUTS = [
   'standard',
@@ -224,7 +225,12 @@ export function validateConfigMutationBody(
   if (type === 'dockerHost') {
     readString(body, 'name', { maxLength: 200 });
     readString(body, 'icon', { maxLength: 64, trim: false });
-    readString(body, 'url', { maxLength: 4_096, trim: false });
+    const url = readString(body, 'url', { maxLength: 4_096, trim: false });
+    try {
+      validateDockerHostUrl(url || '');
+    } catch {
+      throw new RequestValidationError('L’adresse Docker doit être une URL complète en http:// ou https:// avec le bon port.');
+    }
     return;
   }
 

@@ -68,6 +68,22 @@ describe('configuration entity payloads', () => {
     }, 'dockerAction', 'POST')).not.toThrow();
   });
 
+  it('accepts a complete Docker host URL and rejects incomplete fields', () => {
+    expect(() => validateConfigMutationBody({
+      type: 'dockerHost',
+      name: 'NAS',
+      icon: 'Docker',
+      url: 'http://192.168.1.20:2375',
+    }, 'dockerHost', 'POST')).not.toThrow();
+
+    expect(() => validateConfigMutationBody({
+      type: 'dockerHost',
+      name: 'NAS',
+      icon: 'Docker',
+      url: '192.168.1.20:2375',
+    }, 'dockerHost', 'POST')).toThrow('URL complète');
+  });
+
   it('rejects malformed reorder payloads before route code can crash', () => {
     expect(() => validateConfigMutationBody({
       type: 'reorderDevices',

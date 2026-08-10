@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import {
+  classifyDockerError,
+  dockerFailureStatus,
+  fetchDockerApi,
+  readDockerJson,
+  reportDockerFailure,
+  reportDockerSuccess,
+} from '@/lib/dockerClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,8 +31,10 @@ export async function GET(
   );
   if (access.error) return access.error;
 
+  let resolvedHostId = 'unknown';
   try {
     const { hostId } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -39,15 +49,8 @@ export async function GET(
       return NextResponse.json(mockImages);
     }
 
-    const dockerUrl = `${host.url.replace(/\/$/, '')}/images/json`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch(dockerUrl, { signal: controller.signal });
-    clearTimeout(timeout);
-    
-    if (!res.ok) throw new Error(`Docker images error ${res.status}`);
-    const raw = await res.json();
+    const response = await fetchDockerApi(host.url, '/images/json');
+    const raw = await readDockerJson(response) as any[];
 
     const images = raw.map((img: any) => ({
       id: img.Id?.replace('sha256:', '').substring(0, 12) || img.Id,
@@ -58,9 +61,10 @@ export async function GET(
     }));
 
     return NextResponse.json(images);
-  } catch (e: any) {
-    console.error('Docker images error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }
 
@@ -73,8 +77,10 @@ export async function DELETE(
   if (authError) return authError;
 
 
+  let resolvedHostId = 'unknown';
   try {
     const { hostId } = await segmentData.params;
+    resolvedHostId = hostId;
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
@@ -82,26 +88,26 @@ export async function DELETE(
     const imageId = url.searchParams.get('id');
     if (!imageId) return NextResponse.json({ error: 'Image ID required' }, { status: 400 });
 
-    const dockerUrl = `${host.url.replace(/\/$/, '')}/images/${encodeURIComponent(imageId)}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    // Attempt deletion
-    const res = await fetch(dockerUrl, { method: 'DELETE', signal: controller.signal });
-    clearTimeout(timeout);
-    
-    // Status 200 means successful deletion, 404 means no such image, 409 means image is in use
+    const res = await fetchDockerApi(
+      host.url,
+      `/images/${encodeURIComponent(imageId)}`,
+      { method: 'DELETE' },
+      5_000,
+      [404, 409],
+    );
+
+    if (res.status === 404) {
+      return NextResponse.json({ error: 'Image Docker introuvable.' }, { status: 404 });
+    }
     if (res.status === 409) {
       return NextResponse.json({ error: 'L\'image est en cours d\'utilisation par un conteneur et ne peut pas être supprimée.' }, { status: 409 });
     }
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`Docker API error ${res.status}: ${text}`);
-    }
 
+    reportDockerSuccess(hostId);
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    console.error('Docker image delete error:', e.message);
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (error: unknown) {
+    const failure = classifyDockerError(error);
+    reportDockerFailure(resolvedHostId, failure);
+    return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
 }
