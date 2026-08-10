@@ -3,6 +3,7 @@ import path from 'path';
 import https from 'https';
 import { Category, DashboardConfig, LocalCalendarEvent, NetworkTopology } from './types';
 import { encrypt, decrypt } from './crypto';
+import { migrateLegacySplitFiles } from './configMigration';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
@@ -107,34 +108,20 @@ export function readConfig(): DashboardConfig {
     }
 
     // --- MIGRATION AUTOMATIQUE TRANSPARENTE EN 4 FICHIERS ---
-    let migrated = false;
-
-    // A. Migration des catégories/services vers services.json
-    if (configData.categories && configData.categories.length > 0) {
-      if (!fs.existsSync(SERVICES_PATH)) {
-        safeWriteFileSync(SERVICES_PATH, JSON.stringify(configData.categories, null, 2));
-      }
-      delete configData.categories;
-      migrated = true;
-    }
-
-    // B. Migration de networkTopology vers topology.json
-    if (configData.settings && configData.settings.networkTopology) {
-      if (!fs.existsSync(TOPOLOGY_PATH)) {
-        safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(configData.settings.networkTopology, null, 2));
-      }
-      delete configData.settings.networkTopology;
-      migrated = true;
-    }
-
-    // C. Migration des localEvents vers calendar.json
-    if (configData.localEvents && configData.localEvents.length > 0) {
-      if (!fs.existsSync(CALENDAR_PATH)) {
-        safeWriteFileSync(CALENDAR_PATH, JSON.stringify(configData.localEvents, null, 2));
-      }
-      delete configData.localEvents;
-      migrated = true;
-    }
+    let migrated = migrateLegacySplitFiles(configData, {
+      services: {
+        target: SERVICES_PATH,
+        example: path.join(DATA_DIR, 'services.example.json'),
+      },
+      topology: {
+        target: TOPOLOGY_PATH,
+        example: path.join(DATA_DIR, 'topology.example.json'),
+      },
+      calendar: {
+        target: CALENDAR_PATH,
+        example: path.join(DATA_DIR, 'calendar.example.json'),
+      },
+    }, (filePath, data) => safeWriteFileSync(filePath, data));
 
     // D. Migration vers la configuration par panneaux (panels)
     if (configData.settings && !configData.settings.panels) {
