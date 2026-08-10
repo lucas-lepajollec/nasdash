@@ -13,6 +13,7 @@
     "data:restore": "node scripts/data-snapshot.mjs restore",
     "test": "vitest run",
     "test:e2e": "node scripts/e2e-runner.mjs",
+    "test:container": "node scripts/container-smoke.mjs",
     "data:demo:old": "cp demo-data/*.json data/",
     "data:real:old": "cp data-real/*.json data/ && cp data-real/encryption.key data/ 2>/dev/null || true"
   },

@@ -19,7 +19,7 @@ ENV HOSTNAME="0.0.0.0"
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # Copy standalone output
 COPY --from=builder /app/.next/standalone ./
@@ -33,6 +33,7 @@ COPY --from=builder /app/data/services.example.json /app/defaults/services.examp
 COPY --from=builder /app/data/topology.example.json /app/defaults/topology.example.json
 COPY --from=builder /app/data/calendar.example.json /app/defaults/calendar.example.json
 COPY --from=builder /app/data/custom_tabs.example.json /app/defaults/custom_tabs.example.json
+COPY --from=builder /app/data/users.example.json /app/defaults/users.example.json
 
 # Copy entrypoint script
 COPY --from=builder /app/docker-entrypoint.sh /app/docker-entrypoint.sh

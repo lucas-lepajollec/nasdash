@@ -1,5 +1,11 @@
 node_modules
 .next
+.next-e2e
+.e2e
+coverage
+backups
+playwright-report
+test-results
 .git
 data/*
 !data/*.example.json
@@ -7,5 +13,6 @@ data-real
 demo-data
 data_test*
 .agents
+.codex
 *.md
 .env*

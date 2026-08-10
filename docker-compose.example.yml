@@ -13,7 +13,8 @@ services:
     # au lieu de lire uniquement les limites du conteneur de l'application.
     pid: "host"
     volumes:
-      # Persistance de la configuration du tableau de bord (config, services, utilisateurs) et des logos importés
+      # Compatibilité historique : données visibles dans ./data sur l'hôte.
+      # Préparez les droits UID/GID 1001:1001 avant le premier démarrage.
       - ./data:/app/data
     environment:
       - NODE_ENV=production

@@ -4,6 +4,7 @@ NasDash uses two complementary test layers:
 
 - `npm test` runs the fast unit and API contract suite with Vitest.
 - `npm run test:e2e` starts an isolated NasDash instance and runs the critical browser paths with Playwright Chromium.
+- `npm run test:container -- <image>` verifies a built image, initial login, the non-root UID/GID and reuse of its persistent volume.
 
 ## Browser tests
 
@@ -33,6 +34,19 @@ The initial suite covers:
 - anonymous rejection and browser redirection in private mode.
 
 For a production-mode run, build first and set `NASDASH_E2E_SERVER_MODE=production` before `npm run test:e2e`. The continuous-integration workflow uses this mode.
+
+The E2E runner owns only the isolated server it starts. It refuses to run if port 2510 is already occupied and explicitly releases its process tree on Windows, Linux and macOS.
+
+## Container smoke test
+
+Build an image and test it with:
+
+```bash
+docker build --tag nasdash:smoke .
+npm run test:container -- nasdash:smoke
+```
+
+The script creates uniquely named temporary containers and a temporary Docker volume. It verifies a fresh start, healthcheck, admin login, runtime UID/GID `1001:1001`, required data files and persistence after the container is replaced. Its own containers and volume are removed in a `finally` cleanup; existing NasDash containers and volumes are never targeted.
 
 ## Isolated data directory
 

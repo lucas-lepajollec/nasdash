@@ -11,7 +11,7 @@ Welcome to the NasDash project! We'd love your help to make this the ultimate ho
    ```
 2. **Install dependencies**:
    ```bash
-   npm install
+   npm ci
    ```
 3. **Set up your environment**:
    Copy the example environment file.
@@ -32,6 +32,8 @@ Before opening a pull request, run the unit/API suite and the isolated browser s
 npm test
 npx playwright install chromium
 npm run test:e2e
+docker build --tag nasdash:smoke .
+npm run test:container -- nasdash:smoke
 ```
 
 The browser suite uses disposable data and can run beside the normal development server. See [TESTING.md](TESTING.md) for the covered paths and production-mode command.

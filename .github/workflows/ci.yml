@@ -48,3 +48,6 @@ jobs:
 
       - name: Build local image
         run: docker build --tag nasdash:ci .
+
+      - name: Smoke-test fresh install and persistent upgrade
+        run: npm run test:container -- nasdash:ci

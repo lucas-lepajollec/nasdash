@@ -8,11 +8,11 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  build-and-push:
+  verify:
+    name: Verify release candidate
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -24,10 +24,39 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Verify test suite
-        run: |
-          npm ci
-          npm test
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit and API tests
+        run: npm test
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production browser tests
+        run: npm run test:e2e
+        env:
+          NASDASH_E2E_SERVER_MODE: production
+
+      - name: Build release-candidate container
+        run: docker build --tag nasdash:release-candidate .
+
+      - name: Smoke-test fresh install and persistent upgrade
+        run: npm run test:container -- nasdash:release-candidate
+
+  build-and-push:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
