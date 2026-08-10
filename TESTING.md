@@ -25,6 +25,7 @@ The E2E server listens on `127.0.0.1:2510`, uses `.next-e2e` for its local Next.
 The initial suite covers:
 
 - keyboard accessibility of the dashboard and settings dialog, including names, focus trapping, Escape and focus restoration;
+- keyboard accessibility of the network topology editor dialog without persisting a topology change;
 - anonymous viewer access in public mode;
 - server-side rejection of anonymous writes;
 - admin login through the real login page;

@@ -13,6 +13,7 @@ import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { WidgetPanel } from '../../shared/WidgetPanel';
 import { Emoji } from '../../shared/Emoji';
 import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 const fetcher = dockerJsonFetcher;
 
@@ -168,10 +169,11 @@ function DockerHostFormModal({ onClose, onSave }: {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const dialogRef = useDialogAccessibility(onClose);
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal" style={{ maxWidth: 420 }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Ajouter un hôte Docker" tabIndex={-1} className="nd-modal" style={{ maxWidth: 420 }}>
         <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Ajouter un hôte Docker</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           
@@ -184,6 +186,7 @@ function DockerHostFormModal({ onClose, onSave }: {
               <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
               <button
                 type="button"
+                aria-label="Choisir l’icône de l’hôte Docker"
                 onClick={() => setIsPickerOpen(true)}
                 style={{
                   width: 38,
@@ -446,6 +449,10 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
   const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const deleteDialogRef = useDialogAccessibility(
+    () => { if (!isDeleting) setDeleteTargets(null); },
+    Boolean(deleteTargets),
+  );
 
   const availableImages = images.filter(img => !containers.some((c: any) => c.imageID === img.id || (img.repoTags && img.repoTags.includes(c.image))));
 
@@ -581,7 +588,7 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
 
       {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div className="nd-modal">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des images Docker" tabIndex={-1} className="nd-modal">
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? "les images" : "l'image"}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
               Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} images` : `cette image (${deleteTargets[0].substring(0, 12)})`} ?
@@ -612,6 +619,10 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
   const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const deleteDialogRef = useDialogAccessibility(
+    () => { if (!isDeleting) setDeleteTargets(null); },
+    Boolean(deleteTargets),
+  );
 
   const availableVolumes = volumes.filter(vol => !containers.some((c: any) => c.mounts?.some((m: any) => m.name === vol.name)));
 
@@ -744,7 +755,7 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
 
       {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div className="nd-modal">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des volumes Docker" tabIndex={-1} className="nd-modal">
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? 'les volumes' : 'un volume'}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
               Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} volumes` : <strong style={{ color: 'var(--nd-text)' }}>{deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '...' : deleteTargets[0]}</strong>} ?

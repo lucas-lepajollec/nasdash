@@ -12,6 +12,7 @@ import CustomSelect from '@/components/shared/CustomSelect';
 import { createPortal } from 'react-dom';
 import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface DevicesWidgetProps {
   devices: Device[];
@@ -837,6 +838,14 @@ export default function DevicesWidget({
 
   // Local device configuration states
   const [configuringDevice, setConfiguringDevice] = useState<Device | null>(null);
+  const widgetConfigDialogRef = useDialogAccessibility(
+    () => setIsWidgetConfigOpen(false),
+    isWidgetConfigOpen,
+  );
+  const deviceConfigDialogRef = useDialogAccessibility(
+    () => setConfiguringDevice(null),
+    Boolean(configuringDevice),
+  );
   const [localStyle, setLocalStyle] = useState<'horizontal' | 'vertical' | 'graph'>('horizontal');
   const [localColsDesktop, setLocalColsDesktop] = useState(3);
   const [localColsMobile, setLocalColsMobile] = useState(3);
@@ -1207,12 +1216,12 @@ export default function DevicesWidget({
       {/* Widget Instance Config Modal (Portal centered modal with blur) */}
       {isWidgetConfigOpen && renderPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setIsWidgetConfigOpen(false); }}>
-          <div className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div ref={widgetConfigDialogRef} role="dialog" aria-modal="true" aria-label="Configurer le widget Appareils" tabIndex={-1} className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="⚙️" /></span> Configurer le widget Appareils
               </h2>
-              <button className="nd-action-icon" onClick={() => setIsWidgetConfigOpen(false)}>
+              <button aria-label="Fermer la configuration du widget Appareils" className="nd-action-icon" onClick={() => setIsWidgetConfigOpen(false)}>
                 <X size={16} />
               </button>
             </div>
@@ -1304,12 +1313,12 @@ export default function DevicesWidget({
       {/* Local Device Config Modal (Portal centered modal with blur) */}
       {configuringDevice && renderPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfiguringDevice(null); }}>
-          <div className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div ref={deviceConfigDialogRef} role="dialog" aria-modal="true" aria-label={`Configuration d’affichage de ${configuringDevice.name}`} tabIndex={-1} className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="🖥️" /></span> Configuration d'affichage - {configuringDevice.name}
               </h2>
-              <button className="nd-action-icon" onClick={() => setConfiguringDevice(null)}>
+              <button aria-label="Fermer la configuration d’affichage" className="nd-action-icon" onClick={() => setConfiguringDevice(null)}>
                 <X size={16} />
               </button>
             </div>

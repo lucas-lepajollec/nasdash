@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Smartphone, Monitor, Layers, X, Trash2 } from 'lucide-react';
+import { Monitor, Layers, Trash2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../../../shared/CustomSelect';
@@ -7,6 +7,7 @@ import { THEME_PRESETS } from '../../SettingsModal';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
 
 import { ToggleSwitch } from '../shared/ToggleSwitch';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 export function MobileTab() {
   const { config, updateConfig } = useConfig();
@@ -43,6 +44,14 @@ export function MobileTab() {
   // Delete Confirmations
   const [confirmDeleteMobileProfile, setConfirmDeleteMobileProfile] = useState<string | null>(null);
   const [isConfirmBgDeleteOpen, setIsConfirmBgDeleteOpen] = useState(false);
+  const profileDeleteDialogRef = useDialogAccessibility(
+    () => setConfirmDeleteMobileProfile(null),
+    Boolean(confirmDeleteMobileProfile),
+  );
+  const backgroundDeleteDialogRef = useDialogAccessibility(
+    () => { setIsConfirmBgDeleteOpen(false); setBgToDelete(null); },
+    isConfirmBgDeleteOpen,
+  );
 
   useEffect(() => {
     if (config) {
@@ -558,9 +567,9 @@ export function MobileTab() {
 
         {confirmDeleteMobileProfile && (
           <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
-            <div className="nd-modal" style={{ maxWidth: 400 }}>
+            <div ref={profileDeleteDialogRef} role="dialog" aria-modal="true" aria-label="Supprimer le profil mobile" tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
               <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>Supprimer le profil mobile ?</h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>Êtes-vous sûr de vouloir supprimer ce profil d'apparence mobile ?</p>
+              <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>Êtes-vous sûr de vouloir supprimer ce profil d&apos;apparence mobile ?</p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                 <button className="nd-btn" onClick={() => setConfirmDeleteMobileProfile(null)}>Annuler</button>
                 <button className="nd-btn nd-btn-danger" onClick={() => handleDeleteMobileProfile(confirmDeleteMobileProfile)}>Oui, supprimer</button>
@@ -571,8 +580,8 @@ export function MobileTab() {
 
         {isConfirmBgDeleteOpen && (
           <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
-            <div className="nd-modal" style={{ maxWidth: 400 }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>Supprimer l'image ?</h3>
+            <div ref={backgroundDeleteDialogRef} role="dialog" aria-modal="true" aria-label="Supprimer l’image" tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>Supprimer l&apos;image ?</h3>
               <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)', lineHeight: 1.5 }}>
                 Êtes-vous sûr de vouloir supprimer cette image ? Si elle est utilisée, elle disparaîtra.
               </p>

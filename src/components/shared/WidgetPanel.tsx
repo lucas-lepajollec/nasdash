@@ -8,6 +8,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { PanelWidgetConfig } from '@/lib/types';
 import { ArrowUp, ArrowDown, Trash2, X, Settings, Plus } from 'lucide-react';
 import { WidgetSelectionModal } from '@/components/modals/settings/tabs/custom/WidgetSelectionModal';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface WidgetPanelProps {
   panelId: string;
@@ -21,6 +22,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const dialogRef = useDialogAccessibility(() => setIsModalOpen(false), isModalOpen);
 
   useEffect(() => {
     setMounted(true);
@@ -220,7 +222,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
       {/* Modal de gestion du panneau */}
       {isModalOpen && mounted && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }} style={{ zIndex: 99999 }}>
-          <div className="nd-modal nd-animate-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, maxHeight: '80svh', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`Gérer ${getPanelName(panelId)}`} tabIndex={-1} className="nd-modal nd-animate-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, maxHeight: '80svh', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             
             {/* Header */}
             <div style={{ 
@@ -240,6 +242,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
                 </p>
               </div>
               <button 
+                aria-label="Fermer la gestion du panneau"
                 onClick={() => setIsModalOpen(false)} 
                 style={{ 
                   background: 'rgba(255,255,255,0.03)', 

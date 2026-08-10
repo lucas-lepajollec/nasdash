@@ -7,6 +7,7 @@ import { SettingsAccordion } from '../shared/SettingsAccordion';
 import { HeaderElementDesktop } from '@/lib/types';
 
 import { ToggleSwitch } from '../shared/ToggleSwitch';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 export function HeaderTab() {
   const { config, updateConfig } = useConfig();
@@ -36,6 +37,10 @@ export function HeaderTab() {
 
   const [isConfirmLogoDeleteOpen, setIsConfirmLogoDeleteOpen] = useState(false);
   const [logoToDelete, setLogoToDelete] = useState<string | null>(null);
+  const logoDeleteDialogRef = useDialogAccessibility(
+    () => { setIsConfirmLogoDeleteOpen(false); setLogoToDelete(null); },
+    isConfirmLogoDeleteOpen,
+  );
 
   useEffect(() => {
     if (config) {
@@ -314,10 +319,10 @@ export function HeaderTab() {
         {/* Delete Modal */}
         {isConfirmLogoDeleteOpen && (
           <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
-            <div className="nd-modal" style={{ maxWidth: 400 }}>
+            <div ref={logoDeleteDialogRef} role="dialog" aria-modal="true" aria-label="Supprimer le logo" tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
               <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>Supprimer le logo ?</h3>
               <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)', lineHeight: 1.5 }}>
-                Êtes-vous sûr de vouloir supprimer ce logo ? S'il s'agit d'un fichier importé, il sera définitivement effacé.
+                Êtes-vous sûr de vouloir supprimer ce logo ? S&apos;il s&apos;agit d&apos;un fichier importé, il sera définitivement effacé.
               </p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                 <button className="nd-btn" onClick={() => { setIsConfirmLogoDeleteOpen(false); setLogoToDelete(null); }}>Annuler</button>
