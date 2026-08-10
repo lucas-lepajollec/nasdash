@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSessionFromRequest, readUsers } from './auth';
+import { getSessionFromRequest, readUsers, type AuthRequestLike } from './auth';
 
 export type SecurityMode = 'public' | 'private';
 
@@ -32,7 +32,7 @@ function normalizePermissions(values?: string[]): string[] {
 }
 
 export function resolveAccessPrincipal(
-  req: unknown,
+  req: AuthRequestLike,
   securityMode: SecurityMode = 'public'
 ): AccessPrincipal | null {
   const session = getSessionFromRequest(req);
@@ -93,7 +93,7 @@ export function canReadResource(
 }
 
 export function checkReadAccess(
-  req: unknown,
+  req: AuthRequestLike,
   securityMode: SecurityMode,
   requirement: ReadAccessRequirement
 ): { principal: AccessPrincipal; error: null } | { principal: null; error: NextResponse } {

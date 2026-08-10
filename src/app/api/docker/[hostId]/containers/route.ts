@@ -12,14 +12,44 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const globalAny: any = global;
-if (!globalAny.__mockContainerStates) globalAny.__mockContainerStates = new Map<string, string>();
-const mockStates: Map<string, string> = globalAny.__mockContainerStates;
+interface DockerApiPort {
+  IP?: string;
+  PrivatePort: number;
+  PublicPort?: number;
+  Type: string;
+}
+
+interface DockerApiMount {
+  Type: string;
+  Name?: string;
+  Source: string;
+  Destination: string;
+  RW: boolean;
+}
+
+interface DockerApiContainerSummary {
+  Id: string;
+  Names?: string[];
+  Image?: string;
+  ImageID?: string;
+  State?: string;
+  Status?: string;
+  Created?: number;
+  Ports?: DockerApiPort[];
+  Mounts?: DockerApiMount[];
+  Labels?: Record<string, string>;
+}
+
+const dockerGlobal = globalThis as typeof globalThis & {
+  __mockContainerStates?: Map<string, string>;
+};
+if (!dockerGlobal.__mockContainerStates) dockerGlobal.__mockContainerStates = new Map<string, string>();
+const mockStates = dockerGlobal.__mockContainerStates;
 
 function getDockerHost(hostId: string) {
   const config = readConfig();
   const hosts = config.dockerHosts || [];
-  return hosts.find((h: any) => h.id === hostId);
+  return hosts.find(h => h.id === hostId);
 }
 
 // GET /api/docker/[hostId]/containers — list all containers
@@ -194,9 +224,9 @@ export async function GET(
     const all = url.searchParams.get('all') !== 'false'; // default true
     
     const response = await fetchDockerApi(host.url, `/containers/json?all=${all}&size=false`);
-    const rawContainers = await readDockerJson(response) as any[];
+    const rawContainers = await readDockerJson(response) as DockerApiContainerSummary[];
     
-    const containers = rawContainers.map((c: any) => ({
+    const containers = rawContainers.map(c => ({
       id: c.Id?.substring(0, 12) || c.Id,
       fullId: c.Id,
       names: (c.Names || []).map((n: string) => n.replace(/^\//, '')),
@@ -205,13 +235,13 @@ export async function GET(
       state: c.State?.toLowerCase() || 'unknown',
       status: c.Status || '',
       created: c.Created || 0,
-      ports: (c.Ports || []).map((p: any) => ({
+      ports: (c.Ports || []).map(p => ({
         ip: p.IP,
         privatePort: p.PrivatePort,
         publicPort: p.PublicPort,
         type: p.Type,
       })),
-      mounts: (c.Mounts || []).map((m: any) => ({
+      mounts: (c.Mounts || []).map(m => ({
         type: m.Type,
         name: m.Name,
         source: m.Source,

@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest, readUsers, isSecureRequest } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
 
-function jsonNoCache(data: any, init?: ResponseInit) {
+interface SessionUserView {
+  username: string;
+  role: 'admin' | 'viewer';
+  allowedTabs: string[];
+  allowedWidgets: string[];
+  isAnonymous: boolean;
+}
+
+function jsonNoCache(data: unknown, init?: ResponseInit) {
   const res = NextResponse.json(data, init);
   res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.headers.set('Pragma', 'no-cache');
@@ -37,7 +45,7 @@ export async function GET(req: NextRequest) {
 
   if (!payload) {
     // Session invalide ou expirée, effacer le cookie et renvoyer le viewer si public
-    let fallbackUser: any = null;
+    let fallbackUser: SessionUserView | null = null;
     const config = readConfig();
     if (config?.settings?.securityMode === 'public') {
       const users = readUsers();

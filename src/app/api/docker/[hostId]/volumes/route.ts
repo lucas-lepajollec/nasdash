@@ -13,9 +13,18 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+interface DockerApiVolume {
+  Name: string;
+  Driver?: string;
+  Mountpoint?: string;
+  CreatedAt?: string;
+  Labels?: Record<string, string> | null;
+  UsageData?: { Size?: number; RefCount?: number };
+}
+
 function getDockerHost(hostId: string) {
   const config = readConfig();
-  return (config.dockerHosts || []).find((h: any) => h.id === hostId);
+  return (config.dockerHosts || []).find(h => h.id === hostId);
 }
 
 // GET /api/docker/[hostId]/volumes — list all volumes
@@ -48,9 +57,9 @@ export async function GET(
     }
 
     const response = await fetchDockerApi(host.url, '/volumes');
-    const raw = await readDockerJson(response) as { Volumes?: any[] };
+    const raw = await readDockerJson(response) as { Volumes?: DockerApiVolume[] };
 
-    const volumes = (raw.Volumes || []).map((v: any) => ({
+    const volumes = (raw.Volumes || []).map(v => ({
       name: v.Name,
       driver: v.Driver,
       mountpoint: v.Mountpoint,

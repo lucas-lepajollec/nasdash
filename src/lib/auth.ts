@@ -8,41 +8,6 @@ import { getDataPath } from './dataDirectory';
 const USERS_PATH = getDataPath('users.json');
 const SECRET_FILE = getDataPath('jwt.secret');
 
-// Utiliser une clé persistante ou en générer une nouvelle à chaque démarrage
-const globalAny: any = global;
-
-function getJwtSecret(): string {
-  let secret = process.env.NASDASH_JWT_SECRET;
-  if (!secret) {
-    try {
-      if (fs.existsSync(SECRET_FILE)) {
-        secret = fs.readFileSync(SECRET_FILE, 'utf-8').trim();
-      } else {
-        secret = crypto.randomBytes(32).toString('hex');
-        const dir = path.dirname(SECRET_FILE);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        safeWriteFileSync(SECRET_FILE, secret, 'utf-8');
-      }
-    } catch (e) {
-      console.error('Failed to read/write persistent JWT secret:', e);
-      if (!globalAny.__jwtSecretFallback) {
-        globalAny.__jwtSecretFallback = crypto.randomBytes(32).toString('hex');
-      }
-      secret = globalAny.__jwtSecretFallback;
-    }
-  }
-  return secret || 'fallback-jwt-secret';
-}
-
-if (!globalAny.__jwtSecret) {
-  globalAny.__jwtSecret = getJwtSecret();
-}
-const JWT_SECRET: string = globalAny.__jwtSecret;
-
-if (!globalAny.__cachedUsers) {
-  globalAny.__cachedUsers = null;
-}
-
 export interface User {
   username: string;
   role: 'admin' | 'viewer';
@@ -59,6 +24,73 @@ export interface SessionPayload {
   allowedWidgets?: string[];
   sessionVersion: number;
   exp: number;
+}
+
+interface HeaderReader {
+  get(name: string): string | null | undefined;
+}
+
+interface CookieReader {
+  get(name: string): { value?: string } | undefined;
+}
+
+export interface AuthRequestLike {
+  url?: string;
+  method?: string;
+  headers?: HeaderReader | Record<string, string | undefined>;
+  cookies?: CookieReader;
+  req?: { method?: string };
+}
+
+function hasHeaderReader(headers: HeaderReader | Record<string, string | undefined>): headers is HeaderReader {
+  return typeof (headers as HeaderReader).get === 'function';
+}
+
+function getRequestHeader(req: AuthRequestLike | undefined, name: string): string | null {
+  const headers = req?.headers;
+  if (!headers) return null;
+  if (hasHeaderReader(headers)) return headers.get(name) || null;
+  return headers[name] || headers[name.toLowerCase()] || null;
+}
+
+// Utiliser une clé persistante ou en générer une nouvelle à chaque démarrage
+const authGlobal = globalThis as typeof globalThis & {
+  __jwtSecretFallback?: string;
+  __jwtSecret?: string;
+  __cachedUsers?: User[] | null;
+  __warnedAboutDefaultPasswords?: boolean;
+};
+
+function getJwtSecret(): string {
+  let secret = process.env.NASDASH_JWT_SECRET;
+  if (!secret) {
+    try {
+      if (fs.existsSync(SECRET_FILE)) {
+        secret = fs.readFileSync(SECRET_FILE, 'utf-8').trim();
+      } else {
+        secret = crypto.randomBytes(32).toString('hex');
+        const dir = path.dirname(SECRET_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        safeWriteFileSync(SECRET_FILE, secret, 'utf-8');
+      }
+    } catch (e) {
+      console.error('Failed to read/write persistent JWT secret:', e);
+      if (!authGlobal.__jwtSecretFallback) {
+        authGlobal.__jwtSecretFallback = crypto.randomBytes(32).toString('hex');
+      }
+      secret = authGlobal.__jwtSecretFallback;
+    }
+  }
+  return secret || 'fallback-jwt-secret';
+}
+
+if (!authGlobal.__jwtSecret) {
+  authGlobal.__jwtSecret = getJwtSecret();
+}
+const JWT_SECRET = authGlobal.__jwtSecret;
+
+if (!authGlobal.__cachedUsers) {
+  authGlobal.__cachedUsers = null;
 }
 
 function getInitialPassword(username: 'admin' | 'viewer'): string {
@@ -86,7 +118,7 @@ export function verifyPassword(password: string, storedHash: string): boolean {
     if (!salt || !hash) return false;
     const verifyHash = crypto.scryptSync(password, salt, 64).toString('hex');
     return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(verifyHash, 'hex'));
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -174,7 +206,7 @@ export function isSessionCurrentForUser(payload: SessionPayload, user: User): bo
   );
 }
 
-export function getSessionFromRequest(req: Request | any): SessionPayload | null {
+export function getSessionFromRequest(req: AuthRequestLike): SessionPayload | null {
   let token: string | null = null;
   
   // Si c'est un NextRequest (possède la propriété cookies.get)
@@ -203,17 +235,17 @@ export function getSessionFromRequest(req: Request | any): SessionPayload | null
   };
 }
 
-export function isAuthenticated(req: Request | any): boolean {
+export function isAuthenticated(req: AuthRequestLike): boolean {
   return !!getSessionFromRequest(req);
 }
 
-export function isAdmin(req: Request | any): boolean {
+export function isAdmin(req: AuthRequestLike): boolean {
   const payload = getSessionFromRequest(req);
   return payload?.role === 'admin';
 }
 
-export function isSecureRequest(req?: Request | any): boolean {
-  const forwardedProto = req?.headers?.get?.('x-forwarded-proto')
+export function isSecureRequest(req?: AuthRequestLike): boolean {
+  const forwardedProto = getRequestHeader(req, 'x-forwarded-proto')
     ?.split(',')[0]
     ?.trim()
     ?.toLowerCase();
@@ -226,7 +258,7 @@ export function isSecureRequest(req?: Request | any): boolean {
   }
 }
 
-export function verifyCsrf(req: Request | any): boolean {
+export function verifyCsrf(req: AuthRequestLike): boolean {
   if (!req) return true;
   
   // Only state-changing methods are checked
@@ -242,15 +274,7 @@ export function verifyCsrf(req: Request | any): boolean {
   }
 
   // 1. Sec-Fetch-Site check (extremely robust in modern browsers)
-  const getHeader = (name: string): string | null => {
-    if (req.headers && typeof req.headers.get === 'function') {
-      return req.headers.get(name);
-    }
-    if (req.headers) {
-      return req.headers[name] || req.headers[name.toLowerCase()] || null;
-    }
-    return null;
-  };
+  const getHeader = (name: string) => getRequestHeader(req, name);
 
   const secFetchSite = getHeader('sec-fetch-site');
   if (secFetchSite && secFetchSite === 'cross-site') {
@@ -325,7 +349,7 @@ export function verifyCsrf(req: Request | any): boolean {
   return true;
 }
 
-export function checkAdmin(req: Request | any): NextResponse | null {
+export function checkAdmin(req: AuthRequestLike): NextResponse | null {
   if (!verifyCsrf(req)) {
     return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
   }
@@ -335,7 +359,7 @@ export function checkAdmin(req: Request | any): NextResponse | null {
   return null;
 }
 
-export function checkAuth(req: Request | any): NextResponse | null {
+export function checkAuth(req: AuthRequestLike): NextResponse | null {
   if (!verifyCsrf(req)) {
     return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
   }
@@ -349,8 +373,8 @@ export function checkAuth(req: Request | any): NextResponse | null {
 // --- GESTION DES UTILISATEURS LOCAUX ---
 
 export function readUsers(): User[] {
-  if (globalAny.__cachedUsers) {
-    return JSON.parse(JSON.stringify(globalAny.__cachedUsers));
+  if (authGlobal.__cachedUsers) {
+    return JSON.parse(JSON.stringify(authGlobal.__cachedUsers));
   }
 
   try {
@@ -417,21 +441,21 @@ export function readUsers(): User[] {
       modified = true;
     }
 
-    if (!globalAny.__warnedAboutDefaultPasswords) {
+    if (!authGlobal.__warnedAboutDefaultPasswords) {
       if (adminUser?.passwordHash && verifyPassword('admin', adminUser.passwordHash)) {
         console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte admin utilise encore le mot de passe par défaut « admin ».');
       }
       if (viewerUser?.passwordHash && verifyPassword('viewer', viewerUser.passwordHash)) {
         console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte viewer utilise encore le mot de passe par défaut « viewer ».');
       }
-      globalAny.__warnedAboutDefaultPasswords = true;
+      authGlobal.__warnedAboutDefaultPasswords = true;
     }
 
     if (modified || !fileExists) {
       safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2));
     }
 
-    globalAny.__cachedUsers = JSON.parse(JSON.stringify(users));
+    authGlobal.__cachedUsers = JSON.parse(JSON.stringify(users));
     return users;
   } catch (e) {
     console.error('Erreur de lecture du fichier users.json', e);
@@ -446,7 +470,7 @@ export function writeUsers(users: User[]): boolean {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2));
-    globalAny.__cachedUsers = JSON.parse(JSON.stringify(users));
+    authGlobal.__cachedUsers = JSON.parse(JSON.stringify(users));
     return true;
   } catch (e) {
     console.error('Erreur d\'écriture du fichier users.json', e);

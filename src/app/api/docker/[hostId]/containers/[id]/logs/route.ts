@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 function getDockerHost(hostId: string) {
   const config = readConfig();
-  return (config.dockerHosts || []).find((h: any) => h.id === hostId);
+  return (config.dockerHosts || []).find(h => h.id === hostId);
 }
 
 // GET /api/docker/[hostId]/containers/[id]/logs

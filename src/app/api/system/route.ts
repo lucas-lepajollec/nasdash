@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
   incrementActiveClients();
 
-  let interval: NodeJS.Timeout | any = null;
+  let interval: ReturnType<typeof setInterval> | null = null;
   const cleanup = () => {
     if (active) {
       active = false;

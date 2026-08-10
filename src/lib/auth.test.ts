@@ -73,7 +73,7 @@ describe('Auth Utility Tests', () => {
 
   describe('Authorization', () => {
     it('should never grant admin rights without an authenticated admin session', () => {
-      const req = { headers: new Map() } as any;
+      const req = { headers: new Map<string, string>() };
       expect(isAdmin(req)).toBe(false);
     });
 
@@ -86,10 +86,10 @@ describe('Auth Utility Tests', () => {
 
   describe('CSRF Validation', () => {
     it('should allow GET, HEAD, OPTIONS requests without CSRF verification', () => {
-      const reqGet = { method: 'GET', url: 'http://localhost/api/test', headers: new Map() } as any;
+      const reqGet = { method: 'GET', url: 'http://localhost/api/test', headers: new Map<string, string>() };
       expect(verifyCsrf(reqGet)).toBe(true);
 
-      const reqHead = { method: 'HEAD', url: 'http://localhost/api/test', headers: new Map() } as any;
+      const reqHead = { method: 'HEAD', url: 'http://localhost/api/test', headers: new Map<string, string>() };
       expect(verifyCsrf(reqHead)).toBe(true);
     });
 
@@ -102,7 +102,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST', 
         url: 'http://localhost/api/test', 
         headers 
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(false);
     });
@@ -116,7 +116,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(false);
     });
@@ -130,7 +130,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(true);
     });
@@ -144,7 +144,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(false);
     });
@@ -158,7 +158,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(true);
     });

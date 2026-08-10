@@ -5,7 +5,7 @@ import { resolveAccessPrincipal } from '@/lib/access';
 import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
-import { Category, Service, Device } from '@/lib/types';
+import { Category, Service, Device, type DeviceApiConfig } from '@/lib/types';
 import { validateConfigMutationBody } from '@/lib/configEntityValidation';
 import {
   RequestValidationError,
@@ -90,7 +90,6 @@ export async function POST(req: NextRequest) {
     config.categories.push(newCategory);
     
     // Automatically expand the grid by 1 slot so an empty dropzone immediately appears
-    if (!config.settings) config.settings = {} as any;
     const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length - 1);
     if (currentSlots < config.categories.length + 1) {
        config.settings.totalSlots = config.categories.length + 1;
@@ -157,7 +156,7 @@ export async function POST(req: NextRequest) {
           const urlObj = new URL(baseUrl);
           if (body.api.port) urlObj.port = body.api.port;
           newDevice.api.url = urlObj.toString().replace(/\/$/, '');
-        } catch (e) {
+        } catch {
           newDevice.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
         }
 
@@ -200,7 +199,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === 'dockerHost') {
-    if (!config.dockerHosts) (config as any).dockerHosts = [];
+    if (!config.dockerHosts) config.dockerHosts = [];
     const newHost = {
       id: uuidv4(),
       name: body.name || 'Docker Host',
@@ -208,7 +207,7 @@ export async function POST(req: NextRequest) {
       type: 'tcp' as const,
       url: body.url || '',
     };
-    (config as any).dockerHosts.push(newHost);
+    config.dockerHosts.push(newHost);
     if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(newHost, { status: 201 });
   }
@@ -266,8 +265,8 @@ export async function PUT(req: NextRequest) {
     if (!config.devices) config.devices = [];
 
     // Preserve sensitive tokens from existing devices
-    const newDevices = body.devices.map((newDevice: any) => {
-      const existingDevice = (config.devices || []).find((d: any) => d.id === newDevice.id);
+    const newDevices = (body.devices as Device[]).map(newDevice => {
+      const existingDevice = (config.devices || []).find(d => d.id === newDevice.id);
       if (existingDevice && existingDevice.api?.token && newDevice.api?.token === '********') {
         // Keep the original token if the new one is masked
         newDevice.api.token = existingDevice.api.token;
@@ -311,8 +310,6 @@ export async function PUT(req: NextRequest) {
   }
 
   if (type === 'settings') {
-    if (!config.settings) (config as any).settings = {};
-
     if (body.title !== undefined) config.settings.title = body.title;
     if (body.titleMobile !== undefined) config.settings.titleMobile = body.titleMobile;
     if (body.titleLogo !== undefined) config.settings.titleLogo = body.titleLogo;
@@ -360,6 +357,7 @@ export async function PUT(req: NextRequest) {
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
     
     // Dynamically save all widget specific states (hide[Widget], [widget]Sidebar, [widget]Order, [widget]Props) with validation
+    const dynamicSettings = config.settings as typeof config.settings & Record<string, unknown>;
     Object.keys(body).forEach(key => {
       if (key.startsWith('hide') || key.endsWith('Sidebar') || key.endsWith('Order') || key.endsWith('Props')) {
         // Validation of key format to prevent prototype pollution or other injections
@@ -370,30 +368,31 @@ export async function PUT(req: NextRequest) {
         // Validate values
         if (key.startsWith('hide')) {
           if (typeof val === 'boolean') {
-            (config.settings as any)[key] = val;
+            dynamicSettings[key] = val;
           }
         } else if (key.endsWith('Sidebar')) {
           if (typeof val === 'string' || typeof val === 'boolean') {
-            (config.settings as any)[key] = val;
+            dynamicSettings[key] = val;
           }
         } else if (key.endsWith('Order')) {
           if (typeof val === 'number' || (Array.isArray(val) && val.every(item => typeof item === 'string' || typeof item === 'number'))) {
-            (config.settings as any)[key] = val;
+            dynamicSettings[key] = val;
           }
         } else if (key.endsWith('Props')) {
           if (val && typeof val === 'object' && !Array.isArray(val)) {
             // Simple check: make sure keys of Props are safe alphanumeric strings
-            const safeProps: any = {};
+            const propsRecord = val as Record<string, unknown>;
+            const safeProps: Record<string, unknown> = {};
             let isSafe = true;
             Object.keys(val).forEach(propKey => {
               if (!/^[a-zA-Z0-9_-]+$/.test(propKey) || propKey === '__proto__' || propKey === 'constructor' || propKey === 'prototype') {
                 isSafe = false;
                 return;
               }
-              safeProps[propKey] = val[propKey];
+              safeProps[propKey] = propsRecord[propKey];
             });
             if (isSafe) {
-              (config.settings as any)[key] = safeProps;
+              dynamicSettings[key] = safeProps;
             }
           }
         }
@@ -454,7 +453,7 @@ export async function PUT(req: NextRequest) {
     if (body.colsMobile !== undefined) device.colsMobile = body.colsMobile;
 
     if (body.api) {
-      const oldApiObj: any = device.api || {};
+      const oldApiObj: Partial<DeviceApiConfig> = device.api || {};
       const isChangingPlatform = oldApiObj.type !== body.api.type;
 
       // Check if username or password was specifically sent in the PUT request
@@ -481,7 +480,7 @@ export async function PUT(req: NextRequest) {
           const urlObj = new URL(baseUrl);
           if (body.api.port) urlObj.port = body.api.port;
           device.api.url = urlObj.toString().replace(/\/$/, '');
-        } catch (e) {
+        } catch {
           device.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
         }
 
@@ -543,7 +542,7 @@ export async function PUT(req: NextRequest) {
 
   if (type === 'homeWidgetProps') {
     if (!config.settings.homeWidgets) config.settings.homeWidgets = [];
-    const widget = config.settings.homeWidgets.find((w: any) => w.id === body.id);
+    const widget = config.settings.homeWidgets.find(w => w.id === body.id);
     if (!widget) return NextResponse.json({ error: 'Widget not found' }, { status: 404 });
     if (!widget.props) widget.props = {};
     widget.props = { ...widget.props, ...body.props };
@@ -560,7 +559,7 @@ export async function PUT(req: NextRequest) {
 
   if (type === 'dockerAction') {
     if (!config.dockerActions) config.dockerActions = [];
-    const action = config.dockerActions.find((a: any) => a.id === body.id);
+    const action = config.dockerActions.find(a => a.id === body.id);
     if (!action) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (body.name !== undefined) action.name = body.name;
@@ -574,7 +573,7 @@ export async function PUT(req: NextRequest) {
 
   if (type === 'localEvent') {
     if (!config.localEvents) config.localEvents = [];
-    const event = config.localEvents.find((e: any) => e.id === body.id);
+    const event = config.localEvents.find(e => e.id === body.id);
     if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (body.title !== undefined) event.title = body.title;
@@ -637,22 +636,22 @@ export async function DELETE(req: NextRequest) {
   }
 
   if (type === 'dockerHost') {
-    if (!(config as any).dockerHosts) (config as any).dockerHosts = [];
-    (config as any).dockerHosts = (config as any).dockerHosts.filter((h: any) => h.id !== id);
+    if (!config.dockerHosts) config.dockerHosts = [];
+    config.dockerHosts = config.dockerHosts.filter(h => h.id !== id);
     if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'dockerAction') {
     if (!config.dockerActions) config.dockerActions = [];
-    config.dockerActions = config.dockerActions.filter((a: any) => a.id !== id);
+    config.dockerActions = config.dockerActions.filter(a => a.id !== id);
     if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'localEvent') {
     if (!config.localEvents) config.localEvents = [];
-    config.localEvents = config.localEvents.filter((e: any) => e.id !== id);
+    config.localEvents = config.localEvents.filter(e => e.id !== id);
     if (!writeCalendar(config.localEvents)) return persistenceError();
     return NextResponse.json({ ok: true });
   }

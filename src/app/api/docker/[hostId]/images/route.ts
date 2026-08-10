@@ -13,9 +13,17 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+interface DockerApiImage {
+  Id?: string;
+  RepoTags?: string[] | null;
+  Size?: number;
+  Created?: number;
+  Containers?: number;
+}
+
 function getDockerHost(hostId: string) {
   const config = readConfig();
-  return (config.dockerHosts || []).find((h: any) => h.id === hostId);
+  return (config.dockerHosts || []).find(h => h.id === hostId);
 }
 
 // GET /api/docker/[hostId]/images — list all images
@@ -50,9 +58,9 @@ export async function GET(
     }
 
     const response = await fetchDockerApi(host.url, '/images/json');
-    const raw = await readDockerJson(response) as any[];
+    const raw = await readDockerJson(response) as DockerApiImage[];
 
-    const images = raw.map((img: any) => ({
+    const images = raw.map(img => ({
       id: img.Id?.replace('sha256:', '').substring(0, 12) || img.Id,
       repoTags: img.RepoTags || ['<none>:<none>'],
       size: img.Size || 0,

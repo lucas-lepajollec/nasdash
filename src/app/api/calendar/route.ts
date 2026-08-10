@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
 
       const uid = extractField('UID');
       const summary = extractField('SUMMARY');
-      let start = extractField('DTSTART');
-      let end = extractField('DTEND');
+      const start = extractField('DTSTART');
+      const end = extractField('DTEND');
       const description = extractField('DESCRIPTION');
       const location = extractField('LOCATION');
 
@@ -112,8 +112,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ events: processedEvents });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching calendar:', error);
-    return NextResponse.json({ error: 'Failed to fetch calendar: ' + error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to fetch calendar: ' + message }, { status: 500 });
   }
 }

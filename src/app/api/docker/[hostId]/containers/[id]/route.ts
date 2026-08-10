@@ -13,23 +13,67 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const globalAny: any = global;
-if (!globalAny.__mockContainerStates) globalAny.__mockContainerStates = new Map<string, string>();
-const mockStates: Map<string, string> = globalAny.__mockContainerStates;
+interface MockContainerDetail {
+  id: string;
+  name: string;
+  image: string;
+  defaultState: string;
+  startedAt: string;
+  finishedAt?: string;
+}
+
+interface DockerInspectMount {
+  Type: string;
+  Name?: string;
+  Source: string;
+  Destination: string;
+  RW: boolean;
+}
+
+interface DockerPortBinding {
+  HostIp?: string;
+  HostPort?: string;
+}
+
+interface DockerContainerInspect {
+  Id?: string;
+  Name?: string;
+  Config?: {
+    Image?: string;
+    Env?: string[];
+    Labels?: Record<string, string>;
+  };
+  State?: { Status?: string; StartedAt?: string; FinishedAt?: string };
+  HostConfig?: { PortBindings?: Record<string, DockerPortBinding[] | null> };
+  Mounts?: DockerInspectMount[];
+  Created?: string;
+  RestartCount?: number;
+}
+
+interface DockerContainerStats {
+  cpu_stats?: {
+    cpu_usage?: { total_usage?: number };
+    system_cpu_usage?: number;
+    online_cpus?: number;
+  };
+  precpu_stats?: {
+    cpu_usage?: { total_usage?: number };
+    system_cpu_usage?: number;
+  };
+  memory_stats?: { usage?: number; limit?: number };
+  networks?: Record<string, { rx_bytes?: number; tx_bytes?: number }>;
+}
+
+const dockerGlobal = globalThis as typeof globalThis & {
+  __mockContainerStates?: Map<string, string>;
+};
+if (!dockerGlobal.__mockContainerStates) dockerGlobal.__mockContainerStates = new Map<string, string>();
+const mockStates = dockerGlobal.__mockContainerStates;
 
 
 function getDockerHost(hostId: string) {
   const config = readConfig();
-  return (config.dockerHosts || []).find((h: any) => h.id === hostId);
-}
-
-async function dockerFetch(hostUrl: string, endpoint: string, method = 'GET'): Promise<any> {
-  const timeoutMs = method === 'GET' ? 5000 : 30000;
-  const response = await fetchDockerApi(hostUrl, endpoint, { method }, timeoutMs);
-  const contentType = response.headers.get('content-type');
-  return contentType?.includes('application/json')
-    ? readDockerJson(response)
-    : { ok: true };
+  return (config.dockerHosts || []).find(h => h.id === hostId);
 }
 
 // GET /api/docker/[hostId]/containers/[id] — container details
@@ -58,7 +102,7 @@ export async function GET(
     // Mock details
     const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
     if (isMockMode) {
-      const mockContainers = [
+      const mockContainers: MockContainerDetail[] = [
         { id: "mock11111111", name: "web-server", image: "nginx:latest", defaultState: "running", startedAt: "2026-06-11T07:00:00Z" },
         { id: "mock22222222", name: "postgres-db", image: "postgres:15-alpine", defaultState: "running", startedAt: "2026-06-11T05:00:00Z" },
         { id: "mock33333333", name: "redis-cache", image: "redis:alpine", defaultState: "running", startedAt: "2026-06-11T09:00:00Z" },
@@ -112,16 +156,18 @@ export async function GET(
       return NextResponse.json(result);
     }
 
-    const detail = await dockerFetch(host.url, `/containers/${id}/json`);
+    const detailResponse = await fetchDockerApi(host.url, `/containers/${encodeURIComponent(id)}/json`);
+    const detail = await readDockerJson(detailResponse) as DockerContainerInspect;
 
     // Also get one-shot stats
-    let stats: any = null;
+    let stats: DockerContainerStats | null = null;
     try {
-      stats = await dockerFetch(host.url, `/containers/${id}/stats?stream=false`);
+      const statsResponse = await fetchDockerApi(host.url, `/containers/${encodeURIComponent(id)}/stats?stream=false`);
+      stats = await readDockerJson(statsResponse) as DockerContainerStats;
     } catch { /* stats optional */ }
 
-    const cpuDelta = stats?.cpu_stats?.cpu_usage?.total_usage - (stats?.precpu_stats?.cpu_usage?.total_usage || 0);
-    const systemDelta = stats?.cpu_stats?.system_cpu_usage - (stats?.precpu_stats?.system_cpu_usage || 0);
+    const cpuDelta = (stats?.cpu_stats?.cpu_usage?.total_usage || 0) - (stats?.precpu_stats?.cpu_usage?.total_usage || 0);
+    const systemDelta = (stats?.cpu_stats?.system_cpu_usage || 0) - (stats?.precpu_stats?.system_cpu_usage || 0);
     const numCpus = stats?.cpu_stats?.online_cpus || 1;
     const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * numCpus * 100 : 0;
 
@@ -132,7 +178,7 @@ export async function GET(
     // Network I/O
     let netInput = 0, netOutput = 0;
     if (stats?.networks) {
-      for (const net of Object.values(stats.networks) as any[]) {
+      for (const net of Object.values(stats.networks)) {
         netInput += net.rx_bytes || 0;
         netOutput += net.tx_bytes || 0;
       }
@@ -149,11 +195,11 @@ export async function GET(
       finishedAt: detail.State?.FinishedAt,
       created: detail.Created,
       restartCount: detail.RestartCount || 0,
-      ports: Object.entries(detail.HostConfig?.PortBindings || {}).map(([containerPort, bindings]: [string, any]) => ({
+      ports: Object.entries(detail.HostConfig?.PortBindings || {}).map(([containerPort, bindings]) => ({
         containerPort,
-        hostBindings: (bindings || []).map((b: any) => `${b.HostIp || '0.0.0.0'}:${b.HostPort}`),
+        hostBindings: (bindings || []).map(b => `${b.HostIp || '0.0.0.0'}:${b.HostPort}`),
       })),
-      mounts: (detail.Mounts || []).map((m: any) => ({
+      mounts: (detail.Mounts || []).map(m => ({
         type: m.Type,
         name: m.Name,
         source: m.Source,
@@ -230,7 +276,7 @@ export async function POST(
       return NextResponse.json({ ok: true, action });
     }
 
-    await dockerFetch(host.url, endpoint, method);
+    await fetchDockerApi(host.url, endpoint, { method }, 30_000, [304]);
     return NextResponse.json({ ok: true, action });
   } catch (error: unknown) {
     const failure = classifyDockerError(error);
