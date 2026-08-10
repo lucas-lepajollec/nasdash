@@ -5,6 +5,12 @@ import { Category, DashboardConfig, DeviceStat, LocalCalendarEvent, NetworkTopol
 import { encrypt, decrypt } from './crypto';
 import { LegacyConfigData, migrateLegacySplitFiles } from './configMigration';
 import { getDataDirectory } from './dataDirectory';
+import {
+  classifyMonitoringError,
+  MonitoringConfigurationError,
+  MonitoringHttpError,
+  MonitoringInvalidResponseError,
+} from './monitoringError';
 
 const DATA_DIR = getDataDirectory();
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
@@ -616,6 +622,18 @@ function logErrorSmartly(deviceId: string, context: string, errorMsg: string) {
   }
 }
 
+function logMonitoringErrorSmartly(deviceId: string, context: string, error: unknown) {
+  const failure = classifyMonitoringError(error);
+  const key = `${deviceId}-${context}`;
+  const signature = `${failure.code}:${failure.message}`;
+  if (errorLogCache.get(key) === signature) return;
+
+  const line = `[${context}] ${failure.message} ${failure.hint}`;
+  if (failure.severity === 'warning') console.warn(`🟠 ${line}`);
+  else console.error(`🔴 ${line}`);
+  errorLogCache.set(key, signature);
+}
+
 function clearErrorSmartly(deviceId: string, context: string) {
   errorLogCache.delete(`${deviceId}-${context}`);
 }
@@ -673,13 +691,13 @@ export function startBackgroundMonitoring() {
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
           if (res.statusCode !== 200) {
-            reject(new Error(`Proxmox SSL/API Error: ${res.statusCode} ${res.statusMessage}`));
+            reject(new MonitoringHttpError('Proxmox', res.statusCode || 500, res.statusMessage));
             return;
           }
           try {
             resolve((JSON.parse(data) as { data: T }).data); // Proxmox nests everything under .data
           } catch {
-            reject(new Error('Invalid JSON from Proxmox'));
+            reject(new MonitoringInvalidResponseError('Réponse JSON Proxmox invalide.'));
           }
         });
       });
@@ -707,6 +725,7 @@ export function startBackgroundMonitoring() {
 
         if (device.api.type === 'glances') {
           if (!apiUrl) {
+            logMonitoringErrorSmartly(id, 'Glances', new MonitoringConfigurationError('URL Glances manquante.'));
             devicesStatusCache[id] = { online: false, error: 'URL Glances manquante.', isOffline: true, updatedAt: Date.now() };
             return;
           }
@@ -758,10 +777,10 @@ export function startBackgroundMonitoring() {
 
             if (!res || !res.ok) {
               if (res) {
-                logErrorSmartly(id, 'Glances', `Erreur HTTP: ${res.status} ${res.statusText}`);
+                logMonitoringErrorSmartly(id, 'Glances', new MonitoringHttpError('Glances', res.status, res.statusText));
                 devicesStatusCache[id] = { online: false, error: `Erreur serveur (${res.status})`, isOffline: true, updatedAt: Date.now() };
               } else {
-                logErrorSmartly(id, 'Glances', `Fetch Error: ${getErrorMessage(lastError)}`);
+                logMonitoringErrorSmartly(id, 'Glances', lastError);
                 devicesStatusCache[id] = { online: false, error: 'Impossible de joindre Glances', isOffline: true, updatedAt: Date.now() };
               }
               return;
@@ -772,7 +791,7 @@ export function startBackgroundMonitoring() {
             try {
               data = JSON.parse(text) as GlancesResponse;
             } catch {
-              logErrorSmartly(id, 'Glances HTML', `Reçu HTML au lieu de JSON sur ${finalUrl}`);
+              logMonitoringErrorSmartly(id, 'Glances', new MonitoringInvalidResponseError(`Réponse HTML reçue au lieu de JSON sur ${finalUrl}.`));
               devicesStatusCache[id] = { online: false, error: 'Réponse invalide (HTML)', isOffline: true, updatedAt: Date.now() };
               return;
             }
@@ -870,13 +889,14 @@ export function startBackgroundMonitoring() {
 
           } catch (error: unknown) {
             const errorMessage = getErrorMessage(error);
-            logErrorSmartly(id, 'Glances', errorMessage);
+            logMonitoringErrorSmartly(id, 'Glances', error);
             devicesStatusCache[id] = { online: false, error: errorMessage || 'Impossible de joindre Glances', isOffline: true, updatedAt: Date.now() };
           }
         }
 
         else if (device.api.type === 'proxmox') {
           if (!apiUrl || !device.api.token) {
+            logMonitoringErrorSmartly(id, 'Proxmox', new MonitoringConfigurationError('URL ou jeton Proxmox manquant.'));
             devicesStatusCache[id] = { online: false, error: 'URL ou Token manquant.', isOffline: true, updatedAt: Date.now() };
             return;
           }
@@ -925,8 +945,9 @@ export function startBackgroundMonitoring() {
                      diskTotal = sTotal;
                    }
                  }
+                 clearErrorSmartly(id, 'Proxmox Storage');
               } catch (error: unknown) {
-                 logErrorSmartly(id, 'Proxmox Storage', getErrorMessage(error));
+                 logMonitoringErrorSmartly(id, 'Proxmox Storage', error);
               }
             }
 
@@ -958,7 +979,7 @@ export function startBackgroundMonitoring() {
 
           } catch (error: unknown) {
             const errorMessage = getErrorMessage(error);
-            logErrorSmartly(id, 'Proxmox', errorMessage);
+            logMonitoringErrorSmartly(id, 'Proxmox', error);
             devicesStatusCache[id] = { online: false, error: errorMessage || 'Impossible de joindre Proxmox', isOffline: true, updatedAt: Date.now() };
           }
         }

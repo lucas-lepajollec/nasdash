@@ -38,6 +38,16 @@ For a production-mode run, build first and set `NASDASH_E2E_SERVER_MODE=producti
 
 The E2E runner owns only the isolated server it starts. It refuses to run if port 2510 is already occupied and explicitly releases its process tree on Windows, Linux and macOS.
 
+## Monitoring failure classification
+
+`src/lib/monitoringError.test.ts` protects the log-severity contract used by the Glances and Proxmox adapters:
+
+- timeouts, refused connections, unreachable hosts and temporary DNS failures are retryable warnings;
+- missing or invalid settings, authentication failures, TLS failures and missing API endpoints are errors requiring intervention;
+- invalid payloads and unexpected remote HTTP failures remain errors.
+
+This classification changes only the server log severity and guidance. Device online/offline state, polling retries and collected metrics remain covered by their existing behavior.
+
 ## Container smoke test
 
 Build an image and test it with:
