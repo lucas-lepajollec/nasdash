@@ -1,28 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Plus, Clock, MapPin, AlignLeft } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Plus, Clock } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string | null;
-  end: string | null;
-  description?: string;
-  location?: string;
-  isAllDay?: boolean;
-}
+import { CalendarDisplayEvent } from '@/lib/types';
 
 export default function CalendarWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { config, setCalendarEventModal, setViewEventModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const calendarUrl = config?.settings?.calendarUrl;
-  const localEvents = config?.localEvents || [];
+  const localEvents = React.useMemo(() => config?.localEvents || [], [config?.localEvents]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarDisplayEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   
@@ -35,7 +26,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
   useEffect(() => {
     if (!isVisible) return;
     const fetchEvents = async () => {
-      let combinedEvents: CalendarEvent[] = localEvents.map(e => ({
+      let combinedEvents: CalendarDisplayEvent[] = localEvents.map(e => ({
         ...e,
         start: e.start || null,
         end: e.end || null
@@ -102,13 +93,6 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
       const eventStart = new Date(e.start);
       return eventStart >= startOfDay && eventStart <= endOfDay;
     });
-  };
-
-  // Helper: check if a day is today or in the future
-  const isUpcomingOrToday = (day: number) => {
-    const d = new Date(year, month, day, 23, 59, 59);
-    const todayCutoff = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate(), 0, 0, 0);
-    return d >= todayCutoff;
   };
 
   // Get upcoming events (filtered for today and future)
@@ -314,8 +298,6 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
     for (let i = 1; i <= daysInMonth; i++) {
       const today = isToday(i);
       const dayEvents = getEventsForDay(i);
-      const isSelected = false; // Add selection state later if needed
-
       cells.push(
         <div
           key={`day-full-${i}`}
@@ -361,7 +343,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
 
           {/* Event list inside the day cell */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, overflow: 'hidden' }}>
-            {dayEvents.slice(0, 2).map((e, idx) => (
+            {dayEvents.slice(0, 2).map((e) => (
               <div
                 key={e.id}
                 onClick={(evt) => {

@@ -3,23 +3,31 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface AuthContextType {
-  user: { username: string; role: 'admin' | 'viewer'; allowedTabs?: string[]; allowedWidgets?: string[]; isAnonymous?: boolean } | null;
+  user: AuthUser | null;
   authLoading: boolean;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
 }
 
+export interface AuthUser {
+  username: string;
+  role: 'admin' | 'viewer';
+  allowedTabs?: string[];
+  allowedWidgets?: string[];
+  isAnonymous?: boolean;
+}
+
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<{ username: string; role: 'admin' | 'viewer'; allowedTabs?: string[]; allowedWidgets?: string[]; isAnonymous?: boolean } | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' });
-      const data = await res.json();
+      const data = await res.json() as { user: AuthUser | null };
       setUser(data.user);
     } catch (e) {
       console.error('Erreur vérification session:', e);
@@ -34,18 +42,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      if (typeof window !== 'undefined' && (window as any).globalEventSource) {
+      if (typeof window !== 'undefined' && window.globalEventSource) {
         try {
-          (window as any).globalEventSource.close();
-          (window as any).globalEventSource = null;
+          window.globalEventSource.close();
+          window.globalEventSource = null;
         } catch {}
       }
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
-      window.location.href = '/login';
+      // A full reload intentionally clears every in-memory auth and SSE state.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign('/login');
     } catch (e) {
       console.error('Erreur déconnexion:', e);
-      window.location.href = '/login';
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign('/login');
     }
   };
 
@@ -54,7 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(url, options);
       if (res.status === 401 || res.status === 403) {
         alert("Accès refusé. Session administrateur requise.");
-        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+        // A full reload prevents protected provider state surviving the redirect.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
         throw new Error('Unauthorized');
       }
       return res;

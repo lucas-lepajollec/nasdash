@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { DashboardConfig, Category, Service, Device } from '@/lib/types';
+import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent } from '@/lib/types';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
@@ -26,22 +26,24 @@ export interface DashboardContextType {
   reorderDevices: (newDevices: Device[]) => Promise<void>;
   updateDevice: (id: string, updates: Partial<Device>) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
-  updateConfig: (updates: any) => Promise<void>;
-  updateHomeWidgetProps: (widgetId: string, newProps: any) => Promise<void>;
+  updateConfig: (updates: DashboardConfigUpdate) => Promise<void>;
+  updateHomeWidgetProps: (widgetId: string, newProps: Record<string, unknown>) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   
   // Docker Actions
-  addDockerAction: (action: any) => Promise<void>;
-  updateDockerAction: (id: string, updates: any) => Promise<void>;
+  addDockerAction: (action: Omit<DockerActionConfig, 'id'>) => Promise<void>;
+  updateDockerAction: (id: string, updates: Partial<DockerActionConfig>) => Promise<void>;
   deleteDockerAction: (id: string) => Promise<void>;
-  reorderDockerActions: (newActions: any[]) => Promise<void>;
+  reorderDockerActions: (newActions: DockerActionConfig[]) => Promise<void>;
 
   // Local Events
-  addLocalEvent: (event: Omit<any, 'id'>) => Promise<void>;
-  updateLocalEvent: (id: string, updates: any) => Promise<void>;
+  addLocalEvent: (event: Omit<LocalCalendarEvent, 'id'>) => Promise<void>;
+  updateLocalEvent: (id: string, updates: Partial<LocalCalendarEvent>) => Promise<void>;
   deleteLocalEvent: (id: string) => Promise<void>;
   pingResults: Record<string, { status: string; statusText: string; latency: number }>;
 }
+
+export type DashboardConfigUpdate = { type?: string } & Record<string, unknown>;
 
 export const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
@@ -88,7 +90,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       if (res.status === 401) {
         const isLoginPage = window.location.pathname === '/login';
         if (!isLoginPage) {
-          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+          // A full reload prevents stale dashboard state surviving a rejected session.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
         }
         return;
       }
@@ -125,7 +129,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const isLoginPage = window.location.pathname === '/login';
     
     if (securityMode === 'private' && !user && !isLoginPage) {
-      window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   }, [config, user, loading, authLoading]);
 
@@ -245,8 +250,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
     const urlsToPing = new Set<string>();
 
-    config.categories?.forEach((cat: any) => {
-      cat.services?.forEach((svc: any) => {
+    config.categories?.forEach((cat) => {
+      cat.services?.forEach((svc) => {
         if (svc.localUrl) urlsToPing.add(svc.localUrl);
         if (svc.secondaryUrl) urlsToPing.add(svc.secondaryUrl);
       });
@@ -425,7 +430,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (res.ok) await fetchConfig();
   };
 
-  const updateHomeWidgetProps = async (widgetId: string, newProps: any) => {
+  const updateHomeWidgetProps = async (widgetId: string, newProps: Record<string, unknown>) => {
     setConfig(prev => {
       if (!prev) return prev;
       return {
@@ -449,18 +454,18 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
-  const updateConfig = async (updates: any) => {
+  const updateConfig = async (updates: DashboardConfigUpdate) => {
     setConfig(prev => {
       if (!prev) return prev;
       const next = { ...prev };
-      const settingsUpdates: any = {};
+      const settingsUpdates: Record<string, unknown> = {};
 
       Object.keys(updates).forEach(key => {
         if (key === 'type') {
           return;
         }
         if (key === 'appearanceProfiles' || key === 'categories' || key === 'devices' || key === 'dockerHosts' || key === 'dockerActions' || key === 'localEvents') {
-          (next as any)[key] = updates[key];
+          Object.assign(next, { [key]: updates[key] });
         } else {
           settingsUpdates[key] = updates[key];
         }
@@ -481,7 +486,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ type: 'settings', ...updates }),
       });
       if (!response.ok) {
-        const payload = await response.json().catch(() => null);
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
         throw new Error(payload?.error || `Échec de sauvegarde de la configuration (${response.status}).`);
       }
     } catch (err) {
@@ -500,7 +505,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     return data.url;
   };
 
-  const addDockerAction = async (action: any) => {
+  const addDockerAction = async (action: Omit<DockerActionConfig, 'id'>) => {
     const res = await fetchWithAuth('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -509,7 +514,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (res.ok) await fetchConfig();
   };
 
-  const updateDockerAction = async (id: string, updates: any) => {
+  const updateDockerAction = async (id: string, updates: Partial<DockerActionConfig>) => {
     const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -523,7 +528,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (res.ok) await fetchConfig();
   };
 
-  const reorderDockerActions = async (newActions: any[]) => {
+  const reorderDockerActions = async (newActions: DockerActionConfig[]) => {
     if (!config) return;
     setConfig(prev => prev ? { ...prev, dockerActions: newActions } : prev);
     const res = await fetchWithAuth('/api/config', {
@@ -534,7 +539,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
-  const addLocalEvent = async (event: Omit<any, 'id'>) => {
+  const addLocalEvent = async (event: Omit<LocalCalendarEvent, 'id'>) => {
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -543,7 +548,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (res.ok) await fetchConfig();
   };
 
-  const updateLocalEvent = async (id: string, updates: any) => {
+  const updateLocalEvent = async (id: string, updates: Partial<LocalCalendarEvent>) => {
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

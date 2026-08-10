@@ -1,35 +1,43 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
-import { Service, Category, Device } from '@/lib/types';
+import { Service, Category, Device, DockerActionConfig, CalendarDisplayEvent } from '@/lib/types';
+
+export interface ServiceModalState { open: boolean; service?: Service; categoryId?: string }
+export interface CategoryModalState { open: boolean; category?: Category }
+export interface DeviceModalState { open: boolean; device?: Device }
+export interface DockerActionModalState { open: boolean; action?: DockerActionConfig }
+export interface SettingsModalState { open: boolean; targetTab?: string; targetCustomTabId?: string }
+export interface CalendarEventModalState { open: boolean; date?: string; events?: CalendarDisplayEvent[] }
+export interface ViewEventModalState { open: boolean; event?: CalendarDisplayEvent }
 
 export interface ModalContextType {
-  serviceModal: { open: boolean; service?: Service; categoryId?: string };
-  setServiceModal: (state: { open: boolean; service?: Service; categoryId?: string }) => void;
-  categoryModal: { open: boolean; category?: Category };
-  setCategoryModal: (state: { open: boolean; category?: Category }) => void;
-  deviceModal: { open: boolean; device?: Device };
-  setDeviceModal: (state: { open: boolean; device?: Device }) => void;
-  dockerActionModal: { open: boolean; action?: any };
-  setDockerActionModal: (state: { open: boolean; action?: any }) => void;
-  settingsModal: { open: boolean; targetTab?: string; targetCustomTabId?: string };
-  setSettingsModal: (state: { open: boolean; targetTab?: string; targetCustomTabId?: string }) => void;
-  calendarEventModal: { open: boolean; date?: string; events?: any[] };
-  setCalendarEventModal: (state: { open: boolean; date?: string; events?: any[] }) => void;
-  viewEventModal: { open: boolean; event?: any };
-  setViewEventModal: (state: { open: boolean; event?: any }) => void;
+  serviceModal: ServiceModalState;
+  setServiceModal: (state: ServiceModalState) => void;
+  categoryModal: CategoryModalState;
+  setCategoryModal: (state: CategoryModalState) => void;
+  deviceModal: DeviceModalState;
+  setDeviceModal: (state: DeviceModalState) => void;
+  dockerActionModal: DockerActionModalState;
+  setDockerActionModal: (state: DockerActionModalState) => void;
+  settingsModal: SettingsModalState;
+  setSettingsModal: (state: SettingsModalState) => void;
+  calendarEventModal: CalendarEventModalState;
+  setCalendarEventModal: (state: CalendarEventModalState) => void;
+  viewEventModal: ViewEventModalState;
+  setViewEventModal: (state: ViewEventModalState) => void;
 }
 
 export const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export function ModalProvider({ children }: { children: React.ReactNode }) {
-  const [serviceModal, setServiceModal] = useState<{ open: boolean; service?: Service; categoryId?: string }>({ open: false });
-  const [categoryModal, setCategoryModal] = useState<{ open: boolean; category?: Category }>({ open: false });
-  const [deviceModal, setDeviceModal] = useState<{ open: boolean; device?: Device }>({ open: false });
-  const [dockerActionModal, setDockerActionModal] = useState<{ open: boolean; action?: any }>({ open: false });
-  const [settingsModal, setSettingsModal] = useState<{ open: boolean; targetTab?: string; targetCustomTabId?: string }>({ open: false });
-  const [calendarEventModal, setCalendarEventModal] = useState<{ open: boolean; date?: string; events?: any[] }>({ open: false });
-  const [viewEventModal, setViewEventModal] = useState<{ open: boolean; event?: any }>({ open: false });
+  const [serviceModal, setServiceModal] = useState<ServiceModalState>({ open: false });
+  const [categoryModal, setCategoryModal] = useState<CategoryModalState>({ open: false });
+  const [deviceModal, setDeviceModal] = useState<DeviceModalState>({ open: false });
+  const [dockerActionModal, setDockerActionModal] = useState<DockerActionModalState>({ open: false });
+  const [settingsModal, setSettingsModal] = useState<SettingsModalState>({ open: false });
+  const [calendarEventModal, setCalendarEventModal] = useState<CalendarEventModalState>({ open: false });
+  const [viewEventModal, setViewEventModal] = useState<ViewEventModalState>({ open: false });
 
   return (
     <ModalContext.Provider

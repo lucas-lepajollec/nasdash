@@ -33,6 +33,7 @@ The initial suite covers:
 - category and service creation/editing with the real UI payload shape;
 - custom-tab layout persistence;
 - viewer read access and write rejection;
+- admin logout, session removal and full reload to the login page;
 - anonymous rejection and browser redirection in private mode.
 
 For a production-mode run, build first and set `NASDASH_E2E_SERVER_MODE=production` before `npm run test:e2e`. The continuous-integration workflow uses this mode.

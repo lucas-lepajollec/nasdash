@@ -206,6 +206,23 @@ test.describe.serial('critical self-hosted paths', () => {
     await viewer.dispose();
   });
 
+  test('admin logout clears the session and reloads the login page', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel("Nom d'utilisateur").fill('admin');
+    await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+
+    await page.getByTitle('Se déconnecter').click();
+    await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 });
+
+    const session = await page.request.get('/api/auth/me');
+    expect(session.status()).toBe(200);
+    expect(await session.json()).toMatchObject({
+      user: { role: 'viewer', isAnonymous: true },
+    });
+  });
+
   test('private mode rejects anonymous access and redirects the browser to login', async ({ browser }) => {
     const admin = await isolatedRequest(40);
     await login(admin, 'admin', ADMIN_PASSWORD);

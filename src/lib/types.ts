@@ -147,6 +147,16 @@ export interface LocalCalendarEvent {
   isAllDay?: boolean;
 }
 
+export interface CalendarDisplayEvent {
+  id: string;
+  title: string;
+  start: string | null;
+  end: string | null;
+  description?: string;
+  location?: string;
+  isAllDay?: boolean;
+}
+
 export type HeaderElementDesktop = 'title' | 'search' | 'menu' | 'none';
 export type HeaderElementMobile = 'title' | 'search' | 'none';
 
