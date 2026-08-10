@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
-import { Category, DashboardConfig, LocalCalendarEvent, NetworkTopology } from './types';
+import { Category, DashboardConfig, DeviceStat, LocalCalendarEvent, NetworkTopology } from './types';
 import { encrypt, decrypt } from './crypto';
-import { migrateLegacySplitFiles } from './configMigration';
+import { LegacyConfigData, migrateLegacySplitFiles } from './configMigration';
 import { getDataDirectory } from './dataDirectory';
 
 const DATA_DIR = getDataDirectory();
@@ -13,11 +13,92 @@ const TOPOLOGY_PATH = path.join(DATA_DIR, 'topology.json');
 const CALENDAR_PATH = path.join(DATA_DIR, 'calendar.json');
 const LOGOS_DIR = path.join(DATA_DIR, 'logos');
 
-const globalAny: any = global;
-if (!globalAny.__cachedConfig) globalAny.__cachedConfig = null;
-if (!globalAny.__cachedServices) globalAny.__cachedServices = null;
-if (!globalAny.__cachedTopology) globalAny.__cachedTopology = null;
-if (!globalAny.__cachedCalendar) globalAny.__cachedCalendar = null;
+type MutableDashboardConfig = Omit<DashboardConfig, 'categories' | 'localEvents'> & {
+  categories?: Category[];
+  localEvents?: LocalCalendarEvent[];
+};
+
+interface DeviceStatus {
+  online: boolean;
+  stats?: DeviceStat[];
+  updatedAt: number;
+  error?: string;
+  isOffline?: boolean;
+}
+
+interface ConfigRuntimeGlobal {
+  __cachedConfig?: MutableDashboardConfig | null;
+  __cachedConfigMtime?: number;
+  __cachedServices?: Category[] | null;
+  __cachedServicesMtime?: number;
+  __cachedTopology?: NetworkTopology | null;
+  __cachedTopologyMtime?: number;
+  __cachedCalendar?: LocalCalendarEvent[] | null;
+  __cachedCalendarMtime?: number;
+  __errorLogCache?: Map<string, string>;
+  __devicesStatusCache?: Record<string, DeviceStatus>;
+  activeClients?: number;
+  __monitoringInterval?: ReturnType<typeof setInterval> | null;
+  __glancesUrlCache?: Record<string, string>;
+}
+
+interface GlancesSensor {
+  label?: string;
+  value?: number;
+}
+
+interface GlancesDisk {
+  mnt_point: string;
+  size: number;
+  percent: number;
+}
+
+interface GlancesGpu {
+  name?: string;
+  proc?: number;
+  temperature?: number;
+}
+
+interface GlancesResponse {
+  sensors?: GlancesSensor[];
+  cpu?: { total?: number };
+  mem?: { percent?: number; total?: number };
+  fs?: GlancesDisk[];
+  gpu?: GlancesGpu[];
+}
+
+interface ProxmoxResponse {
+  cpu?: number;
+  memory?: { used?: number; total?: number };
+  mem?: number;
+  maxmem?: number;
+  rootfs?: { used?: number; total?: number };
+  disk?: number;
+  maxdisk?: number;
+  used?: number;
+  total?: number;
+}
+
+interface LhmNode {
+  Text?: string;
+  Value?: string;
+  Children?: LhmNode[];
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+const configGlobal = globalThis as typeof globalThis & ConfigRuntimeGlobal;
+const globalAny = configGlobal;
+if (!configGlobal.__cachedConfig) configGlobal.__cachedConfig = null;
+if (!configGlobal.__cachedServices) configGlobal.__cachedServices = null;
+if (!configGlobal.__cachedTopology) configGlobal.__cachedTopology = null;
+if (!configGlobal.__cachedCalendar) configGlobal.__cachedCalendar = null;
 
 export function ensureDataDir() {
   try {
@@ -55,7 +136,7 @@ export function readConfig(): DashboardConfig {
     }
   } catch {}
 
-  let configData: any = null;
+  let configData: MutableDashboardConfig | null = null;
   let needDefault = false;
 
   if (globalAny.__cachedConfig && !shouldReadConfig) {
@@ -69,12 +150,12 @@ export function readConfig(): DashboardConfig {
         needDefault = true;
       } else {
         try {
-          configData = JSON.parse(raw);
+          configData = JSON.parse(raw) as MutableDashboardConfig;
           // Minimal validation to consider it's not "empty"
           if (!configData || (!configData.categories && !configData.devices && !configData.settings)) {
             needDefault = true;
           }
-        } catch (e) {
+        } catch {
           needDefault = true;
         }
       }
@@ -85,7 +166,7 @@ export function readConfig(): DashboardConfig {
       if (fs.existsSync(examplePath)) {
         try {
           fs.copyFileSync(examplePath, CONFIG_PATH);
-          configData = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+          configData = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) as MutableDashboardConfig;
           // Set mtime to cache
           try {
             globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
@@ -108,8 +189,10 @@ export function readConfig(): DashboardConfig {
       }
     }
 
+    configData ??= getDefaultConfig();
+
     // --- MIGRATION AUTOMATIQUE TRANSPARENTE EN 4 FICHIERS ---
-    let migrated = migrateLegacySplitFiles(configData, {
+    let migrated = migrateLegacySplitFiles(configData as unknown as LegacyConfigData, {
       services: {
         target: SERVICES_PATH,
         example: path.join(DATA_DIR, 'services.example.json'),
@@ -149,31 +232,37 @@ export function readConfig(): DashboardConfig {
         if (exampleData && exampleData.settings) {
           let settingsChanged = false;
           if (!configData.settings) {
-            configData.settings = {};
+            configData.settings = { ...getDefaultConfig().settings };
             settingsChanged = true;
           }
+
+          const settingsRecord = configData.settings as unknown as Record<string, unknown>;
+          const exampleSettings = exampleData.settings as Record<string, unknown>;
           
-          for (const [key, value] of Object.entries(exampleData.settings)) {
-            if (configData.settings[key] === undefined) {
-              configData.settings[key] = value;
+          for (const [key, value] of Object.entries(exampleSettings)) {
+            if (settingsRecord[key] === undefined) {
+              settingsRecord[key] = value;
               settingsChanged = true;
             }
           }
           
           // Deep backfill for tabs settings
           if (exampleData.settings.tabs) {
-            if (!configData.settings.tabs) {
-              configData.settings.tabs = { ...exampleData.settings.tabs };
+            const exampleTabs = exampleData.settings.tabs as Record<string, unknown>;
+            if (!settingsRecord.tabs) {
+              settingsRecord.tabs = { ...exampleTabs };
               settingsChanged = true;
             } else {
-              for (const [key, value] of Object.entries(exampleData.settings.tabs)) {
-                if (configData.settings.tabs[key] === undefined) {
-                  configData.settings.tabs[key] = value;
+              const configTabs = settingsRecord.tabs as Record<string, unknown>;
+              for (const [key, value] of Object.entries(exampleTabs)) {
+                if (configTabs[key] === undefined) {
+                  configTabs[key] = value;
                   settingsChanged = true;
                 } else if (typeof value === 'object' && value !== null) {
+                  const configTab = configTabs[key] as Record<string, unknown>;
                   for (const [subKey, subValue] of Object.entries(value)) {
-                    if (configData.settings.tabs[key][subKey] === undefined) {
-                      configData.settings.tabs[key][subKey] = subValue;
+                    if (configTab[subKey] === undefined) {
+                      configTab[subKey] = subValue;
                       settingsChanged = true;
                     }
                   }
@@ -200,7 +289,7 @@ export function readConfig(): DashboardConfig {
       configData.settings.tailscaleClientSecret = decrypt(configData.settings.tailscaleClientSecret);
     }
     if (configData.devices) {
-      configData.devices.forEach((device: any) => {
+      configData.devices.forEach((device) => {
         if (device.api?.token) {
           device.api.token = decrypt(device.api.token);
         }
@@ -209,6 +298,8 @@ export function readConfig(): DashboardConfig {
 
     globalAny.__cachedConfig = JSON.parse(JSON.stringify(configData));
   }
+
+  configData ??= getDefaultConfig();
 
   // 2. Charger les Services / Catégories (avec cache + mtime)
   let shouldReadServices = !globalAny.__cachedServices;
@@ -220,7 +311,7 @@ export function readConfig(): DashboardConfig {
     }
   } catch {}
 
-  let categories: any[] = [];
+  let categories: Category[] = [];
   if (globalAny.__cachedServices && !shouldReadServices) {
     categories = JSON.parse(JSON.stringify(globalAny.__cachedServices));
   } else {
@@ -256,7 +347,7 @@ export function readConfig(): DashboardConfig {
     }
   } catch {}
 
-  let topology: any = { nodes: [], groups: [], connections: [] };
+  let topology: NetworkTopology = { nodes: [], groups: [], connections: [] };
   if (globalAny.__cachedTopology && !shouldReadTopology) {
     topology = JSON.parse(JSON.stringify(globalAny.__cachedTopology));
   } else {
@@ -290,7 +381,7 @@ export function readConfig(): DashboardConfig {
     }
   } catch {}
 
-  let localEvents: any[] = [];
+  let localEvents: LocalCalendarEvent[] = [];
   if (globalAny.__cachedCalendar && !shouldReadCalendar) {
     localEvents = JSON.parse(JSON.stringify(globalAny.__cachedCalendar));
   } else {
@@ -328,9 +419,9 @@ export function readConfig(): DashboardConfig {
   };
 
   if (fullConfig.categories) {
-    fullConfig.categories.forEach((cat: any) => {
+    fullConfig.categories.forEach((cat) => {
       if (cat.services) {
-        cat.services.forEach((svc: any) => {
+        cat.services.forEach((svc) => {
           if (svc.tailscaleUrl && !svc.secondaryUrl) {
             svc.secondaryUrl = svc.tailscaleUrl;
           }
@@ -343,13 +434,13 @@ export function readConfig(): DashboardConfig {
 }
 
 export function writeConfig(config: DashboardConfig): boolean {
-  const baseConfig = JSON.parse(JSON.stringify(config));
+  const baseConfig: MutableDashboardConfig = cloneJson(config);
   const categories = baseConfig.categories || [];
   const topology = baseConfig.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
   const localEvents = baseConfig.localEvents || [];
 
   if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-    const cacheConfig = JSON.parse(JSON.stringify(config));
+    const cacheConfig: MutableDashboardConfig = cloneJson(config);
     delete cacheConfig.categories;
     delete cacheConfig.localEvents;
     if (cacheConfig.settings) {
@@ -375,7 +466,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     baseConfig.settings.tailscaleClientSecret = encrypt(baseConfig.settings.tailscaleClientSecret);
   }
   if (baseConfig.devices) {
-    baseConfig.devices.forEach((device: any) => {
+    baseConfig.devices.forEach((device) => {
       if (device.api?.token && device.api.token !== '********') {
         device.api.token = encrypt(device.api.token);
       }
@@ -388,7 +479,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     safeWriteFileSync(CONFIG_PATH, JSON.stringify(baseConfig, null, 2));
     
     // Mettre en cache la version déchiffrée en mémoire
-    const cacheConfig = JSON.parse(JSON.stringify(config));
+    const cacheConfig: MutableDashboardConfig = cloneJson(config);
     delete cacheConfig.categories;
     delete cacheConfig.localEvents;
     if (cacheConfig.settings) {
@@ -531,19 +622,19 @@ function clearErrorSmartly(deviceId: string, context: string) {
 // ---------------------------------------------
 
 if (!globalAny.__devicesStatusCache) globalAny.__devicesStatusCache = {};
-export const devicesStatusCache: Record<string, { online: boolean; stats?: any; updatedAt: number; error?: string; isOffline?: boolean }> = globalAny.__devicesStatusCache;
+export const devicesStatusCache: Record<string, DeviceStatus> = globalAny.__devicesStatusCache;
 
 if (globalAny.activeClients === undefined) globalAny.activeClients = 0;
 
 export function incrementActiveClients() {
-  globalAny.activeClients++;
+  globalAny.activeClients = (globalAny.activeClients ?? 0) + 1;
   if (globalAny.activeClients === 1) {
     startBackgroundMonitoring();
   }
 }
 
 export function decrementActiveClients() {
-  globalAny.activeClients = Math.max(0, globalAny.activeClients - 1);
+  globalAny.activeClients = Math.max(0, (globalAny.activeClients ?? 0) - 1);
   if (globalAny.activeClients === 0 && globalAny.__monitoringInterval) {
     clearInterval(globalAny.__monitoringInterval);
     globalAny.__monitoringInterval = null;
@@ -561,7 +652,7 @@ export function startBackgroundMonitoring() {
 
   const interpolateEnv = (str: string) => str.replace(/\${([^}]+)}/g, (_, v) => process.env[v] || '');
 
-  const fetchProxmox = (urlStr: string, token: string): Promise<any> => {
+  const fetchProxmox = <T extends ProxmoxResponse | ProxmoxResponse[]>(urlStr: string, token: string): Promise<T> => {
     return new Promise((resolve, reject) => {
       const url = new URL(urlStr);
       const options = {
@@ -586,8 +677,8 @@ export function startBackgroundMonitoring() {
             return;
           }
           try {
-            resolve(JSON.parse(data).data); // Proxmox nests everything under .data
-          } catch (e) {
+            resolve((JSON.parse(data) as { data: T }).data); // Proxmox nests everything under .data
+          } catch {
             reject(new Error('Invalid JSON from Proxmox'));
           }
         });
@@ -652,7 +743,7 @@ export function startBackgroundMonitoring() {
             }
 
             let res: Response | null = null;
-            let lastError: any = null;
+            let lastError: unknown = null;
             let finalUrl = '';
 
             for (const url of fetchUrls) {
@@ -660,8 +751,8 @@ export function startBackgroundMonitoring() {
                 res = await fetch(url, { headers, cache: 'no-store', signal: AbortSignal.timeout(4000) });
                 if (res.ok) { finalUrl = url; glancesUrlCache[id] = url; break; }
                 if (res.status !== 404) { finalUrl = url; break; }
-              } catch (e) {
-                lastError = e;
+              } catch (error) {
+                lastError = error;
               }
             }
 
@@ -670,31 +761,31 @@ export function startBackgroundMonitoring() {
                 logErrorSmartly(id, 'Glances', `Erreur HTTP: ${res.status} ${res.statusText}`);
                 devicesStatusCache[id] = { online: false, error: `Erreur serveur (${res.status})`, isOffline: true, updatedAt: Date.now() };
               } else {
-                logErrorSmartly(id, 'Glances', `Fetch Error: ${lastError?.message || lastError}`);
+                logErrorSmartly(id, 'Glances', `Fetch Error: ${getErrorMessage(lastError)}`);
                 devicesStatusCache[id] = { online: false, error: 'Impossible de joindre Glances', isOffline: true, updatedAt: Date.now() };
               }
               return;
             }
 
             const text = await res.text();
-            let data;
+            let data: GlancesResponse;
             try {
-              data = JSON.parse(text);
-            } catch (e) {
+              data = JSON.parse(text) as GlancesResponse;
+            } catch {
               logErrorSmartly(id, 'Glances HTML', `Reçu HTML au lieu de JSON sur ${finalUrl}`);
               devicesStatusCache[id] = { online: false, error: 'Réponse invalide (HTML)', isOffline: true, updatedAt: Date.now() };
               return;
             }
 
-            const stats = [];
+            const stats: DeviceStat[] = [];
             let cpuTemp = '';
             let diskTemp = '';
             if (data?.sensors && Array.isArray(data.sensors)) {
-              const getSensor = (kws: string[]) => data.sensors.find((s: any) => kws.some(kw => s.label?.toLowerCase().includes(kw)));
+              const getSensor = (kws: string[]) => data.sensors?.find((sensor) => kws.some(kw => sensor.label?.toLowerCase().includes(kw)));
               const cpuS = getSensor(['package', 'tctl', 'tdie']) || getSensor(['core']) || getSensor(['cpu']) || getSensor(['acpitz']);
               if (typeof cpuS?.value === 'number') cpuTemp = ` ${Math.round(cpuS.value)}°C`;
 
-              const diskS = data.sensors.find((s: any) => ['nvme', 'sda', 'disk', 'hdd', 'temp1'].some(keyword => s.label?.toLowerCase().includes(keyword)) && !['cpu', 'core'].some(keyword => s.label?.toLowerCase().includes(keyword)));
+              const diskS = data.sensors.find((sensor) => ['nvme', 'sda', 'disk', 'hdd', 'temp1'].some(keyword => sensor.label?.toLowerCase().includes(keyword)) && !['cpu', 'core'].some(keyword => sensor.label?.toLowerCase().includes(keyword)));
               if (typeof diskS?.value === 'number') diskTemp = ` ${Math.round(diskS.value)}°C`;
             }
 
@@ -718,13 +809,13 @@ export function startBackgroundMonitoring() {
 
             if (data?.fs && Array.isArray(data.fs)) {
               const excludeKeywords = ['boot', 'efi', 'overlay', 'tmpfs', 'docker'];
-              let filteredDisks = data.fs.filter((disk: any) => {
+              const filteredDisks = data.fs.filter((disk) => {
                 if (!disk.mnt_point) return false;
                 const lowerMnt = disk.mnt_point.toLowerCase();
                 return !excludeKeywords.some(kw => lowerMnt.includes(kw));
               });
 
-              const uniqueDisks = new Map<number, any>();
+              const uniqueDisks = new Map<number, GlancesDisk>();
               for (const disk of filteredDisks) {
                 if (!disk.size) continue;
                 const existing = uniqueDisks.get(disk.size);
@@ -733,7 +824,7 @@ export function startBackgroundMonitoring() {
                 }
               }
 
-              let finalDisks = Array.from(uniqueDisks.values());
+              const finalDisks = Array.from(uniqueDisks.values());
               for (const disk of finalDisks) {
                 let totalStr = '';
                 if (disk.size) {
@@ -777,9 +868,10 @@ export function startBackgroundMonitoring() {
             clearErrorSmartly(id, 'Glances');
             devicesStatusCache[id] = { online: true, stats, updatedAt: Date.now() };
 
-          } catch (err: any) {
-            logErrorSmartly(id, 'Glances', err.message || err);
-            devicesStatusCache[id] = { online: false, error: err.message || 'Impossible de joindre Glances', isOffline: true, updatedAt: Date.now() };
+          } catch (error: unknown) {
+            const errorMessage = getErrorMessage(error);
+            logErrorSmartly(id, 'Glances', errorMessage);
+            devicesStatusCache[id] = { online: false, error: errorMessage || 'Impossible de joindre Glances', isOffline: true, updatedAt: Date.now() };
           }
         }
 
@@ -791,8 +883,8 @@ export function startBackgroundMonitoring() {
 
           try {
             const tokenStr = interpolateEnv(device.api.token);
-            const data = await fetchProxmox(apiUrl, tokenStr);
-            const stats = [];
+            const data = await fetchProxmox<ProxmoxResponse>(apiUrl, tokenStr);
+            const stats: DeviceStat[] = [];
 
             if (data.cpu !== undefined) {
               const cpuUsage = data.cpu * 100;
@@ -821,7 +913,7 @@ export function startBackgroundMonitoring() {
             if (!device.api.vmid && typeof apiUrl === 'string' && apiUrl.endsWith('/status')) {
               const storageUrl = apiUrl.replace('/status', '/storage');
               try {
-                 const storageData = await fetchProxmox(storageUrl, tokenStr);
+                 const storageData = await fetchProxmox<ProxmoxResponse[]>(storageUrl, tokenStr);
                  if (Array.isArray(storageData) && storageData.length > 0) {
                    let sUsed = 0, sTotal = 0;
                    for (const st of storageData) {
@@ -833,8 +925,8 @@ export function startBackgroundMonitoring() {
                      diskTotal = sTotal;
                    }
                  }
-              } catch(e: any) {
-                 logErrorSmartly(id, 'Proxmox Storage', e.message || e);
+              } catch (error: unknown) {
+                 logErrorSmartly(id, 'Proxmox Storage', getErrorMessage(error));
               }
             }
 
@@ -864,9 +956,10 @@ export function startBackgroundMonitoring() {
             clearErrorSmartly(id, 'Proxmox');
             devicesStatusCache[id] = { online: true, stats, updatedAt: Date.now() };
 
-          } catch (err: any) {
-            logErrorSmartly(id, 'Proxmox', err.message || err);
-            devicesStatusCache[id] = { online: false, error: err.message || 'Impossible de joindre Proxmox', isOffline: true, updatedAt: Date.now() };
+          } catch (error: unknown) {
+            const errorMessage = getErrorMessage(error);
+            logErrorSmartly(id, 'Proxmox', errorMessage);
+            devicesStatusCache[id] = { online: false, error: errorMessage || 'Impossible de joindre Proxmox', isOffline: true, updatedAt: Date.now() };
           }
         }
 
@@ -879,10 +972,10 @@ export function startBackgroundMonitoring() {
           try {
             const res = await fetch(apiUrl, { cache: 'no-store', signal: AbortSignal.timeout(4000) });
             if (!res.ok) throw new Error(`HTTP: ${res.status}`);
-            const data = await res.json();
-            const stats = [];
+            const data = await res.json() as LhmNode;
+            const stats: DeviceStat[] = [];
 
-            const searchLHMTree = (node: any, matchFn: (n: any) => boolean): any => {
+            const searchLHMTree = (node: LhmNode, matchFn: (candidate: LhmNode) => boolean): LhmNode | null => {
               if (matchFn(node)) return node;
               if (node.Children) {
                 for (const child of node.Children) {
@@ -896,31 +989,31 @@ export function startBackgroundMonitoring() {
             const computerNode = data.Children?.[0];
             const hwNodes = computerNode?.Children || [];
 
-            const cpuStats: any[] = [];
-            const ramStats: any[] = [];
-            const gpuStats: any[] = [];
-            const diskStats: any[] = [];
+            const cpuStats: DeviceStat[] = [];
+            const ramStats: DeviceStat[] = [];
+            const gpuStats: DeviceStat[] = [];
+            const diskStats: DeviceStat[] = [];
 
             for (const hw of hwNodes) {
-              const cpuLoad = searchLHMTree(hw, (n: any) => n.Text === 'CPU Total' && n.Value?.includes('%'));
+              const cpuLoad = searchLHMTree(hw, (node) => node.Text === 'CPU Total' && Boolean(node.Value?.includes('%')));
               if (cpuLoad) {
-                let cpuTemp = searchLHMTree(hw, (n: any) => (n.Text === 'CPU Package' || n.Text?.includes('Core (Tctl/Tdie)')) && n.Value?.includes('°C'));
+                let cpuTemp = searchLHMTree(hw, (node) => Boolean((node.Text === 'CPU Package' || node.Text?.includes('Core (Tctl/Tdie)')) && node.Value?.includes('°C')));
                 if (!cpuTemp) {
-                  cpuTemp = searchLHMTree(hw, (n: any) => n.Text === 'Core Max' && n.Value?.includes('°C'));
+                  cpuTemp = searchLHMTree(hw, (node) => node.Text === 'Core Max' && Boolean(node.Value?.includes('°C')));
                 }
-                const val = parseFloat(cpuLoad.Value.replace(',', '.'));
+                const val = parseFloat(cpuLoad.Value!.replace(',', '.'));
                 const parts = [`${val.toFixed(1)}%`];
-                if (cpuTemp) parts.push(`${Math.round(parseFloat(cpuTemp.Value.replace(',', '.')))}°C`);
+                if (cpuTemp) parts.push(`${Math.round(parseFloat(cpuTemp.Value!.replace(',', '.')))}°C`);
                 cpuStats.push({ label: 'CPU', value: parts.join('\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-accent)' });
               }
 
               if (hw.Text === 'Total Memory' || hw.Text === 'Generic Memory' || hw.Text === 'System Memory') {
-                const ramLoad = searchLHMTree(hw, (n: any) => n.Text === 'Memory' && n.Value?.includes('%'));
+                const ramLoad = searchLHMTree(hw, (node) => node.Text === 'Memory' && Boolean(node.Value?.includes('%')));
                 if (ramLoad) {
-                  const val = parseFloat(ramLoad.Value.replace(',', '.'));
+                  const val = parseFloat(ramLoad.Value!.replace(',', '.'));
                   let ramTotalStr = '';
-                  const memUsedNode = searchLHMTree(hw, (n: any) => n.Text === 'Memory Used');
-                  const memAvailNode = searchLHMTree(hw, (n: any) => n.Text === 'Memory Available');
+                  const memUsedNode = searchLHMTree(hw, (node) => node.Text === 'Memory Used');
+                  const memAvailNode = searchLHMTree(hw, (node) => node.Text === 'Memory Available');
                   if (memUsedNode && memAvailNode && memUsedNode.Value && memAvailNode.Value) {
                     let usedGB = parseFloat(memUsedNode.Value.replace(',', '.'));
                     if (memUsedNode.Value.includes('MB')) usedGB /= 1024;
@@ -941,27 +1034,27 @@ export function startBackgroundMonitoring() {
                 }
               }
 
-              const gpuLoad = searchLHMTree(hw, (n: any) => n.Text === 'GPU Core' && n.Value?.includes('%'));
+              const gpuLoad = searchLHMTree(hw, (node) => node.Text === 'GPU Core' && Boolean(node.Value?.includes('%')));
               if (gpuLoad) {
-                const gpuName = hw.Text.replace('NVIDIA ', '').replace('AMD ', '');
-                let gpuTemp = searchLHMTree(hw, (n: any) => n.Text === 'GPU Core' && n.Value?.includes('°C'));
+                const gpuName = hw.Text!.replace('NVIDIA ', '').replace('AMD ', '');
+                let gpuTemp = searchLHMTree(hw, (node) => node.Text === 'GPU Core' && Boolean(node.Value?.includes('°C')));
                 if (!gpuTemp) {
-                  gpuTemp = searchLHMTree(hw, (n: any) => n.Text?.startsWith('GPU') && n.Value?.includes('°C'));
+                  gpuTemp = searchLHMTree(hw, (node) => Boolean(node.Text?.startsWith('GPU') && node.Value?.includes('°C')));
                 }
-                const val = parseFloat(gpuLoad.Value.replace(',', '.'));
+                const val = parseFloat(gpuLoad.Value!.replace(',', '.'));
                 const parts = [`${val.toFixed(1)}%`];
-                if (gpuTemp) parts.push(`${Math.round(parseFloat(gpuTemp.Value.replace(',', '.')))}°C`);
+                if (gpuTemp) parts.push(`${Math.round(parseFloat(gpuTemp.Value!.replace(',', '.')))}°C`);
                 gpuStats.push({ label: gpuName, value: parts.join('\u00A0\u00A0'), percent: val > 100 ? 100 : val, color: 'var(--nd-purple)' });
               }
 
-              const diskLoad = searchLHMTree(hw, (n: any) => n.Text === 'Used Space' && n.Value?.includes('%'));
+              const diskLoad = searchLHMTree(hw, (node) => node.Text === 'Used Space' && Boolean(node.Value?.includes('%')));
               if (diskLoad) {
                 const diskName = hw.Text;
-                const diskTemp = searchLHMTree(hw, (n: any) => n.Text?.startsWith('Temperature') && n.Value?.includes('°C'));
-                const totalSpace = searchLHMTree(hw, (n: any) => n.Text === 'Total Space');
-                const val = parseFloat(diskLoad.Value.replace(',', '.'));
+                const diskTemp = searchLHMTree(hw, (node) => Boolean(node.Text?.startsWith('Temperature') && node.Value?.includes('°C')));
+                const totalSpace = searchLHMTree(hw, (node) => node.Text === 'Total Space');
+                const val = parseFloat(diskLoad.Value!.replace(',', '.'));
                 const parts = [`${val.toFixed(1)}%`];
-                if (diskTemp) parts.push(`${Math.round(parseFloat(diskTemp.Value.replace(',', '.')))}°C`);
+                if (diskTemp) parts.push(`${Math.round(parseFloat(diskTemp.Value!.replace(',', '.')))}°C`);
                 if (totalSpace && totalSpace.Value) {
                    let gb = parseFloat(totalSpace.Value.replace(',', '.'));
                    if (totalSpace.Value.includes('MB')) gb = gb / 1024;
@@ -976,9 +1069,10 @@ export function startBackgroundMonitoring() {
             clearErrorSmartly(id, 'LHM');
             devicesStatusCache[id] = { online: true, stats, updatedAt: Date.now() };
 
-          } catch (err: any) {
-            logErrorSmartly(id, 'LHM', err.message || err);
-            devicesStatusCache[id] = { online: false, error: err.message || 'Impossible de joindre LHM', isOffline: true, updatedAt: Date.now() };
+          } catch (error: unknown) {
+            const errorMessage = getErrorMessage(error);
+            logErrorSmartly(id, 'LHM', errorMessage);
+            devicesStatusCache[id] = { online: false, error: errorMessage || 'Impossible de joindre LHM', isOffline: true, updatedAt: Date.now() };
           }
         }
         else {
@@ -997,7 +1091,7 @@ export function startBackgroundMonitoring() {
   globalAny.__monitoringInterval = setInterval(doPoll, 10000);
 }
 
-export function migrateConfigToPanels(configData: any) {
+export function migrateConfigToPanels(configData: Pick<DashboardConfig, 'settings'>) {
   if (configData.settings && !configData.settings.panels) {
     configData.settings.panels = {
       'home-left': {

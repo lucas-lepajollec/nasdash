@@ -58,7 +58,7 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
     // Si pas de données dans le cache, on retourne vide en attendant le prochain polling (20s)
     return NextResponse.json([]);
     
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to read device cache' }, { status: 500 });
   }
 }

@@ -166,7 +166,7 @@ export interface HeaderLayoutMobile {
 export interface PanelWidgetConfig {
   id: string;
   type: string;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 }
 
 export interface PanelConfig {
@@ -352,7 +352,7 @@ export type CustomTabRowType = '1-col' | '50-50' | '25-75' | '75-25' | '3-col';
 export interface CustomTabWidgetInfo {
   type: string; // 'clock', 'weather', 'quickstats', 'spacer'
   height?: number; // For spacer widgets
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 }
 
 export interface CustomTabColumn {
