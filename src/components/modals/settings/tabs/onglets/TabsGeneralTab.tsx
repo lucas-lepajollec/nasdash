@@ -8,7 +8,7 @@ import { Emoji } from '../../../../shared/Emoji';
 
 export function TabsGeneralTab() {
   const { config, updateConfig } = useConfig();
-  const { tabs, refreshTabs } = useTabs();
+  const { tabs } = useTabs();
 
   const [iconPickerTabId, setIconPickerTabId] = useState<string | null>(null);
 
@@ -39,14 +39,12 @@ export function TabsGeneralTab() {
     await updateConfig({ tabOrder: newOrder });
   };
 
-  const commonIcons = ['🏠', '📊', '🛡️', '🐳', '⌚', '📅', '☁️', '⚙️', '📂', '📝', '🔔', '🚀', '🛠️', '💡', '🎵', '📺'];
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Position du Dock</h4>
         <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-          Choisissez où s'affiche la barre de navigation principale.
+          Choisissez où s&apos;affiche la barre de navigation principale.
         </p>
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <button 
@@ -89,7 +87,7 @@ export function TabsGeneralTab() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
                   <ToggleSwitch 
                     checked={!isHidden}
-                    onChange={(val) => handleToggleTabHidden(t.id)}
+                    onChange={() => handleToggleTabHidden(t.id)}
                     label={t.name}
                     sublabel={`Statut : ${!isHidden ? 'Actif dans le dock' : 'Masqué'}`}
                   />

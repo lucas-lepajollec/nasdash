@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Cpu, Sliders, ChevronRight, Monitor, Activity, Shield, Container, Clipboard, Calendar, Cloud, Home, Layout, Layers, X, Smartphone, PanelTop, Network } from 'lucide-react';
+import { Palette, Cpu, Sliders, ChevronRight, Shield, Container, Home, Layout, Layers, X, Smartphone, PanelTop, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { Emoji } from '../../shared/Emoji';
@@ -164,7 +164,8 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
               <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {WIDGET_REGISTRY.map((w) => {
                   const keys = getWidgetConfigKeys(w.id);
-                  const isHidden = (config?.settings as any)?.[keys.hide] ?? w.defaultHidden;
+                  const configuredHidden = (config?.settings as Record<string, unknown> | undefined)?.[keys.hide];
+                  const isHidden = typeof configuredHidden === 'boolean' ? configuredHidden : w.defaultHidden;
                   return {
                     ...w,
                     active: !isHidden,

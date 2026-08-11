@@ -26,7 +26,26 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
   await expect(dialog.getByText('Position du Dock', { exact: true })).toBeVisible();
 
   await sidebar.getByRole('button', { name: 'Configuration Widgets', exact: true }).click();
-  await sidebar.getByRole('button', { name: /Météo/ }).click();
+  const widgetPages = [
+    { navigationName: /Appareils/, title: /Configuration — Appareils/ },
+    {
+      navigationName: /VPN Tailscale/,
+      title: /Configuration — VPN Tailscale/,
+      fieldNames: ['Nom du Tailnet', 'OAuth Client ID Tailscale', 'OAuth Client Secret Tailscale'],
+    },
+    { navigationName: /Horloge/, title: /Configuration — Horloge \/ Date/ },
+    { navigationName: /Calendrier/, title: /Configuration — Calendrier/, fieldNames: ['URL du calendrier iCal'] },
+    { navigationName: /Météo/, title: /Configuration — Météo/, fieldNames: ['Rechercher une ville'] },
+  ];
+
+  for (const widgetPage of widgetPages) {
+    await sidebar.getByRole('button', { name: widgetPage.navigationName }).click();
+    await expect(dialog.getByRole('heading', { level: 3, name: widgetPage.title })).toBeVisible();
+    for (const fieldName of widgetPage.fieldNames || []) {
+      await expect(dialog.getByLabel(fieldName)).toBeVisible();
+    }
+  }
+
   await expect(dialog.getByText('Activer le widget Météo', { exact: true })).toBeVisible();
 
   const lastButton = dialog.locator('button:not([disabled])').last();
