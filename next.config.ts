@@ -2,7 +2,11 @@ import type { NextConfig } from 'next';
 
 // Trigger dev server restart to reload background monitoring loop
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  // Docker/self-hosted releases use Next's minimal standalone server. Vercel
+  // creates its own Functions and build output, so asking Next for both output
+  // formats can leave Vercel's post-build tracer without the manifest it
+  // expects. VERCEL=1 is provided by the platform at build time.
+  output: process.env.VERCEL === '1' ? undefined : 'standalone',
   outputFileTracingIncludes: {
     '/*': ['./demo/fixtures/**/*'],
   },

@@ -1,8 +1,10 @@
 import crypto from 'crypto';
 import { getDataPath } from './dataDirectory';
 import { readOrCreatePersistentSecret } from './persistentSecret';
+import { isDemoMode } from './demoMode';
 
 const KEY_FILE = getDataPath('encryption.key');
+let demoEncryptionSecret: string | undefined;
 
 /**
  * Obtient ou génère une clé de chiffrement stable persistée sur le disque
@@ -10,6 +12,14 @@ const KEY_FILE = getDataPath('encryption.key');
  */
 function getEncryptionKey(): Buffer {
   let secret = process.env.NASDASH_JWT_SECRET?.trim();
+
+  // The public showcase never persists credentials. When a deployment secret
+  // is omitted, keep one process-local key for simulated configuration changes
+  // instead of creating encryption.key alongside the bundled demo fixtures.
+  if (!secret && isDemoMode()) {
+    demoEncryptionSecret ||= crypto.randomBytes(32).toString('hex');
+    secret = demoEncryptionSecret;
+  }
   
   if (!secret) {
     try {

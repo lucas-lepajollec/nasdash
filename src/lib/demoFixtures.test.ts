@@ -32,6 +32,7 @@ describe('public demo fixtures', () => {
     expect(content).not.toMatch(/\b172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}\b/);
     expect(content).not.toMatch(/"(?:token|password|clientSecret)"\s*:/i);
     expect(fs.existsSync(path.join(fixturesDirectory, 'jwt.secret'))).toBe(false);
+    expect(fs.existsSync(path.join(fixturesDirectory, 'encryption.key'))).toBe(false);
   });
 
   it('enables only simulated privileged product features', () => {
