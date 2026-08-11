@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useConfig } from '@/hooks/useConfig';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -68,6 +69,8 @@ interface DeviceFormModalProps {
 
 export default function DeviceFormModal({ device, onClose, onSave, onDelete, showSensitive = false }: DeviceFormModalProps) {
   const dialogRef = useDialogAccessibility(onClose);
+  const { config } = useConfig();
+  const demoMode = config?.demoMode === true;
   const [name, setName] = useState(device?.name || '');
   const [host, setHost] = useState(device?.host || '');
   const [icon, setIcon] = useState(device?.icon || '🖥️');
@@ -82,6 +85,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const [vmid, setVmid] = useState(device?.api?.vmid || '');
   const [vmType, setVmType] = useState(device?.api?.vmType || 'qemu');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Auto-fill default port based on API type if empty
@@ -96,6 +100,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setSaveError('');
 
     try {
       await onSave({
@@ -116,6 +121,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
       });
     } catch (err) {
       console.error(err);
+      setSaveError(err instanceof Error ? err.message : 'Impossible d’enregistrer cet appareil.');
     } finally {
       setIsSaving(false);
     }
@@ -127,6 +133,12 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
         <h2 className="nd-section-title" style={{ marginBottom: 20 }}>
           {device ? 'Éditer l\'appareil' : 'Ajouter un appareil'}
         </h2>
+
+        {demoMode && (
+          <div style={{ padding: '10px 12px', marginBottom: 16, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
+            Appareil entièrement simulé : les statistiques ne proviendront jamais de cette adresse. Utilisez une IP de documentation comme 192.0.2.60 et ne saisissez aucun identifiant réel.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 12 }}>
@@ -281,6 +293,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
             </div>
           </div>
 
+          {saveError && <div style={{ color: 'var(--nd-red)', fontSize: '0.7rem' }}>{saveError}</div>}
           <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
             {device && onDelete && (
               <button

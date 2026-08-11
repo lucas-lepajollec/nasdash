@@ -16,18 +16,26 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
   const customTabs = tabs.filter(t => t.isCustom);
   const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
   const [iconPickerTabId, setIconPickerTabId] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState('');
 
   const handleDelete = async (id: string) => {
     try {
-      await fetch(`/api/custom-tabs?id=${id}`, { method: 'DELETE' });
+      setActionError('');
+      const response = await fetch(`/api/custom-tabs?id=${id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(payload?.error || `Suppression refusée (${response.status}).`);
+      }
       refreshTabs();
     } catch (e) {
       console.error(e);
+      setActionError(e instanceof Error ? e.message : 'Impossible de supprimer cet onglet.');
     }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {actionError && <div style={{ padding: 10, color: 'var(--nd-red)', border: '1px solid color-mix(in srgb, var(--nd-red) 30%, transparent)', borderRadius: 'var(--nd-card-radius)', fontSize: '0.7rem' }}>{actionError}</div>}
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Onglets Libres</h4>
         <p style={{ margin: '4px 0 16px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
@@ -104,14 +112,16 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
             await updateConfig({ tabIcons: { ...(config?.settings?.tabIcons || {}), [iconPickerTabId]: emoji } });
             // Also update the custom tab source of truth
             try {
-              await fetch('/api/custom-tabs', {
+              const response = await fetch('/api/custom-tabs', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type: 'updateTab', id: iconPickerTabId, tabUpdates: { icon: emoji } }),
               });
+              if (!response.ok) throw new Error(`Mise à jour refusée (${response.status}).`);
               refreshTabs();
             } catch (e) {
               console.error(e);
+              setActionError(e instanceof Error ? e.message : 'Impossible de modifier l’icône.');
             }
             setIconPickerTabId(null);
           }}

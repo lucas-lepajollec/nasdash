@@ -1,0 +1,63 @@
+{
+  "nodes": [
+    { "id": "node-edge-gateway", "name": "Edge Gateway", "type": "infra", "icon": "lucide:Globe2", "ip": "192.0.2.1" },
+    { "id": "node-core-switch", "name": "Core Switch", "type": "infra", "icon": "lucide:Network", "ip": "192.0.2.2", "groupId": "group-network-core" },
+    { "id": "node-wifi-access-point", "name": "Wi-Fi Access Point", "type": "infra", "icon": "lucide:Wifi", "ip": "192.0.2.3", "groupId": "group-network-core" },
+    { "id": "node-atlas-nas", "name": "Atlas NAS", "type": "device", "icon": "lucide:HardDrive", "ip": "192.0.2.20", "groupId": "group-homelab-hosts", "linkedDeviceId": "demo-device-1" },
+    { "id": "node-orion-compute", "name": "Orion Compute", "type": "device", "icon": "lucide:Server", "ip": "192.0.2.30", "groupId": "group-homelab-hosts", "linkedDeviceId": "demo-device-2" },
+    { "id": "node-iot-gateway", "name": "IoT Gateway", "type": "device", "icon": "lucide:Router", "ip": "192.0.2.40", "groupId": "group-homelab-hosts", "linkedDeviceId": "demo-device-3" },
+    { "id": "node-admin-workstation", "name": "Admin Workstation", "type": "device", "icon": "lucide:Laptop", "ip": "192.0.2.50" },
+    { "id": "node-reverse-proxy", "name": "Reverse Proxy", "type": "netsvc", "icon": "lucide:Route", "ip": "198.51.100.10", "ports": [80, 443] },
+
+    { "id": "node-jellyfin", "name": "Jellyfin", "type": "stdsvc", "icon": "lucide:Film", "ip": "203.0.113.20", "ports": [8096], "groupId": "group-media-services", "linkedServiceId": "service-jellyfin", "linkedContainerId": "demojellyfin" },
+    { "id": "node-immich", "name": "Immich", "type": "stdsvc", "icon": "lucide:Camera", "ip": "203.0.113.21", "ports": [2283], "groupId": "group-media-services", "linkedServiceId": "service-immich", "linkedContainerId": "demoimmich00" },
+    { "id": "node-navidrome", "name": "Navidrome", "type": "stdsvc", "icon": "lucide:Music", "ip": "203.0.113.22", "ports": [4533], "groupId": "group-media-services", "linkedServiceId": "service-navidrome", "linkedContainerId": "demonavidrom" },
+    { "id": "node-kavita", "name": "Kavita", "type": "stdsvc", "icon": "lucide:BookOpen", "ip": "203.0.113.23", "ports": [5000], "groupId": "group-media-services", "linkedServiceId": "service-kavita", "linkedContainerId": "demokavita00" },
+    { "id": "node-metube", "name": "MeTube", "type": "stdsvc", "icon": "lucide:Download", "ip": "203.0.113.24", "ports": [8081], "groupId": "group-media-services", "linkedServiceId": "service-metube", "linkedContainerId": "demometube00" },
+
+    { "id": "node-proxmox", "name": "Proxmox", "type": "stdsvc", "icon": "lucide:ServerCog", "ip": "203.0.113.30", "ports": [8006], "groupId": "group-infrastructure-services", "linkedServiceId": "service-proxmox", "linkedContainerId": "demoproxmox0" },
+    { "id": "node-portainer", "name": "Portainer", "type": "stdsvc", "icon": "lucide:Container", "ip": "203.0.113.31", "ports": [9443], "groupId": "group-infrastructure-services", "linkedServiceId": "service-portainer", "linkedContainerId": "demoportainr" },
+    { "id": "node-uptime-kuma", "name": "Uptime Kuma", "type": "stdsvc", "icon": "lucide:Activity", "ip": "203.0.113.32", "ports": [3001], "groupId": "group-infrastructure-services", "linkedServiceId": "service-uptime-kuma", "linkedContainerId": "demouptime00" },
+    { "id": "node-glances", "name": "Glances", "type": "stdsvc", "icon": "lucide:Gauge", "ip": "203.0.113.33", "ports": [61208], "groupId": "group-infrastructure-services", "linkedServiceId": "service-glances", "linkedContainerId": "demoglances0" },
+    { "id": "node-pihole", "name": "Pi-hole", "type": "netsvc", "icon": "lucide:Shield", "ip": "203.0.113.34", "ports": [53, 8088], "groupId": "group-infrastructure-services", "linkedServiceId": "service-pihole", "linkedContainerId": "demopihole00" },
+
+    { "id": "node-home-assistant", "name": "Home Assistant", "type": "stdsvc", "icon": "lucide:House", "ip": "203.0.113.40", "ports": [8123], "groupId": "group-automation-tools", "linkedServiceId": "service-home-assistant", "linkedContainerId": "demohomeasst" },
+    { "id": "node-n8n", "name": "n8n", "type": "stdsvc", "icon": "lucide:Workflow", "ip": "203.0.113.41", "ports": [5678], "groupId": "group-automation-tools", "linkedServiceId": "service-n8n", "linkedContainerId": "demon8n00000" },
+    { "id": "node-syncthing", "name": "Syncthing", "type": "stdsvc", "icon": "lucide:RefreshCw", "ip": "203.0.113.42", "ports": [8384, 22000], "groupId": "group-automation-tools", "linkedServiceId": "service-syncthing", "linkedContainerId": "demosyncthng" },
+    { "id": "node-file-browser", "name": "File Browser", "type": "stdsvc", "icon": "lucide:FolderOpen", "ip": "203.0.113.43", "ports": [8082], "groupId": "group-automation-tools", "linkedServiceId": "service-file-browser", "linkedContainerId": "demofilebrws" },
+    { "id": "node-it-tools", "name": "IT-Tools", "type": "stdsvc", "icon": "lucide:Wrench", "ip": "203.0.113.44", "ports": [8083], "groupId": "group-automation-tools", "linkedServiceId": "service-it-tools", "linkedContainerId": "demoittools0" },
+
+    { "id": "node-sonarr", "name": "Sonarr", "type": "stdsvc", "icon": "lucide:Tv", "ip": "203.0.113.50", "ports": [8989], "groupId": "group-library-automation", "linkedServiceId": "service-sonarr", "linkedContainerId": "demosonarr00" },
+    { "id": "node-radarr", "name": "Radarr", "type": "stdsvc", "icon": "lucide:Clapperboard", "ip": "203.0.113.51", "ports": [7878], "groupId": "group-library-automation", "linkedServiceId": "service-radarr", "linkedContainerId": "demoradarr00" },
+    { "id": "node-lidarr", "name": "Lidarr", "type": "stdsvc", "icon": "lucide:Headphones", "ip": "203.0.113.52", "ports": [8686], "groupId": "group-library-automation", "linkedServiceId": "service-lidarr", "linkedContainerId": "demolidarr00" },
+    { "id": "node-prowlarr", "name": "Prowlarr", "type": "stdsvc", "icon": "lucide:Search", "ip": "203.0.113.53", "ports": [9696], "groupId": "group-library-automation", "linkedServiceId": "service-prowlarr", "linkedContainerId": "demoprowlarr" },
+    { "id": "node-qbittorrent", "name": "qBittorrent", "type": "stdsvc", "icon": "lucide:DownloadCloud", "ip": "203.0.113.54", "ports": [8080, 6881], "groupId": "group-library-automation", "linkedServiceId": "service-qbittorrent", "linkedContainerId": "demoqbittorn" }
+  ],
+  "groups": [
+    { "id": "group-network-core", "name": "Network Core", "type": "infra", "mergeIncomingLinks": true },
+    { "id": "group-homelab-hosts", "name": "Homelab Hosts", "type": "device", "mergeIncomingLinks": true },
+    { "id": "group-media-services", "name": "Médias & photos", "type": "stdsvc", "mergeIncomingLinks": true },
+    { "id": "group-infrastructure-services", "name": "Infrastructure", "type": "netsvc", "mergeIncomingLinks": true },
+    { "id": "group-automation-tools", "name": "Automatisation & outils", "type": "stdsvc", "mergeIncomingLinks": true },
+    { "id": "group-library-automation", "name": "Bibliothèque & téléchargements", "type": "stdsvc", "mergeIncomingLinks": true }
+  ],
+  "connections": [
+    { "id": "link-gateway-core", "fromId": "node-edge-gateway", "toId": "group-network-core", "label": "2.5 Gbps trunk", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-core-hosts", "fromId": "group-network-core", "toId": "group-homelab-hosts", "label": "10 Gbps LAN", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-core-admin", "fromId": "group-network-core", "toId": "node-admin-workstation", "label": "1 Gbps", "type": "bidirectional", "fromPort": "bottom", "toPort": "top" },
+    { "id": "link-core-proxy", "fromId": "group-network-core", "toId": "node-reverse-proxy", "label": "HTTPS ingress", "type": "directional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-hosts-media", "fromId": "group-homelab-hosts", "toId": "group-media-services", "label": "Media workloads", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-hosts-infrastructure", "fromId": "group-homelab-hosts", "toId": "group-infrastructure-services", "label": "Management plane", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-hosts-automation", "fromId": "group-homelab-hosts", "toId": "group-automation-tools", "label": "Application network", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-hosts-library", "fromId": "group-homelab-hosts", "toId": "group-library-automation", "label": "Automation network", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-proxy-media", "fromId": "node-reverse-proxy", "toId": "group-media-services", "label": "HTTPS", "type": "directional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-proxy-infrastructure", "fromId": "node-reverse-proxy", "toId": "group-infrastructure-services", "label": "HTTPS", "type": "directional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-proxy-automation", "fromId": "node-reverse-proxy", "toId": "group-automation-tools", "label": "HTTPS", "type": "directional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-proxy-library", "fromId": "node-reverse-proxy", "toId": "group-library-automation", "label": "HTTPS", "type": "directional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-n8n-home-assistant", "fromId": "node-n8n", "toId": "node-home-assistant", "label": "Webhooks", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-sonarr-prowlarr", "fromId": "node-sonarr", "toId": "node-prowlarr", "label": "Indexer API", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-radarr-prowlarr", "fromId": "node-radarr", "toId": "node-prowlarr", "label": "Indexer API", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-lidarr-prowlarr", "fromId": "node-lidarr", "toId": "node-prowlarr", "label": "Indexer API", "type": "bidirectional", "fromPort": "right", "toPort": "left" },
+    { "id": "link-prowlarr-qbittorrent", "fromId": "node-prowlarr", "toId": "node-qbittorrent", "label": "Download client", "type": "directional", "fromPort": "right", "toPort": "left" }
+  ]
+}

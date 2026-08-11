@@ -8,12 +8,13 @@ import CustomSelect from '../shared/CustomSelect';
 import { Emoji } from '../shared/Emoji';
 import EmojiPickerModal from './EmojiPickerModal';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useConfig } from '@/hooks/useConfig';
 
 interface CategoryFormModalProps {
   category?: Category;
   onClose: () => void;
-  onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[]; layout?: Category['layout'] }) => void;
-  onDelete?: (id: string) => void;
+  onSave: (data: { title: string; emoji: string; isSecret: boolean; services: Service[]; layout?: Category['layout'] }) => Promise<void> | void;
+  onDelete?: (id: string) => Promise<void> | void;
   showSecretSections: boolean;
   showSensitive: boolean;
 }
@@ -21,6 +22,8 @@ interface CategoryFormModalProps {
 
 export default function CategoryFormModal({ category, onClose, onSave, onDelete, showSecretSections, showSensitive }: CategoryFormModalProps) {
   const dialogRef = useDialogAccessibility(onClose);
+  const { config } = useConfig();
+  const demoMode = config?.demoMode === true;
   const [title, setTitle] = useState(category?.title || '');
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
@@ -41,15 +44,23 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [deleteServiceConfirm, setDeleteServiceConfirm] = useState<string | null>(null);
   const [deleteLogoConfirm, setDeleteLogoConfirm] = useState<string | null>(null);
   const [pendingLogoDeletions, setPendingLogoDeletions] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
-
-    for (const url of pendingLogoDeletions) {
-      await fetch(url, { method: 'DELETE' }).catch(console.error);
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      for (const url of pendingLogoDeletions) {
+        await fetch(url, { method: 'DELETE' }).catch(console.error);
+      }
+      await onSave({ title, emoji, isSecret, services, layout });
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Impossible d’enregistrer cette catégorie.');
+    } finally {
+      setIsSaving(false);
     }
-
-    onSave({ title, emoji, isSecret, services, layout });
   };
 
   const updateServiceField = (id: string, field: keyof Service, value: string) => {
@@ -97,6 +108,11 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
             <X size={16} />
           </button>
         </div>
+        {demoMode && (
+          <div style={{ padding: '10px 12px', marginBottom: 14, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
+            Modification temporaire sur données fictives. Les imports sont désactivés ; utilisez uniquement des URL de démonstration et ne saisissez aucune adresse personnelle.
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
@@ -201,12 +217,12 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>Logo (URL ou Upload)</label>
                           <div style={{ display: 'flex', gap: 6 }}>
                             <input className="nd-input" style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem' }} value={svc.logo} onChange={(e) => updateServiceField(svc.id, 'logo', e.target.value)} placeholder="https://... ou emoji" />
-                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
+                            {!demoMode && <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
                               <Upload size={14} />
                               <input type="file" accept=".png,.svg,.jpg,.jpeg,.webp,.ico" style={{ display: 'none' }} onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) handleUploadLogo(svc.id, e.target.files[0]);
                               }} />
-                            </label>
+                            </label>}
                             {svc.logo?.startsWith('/api/logos/') && (
                               <button type="button" onClick={() => setDeleteLogoConfirm(svc.id)} title="Supprimer le logo local" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-red)', transition: 'all 0.2s' }}>
                                 <Trash2 size={14} />
@@ -226,7 +242,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                           <label style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', marginBottom: 2, display: 'block' }}>Logo Secondaire (Optionnel)</label>
                           <div style={{ display: 'flex', gap: 6 }}>
                             <input className="nd-input" style={{ flex: 1, padding: '6px 10px', fontSize: '0.75rem' }} value={svc.secondaryLogo || ''} onChange={(e) => updateServiceField(svc.id, 'secondaryLogo', e.target.value)} placeholder="https://... ou fichier" />
-                            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
+                            {!demoMode && <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-text-muted)', transition: 'all 0.2s' }}>
                               <Upload size={14} />
                               <input type="file" accept=".png,.svg,.jpg,.jpeg,.webp,.ico" style={{ display: 'none' }} onChange={async (e) => {
                                 if (e.target.files && e.target.files[0]) {
@@ -237,7 +253,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
                                   updateServiceField(svc.id, 'secondaryLogo', data.url);
                                 }
                               }} />
-                            </label>
+                            </label>}
                             {svc.secondaryLogo?.startsWith('/api/logos/') && (
                               <button type="button" onClick={() => updateServiceField(svc.id, 'secondaryLogo', '')} title="Supprimer le logo secondaire" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--nd-card-radius)', padding: '0 10px', color: 'var(--nd-red)', transition: 'all 0.2s' }}>
                                 <Trash2 size={14} />
@@ -262,6 +278,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
           )}
         </div>
 
+        {saveError && <div style={{ marginTop: 14, color: 'var(--nd-red)', fontSize: '0.7rem' }}>{saveError}</div>}
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           {category && onDelete && (
             <button className="nd-btn nd-btn-danger" onClick={() => setDeleteCategoryConfirm(true)} style={{ flex: 1, borderColor: 'var(--nd-red)', color: 'var(--nd-red)' }}>
@@ -270,8 +287,8 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
           )}
           <div style={{ flex: category ? 1 : 2, display: 'flex', gap: 12 }}>
             <button className="nd-btn" onClick={onClose} style={{ flex: 1 }}>Annuler</button>
-            <button className="nd-btn nd-btn-accent" onClick={handleSubmit} style={{ flex: 1 }}>
-              {category ? 'Enregistrer' : 'Ajouter'}
+            <button className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={isSaving} style={{ flex: 1 }}>
+              {isSaving ? 'Enregistrement…' : category ? 'Enregistrer' : 'Ajouter'}
             </button>
           </div>
         </div>

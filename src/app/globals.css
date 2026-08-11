@@ -333,6 +333,115 @@ body {
 }
 
 /* ==================== HEADER ==================== */
+.nd-demo-banner {
+  position: relative;
+  left: 50%;
+  z-index: 40;
+  width: 100vw;
+  max-width: none;
+  margin-left: -50vw;
+  overflow: hidden;
+  border-bottom: 1px solid color-mix(in srgb, var(--nd-accent) 18%, var(--nd-card-border));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--nd-accent) 5%, transparent), transparent 34%),
+    color-mix(in srgb, var(--nd-card-bg) 98%, var(--nd-bg) 2%);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--nd-text) 2%, transparent);
+  color: var(--nd-text);
+}
+
+.nd-demo-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 44px;
+  padding: 7px clamp(14px, 1.6vw, 28px);
+}
+
+.nd-demo-banner-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--nd-accent) 25%, var(--nd-card-border));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--nd-accent) 8%, transparent);
+  color: var(--nd-accent);
+}
+
+.nd-demo-banner-content {
+  display: flex;
+  align-items: baseline;
+  flex: 1 1 auto;
+  gap: 9px;
+  min-width: 0;
+}
+
+.nd-demo-banner-content strong {
+  flex: 0 0 auto;
+  color: var(--nd-text);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.nd-demo-banner-content > span {
+  color: var(--nd-text-muted);
+  font-size: 0.62rem;
+  line-height: 1.35;
+}
+
+.nd-demo-banner-copy-mobile {
+  display: none;
+}
+
+.nd-demo-banner-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.nd-demo-banner-reset,
+.nd-demo-banner-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--nd-text) 2.5%, transparent);
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.61rem;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nd-demo-banner-close {
+  width: 28px;
+  padding: 0;
+}
+
+.nd-demo-banner-reset:hover,
+.nd-demo-banner-close:hover {
+  border-color: color-mix(in srgb, var(--nd-accent) 30%, var(--nd-card-border));
+  background: color-mix(in srgb, var(--nd-accent) 7%, transparent);
+  color: var(--nd-text);
+}
+
+.nd-demo-banner-reset:focus-visible,
+.nd-demo-banner-close:focus-visible {
+  outline: 2px solid var(--nd-accent);
+  outline-offset: 2px;
+}
+
 .nd-header {
   display: flex;
   align-items: center;
@@ -640,7 +749,7 @@ body {
   margin-top: 10px;
   justify-items: center;
   align-items: start;
-  
+
   /* Defaults */
   --circle-size: 44px;
   --bar-width: 34px;
@@ -1324,7 +1433,7 @@ body {
   .nd-dock--open.nd-dock--left {
     transform: translate(0, -50%) !important;
   }
-  
+
   .nd-dock--open.nd-dock--right {
     transform: translate(0, -50%) !important;
   }
@@ -1500,6 +1609,51 @@ body {
 }
 
 @media (max-width: 960px) {
+  .nd-demo-banner-inner {
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 8px;
+  }
+
+  .nd-demo-banner-content {
+    align-items: baseline;
+    flex-direction: row;
+    gap: 7px;
+    overflow: hidden;
+  }
+
+  .nd-demo-banner-copy-desktop {
+    display: none;
+  }
+
+  .nd-demo-banner-content > .nd-demo-banner-copy-mobile {
+    display: inline;
+    font-size: 0.6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nd-demo-banner-actions {
+    gap: 3px;
+  }
+
+  .nd-demo-banner-reset {
+    width: 28px;
+    padding: 0;
+  }
+
+  .nd-demo-banner-reset span {
+    display: none;
+  }
+
+  .nd-demo-banner-icon,
+  .nd-demo-banner-reset,
+  .nd-demo-banner-close {
+    width: 28px;
+    height: 28px;
+  }
+
   .nd-header-menu {
     display: none !important;
   }
@@ -2202,7 +2356,7 @@ body {
   .nd-mobile-hidden {
     display: none !important;
   }
-  
+
   .nd-desktop-only {
     display: none !important;
   }
@@ -2930,7 +3084,7 @@ body {
     width: 100% !important;
     order: 2 !important;
   }
-  
+
   /* Stack 4 categories vertically on mobile viewports */
   .nd-topology-canvas {
     overflow-y: auto !important;
@@ -3111,4 +3265,4 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
 
 
 
-
+

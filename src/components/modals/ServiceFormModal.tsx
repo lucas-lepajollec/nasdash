@@ -4,24 +4,29 @@ import { useState } from 'react';
 import { Service } from '@/lib/types';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useConfig } from '@/hooks/useConfig';
 
 interface ServiceFormModalProps {
   service?: Service;
   categoryId?: string;
   onClose: () => void;
-  onSave: (data: { name: string; localUrl: string; secondaryUrl: string; logo: string; secondaryLogo: string; categoryId?: string }) => void;
-  onDelete?: (id: string) => void;
+  onSave: (data: { name: string; localUrl: string; secondaryUrl: string; logo: string; secondaryLogo: string; categoryId?: string }) => Promise<void> | void;
+  onDelete?: (id: string) => Promise<void> | void;
   onUploadLogo: (file: File) => Promise<string>;
   showSensitive?: boolean;
 }
 
 export default function ServiceFormModal({ service, categoryId, onClose, onSave, onDelete, onUploadLogo, showSensitive = false }: ServiceFormModalProps) {
   const dialogRef = useDialogAccessibility(onClose);
+  const { config } = useConfig();
+  const demoMode = config?.demoMode === true;
   const [name, setName] = useState(service?.name || '');
   const [localUrl, setLocalUrl] = useState(service?.localUrl || '');
   const [secondaryUrl, setSecondaryUrl] = useState(service?.secondaryUrl || service?.tailscaleUrl || '');
   const [logo, setLogo] = useState(service?.logo || '');
   const [secondaryLogo, setSecondaryLogo] = useState(service?.secondaryLogo || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,9 +35,17 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
     setLogo(url);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) return;
-    onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId, tailscaleUrl: '' } as any);
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId, tailscaleUrl: '' } as any);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Impossible d’enregistrer ce service.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -44,6 +57,11 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
             <X size={16} />
           </button>
         </div>
+        {demoMode && (
+          <div style={{ padding: '10px 12px', marginBottom: 14, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
+            Ce formulaire modifie uniquement votre session de démo. Utilisez des URL fictives : NasDash ne doit recevoir ici aucune adresse privée ni information personnelle.
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
@@ -64,10 +82,12 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
               {logo && (
                 <img src={logo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
               )}
-              <label className="nd-btn" style={{ cursor: 'pointer' }}>
+              {demoMode ? (
+                <input className="nd-input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://cdn.example/logo.svg" />
+              ) : <label className="nd-btn" style={{ cursor: 'pointer' }}>
                 <Upload size={12} /> Upload
                 <input type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: 'none' }} />
-              </label>
+              </label>}
               {logo && (
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button className="nd-btn" title="Détacher le logo du service" onClick={() => setLogo('')}>
@@ -103,7 +123,9 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
               {secondaryLogo && (
                 <img src={secondaryLogo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
               )}
-              <label className="nd-btn" style={{ cursor: 'pointer' }}>
+              {demoMode ? (
+                <input className="nd-input" value={secondaryLogo} onChange={(e) => setSecondaryLogo(e.target.value)} placeholder="https://cdn.example/logo-alt.svg" />
+              ) : <label className="nd-btn" style={{ cursor: 'pointer' }}>
                 <Upload size={12} /> Upload
                 <input type="file" accept="image/*" onChange={async (e) => {
                   const file = e.target.files?.[0];
@@ -111,7 +133,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
                   const url = await onUploadLogo(file);
                   setSecondaryLogo(url);
                 }} style={{ display: 'none' }} />
-              </label>
+              </label>}
               {secondaryLogo && (
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button className="nd-btn" title="Détacher le logo secondaire" onClick={() => setSecondaryLogo('')}>
@@ -143,14 +165,15 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           </div>
         </div>
 
+        {saveError && <div style={{ marginTop: 14, color: 'var(--nd-red)', fontSize: '0.7rem' }}>{saveError}</div>}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
           {service && onDelete ? (
             <button className="nd-btn" onClick={() => onDelete(service.id)} style={{ color: 'var(--nd-red)' }}>
               <Trash2 size={12} /> Supprimer
             </button>
           ) : <div />}
-          <button className="nd-btn nd-btn-accent" onClick={handleSubmit}>
-            {service ? 'Enregistrer' : 'Ajouter'}
+          <button className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={isSaving}>
+            {isSaving ? 'Enregistrement…' : service ? 'Enregistrer' : 'Ajouter'}
           </button>
         </div>
       </div>

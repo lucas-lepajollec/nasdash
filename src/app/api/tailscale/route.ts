@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import { isDemoMode } from '@/lib/demoMode';
 
 interface TailscaleApiDevice {
   nodeId?: string;
@@ -33,6 +34,19 @@ export async function GET(request: Request) {
       READ_ACCESS.tailscale
     );
     if (access.error) return access.error;
+
+    if (isDemoMode()) {
+      return NextResponse.json({
+        simulated: true,
+        tailnet: 'nasdash-demo',
+        clientId: '',
+        devices: [
+          { id: 'demo-ts-1', hostname: 'atlas-nas', os: 'linux', ip: '100.64.0.10', online: true, isSelf: true },
+          { id: 'demo-ts-2', hostname: 'orion-compute', os: 'linux', ip: '100.64.0.20', online: true, isSelf: false },
+          { id: 'demo-ts-3', hostname: 'travel-laptop', os: 'windows', ip: '100.64.0.30', online: false, lastSeen: '2026-08-10T18:20:00.000Z', isSelf: false },
+        ],
+      });
+    }
 
     const { tailscaleTailnet, tailscaleClientId, tailscaleClientSecret } = config.settings;
 

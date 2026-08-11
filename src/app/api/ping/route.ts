@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import { isDemoMode } from '@/lib/demoMode';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,16 @@ export async function GET(request: Request) {
 
   if (!url) {
     return NextResponse.json({ status: 'offline', statusText: 'Invalid URL', latency: 0 }, { status: 400 });
+  }
+
+  if (isDemoMode()) {
+    const isOffline = url.includes('offline');
+    const hash = Array.from(url).reduce((value, char) => ((value * 31) + char.charCodeAt(0)) >>> 0, 7);
+    return NextResponse.json({
+      status: isOffline ? 'offline' : 'online',
+      statusText: isOffline ? 'Timeout' : 'OK',
+      latency: isOffline ? 0 : 4 + (hash % 12),
+    });
   }
 
   // Prévention SSRF: Valider que l'URL demandée est configurée dans les services ou devices

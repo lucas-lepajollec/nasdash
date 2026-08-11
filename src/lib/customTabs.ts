@@ -4,6 +4,8 @@ import { CustomTabLayout } from './types';
 import { TabDef } from '@/hooks/useTabs';
 import { safeWriteFileSync } from './config';
 import { getDataDirectory } from './dataDirectory';
+import { isDemoMode } from './demoMode';
+import { getDemoSessionCustomTabs, setDemoSessionCustomTabs } from './demoSession';
 
 export interface CustomTabsData {
   tabs: TabDef[];
@@ -29,6 +31,10 @@ if (!globalCache.__cachedCustomTabs) {
 }
 
 export function readCustomTabs(): CustomTabsData {
+  if (isDemoMode()) {
+    const sessionData = getDemoSessionCustomTabs<CustomTabsData>();
+    if (sessionData) return sessionData;
+  }
   let shouldReadTabs = !globalCache.__cachedCustomTabs;
   try {
     const mtime = fs.statSync(CUSTOM_TABS_FILE).mtimeMs;
@@ -57,6 +63,7 @@ export function readCustomTabs(): CustomTabsData {
       const data = fs.readFileSync(CUSTOM_TABS_FILE, 'utf-8');
       const parsed = JSON.parse(data);
       globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(parsed));
+      if (isDemoMode()) setDemoSessionCustomTabs(parsed);
       return parsed;
     }
   } catch (error) {
@@ -67,7 +74,8 @@ export function readCustomTabs(): CustomTabsData {
 
 export function writeCustomTabs(data: CustomTabsData): boolean {
   try {
-    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    if (isDemoMode()) {
+      if (setDemoSessionCustomTabs(data)) return true;
       globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
       return true;
     }

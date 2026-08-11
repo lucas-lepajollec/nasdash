@@ -5,6 +5,11 @@
 DEFAULTS_DIR="/app/defaults"
 DATA_DIR="/app/data"
 
+if [ "${NASDASH_DEMO_MODE:-false}" = "true" ]; then
+  echo "[NASDASH] Public demo mode: using isolated temporary fictional data."
+  exec "$@"
+fi
+
 echo "[NASDASH] Mise à jour des modèles de configuration..."
 
 # Toujours mettre à jour les fichiers d'exemples dans le volume monté pour qu'ils soient de la dernière version

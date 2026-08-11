@@ -11,6 +11,7 @@ import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 export function MobileTab() {
   const { config, updateConfig } = useConfig();
+  const demoMode = config?.demoMode === true;
   
   // Accordions states
   const [openAccordions, setOpenAccordions] = useState<string[]>(['mobile-layout']);
@@ -309,6 +310,9 @@ export function MobileTab() {
                   )}
                 </div>
                 
+                {demoMode ? (
+                  <div style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>Import de fond mobile désactivé dans la démo publique.</div>
+                ) : (
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <input
                     type="file"
@@ -340,6 +344,7 @@ export function MobileTab() {
                     📁 Importer une image mobile
                   </label>
                 </div>
+                )}
 
                 {uploadedBgs.length > 0 && (
                   <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>

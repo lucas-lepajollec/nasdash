@@ -5,6 +5,7 @@ import { safeWriteFileSync } from './config';
 import { NextResponse } from 'next/server';
 import { getDataPath } from './dataDirectory';
 import { readOrCreatePersistentSecret } from './persistentSecret';
+import { isDemoMode } from './demoMode';
 
 const USERS_PATH = getDataPath('users.json');
 const SECRET_FILE = getDataPath('jwt.secret');
@@ -64,6 +65,15 @@ const authGlobal = globalThis as typeof globalThis & {
 
 function getJwtSecret(): string {
   let secret = process.env.NASDASH_JWT_SECRET?.trim();
+  // Authentication is disabled in the public showcase. Keep an ephemeral
+  // process-local key so demo deployments never need to read or create a
+  // credential file on their read-only filesystem.
+  if (!secret && isDemoMode()) {
+    if (!authGlobal.__jwtSecretFallback) {
+      authGlobal.__jwtSecretFallback = crypto.randomBytes(32).toString('hex');
+    }
+    return authGlobal.__jwtSecretFallback;
+  }
   if (!secret) {
     try {
       secret = readOrCreatePersistentSecret(SECRET_FILE);
@@ -344,6 +354,12 @@ export function verifyCsrf(req: AuthRequestLike): boolean {
 }
 
 export function checkAdmin(req: AuthRequestLike): NextResponse | null {
+  if (isDemoMode()) {
+    if (!verifyCsrf(req)) {
+      return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
+    }
+    return null;
+  }
   if (!verifyCsrf(req)) {
     return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
   }

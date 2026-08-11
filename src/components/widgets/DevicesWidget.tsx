@@ -623,9 +623,9 @@ function DeviceMonitorCardContent({
             <span style={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
               {device.name}
             </span>
-            {device.host && (
+            {(device.system || device.host) && (
               <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
-                {device.host}
+                {device.system || device.host}
               </span>
             )}
             {isLoading && isApiDevice && !stats && <Loader2 size={10} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)', flexShrink: 0 }} />}

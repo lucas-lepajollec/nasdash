@@ -1,0 +1,18 @@
+[
+  {
+    "username": "admin",
+    "role": "admin",
+    "passwordHash": "disabled:disabled",
+    "allowedTabs": [],
+    "allowedWidgets": [],
+    "sessionVersion": 0
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "passwordHash": "disabled:disabled",
+    "allowedTabs": [],
+    "allowedWidgets": [],
+    "sessionVersion": 0
+  }
+]

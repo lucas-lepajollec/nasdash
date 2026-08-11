@@ -15,6 +15,7 @@ import {
   readObject,
   readString,
 } from '@/lib/requestValidation';
+import { withDemoSession } from '@/lib/demoSession';
 
 const MAX_CUSTOM_TAB_BODY_BYTES = 1024 * 1024;
 
@@ -38,7 +39,7 @@ function validationResponse(error: unknown) {
   return null;
 }
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const config = readConfig();
   const principal = resolveAccessPrincipal(req, config.settings?.securityMode || 'public');
   if (!principal) {
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ ...data, tabs, layouts });
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function PUT(req: NextRequest) {
+async function handlePUT(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -148,7 +149,7 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-export async function DELETE(req: NextRequest) {
+async function handleDELETE(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -173,4 +174,20 @@ export async function DELETE(req: NextRequest) {
     console.error('Erreur API Custom Tabs DELETE:', error);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
+}
+
+export function GET(req: NextRequest) {
+  return withDemoSession(req, () => handleGET(req));
+}
+
+export function POST(req: NextRequest) {
+  return withDemoSession(req, () => handlePOST(req));
+}
+
+export function PUT(req: NextRequest) {
+  return withDemoSession(req, () => handlePUT(req));
+}
+
+export function DELETE(req: NextRequest) {
+  return withDemoSession(req, () => handleDELETE(req));
 }

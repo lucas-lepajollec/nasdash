@@ -7,6 +7,7 @@ import {
   readString,
   readStringArray,
 } from '@/lib/requestValidation';
+import { isDemoMode } from '@/lib/demoMode';
 
 const MAX_USERS_BODY_BYTES = 16 * 1024;
 
@@ -43,6 +44,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: 'La gestion des comptes est désactivée dans le bac à sable.' },
+      { status: 403 },
+    );
+  }
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -117,6 +124,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: 'La gestion des comptes est désactivée dans le bac à sable.' },
+      { status: 403 },
+    );
+  }
   const authError = checkAdmin(req);
   if (authError) return authError;
 

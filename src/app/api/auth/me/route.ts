@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionFromRequest, readUsers, isSecureRequest } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
+import { isDemoMode } from '@/lib/demoMode';
 
 interface SessionUserView {
   username: string;
@@ -19,6 +20,18 @@ function jsonNoCache(data: unknown, init?: ResponseInit) {
 }
 
 export async function GET(req: NextRequest) {
+  if (isDemoMode()) {
+    return jsonNoCache({
+      user: {
+        username: 'demo',
+        role: 'admin',
+        allowedTabs: [],
+        allowedWidgets: [],
+        isAnonymous: false,
+      },
+    });
+  }
+
   const token = req.cookies.get('nasdash_session')?.value;
 
   if (!token) {

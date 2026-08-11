@@ -7,6 +7,7 @@ import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutCon
 
 export function CalendarWidgetTab() {
   const { config, updateConfig } = useConfig();
+  const demoMode = config?.demoMode === true;
 
   const hideCalendar = !!config?.settings?.hideCalendar;
   const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
@@ -33,6 +34,14 @@ export function CalendarWidgetTab() {
           <WidgetNetworksLayoutConfig widgetId="calendar" />
 
           {/* Calendar Sync URL */}
+          {demoMode ? (
+            <div className="nd-settings-card" style={{ padding: '14px', background: 'color-mix(in srgb, var(--nd-accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)' }}>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Synchronisation iCal simulée</h4>
+              <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.55 }}>
+                Les événements affichés sont fictifs. La démo n’accepte ni ne télécharge d’URL de calendrier réelle afin de protéger vos données privées.
+              </p>
+            </div>
+          ) : (
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Synchronisation iCal</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
@@ -53,6 +62,7 @@ export function CalendarWidgetTab() {
               style={{ width: '100%', fontSize: '0.75rem', padding: '10px 14px' }}
             />
           </div>
+          )}
         </>
       )}
     </div>

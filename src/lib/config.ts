@@ -12,6 +12,9 @@ import {
   MonitoringHttpError,
   MonitoringInvalidResponseError,
 } from './monitoringError';
+import { isDemoMode } from './demoMode';
+import { getDemoSessionConfig, setDemoSessionConfig } from './demoSession';
+import { createRollingDemoCalendar } from './demoCalendar';
 
 const DATA_DIR = getDataDirectory();
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
@@ -131,6 +134,10 @@ export function safeWriteFileSync(filePath: string, data: string | Buffer, optio
 }
 
 export function readConfig(): DashboardConfig {
+  if (isDemoMode()) {
+    const sessionConfig = getDemoSessionConfig();
+    if (sessionConfig) return sessionConfig;
+  }
   ensureDataDir();
 
   // 1. Lire la configuration de base (avec cache + mtime)
@@ -436,9 +443,14 @@ export function readConfig(): DashboardConfig {
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
   }
 
+  if (isDemoMode()) {
+    localEvents = createRollingDemoCalendar();
+  }
+
   // 5. Assembler pour assurer la compatibilité
   const fullConfig: DashboardConfig = {
     ...configData,
+    demoMode: isDemoMode(),
     categories,
     localEvents,
     settings: {
@@ -459,17 +471,21 @@ export function readConfig(): DashboardConfig {
     });
   }
 
+  if (isDemoMode()) setDemoSessionConfig(fullConfig);
   return fullConfig;
 }
 
 export function writeConfig(config: DashboardConfig): boolean {
   const baseConfig: MutableDashboardConfig = cloneJson(config);
+  delete baseConfig.demoMode;
   const categories = baseConfig.categories || [];
   const topology = baseConfig.settings?.networkTopology || { nodes: [], groups: [], connections: [] };
   const localEvents = baseConfig.localEvents || [];
 
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  if (isDemoMode()) {
+    if (setDemoSessionConfig(config)) return true;
     const cacheConfig: MutableDashboardConfig = cloneJson(config);
+    delete cacheConfig.demoMode;
     delete cacheConfig.categories;
     delete cacheConfig.localEvents;
     if (cacheConfig.settings) {
@@ -509,6 +525,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     
     // Mettre en cache la version déchiffrée en mémoire
     const cacheConfig: MutableDashboardConfig = cloneJson(config);
+    delete cacheConfig.demoMode;
     delete cacheConfig.categories;
     delete cacheConfig.localEvents;
     if (cacheConfig.settings) {
@@ -548,7 +565,12 @@ export function writeConfig(config: DashboardConfig): boolean {
 }
 
 export function writeServices(categories: Category[]): boolean {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  if (isDemoMode()) {
+    const sessionConfig = getDemoSessionConfig();
+    if (sessionConfig) {
+      sessionConfig.categories = cloneJson(categories);
+      return setDemoSessionConfig(sessionConfig);
+    }
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
     return true;
   }
@@ -564,7 +586,12 @@ export function writeServices(categories: Category[]): boolean {
 }
 
 export function writeTopology(topology: NetworkTopology): boolean {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  if (isDemoMode()) {
+    const sessionConfig = getDemoSessionConfig();
+    if (sessionConfig) {
+      sessionConfig.settings.networkTopology = cloneJson(topology);
+      return setDemoSessionConfig(sessionConfig);
+    }
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
     return true;
   }
@@ -580,7 +607,12 @@ export function writeTopology(topology: NetworkTopology): boolean {
 }
 
 export function writeCalendar(calendar: LocalCalendarEvent[]): boolean {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  if (isDemoMode()) {
+    const sessionConfig = getDemoSessionConfig();
+    if (sessionConfig) {
+      sessionConfig.localEvents = cloneJson(calendar);
+      return setDemoSessionConfig(sessionConfig);
+    }
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
     return true;
   }
@@ -686,6 +718,9 @@ export function decrementActiveClients() {
 if (!globalAny.__glancesUrlCache) globalAny.__glancesUrlCache = {};
 const glancesUrlCache: Record<string, string> = globalAny.__glancesUrlCache;
 export function startBackgroundMonitoring() {
+  if (isDemoMode()) {
+    return;
+  }
   if (globalAny.__monitoringInterval) {
     return;
   }

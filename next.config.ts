@@ -3,6 +3,9 @@ import type { NextConfig } from 'next';
 // Trigger dev server restart to reload background monitoring loop
 const nextConfig: NextConfig = {
   output: 'standalone',
+  outputFileTracingIncludes: {
+    '/*': ['./demo/fixtures/**/*'],
+  },
   distDir: process.env.NASDASH_NEXT_DIST_DIR || '.next',
   agentRules: false,
   serverExternalPackages: ['systeminformation'],

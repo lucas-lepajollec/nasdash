@@ -1,6 +1,7 @@
 import { getSystemStats } from '@/lib/system';
 import { incrementActiveClients, decrementActiveClients, readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import { isDemoMode } from '@/lib/demoMode';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
 
       // Send initial data immediately
       try {
-        const stats = await getSystemStats();
+        const stats = isDemoMode() ? { network: { latency: 8 } } : await getSystemStats();
         send(stats);
       } catch (err) {
         send({ error: 'Failed to get initial stats', details: String(err) });
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
           return;
         }
         try {
-          const stats = await getSystemStats();
+          const stats = isDemoMode() ? { network: { latency: 8 } } : await getSystemStats();
           send(stats);
         } catch {
           // silently skip failed polls

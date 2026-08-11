@@ -4,6 +4,7 @@ import { checkAdmin } from '@/lib/auth';
 import { resolveAccessPrincipal } from '@/lib/access';
 import path from 'path';
 import fs from 'fs';
+import { isDemoMode } from '@/lib/demoMode';
 
 const MIME_TYPES: Record<string, string> = {
   '.png': 'image/png',
@@ -52,6 +53,12 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: 'La suppression de fichiers est désactivée dans le bac à sable.' },
+      { status: 403 },
+    );
+  }
   const authError = checkAdmin(req);
   if (authError) return authError;
 

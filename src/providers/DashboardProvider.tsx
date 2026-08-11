@@ -282,13 +282,20 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }, [config, user]);
 
   // API operations
+  const assertApiOk = async (response: Response, fallback: string) => {
+    if (response.ok) return;
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(payload?.error || `${fallback} (${response.status}).`);
+  };
+
   const addCategory = async (title: string, emoji: string, isSecret = false, layout?: Category['layout']) => {
     const res = await fetchWithAuth('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'category', title, emoji, isSecret, layout }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible d’ajouter la catégorie');
+    await fetchConfig();
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
@@ -297,12 +304,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'category', id, ...updates }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible de modifier la catégorie');
+    await fetchConfig();
   };
 
   const deleteCategory = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=category&id=${id}`, { method: 'DELETE' });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible de supprimer la catégorie');
+    await fetchConfig();
   };
 
   const addService = async (categoryId: string, service: Omit<Service, 'id'>) => {
@@ -311,7 +320,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'service', categoryId, ...service }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible d’ajouter le service');
+    await fetchConfig();
   };
 
   const updateService = async (id: string, updates: Partial<Service>) => {
@@ -320,12 +330,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'service', id, ...updates }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible de modifier le service');
+    await fetchConfig();
   };
 
   const deleteService = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=service&id=${id}`, { method: 'DELETE' });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible de supprimer le service');
+    await fetchConfig();
   };
 
   const saveCategories = async (newCategories: Category[]) => {
@@ -402,7 +414,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'device', ...device }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible d’ajouter l’appareil');
+    await fetchConfig();
   };
 
   const reorderDevices = async (newDevices: Device[]) => {
@@ -422,12 +435,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'device', id, ...updates }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible de modifier l’appareil');
+    await fetchConfig();
   };
 
   const deleteDevice = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=device&id=${id}`, { method: 'DELETE' });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'Impossible de supprimer l’appareil');
+    await fetchConfig();
   };
 
   const updateHomeWidgetProps = async (widgetId: string, newProps: Record<string, unknown>) => {
@@ -501,6 +516,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const formData = new FormData();
     formData.append('file', file);
     const res = await fetchWithAuth('/api/upload', { method: 'POST', body: formData });
+    await assertApiOk(res, 'Impossible d’importer le logo');
     const data = await res.json();
     return data.url;
   };

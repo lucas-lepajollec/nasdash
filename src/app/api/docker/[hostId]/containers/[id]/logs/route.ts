@@ -8,6 +8,9 @@ import {
   fetchDockerApi,
   reportDockerFailure,
 } from '@/lib/dockerClient';
+import { isDemoMode } from '@/lib/demoMode';
+import { isDemoContainerRemoved, normalizeDemoContainerId, withDemoSession } from '@/lib/demoSession';
+import { getDemoDockerLogs, getDemoDockerService } from '@/lib/demoDockerFixtures';
 
 export const dynamic = 'force-dynamic';
 const MAX_LOG_LINES = 1_000;
@@ -19,7 +22,7 @@ function getDockerHost(hostId: string) {
 }
 
 // GET /api/docker/[hostId]/containers/[id]/logs
-export async function GET(
+async function handleGET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
@@ -50,18 +53,19 @@ export async function GET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
-    const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    const isMockMode = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
     if (isMockMode) {
-      const mockLogs = {
-        lines: [
-          `[${new Date().toISOString().split('T')[0]} 10:00:00] INFO Starting service...`,
-          `[${new Date().toISOString().split('T')[0]} 10:00:01] INFO Connection to database established.`,
-          `[${new Date().toISOString().split('T')[0]} 10:00:02] INFO Listening on port 80.`,
-          `[${new Date().toISOString().split('T')[0]} 10:05:00] DEBUG Health check passed.`,
-          `[${new Date().toISOString().split('T')[0]} 10:10:00] DEBUG Health check passed.`
-        ]
-      };
-      return NextResponse.json(mockLogs);
+      const normalizedId = normalizeDemoContainerId(id);
+      if (isDemoContainerRemoved(normalizedId)) {
+        return NextResponse.json({ error: 'Container not found' }, { status: 404 });
+      }
+      const service = getDemoDockerService(normalizedId);
+      if (!service) return NextResponse.json({ error: 'Container not found' }, { status: 404 });
+      const baseLines = getDemoDockerLogs(service);
+      const lines = baseLines
+        .slice(-tailNumber)
+        .map(line => timestamps ? line : line.replace(/^\S+\s+/, ''));
+      return NextResponse.json({ lines });
     }
 
     const query = new URLSearchParams({ stdout: 'true', stderr: 'true', tail, timestamps: String(timestamps) });
@@ -114,4 +118,11 @@ export async function GET(
     reportDockerFailure(resolvedHostId, failure);
     return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
+}
+
+export function GET(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string; id: string }> },
+) {
+  return withDemoSession(request, () => handleGET(request, segmentData));
 }

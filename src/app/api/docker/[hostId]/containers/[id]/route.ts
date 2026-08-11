@@ -10,17 +10,18 @@ import {
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
+import { isDemoMode } from '@/lib/demoMode';
+import {
+  getDemoContainerState,
+  isDemoContainerRemoved,
+  normalizeDemoContainerId,
+  removeDemoContainer,
+  setDemoContainerState,
+  withDemoSession,
+} from '@/lib/demoSession';
+import { demoContainerStatus, demoStartedAt, getDemoDockerService } from '@/lib/demoDockerFixtures';
 
 export const dynamic = 'force-dynamic';
-
-interface MockContainerDetail {
-  id: string;
-  name: string;
-  image: string;
-  defaultState: string;
-  startedAt: string;
-  finishedAt?: string;
-}
 
 interface DockerInspectMount {
   Type: string;
@@ -64,13 +65,6 @@ interface DockerContainerStats {
   networks?: Record<string, { rx_bytes?: number; tx_bytes?: number }>;
 }
 
-const dockerGlobal = globalThis as typeof globalThis & {
-  __mockContainerStates?: Map<string, string>;
-};
-if (!dockerGlobal.__mockContainerStates) dockerGlobal.__mockContainerStates = new Map<string, string>();
-const mockStates = dockerGlobal.__mockContainerStates;
-
-
 function getDockerHost(hostId: string) {
   const config = readConfig();
   return (config.dockerHosts || []).find(h => h.id === hostId);
@@ -78,7 +72,7 @@ function getDockerHost(hostId: string) {
 
 // GET /api/docker/[hostId]/containers/[id] — container details
 // POST /api/docker/[hostId]/containers/[id]?action=start|stop|restart|remove
-export async function GET(
+async function handleGET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
@@ -100,34 +94,22 @@ export async function GET(
     const isAdminUser = isAdmin(request);
 
     // Mock details
-    const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    const isMockMode = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
     if (isMockMode) {
-      const mockContainers: MockContainerDetail[] = [
-        { id: "mock11111111", name: "web-server", image: "nginx:latest", defaultState: "running", startedAt: "2026-06-11T07:00:00Z" },
-        { id: "mock22222222", name: "postgres-db", image: "postgres:15-alpine", defaultState: "running", startedAt: "2026-06-11T05:00:00Z" },
-        { id: "mock33333333", name: "redis-cache", image: "redis:alpine", defaultState: "running", startedAt: "2026-06-11T09:00:00Z" },
-        { id: "mock44444444", name: "node-api", image: "node:18-alpine", defaultState: "exited", startedAt: "2026-06-11T08:00:00Z", finishedAt: "2026-06-11T08:50:00Z" },
-        { id: "mock55555555", name: "prometheus", image: "prom/prometheus:latest", defaultState: "running", startedAt: "2026-06-11T09:15:00Z" },
-        { id: "mock66666666", name: "grafana", image: "grafana/grafana:latest", defaultState: "running", startedAt: "2026-06-11T09:15:00Z" },
-        { id: "mock77777777", name: "pihole-dns", image: "pihole/pihole:latest", defaultState: "paused", startedAt: "2026-06-10T10:00:00Z" },
-        { id: "mock88888888", name: "jellyfin-media", image: "jellyfin/jellyfin:latest", defaultState: "running", startedAt: "2026-06-09T10:00:00Z" },
-      ];
-      
-      if (id.startsWith('mock') && parseInt(id.replace('mock', ''), 10) >= 9) {
-        const index = parseInt(id.replace('mock', ''), 10);
-        mockContainers.push({
-          id,
-          name: `demo-service-${index}`,
-          image: `demo/service-${index}:latest`,
-          defaultState: index % 4 === 0 ? "exited" : "running",
-          startedAt: "2026-06-09T10:00:00Z"
-        });
+      const normalizedId = normalizeDemoContainerId(id);
+      if (isDemoContainerRemoved(normalizedId)) {
+        return NextResponse.json({ error: 'Container not found' }, { status: 404 });
       }
 
-      const found = mockContainers.find(c => c.id === id);
+      const found = getDemoDockerService(normalizedId);
       if (!found) return NextResponse.json({ error: 'Container not found' }, { status: 404 });
-      
-      const state = mockStates.get(id) || found.defaultState;
+
+      const state = getDemoContainerState(normalizedId, found.defaultState);
+      const seed = Array.from(found.id).reduce((total, character) => total + character.charCodeAt(0), 0);
+      const cpuPercent = Math.round((0.8 + (seed % 47) / 10) * 10) / 10;
+      const memPercent = Math.round((2.5 + (seed % 23)) * 10) / 10;
+      const memLimit = 2 * 1024 * 1024 * 1024;
+      const memUsage = Math.round(memLimit * memPercent / 100);
 
       const result = {
         id: found.id,
@@ -135,22 +117,29 @@ export async function GET(
         name: found.name,
         image: found.image,
         state: state,
-        status: state === 'running' ? 'Up 5 minutes' : state === 'paused' ? 'Paused' : 'Exited (0) 5 minutes ago',
-        startedAt: found.startedAt,
-        finishedAt: found.finishedAt || '',
+        status: demoContainerStatus(state),
+        startedAt: demoStartedAt(seed % 20),
+        finishedAt: '',
         created: 1780517682,
         restartCount: 0,
-        ports: [],
-        mounts: [],
+        ports: found.ports.map(port => ({
+          containerPort: `${port.privatePort}/${port.type}`,
+          hostBindings: port.publicPort ? [`0.0.0.0:${port.publicPort}`] : [],
+        })),
+        mounts: found.mounts,
         env: isAdminUser ? ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"] : ["<MASQUÉ - ADMINISTRATEUR UNIQUEMENT>"],
-        labels: {},
+        labels: {
+          'com.docker.compose.project': 'nasdash-demo',
+          'com.docker.compose.service': found.name,
+          'io.nasdash.demo.service-id': found.serviceId,
+        },
         stats: {
-          cpuPercent: state === 'running' ? 1.2 : 0,
-          memUsage: state === 'running' ? 24 * 1024 * 1024 : 0,
-          memLimit: 1024 * 1024 * 1024,
-          memPercent: state === 'running' ? 2.3 : 0,
-          netInput: state === 'running' ? 124500 : 0,
-          netOutput: state === 'running' ? 987000 : 0,
+          cpuPercent: state === 'running' ? cpuPercent : 0,
+          memUsage: state === 'running' ? memUsage : 0,
+          memLimit,
+          memPercent: state === 'running' ? memPercent : 0,
+          netInput: state === 'running' ? 12_450_000 + seed * 1_000 : 0,
+          netOutput: state === 'running' ? 8_970_000 + seed * 800 : 0,
         }
       };
       return NextResponse.json(result);
@@ -228,7 +217,7 @@ export async function GET(
 }
 
 // POST — container actions (start, stop, restart, remove)
-export async function POST(
+async function handlePOST(
   request: Request,
   segmentData: { params: Promise<{ hostId: string; id: string }> }
 ) {
@@ -250,11 +239,15 @@ export async function POST(
     }
 
     // Mock action success
-    const isMockModePost = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    const isMockModePost = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
     if (isMockModePost) {
-      const newState = action === 'start' ? 'running' : action === 'stop' ? 'exited' : action === 'restart' ? 'running' : 'exited';
-      mockStates.set(id, newState);
-      return NextResponse.json({ ok: true, action });
+      if (action === 'remove') {
+        removeDemoContainer(id);
+        return NextResponse.json({ ok: true, action, simulated: true });
+      }
+      const newState = action === 'start' ? 'running' : action === 'stop' ? 'exited' : 'running';
+      setDemoContainerState(id, newState);
+      return NextResponse.json({ ok: true, action, simulated: true });
     }
 
     const encodedId = encodeURIComponent(id);
@@ -276,4 +269,18 @@ export async function POST(
     reportDockerFailure(resolvedHostId, failure);
     return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
+}
+
+export function GET(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string; id: string }> },
+) {
+  return withDemoSession(request, () => handleGET(request, segmentData));
+}
+
+export function POST(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string; id: string }> },
+) {
+  return withDemoSession(request, () => handlePOST(request, segmentData));
 }

@@ -10,6 +10,9 @@ import {
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
+import { isDemoMode } from '@/lib/demoMode';
+import { isDemoImageRemoved, removeDemoImage, withDemoSession } from '@/lib/demoSession';
+import { DEMO_DOCKER_IMAGES } from '@/lib/demoDockerFixtures';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +30,7 @@ function getDockerHost(hostId: string) {
 }
 
 // GET /api/docker/[hostId]/images — list all images
-export async function GET(
+async function handleGET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
@@ -47,14 +50,8 @@ export async function GET(
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
     // Mock images
-    if (host.url === 'mock' || host.id === 'mock-host-id') {
-      const mockImages = [
-        { id: "nginx-img-id", repoTags: ["nginx:latest"], size: 142000000, created: 1780517682, containers: 1 },
-        { id: "postgres-img-id", repoTags: ["postgres:15-alpine"], size: 234000000, created: 1780517682, containers: 1 },
-        { id: "redis-img-id", repoTags: ["redis:alpine"], size: 32000000, created: 1780517682, containers: 1 },
-        { id: "node-img-id", repoTags: ["node:18-alpine"], size: 180000000, created: 1780517682, containers: 1 },
-      ];
-      return NextResponse.json(mockImages);
+    if (isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host')) {
+      return NextResponse.json(DEMO_DOCKER_IMAGES.filter(image => !isDemoImageRemoved(image.id)));
     }
 
     const response = await fetchDockerApi(host.url, '/images/json');
@@ -77,7 +74,7 @@ export async function GET(
 }
 
 // DELETE /api/docker/[hostId]/images?id=[imageId]
-export async function DELETE(
+async function handleDELETE(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
@@ -95,6 +92,11 @@ export async function DELETE(
     const url = new URL(request.url);
     const imageId = url.searchParams.get('id');
     if (!imageId) return NextResponse.json({ error: 'Image ID required' }, { status: 400 });
+
+    if (isDemoMode()) {
+      removeDemoImage(imageId);
+      return NextResponse.json({ success: true, simulated: true });
+    }
 
     const res = await fetchDockerApi(
       host.url,
@@ -118,4 +120,18 @@ export async function DELETE(
     reportDockerFailure(resolvedHostId, failure);
     return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
+}
+
+export function GET(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string }> },
+) {
+  return withDemoSession(request, () => handleGET(request, segmentData));
+}
+
+export function DELETE(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string }> },
+) {
+  return withDemoSession(request, () => handleDELETE(request, segmentData));
 }

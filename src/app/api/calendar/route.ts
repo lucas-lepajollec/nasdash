@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { readBoundedResponseBytes, ResponseTooLargeError } from '@/lib/boundedResponse';
+import { isDemoMode } from '@/lib/demoMode';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,12 @@ export async function GET(request: NextRequest) {
       READ_ACCESS.calendar
     );
     if (access.error) return access.error;
+
+    // Never let a public demo visitor turn this endpoint into an outbound
+    // fetcher. Local fixture events are already merged by CalendarWidget.
+    if (isDemoMode()) {
+      return NextResponse.json({ events: [], simulated: true });
+    }
 
     const { searchParams } = new URL(request.url);
     const url = searchParams.get('url');

@@ -13,6 +13,7 @@ import {
   readEnum,
   readJsonObject,
 } from '@/lib/requestValidation';
+import { withDemoSession } from '@/lib/demoSession';
 
 const MAX_CONFIG_BODY_BYTES = 2 * 1024 * 1024;
 const CONFIG_POST_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
@@ -55,7 +56,7 @@ async function parseConfigBody<const T extends readonly string[]>(
   }
 }
 
-export async function GET(req: NextRequest) {
+async function handleGET(req: NextRequest) {
   const config = readConfig();
   const securityMode = config.settings?.securityMode || 'public';
   const principal = resolveAccessPrincipal(req, securityMode);
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(buildConfigForPrincipal(config, principal));
 }
 
-export async function POST(req: NextRequest) {
+async function handlePOST(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -244,7 +245,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
 }
 
-export async function PUT(req: NextRequest) {
+async function handlePUT(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -589,7 +590,7 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json({ error: 'Unknown update type' }, { status: 400 });
 }
 
-export async function DELETE(req: NextRequest) {
+async function handleDELETE(req: NextRequest) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -657,4 +658,20 @@ export async function DELETE(req: NextRequest) {
   }
 
   return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+}
+
+export function GET(req: NextRequest) {
+  return withDemoSession(req, () => handleGET(req));
+}
+
+export function POST(req: NextRequest) {
+  return withDemoSession(req, () => handlePOST(req));
+}
+
+export function PUT(req: NextRequest) {
+  return withDemoSession(req, () => handlePUT(req));
+}
+
+export function DELETE(req: NextRequest) {
+  return withDemoSession(req, () => handleDELETE(req));
 }

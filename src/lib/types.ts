@@ -50,6 +50,7 @@ export interface Device {
   id: string;
   name: string;
   host: string;
+  system?: string;
   icon: string;
   api?: DeviceApiConfig;
   stats?: DeviceStat[];
@@ -185,6 +186,8 @@ export interface PanelConfig {
 
 export interface DashboardConfig {
   version: number;
+  /** Runtime-only flag exposed by the API; never persisted in config.json. */
+  demoMode?: boolean;
   categories: Category[];
   devices?: Device[];
   dockerHosts?: DockerHost[];

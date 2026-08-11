@@ -4,18 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0 --port 2499",
+    "demo": "node scripts/demo-dev.mjs",
+    "demo:docker": "docker compose -f docker-compose.demo.yml up --build -d",
+    "demo:docker:start": "docker compose -f docker-compose.demo.yml up -d",
+    "demo:docker:logs": "docker compose -f docker-compose.demo.yml logs -f --tail=100",
+    "demo:docker:down": "docker compose -f docker-compose.demo.yml down",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "data:demo": "node scripts/copy-data.js demo",
-    "data:real": "node scripts/copy-data.js real",
     "data:backup": "node scripts/data-snapshot.mjs backup",
     "data:restore": "node scripts/data-snapshot.mjs restore",
     "test": "vitest run",
     "test:e2e": "node scripts/e2e-runner.mjs",
-    "test:container": "node scripts/container-smoke.mjs",
-    "data:demo:old": "cp demo-data/*.json data/",
-    "data:real:old": "cp data-real/*.json data/ && cp data-real/encryption.key data/ 2>/dev/null || true"
+    "test:container": "node scripts/container-smoke.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
