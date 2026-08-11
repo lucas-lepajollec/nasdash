@@ -1,5 +1,62 @@
 import { expect, test } from '@playwright/test';
 
+test('reduced-motion preference stops decorative movement', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  const reducedMotion = await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  expect(reducedMotion).toBe(true);
+
+  const motionProbe = page.locator('[data-testid="reduced-motion-probe"]');
+  await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.dataset.testid = 'reduced-motion-probe';
+    probe.style.animation = 'spin 10s linear 5s infinite';
+    probe.style.transition = 'transform 10s linear 5s';
+    probe.style.scrollBehavior = 'smooth';
+    document.body.appendChild(probe);
+  });
+
+  const motionStyles = await motionProbe.evaluate(element => {
+    const styles = window.getComputedStyle(element);
+    return {
+      animationDelay: styles.animationDelay,
+      animationDuration: styles.animationDuration,
+      animationIterationCount: styles.animationIterationCount,
+      scrollBehavior: styles.scrollBehavior,
+      transitionDelay: styles.transitionDelay,
+      transitionDuration: styles.transitionDuration,
+    };
+  });
+
+  expect(motionStyles.animationDelay).toBe('0s');
+  expect(motionStyles.animationDuration).toBe('1e-05s');
+  expect(motionStyles.animationIterationCount).toBe('1');
+  expect(motionStyles.scrollBehavior).toBe('auto');
+  expect(motionStyles.transitionDelay).toBe('0s');
+  expect(motionStyles.transitionDuration).toBe('1e-05s');
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const normalMotionStyles = await motionProbe.evaluate(element => {
+    const styles = window.getComputedStyle(element);
+    return {
+      animationDelay: styles.animationDelay,
+      animationDuration: styles.animationDuration,
+      animationIterationCount: styles.animationIterationCount,
+      scrollBehavior: styles.scrollBehavior,
+      transitionDelay: styles.transitionDelay,
+      transitionDuration: styles.transitionDuration,
+    };
+  });
+
+  expect(normalMotionStyles.animationDelay).toBe('5s');
+  expect(normalMotionStyles.animationDuration).toBe('10s');
+  expect(normalMotionStyles.animationIterationCount).toBe('infinite');
+  expect(normalMotionStyles.scrollBehavior).toBe('smooth');
+  expect(normalMotionStyles.transitionDelay).toBe('5s');
+  expect(normalMotionStyles.transitionDuration).toBe('10s');
+});
+
 test('core dashboard and settings stay keyboard accessible', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
