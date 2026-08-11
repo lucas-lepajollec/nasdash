@@ -65,6 +65,12 @@ export function useDialogAccessibility(
       if (!isTopMostDialog()) return;
 
       if (event.key === 'Escape') {
+        if (
+          event.target instanceof Element
+          && event.target.closest('[data-dialog-escape-boundary="true"]')
+        ) {
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         onCloseRef.current();

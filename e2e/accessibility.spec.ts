@@ -33,7 +33,7 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
       title: /Configuration — VPN Tailscale/,
       fieldNames: ['Nom du Tailnet', 'OAuth Client ID Tailscale', 'OAuth Client Secret Tailscale'],
     },
-    { navigationName: /Horloge/, title: /Configuration — Horloge \/ Date/ },
+    { navigationName: /Horloge/, title: /Configuration — Horloge \/ Date/, selectName: 'Fuseau horaire' },
     { navigationName: /Calendrier/, title: /Configuration — Calendrier/, fieldNames: ['URL du calendrier iCal'] },
     { navigationName: /Météo/, title: /Configuration — Météo/, fieldNames: ['Rechercher une ville'] },
   ];
@@ -43,6 +43,17 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
     await expect(dialog.getByRole('heading', { level: 3, name: widgetPage.title })).toBeVisible();
     for (const fieldName of widgetPage.fieldNames || []) {
       await expect(dialog.getByLabel(fieldName)).toBeVisible();
+    }
+    if (widgetPage.selectName) {
+      const select = dialog.getByRole('button', { name: widgetPage.selectName });
+      await select.focus();
+      await page.keyboard.press('ArrowDown');
+      await expect(select).toHaveAttribute('aria-expanded', 'true');
+      await expect(dialog.getByRole('listbox', { name: widgetPage.selectName })).toBeVisible();
+      await expect(dialog.getByRole('option', { selected: true })).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(select).toHaveAttribute('aria-expanded', 'false');
+      await expect(select).toBeFocused();
     }
   }
 
