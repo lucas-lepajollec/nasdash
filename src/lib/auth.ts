@@ -4,6 +4,7 @@ import path from 'path';
 import { safeWriteFileSync } from './config';
 import { NextResponse } from 'next/server';
 import { getDataPath } from './dataDirectory';
+import { readOrCreatePersistentSecret } from './persistentSecret';
 
 const USERS_PATH = getDataPath('users.json');
 const SECRET_FILE = getDataPath('jwt.secret');
@@ -62,17 +63,10 @@ const authGlobal = globalThis as typeof globalThis & {
 };
 
 function getJwtSecret(): string {
-  let secret = process.env.NASDASH_JWT_SECRET;
+  let secret = process.env.NASDASH_JWT_SECRET?.trim();
   if (!secret) {
     try {
-      if (fs.existsSync(SECRET_FILE)) {
-        secret = fs.readFileSync(SECRET_FILE, 'utf-8').trim();
-      } else {
-        secret = crypto.randomBytes(32).toString('hex');
-        const dir = path.dirname(SECRET_FILE);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        safeWriteFileSync(SECRET_FILE, secret, 'utf-8');
-      }
+      secret = readOrCreatePersistentSecret(SECRET_FILE);
     } catch (e) {
       console.error('Failed to read/write persistent JWT secret:', e);
       if (!authGlobal.__jwtSecretFallback) {
@@ -81,7 +75,7 @@ function getJwtSecret(): string {
       secret = authGlobal.__jwtSecretFallback;
     }
   }
-  return secret || 'fallback-jwt-secret';
+  return secret;
 }
 
 if (!authGlobal.__jwtSecret) {

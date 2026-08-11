@@ -5,6 +5,7 @@ import { Category, DashboardConfig, DeviceStat, LocalCalendarEvent, NetworkTopol
 import { encrypt, decrypt } from './crypto';
 import { LegacyConfigData, migrateLegacySplitFiles } from './configMigration';
 import { getDataDirectory } from './dataDirectory';
+import { preserveCorruptFile } from './corruptFileRecovery';
 import {
   classifyMonitoringError,
   MonitoringConfigurationError,
@@ -144,6 +145,8 @@ export function readConfig(): DashboardConfig {
 
   let configData: MutableDashboardConfig | null = null;
   let needDefault = false;
+  let configFileInvalid = false;
+  let canPersistRecoveredConfig = true;
 
   if (globalAny.__cachedConfig && !shouldReadConfig) {
     configData = JSON.parse(JSON.stringify(globalAny.__cachedConfig));
@@ -154,29 +157,47 @@ export function readConfig(): DashboardConfig {
       const raw = fs.readFileSync(CONFIG_PATH, 'utf-8').trim();
       if (!raw || raw === '{}' || raw === '[]') {
         needDefault = true;
+        configFileInvalid = true;
       } else {
         try {
           configData = JSON.parse(raw) as MutableDashboardConfig;
           // Minimal validation to consider it's not "empty"
           if (!configData || (!configData.categories && !configData.devices && !configData.settings)) {
             needDefault = true;
+            configFileInvalid = true;
           }
         } catch {
           needDefault = true;
+          configFileInvalid = true;
         }
       }
     }
 
     if (needDefault || !configData) {
+      if (configFileInvalid) {
+        try {
+          const recoveryPath = preserveCorruptFile(CONFIG_PATH);
+          console.error(`[NASDASH] Configuration invalide conservée avant récupération : ${recoveryPath}`);
+        } catch (error) {
+          canPersistRecoveredConfig = false;
+          console.error(
+            '[NASDASH] Impossible de préserver config.json invalide ; le fichier original ne sera pas remplacé.',
+            error,
+          );
+        }
+      }
+
       const examplePath = path.join(DATA_DIR, 'config.example.json');
       if (fs.existsSync(examplePath)) {
         try {
-          fs.copyFileSync(examplePath, CONFIG_PATH);
-          configData = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')) as MutableDashboardConfig;
-          // Set mtime to cache
-          try {
-            globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
-          } catch {}
+          const exampleData = fs.readFileSync(examplePath, 'utf-8');
+          configData = JSON.parse(exampleData) as MutableDashboardConfig;
+          if (canPersistRecoveredConfig) {
+            safeWriteFileSync(CONFIG_PATH, exampleData, 'utf-8');
+            try {
+              globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
+            } catch {}
+          }
         } catch (e) {
           console.error('⚠️ ERREUR DE PERMISSION ou de lecture lors de la copie de config.example.json :', e);
         }
@@ -184,13 +205,15 @@ export function readConfig(): DashboardConfig {
 
       if (!configData) {
         configData = getDefaultConfig();
-        try {
-          safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+        if (canPersistRecoveredConfig) {
           try {
-            globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
-          } catch {}
-        } catch (e) {
-          console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
+            safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
+            try {
+              globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
+            } catch {}
+          } catch (e) {
+            console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
+          }
         }
       }
     }
@@ -219,7 +242,7 @@ export function readConfig(): DashboardConfig {
       migrated = true;
     }
 
-    if (migrated) {
+    if (migrated && canPersistRecoveredConfig) {
       try {
         safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
         try {
@@ -277,7 +300,7 @@ export function readConfig(): DashboardConfig {
             }
           }
 
-          if (settingsChanged) {
+          if (settingsChanged && canPersistRecoveredConfig) {
             safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
             try {
               globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;

@@ -217,6 +217,9 @@ test.describe.serial('critical self-hosted paths', () => {
     expect(action.status()).toBe(200);
     expect(await action.json()).toMatchObject({ ok: true, action: 'restart' });
 
+    const unboundedLogs = await admin.get(`/api/docker/${host.id}/containers/mock11111111/logs?tail=all`);
+    expect(unboundedLogs.status()).toBe(400);
+
     const viewer = await isolatedRequest(28);
     await login(viewer, 'viewer', VIEWER_PASSWORD);
     const forbiddenAction = await viewer.post(`/api/docker/${host.id}/containers/mock11111111?action=restart`);
@@ -285,6 +288,8 @@ test.describe.serial('critical self-hosted paths', () => {
 
     const anonymous = await isolatedRequest(41);
     expect((await anonymous.get('/api/config')).status()).toBe(401);
+    expect((await anonymous.get('/api/logos')).status()).toBe(401);
+    expect((await anonymous.get('/api/logos/logo.png')).status()).toBe(401);
 
     const context = await browser.newContext();
     const page = await context.newPage();

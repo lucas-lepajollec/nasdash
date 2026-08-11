@@ -34,10 +34,11 @@ The initial suite covers:
 - settings persistence and reload through the API;
 - category and service creation/editing with the real UI payload shape;
 - Docker-tab actions remaining admin-only while staying independent from the widget-only Start/Stop button visibility setting;
+- Docker log requests rejecting unbounded or invalid `tail` values before contacting the remote host;
 - custom-tab layout persistence;
 - viewer read access and write rejection;
 - admin logout after the initial dashboard requests settle, single-owner EventSource cleanup, session removal and full reload to the login page;
-- anonymous rejection and browser redirection in private mode.
+- anonymous rejection and browser redirection in private mode, including protection of the logo listing and stored logo files.
 
 For a production-mode run, build first and set `NASDASH_E2E_SERVER_MODE=production` before `npm run test:e2e`. The continuous-integration workflow uses this mode.
 
@@ -67,6 +68,17 @@ Do not perform destructive Docker actions on valuable containers, images or volu
 - invalid payloads and unexpected remote HTTP failures remain errors.
 
 This classification changes only the server log severity and guidance. Device online/offline state, polling retries and collected metrics remain covered by their existing behavior.
+
+## Resilience and recovery contracts
+
+The unit suite also protects the less visible failure modes introduced by self-hosting:
+
+- calendar downloads and Docker log streams are stopped as soon as their real payload exceeds the 2 MiB limit, even without a trustworthy `Content-Length` header;
+- missing or empty local JWT and encryption secrets are replaced with a persistent random 256-bit value and reused after restart;
+- an invalid `config.json` is copied byte-for-byte beside the original as `config.json.corrupt-<timestamp>` before NasDash writes a recoverable default;
+- an existing recovery copy is never silently overwritten.
+
+If NasDash cannot preserve an invalid `config.json`, it uses a fallback configuration in memory but deliberately leaves the original file untouched. This favors recoverability over an automatic destructive repair.
 
 ## Container smoke test
 

@@ -257,9 +257,10 @@ export async function POST(
       return NextResponse.json({ ok: true, action });
     }
 
+    const encodedId = encodeURIComponent(id);
     const endpoint = action === 'remove'
-      ? `/containers/${id}?force=true`
-      : `/containers/${id}/${action}`;
+      ? `/containers/${encodedId}?force=true`
+      : `/containers/${encodedId}/${action}`;
     const method = action === 'remove' ? 'DELETE' : 'POST';
 
     // For DELETE we need a custom fetch

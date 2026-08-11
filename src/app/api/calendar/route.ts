@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import { readBoundedResponseBytes, ResponseTooLargeError } from '@/lib/boundedResponse';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,15 +50,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch ICS: ${response.status} ${response.statusText}`);
     }
 
-    const maxCalendarBytes = 2 * 1024 * 1024;
-    const declaredLength = Number(response.headers.get('content-length') || 0);
-    if (declaredLength > maxCalendarBytes) {
-      return NextResponse.json({ error: 'Le calendrier dépasse la taille autorisée (2 Mo).' }, { status: 413 });
-    }
-    const calendarBuffer = await response.arrayBuffer();
-    if (calendarBuffer.byteLength > maxCalendarBytes) {
-      return NextResponse.json({ error: 'Le calendrier dépasse la taille autorisée (2 Mo).' }, { status: 413 });
-    }
+    const calendarBuffer = await readBoundedResponseBytes(response, 2 * 1024 * 1024);
     const textData = new TextDecoder().decode(calendarBuffer);
 
     // Simple native iCal parser to avoid Next.js node-ical crashes (BigInt errors)
@@ -113,6 +106,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ events: processedEvents });
 
   } catch (error: unknown) {
+    if (error instanceof ResponseTooLargeError) {
+      return NextResponse.json({ error: 'Le calendrier dépasse la taille autorisée (2 Mo).' }, { status: 413 });
+    }
     console.error('Error fetching calendar:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: 'Failed to fetch calendar: ' + message }, { status: 500 });

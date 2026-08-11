@@ -1,8 +1,6 @@
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import { safeWriteFileSync } from './config';
 import { getDataPath } from './dataDirectory';
+import { readOrCreatePersistentSecret } from './persistentSecret';
 
 const KEY_FILE = getDataPath('encryption.key');
 
@@ -11,18 +9,11 @@ const KEY_FILE = getDataPath('encryption.key');
  * (dans le volume monté /data) s'il n'y a pas de NASDASH_JWT_SECRET défini.
  */
 function getEncryptionKey(): Buffer {
-  let secret = process.env.NASDASH_JWT_SECRET;
+  let secret = process.env.NASDASH_JWT_SECRET?.trim();
   
   if (!secret) {
     try {
-      if (fs.existsSync(KEY_FILE)) {
-        secret = fs.readFileSync(KEY_FILE, 'utf-8').trim();
-      } else {
-        secret = crypto.randomBytes(32).toString('hex');
-        const dir = path.dirname(KEY_FILE);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        safeWriteFileSync(KEY_FILE, secret, 'utf-8');
-      }
+      secret = readOrCreatePersistentSecret(KEY_FILE);
     } catch (e) {
       console.error('⚠️ ERREUR CRITIQUE : Impossible de lire ou d\'écrire la clé de chiffrement persistée.', e);
       throw new Error(
