@@ -6,15 +6,22 @@ import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig'
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import { CheckCircle2, Trash2 } from 'lucide-react';
 
+interface WeatherSearchResult {
+  latitude: number;
+  longitude: number;
+  name: string;
+  admin1?: string;
+  country?: string;
+}
+
 export function WeatherWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideWeather = !!config?.settings?.hideWeather;
   
   const [weatherSearchQuery, setWeatherSearchQuery] = useState('');
-  const [weatherSearchResults, setWeatherSearchResults] = useState<any[]>([]);
+  const [weatherSearchResults, setWeatherSearchResults] = useState<WeatherSearchResult[]>([]);
   const [isSearchingWeather, setIsSearchingWeather] = useState(false);
-  const [cityToDelete, setCityToDelete] = useState<{id: string, name: string} | null>(null);
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
@@ -26,7 +33,7 @@ export function WeatherWidgetTab() {
     try {
       const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=fr&format=json`);
       if (!res.ok) throw new Error('Search failed');
-      const data = await res.json();
+      const data = await res.json() as { results?: WeatherSearchResult[] };
       setWeatherSearchResults(data.results || []);
     } catch (e) {
       console.error(e);
@@ -36,7 +43,7 @@ export function WeatherWidgetTab() {
     }
   };
 
-  const selectWeatherCity = async (city: any) => {
+  const selectWeatherCity = async (city: WeatherSearchResult) => {
     const newId = Math.random().toString(36).substring(2, 9);
     const loc = { id: newId, lat: city.latitude, lon: city.longitude, name: city.name };
     const currentLocations = config?.settings?.weatherLocations || [];
@@ -106,6 +113,7 @@ export function WeatherWidgetTab() {
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               <input
                 type="text"
+                aria-label="Rechercher une ville"
                 className="nd-input"
                 placeholder="Ex: Paris, Tokyo..."
                 value={weatherSearchQuery}

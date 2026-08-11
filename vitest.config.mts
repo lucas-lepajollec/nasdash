@@ -1,15 +1,15 @@
 import { defineConfig } from 'vitest/config';
-import path from 'path';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    exclude: ['**/node_modules/**', '**/.next/**'],
+    exclude: ['**/node_modules/**', '**/.next/**', '**/e2e/**'],
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 });

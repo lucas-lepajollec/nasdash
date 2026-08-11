@@ -147,6 +147,16 @@ export interface LocalCalendarEvent {
   isAllDay?: boolean;
 }
 
+export interface CalendarDisplayEvent {
+  id: string;
+  title: string;
+  start: string | null;
+  end: string | null;
+  description?: string;
+  location?: string;
+  isAllDay?: boolean;
+}
+
 export type HeaderElementDesktop = 'title' | 'search' | 'menu' | 'none';
 export type HeaderElementMobile = 'title' | 'search' | 'none';
 
@@ -166,7 +176,7 @@ export interface HeaderLayoutMobile {
 export interface PanelWidgetConfig {
   id: string;
   type: string;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 }
 
 export interface PanelConfig {
@@ -295,7 +305,7 @@ export interface DashboardConfig {
     hideDock?: boolean;
     calendarUrl?: string;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
-    dockerContainersStyle?: 'standard' | 'extended' | 'minimalist';
+    dockerContainersStyle?: 'standard' | 'extended' | 'minimalist' | 'grid'; // grid: legacy demo/config compatibility
     dockerContainersAutoScroll?: boolean;
     allowDockerActions?: boolean;
     securityMode?: 'public' | 'private';
@@ -352,7 +362,7 @@ export type CustomTabRowType = '1-col' | '50-50' | '25-75' | '75-25' | '3-col';
 export interface CustomTabWidgetInfo {
   type: string; // 'clock', 'weather', 'quickstats', 'spacer'
   height?: number; // For spacer widgets
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 }
 
 export interface CustomTabColumn {

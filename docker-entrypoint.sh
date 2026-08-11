@@ -8,7 +8,7 @@ DATA_DIR="/app/data"
 echo "[NASDASH] Mise à jour des modèles de configuration..."
 
 # Toujours mettre à jour les fichiers d'exemples dans le volume monté pour qu'ils soient de la dernière version
-for file in config.example.json services.example.json topology.example.json calendar.example.json custom_tabs.example.json; do
+for file in config.example.json services.example.json topology.example.json calendar.example.json custom_tabs.example.json users.example.json; do
   if [ -f "$DEFAULTS_DIR/$file" ]; then
     cp "$DEFAULTS_DIR/$file" "$DATA_DIR/$file"
   fi
@@ -39,6 +39,7 @@ init_file "services.json"    "services.example.json"
 init_file "topology.json"    "topology.example.json"
 init_file "calendar.json"    "calendar.example.json"
 init_file "custom_tabs.json" "custom_tabs.example.json"
+init_file "users.json"       "users.example.json"
 
 echo "[NASDASH] Démarrage de l'application..."
 exec "$@"

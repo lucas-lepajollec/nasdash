@@ -1,0 +1,47 @@
+# Recommended deployment for a new NasDash installation.
+# Existing bind-mount installations should keep docker-compose.example.yml.
+
+services:
+  nasdash:
+    image: ghcr.io/lucas-lepajollec/nasdash:latest
+    container_name: nasdash
+    ports:
+      - "2504:2504"
+    pid: "host"
+    volumes:
+      - nasdash-data:/app/data
+    environment:
+      NODE_ENV: production
+      PORT: 2504
+      HOSTNAME: 0.0.0.0
+      NASDASH_ADMIN_PASSWORD: ${NASDASH_ADMIN_PASSWORD:-}
+      NASDASH_VIEWER_PASSWORD: ${NASDASH_VIEWER_PASSWORD:-}
+      NASDASH_JWT_SECRET: ${NASDASH_JWT_SECRET:-}
+    depends_on:
+      - docker-proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: nasdash-docker-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+      IMAGES: 1
+      VOLUMES: 1
+      NETWORKS: 1
+      INFO: 1
+      POST: 1
+      DELETE: 0
+      AUTH: 0
+      BUILD: 0
+      EXEC: 0
+      SYSTEM: 0
+    restart: unless-stopped
+
+volumes:
+  nasdash-data:
+    name: nasdash-data

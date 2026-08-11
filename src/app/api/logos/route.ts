@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLogosDir } from '@/lib/config';
+import { checkAdmin } from '@/lib/auth';
 import fs from 'fs';
 import path from 'path';
 
 export async function GET(req: NextRequest) {
+  const authError = checkAdmin(req);
+  if (authError) return authError;
+
   try {
     const dir = getLogosDir();
     if (!fs.existsSync(dir)) {

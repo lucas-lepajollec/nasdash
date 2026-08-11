@@ -16,7 +16,7 @@ const getOsIcon = (os: string, hostname: string) => {
   return <Laptop size={12} color="#9ca3af" />;
 };
 
-export default function TailscaleWidget({ editMode, showSensitive = false }: { editMode?: boolean; showSensitive?: boolean }) {
+export default function TailscaleWidget({ editMode, showSensitive = false, isVisible = true }: { editMode?: boolean; showSensitive?: boolean; isVisible?: boolean }) {
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -50,10 +50,11 @@ export default function TailscaleWidget({ editMode, showSensitive = false }: { e
   };
 
   useEffect(() => {
+    if (!isVisible) return;
     fetchTS();
     const interval = setInterval(fetchTS, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isVisible]);
 
   if (loading && !devices && !unconfigured && !error) {
     return (

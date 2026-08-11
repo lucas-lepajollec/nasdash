@@ -1,40 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readConfig, writeConfig, writeServices, writeCalendar } from '@/lib/config';
-import { checkAdmin, getSessionFromRequest } from '@/lib/auth';
+import { checkAdmin } from '@/lib/auth';
+import { resolveAccessPrincipal } from '@/lib/access';
+import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
-import { Category, Service, Device } from '@/lib/types';
-import fs from 'fs';
-import path from 'path';
+import { Category, Service, Device, type DeviceApiConfig } from '@/lib/types';
+import { validateConfigMutationBody } from '@/lib/configEntityValidation';
+import {
+  RequestValidationError,
+  assertSafeIdentifier,
+  readEnum,
+  readJsonObject,
+} from '@/lib/requestValidation';
+
+const MAX_CONFIG_BODY_BYTES = 2 * 1024 * 1024;
+const CONFIG_POST_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
+const CONFIG_PUT_TYPES = [
+  'reorder',
+  'reorderDevices',
+  'category',
+  'service',
+  'settings',
+  'device',
+  'homeWidgetProps',
+  'reorderDockerActions',
+  'dockerAction',
+  'localEvent',
+] as const;
+const CONFIG_DELETE_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
+
+function persistenceError() {
+  return NextResponse.json({ error: 'Impossible d’enregistrer la configuration.' }, { status: 500 });
+}
+
+async function parseConfigBody<const T extends readonly string[]>(
+  req: NextRequest,
+  allowedTypes: T,
+  method: 'POST' | 'PUT',
+) {
+  try {
+    const body = await readJsonObject(req, MAX_CONFIG_BODY_BYTES) as unknown as Awaited<ReturnType<NextRequest['json']>>;
+    const type = readEnum(body, 'type', allowedTypes, true)!;
+    validateConfigMutationBody(body, type, method);
+    return { ok: true as const, body, type };
+  } catch (error: unknown) {
+    if (error instanceof RequestValidationError) {
+      return {
+        ok: false as const,
+        response: NextResponse.json({ error: error.message }, { status: error.status }),
+      };
+    }
+    throw error;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(req);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
+  const securityMode = config.settings?.securityMode || 'public';
+  const principal = resolveAccessPrincipal(req, securityMode);
+  if (!principal) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
   }
 
-  // Ensure devices array exists (backward compat)
-  if (!config.devices) (config as any).devices = [];
-  if (!config.dockerHosts) (config as any).dockerHosts = [];
-  if (!config.localEvents) config.localEvents = [];
-
-  // Strip out sensitive tokens before sending to client
-  const safeConfig = JSON.parse(JSON.stringify(config));
-  safeConfig.devices.forEach((device: any) => {
-    if (device.api && device.api.token) {
-      device.api.token = '********';
-    }
-  });
-  if (safeConfig.settings && safeConfig.settings.tailscaleClientSecret) {
-    safeConfig.settings.tailscaleClientSecret = '********';
-  }
-
-  return NextResponse.json(safeConfig);
+  return NextResponse.json(buildConfigForPrincipal(config, principal));
 }
 
 export async function POST(req: NextRequest) {
@@ -42,9 +71,11 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
 
-  const body = await req.json();
+  const parsed = await parseConfigBody(req, CONFIG_POST_TYPES, 'POST');
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body;
   const config = readConfig();
-  const { type } = body;
+  const type = parsed.type;
 
   if (type === 'category') {
     const newCategory: Category = {
@@ -59,14 +90,13 @@ export async function POST(req: NextRequest) {
     config.categories.push(newCategory);
     
     // Automatically expand the grid by 1 slot so an empty dropzone immediately appears
-    if (!config.settings) config.settings = {} as any;
     const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length - 1);
     if (currentSlots < config.categories.length + 1) {
        config.settings.totalSlots = config.categories.length + 1;
     }
 
     // Écrit à la fois la config (slots) et les services
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(newCategory, { status: 201 });
   }
 
@@ -85,7 +115,7 @@ export async function POST(req: NextRequest) {
     config.categories[catIndex].services.push(newService);
     
     // N'écrit que le fichier services.json
-    writeServices(config.categories);
+    if (!writeServices(config.categories)) return persistenceError();
     return NextResponse.json(newService, { status: 201 });
   }
 
@@ -126,7 +156,7 @@ export async function POST(req: NextRequest) {
           const urlObj = new URL(baseUrl);
           if (body.api.port) urlObj.port = body.api.port;
           newDevice.api.url = urlObj.toString().replace(/\/$/, '');
-        } catch (e) {
+        } catch {
           newDevice.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
         }
 
@@ -160,7 +190,7 @@ export async function POST(req: NextRequest) {
     }
 
     config.devices.push(newDevice);
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
 
     // Strip sensitive info before returning
     const safeDevice = JSON.parse(JSON.stringify(newDevice));
@@ -169,7 +199,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (type === 'dockerHost') {
-    if (!config.dockerHosts) (config as any).dockerHosts = [];
+    if (!config.dockerHosts) config.dockerHosts = [];
     const newHost = {
       id: uuidv4(),
       name: body.name || 'Docker Host',
@@ -177,8 +207,8 @@ export async function POST(req: NextRequest) {
       type: 'tcp' as const,
       url: body.url || '',
     };
-    (config as any).dockerHosts.push(newHost);
-    writeConfig(config);
+    config.dockerHosts.push(newHost);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(newHost, { status: 201 });
   }
   if (type === 'dockerAction') {
@@ -191,7 +221,7 @@ export async function POST(req: NextRequest) {
       targets: body.targets || [],
     };
     config.dockerActions.push(newAction);
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(newAction, { status: 201 });
   }
   if (type === 'localEvent') {
@@ -207,7 +237,7 @@ export async function POST(req: NextRequest) {
     config.localEvents.push(newEvent);
     
     // N'écrit que le calendrier
-    writeCalendar(config.localEvents);
+    if (!writeCalendar(config.localEvents)) return persistenceError();
     return NextResponse.json(newEvent, { status: 201 });
   }
 
@@ -219,13 +249,15 @@ export async function PUT(req: NextRequest) {
   if (authError) return authError;
 
 
-  const body = await req.json();
+  const parsed = await parseConfigBody(req, CONFIG_PUT_TYPES, 'PUT');
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.body;
   const config = readConfig();
-  const { type } = body;
+  const type = parsed.type;
 
   if (type === 'reorder') {
     config.categories = body.categories;
-    writeServices(config.categories);
+    if (!writeServices(config.categories)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
@@ -233,8 +265,8 @@ export async function PUT(req: NextRequest) {
     if (!config.devices) config.devices = [];
 
     // Preserve sensitive tokens from existing devices
-    const newDevices = body.devices.map((newDevice: any) => {
-      const existingDevice = (config.devices || []).find((d: any) => d.id === newDevice.id);
+    const newDevices = (body.devices as Device[]).map(newDevice => {
+      const existingDevice = (config.devices || []).find(d => d.id === newDevice.id);
       if (existingDevice && existingDevice.api?.token && newDevice.api?.token === '********') {
         // Keep the original token if the new one is masked
         newDevice.api.token = existingDevice.api.token;
@@ -243,7 +275,7 @@ export async function PUT(req: NextRequest) {
     });
 
     config.devices = newDevices;
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
@@ -255,7 +287,7 @@ export async function PUT(req: NextRequest) {
     if (body.isSecret !== undefined) cat.isSecret = body.isSecret;
     if (body.services !== undefined) cat.services = body.services;
     if (body.layout !== undefined) cat.layout = body.layout;
-    writeServices(config.categories);
+    if (!writeServices(config.categories)) return persistenceError();
     return NextResponse.json(cat);
   }
 
@@ -270,7 +302,7 @@ export async function PUT(req: NextRequest) {
         if (body.secondaryLogo !== undefined) svc.secondaryLogo = body.secondaryLogo;
         // Keep tailscaleUrl setter for backwards compatibility if clients still send it
         if (body.tailscaleUrl !== undefined) svc.tailscaleUrl = body.tailscaleUrl;
-        writeServices(config.categories);
+        if (!writeServices(config.categories)) return persistenceError();
         return NextResponse.json(svc);
       }
     }
@@ -278,8 +310,6 @@ export async function PUT(req: NextRequest) {
   }
 
   if (type === 'settings') {
-    if (!config.settings) (config as any).settings = {};
-
     if (body.title !== undefined) config.settings.title = body.title;
     if (body.titleMobile !== undefined) config.settings.titleMobile = body.titleMobile;
     if (body.titleLogo !== undefined) config.settings.titleLogo = body.titleLogo;
@@ -308,6 +338,7 @@ export async function PUT(req: NextRequest) {
     if (body.hiddenTabs !== undefined) config.settings.hiddenTabs = body.hiddenTabs;
     if (body.tabIcons !== undefined) config.settings.tabIcons = body.tabIcons;
     if (body.theme !== undefined) config.settings.theme = body.theme;
+    if (body.mode !== undefined) config.settings.mode = body.mode;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
     if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
     if (body.panels !== undefined) config.settings.panels = body.panels;
@@ -326,6 +357,7 @@ export async function PUT(req: NextRequest) {
     if (body.enablePerfMonitor !== undefined) config.settings.enablePerfMonitor = body.enablePerfMonitor;
     
     // Dynamically save all widget specific states (hide[Widget], [widget]Sidebar, [widget]Order, [widget]Props) with validation
+    const dynamicSettings = config.settings as typeof config.settings & Record<string, unknown>;
     Object.keys(body).forEach(key => {
       if (key.startsWith('hide') || key.endsWith('Sidebar') || key.endsWith('Order') || key.endsWith('Props')) {
         // Validation of key format to prevent prototype pollution or other injections
@@ -336,30 +368,31 @@ export async function PUT(req: NextRequest) {
         // Validate values
         if (key.startsWith('hide')) {
           if (typeof val === 'boolean') {
-            (config.settings as any)[key] = val;
+            dynamicSettings[key] = val;
           }
         } else if (key.endsWith('Sidebar')) {
           if (typeof val === 'string' || typeof val === 'boolean') {
-            (config.settings as any)[key] = val;
+            dynamicSettings[key] = val;
           }
         } else if (key.endsWith('Order')) {
           if (typeof val === 'number' || (Array.isArray(val) && val.every(item => typeof item === 'string' || typeof item === 'number'))) {
-            (config.settings as any)[key] = val;
+            dynamicSettings[key] = val;
           }
         } else if (key.endsWith('Props')) {
           if (val && typeof val === 'object' && !Array.isArray(val)) {
             // Simple check: make sure keys of Props are safe alphanumeric strings
-            const safeProps: any = {};
+            const propsRecord = val as Record<string, unknown>;
+            const safeProps: Record<string, unknown> = {};
             let isSafe = true;
             Object.keys(val).forEach(propKey => {
               if (!/^[a-zA-Z0-9_-]+$/.test(propKey) || propKey === '__proto__' || propKey === 'constructor' || propKey === 'prototype') {
                 isSafe = false;
                 return;
               }
-              safeProps[propKey] = val[propKey];
+              safeProps[propKey] = propsRecord[propKey];
             });
             if (isSafe) {
-              (config.settings as any)[key] = safeProps;
+              dynamicSettings[key] = safeProps;
             }
           }
         }
@@ -402,7 +435,7 @@ export async function PUT(req: NextRequest) {
     if (body.mobileTitleAnimation !== undefined) config.settings.mobileTitleAnimation = body.mobileTitleAnimation;
     if (body.securityMode !== undefined) config.settings.securityMode = body.securityMode;
     
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(config.settings);
   }
 
@@ -420,7 +453,7 @@ export async function PUT(req: NextRequest) {
     if (body.colsMobile !== undefined) device.colsMobile = body.colsMobile;
 
     if (body.api) {
-      const oldApiObj: any = device.api || {};
+      const oldApiObj: Partial<DeviceApiConfig> = device.api || {};
       const isChangingPlatform = oldApiObj.type !== body.api.type;
 
       // Check if username or password was specifically sent in the PUT request
@@ -447,7 +480,7 @@ export async function PUT(req: NextRequest) {
           const urlObj = new URL(baseUrl);
           if (body.api.port) urlObj.port = body.api.port;
           device.api.url = urlObj.toString().replace(/\/$/, '');
-        } catch (e) {
+        } catch {
           device.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
         }
 
@@ -499,7 +532,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
 
     // Strip sensitive info before returning
     const safeDevice = JSON.parse(JSON.stringify(device));
@@ -509,24 +542,24 @@ export async function PUT(req: NextRequest) {
 
   if (type === 'homeWidgetProps') {
     if (!config.settings.homeWidgets) config.settings.homeWidgets = [];
-    const widget = config.settings.homeWidgets.find((w: any) => w.id === body.id);
+    const widget = config.settings.homeWidgets.find(w => w.id === body.id);
     if (!widget) return NextResponse.json({ error: 'Widget not found' }, { status: 404 });
     if (!widget.props) widget.props = {};
     widget.props = { ...widget.props, ...body.props };
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(widget);
   }
 
   if (type === 'reorderDockerActions') {
     if (!config.dockerActions) config.dockerActions = [];
     config.dockerActions = body.dockerActions;
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'dockerAction') {
     if (!config.dockerActions) config.dockerActions = [];
-    const action = config.dockerActions.find((a: any) => a.id === body.id);
+    const action = config.dockerActions.find(a => a.id === body.id);
     if (!action) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (body.name !== undefined) action.name = body.name;
@@ -534,13 +567,13 @@ export async function PUT(req: NextRequest) {
     if (body.actionType !== undefined) action.actionType = body.actionType;
     if (body.targets !== undefined) action.targets = body.targets;
 
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(action);
   }
 
   if (type === 'localEvent') {
     if (!config.localEvents) config.localEvents = [];
-    const event = config.localEvents.find((e: any) => e.id === body.id);
+    const event = config.localEvents.find(e => e.id === body.id);
     if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (body.title !== undefined) event.title = body.title;
@@ -549,7 +582,7 @@ export async function PUT(req: NextRequest) {
     if (body.description !== undefined) event.description = body.description;
     if (body.isAllDay !== undefined) event.isAllDay = body.isAllDay;
 
-    writeCalendar(config.localEvents);
+    if (!writeCalendar(config.localEvents)) return persistenceError();
     return NextResponse.json(event);
   }
 
@@ -562,16 +595,28 @@ export async function DELETE(req: NextRequest) {
 
 
   const { searchParams } = new URL(req.url);
-  const type = searchParams.get('type');
-  const id = searchParams.get('id');
+  const rawType = searchParams.get('type');
+  const rawId = searchParams.get('id');
 
-  if (!type || !id) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
+  if (!rawType || !rawId) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
+
+  let type: typeof CONFIG_DELETE_TYPES[number];
+  let id: string;
+  try {
+    type = readEnum({ type: rawType }, 'type', CONFIG_DELETE_TYPES, true)!;
+    id = assertSafeIdentifier(rawId);
+  } catch (error: unknown) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 
   const config = readConfig();
 
   if (type === 'category') {
     config.categories = config.categories.filter(c => c.id !== id);
-    writeConfig(config); // Écrit la config de base et services
+    if (!writeConfig(config)) return persistenceError(); // Écrit la config de base et services
     return NextResponse.json({ ok: true });
   }
 
@@ -579,35 +624,35 @@ export async function DELETE(req: NextRequest) {
     for (const cat of config.categories) {
       cat.services = cat.services.filter(s => s.id !== id);
     }
-    writeServices(config.categories);
+    if (!writeServices(config.categories)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'device') {
     if (!config.devices) config.devices = [];
     config.devices = config.devices.filter((d: Device) => d.id !== id);
-    writeConfig(config);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'dockerHost') {
-    if (!(config as any).dockerHosts) (config as any).dockerHosts = [];
-    (config as any).dockerHosts = (config as any).dockerHosts.filter((h: any) => h.id !== id);
-    writeConfig(config);
+    if (!config.dockerHosts) config.dockerHosts = [];
+    config.dockerHosts = config.dockerHosts.filter(h => h.id !== id);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'dockerAction') {
     if (!config.dockerActions) config.dockerActions = [];
-    config.dockerActions = config.dockerActions.filter((a: any) => a.id !== id);
-    writeConfig(config);
+    config.dockerActions = config.dockerActions.filter(a => a.id !== id);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 
   if (type === 'localEvent') {
     if (!config.localEvents) config.localEvents = [];
-    config.localEvents = config.localEvents.filter((e: any) => e.id !== id);
-    writeCalendar(config.localEvents);
+    config.localEvents = config.localEvents.filter(e => e.id !== id);
+    if (!writeCalendar(config.localEvents)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 

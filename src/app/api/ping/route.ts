@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { getSessionFromRequest } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +19,12 @@ function getHostAndPort(urlStr: string): string | null {
 
 export async function GET(request: Request) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
-  }
+  const access = checkReadAccess(
+    request,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.ping
+  );
+  if (access.error) return access.error;
 
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
@@ -38,16 +36,16 @@ export async function GET(request: Request) {
   // Prévention SSRF: Valider que l'URL demandée est configurée dans les services ou devices
   const allowedHosts = new Set<string>();
   if (config.devices) {
-    config.devices.forEach((d: any) => {
+    config.devices.forEach(d => {
       if (d.host) { const h = getHostAndPort(d.host); if (h) allowedHosts.add(h); }
       if (d.api?.url) { const h = getHostAndPort(d.api.url); if (h) allowedHosts.add(h); }
       if (d.api?.ip) { const h = getHostAndPort(d.api.ip); if (h) allowedHosts.add(h); }
     });
   }
   if (config.categories) {
-    config.categories.forEach((cat: any) => {
+    config.categories.forEach(cat => {
       if (cat.services) {
-        cat.services.forEach((svc: any) => {
+        cat.services.forEach(svc => {
           if (svc.localUrl) { const h = getHostAndPort(svc.localUrl); if (h) allowedHosts.add(h); }
           if (svc.secondaryUrl) { const h = getHostAndPort(svc.secondaryUrl); if (h) allowedHosts.add(h); }
           if (svc.tailscaleUrl) { const h = getHostAndPort(svc.tailscaleUrl); if (h) allowedHosts.add(h); }
@@ -88,11 +86,12 @@ export async function GET(request: Request) {
     } else {
       return NextResponse.json({ status: 'offline', statusText: `Error ${response.status}`, latency });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const failure = error as { name?: string; code?: string; cause?: { code?: string } };
     let statusText = 'Client Error';
-    if (error.name === 'AbortError') {
+    if (failure.name === 'AbortError') {
       statusText = 'Timeout';
-    } else if (error.code === 'ECONNREFUSED') {
+    } else if (failure.code === 'ECONNREFUSED' || failure.cause?.code === 'ECONNREFUSED') {
       statusText = 'Connection Refused';
     }
     return NextResponse.json({ status: 'offline', statusText, latency: 0 });

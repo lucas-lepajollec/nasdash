@@ -37,7 +37,7 @@ const getTimestamp = () => {
   return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
 };
 
-const formatMessage = (level: string, color: string, ...args: any[]) => {
+const formatMessage = (level: string, color: string, ...args: unknown[]) => {
   const timestamp = `${COLORS.dim}[${getTimestamp()}]${COLORS.reset}`;
   const prefix = `${color}${COLORS.bright}[NASDASH] [${level}]${COLORS.reset}`;
   
@@ -46,7 +46,7 @@ const formatMessage = (level: string, color: string, ...args: any[]) => {
     if (typeof arg === 'object' && arg !== null) {
       try {
         return JSON.stringify(arg, null, 2);
-      } catch (e) {
+      } catch {
         return String(arg);
       }
     }
@@ -94,17 +94,27 @@ class Logger {
       this.originalConsole.debug(formatMessage('DEBUG', COLORS.fg.magenta, ...args));
     };
 
-    const _process = typeof process !== 'undefined' ? process : null;
-    const stdout = _process ? (_process as any)['stdout'] : null;
-    const stderr = _process ? (_process as any)['stderr'] : null;
+    const runtimeProcess = typeof process !== 'undefined' ? process : null;
+    const stdout = runtimeProcess
+      ? Reflect.get(runtimeProcess, 'stdout') as NodeJS.WriteStream | undefined
+      : null;
+    const stderr = runtimeProcess
+      ? Reflect.get(runtimeProcess, 'stderr') as NodeJS.WriteStream | undefined
+      : null;
 
     if (stdout && stdout.write && stderr && stderr.write) {
-      // Hook into process.stdout.write to catch Next.js native logs
-      const originalStdoutWrite = stdout.write.bind(stdout);
-      const originalStderrWrite = stderr.write.bind(stderr);
+      type WriteCallback = (error?: Error | null) => void;
+      type WriteFunction = (
+        chunk: string | Uint8Array,
+        encoding?: BufferEncoding | WriteCallback,
+        callback?: WriteCallback,
+      ) => boolean;
 
-      // @ts-ignore
-      stdout.write = (chunk: any, encoding?: any, callback?: any) => {
+      // Hook into process.stdout.write to catch Next.js native logs
+      const originalStdoutWrite = stdout.write.bind(stdout) as WriteFunction;
+      const originalStderrWrite = stderr.write.bind(stderr) as WriteFunction;
+
+      stdout.write = ((chunk: string | Uint8Array, encoding?: BufferEncoding | WriteCallback, callback?: WriteCallback) => {
         let textChunk = chunk;
         if (Buffer.isBuffer(chunk)) {
           textChunk = chunk.toString('utf8');
@@ -134,10 +144,9 @@ class Logger {
           }
         }
         return originalStdoutWrite(chunk, encoding, callback);
-      };
+      }) as typeof stdout.write;
 
-      // @ts-ignore
-      stderr.write = (chunk: any, encoding?: any, callback?: any) => {
+      stderr.write = ((chunk: string | Uint8Array, encoding?: BufferEncoding | WriteCallback, callback?: WriteCallback) => {
         let textChunk = chunk;
         if (Buffer.isBuffer(chunk)) {
           textChunk = chunk.toString('utf8');
@@ -148,7 +157,7 @@ class Logger {
           return originalStderrWrite(formatMessage('ERROR', COLORS.fg.red, trimmed) + '\n', encoding, callback);
         }
         return originalStderrWrite(chunk, encoding, callback);
-      };
+      }) as typeof stderr.write;
     }
 
     setTimeout(() => {

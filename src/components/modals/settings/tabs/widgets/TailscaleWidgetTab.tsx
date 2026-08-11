@@ -9,8 +9,6 @@ export function TailscaleWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideTailscaleStatus = !!config?.settings?.hideTailscaleStatus;
-  const tailscaleSidebar = config?.settings?.tailscaleSidebar || 'right';
-  const tailscaleOrder = config?.settings?.tailscaleOrder ?? 2;
 
   const [tailscaleTailnet, setTailscaleTailnet] = useState(config?.settings?.tailscaleTailnet || '');
   const [tailscaleClientId, setTailscaleClientId] = useState(config?.settings?.tailscaleClientId || '');
@@ -18,14 +16,6 @@ export function TailscaleWidgetTab() {
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
-  };
-
-  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
-    await updateConfig({ [`${widgetKey}Sidebar`]: sidebar });
-  };
-
-  const handleWidgetOrder = async (widgetKey: string, order: number) => {
-    await updateConfig({ [`${widgetKey}Order`]: order });
   };
 
   return (
@@ -48,11 +38,12 @@ export function TailscaleWidgetTab() {
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Authentification API Tailscale</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Connectez votre compte Tailscale pour visualiser l'état de vos appareils directement sur le Dashboard.
+              Connectez votre compte Tailscale pour visualiser l&apos;état de vos appareils directement sur le Dashboard.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <input
                 type="text"
+                aria-label="Nom du Tailnet"
                 className="nd-input"
                 placeholder="Nom du Tailnet (ex: email@domaine.com)"
                 value={tailscaleTailnet}
@@ -64,6 +55,7 @@ export function TailscaleWidgetTab() {
               />
               <input
                 type="password"
+                aria-label="OAuth Client ID Tailscale"
                 className="nd-input"
                 placeholder="OAuth Client ID (kxxxx...)"
                 value={tailscaleClientId}
@@ -75,6 +67,7 @@ export function TailscaleWidgetTab() {
               />
               <input
                 type="password"
+                aria-label="OAuth Client Secret Tailscale"
                 className="nd-input"
                 placeholder="OAuth Client Secret (tskey-client-...)"
                 value={tailscaleClientSecret}

@@ -8,11 +8,12 @@ interface HomeWidgetRendererProps {
   widget: CustomTabWidgetInfo & { id: string, order: number };
   editMode: boolean;
   showSensitive?: boolean;
+  isVisible?: boolean;
   onDelete: (id: string) => void;
   onUpdateHeight?: (id: string, newHeight: number) => void;
 }
 
-export default function HomeWidgetRenderer({ widget, editMode, showSensitive = false, onDelete, onUpdateHeight }: HomeWidgetRendererProps) {
+export default function HomeWidgetRenderer({ widget, editMode, showSensitive = false, isVisible = true, onDelete, onUpdateHeight }: HomeWidgetRendererProps) {
   const { config, updateHomeWidgetProps } = useConfig();
   
   // By default, widgets in Home BentoGrid slots occupy the medium slot size
@@ -57,7 +58,7 @@ export default function HomeWidgetRenderer({ widget, editMode, showSensitive = f
       );
     }
     
-    return <WidgetRenderer id={widget.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} widgetInstanceId={widget.id} widgetProps={widget.props} onUpdateProps={(newProps) => updateHomeWidgetProps && updateHomeWidgetProps(widget.id, newProps)} />;
+    return <WidgetRenderer id={widget.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} widgetInstanceId={widget.id} widgetProps={widget.props} isVisible={isVisible} onUpdateProps={(newProps) => updateHomeWidgetProps && updateHomeWidgetProps(widget.id, newProps)} />;
   };
 
   return (

@@ -3,6 +3,7 @@ import { Device, DeviceApiConfig } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '@/components/shared/CustomSelect';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -66,6 +67,7 @@ interface DeviceFormModalProps {
 }
 
 export default function DeviceFormModal({ device, onClose, onSave, onDelete, showSensitive = false }: DeviceFormModalProps) {
+  const dialogRef = useDialogAccessibility(onClose);
   const [name, setName] = useState(device?.name || '');
   const [host, setHost] = useState(device?.host || '');
   const [icon, setIcon] = useState(device?.icon || '🖥️');
@@ -121,7 +123,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={device ? "Modifier l'appareil" : 'Ajouter un appareil'} tabIndex={-1} className="nd-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <h2 className="nd-section-title" style={{ marginBottom: 20 }}>
           {device ? 'Éditer l\'appareil' : 'Ajouter un appareil'}
         </h2>

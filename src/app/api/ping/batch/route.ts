@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { getSessionFromRequest } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import { RequestValidationError, readJsonObject, readStringArray } from '@/lib/requestValidation';
+import { Device, Service } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+const MAX_PING_BODY_BYTES = 128 * 1024;
+
+interface PingStatus {
+  status: string;
+  statusText: string;
+  latency: number;
+}
 
 function getHostAndPort(urlStr: string): string | null {
   try {
@@ -46,13 +55,17 @@ async function pingOne(url: string, allowedHosts: Set<string>) {
     } else {
       return { url, status: 'offline', statusText: `Error ${response.status}`, latency };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     let statusText = 'Offline';
-    if (error.name === 'AbortError') {
+    const errorName = error instanceof Error ? error.name : '';
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error
+      ? String(error.code)
+      : '';
+    if (errorName === 'AbortError') {
       statusText = 'Timeout';
-    } else if (error.code === 'ECONNREFUSED') {
+    } else if (errorCode === 'ECONNREFUSED') {
       statusText = 'Refusé';
-    } else if (error.code === 'ECONNRESET') {
+    } else if (errorCode === 'ECONNRESET') {
       statusText = 'Offline';
     }
     return { url, status: 'offline', statusText, latency: 0 };
@@ -61,21 +74,19 @@ async function pingOne(url: string, allowedHosts: Set<string>) {
 
 export async function POST(request: Request) {
   const config = readConfig();
-
-  // Bloquer l'accès en mode privé si non authentifié
-  if (config.settings?.securityMode === 'private') {
-    const session = getSessionFromRequest(request);
-    if (!session) {
-      return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-    }
-  }
+  const access = checkReadAccess(
+    request,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.ping
+  );
+  if (access.error) return access.error;
 
   try {
-    const body = await request.json();
-    const urls: string[] = body.urls || [];
+    const body = await readJsonObject(request, MAX_PING_BODY_BYTES);
+    const urls = readStringArray(body, 'urls', { maxItems: 50, maxItemLength: 2048 }) || [];
 
     if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-      const resultMap: Record<string, any> = {};
+      const resultMap: Record<string, PingStatus> = {};
       urls.forEach(url => {
         const isOffline = url.includes('offline') || url.includes('10.0.30.22'); // camera offline
         const latency = isOffline ? 0 : Math.round(3 + Math.random() * 12);
@@ -88,23 +99,23 @@ export async function POST(request: Request) {
       return NextResponse.json(resultMap);
     }
 
-    if (!Array.isArray(urls) || urls.length === 0) {
+    if (urls.length === 0) {
       return NextResponse.json({});
     }
 
     // SSRF Prevention: Collect all configured allowed hosts
     const allowedHosts = new Set<string>();
     if (config.devices) {
-      config.devices.forEach((d: any) => {
+      config.devices.forEach((d: Device) => {
         if (d.host) { const h = getHostAndPort(d.host); if (h) allowedHosts.add(h); }
         if (d.api?.url) { const h = getHostAndPort(d.api.url); if (h) allowedHosts.add(h); }
         if (d.api?.ip) { const h = getHostAndPort(d.api.ip); if (h) allowedHosts.add(h); }
       });
     }
     if (config.categories) {
-      config.categories.forEach((cat: any) => {
+      config.categories.forEach(cat => {
         if (cat.services) {
-          cat.services.forEach((svc: any) => {
+          cat.services.forEach((svc: Service) => {
             if (svc.localUrl) { const h = getHostAndPort(svc.localUrl); if (h) allowedHosts.add(h); }
             if (svc.secondaryUrl) { const h = getHostAndPort(svc.secondaryUrl); if (h) allowedHosts.add(h); }
             if (svc.tailscaleUrl) { const h = getHostAndPort(svc.tailscaleUrl); if (h) allowedHosts.add(h); }
@@ -121,10 +132,13 @@ export async function POST(request: Request) {
     const resultMap = results.reduce((acc, r) => {
       acc[r.url] = { status: r.status, statusText: r.statusText, latency: r.latency };
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, PingStatus>);
 
     return NextResponse.json(resultMap);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (err instanceof RequestValidationError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Erreur Batch Ping:', err);
     return NextResponse.json({ error: 'Une erreur est survenue.' }, { status: 500 });
   }

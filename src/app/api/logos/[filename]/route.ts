@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLogosDir } from '@/lib/config';
+import { getLogosDir, readConfig } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
+import { resolveAccessPrincipal } from '@/lib/access';
 import path from 'path';
 import fs from 'fs';
 
@@ -14,9 +15,15 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
+  const config = readConfig();
+  const principal = resolveAccessPrincipal(req, config.settings?.securityMode || 'public');
+  if (!principal) {
+    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
+  }
+
   const { filename } = await params;
   const safeFilename = path.basename(filename);
   const filePath = path.join(getLogosDir(), safeFilename);
@@ -33,6 +40,10 @@ export async function GET(
     headers: {
       'Content-Type': contentType,
       'Cache-Control': 'public, max-age=31536000',
+      'X-Content-Type-Options': 'nosniff',
+      ...(ext === '.svg' ? {
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+      } : {}),
     },
   });
 }

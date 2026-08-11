@@ -11,9 +11,10 @@ interface CustomTabRendererProps {
   tab: TabDef;
   editMode: boolean;
   showSensitive?: boolean;
+  isVisible?: boolean;
 }
 
-export default function CustomTabRenderer({ tab, editMode, showSensitive = false }: CustomTabRendererProps) {
+export default function CustomTabRenderer({ tab, editMode, showSensitive = false, isVisible = true }: CustomTabRendererProps) {
   const { config, setSettingsModal, user } = useConfig();
   const [layout, setLayout] = useState<CustomTabLayout | null>(globalLayoutCache[tab.id] || null);
 
@@ -140,7 +141,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
       );
     }
     
-    return <WidgetRenderer id={info.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} widgetInstanceId={`${rowId}-${colId}-${index}`} widgetProps={info.props} onUpdateProps={(newProps) => handleUpdateWidgetProps(rowId, colId, index, newProps)} />;
+    return <WidgetRenderer id={info.type} layoutSize={size} editMode={editMode} showSensitive={showSensitive} widgetInstanceId={`${rowId}-${colId}-${index}`} widgetProps={info.props} isVisible={isVisible} onUpdateProps={(newProps) => handleUpdateWidgetProps(rowId, colId, index, newProps)} />;
   };
 
   const renderRow = (row: CustomTabRow) => {

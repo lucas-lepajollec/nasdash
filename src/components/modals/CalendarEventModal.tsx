@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Calendar as CalendarIcon, Clock, AlignLeft, Trash2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import ConfirmModal from './ConfirmModal';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 export default function CalendarEventModal() {
   const { config, calendarEventModal, setCalendarEventModal, addLocalEvent, deleteLocalEvent, user } = useConfig();
@@ -10,6 +11,11 @@ export default function CalendarEventModal() {
   const [description, setDescription] = useState('');
   const [time, setTime] = useState('12:00');
   const [isAllDay, setIsAllDay] = useState(false);
+  const closeModal = () => setCalendarEventModal({ open: false });
+  const dialogRef = useDialogAccessibility(
+    closeModal,
+    Boolean(calendarEventModal.open && calendarEventModal.date && user?.role === 'admin'),
+  );
 
   if (!calendarEventModal.open || !calendarEventModal.date || user?.role !== 'admin') return null;
 
@@ -46,11 +52,11 @@ export default function CalendarEventModal() {
   };
 
   return (
-    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setCalendarEventModal({ open: false }); }}>
-      <div className="nd-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%' }}>
+    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Ajouter un événement" tabIndex={-1} className="nd-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Ajouter un événement</h2>
-          <button className="nd-btn" onClick={() => setCalendarEventModal({ open: false })} style={{ padding: 8 }}>
+          <button aria-label="Fermer" className="nd-btn" onClick={closeModal} style={{ padding: 8 }}>
             <X size={16} />
           </button>
         </div>

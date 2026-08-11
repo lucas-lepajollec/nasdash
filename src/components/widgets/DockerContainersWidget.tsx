@@ -6,11 +6,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw, Pencil } from 'lucide-react';
 import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
-
-const fetcher = (url: string) => fetch(url).then(r => {
-  if (!r.ok) throw new Error('Fetch failed');
-  return r.json();
-});
+import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
 
 function getPaddedList(list: any[], targetMultiple: number) {
   if (list.length === 0) return [];
@@ -23,7 +19,7 @@ function getPaddedList(list: any[], targetMultiple: number) {
   return result;
 }
 
-export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void }) {
+export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps, isVisible = true }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void, isVisible?: boolean }) {
   const { config, showSecretSections } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hosts = config?.dockerHosts || [];
@@ -62,13 +58,14 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
 
   // Fetch containers list for the selected host
   const { data: containers, error, isLoading, mutate } = useSWR(
-    selectedHostId ? `/api/docker/${selectedHostId}/containers?all=true` : null,
-    fetcher,
+    isVisible && selectedHostId ? `/api/docker/${selectedHostId}/containers?all=true` : null,
+    dockerJsonFetcher,
     { refreshInterval: 5000 }
   );
 
   const currentHost = hosts.find(h => h.id === selectedHostId);
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
+  const errorPresentation = getDockerErrorPresentation(error);
 
   // Handle toggling container start/stop
   const handleToggleContainer = async (containerId: string, currentState: string) => {
@@ -93,16 +90,6 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
     }
   };
 
-  if (hosts.length === 0) {
-    return (
-      <div className="nd-sidebar-card nd-animate-in" style={{ padding: '16px', textAlign: 'center' }}>
-        <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', margin: 0 }}>
-          Aucun hôte Docker configuré.
-        </p>
-      </div>
-    );
-  }
-
   // Pagination calculation
   const containerList = useMemo(() => {
     const rawList = Array.isArray(containers) ? containers : [];
@@ -126,6 +113,16 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
       return !isSecretContainer;
     });
   }, [containers, config?.categories, showSecretSections]);
+
+  if (hosts.length === 0) {
+    return (
+      <div className="nd-sidebar-card nd-animate-in" style={{ padding: '16px', textAlign: 'center' }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', margin: 0 }}>
+          Aucun hôte Docker configuré.
+        </p>
+      </div>
+    );
+  }
   
   // Default to 6 items per page (even number for grids)
   let ITEMS_PER_PAGE = 6;
@@ -593,9 +590,9 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
 
       {error && (
         <div style={{ textAlign: 'center', padding: '24px 8px', height: minHeight, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          <AlertCircle size={20} style={{ color: 'var(--nd-red)', marginBottom: 6 }} />
-          <div style={{ fontSize: '0.75rem', color: 'var(--nd-red)', fontWeight: 600 }}>Hôte injoignable</div>
-          <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', marginTop: 2 }}>Vérifiez la connexion TCP de l'hôte</div>
+          <AlertCircle size={20} style={{ color: errorPresentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)', marginBottom: 6 }} />
+          <div style={{ fontSize: '0.75rem', color: errorPresentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)', fontWeight: 600 }}>{errorPresentation.title}</div>
+          <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', marginTop: 2 }}>{errorPresentation.hint}</div>
         </div>
       )}
 

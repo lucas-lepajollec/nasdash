@@ -9,21 +9,10 @@ export function CalendarWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideCalendar = !!config?.settings?.hideCalendar;
-  const calendarSidebar = config?.settings?.calendarSidebar || 'left';
-  const calendarOrder = config?.settings?.calendarOrder ?? 5;
-  
   const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
 
   const handleToggleWidget = async (key: string, value: boolean) => {
     await updateConfig({ [key]: value });
-  };
-
-  const handleWidgetPosition = async (widgetKey: string, sidebar: 'left' | 'right') => {
-    await updateConfig({ [`${widgetKey}Sidebar`]: sidebar });
-  };
-
-  const handleWidgetOrder = async (widgetKey: string, order: number) => {
-    await updateConfig({ [`${widgetKey}Order`]: order });
   };
 
   return (
@@ -47,10 +36,11 @@ export function CalendarWidgetTab() {
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Synchronisation iCal</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Collez l'URL d'un calendrier au format .ics (Google Agenda, Apple, etc.) pour afficher vos événements.
+              Collez l&apos;URL d&apos;un calendrier au format .ics (Google Agenda, Apple, etc.) pour afficher vos événements.
             </p>
             <input
               type="url"
+              aria-label="URL du calendrier iCal"
               className="nd-input"
               placeholder="https://..."
               value={calendarUrl}

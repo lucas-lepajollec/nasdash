@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Category, Service } from '@/lib/types';
 import { X, Trash2, ChevronDown, ChevronRight, Upload, Settings, Ban } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '../shared/CustomSelect';
 import { Emoji } from '../shared/Emoji';
 import EmojiPickerModal from './EmojiPickerModal';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface CategoryFormModalProps {
   category?: Category;
@@ -19,6 +20,7 @@ interface CategoryFormModalProps {
 
 
 export default function CategoryFormModal({ category, onClose, onSave, onDelete, showSecretSections, showSensitive }: CategoryFormModalProps) {
+  const dialogRef = useDialogAccessibility(onClose);
   const [title, setTitle] = useState(category?.title || '');
   const [emoji, setEmoji] = useState(category?.emoji || '📁');
   const [isSecret, setIsSecret] = useState(category?.isSecret || false);
@@ -39,12 +41,6 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
   const [deleteServiceConfirm, setDeleteServiceConfirm] = useState<string | null>(null);
   const [deleteLogoConfirm, setDeleteLogoConfirm] = useState<string | null>(null);
   const [pendingLogoDeletions, setPendingLogoDeletions] = useState<string[]>([]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
@@ -94,10 +90,10 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={category ? 'Modifier une catégorie' : 'Ajouter une catégorie'} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{category ? 'Modifier' : 'Ajouter'} une catégorie</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
+          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
             <X size={16} />
           </button>
         </div>

@@ -12,8 +12,10 @@ import useSWR from 'swr';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { WidgetPanel } from '../../shared/WidgetPanel';
 import { Emoji } from '../../shared/Emoji';
+import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
-const fetcher = (url: string) => fetch(url).then(r => r.ok ? r.json() : null);
+const fetcher = dockerJsonFetcher;
 
 interface DockerTabProps {
   editMode: boolean;
@@ -23,6 +25,19 @@ interface DockerTabProps {
 }
 
 type DockerTab = 'containers' | 'images' | 'volumes';
+
+function DockerErrorNotice({ error, compact = false }: { error: unknown; compact?: boolean }) {
+  const presentation = getDockerErrorPresentation(error);
+  const color = presentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)';
+
+  return (
+    <div className="nd-sidebar-card" style={{ textAlign: 'center', padding: compact ? 16 : 24 }}>
+      <AlertCircle size={compact ? 16 : 20} style={{ color, marginBottom: 6 }} />
+      <div style={{ fontSize: compact ? '0.7rem' : '0.75rem', color, fontWeight: 600 }}>{presentation.title}</div>
+      <div style={{ fontSize: compact ? '0.6rem' : '0.64rem', color: 'var(--nd-text-dimmed)', marginTop: 4 }}>{presentation.hint}</div>
+    </div>
+  );
+}
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -145,17 +160,20 @@ function condensePorts(ports: any[]): Array<{ hostDisplay: string; containerDisp
 // ======================== DOCKER HOST FORM MODAL ========================
 function DockerHostFormModal({ onClose, onSave }: {
   onClose: () => void;
-  onSave: (h: { name: string; icon: string; url: string }) => void;
+  onSave: (h: { name: string; icon: string; url: string }) => Promise<void>;
 }) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('🐳');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('2375');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const dialogRef = useDialogAccessibility(onClose);
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="nd-modal" style={{ maxWidth: 420 }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Ajouter un hôte Docker" tabIndex={-1} className="nd-modal" style={{ maxWidth: 420 }}>
         <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Ajouter un hôte Docker</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           
@@ -168,6 +186,7 @@ function DockerHostFormModal({ onClose, onSave }: {
               <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
               <button
                 type="button"
+                aria-label="Choisir l’icône de l’hôte Docker"
                 onClick={() => setIsPickerOpen(true)}
                 style={{
                   width: 38,
@@ -204,13 +223,27 @@ function DockerHostFormModal({ onClose, onSave }: {
           <p style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', lineHeight: 1.5 }}>
             Pour des raisons de sécurité, veuillez utiliser un conteneur proxy local (ex: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '1px 4px', borderRadius: 3 }}>docker-socket-proxy</code>) et indiquez son nom d&apos;hôte.
           </p>
+          {saveError && <div style={{ fontSize: '0.65rem', color: 'var(--nd-red)', lineHeight: 1.4 }}>{saveError}</div>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-            <button className="nd-btn" onClick={onClose}>Annuler</button>
-            <button className="nd-btn nd-btn-accent" onClick={() => {
+            <button className="nd-btn" onClick={onClose} disabled={isSaving}>Annuler</button>
+            <button className="nd-btn nd-btn-accent" disabled={isSaving} onClick={async () => {
               if (!name || !host) return;
-              const url = `http://${host}:${port || '2375'}`;
-              onSave({ name, icon, url });
-            }}>Ajouter</button>
+              const portNumber = Number(port || '2375');
+              if (!Number.isInteger(portNumber) || portNumber < 1 || portNumber > 65_535) {
+                setSaveError('Le port Docker doit être un nombre compris entre 1 et 65535.');
+                return;
+              }
+              setIsSaving(true);
+              setSaveError('');
+              try {
+                const url = `http://${host.trim()}:${portNumber}`;
+                await onSave({ name: name.trim(), icon, url });
+              } catch (error) {
+                setSaveError(error instanceof Error ? error.message : 'Impossible d’ajouter cet hôte Docker.');
+              } finally {
+                setIsSaving(false);
+              }
+            }}>{isSaving ? 'Enregistrement…' : 'Ajouter'}</button>
           </div>
         </div>
 
@@ -230,9 +263,9 @@ function DockerHostFormModal({ onClose, onSave }: {
 }
 
 // ======================== CONTAINER LOGS ========================
-function ContainerLogs({ hostId, containerId, showSensitive }: { hostId: string; containerId: string; showSensitive: boolean }) {
+function ContainerLogs({ hostId, containerId, showSensitive, enabled }: { hostId: string; containerId: string; showSensitive: boolean; enabled: boolean }) {
   const { data, error } = useSWR(
-    `/api/docker/${hostId}/containers/${containerId}/logs?tail=150`,
+    enabled ? `/api/docker/${hostId}/containers/${containerId}/logs?tail=150` : null,
     fetcher,
     { refreshInterval: 3000 }
   );
@@ -256,7 +289,8 @@ function ContainerLogs({ hostId, containerId, showSensitive }: { hostId: string;
   };
 
   if (error) {
-    return <div style={{ fontSize: '0.7rem', color: 'var(--nd-red)', padding: 12 }}>Erreur de chargement des logs</div>;
+    const presentation = getDockerErrorPresentation(error);
+    return <div style={{ fontSize: '0.7rem', color: presentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)', padding: 12 }}>{presentation.title} — {presentation.hint}</div>;
   }
 
   return (
@@ -290,12 +324,13 @@ function ContainerLogs({ hostId, containerId, showSensitive }: { hostId: string;
 }
 
 // ======================== CONTAINER DETAIL VIEW ========================
-function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSensitive }: {
+function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSensitive, isVisible }: {
   hostId: string;
   detail: any;
   onAction: (id: string, action: 'start' | 'stop' | 'restart' | 'remove') => void;
   actionLoading: string | null;
   showSensitive: boolean;
+  isVisible: boolean;
 }) {
   if (!detail) return null;
 
@@ -402,21 +437,26 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
 
       {/* Logs */}
       {isRunning && (
-        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSensitive={showSensitive} />
+        <ContainerLogs hostId={hostId} containerId={detail.fullId} showSensitive={showSensitive} enabled={isVisible} />
       )}
     </div>
   );
 }
 
 // ======================== IMAGES TAB ========================
-function ImagesTab({ images, loading, containers, hostId, refreshImages, selectedContainer }: { images: any[]; loading: boolean; containers: any[]; hostId: string; refreshImages: () => void; selectedContainer?: any }) {
+function ImagesTab({ images, error, loading, containers, hostId, refreshImages, selectedContainer }: { images: any[]; error?: unknown; loading: boolean; containers: any[]; hostId: string; refreshImages: () => void; selectedContainer?: any }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const deleteDialogRef = useDialogAccessibility(
+    () => { if (!isDeleting) setDeleteTargets(null); },
+    Boolean(deleteTargets),
+  );
 
   const availableImages = images.filter(img => !containers.some((c: any) => c.imageID === img.id || (img.repoTags && img.repoTags.includes(c.image))));
 
+  if (error) return <DockerErrorNotice error={error} />;
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><Loader2 size={18} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} /></div>;
 
   const toggleSelectAll = () => {
@@ -548,7 +588,7 @@ function ImagesTab({ images, loading, containers, hostId, refreshImages, selecte
 
       {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div className="nd-modal">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des images Docker" tabIndex={-1} className="nd-modal">
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? "les images" : "l'image"}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
               Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} images` : `cette image (${deleteTargets[0].substring(0, 12)})`} ?
@@ -574,14 +614,19 @@ function ImagesTab({ images, loading, containers, hostId, refreshImages, selecte
 }
 
 // ======================== VOLUMES TAB ========================
-function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, selectedContainer }: { volumes: any[]; loading: boolean; containers: any[]; hostId: string; refreshVolumes: () => void; selectedContainer?: any }) {
+function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolumes, selectedContainer }: { volumes: any[]; error?: unknown; loading: boolean; containers: any[]; hostId: string; refreshVolumes: () => void; selectedContainer?: any }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const deleteDialogRef = useDialogAccessibility(
+    () => { if (!isDeleting) setDeleteTargets(null); },
+    Boolean(deleteTargets),
+  );
 
   const availableVolumes = volumes.filter(vol => !containers.some((c: any) => c.mounts?.some((m: any) => m.name === vol.name)));
 
+  if (error) return <DockerErrorNotice error={error} />;
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><Loader2 size={18} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} /></div>;
 
   const toggleSelectAll = () => {
@@ -710,7 +755,7 @@ function VolumesTab({ volumes, loading, containers, hostId, refreshVolumes, sele
 
       {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div className="nd-modal">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des volumes Docker" tabIndex={-1} className="nd-modal">
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? 'les volumes' : 'un volume'}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
               Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} volumes` : <strong style={{ color: 'var(--nd-text)' }}>{deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '...' : deleteTargets[0]}</strong>} ?
@@ -751,10 +796,10 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     containers, containersError, containersLoading, refreshContainers,
     selectedContainerId, setSelectedContainerId,
     containerDetail, detailError,
-    images, imagesLoading, refreshImages,
-    volumes, volumesLoading, refreshVolumes,
+    images, imagesError, imagesLoading, refreshImages,
+    volumes, volumesError, volumesLoading, refreshVolumes,
     containerAction, actionLoading,
-  } = useDocker(hosts);
+  } = useDocker(hosts, isVisible);
 
   const visibleContainers = useMemo(() => {
     if (showSecretSections || !config?.categories) return containers;
@@ -807,11 +852,15 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
 
   // Add docker host
   const handleAddHost = async (data: { name: string; icon: string; url: string }) => {
-    await fetch('/api/config', {
+    const response = await fetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'dockerHost', ...data }),
     });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new Error(payload?.error || 'Impossible d’enregistrer cet hôte Docker.');
+    }
     await refresh();
     setShowHostForm(false);
   };
@@ -974,11 +1023,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
             )}
 
             {containersError && (
-              <div className="nd-sidebar-card" style={{ textAlign: 'center', padding: 16 }}>
-                <AlertCircle size={16} style={{ color: 'var(--nd-red)', marginBottom: 6 }} />
-                <div style={{ fontSize: '0.7rem', color: 'var(--nd-red)' }}>Hôte injoignable</div>
-                <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', marginTop: 4 }}>Vérifiez que l&apos;API Docker TCP est accessible</div>
-              </div>
+              <DockerErrorNotice error={containersError} compact />
             )}
 
             {!containersError && filteredContainers.map((c: any) => (
@@ -1064,6 +1109,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
                 onAction={(id, action) => handleActionRequest(id, action, containerDetail?.name || id)}
                 actionLoading={actionLoading}
                 showSensitive={showSensitive}
+                isVisible={isVisible}
               />
             ) : (
               <div className="nd-docker-detail" style={{ minHeight: 300 }}>
@@ -1078,11 +1124,11 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           )}
 
           {activeTab === 'images' && (
-            <ImagesTab images={images} loading={imagesLoading} containers={visibleContainers} hostId={activeHostId!} refreshImages={() => refreshImages()} selectedContainer={visibleContainers.find((c: any) => c.fullId === selectedContainerId)} />
+            <ImagesTab images={images} error={imagesError} loading={imagesLoading} containers={visibleContainers} hostId={activeHostId!} refreshImages={() => refreshImages()} selectedContainer={visibleContainers.find((c: any) => c.fullId === selectedContainerId)} />
           )}
 
           {activeTab === 'volumes' && (
-            <VolumesTab volumes={volumes} loading={volumesLoading} containers={visibleContainers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={visibleContainers.find((c: any) => c.fullId === selectedContainerId)} />
+            <VolumesTab volumes={volumes} error={volumesError} loading={volumesLoading} containers={visibleContainers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={visibleContainers.find((c: any) => c.fullId === selectedContainerId)} />
           )}
         </div>
 
@@ -1097,7 +1143,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               overflowY: 'visible',
             }}
           >
-            <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} />
+            <WidgetPanel panelId="docker-widgets" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
           </aside>
         )}
       </div>

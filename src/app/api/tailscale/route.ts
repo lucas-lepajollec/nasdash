@@ -1,18 +1,38 @@
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
-import { getSessionFromRequest } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+
+interface TailscaleApiDevice {
+  nodeId?: string;
+  id?: string;
+  hostname?: string;
+  givenName?: string;
+  name?: string;
+  os?: string;
+  addresses?: string[];
+  lastSeen?: string;
+  clientConnectivity?: { online?: boolean };
+}
+
+interface TailscaleDeviceView {
+  id?: string;
+  hostname: string;
+  os: string;
+  ip: string;
+  online: boolean;
+  lastSeen?: string;
+  isSelf: boolean;
+}
 
 export async function GET(request: Request) {
   try {
     const config = readConfig();
-
-    // Bloquer l'accès en mode privé si non authentifié
-    if (config.settings?.securityMode === 'private') {
-      const session = getSessionFromRequest(request);
-      if (!session) {
-        return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-      }
-    }
+    const access = checkReadAccess(
+      request,
+      config.settings?.securityMode || 'public',
+      READ_ACCESS.tailscale
+    );
+    if (access.error) return access.error;
 
     const { tailscaleTailnet, tailscaleClientId, tailscaleClientSecret } = config.settings;
 
@@ -37,8 +57,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ unconfigured: true, error: 'Identifiants OAuth invalides', tailnet: tailscaleTailnet, clientId: tailscaleClientId });
     }
 
-    const tokenData = await tokenRes.json();
+    const tokenData = await tokenRes.json() as { access_token?: string };
     const accessToken = tokenData.access_token;
+    if (!accessToken) {
+      return NextResponse.json({ unconfigured: true, error: 'Réponse OAuth Tailscale invalide', tailnet: tailscaleTailnet, clientId: tailscaleClientId });
+    }
 
     // Get devices list using the access token
     const res = await fetch(`https://api.tailscale.com/api/v2/tailnet/${tailscaleTailnet}/devices`, {
@@ -56,10 +79,10 @@ export async function GET(request: Request) {
       throw new Error(`Tailscale API responded with ${res.status}`);
     }
 
-    const data = await res.json();
+    const data = await res.json() as { devices?: TailscaleApiDevice[] };
     const apiDevices = data.devices || [];
 
-    const devices = apiDevices.map((device: any) => {
+    const devices: TailscaleDeviceView[] = apiDevices.map(device => {
       let hostname = device.hostname || '';
       if (!hostname || hostname.toLowerCase() === 'localhost' || hostname.includes('iPhone') || hostname.includes('iPad')) {
         if (device.givenName) {
@@ -90,7 +113,7 @@ export async function GET(request: Request) {
       };
     });
 
-    devices.sort((a: any, b: any) => {
+    devices.sort((a, b) => {
       if (a.online && !b.online) return -1;
       if (!a.online && b.online) return 1;
       return a.hostname.localeCompare(b.hostname);

@@ -133,25 +133,6 @@ export default function HomeTab({
     setDockerActionModal({ open: false });
   };
 
-  if (loading || !config) return null;
-
-  const tabConf = config.settings?.tabs?.home || {};
-
-  const hasWidgets = (panelId: string) => {
-    const p = config?.settings?.panels?.[panelId];
-    if (!p || !p.widgets || p.widgets.length === 0) return false;
-    return p.widgets.some((w: any) => {
-      if (user && user.role !== 'admin' && user.allowedWidgets && user.allowedWidgets.length > 0) {
-        if (!user.allowedWidgets.includes(w.type)) return false;
-      }
-      const def = WIDGET_REGISTRY.find(x => x.id === w.type);
-      if (!def) return false;
-      const hideKey = getWidgetConfigKeys(w.type).hide;
-      const isGloballyHidden = (config.settings as any)?.[hideKey] ?? def.defaultHidden;
-      return !isGloballyHidden;
-    });
-  };
-
   const onUpdateWidgetHeight = useCallback(async (id: string, height: number) => {
     if (!config) return;
     const currentWidgets = config.settings.homeWidgets || [];
@@ -171,6 +152,25 @@ export default function HomeTab({
     await updateConfig({ homeWidgets: newWidgets });
   }, [config, updateConfig]);
 
+  if (loading || !config) return null;
+
+  const tabConf = config.settings?.tabs?.home || {};
+
+  const hasWidgets = (panelId: string) => {
+    const p = config?.settings?.panels?.[panelId];
+    if (!p || !p.widgets || p.widgets.length === 0) return false;
+    return p.widgets.some((w: any) => {
+      if (user && user.role !== 'admin' && user.allowedWidgets && user.allowedWidgets.length > 0) {
+        if (!user.allowedWidgets.includes(w.type)) return false;
+      }
+      const def = WIDGET_REGISTRY.find(x => x.id === w.type);
+      if (!def) return false;
+      const hideKey = getWidgetConfigKeys(w.type).hide;
+      const isGloballyHidden = (config.settings as any)?.[hideKey] ?? def.defaultHidden;
+      return !isGloballyHidden;
+    });
+  };
+
   const showLeftPanel = !tabConf.hideLeftSidebar;
   const showRightPanel = !tabConf.hideRightSidebar;
 
@@ -183,7 +183,7 @@ export default function HomeTab({
   if (showLeftPanel && (hasWidgets('home-left') || editMode)) {
     const el = (
       <aside key="left-panel" ref={leftSidebarRef} className="nd-sidebar-left" style={{ position: leftSticky ? 'sticky' : 'static' }}>
-        <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} />
+        <WidgetPanel panelId="home-left" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
       </aside>
     );
     if (leftPanelPos === 'left') leftSidebars.push(el);
@@ -193,7 +193,7 @@ export default function HomeTab({
   if (showRightPanel && (hasWidgets('home-right') || editMode)) {
     const el = (
       <aside key="right-panel" ref={rightSidebarRef} className="nd-sidebar-right" style={{ position: rightSticky ? 'sticky' : 'static' }}>
-        <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} />
+        <WidgetPanel panelId="home-right" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
       </aside>
     );
     if (rightPanelPos === 'left') leftSidebars.push(el);
@@ -235,6 +235,7 @@ export default function HomeTab({
               searchQuery={searchQuery}
               showSecretSections={showSecretSections}
               showSensitive={showSensitive}
+              isVisible={isVisible}
               onReorder={saveCategories}
               onReorderWidgets={onReorderWidgets}
               onEditCategory={(cat) => setCategoryModal({ open: true, category: cat })}
@@ -258,7 +259,7 @@ export default function HomeTab({
                   gap: 16,
                   alignItems: 'stretch'
                 }}>
-                  <WidgetPanel panelId="home-bottom" editMode={editMode} showSensitive={showSensitive} />
+                  <WidgetPanel panelId="home-bottom" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
                 </div>
               </section>
             )}

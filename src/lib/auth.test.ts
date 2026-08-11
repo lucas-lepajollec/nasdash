@@ -4,7 +4,10 @@ import {
   verifyPassword, 
   generateToken, 
   verifyToken, 
-  verifyCsrf 
+  verifyCsrf,
+  isAdmin,
+  isSecureRequest,
+  isSessionCurrentForUser
 } from './auth';
 
 describe('Auth Utility Tests', () => {
@@ -28,19 +31,65 @@ describe('Auth Utility Tests', () => {
       expect(verified).not.toBeNull();
       expect(verified?.username).toBe('testuser');
       expect(verified?.role).toBe('viewer');
+      expect(verified?.sessionVersion).toBe(0);
     });
 
     it('should return null for invalid or expired tokens', () => {
       expect(verifyToken('invalid.token.here')).toBeNull();
     });
+
+    it('should reject a token with a modified signature', () => {
+      const token = generateToken({ username: 'admin', role: 'admin' });
+      const parts = token.split('.');
+      parts[2] = `${parts[2].slice(0, -1)}${parts[2].endsWith('a') ? 'b' : 'a'}`;
+      expect(verifyToken(parts.join('.'))).toBeNull();
+    });
+
+    it('should carry and validate a non-negative session version', () => {
+      const token = generateToken({ username: 'viewer', role: 'viewer', sessionVersion: 4 });
+      expect(verifyToken(token)?.sessionVersion).toBe(4);
+
+      const invalidToken = generateToken({ username: 'viewer', role: 'viewer', sessionVersion: -1 });
+      expect(verifyToken(invalidToken)).toBeNull();
+    });
+
+    it('should revoke a token when the stored session version changes', () => {
+      const payload = verifyToken(generateToken({ username: 'viewer', role: 'viewer', sessionVersion: 2 }));
+      expect(payload).not.toBeNull();
+
+      const user = {
+        username: 'viewer',
+        role: 'viewer' as const,
+        passwordHash: 'unused:test-hash',
+        allowedTabs: [],
+        allowedWidgets: [],
+        sessionVersion: 3,
+      };
+
+      expect(isSessionCurrentForUser(payload!, user)).toBe(false);
+      expect(isSessionCurrentForUser({ ...payload!, sessionVersion: 3 }, user)).toBe(true);
+    });
+  });
+
+  describe('Authorization', () => {
+    it('should never grant admin rights without an authenticated admin session', () => {
+      const req = { headers: new Map<string, string>() };
+      expect(isAdmin(req)).toBe(false);
+    });
+
+    it('should detect HTTPS behind a trusted reverse proxy header', () => {
+      const headers = new Map([['x-forwarded-proto', 'https']]);
+      expect(isSecureRequest({ headers })).toBe(true);
+      expect(isSecureRequest({ url: 'http://localhost' })).toBe(false);
+    });
   });
 
   describe('CSRF Validation', () => {
     it('should allow GET, HEAD, OPTIONS requests without CSRF verification', () => {
-      const reqGet = { method: 'GET', url: 'http://localhost/api/test', headers: new Map() } as any;
+      const reqGet = { method: 'GET', url: 'http://localhost/api/test', headers: new Map<string, string>() };
       expect(verifyCsrf(reqGet)).toBe(true);
 
-      const reqHead = { method: 'HEAD', url: 'http://localhost/api/test', headers: new Map() } as any;
+      const reqHead = { method: 'HEAD', url: 'http://localhost/api/test', headers: new Map<string, string>() };
       expect(verifyCsrf(reqHead)).toBe(true);
     });
 
@@ -53,7 +102,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST', 
         url: 'http://localhost/api/test', 
         headers 
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(false);
     });
@@ -67,7 +116,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(false);
     });
@@ -81,7 +130,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(true);
     });
@@ -95,7 +144,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(false);
     });
@@ -109,7 +158,7 @@ describe('Auth Utility Tests', () => {
         method: 'POST',
         url: 'http://localhost/api/test',
         headers
-      } as any;
+      };
 
       expect(verifyCsrf(req)).toBe(true);
     });

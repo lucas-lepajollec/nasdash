@@ -1,27 +1,19 @@
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import { safeWriteFileSync } from './config';
+import { getDataPath } from './dataDirectory';
+import { readOrCreatePersistentSecret } from './persistentSecret';
 
-const KEY_FILE = path.join(process.cwd(), 'data', 'encryption.key');
+const KEY_FILE = getDataPath('encryption.key');
 
 /**
  * Obtient ou génère une clé de chiffrement stable persistée sur le disque
  * (dans le volume monté /data) s'il n'y a pas de NASDASH_JWT_SECRET défini.
  */
 function getEncryptionKey(): Buffer {
-  let secret = process.env.NASDASH_JWT_SECRET;
+  let secret = process.env.NASDASH_JWT_SECRET?.trim();
   
   if (!secret) {
     try {
-      if (fs.existsSync(KEY_FILE)) {
-        secret = fs.readFileSync(KEY_FILE, 'utf-8').trim();
-      } else {
-        secret = crypto.randomBytes(32).toString('hex');
-        const dir = path.dirname(KEY_FILE);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        safeWriteFileSync(KEY_FILE, secret, 'utf-8');
-      }
+      secret = readOrCreatePersistentSecret(KEY_FILE);
     } catch (e) {
       console.error('⚠️ ERREUR CRITIQUE : Impossible de lire ou d\'écrire la clé de chiffrement persistée.', e);
       throw new Error(
@@ -56,7 +48,8 @@ export function encrypt(text: string): string {
     return `enc:aes256:${iv.toString('hex')}:${tag}:${encrypted}`;
   } catch (e) {
     console.error('Erreur de chiffrement :', e);
-    return text; // Retourne le texte en clair en cas d'échec pour ne pas bloquer l'écriture
+    // Ne jamais enregistrer silencieusement un secret en clair.
+    throw e instanceof Error ? e : new Error('Impossible de chiffrer la valeur sensible.');
   }
 }
 
@@ -73,8 +66,11 @@ export function decrypt(text: string): string {
     const key = getEncryptionKey();
     const iv = Buffer.from(ivHex, 'hex');
     const tag = Buffer.from(tagHex, 'hex');
+    if (iv.length !== 12 || tag.length !== 16 || !/^(?:[0-9a-f]{2})+$/i.test(encryptedText)) {
+      return '';
+    }
     
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: 16 });
     decipher.setAuthTag(tag);
     
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');

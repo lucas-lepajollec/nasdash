@@ -1,10 +1,4 @@
-# ---- Stage 1: Install dependencies ----
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
-
-# ---- Stage 2: Build ----
+# ---- Stage 1: Build ----
 FROM node:22-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
@@ -14,7 +8,7 @@ COPY . .
 RUN mkdir -p data/logos
 RUN npm run build
 
-# ---- Stage 3: Production runner ----
+# ---- Stage 2: Production runner ----
 FROM node:22-alpine AS runner
 WORKDIR /app
 
@@ -25,7 +19,7 @@ ENV HOSTNAME="0.0.0.0"
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # Copy standalone output
 COPY --from=builder /app/.next/standalone ./
@@ -39,6 +33,7 @@ COPY --from=builder /app/data/services.example.json /app/defaults/services.examp
 COPY --from=builder /app/data/topology.example.json /app/defaults/topology.example.json
 COPY --from=builder /app/data/calendar.example.json /app/defaults/calendar.example.json
 COPY --from=builder /app/data/custom_tabs.example.json /app/defaults/custom_tabs.example.json
+COPY --from=builder /app/data/users.example.json /app/defaults/users.example.json
 
 # Copy entrypoint script
 COPY --from=builder /app/docker-entrypoint.sh /app/docker-entrypoint.sh
@@ -52,6 +47,8 @@ USER nextjs
 
 EXPOSE 2504
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget --quiet --spider "http://127.0.0.1:${PORT}/api/health" || exit 1
+
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "server.js"]
-

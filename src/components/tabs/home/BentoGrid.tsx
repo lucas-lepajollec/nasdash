@@ -32,6 +32,7 @@ export interface BentoGridProps {
   searchQuery: string;
   showSecretSections: boolean;
   showSensitive: boolean;
+  isVisible: boolean;
   onReorder: (newCategories: Category[]) => void;
   onReorderWidgets?: (newWidgets: (CustomTabWidgetInfo & { id: string, order: number })[]) => void;
   onEditCategory: (cat: Category) => void;
@@ -42,7 +43,7 @@ export interface BentoGridProps {
   onDeleteSlot: (slotId: number) => void;
 }
 
-const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, searchQuery, showSecretSections, showSensitive, onReorder, onReorderWidgets, onEditCategory, onDeleteCategory, onDeleteWidget, onUpdateWidgetHeight, onAddService, onDeleteSlot }: BentoGridProps) => {
+const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, searchQuery, showSecretSections, showSensitive, isVisible, onReorder, onReorderWidgets, onEditCategory, onDeleteCategory, onDeleteWidget, onUpdateWidgetHeight, onAddService, onDeleteSlot }: BentoGridProps) => {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
@@ -290,6 +291,7 @@ const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, 
                         widget={slot.item.data} 
                         editMode={editMode} 
                         showSensitive={showSensitive}
+                        isVisible={isVisible}
                         onDelete={(id) => setDeleteItem({ type: 'widget', id })} 
                         onUpdateHeight={onUpdateWidgetHeight} 
                       />
@@ -316,7 +318,7 @@ const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, 
           </div>
         ) : activeItem && !activeItem.isCategory ? (
           <div style={{ transform: 'scale(1.02)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', borderRadius: 'var(--nd-card-radius)', opacity: 0.9 }}>
-            <HomeWidgetRenderer widget={activeItem.data} editMode={editMode} onDelete={() => {}} />
+            <HomeWidgetRenderer widget={activeItem.data} editMode={editMode} isVisible={isVisible} onDelete={() => {}} />
           </div>
         ) : null}
         {activeService ? (

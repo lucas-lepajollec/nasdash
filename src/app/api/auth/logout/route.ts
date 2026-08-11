@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { isSecureRequest } from '@/lib/auth';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const response = NextResponse.json({ success: true });
 
   // Supprimer le cookie de session
@@ -8,7 +9,7 @@ export async function POST() {
     name: 'nasdash_session',
     value: '',
     httpOnly: true,
-    secure: false,
+    secure: isSecureRequest(req),
     path: '/',
     maxAge: 0, // Expirer immédiatement
     sameSite: 'lax'

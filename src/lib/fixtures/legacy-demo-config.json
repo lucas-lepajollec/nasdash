@@ -1,0 +1,137 @@
+{
+  "settings": {
+    "title": "Legacy demo",
+    "showMonitor": true,
+    "totalSlots": 10,
+    "hiddenTabs": [],
+    "theme": "nasdash",
+    "dockPosition": "right",
+    "tabOrder": [
+      "dashboard",
+      "docker",
+      "networks",
+      "custom_supervision"
+    ],
+    "tabIcons": {
+      "custom_supervision": "chart"
+    },
+    "hiddenSections": [],
+    "hideHeaderTitle": false,
+    "hideHeaderSearch": false,
+    "hideHeaderMenu": false,
+    "headerLayoutDesktop": {
+      "left": "title",
+      "center": "menu",
+      "right": "search",
+      "splitMenuAround": "none"
+    },
+    "headerLayoutMobile": {
+      "left": "title",
+      "center": "search"
+    },
+    "showHeaderMenuIcons": false,
+    "showPingDetails": true,
+    "pingIndicatorMode": "all",
+    "hideDevices": false,
+    "hideQuickStats": false,
+    "hideTailscaleStatus": false,
+    "hideDockerActions": false,
+    "hideClock": false,
+    "hideCalendar": false,
+    "hideWeather": false,
+    "hideNetworkGraph": false,
+    "hideDockerContainers": false,
+    "hideWidgetTitles": false,
+    "hideDock": false,
+    "customCss": "",
+    "enablePerfMonitor": false,
+    "backgroundImage": "",
+    "borderRadius": 12,
+    "cardOpacity": 0.8,
+    "globalFont": "Outfit",
+    "titleMobile": "",
+    "titleLogo": "",
+    "titleFont": "outfit",
+    "titleAnimation": "spotlight-silver",
+    "clockDesign": "default",
+    "clockTimezone": "Europe/Paris",
+    "calendarUrl": "",
+    "dockerContainersStyle": "grid",
+    "dockerContainersAutoScroll": false,
+    "allowDockerActions": true,
+    "securityMode": "public",
+    "mobileWallpaper": "",
+    "mobileTheme": "",
+    "mobileGlobalFont": "",
+    "mobileBorderRadius": 12,
+    "mobileCardOpacity": 0.8,
+    "mobileTitleAnimation": "none",
+    "weatherLocation": {
+      "lat": 48.85341,
+      "lon": 2.3488,
+      "name": "Paris"
+    },
+    "weatherWidgetStyle": "default",
+    "tabs": {
+      "home": {
+        "hideClock": false,
+        "hideCalendar": false,
+        "hideWeather": false
+      },
+      "docker": {
+        "hideClock": false,
+        "hideCalendar": false,
+        "hideWeather": false
+      },
+      "networks": {
+        "hideClock": false,
+        "hideCalendar": false,
+        "hideWeather": false
+      }
+    },
+    "panels": {
+      "home-left": {
+        "widgets": [
+          {
+            "id": "quickstats-1",
+            "type": "quickstats",
+            "props": {}
+          },
+          {
+            "id": "weather-1",
+            "type": "weather",
+            "props": {}
+          }
+        ]
+      },
+      "docker-widgets": {
+        "widgets": [
+          {
+            "id": "dockercontainers-1",
+            "type": "dockercontainers",
+            "props": {}
+          },
+          {
+            "id": "dockeractions-1",
+            "type": "dockeractions",
+            "props": {}
+          }
+        ]
+      }
+    }
+  },
+  "appearanceProfiles": [
+    {
+      "id": "profile-neon-cyberpunk",
+      "name": "Neon Cyberpunk",
+      "settings": {
+        "theme": "nasdash",
+        "globalFont": "Outfit",
+        "borderRadius": 16,
+        "cardOpacity": 0.85,
+        "titleAnimation": "spotlight-silver",
+        "customCss": ".nd-card { border: 1px solid rgba(0, 229, 255, 0.4) !important; }"
+      }
+    }
+  ]
+}

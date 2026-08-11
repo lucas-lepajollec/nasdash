@@ -2,11 +2,34 @@ import { NextResponse } from 'next/server';
 import { readConfig, writeCalendar } from '@/lib/config';
 import { v4 as uuidv4 } from 'uuid';
 import { checkAdmin } from '@/lib/auth';
+import { checkReadAccess, READ_ACCESS } from '@/lib/access';
+import {
+  RequestValidationError,
+  assertSafeIdentifier,
+  readBoolean,
+  readJsonObject,
+  readString,
+} from '@/lib/requestValidation';
 
 export const dynamic = 'force-dynamic';
+const MAX_CALENDAR_BODY_BYTES = 64 * 1024;
 
-export async function GET() {
+function validationResponse(error: unknown) {
+  if (error instanceof RequestValidationError) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+  return null;
+}
+
+export async function GET(req: Request) {
   const config = readConfig();
+  const access = checkReadAccess(
+    req,
+    config.settings?.securityMode || 'public',
+    READ_ACCESS.calendar
+  );
+  if (access.error) return access.error;
+
   return NextResponse.json(config.localEvents || []);
 }
 
@@ -16,25 +39,36 @@ export async function POST(req: Request) {
 
 
   try {
-    const body = await req.json();
+    const body = await readJsonObject(req, MAX_CALENDAR_BODY_BYTES);
     const config = readConfig();
     if (!config.localEvents) config.localEvents = [];
 
+    const title = readString(body, 'title', { maxLength: 200 });
+    const start = readString(body, 'start', { required: true, maxLength: 64 })!;
+    const end = readString(body, 'end', { maxLength: 64 });
+    const description = readString(body, 'description', { maxLength: 4000 });
+    const isAllDay = readBoolean(body, 'isAllDay');
+
     const newEvent = {
       id: uuidv4(),
-      title: body.title || 'Nouvel événement',
-      start: body.start,
-      end: body.end,
-      description: body.description,
-      isAllDay: body.isAllDay || false
+      title: title || 'Nouvel événement',
+      start,
+      end,
+      description,
+      isAllDay: isAllDay || false
     };
 
     config.localEvents.push(newEvent);
-    writeCalendar(config.localEvents);
+    if (!writeCalendar(config.localEvents)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer le calendrier.' }, { status: 500 });
+    }
 
     return NextResponse.json(newEvent, { status: 201 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const response = validationResponse(e);
+    if (response) return response;
+    console.error('Erreur API Calendar POST:', e);
+    return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }
 
@@ -44,23 +78,35 @@ export async function PUT(req: Request) {
 
 
   try {
-    const body = await req.json();
+    const body = await readJsonObject(req, MAX_CALENDAR_BODY_BYTES);
+    const id = assertSafeIdentifier(readString(body, 'id', { required: true, maxLength: 128 })!);
     const config = readConfig();
     if (!config.localEvents) config.localEvents = [];
 
-    const event = config.localEvents.find((e: any) => e.id === body.id);
+    const event = config.localEvents.find(e => e.id === id);
     if (!event) return NextResponse.json({ error: 'Événement non trouvé' }, { status: 404 });
 
-    if (body.title !== undefined) event.title = body.title;
-    if (body.start !== undefined) event.start = body.start;
-    if (body.end !== undefined) event.end = body.end;
-    if (body.description !== undefined) event.description = body.description;
-    if (body.isAllDay !== undefined) event.isAllDay = body.isAllDay;
+    const title = readString(body, 'title', { maxLength: 200 });
+    const start = readString(body, 'start', { maxLength: 64 });
+    const end = readString(body, 'end', { maxLength: 64 });
+    const description = readString(body, 'description', { maxLength: 4000 });
+    const isAllDay = readBoolean(body, 'isAllDay');
 
-    writeCalendar(config.localEvents);
+    if (title !== undefined) event.title = title;
+    if (start !== undefined) event.start = start;
+    if (end !== undefined) event.end = end;
+    if (description !== undefined) event.description = description;
+    if (isAllDay !== undefined) event.isAllDay = isAllDay;
+
+    if (!writeCalendar(config.localEvents)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer le calendrier.' }, { status: 500 });
+    }
     return NextResponse.json(event);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const response = validationResponse(e);
+    if (response) return response;
+    console.error('Erreur API Calendar PUT:', e);
+    return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }
 
@@ -74,15 +120,21 @@ export async function DELETE(req: Request) {
     const id = searchParams.get('id');
 
     if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 });
+    assertSafeIdentifier(id);
 
     const config = readConfig();
     if (!config.localEvents) config.localEvents = [];
 
-    const filtered = config.localEvents.filter((e: any) => e.id !== id);
-    writeCalendar(filtered);
+    const filtered = config.localEvents.filter(e => e.id !== id);
+    if (!writeCalendar(filtered)) {
+      return NextResponse.json({ error: 'Impossible d’enregistrer le calendrier.' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const response = validationResponse(e);
+    if (response) return response;
+    console.error('Erreur API Calendar DELETE:', e);
+    return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

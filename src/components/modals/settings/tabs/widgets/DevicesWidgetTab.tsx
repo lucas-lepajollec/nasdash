@@ -4,7 +4,7 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
-import { Pencil, Trash2, Plus, HardDrive, Monitor, ShieldAlert } from 'lucide-react';
+import { Pencil, Trash2, Plus, HardDrive } from 'lucide-react';
 import ConfirmModal from '../../../ConfirmModal';
 import { Device } from '@/lib/types';
 import { Emoji } from '../../../../shared/Emoji';
@@ -70,7 +70,7 @@ export function DevicesWidgetTab() {
             {devicesList.length === 0 ? (
               <div style={{ padding: '24px 12px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                  Aucun appareil connecté pour le moment. Cliquez sur "Ajouter" pour lier un serveur.
+                  Aucun appareil connecté pour le moment. Cliquez sur &quot;Ajouter&quot; pour lier un serveur.
                 </p>
               </div>
             ) : (

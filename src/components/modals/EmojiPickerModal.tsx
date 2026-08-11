@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Ban, Search, Palette } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -8,6 +8,7 @@ import { EMOJI_CATEGORIES } from '@/lib/constants';
 import { Emoji, EMOJI_TO_LUCIDE, normalizeEmoji } from '../shared/Emoji';
 import { useConfig } from '@/hooks/useConfig';
 import ThemeGalleryView from './ThemeGalleryView';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface EmojiPickerModalProps {
   initialEmoji?: string;
@@ -36,6 +37,8 @@ export default function EmojiPickerModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [emoji, setEmoji] = useState(initialEmoji || '');
   const [showGallery, setShowGallery] = useState(false);
+  const dialogRef = useDialogAccessibility(onClose);
+  const galleryDialogRef = useDialogAccessibility(() => setShowGallery(false), showGallery);
 
   // Filter Emojis semantically
   const filteredEmojis = useMemo(() => {
@@ -64,30 +67,19 @@ export default function EmojiPickerModal({
     return ALL_LUCIDE_ICONS.filter(name => name.toLowerCase().includes(q));
   }, [searchQuery]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
   const handleSelect = (e: string) => {
     setEmoji(e);
     onSelect(e);
     onClose();
   };
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) return null;
-
   return createPortal(
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ zIndex: 10000 }}>
-      <div className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 440, maxWidth: '95%', maxHeight: '80vh', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={modalTitle} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 440, maxWidth: '95%', maxHeight: '80vh', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <h3 style={{ fontSize: '0.88rem', fontWeight: 700, margin: 0, color: 'var(--nd-text)' }}>{modalTitle}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', padding: 4 }}>
+          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
@@ -97,6 +89,8 @@ export default function EmojiPickerModal({
           <Search size={14} style={{ position: 'absolute', left: 10, color: 'var(--nd-text-muted)' }} />
           <input
             type="text"
+            aria-label={isLucideActive ? "Rechercher une icône" : "Rechercher un émoji"}
+            data-dialog-autofocus
             placeholder={isLucideActive ? "Rechercher une icône (ex: server, cloud, home...)" : "Rechercher un émoji (ex: maison, dev, café...)"}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -246,7 +240,7 @@ export default function EmojiPickerModal({
 
         {showGallery && (
           <div className="nd-modal-overlay" onClick={() => setShowGallery(false)} style={{ zIndex: 10001 }}>
-            <div className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 850, maxWidth: '95%', height: '85vh', padding: 0, overflow: 'hidden' }}>
+            <div ref={galleryDialogRef} role="dialog" aria-modal="true" aria-label="Galerie des icônes" tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 850, maxWidth: '95%', height: '85vh', padding: 0, overflow: 'hidden' }}>
               <ThemeGalleryView
                 currentTheme={config?.settings?.theme || 'default'}
                 onSelectTheme={async () => {}}

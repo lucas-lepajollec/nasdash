@@ -1,21 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  X, Palette, Layers, Sliders, Clipboard, Check, 
-  Monitor, Activity, Shield, Cpu, Info, CheckCircle2, ChevronRight, Container, Calendar, Trash2,
-  Home, Layout, ArrowUp, ArrowDown, Eye, EyeOff, Ban, Cloud, Code
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
-import { useTabs } from '@/hooks/useTabs';
-import { AppearanceProfile } from '@/lib/types';
-import CustomSelect from '../shared/CustomSelect';
-import ConfirmModal from './ConfirmModal';
-import EmojiPickerModal from './EmojiPickerModal';
 import { Emoji } from '../shared/Emoji';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface SettingsModalProps {
   onClose: () => void;
+  restoreFocus?: () => HTMLElement | null;
 }
 
 export const THEME_PRESETS: Record<string, {
@@ -306,8 +299,6 @@ export const THEME_PRESETS: Record<string, {
   }
 };
 
-import { ToggleSwitch, ToggleSwitchProps } from './settings/shared/ToggleSwitch';
-import { SettingsAccordion, SettingsAccordionProps } from './settings/shared/SettingsAccordion';
 import { SettingsSidebar } from './settings/SettingsSidebar';
 import { AppearanceTab } from './settings/tabs/AppearanceTab';
 import { HeaderTab } from './settings/tabs/HeaderTab';
@@ -334,9 +325,9 @@ import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab'
 
 import ThemeGalleryView from './ThemeGalleryView';
 
-export default function SettingsModal({ onClose }: SettingsModalProps) {
+export default function SettingsModal({ onClose, restoreFocus }: SettingsModalProps) {
+  const dialogRef = useDialogAccessibility(onClose, true, restoreFocus);
   const { config, updateConfig, settingsModal } = useConfig();
-  const { tabs } = useTabs();
   const [isThemeGalleryOpen, setIsThemeGalleryOpen] = useState(false);
   const [galleryInitialTab, setGalleryInitialTab] = useState<'themes' | 'emojis'>('themes');
 
@@ -363,32 +354,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     await updateConfig({ theme: newTheme, mode: isLight ? 'light' : 'dark' });
   };
   
-  const tabOrder = (() => {
-    const savedOrder = config?.settings?.tabOrder || [];
-    const savedSet = new Set(savedOrder);
-    const newTabs = tabs.map(t => t.id).filter(id => !savedSet.has(id));
-    return savedOrder.length > 0 ? [...savedOrder, ...newTabs] : tabs.map(t => t.id);
-  })();
-  const hiddenTabs = config?.settings?.hiddenTabs || [];
-
-  const handleToggleTabHidden = async (id: string) => {
-    const newHidden = hiddenTabs.includes(id) 
-      ? hiddenTabs.filter((h: string) => h !== id)
-      : [...hiddenTabs, id];
-    await updateConfig({ hiddenTabs: newHidden });
-  };
-
-  const handleMoveTab = async (id: string, direction: 'up' | 'down') => {
-    const currentIndex = tabOrder.indexOf(id);
-    if (currentIndex === -1) return;
-    const newOrder = [...tabOrder];
-    if (direction === 'up' && currentIndex > 0) {
-      [newOrder[currentIndex - 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex - 1]];
-    } else if (direction === 'down' && currentIndex < newOrder.length - 1) {
-      [newOrder[currentIndex + 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex + 1]];
-    }
-    await updateConfig({ tabOrder: newOrder });
-  };
   const [editingTabId, setEditingTabId] = useState<string | undefined>(settingsModal.targetCustomTabId || undefined);
   const [activeTab, setActiveTab] = useState<string | null>(() => {
     if (settingsModal.targetTab) return settingsModal.targetTab;
@@ -407,178 +372,14 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     }
   }, [activeTab]);
 
-  const [mode, setMode] = useState<'light' | 'dark'>('dark');
-  const [theme, setTheme] = useState(config?.settings?.theme || 'nasdash');
-
-  // Accordions states
-  const [openAccordions, setOpenAccordions] = useState<string[]>(['theme']);
-
-  const toggleAccordion = (id: string) => {
-    setOpenAccordions(prev => prev.includes(id) ? [] : [id]);
-  };
-
-  // Design system states
-  const [globalFont, setGlobalFont] = useState(config?.settings?.globalFont || 'Outfit');
-  const [borderRadius, setBorderRadius] = useState(config?.settings?.borderRadius ?? 12);
-  const [cardOpacity, setCardOpacity] = useState(config?.settings?.cardOpacity ?? 0.8);
-
-  // Emoji Picker state
-  const [iconPickerTabId, setIconPickerTabId] = useState<string | null>(null);
-
-  // Widget positioning & ordering states
-  const [devicesSidebar, setDevicesSidebar] = useState(config?.settings?.devicesSidebar || 'left');
-  const [devicesOrder, setDevicesOrder] = useState(config?.settings?.devicesOrder ?? 0);
-
-  const [quickStatsSidebar, setQuickStatsSidebar] = useState(config?.settings?.quickStatsSidebar || 'right');
-  const [quickStatsOrder, setQuickStatsOrder] = useState(config?.settings?.quickStatsOrder ?? 1);
-
-  const [tailscaleSidebar, setTailscaleSidebar] = useState(config?.settings?.tailscaleSidebar || 'right');
-  const [tailscaleOrder, setTailscaleOrder] = useState(config?.settings?.tailscaleOrder ?? 2);
-
-  const [dockerActionsSidebar, setDockerActionsSidebar] = useState(config?.settings?.dockerActionsSidebar || 'right');
-  const [dockerActionsOrder, setDockerActionsOrder] = useState(config?.settings?.dockerActionsOrder ?? 3);
-
-  const [dockerContainersSidebar, setDockerContainersSidebar] = useState(config?.settings?.dockerContainersSidebar || 'right');
-  const [dockerContainersOrder, setDockerContainersOrder] = useState(config?.settings?.dockerContainersOrder ?? 4);
-
-  const [clockSidebar, setClockSidebar] = useState(config?.settings?.clockSidebar || 'left');
-  const [clockOrder, setClockOrder] = useState(config?.settings?.clockOrder ?? -1);
-  const [clockDesign, setClockDesign] = useState(config?.settings?.clockDesign || 'default');
-  const [clockTimezone, setClockTimezone] = useState(config?.settings?.clockTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-
-  const [calendarSidebar, setCalendarSidebar] = useState(config?.settings?.calendarSidebar || 'left');
-  const [calendarOrder, setCalendarOrder] = useState(config?.settings?.calendarOrder ?? -2);
-
-  // Sidebar visibility states
-  const hideDevices = !!config?.settings?.hideDevices;
-  const hideDockerContainers = config?.settings?.hideDockerContainers ?? true;
-  const hideQuickStats = !!config?.settings?.hideQuickStats;
-  const hideTailscaleStatus = !!config?.settings?.hideTailscaleStatus;
-  const hideDockerActions = config?.settings?.hideDockerActions ?? true;
-  const hideClock = config?.settings?.hideClock ?? false;
-  const hideCalendar = config?.settings?.hideCalendar ?? true;
-  const hideWeather = config?.settings?.hideWeather ?? false;
-
-  const [weatherWidgetStyle, setWeatherWidgetStyle] = useState<'default' | 'currentOnly' | 'minimal' | 'extended'>(config?.settings?.weatherWidgetStyle || 'default');
-  const [weatherSearchQuery, setWeatherSearchQuery] = useState('');
-  const [weatherSearchResults, setWeatherSearchResults] = useState<any[]>([]);
-  const [isSearchingWeather, setIsSearchingWeather] = useState(false);
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [cityToDelete, setCityToDelete] = useState<{id: string, name: string} | null>(null);
-  const [hideWidgetTitles, setHideWidgetTitles] = useState(config?.settings?.hideWidgetTitles ?? false);
-  const [calendarUrl, setCalendarUrl] = useState(config?.settings?.calendarUrl || '');
-  const [customTabToEdit, setCustomTabToEdit] = useState<string | null>(settingsModal.targetCustomTabId || null);
-
-  const [tailscaleTailnet, setTailscaleTailnet] = useState(config?.settings?.tailscaleTailnet || '');
-  const [tailscaleClientId, setTailscaleClientId] = useState(config?.settings?.tailscaleClientId || '');
-  const [tailscaleClientSecret, setTailscaleClientSecret] = useState(config?.settings?.tailscaleClientSecret ? '********' : '');
-
-  // Modal / status states
-  const [copied, setCopied] = useState(false);
-
-  const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(false);
-  const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (config) {
-      setGlobalFont(config.settings?.globalFont || 'Outfit');
-      setBorderRadius(config.settings?.borderRadius ?? 12);
-      setCardOpacity(config.settings?.cardOpacity ?? 0.8);
-      setDevicesSidebar(config.settings?.devicesSidebar || 'left');
-      setDevicesOrder(config.settings?.devicesOrder ?? 0);
-      setQuickStatsSidebar(config.settings?.quickStatsSidebar || 'right');
-      setQuickStatsOrder(config.settings?.quickStatsOrder ?? 1);
-      setTailscaleSidebar(config.settings?.tailscaleSidebar || 'right');
-      setTailscaleOrder(config.settings?.tailscaleOrder ?? 2);
-      setDockerActionsSidebar(config.settings?.dockerActionsSidebar || 'right');
-      setDockerActionsOrder(config.settings?.dockerActionsOrder ?? 3);
-      setDockerContainersSidebar(config.settings?.dockerContainersSidebar || 'right');
-      setDockerContainersOrder(config.settings?.dockerContainersOrder ?? 4);
-      setClockSidebar(config.settings?.clockSidebar || 'left');
-      setClockOrder(config.settings?.clockOrder ?? -1);
-      setClockDesign(config.settings?.clockDesign || 'default');
-      setClockTimezone(config.settings?.clockTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-      setWeatherWidgetStyle(config.settings?.weatherWidgetStyle || 'default');
-      if (config.settings?.calendarSidebar !== undefined) setCalendarSidebar(config.settings.calendarSidebar);
-      if (config.settings?.calendarOrder !== undefined) setCalendarOrder(config.settings.calendarOrder);
-      if (config.settings?.calendarUrl !== undefined) setCalendarUrl(config.settings.calendarUrl);
-      if (config.settings?.tailscaleTailnet !== undefined) setTailscaleTailnet(config.settings.tailscaleTailnet);
-      if (config.settings?.tailscaleClientId !== undefined) setTailscaleClientId(config.settings.tailscaleClientId);
-    }
-  }, [config]);
-
-  // Removed hardcoded setActiveTab('apparence') here so we don't overwrite localStorage
-
-
-
-  const handleToggleWidget = async (key: string, value: boolean) => {
-    await updateConfig({ [key]: value });
-  };
-
-
-  const searchWeatherCity = async () => {
-    if (!weatherSearchQuery.trim()) return;
-    setIsSearchingWeather(true);
-    try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=fr&format=json`);
-      if (!res.ok) throw new Error('Search failed');
-      const data = await res.json();
-      setWeatherSearchResults(data.results || []);
-    } catch (e) {
-      console.error(e);
-      setWeatherSearchResults([]);
-    } finally {
-      setIsSearchingWeather(false);
-    }
-  };
-
-  const selectWeatherCity = async (city: any) => {
-    const newId = Math.random().toString(36).substring(2, 9);
-    const loc = { id: newId, lat: city.latitude, lon: city.longitude, name: city.name };
-    const currentLocations = config?.settings?.weatherLocations || [];
-    
-    // Migrate old single location if present and list is empty
-    if (currentLocations.length === 0 && config?.settings?.weatherLocation) {
-      currentLocations.push({ id: 'legacy-1', ...config.settings.weatherLocation });
-    }
-
-    const newLocations = [...currentLocations, loc];
-    
-    // Set as active if it's the first one
-    const newActiveId = currentLocations.length === 0 ? newId : (config?.settings?.activeWeatherLocationId || currentLocations[0]?.id || newId);
-
-    await updateConfig({ 
-      weatherLocations: newLocations,
-      activeWeatherLocationId: newActiveId
-    });
-    
-    setWeatherSearchResults([]);
-    setWeatherSearchQuery('');
-  };
-
-  const removeWeatherCity = async (idToRemove: string) => {
-    const currentLocations = config?.settings?.weatherLocations || [];
-    const newLocations = currentLocations.filter(loc => loc.id !== idToRemove);
-    
-    let newActiveId = config?.settings?.activeWeatherLocationId;
-    if (newActiveId === idToRemove) {
-      newActiveId = newLocations.length > 0 ? newLocations[0].id : undefined;
-    }
-
-    await updateConfig({ 
-      weatherLocations: newLocations,
-      activeWeatherLocationId: newActiveId
-    });
-  };
-
-  const setActiveWeatherCity = async (id: string) => {
-    await updateConfig({ activeWeatherLocationId: id });
-  };
-
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div 
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Paramètres NasDash"
+        tabIndex={-1}
         className={`nd-modal nd-settings-modal nd-animate-in ${activeTab ? 'nd-settings-modal--detail' : 'nd-settings-modal--menu'}`}
         onClick={(e) => e.stopPropagation()} 
         style={{ 
@@ -655,7 +456,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   {currentTab === 'tabs-docker' && <><Emoji emoji="🐳" /> Paramètres — Onglet Docker</>}
                   {currentTab === 'tabs-networks' && <><Emoji emoji="📶" /> Paramètres — Onglet Réseaux</>}
                   {currentTab === 'widget-devices' && <><Emoji emoji="🖥️" /> Configuration — Appareils</>}
-                  {currentTab === 'widget-quickstats' && <><Emoji emoji="📊" /> Configuration — Vue d'ensemble</>}
+                  {currentTab === 'widget-quickstats' && <><Emoji emoji="📊" /> Configuration — Vue d&apos;ensemble</>}
                   {currentTab === 'widget-tailscale' && <><Emoji emoji="🛡️" /> Configuration — VPN Tailscale</>}
                   {currentTab === 'widget-dockeractions' && <><Emoji emoji="🐳" /> Configuration — Actions Docker</>}
                   {currentTab === 'widget-clock' && <><Emoji emoji="🕒" /> Configuration — Horloge / Date</>}
@@ -664,12 +465,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                   {currentTab === 'widget-networkgraph' && <><Emoji emoji="📶" /> Configuration — Graphe Réseau</>}
                   {currentTab === 'widget-dockercontainers' && <><Emoji emoji="🐳" /> Configuration — Conteneurs Docker</>}
                   {currentTab === 'custom-tabs' && <><Emoji emoji="🎨" /> Onglets Personnalisés</>}
-                  {currentTab === 'custom-tab-builder' && <><Emoji emoji="🛠️" /> Éditeur d'Onglet</>}
+                  {currentTab === 'custom-tab-builder' && <><Emoji emoji="🛠️" /> Éditeur d&apos;Onglet</>}
                 </>
               )}
             </h3>
 
-            <button className="nd-settings-close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
+            <button aria-label="Fermer les paramètres" className="nd-settings-close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', flexShrink: 0, padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={(e) => e.currentTarget.style.background = 'none'}>
               <X size={18} />
             </button>
           </div>
@@ -773,37 +574,6 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         </div>
       </div>
 
-      {iconPickerTabId && (
-        <EmojiPickerModal
-          title={`Icône de l'onglet ${tabs.find(t => t.id === iconPickerTabId)?.name || ''}`}
-          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] !== undefined ? config?.settings?.tabIcons?.[iconPickerTabId] : (tabs.find(t => t.id === iconPickerTabId)?.icon || '')}
-          onSelect={(emoji) => {
-            updateConfig({ tabIcons: { ...(config?.settings?.tabIcons || {}), [iconPickerTabId]: emoji } });
-          }}
-          onClose={() => setIconPickerTabId(null)}
-        />
-      )}
-
-
-
-
-      {/* City Delete Confirmation */}
-      {cityToDelete && (
-        <ConfirmModal
-          isOpen={true}
-          onClose={() => setCityToDelete(null)}
-          onConfirm={() => {
-            if (cityToDelete) {
-              removeWeatherCity(cityToDelete.id);
-              setCityToDelete(null);
-            }
-          }}
-          title="Supprimer la ville ?"
-          description={`Voulez-vous vraiment supprimer la ville de ${cityToDelete.name} ?`}
-          confirmLabel="Supprimer"
-          cancelLabel="Annuler"
-        />
-      )}
     </div>
   );
 }

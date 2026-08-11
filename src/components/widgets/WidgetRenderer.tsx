@@ -22,6 +22,7 @@ interface WidgetRendererProps {
   widgetInstanceId?: string;
   widgetProps?: any;
   onUpdateProps?: (newProps: any) => void;
+  isVisible?: boolean;
 }
 
 export function WidgetRenderer({ 
@@ -32,7 +33,8 @@ export function WidgetRenderer({
   categories = [],
   widgetInstanceId,
   widgetProps,
-  onUpdateProps
+  onUpdateProps,
+  isVisible = true,
 }: WidgetRendererProps) {
   const { config, setDeviceModal, deleteDevice, reorderDevices } = useConfig();
 
@@ -42,7 +44,7 @@ export function WidgetRenderer({
       case 'clock':
         return <ClockWidget editMode={editMode} />;
       case 'weather':
-        return <WeatherWidget editMode={editMode} />;
+        return <WeatherWidget editMode={editMode} isVisible={isVisible} />;
       case 'quickstats':
         // Fallback to config categories if not provided
         const finalCategories = categories.length > 0 ? categories : (config?.categories || []);
@@ -59,18 +61,19 @@ export function WidgetRenderer({
             onEditDevice={(dev) => setDeviceModal({ open: true, device: dev })}
             onDeleteDevice={async (deviceId) => { await deleteDevice(deviceId); setDeviceModal({ open: false }); }}
             onReorderDevices={reorderDevices}
+            isVisible={isVisible}
           />
         );
       case 'tailscale':
-        return <TailscaleWidget editMode={editMode} showSensitive={showSensitive} />;
+        return <TailscaleWidget editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />;
       case 'dockeractions':
         return <DockerWidget editMode={editMode} />;
       case 'calendar':
-        return <CalendarWidget editMode={editMode} />;
+        return <CalendarWidget editMode={editMode} isVisible={isVisible} />;
       case 'networkgraph':
         return <NetworkGraphWidget editMode={editMode} />;
       case 'dockercontainers':
-        return <DockerContainersWidget editMode={editMode} widgetInstanceId={widgetInstanceId} widgetProps={widgetProps} onUpdateProps={onUpdateProps} />;
+        return <DockerContainersWidget editMode={editMode} widgetInstanceId={widgetInstanceId} widgetProps={widgetProps} onUpdateProps={onUpdateProps} isVisible={isVisible} />;
       default:
         return (
           <div style={{ padding: 20, textAlign: 'center', color: 'var(--nd-text-muted)', background: 'var(--nd-bg)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
@@ -82,4 +85,3 @@ export function WidgetRenderer({
 
   return <WidgetContainer>{renderWidget()}</WidgetContainer>;
 }
-

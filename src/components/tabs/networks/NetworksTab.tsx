@@ -93,7 +93,7 @@ export default function NetworksTab({ editMode, searchQuery, isVisible, showSens
             overflowY: 'visible',
           }}
         >
-          <WidgetPanel panelId="networks-widgets" editMode={editMode} showSensitive={showSensitive} />
+          <WidgetPanel panelId="networks-widgets" editMode={editMode} showSensitive={showSensitive} isVisible={isVisible} />
         </aside>
       )}
 

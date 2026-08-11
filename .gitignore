@@ -12,9 +12,14 @@
 
 # testing
 /coverage
+/backups/
+/.e2e/
+/playwright-report/
+/test-results/
 
 # next.js
 /.next/
+/.next-e2e/
 /out/
 
 # production
@@ -60,6 +65,9 @@ commandes.md
 # real data (local-only)
 /data-real/
 
+# test data generated locally
+/data_test*/
+/data_test_crypto_temp
+
 # agent configs
 .agents/
-

@@ -3,42 +3,54 @@
 import { useState, useCallback } from 'react';
 import useSWR from 'swr';
 import { DockerHost } from '@/lib/types';
+import { dockerJsonFetcher } from '@/lib/dockerErrorContract';
 
-const fetcher = (url: string) => fetch(url).then(r => {
-  if (!r.ok) throw new Error('Fetch failed');
-  return r.json();
-});
+export function getDockerRequestKeys(
+  activeHostId: string | null,
+  selectedContainerId: string | null,
+  enabled: boolean,
+) {
+  const hostBase = enabled && activeHostId ? `/api/docker/${activeHostId}` : null;
 
-export function useDocker(hosts: DockerHost[]) {
+  return {
+    containers: hostBase ? `${hostBase}/containers?all=true` : null,
+    detail: hostBase && selectedContainerId ? `${hostBase}/containers/${selectedContainerId}` : null,
+    images: hostBase ? `${hostBase}/images` : null,
+    volumes: hostBase ? `${hostBase}/volumes` : null,
+  };
+}
+
+export function useDocker(hosts: DockerHost[], enabled = true) {
   const [activeHostId, setActiveHostId] = useState<string | null>(hosts[0]?.id || null);
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const requestKeys = getDockerRequestKeys(activeHostId, selectedContainerId, enabled);
 
   // Containers list
   const { data: containers, error: containersError, isLoading: containersLoading, mutate: refreshContainers } = useSWR(
-    activeHostId ? `/api/docker/${activeHostId}/containers?all=true` : null,
-    fetcher,
+    requestKeys.containers,
+    dockerJsonFetcher,
     { refreshInterval: 5000 }
   );
 
   // Container detail (only when one is selected)
   const { data: containerDetail, error: detailError, mutate: refreshDetail } = useSWR(
-    activeHostId && selectedContainerId ? `/api/docker/${activeHostId}/containers/${selectedContainerId}` : null,
-    fetcher,
+    requestKeys.detail,
+    dockerJsonFetcher,
     { refreshInterval: 3000 }
   );
 
   // Images
   const { data: images, error: imagesError, isLoading: imagesLoading, mutate: refreshImages } = useSWR(
-    activeHostId ? `/api/docker/${activeHostId}/images` : null,
-    fetcher,
+    requestKeys.images,
+    dockerJsonFetcher,
     { refreshInterval: 30000 } // Refresh every 30s — images don't change often
   );
 
   // Volumes
   const { data: volumes, error: volumesError, isLoading: volumesLoading, mutate: refreshVolumes } = useSWR(
-    activeHostId ? `/api/docker/${activeHostId}/volumes` : null,
-    fetcher,
+    requestKeys.volumes,
+    dockerJsonFetcher,
     { refreshInterval: 30000 }
   );
 
@@ -67,8 +79,9 @@ export function useDocker(hosts: DockerHost[]) {
           await refreshDetail();
         }
       }
-    } catch (e: any) {
-      console.error(`Docker action ${action} failed:`, e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`Docker action ${action} failed:`, message);
       throw e;
     } finally {
       setActionLoading(null);

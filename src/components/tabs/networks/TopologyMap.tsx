@@ -7,6 +7,7 @@ import ConfirmModal from '../../modals/ConfirmModal';
 import EmojiPickerModal from '../../modals/EmojiPickerModal';
 import CustomSelect from '../../shared/CustomSelect';
 import { Emoji } from '../../shared/Emoji';
+import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 interface TopologyMapProps {
   editMode: boolean;
@@ -520,6 +521,22 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   // Auto-import options
   const [showAutoImportModal, setShowAutoImportModal] = useState(false);
   const [autoImportGroupCategories, setAutoImportGroupCategories] = useState(true);
+  const nodeDialogRef = useDialogAccessibility(
+    () => editingNode ? setEditingNode(null) : setShowAddNode(false),
+    Boolean(showAddNode || editingNode),
+  );
+  const groupDialogRef = useDialogAccessibility(
+    () => editingGroup ? setEditingGroup(null) : setShowAddGroup(false),
+    Boolean(showAddGroup || editingGroup),
+  );
+  const connectionDialogRef = useDialogAccessibility(
+    () => editingConnection ? setEditingConnection(null) : setShowAddLink(false),
+    Boolean(showAddLink || editingConnection),
+  );
+  const autoImportDialogRef = useDialogAccessibility(
+    () => setShowAutoImportModal(false),
+    showAutoImportModal,
+  );
 
   // New Connection Form fields
   const [linkFrom, setLinkFrom] = useState('');
@@ -2484,7 +2501,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {(showAddNode || editingNode) && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && (editingNode ? setEditingNode(null) : setShowAddNode(false))}>
-          <div className="nd-modal" style={{ maxWidth: 420, overflow: 'visible' }}>
+          <div ref={nodeDialogRef} role="dialog" aria-modal="true" aria-label={editingNode ? 'Modifier le nœud' : 'Ajouter un nœud topologique'} tabIndex={-1} className="nd-modal" style={{ maxWidth: 420, overflow: 'visible' }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
               {editingNode ? <Edit3 size={16} /> : <Plus size={16} />}
               <span>{editingNode ? 'Modifier le nœud' : 'Ajouter un nœud topologique'}</span>
@@ -2646,7 +2663,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {(showAddGroup || editingGroup) && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && (editingGroup ? setEditingGroup(null) : setShowAddGroup(false))}>
-          <div className="nd-modal" style={{ maxWidth: 360, overflow: 'visible' }}>
+          <div ref={groupDialogRef} role="dialog" aria-modal="true" aria-label={editingGroup ? 'Modifier le groupe' : 'Créer un groupe de nœuds'} tabIndex={-1} className="nd-modal" style={{ maxWidth: 360, overflow: 'visible' }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>
               {editingGroup ? 'Modifier le groupe' : 'Créer un groupe de nœuds'}
             </h3>
@@ -2802,7 +2819,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {(showAddLink || editingConnection) && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && (editingConnection ? setEditingConnection(null) : setShowAddLink(false))}>
-          <div className="nd-modal" style={{ maxWidth: 460, overflow: 'visible' }}>
+          <div ref={connectionDialogRef} role="dialog" aria-modal="true" aria-label={editingConnection ? 'Modifier la liaison' : 'Nouvelle liaison réseau'} tabIndex={-1} className="nd-modal" style={{ maxWidth: 460, overflow: 'visible' }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 6 }}>
               <ArrowRight size={16} style={{ color: 'var(--nd-accent)' }} />
               <span>{editingConnection ? 'Modifier la liaison' : 'Nouvelle liaison réseau'}</span>
@@ -3051,7 +3068,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {showAutoImportModal && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setShowAutoImportModal(false)}>
-          <div className="nd-modal" style={{ maxWidth: 380 }}>
+          <div ref={autoImportDialogRef} role="dialog" aria-modal="true" aria-label="Générer la carte réseau automatiquement" tabIndex={-1} className="nd-modal" style={{ maxWidth: 380 }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Sparkles size={16} style={{ color: 'var(--nd-accent)' }} />
               <span>Générer la carte réseau automatiquement ?</span>

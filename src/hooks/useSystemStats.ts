@@ -6,7 +6,7 @@ import { SystemStats } from '@/lib/types';
 let globalEventSource: EventSource | null = null;
 let globalStats: SystemStats | null = null;
 let globalHistory: { cpu: number; latency: number; time: string }[] = [];
-let listeners = new Set<() => void>();
+const listeners = new Set<() => void>();
 let reconnectTimer: NodeJS.Timeout | null = null;
 let isConnecting = false;
 let visibilityHandlerAdded = false;
@@ -22,9 +22,6 @@ function connect() {
   isConnecting = true;
   const es = new EventSource('/api/system');
   globalEventSource = es;
-  if (typeof window !== 'undefined') {
-    (window as any).globalEventSource = es;
-  }
 
   es.onopen = () => {
     isConnecting = false;
@@ -55,9 +52,6 @@ function disconnect() {
   if (globalEventSource) {
     globalEventSource.close();
     globalEventSource = null;
-    if (typeof window !== 'undefined') {
-      (window as any).globalEventSource = null;
-    }
   }
   isConnecting = false;
   if (reconnectTimer) {
@@ -91,8 +85,6 @@ export function useSystemStats() {
       connect();
     }
     
-    forceRender({});
-
     return () => {
       listeners.delete(listener);
       if (listeners.size === 0) {

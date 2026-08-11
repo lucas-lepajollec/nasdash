@@ -1,28 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Plus, Clock, MapPin, AlignLeft } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Plus, Clock } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
+import { CalendarDisplayEvent } from '@/lib/types';
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string | null;
-  end: string | null;
-  description?: string;
-  location?: string;
-  isAllDay?: boolean;
-}
-
-export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
+export default function CalendarWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { config, setCalendarEventModal, setViewEventModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const calendarUrl = config?.settings?.calendarUrl;
-  const localEvents = config?.localEvents || [];
+  const localEvents = React.useMemo(() => config?.localEvents || [], [config?.localEvents]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarDisplayEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   
@@ -33,8 +24,9 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
   }, []);
 
   useEffect(() => {
+    if (!isVisible) return;
     const fetchEvents = async () => {
-      let combinedEvents: CalendarEvent[] = localEvents.map(e => ({
+      let combinedEvents: CalendarDisplayEvent[] = localEvents.map(e => ({
         ...e,
         start: e.start || null,
         end: e.end || null
@@ -60,7 +52,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
     };
 
     fetchEvents();
-  }, [calendarUrl, localEvents]);
+  }, [calendarUrl, isVisible, localEvents]);
 
   const daysOfWeek = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
   const monthNames = [
@@ -101,13 +93,6 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
       const eventStart = new Date(e.start);
       return eventStart >= startOfDay && eventStart <= endOfDay;
     });
-  };
-
-  // Helper: check if a day is today or in the future
-  const isUpcomingOrToday = (day: number) => {
-    const d = new Date(year, month, day, 23, 59, 59);
-    const todayCutoff = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate(), 0, 0, 0);
-    return d >= todayCutoff;
   };
 
   // Get upcoming events (filtered for today and future)
@@ -193,10 +178,10 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
             {monthNames[month]} {year}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
+            <button aria-label="Mois précédent" onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
               <ChevronLeft size={13} />
             </button>
-            <button onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
+            <button aria-label="Mois suivant" onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
               <ChevronRight size={13} />
             </button>
           </div>
@@ -313,8 +298,6 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
     for (let i = 1; i <= daysInMonth; i++) {
       const today = isToday(i);
       const dayEvents = getEventsForDay(i);
-      const isSelected = false; // Add selection state later if needed
-
       cells.push(
         <div
           key={`day-full-${i}`}
@@ -360,7 +343,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
 
           {/* Event list inside the day cell */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, overflow: 'hidden' }}>
-            {dayEvents.slice(0, 2).map((e, idx) => (
+            {dayEvents.slice(0, 2).map((e) => (
               <div
                 key={e.id}
                 onClick={(evt) => {
@@ -416,7 +399,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
             <span style={{ color: 'var(--nd-accent)' }}>●</span> {monthNames[month]} {year}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={prevMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
+            <button aria-label="Mois précédent" onClick={prevMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
               <ChevronLeft size={14} />
             </button>
             {!isCurrentMonth && (
@@ -424,7 +407,7 @@ export default function CalendarWidget({ editMode }: { editMode?: boolean }) {
                 <RotateCcw size={10} /> Revenir
               </button>
             )}
-            <button onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
+            <button aria-label="Mois suivant" onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
               <ChevronRight size={14} />
             </button>
           </div>

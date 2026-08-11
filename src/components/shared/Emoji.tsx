@@ -1650,8 +1650,6 @@ function getIconFileName(lucideName: string, library: 'tabler' | 'bootstrap' | '
   return lucideName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-const SVG_CACHE = new Map<string, string>();
-
 function SvgCdnIcon({
   src,
   fallbackLucideName,
@@ -1663,46 +1661,23 @@ function SvgCdnIcon({
   className?: string;
   style?: React.CSSProperties;
 }) {
-  const [svgContent, setSvgContent] = useState<string | null>(() => SVG_CACHE.get(src) || null);
-  const [error, setError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const error = failedSrc === src;
 
   useEffect(() => {
-    let isMounted = true;
-
-    if (SVG_CACHE.has(src)) {
-      setSvgContent(SVG_CACHE.get(src)!);
-      setError(false);
-      return;
-    }
-
-    setError(false);
-    setSvgContent(null);
-
-    fetch(src)
-      .then(res => {
-        if (!res.ok) throw new Error('CDN Icon not found');
-        return res.text();
-      })
-      .then(text => {
-        if (!isMounted) return;
-        let cleanText = text.replace(/<\?xml[\s\S]*?\?>/i, '').replace(/<!DOCTYPE[\s\S]*?>/i, '').trim();
-        cleanText = cleanText.replace(/width="[^"]*"/gi, '').replace(/height="[^"]*"/gi, '');
-        cleanText = cleanText.replace(/stroke="[^"]*"/gi, 'stroke="currentColor"');
-        cleanText = cleanText.replace(/fill="(?!none)[^"]*"/gi, 'fill="currentColor"');
-        
-        SVG_CACHE.set(src, cleanText);
-        setSvgContent(cleanText);
-      })
-      .catch(() => {
-        if (isMounted) setError(true);
-      });
+    let active = true;
+    const probe = new Image();
+    probe.onerror = () => {
+      if (active) setFailedSrc(src);
+    };
+    probe.src = src;
 
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, [src]);
 
-  if (error || !svgContent) {
+  if (error) {
     const IconComponent = (LucideIcons as any)[fallbackLucideName] || LucideIcons.HelpCircle;
     return (
       <IconComponent
@@ -1721,16 +1696,23 @@ function SvgCdnIcon({
   return (
     <span
       className={className}
+      aria-hidden="true"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'inline-block',
         width: '1.2em',
         height: '1.2em',
         verticalAlign: '-0.15em',
+        backgroundColor: 'currentColor',
+        WebkitMaskImage: `url("${src}")`,
+        maskImage: `url("${src}")`,
+        WebkitMaskPosition: 'center',
+        maskPosition: 'center',
+        WebkitMaskRepeat: 'no-repeat',
+        maskRepeat: 'no-repeat',
+        WebkitMaskSize: 'contain',
+        maskSize: 'contain',
         ...style
       }}
-      dangerouslySetInnerHTML={{ __html: svgContent }}
     />
   );
 }
