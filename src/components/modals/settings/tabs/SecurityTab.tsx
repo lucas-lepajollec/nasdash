@@ -24,7 +24,7 @@ const DEFAULT_TABS = [
 ];
 
 export function SecurityTab() {
-  const { config, updateConfig, user: currentUser } = useConfig();
+  const { config, updateConfig, user: currentUser, logout } = useConfig();
   const [users, setUsers] = useState<LocalUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [customTabs, setCustomTabs] = useState<any[]>([]);
@@ -122,6 +122,9 @@ export function SecurityTab() {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const isEdit = users.some(u => u.username.toLowerCase() === username.toLowerCase());
+    const changesCurrentPassword = isEdit
+      && password.length > 0
+      && currentUser?.username.toLowerCase() === username.toLowerCase();
     
     if (!username || (!password && !isEdit)) {
       setActionError('Le nom d\'utilisateur et le mot de passe sont obligatoires.');
@@ -149,6 +152,11 @@ export function SecurityTab() {
 
       if (!res.ok) {
         throw new Error(data.error || 'Erreur lors de la configuration de l\'utilisateur');
+      }
+
+      if (changesCurrentPassword) {
+        await logout({ reason: 'password-changed' });
+        return;
       }
 
       setActionSuccess(`Utilisateur ${username} enregistré avec succès.`);
@@ -438,7 +446,7 @@ export function SecurityTab() {
                         setActionError(null);
                         setActionSuccess(null);
                       }}
-                      title="Modifier l'utilisateur / permissions"
+                      title={`Modifier l'utilisateur ${u.username} / permissions`}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -484,8 +492,9 @@ export function SecurityTab() {
 
           <form onSubmit={handleAddUser} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'end' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Nom d'utilisateur</label>
+              <label htmlFor="security-username" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{"Nom d'utilisateur"}</label>
               <input
+                id="security-username"
                 type="text"
                 className="nd-input"
                 value={username}
@@ -497,9 +506,10 @@ export function SecurityTab() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Mot de passe</label>
+              <label htmlFor="security-password" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Mot de passe</label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="security-password"
                   type={showPassword ? 'text' : 'password'}
                   className="nd-input"
                   value={password}

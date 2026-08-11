@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 export interface AuthContextType {
   user: AuthUser | null;
   authLoading: boolean;
-  logout: () => Promise<void>;
+  logout: (options?: { reason?: 'password-changed' }) => Promise<void>;
   refreshUser: () => Promise<void>;
   fetchWithAuth: (url: string, options?: RequestInit) => Promise<Response>;
 }
@@ -40,17 +40,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchUser();
   }, [fetchUser]);
 
-  const logout = async () => {
+  const logout = async (options?: { reason?: 'password-changed' }) => {
+    const destination = options?.reason === 'password-changed'
+      ? '/login?reason=password-changed'
+      : '/login';
+
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
-      // A full reload intentionally clears every in-memory auth and SSE state.
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign('/login');
     } catch (e) {
       console.error('Erreur déconnexion:', e);
-      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-      window.location.assign('/login');
+    } finally {
+      // A full reload intentionally clears every in-memory auth and SSE state.
+      window.location.assign(destination);
     }
   };
 

@@ -34,6 +34,9 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedRedirect = searchParams.get('redirect');
+  const notice = searchParams.get('reason') === 'password-changed'
+    ? 'Votre mot de passe a été modifié. Reconnectez-vous avec votre nouveau mot de passe.'
+    : null;
   const redirectTo = requestedRedirect && /^\/(?!\/)/.test(requestedRedirect) && !requestedRedirect.includes('\\')
     ? requestedRedirect
     : '/';
@@ -166,6 +169,21 @@ function LoginForm() {
             Accès sécurisé à votre tableau de bord
           </p>
         </div>
+
+        {notice && (
+          <div role="status" style={{
+            padding: '12px',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            borderRadius: '6px',
+            color: 'var(--nd-green, #10b981)',
+            fontSize: '0.75rem',
+            marginBottom: '20px',
+            textAlign: 'center',
+          }}>
+            {notice}
+          </div>
+        )}
 
         {error && (
           <div style={{

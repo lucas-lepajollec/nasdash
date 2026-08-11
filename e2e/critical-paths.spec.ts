@@ -305,4 +305,38 @@ test.describe.serial('critical self-hosted paths', () => {
     expect(restorePublic.status()).toBe(200);
     await admin.dispose();
   });
+
+  test('changing the current admin password redirects clearly to a fresh login', async ({ page }) => {
+    const replacementPassword = 'playwright-admin-password-updated';
+
+    await page.goto('/login');
+    await page.getByLabel("Nom d'utilisateur").fill('admin');
+    await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+
+    await page.getByTitle('Paramètres globaux').click();
+    const settingsDialog = page.getByRole('dialog', { name: 'Paramètres NasDash' });
+    await settingsDialog.getByRole('button', { name: 'Sécurité' }).click();
+    await settingsDialog.getByRole('button', { name: /Utilisateurs & Permissions/ }).click();
+    await settingsDialog.getByTitle("Modifier l'utilisateur admin / permissions").click();
+    await settingsDialog.getByLabel('Mot de passe').fill(replacementPassword);
+    await settingsDialog.getByRole('button', { name: 'Sauvegarder' }).click();
+
+    await expect(page).toHaveURL(/\/login\?reason=password-changed$/, { timeout: 30_000 });
+    await expect(page.getByRole('status')).toHaveText(
+      'Votre mot de passe a été modifié. Reconnectez-vous avec votre nouveau mot de passe.',
+    );
+
+    const expiredSession = await page.request.get('/api/auth/me');
+    expect(expiredSession.status()).toBe(200);
+    expect(await expiredSession.json()).toMatchObject({
+      user: { role: 'viewer', isAnonymous: true },
+    });
+
+    await page.getByLabel("Nom d'utilisateur").fill('admin');
+    await page.getByLabel('Mot de passe').fill(replacementPassword);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+  });
 });
