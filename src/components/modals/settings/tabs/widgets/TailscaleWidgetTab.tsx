@@ -9,6 +9,7 @@ export function TailscaleWidgetTab() {
   const { config, updateConfig } = useConfig();
 
   const hideTailscaleStatus = !!config?.settings?.hideTailscaleStatus;
+  const demoMode = config?.demoMode === true;
 
   const [tailscaleTailnet, setTailscaleTailnet] = useState(config?.settings?.tailscaleTailnet || '');
   const [tailscaleClientId, setTailscaleClientId] = useState(config?.settings?.tailscaleClientId || '');
@@ -35,6 +36,14 @@ export function TailscaleWidgetTab() {
           <WidgetDockerLayoutConfig widgetId="tailscale" />
           <WidgetNetworksLayoutConfig widgetId="tailscale" />
 
+          {demoMode ? (
+            <div className="nd-settings-card" style={{ padding: '14px', background: 'color-mix(in srgb, var(--nd-accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 32%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)' }}>
+              <h4 style={{ margin: '0 0 5px 0', fontSize: '0.8rem', fontWeight: 700 }}>Connexion Tailscale simulée</h4>
+              <p style={{ margin: 0, fontSize: '0.68rem', lineHeight: 1.55, color: 'var(--nd-text-muted)' }}>
+                La démo utilise une liste fictive d&apos;appareils et ne contacte jamais Tailscale. Les identifiants OAuth sont volontairement désactivés : ne saisissez aucun secret réel dans cette instance publique.
+              </p>
+            </div>
+          ) : (
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Authentification API Tailscale</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
@@ -79,6 +88,7 @@ export function TailscaleWidgetTab() {
               />
             </div>
           </div>
+          )}
         </>
       )}
     </div>

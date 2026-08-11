@@ -1,0 +1,284 @@
+{
+  "version": 1,
+  "settings": {
+    "title": "HOME LAB",
+    "titleTablet": "",
+    "titleMobile": "",
+    "titleLogo": "",
+    "showMonitor": true,
+    "totalSlots": 16,
+    "hiddenTabs": [],
+    "theme": "nasdash",
+    "mode": "dark",
+    "dockPosition": "right",
+    "tabOrder": ["dashboard", "docker", "networks", "widgets", "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2"],
+    "tabIcons": {
+      "widgets": "lucide:LayoutGrid",
+      "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": "lucide:Calendar"
+    },
+    "hiddenSections": [],
+    "hideHeaderTitle": true,
+    "hideHeaderSearch": false,
+    "hideHeaderMenu": false,
+    "headerLayoutDesktop": {
+      "left": "search",
+      "center": "menu",
+      "right": "title",
+      "splitMenuAround": "none"
+    },
+    "headerLayoutMobile": { "left": "title", "center": "search" },
+    "showHeaderMenuIcons": false,
+    "showPingDetails": false,
+    "pingIndicatorMode": "all",
+    "hideDevices": false,
+    "hideQuickStats": false,
+    "hideTailscaleStatus": true,
+    "hideDockerActions": false,
+    "hideClock": false,
+    "hideCalendar": false,
+    "hideWeather": false,
+    "hideNetworkGraph": false,
+    "hideDockerContainers": false,
+    "hideWidgetTitles": true,
+    "hideDock": true,
+    "customCss": "",
+    "enablePerfMonitor": false,
+    "backgroundImage": "",
+    "borderRadius": 10,
+    "cardOpacity": 0.8,
+    "globalFont": "JetBrains Mono",
+    "titleFont": "outfit",
+    "titleAnimation": "spotlight-silver",
+    "clockDesign": "default",
+    "clockTimezone": "",
+    "calendarUrl": "",
+    "weatherLocations": [
+      { "id": "demo-paris", "name": "Paris", "lat": 48.8566, "lon": 2.3522 }
+    ],
+    "activeWeatherLocationId": "demo-paris",
+    "weatherWidgetStyle": "extended",
+    "dockerContainersStyle": "extended",
+    "dockerContainersAutoScroll": true,
+    "dockerActionsSidebar": "right",
+    "dockerActionsOrder": 3,
+    "dockerContainersSidebar": "right",
+    "dockerContainersOrder": 4,
+    "quickStatsSidebar": "bottom",
+    "weatherSidebar": "right",
+    "calendarSidebar": "right",
+    "allowDockerActions": true,
+    "securityMode": "public",
+    "emojiTheme": "lucide",
+    "mobileWallpaper": "",
+    "mobileTheme": "",
+    "mobileGlobalFont": "",
+    "mobileBorderRadius": 12,
+    "mobileCardOpacity": 0.8,
+    "mobileTitleAnimation": "none",
+    "tabs": {
+      "home": {
+        "hideLeftSidebar": false,
+        "hideRightSidebar": false,
+        "leftSidebarPosition": "left",
+        "rightSidebarPosition": "right",
+        "hideDevices": false,
+        "hideQuickStats": false,
+        "hideClock": false,
+        "hideCalendar": true,
+        "hideWeather": false,
+        "hideTailscaleStatus": true,
+        "hideDockerActions": false,
+        "hideDockerContainers": true,
+        "hideNetworkGraph": false
+      },
+      "docker": {
+        "hideWidgetsSidebar": false,
+        "hideDevices": true,
+        "hideQuickStats": true,
+        "hideClock": true,
+        "hideCalendar": false,
+        "hideWeather": true,
+        "hideTailscaleStatus": true,
+        "hideDockerActions": false,
+        "hideDockerContainers": false,
+        "hideNetworkGraph": true,
+        "widgetsSidebarPosition": "right",
+        "dockerPanelPosition": "left"
+      },
+      "networks": {
+        "hideWidgetsSidebar": false,
+        "hideDockerContainers": true,
+        "hideNetworkGraph": false,
+        "hideWeather": true,
+        "hideCalendar": false,
+        "hideClock": true,
+        "hideDockerActions": true,
+        "hideQuickStats": false,
+        "hideDevices": true,
+        "hideTailscaleStatus": true,
+        "cardSize": "standard",
+        "widgetsSidebarPosition": "right",
+        "networksPanelPosition": "left"
+      },
+      "widgets": {
+        "hideDevices": false
+      }
+    },
+    "devicesProps": {
+      "deviceConfigs": {
+        "demo-device-1": {
+          "statStyle": "vertical",
+          "colsDesktop": 2,
+          "colsMobile": 2,
+          "hideValues": false,
+          "visibleStats": ["CPU", "RAM", "Disque (Données)", "Disque (Système)"],
+          "enableAlerts": false,
+          "coloredGraphs": true
+        },
+        "demo-device-2": {
+          "statStyle": "graph",
+          "colsDesktop": 2,
+          "colsMobile": 2,
+          "hideValues": false,
+          "visibleStats": ["CPU", "RAM", "Stockage", "GPU"],
+          "enableAlerts": false,
+          "coloredGraphs": true
+        }
+      }
+    },
+    "home-devicesProps": {
+      "deviceConfigs": {
+        "demo-device-1": {
+          "statStyle": "vertical",
+          "colsDesktop": 2,
+          "colsMobile": 2,
+          "hideValues": false,
+          "visibleStats": ["CPU", "RAM", "Disque (Données)", "Disque (Système)"],
+          "enableAlerts": false,
+          "coloredGraphs": true
+        },
+        "demo-device-2": {
+          "statStyle": "graph",
+          "colsDesktop": 2,
+          "colsMobile": 2,
+          "hideValues": false,
+          "visibleStats": ["CPU", "RAM", "Stockage", "GPU"],
+          "enableAlerts": false,
+          "coloredGraphs": true
+        }
+      }
+    },
+    "homeWidgets": [
+      {
+        "id": "spacer-demo-services",
+        "type": "spacer",
+        "height": 180,
+        "order": 4,
+        "props": {}
+      }
+    ],
+    "docker-dockercontainersProps": { "autoScroll": true, "itemsPerPage": 8 },
+    "panels": {
+      "home-left": {
+        "widgets": [
+          { "id": "clock-demo", "type": "clock", "props": {} },
+          {
+            "id": "devices-demo",
+            "type": "devices",
+            "props": {
+              "deviceConfigs": {
+                "demo-device-1": { "statStyle": "vertical", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Disque (Données)", "Disque (Système)"], "enableAlerts": false, "coloredGraphs": true },
+                "demo-device-2": { "statStyle": "graph", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Stockage", "GPU"], "enableAlerts": false, "coloredGraphs": true }
+              }
+            }
+          }
+        ]
+      },
+      "home-right": {
+        "widgets": [
+          { "id": "quickstats-demo", "type": "quickstats", "props": {} },
+          { "id": "calendar-demo", "type": "calendar", "props": {} },
+          { "id": "weather-demo", "type": "weather", "props": {} }
+        ]
+      },
+      "home-bottom": {
+        "widgets": [
+          { "id": "network-demo", "type": "networkgraph", "props": {} }
+        ]
+      },
+      "docker-widgets": {
+        "widgets": [
+          { "id": "docker-containers-demo", "type": "dockercontainers", "props": { "autoScroll": true, "itemsPerPage": 4 } },
+          { "id": "docker-actions-demo", "type": "dockeractions", "props": {} }
+        ]
+      },
+      "networks-widgets": {
+        "widgets": [
+          { "id": "networkgraph-networks-demo", "type": "networkgraph", "props": {} }
+        ]
+      }
+    }
+  },
+  "devices": [
+    {
+      "id": "demo-device-1",
+      "name": "Atlas NAS",
+      "host": "192.0.2.20",
+      "system": "Debian 12 · NAS",
+      "icon": "lucide:HardDrive",
+      "statStyle": "vertical",
+      "hideValues": false,
+      "api": { "type": "glances", "url": "http://demo-device-1.invalid/api/3/all" }
+    },
+    {
+      "id": "demo-device-2",
+      "name": "Orion Compute",
+      "host": "192.0.2.30",
+      "system": "Proxmox VE 8",
+      "icon": "lucide:Server",
+      "statStyle": "graph",
+      "hideValues": false,
+      "api": { "type": "proxmox", "url": "https://demo-device-2.invalid/api2/json/nodes/orion/status" }
+    }
+  ],
+  "dockerHosts": [
+    {
+      "id": "mock-host-1",
+      "name": "Homelab Docker Cluster",
+      "icon": "lucide:Container",
+      "type": "tcp",
+      "url": "http://mock.invalid"
+    }
+  ],
+  "dockerActions": [
+    {
+      "id": "demo-action-web",
+      "name": "Basculer le serveur web",
+      "icon": "Power",
+      "actionType": "switch",
+      "targets": [
+        { "hostId": "mock-host-1", "containerName": "web-server" }
+      ]
+    },
+    {
+      "id": "demo-action-observability",
+      "name": "Démarrer l'observabilité",
+      "icon": "Play",
+      "actionType": "start",
+      "targets": [
+        { "hostId": "mock-host-1", "containerName": "prometheus" },
+        { "hostId": "mock-host-1", "containerName": "grafana" }
+      ]
+    },
+    {
+      "id": "demo-action-media",
+      "name": "Basculer la stack média",
+      "icon": "Layers",
+      "actionType": "switch",
+      "targets": [
+        { "hostId": "mock-host-1", "containerName": "jellyfin-media" }
+      ]
+    }
+  ],
+  "appearanceProfiles": []
+}

@@ -11,6 +11,7 @@ import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
 export function HeaderTab() {
   const { config, updateConfig } = useConfig();
+  const demoMode = config?.demoMode === true;
   
   const [openAccordions, setOpenAccordions] = useState<string[]>(['header-layout']);
 
@@ -259,6 +260,9 @@ export function HeaderTab() {
                 </button>
               )}
             </div>
+            {demoMode ? (
+              <div style={{ marginTop: 8, fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>Import de logo désactivé dans la démo publique.</div>
+            ) : (
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <label className="nd-btn" style={{ padding: '6px 10px', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                 Importer un fichier
@@ -286,6 +290,7 @@ export function HeaderTab() {
                 />
               </label>
             </div>
+            )}
           </div>
 
           <div style={{ marginTop: 12 }}>

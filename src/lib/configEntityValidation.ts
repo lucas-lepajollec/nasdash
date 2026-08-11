@@ -408,6 +408,7 @@ function validateDevice(value: unknown, requireId: boolean): void {
   readIdentifier(value, 'id', requireId);
   readString(value, 'name', { maxLength: 200 });
   readString(value, 'host', { maxLength: 2_048, trim: false });
+  readString(value, 'system', { maxLength: 200 });
   readString(value, 'icon', { maxLength: 64, trim: false });
   readEnum(value, 'statStyle', DEVICE_STAT_STYLES);
   readBoolean(value, 'hideValues');

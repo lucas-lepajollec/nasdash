@@ -2408,7 +2408,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         style={{
           position: 'relative',
           flex: 1,
-          minHeight: 400,
+          minHeight: config?.demoMode === true ? 'clamp(560px, 72vh, 760px)' : 400,
           overflowY: 'auto'
         }}
       >

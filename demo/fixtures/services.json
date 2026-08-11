@@ -1,0 +1,162 @@
+[
+  {
+    "id": "category-media",
+    "title": "Médias & photos",
+    "emoji": "🎬",
+    "order": 0,
+    "layout": "bento-logo-medium",
+    "isSecret": false,
+    "services": [
+      {
+        "id": "service-jellyfin",
+        "name": "Jellyfin",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jellyfin.svg",
+        "localUrl": "https://jellyfin.demo.invalid"
+      },
+      {
+        "id": "service-immich",
+        "name": "Immich",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/immich.svg",
+        "localUrl": "https://immich.demo.invalid"
+      },
+      {
+        "id": "service-navidrome",
+        "name": "Navidrome",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/navidrome.svg",
+        "localUrl": "https://navidrome.demo.invalid"
+      },
+      {
+        "id": "service-kavita",
+        "name": "Kavita",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/kavita.svg",
+        "localUrl": "https://kavita.demo.invalid"
+      },
+      {
+        "id": "service-metube",
+        "name": "MeTube",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/metube.svg",
+        "localUrl": "https://metube.demo.invalid"
+      }
+    ]
+  },
+  {
+    "id": "category-infrastructure",
+    "title": "Infrastructure",
+    "emoji": "🧭",
+    "order": 1,
+    "layout": "standard",
+    "isSecret": false,
+    "services": [
+      {
+        "id": "service-proxmox",
+        "name": "Proxmox",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/proxmox.svg",
+        "localUrl": "https://proxmox.demo.invalid"
+      },
+      {
+        "id": "service-portainer",
+        "name": "Portainer",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/portainer.svg",
+        "localUrl": "https://portainer.demo.invalid"
+      },
+      {
+        "id": "service-uptime-kuma",
+        "name": "Uptime Kuma",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/uptime-kuma.svg",
+        "localUrl": "https://uptime.demo.invalid"
+      },
+      {
+        "id": "service-glances",
+        "name": "Glances",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/glances.svg",
+        "localUrl": "https://glances.demo.invalid"
+      },
+      {
+        "id": "service-pihole",
+        "name": "Pi-hole",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/pi-hole.svg",
+        "localUrl": "https://pihole.demo.invalid"
+      }
+    ]
+  },
+  {
+    "id": "category-automation",
+    "title": "Automatisation & outils",
+    "emoji": "⚙️",
+    "order": 2,
+    "layout": "bento",
+    "isSecret": false,
+    "services": [
+      {
+        "id": "service-home-assistant",
+        "name": "Home Assistant",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg",
+        "localUrl": "https://home-assistant.demo.invalid"
+      },
+      {
+        "id": "service-n8n",
+        "name": "n8n",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/n8n.svg",
+        "localUrl": "https://n8n.demo.invalid"
+      },
+      {
+        "id": "service-syncthing",
+        "name": "Syncthing",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/syncthing.svg",
+        "localUrl": "https://syncthing.demo.invalid"
+      },
+      {
+        "id": "service-file-browser",
+        "name": "File Browser",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/filebrowser.svg",
+        "localUrl": "https://files.demo.invalid"
+      },
+      {
+        "id": "service-it-tools",
+        "name": "IT-Tools",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/it-tools.svg",
+        "localUrl": "https://tools.demo.invalid"
+      }
+    ]
+  },
+  {
+    "id": "category-library-automation",
+    "title": "Bibliothèque & téléchargements",
+    "emoji": "📚",
+    "order": 3,
+    "layout": "compact",
+    "isSecret": false,
+    "services": [
+      {
+        "id": "service-sonarr",
+        "name": "Sonarr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/sonarr.svg",
+        "localUrl": "https://sonarr.demo.invalid"
+      },
+      {
+        "id": "service-radarr",
+        "name": "Radarr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/radarr.svg",
+        "localUrl": "https://radarr.demo.invalid"
+      },
+      {
+        "id": "service-lidarr",
+        "name": "Lidarr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/lidarr.svg",
+        "localUrl": "https://lidarr.demo.invalid"
+      },
+      {
+        "id": "service-prowlarr",
+        "name": "Prowlarr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/prowlarr.svg",
+        "localUrl": "https://prowlarr.demo.invalid"
+      },
+      {
+        "id": "service-qbittorrent",
+        "name": "qBittorrent",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/qbittorrent.svg",
+        "localUrl": "https://qbittorrent.demo.invalid"
+      }
+    ]
+  }
+]

@@ -3,8 +3,15 @@ import { getLogosDir } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
 import path from 'path';
 import fs from 'fs';
+import { isDemoMode } from '@/lib/demoMode';
 
 export async function POST(req: NextRequest) {
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: 'Les téléversements sont désactivés dans le bac à sable.' },
+      { status: 403 },
+    );
+  }
   const authError = checkAdmin(req);
   if (authError) return authError;
 

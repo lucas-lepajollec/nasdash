@@ -59,6 +59,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
 
   const handleUpdateSpacerHeight = async (rowId: string, colId: string, widgetIndex: number, newHeight: number) => {
     if (!layout) return;
+    const previousLayout = layout;
     const newLayout = JSON.parse(JSON.stringify(layout)); // Deep copy
     const row = newLayout.rows.find((r: CustomTabRow) => r.id === rowId);
     if (!row) return;
@@ -70,19 +71,23 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     setLayout(newLayout);
 
     try {
-      await fetch('/api/custom-tabs', {
+      const response = await fetch('/api/custom-tabs', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: tab.id, layout: newLayout })
       });
+      if (!response.ok) throw new Error(`Mise à jour refusée (${response.status}).`);
       // Silent update, no need to trigger full refresh to avoid flicker during slider drag
     } catch (e) {
       console.error('Failed to save spacer height', e);
+      globalLayoutCache[tab.id] = previousLayout;
+      setLayout(previousLayout);
     }
   };
 
   const handleUpdateWidgetProps = async (rowId: string, colId: string, widgetIndex: number, newProps: any) => {
     if (!layout) return;
+    const previousLayout = layout;
     const newLayout = JSON.parse(JSON.stringify(layout)); // Deep copy
     const row = newLayout.rows.find((r: CustomTabRow) => r.id === rowId);
     if (!row) return;
@@ -94,13 +99,16 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
     setLayout(newLayout);
 
     try {
-      await fetch('/api/custom-tabs', {
+      const response = await fetch('/api/custom-tabs', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: tab.id, layout: newLayout })
       });
+      if (!response.ok) throw new Error(`Mise à jour refusée (${response.status}).`);
     } catch (e) {
       console.error('Failed to save widget props', e);
+      globalLayoutCache[tab.id] = previousLayout;
+      setLayout(previousLayout);
     }
   };
 

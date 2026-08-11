@@ -16,6 +16,7 @@ interface WeatherSearchResult {
 
 export function WeatherWidgetTab() {
   const { config, updateConfig } = useConfig();
+  const demoMode = config?.demoMode === true;
 
   const hideWeather = !!config?.settings?.hideWeather;
   
@@ -31,6 +32,17 @@ export function WeatherWidgetTab() {
     if (!weatherSearchQuery.trim()) return;
     setIsSearchingWeather(true);
     try {
+      if (demoMode) {
+        const sampleCities: WeatherSearchResult[] = [
+          { name: 'Paris', country: 'France', latitude: 48.8566, longitude: 2.3522 },
+          { name: 'Montréal', country: 'Canada', latitude: 45.5019, longitude: -73.5674 },
+          { name: 'Bruxelles', country: 'Belgique', latitude: 50.8503, longitude: 4.3517 },
+          { name: 'Tokyo', country: 'Japon', latitude: 35.6762, longitude: 139.6503 },
+        ];
+        const query = weatherSearchQuery.trim().toLocaleLowerCase('fr');
+        setWeatherSearchResults(sampleCities.filter(city => city.name.toLocaleLowerCase('fr').includes(query)));
+        return;
+      }
       const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=fr&format=json`);
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json() as { results?: WeatherSearchResult[] };

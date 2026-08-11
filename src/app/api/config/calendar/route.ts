@@ -10,6 +10,7 @@ import {
   readJsonObject,
   readString,
 } from '@/lib/requestValidation';
+import { withDemoSession } from '@/lib/demoSession';
 
 export const dynamic = 'force-dynamic';
 const MAX_CALENDAR_BODY_BYTES = 64 * 1024;
@@ -21,7 +22,7 @@ function validationResponse(error: unknown) {
   return null;
 }
 
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   const config = readConfig();
   const access = checkReadAccess(
     req,
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
   return NextResponse.json(config.localEvents || []);
 }
 
-export async function POST(req: Request) {
+async function handlePOST(req: Request) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+async function handlePUT(req: Request) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -110,7 +111,7 @@ export async function PUT(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+async function handleDELETE(req: Request) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -137,4 +138,20 @@ export async function DELETE(req: Request) {
     console.error('Erreur API Calendar DELETE:', e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
+}
+
+export function GET(req: Request) {
+  return withDemoSession(req, () => handleGET(req));
+}
+
+export function POST(req: Request) {
+  return withDemoSession(req, () => handlePOST(req));
+}
+
+export function PUT(req: Request) {
+  return withDemoSession(req, () => handlePUT(req));
+}
+
+export function DELETE(req: Request) {
+  return withDemoSession(req, () => handleDELETE(req));
 }

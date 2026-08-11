@@ -1,0 +1,33 @@
+{
+  "tabs": [
+    {
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
+      "name": "Calendrier",
+      "icon": "lucide:Calendar",
+      "description": "Agenda fictif du laboratoire de démonstration",
+      "isCustom": true
+    }
+  ],
+  "layouts": {
+    "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": {
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
+      "rows": [
+        {
+          "id": "demo-calendar-row",
+          "type": "1-col",
+          "columns": [
+            {
+              "id": "demo-calendar-column",
+              "width": "100%",
+              "content": null,
+              "widgets": [
+                { "type": "clock" },
+                { "type": "calendar" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

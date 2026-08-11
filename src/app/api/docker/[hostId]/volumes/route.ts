@@ -10,6 +10,9 @@ import {
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
+import { isDemoMode } from '@/lib/demoMode';
+import { isDemoVolumeRemoved, removeDemoVolume, withDemoSession } from '@/lib/demoSession';
+import { DEMO_DOCKER_VOLUMES } from '@/lib/demoDockerFixtures';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +31,7 @@ function getDockerHost(hostId: string) {
 }
 
 // GET /api/docker/[hostId]/volumes — list all volumes
-export async function GET(
+async function handleGET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
@@ -48,12 +51,8 @@ export async function GET(
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
     // Mock volumes
-    if (host.url === 'mock' || host.id === 'mock-host-id') {
-      const mockVolumes = [
-        { name: "postgres_data", driver: "local", mountpoint: "/var/lib/docker/volumes/postgres_data/_data", createdAt: "2026-06-11T05:00:00Z", usageData: { size: 45000000, refCount: 1 } },
-        { name: "redis_data", driver: "local", mountpoint: "/var/lib/docker/volumes/redis_data/_data", createdAt: "2026-06-11T09:00:00Z", usageData: { size: 12000, refCount: 1 } },
-      ];
-      return NextResponse.json(mockVolumes);
+    if (isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host')) {
+      return NextResponse.json(DEMO_DOCKER_VOLUMES.filter(volume => !isDemoVolumeRemoved(volume.name)));
     }
 
     const response = await fetchDockerApi(host.url, '/volumes');
@@ -77,7 +76,7 @@ export async function GET(
 }
 
 // DELETE /api/docker/[hostId]/volumes?name=[volumeName]
-export async function DELETE(
+async function handleDELETE(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
@@ -95,6 +94,11 @@ export async function DELETE(
     const url = new URL(request.url);
     const volumeName = url.searchParams.get('name');
     if (!volumeName) return NextResponse.json({ error: 'Volume name required' }, { status: 400 });
+
+    if (isDemoMode()) {
+      removeDemoVolume(volumeName);
+      return NextResponse.json({ success: true, simulated: true });
+    }
 
     const res = await fetchDockerApi(
       host.url,
@@ -118,4 +122,18 @@ export async function DELETE(
     reportDockerFailure(resolvedHostId, failure);
     return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
+}
+
+export function GET(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string }> },
+) {
+  return withDemoSession(request, () => handleGET(request, segmentData));
+}
+
+export function DELETE(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string }> },
+) {
+  return withDemoSession(request, () => handleDELETE(request, segmentData));
 }

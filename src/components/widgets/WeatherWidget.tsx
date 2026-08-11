@@ -21,6 +21,30 @@ interface WeatherData {
   };
 }
 
+function createDemoWeather(): WeatherData {
+  const today = new Date();
+  const time = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(today);
+    day.setDate(today.getDate() + index);
+    return day.toISOString().slice(0, 10);
+  });
+
+  return {
+    current: {
+      temperature_2m: 22.4,
+      weather_code: 2,
+      wind_speed_10m: 13,
+      relative_humidity_2m: 58,
+    },
+    daily: {
+      time,
+      weather_code: [2, 1, 3, 61, 2, 0, 1],
+      temperature_2m_max: [24, 26, 23, 20, 24, 27, 25],
+      temperature_2m_min: [15, 16, 14, 13, 14, 17, 16],
+    },
+  };
+}
+
 const getWeatherGlow = (code: number) => {
   if (code === 0) return '0 0 25px rgba(250, 204, 21, 0.25), inset 0 1px 3px rgba(0,0,0,0.2)'; // Yellow glow for sun
   if (code >= 51 && code <= 82 && code !== 71 && code !== 73 && code !== 75 && code !== 77) return '0 0 25px rgba(96, 165, 250, 0.25), inset 0 1px 3px rgba(0,0,0,0.2)'; // Blue glow for rain
@@ -95,6 +119,10 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
       setLoading(true);
       setError(false);
       try {
+        if (config?.demoMode === true) {
+          setWeather(createDemoWeather());
+          return;
+        }
         const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
         );
@@ -110,9 +138,10 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
     };
 
     fetchWeather();
+    if (config?.demoMode === true) return;
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [isVisible, location?.id, location?.lat, location?.lon]);
+  }, [isVisible, location?.id, location?.lat, location?.lon, config?.demoMode]);
 
   if (!location) {
     return (

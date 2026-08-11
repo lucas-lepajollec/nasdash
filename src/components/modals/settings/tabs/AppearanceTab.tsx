@@ -16,6 +16,7 @@ interface AppearanceTabProps {
 
 export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
   const { config, updateConfig } = useConfig();
+  const demoMode = config?.demoMode === true;
   
   // Accordions states
   const [openAccordions, setOpenAccordions] = useState<string[]>(['theme']);
@@ -424,6 +425,9 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
               </div>
             </div>
             
+            {demoMode ? (
+              <div style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>L&apos;import de fichiers est désactivé dans la démo publique. Vous pouvez tester une URL d&apos;image fictive ; elle ne sera conservée que dans cette session.</div>
+            ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input
                 type="file"
@@ -459,6 +463,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                 📁 Importer une image (Auto-Détection)
               </label>
             </div>
+            )}
 
             {uploadedBgs.length > 0 && (
               <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>

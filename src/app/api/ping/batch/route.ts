@@ -3,6 +3,7 @@ import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, readJsonObject, readStringArray } from '@/lib/requestValidation';
 import { Device, Service } from '@/lib/types';
+import { isDemoMode } from '@/lib/demoMode';
 
 export const dynamic = 'force-dynamic';
 const MAX_PING_BODY_BYTES = 128 * 1024;
@@ -85,11 +86,12 @@ export async function POST(request: Request) {
     const body = await readJsonObject(request, MAX_PING_BODY_BYTES);
     const urls = readStringArray(body, 'urls', { maxItems: 50, maxItemLength: 2048 }) || [];
 
-    if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    if (isDemoMode()) {
       const resultMap: Record<string, PingStatus> = {};
       urls.forEach(url => {
-        const isOffline = url.includes('offline') || url.includes('10.0.30.22'); // camera offline
-        const latency = isOffline ? 0 : Math.round(3 + Math.random() * 12);
+        const isOffline = url.includes('offline');
+        const hash = Array.from(url).reduce((value, char) => ((value * 31) + char.charCodeAt(0)) >>> 0, 7);
+        const latency = isOffline ? 0 : 4 + (hash % 12);
         resultMap[url] = {
           status: isOffline ? 'offline' : 'online',
           statusText: isOffline ? 'Timeout' : 'OK',

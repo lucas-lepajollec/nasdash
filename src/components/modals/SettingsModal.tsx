@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Info, X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../shared/Emoji';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
@@ -474,6 +474,13 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
               <X size={18} />
             </button>
           </div>
+
+          {config?.demoMode === true && !isThemeGalleryOpen && currentTab && (
+            <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '10px 12px', margin: '-6px 0 16px', borderRadius: 'var(--nd-card-radius, 8px)', background: 'color-mix(in srgb, var(--nd-accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 25%, var(--nd-card-border))', color: 'var(--nd-text-muted)', fontSize: '0.67rem', lineHeight: 1.5 }}>
+              <Info size={15} style={{ color: 'var(--nd-accent)', flexShrink: 0, marginTop: 1 }} />
+              <span><strong style={{ color: 'var(--nd-text)' }}>Réglages temporaires.</strong> Vos modifications restent isolées à cette session de démonstration et expirent automatiquement. Les comptes, fichiers et connexions à des services réels sont désactivés : ne saisissez aucun secret personnel.</span>
+            </div>
+          )}
 
           {/* ==========================================
              THEME GALLERY FULL-WIDTH EMBEDDED VIEW

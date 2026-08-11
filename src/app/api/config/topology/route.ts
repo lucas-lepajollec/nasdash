@@ -4,6 +4,7 @@ import { checkAdmin } from '@/lib/auth';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, isJsonObject, readJsonObject } from '@/lib/requestValidation';
 import { NetworkTopology } from '@/lib/types';
+import { withDemoSession } from '@/lib/demoSession';
 
 export const dynamic = 'force-dynamic';
 const MAX_TOPOLOGY_BODY_BYTES = 1024 * 1024;
@@ -27,7 +28,7 @@ function validateTopology(value: unknown): NetworkTopology {
   return value as unknown as NetworkTopology;
 }
 
-export async function GET(req: Request) {
+async function handleGET(req: Request) {
   const config = readConfig();
   const access = checkReadAccess(
     req,
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
   return NextResponse.json(config.settings?.networkTopology || { nodes: [], groups: [], connections: [] });
 }
 
-export async function PUT(req: Request) {
+async function handlePUT(req: Request) {
   const authError = checkAdmin(req);
   if (authError) return authError;
 
@@ -59,4 +60,12 @@ export async function PUT(req: Request) {
     console.error('Erreur API Topology PUT:', e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
+}
+
+export function GET(req: Request) {
+  return withDemoSession(req, () => handleGET(req));
+}
+
+export function PUT(req: Request) {
+  return withDemoSession(req, () => handlePUT(req));
 }

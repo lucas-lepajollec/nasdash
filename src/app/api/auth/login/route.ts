@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readUsers, verifyPassword, generateToken, isSecureRequest } from '@/lib/auth';
 import { RequestValidationError, readJsonObject, readString } from '@/lib/requestValidation';
+import { isDemoMode } from '@/lib/demoMode';
 
 const MAX_LOGIN_BODY_BYTES = 8 * 1024;
 
 export async function POST(req: NextRequest) {
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: 'La connexion est désactivée sur la démonstration publique.' },
+      { status: 403 },
+    );
+  }
+
   try {
     const body = await readJsonObject(req, MAX_LOGIN_BODY_BYTES);
     const username = readString(body, 'username', { required: true, maxLength: 64 });

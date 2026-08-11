@@ -19,6 +19,7 @@ interface ServiceItemProps {
 export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard', index, total }: ServiceItemProps) {
   const [imgError, setImgError] = useState(false);
   const { config, pingResults } = useConfig();
+  const demoMode = config?.demoMode === true;
 
   const pingIndicatorMode = config?.settings?.pingIndicatorMode || 'all';
   const showUrl = layout !== 'compact' && layout !== 'grid' && layout !== 'bento' && !layout?.startsWith('bento-logo');
@@ -141,10 +142,11 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
         className="nd-service-link"
         style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: activeLayout === 'compact' ? 8 : 10 }}
         onClick={(e) => {
-          if (editMode) {
+          if (editMode || demoMode) {
             e.preventDefault();
           }
         }}
+        title={demoMode ? 'Lien simulé dans la démonstration publique' : undefined}
       >
         <div className="nd-service-icon">
           {logoContent}
@@ -178,7 +180,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
 
       {renderStatusIndicator()}
 
-      {(service.secondaryUrl || service.tailscaleUrl) && !editMode && (
+      {(service.secondaryUrl || service.tailscaleUrl) && !editMode && !demoMode && (
         <div className="nd-service-tooltip-wrapper">
           <a href={service.secondaryUrl || service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip" title="Lien Secondaire">
             <div className="nd-service-tooltip-icon">

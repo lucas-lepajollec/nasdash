@@ -90,6 +90,7 @@ export function SecurityTab() {
   }, []);
 
   const securityMode = config?.settings?.securityMode || 'public';
+  const demoMode = config?.demoMode === true;
 
   const handleModeChange = async (mode: 'public' | 'private') => {
     try {
@@ -227,6 +228,12 @@ export function SecurityTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {demoMode && (
+        <div style={{ padding: 14, background: 'color-mix(in srgb, var(--nd-accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 32%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius, 8px)', fontSize: '0.72rem', lineHeight: 1.55 }}>
+          <strong style={{ display: 'block', marginBottom: 4, color: 'var(--nd-text)' }}>Aperçu de la sécurité en mode démo</strong>
+          Les changements de mode ci-dessous sont simulés dans votre session temporaire. Ils ne verrouillent pas cette démo publique et ne modifient aucun compte réel.
+        </div>
+      )}
       {/* Alertes d'action */}
       {actionError && (
         <div style={{ padding: 12, backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 6, color: 'var(--nd-red, #ef4444)', fontSize: '0.75rem' }}>
@@ -349,6 +356,17 @@ export function SecurityTab() {
       </SettingsAccordion>
 
       {/* SECTION 2: GESTION DES UTILISATEURS */}
+      {demoMode ? (
+        <div style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius, 8px)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <User size={18} style={{ color: 'var(--nd-accent)', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <strong style={{ display: 'block', fontSize: '0.8rem', marginBottom: 5 }}>Utilisateurs et permissions</strong>
+            <p style={{ margin: 0, color: 'var(--nd-text-muted)', fontSize: '0.7rem', lineHeight: 1.55 }}>
+              Une installation NasDash complète permet de créer des administrateurs et observateurs, puis de limiter leurs onglets et widgets. La création de comptes, les mots de passe, la suppression et le test d&apos;une session viewer sont désactivés ici afin de ne jamais recueillir de véritables identifiants.
+            </p>
+          </div>
+        </div>
+      ) : (
       <SettingsAccordion
         title="Utilisateurs & Permissions"
         description="Gérez les comptes d'accès, rôles et restrictions d'onglets/widgets"
@@ -683,6 +701,7 @@ export function SecurityTab() {
           </form>
         </div>
       </SettingsAccordion>
+      )}
       <ConfirmModal
         isOpen={deleteConfirmUser !== null}
         onClose={() => setDeleteConfirmUser(null)}

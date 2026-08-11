@@ -35,12 +35,16 @@ COPY --from=builder /app/data/calendar.example.json /app/defaults/calendar.examp
 COPY --from=builder /app/data/custom_tabs.example.json /app/defaults/custom_tabs.example.json
 COPY --from=builder /app/data/users.example.json /app/defaults/users.example.json
 
+# Public showcase fixtures. They contain no real infrastructure data or secrets.
+RUN mkdir -p /app/demo/fixtures
+COPY --from=builder /app/demo/fixtures/ /app/demo/fixtures/
+
 # Copy entrypoint script
 COPY --from=builder /app/docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # Create directories with proper permissions
-RUN mkdir -p /app/data/logos && chown -R nextjs:nodejs /app/defaults /app/data
+RUN mkdir -p /app/data/logos && chown -R nextjs:nodejs /app/defaults /app/demo /app/data
 RUN mkdir -p /app/.next/cache && chown -R nextjs:nodejs /app/.next/cache
 
 USER nextjs

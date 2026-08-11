@@ -162,6 +162,8 @@ function DockerHostFormModal({ onClose, onSave }: {
   onClose: () => void;
   onSave: (h: { name: string; icon: string; url: string }) => Promise<void>;
 }) {
+  const { config } = useConfig();
+  const demoMode = config?.demoMode === true;
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('🐳');
   const [host, setHost] = useState('');
@@ -175,6 +177,11 @@ function DockerHostFormModal({ onClose, onSave }: {
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Ajouter un hôte Docker" tabIndex={-1} className="nd-modal" style={{ maxWidth: 420 }}>
         <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Ajouter un hôte Docker</h3>
+        {demoMode && (
+          <div style={{ padding: '10px 12px', marginBottom: 14, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
+            Cet hôte sera fictif et isolé à votre session. Utilisez par exemple <code>docker-demo.invalid</code> : ne saisissez aucune adresse de votre réseau.
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
@@ -214,7 +221,7 @@ function DockerHostFormModal({ onClose, onSave }: {
 
           <div>
             <label className="nd-label">Adresse / Hôte Docker</label>
-            <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder="docker-proxy ou 192.168.0.200" style={{ width: '100%', boxSizing: 'border-box' }} />
+            <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder={demoMode ? 'docker-demo.invalid' : 'docker-proxy ou 192.168.0.200'} style={{ width: '100%', boxSizing: 'border-box' }} />
           </div>
           <div>
             <label className="nd-label">Port API Docker</label>
@@ -445,6 +452,8 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
 
 // ======================== IMAGES TAB ========================
 function ImagesTab({ images, error, loading, containers, hostId, refreshImages, selectedContainer }: { images: any[]; error?: unknown; loading: boolean; containers: any[]; hostId: string; refreshImages: () => void; selectedContainer?: any }) {
+  const { config } = useConfig();
+  const demoMode = config?.demoMode === true;
   const [selected, setSelected] = useState<string[]>([]);
   const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -454,7 +463,7 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
     Boolean(deleteTargets),
   );
 
-  const availableImages = images.filter(img => !containers.some((c: any) => c.imageID === img.id || (img.repoTags && img.repoTags.includes(c.image))));
+  const availableImages = images.filter(img => !containers.some((c: any) => c.imageId === img.id || (img.repoTags && img.repoTags.includes(c.image))));
 
   if (error) return <DockerErrorNotice error={error} />;
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><Loader2 size={18} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} /></div>;
@@ -591,8 +600,11 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
           <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des images Docker" tabIndex={-1} className="nd-modal">
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? "les images" : "l'image"}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
-              Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} images` : `cette image (${deleteTargets[0].substring(0, 12)})`} ?
-              Cela libérera de l&apos;espace disque, mais vous devrez la retélécharger si un conteneur en a besoin.
+              {demoMode ? (
+                <>Cette action est simulée et temporaire. {deleteTargets.length > 1 ? `${deleteTargets.length} images seront masquées` : `L’image ${deleteTargets[0].substring(0, 12)} sera masquée`} jusqu’à la réinitialisation de votre démo.</>
+              ) : (
+                <>Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} images` : `cette image (${deleteTargets[0].substring(0, 12)})`} ? Cela libérera de l&apos;espace disque, mais vous devrez la retélécharger si un conteneur en a besoin.</>
+              )}
             </p>
             {deleteError && (
               <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
@@ -615,6 +627,8 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
 
 // ======================== VOLUMES TAB ========================
 function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolumes, selectedContainer }: { volumes: any[]; error?: unknown; loading: boolean; containers: any[]; hostId: string; refreshVolumes: () => void; selectedContainer?: any }) {
+  const { config } = useConfig();
+  const demoMode = config?.demoMode === true;
   const [selected, setSelected] = useState<string[]>([]);
   const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -758,8 +772,11 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
           <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des volumes Docker" tabIndex={-1} className="nd-modal">
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? 'les volumes' : 'un volume'}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
-              Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} volumes` : <strong style={{ color: 'var(--nd-text)' }}>{deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '...' : deleteTargets[0]}</strong>} ?
-              Cette action est irréversible et effacera toutes les données stockées dessus.
+              {demoMode ? (
+                <>Cette suppression est simulée et réversible en réinitialisant la démo. Aucun volume ni fichier réel ne sera touché.</>
+              ) : (
+                <>Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} volumes` : <strong style={{ color: 'var(--nd-text)' }}>{deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '...' : deleteTargets[0]}</strong>} ? Cette action est irréversible et effacera toutes les données stockées dessus.</>
+              )}
             </p>
             {deleteError && (
               <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
@@ -1164,11 +1181,13 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           pendingConfirm?.action === 'restart' ? 'Redémarrer le conteneur' :
           'Supprimer le conteneur'
         }
-        description={`Êtes-vous sûr de vouloir ${
-          pendingConfirm?.action === 'stop' ? 'arrêter' :
-          pendingConfirm?.action === 'restart' ? 'redémarrer' :
-          'supprimer'
-        } "${pendingConfirm?.name}" ?`}
+        description={config?.demoMode === true
+          ? `Action simulée sur « ${pendingConfirm?.name} ». Elle ne touche aucun serveur réel et sera annulée à la réinitialisation de votre démo.`
+          : `Êtes-vous sûr de vouloir ${
+              pendingConfirm?.action === 'stop' ? 'arrêter' :
+              pendingConfirm?.action === 'restart' ? 'redémarrer' :
+              'supprimer'
+            } "${pendingConfirm?.name}" ?`}
         confirmLabel={
           pendingConfirm?.action === 'stop' ? 'Arrêter' :
           pendingConfirm?.action === 'restart' ? 'Redémarrer' :
@@ -1187,7 +1206,9 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           }
         }}
         title="Supprimer l'hôte Docker"
-        description={`Êtes-vous sûr de vouloir supprimer l'hôte "${pendingDeleteHost?.name}" ? Cette action est irréversible.`}
+        description={config?.demoMode === true
+          ? `L’hôte fictif « ${pendingDeleteHost?.name} » sera retiré uniquement de votre session temporaire.`
+          : `Êtes-vous sûr de vouloir supprimer l'hôte "${pendingDeleteHost?.name}" ? Cette action est irréversible.`}
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
       />

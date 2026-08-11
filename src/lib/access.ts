@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest, readUsers, type AuthRequestLike } from './auth';
+import { isDemoMode } from './demoMode';
 
 export type SecurityMode = 'public' | 'private';
 
@@ -35,6 +36,19 @@ export function resolveAccessPrincipal(
   req: AuthRequestLike,
   securityMode: SecurityMode = 'public'
 ): AccessPrincipal | null {
+  // The public showcase has no real authentication flow. Give its isolated,
+  // short-lived session enough access to preview every read-only surface even
+  // when a visitor temporarily changes the simulated security mode.
+  if (isDemoMode()) {
+    return {
+      username: 'demo',
+      role: 'admin',
+      allowedTabs: [],
+      allowedWidgets: [],
+      isAnonymous: false,
+    };
+  }
+
   const session = getSessionFromRequest(req);
   const users = readUsers();
 

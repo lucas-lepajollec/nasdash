@@ -9,6 +9,9 @@ import {
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
+import { isDemoMode } from '@/lib/demoMode';
+import { getDemoContainerState, isDemoContainerRemoved, withDemoSession } from '@/lib/demoSession';
+import { DEMO_DOCKER_SERVICES, demoContainerStatus } from '@/lib/demoDockerFixtures';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,12 +43,6 @@ interface DockerApiContainerSummary {
   Labels?: Record<string, string>;
 }
 
-const dockerGlobal = globalThis as typeof globalThis & {
-  __mockContainerStates?: Map<string, string>;
-};
-if (!dockerGlobal.__mockContainerStates) dockerGlobal.__mockContainerStates = new Map<string, string>();
-const mockStates = dockerGlobal.__mockContainerStates;
-
 function getDockerHost(hostId: string) {
   const config = readConfig();
   const hosts = config.dockerHosts || [];
@@ -53,7 +50,7 @@ function getDockerHost(hostId: string) {
 }
 
 // GET /api/docker/[hostId]/containers — list all containers
-export async function GET(
+async function handleGET(
   request: Request,
   segmentData: { params: Promise<{ hostId: string }> }
 ) {
@@ -75,149 +72,30 @@ export async function GET(
     }
 
     // Return mock data for demo/mock hosts
-    const isMockMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || host.url.includes('mock') || host.id.includes('mock-host');
+    const isMockMode = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host');
     if (isMockMode) {
-      const isLarge = host.url.includes('mock-large') || host.id.includes('mock-host-large');
-      const isSmall = host.url.includes('mock-small') || host.id.includes('mock-host-small');
-      
-      const getContainerState = (id: string, defaultState: string) => {
-        const stored = mockStates.get(id);
-        if (stored) {
-          return {
-            state: stored,
-            status: stored === 'running' ? 'Up 5 minutes' : stored === 'paused' ? 'Paused' : 'Exited (0) 5 minutes ago'
-          };
-        }
+      const mockContainers = DEMO_DOCKER_SERVICES.map((service, index) => {
+        const state = getDemoContainerState(service.id, service.defaultState);
         return {
-          state: defaultState,
-          status: defaultState === 'running' ? 'Up 3 hours' : defaultState === 'paused' ? 'Paused' : 'Exited (137) 10 minutes ago'
+          id: service.id,
+          fullId: service.id.padEnd(64, '0'),
+          names: [service.name],
+          image: service.image,
+          imageId: `${service.id}-image`,
+          state,
+          status: demoContainerStatus(state),
+          created: Math.floor(Date.now() / 1000 - (10_800 + index * 3_600)),
+          ports: service.ports,
+          mounts: service.mounts,
+          labels: {
+            'com.docker.compose.project': 'nasdash-demo',
+            'com.docker.compose.service': service.name,
+            'io.nasdash.demo.service-id': service.serviceId,
+          },
         };
-      };
+      });
 
-      const mockContainers = [
-        {
-          id: "mock11111111",
-          fullId: "mock11111111111111111111111111111111",
-          names: ["web-server"],
-          image: "nginx:latest",
-          imageId: "sha256:nginx",
-          ...getContainerState("mock11111111", "running"),
-          created: Math.floor(Date.now() / 1000 - 10800),
-          ports: [{ privatePort: 80, publicPort: 80, type: "tcp" }],
-          mounts: [],
-          labels: {}
-        },
-        {
-          id: "mock22222222",
-          fullId: "mock22222222222222222222222222222222",
-          names: ["postgres-db"],
-          image: "postgres:15-alpine",
-          imageId: "sha256:postgres",
-          ...getContainerState("mock22222222", "running"),
-          created: Math.floor(Date.now() / 1000 - 18000),
-          ports: [{ privatePort: 5432, publicPort: 5432, type: "tcp" }],
-          mounts: [],
-          labels: {}
-        }
-      ];
- 
-      if (!isSmall) {
-        mockContainers.push(
-          {
-            id: "mock33333333",
-            fullId: "mock33333333333333333333333333333333",
-            names: ["redis-cache"],
-            image: "redis:alpine",
-            imageId: "sha256:redis",
-            ...getContainerState("mock33333333", "running"),
-            created: Math.floor(Date.now() / 1000 - 3600),
-            ports: [{ privatePort: 6379, publicPort: 6379, type: "tcp" }],
-            mounts: [],
-            labels: {}
-          },
-          {
-            id: "mock44444444",
-            fullId: "mock44444444444444444444444444444444",
-            names: ["node-api"],
-            image: "node:18-alpine",
-            imageId: "sha256:node",
-            ...getContainerState("mock44444444", "exited"),
-            created: Math.floor(Date.now() / 1000 - 7200),
-            ports: [],
-            mounts: [],
-            labels: {}
-          },
-          {
-            id: "mock55555555",
-            fullId: "mock55555555555555555555555555555555",
-            names: ["prometheus"],
-            image: "prom/prometheus:latest",
-            imageId: "sha256:prometheus",
-            ...getContainerState("mock55555555", "running"),
-            created: Math.floor(Date.now() / 1000 - 2700),
-            ports: [{ privatePort: 9090, publicPort: 9090, type: "tcp" }],
-            mounts: [],
-            labels: {}
-          },
-          {
-            id: "mock66666666",
-            fullId: "mock66666666666666666666666666666666",
-            names: ["grafana"],
-            image: "grafana/grafana:latest",
-            imageId: "sha256:grafana",
-            ...getContainerState("mock66666666", "running"),
-            created: Math.floor(Date.now() / 1000 - 2700),
-            ports: [{ privatePort: 3000, publicPort: 3000, type: "tcp" }],
-            mounts: [],
-            labels: {}
-          },
-          {
-            id: "mock77777777",
-            fullId: "mock77777777777777777777777777777777",
-            names: ["pihole-dns"],
-            image: "pihole/pihole:latest",
-            imageId: "sha256:pihole",
-            ...getContainerState("mock77777777", "paused"),
-            created: Math.floor(Date.now() / 1000 - 86400),
-            ports: [{ privatePort: 53, publicPort: 53, type: "udp" }],
-            mounts: [],
-            labels: {}
-          },
-          {
-            id: "mock88888888",
-            fullId: "mock88888888888888888888888888888888",
-            names: ["jellyfin-media"],
-            image: "jellyfin/jellyfin:latest",
-            imageId: "sha256:jellyfin",
-            ...getContainerState("mock88888888", "running"),
-            created: Math.floor(Date.now() / 1000 - 172800),
-            ports: [{ privatePort: 8096, publicPort: 8096, type: "tcp" }],
-            mounts: [],
-            labels: {}
-          }
-        );
-      }
-
-      if (isLarge) {
-        for (let i = 9; i <= 24; i++) {
-          const containerId = `mock${i.toString().padStart(8, '0')}`;
-          const defaultState = i % 4 === 0 ? "exited" : "running";
-          mockContainers.push({
-            id: containerId,
-            fullId: `mock${i.toString().padStart(32, '0')}`,
-            names: [`demo-service-${i}`],
-            image: `demo/service-${i}:latest`,
-            imageId: `sha256:fake${i}`,
-            ...getContainerState(containerId, defaultState),
-            created: Math.floor(Date.now() / 1000 - 86400 * i),
-            ports: [],
-            mounts: [],
-            labels: {}
-          });
-        }
-      }
-
-      return NextResponse.json(mockContainers);
+      return NextResponse.json(mockContainers.filter(container => !isDemoContainerRemoved(container.id)));
     }
 
     const url = new URL(request.url);
@@ -258,4 +136,11 @@ export async function GET(
     reportDockerFailure(resolvedHostId, failure);
     return NextResponse.json(failure, { status: dockerFailureStatus(failure) });
   }
+}
+
+export function GET(
+  request: Request,
+  segmentData: { params: Promise<{ hostId: string }> },
+) {
+  return withDemoSession(request, () => handleGET(request, segmentData));
 }
