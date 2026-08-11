@@ -207,14 +207,32 @@ test.describe.serial('critical self-hosted paths', () => {
   });
 
   test('admin logout clears the session and reloads the login page', async ({ page }) => {
+    await page.addInitScript(() => {
+      const originalClose = EventSource.prototype.close;
+      EventSource.prototype.close = function close() {
+        const closeCount = Number(sessionStorage.getItem('nasdash-e2e-event-source-close-count') || '0');
+        sessionStorage.setItem('nasdash-e2e-event-source-close-count', String(closeCount + 1));
+        return originalClose.call(this);
+      };
+    });
+
     await page.goto('/login');
     await page.getByLabel("Nom d'utilisateur").fill('admin');
     await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD);
+    const systemResponse = page.waitForResponse(response => response.url().endsWith('/api/system'));
+    const initialDashboardResponses = Promise.all([
+      page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-1')),
+      page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-2')),
+      page.waitForResponse(response => response.url().endsWith('/api/ping/batch')),
+    ]);
     await page.getByRole('button', { name: 'Se connecter' }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+    await Promise.all([systemResponse, initialDashboardResponses]);
+    await page.evaluate(() => sessionStorage.setItem('nasdash-e2e-event-source-close-count', '0'));
 
     await page.getByTitle('Se déconnecter').click();
     await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 });
+    expect(await page.evaluate(() => Number(sessionStorage.getItem('nasdash-e2e-event-source-close-count')))).toBe(1);
 
     const session = await page.request.get('/api/auth/me');
     expect(session.status()).toBe(200);

@@ -42,12 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      if (typeof window !== 'undefined' && window.globalEventSource) {
-        try {
-          window.globalEventSource.close();
-          window.globalEventSource = null;
-        } catch {}
-      }
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
       // A full reload intentionally clears every in-memory auth and SSE state.

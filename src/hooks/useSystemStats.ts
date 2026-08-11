@@ -22,9 +22,6 @@ function connect() {
   isConnecting = true;
   const es = new EventSource('/api/system');
   globalEventSource = es;
-  if (typeof window !== 'undefined') {
-    window.globalEventSource = es;
-  }
 
   es.onopen = () => {
     isConnecting = false;
@@ -55,9 +52,6 @@ function disconnect() {
   if (globalEventSource) {
     globalEventSource.close();
     globalEventSource = null;
-    if (typeof window !== 'undefined') {
-      window.globalEventSource = null;
-    }
   }
   isConnecting = false;
   if (reconnectTimer) {
