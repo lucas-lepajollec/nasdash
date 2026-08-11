@@ -79,8 +79,9 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
           await refreshDetail();
         }
       }
-    } catch (e: any) {
-      console.error(`Docker action ${action} failed:`, e.message);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`Docker action ${action} failed:`, message);
       throw e;
     } finally {
       setActionLoading(null);

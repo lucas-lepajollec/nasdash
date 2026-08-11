@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, type DependencyList, type MutableRefObject } from 'react';
 
 /**
  * useStickyRef — Détecte si un élément peut être en position sticky
@@ -11,9 +11,9 @@ import { useRef, useState, useEffect } from 'react';
  * En dessous de 960px (mobile), on force isSticky=false via CSS (position: static !important).
  */
 export function useStickyRef<T extends HTMLElement>(
-  deps: any[] = [],
+  deps: DependencyList = [],
   verticalMargin = 40
-): [React.MutableRefObject<T | null>, boolean] {
+): [MutableRefObject<T | null>, boolean] {
   const ref = useRef<T | null>(null);
   const [isSticky, setIsSticky] = useState(true);
 

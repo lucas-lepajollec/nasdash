@@ -41,6 +41,21 @@ For a production-mode run, build first and set `NASDASH_E2E_SERVER_MODE=producti
 
 The E2E runner owns only the isolated server it starts. It refuses to run if port 2510 is already occupied and explicitly releases its process tree on Windows, Linux and macOS.
 
+## Manual release test
+
+Run this checklist on the real development instance before merging the hardening branch. Back up `data/` first: unlike the E2E suite, these checks intentionally exercise the normal persistent configuration.
+
+- [ ] Log in and out as an administrator; verify public/private mode and viewer read-only permissions.
+- [ ] On Home, create, edit, move and delete a temporary category and service; check links, search, layouts and the mobile view.
+- [ ] In Docker, test both a reachable host and an intentionally unreachable host; verify containers, details, logs, images and volumes. Run start/stop/restart only on a disposable container, and confirm that an offline host is distinguishable from invalid credentials or settings.
+- [ ] In Networks, generate or load the topology, then create, edit, move, link and delete temporary items on a backed-up configuration. Reload the page and verify persistence.
+- [ ] Enable, disable, reorder and resize widgets. Exercise Clock, Calendar, Weather, Tailscale, Devices and Docker settings, including custom selects with mouse and keyboard, then save and reload.
+- [ ] Check appearance settings, themes and backgrounds on desktop and mobile widths.
+- [ ] Restart NasDash (or its container) and verify that users, services, layouts, widgets and network topology are still present.
+- [ ] For any failure, record the exact reproduction steps, the page and account type, a screenshot, browser-console output and the corresponding server log lines.
+
+Do not perform destructive Docker actions on valuable containers, images or volumes. Use disposable resources for action tests.
+
 ## Monitoring failure classification
 
 `src/lib/monitoringError.test.ts` protects the log-severity contract used by the Glances and Proxmox adapters:
