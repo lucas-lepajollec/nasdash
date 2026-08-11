@@ -172,8 +172,8 @@ describe('configuration entity payloads', () => {
     }, 'settings', 'PUT')).not.toThrow();
   });
 
-  it.each(['data/config.example.json', 'demo-data/config.json'])(
-    'accepts the shipped legacy-compatible settings in %s',
+  it.each(['data/config.example.json', 'src/lib/fixtures/legacy-demo-config.json'])(
+    'accepts the versioned legacy-compatible settings in %s',
     file => {
       const config = JSON.parse(readFileSync(resolve(process.cwd(), file), 'utf8'));
       expect(() => validateConfigMutationBody({
