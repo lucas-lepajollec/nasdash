@@ -42,6 +42,8 @@ The initial suite covers:
 
 For a production-mode run, build first and set `NASDASH_E2E_SERVER_MODE=production` before `npm run test:e2e`. The continuous-integration workflow uses this mode.
 
+When a Playwright run fails in GitHub Actions, the workflow uploads `playwright-report/` and `test-results/` as a diagnostic artifact retained for 14 days. These files contain the HTML report and any trace, screenshot or video retained by Playwright for the failed path.
+
 The E2E runner owns only the isolated server it starts. It refuses to run if port 2510 is already occupied and explicitly releases its process tree on Windows, Linux and macOS.
 
 ## Manual release test

@@ -165,6 +165,7 @@ Create a dedicated Proxmox API token and grant only the permissions required to 
 - Keep Docker actions disabled unless they are needed; deletion remains disabled in the example proxy.
 - Never commit `.env` or the real `data/` directory.
 - Back up the complete persistent data store before updates.
+- Report suspected vulnerabilities privately according to [SECURITY.md](SECURITY.md).
 - Review [ACCESS_CONTROL.md](ACCESS_CONTROL.md) for the authorization model.
 - Review [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) before the first upgrade.
 - Review [TESTING.md](TESTING.md) for unit, browser and container validation.
