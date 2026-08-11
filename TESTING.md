@@ -26,12 +26,14 @@ The initial suite covers:
 
 - the operating-system reduced-motion preference, including decorative animation loops, delays, transitions and smooth scrolling;
 - keyboard accessibility of the dashboard and settings dialog, including names, focus trapping, Escape, focus restoration, accessible integration fields, keyboard operation of custom selects and rendering of the General, Devices, Tailscale, Clock, Calendar and Weather settings pages;
+- mobile-menu rendering without conditional React hooks or browser page errors;
 - keyboard accessibility of the network topology editor dialog without persisting a topology change;
 - anonymous viewer access in public mode;
 - server-side rejection of anonymous writes;
 - admin login through the real login page;
 - settings persistence and reload through the API;
 - category and service creation/editing with the real UI payload shape;
+- Docker-tab actions remaining admin-only while staying independent from the widget-only Start/Stop button visibility setting;
 - custom-tab layout persistence;
 - viewer read access and write rejection;
 - admin logout after the initial dashboard requests settle, single-owner EventSource cleanup, session removal and full reload to the login page;

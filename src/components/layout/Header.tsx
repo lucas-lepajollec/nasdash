@@ -30,7 +30,7 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
-  const { config, setSettingsModal, user } = useConfig();
+  const { config, setSettingsModal, user, logout } = useConfig();
   const isHome = !props.activeTab || props.activeTab === 'dashboard';
   const currentTabDef = props.tabs?.find(t => t.id === props.activeTab);
   const isCustomTab = currentTabDef?.isCustom === true;
@@ -165,7 +165,6 @@ export default function Header(props: HeaderProps) {
   };
 
   const MenuElement = ({ startIndex = 0, endIndex = props.tabs?.length || 0, isMobile }: { startIndex?: number, endIndex?: number, isMobile?: boolean }) => {
-    const { config } = useConfig();
     if ((!isMobile && hideHeaderMenu) || !props.tabs) return null;
     const tabsToRender = props.tabs.slice(startIndex, endIndex);
     
@@ -231,7 +230,6 @@ export default function Header(props: HeaderProps) {
   };
 
   const ActionsDesktop = () => {
-    const { user, logout } = useConfig();
     const actions = getEditActions();
 
     return (
@@ -436,7 +434,12 @@ export default function Header(props: HeaderProps) {
                 minWidth: 'max-content', 
                 justifyContent: 'flex-end' 
               }}>
-                <button className={`nd-btn ${mobileMenuOpen ? 'nd-btn-active' : ''}`} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                <button
+                  className={`nd-btn ${mobileMenuOpen ? 'nd-btn-active' : ''}`}
+                  aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                  aria-expanded={mobileMenuOpen}
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
                   <Menu size={16} />
                 </button>
               </div>
@@ -567,18 +570,15 @@ export default function Header(props: HeaderProps) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Menu</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {(() => {
-                  const { user, logout } = useConfig();
-                  return user && !user.isAnonymous ? (
-                    <button className="nd-btn" onClick={logout} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
-                      <LogOut size={12} /> {user.username}
-                    </button>
-                  ) : (
-                    <a href="/login" className="nd-btn" style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px', textDecoration: 'none', display: 'inline-flex' }}>
-                      <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> Connexion
-                    </a>
-                  );
-                })()}
+                {user && !user.isAnonymous ? (
+                  <button className="nd-btn" onClick={logout} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
+                    <LogOut size={12} /> {user.username}
+                  </button>
+                ) : (
+                  <a href="/login" className="nd-btn" style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px', textDecoration: 'none', display: 'inline-flex' }}>
+                    <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> Connexion
+                  </a>
+                )}
                 <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 6 }}>
                   <X size={16} />
                 </button>

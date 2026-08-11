@@ -235,14 +235,6 @@ export async function POST(
   const authError = checkAdmin(request);
   if (authError) return authError;
 
-  const config = readConfig();
-  if (config.settings?.allowDockerActions !== true) {
-    return NextResponse.json(
-      { error: 'Les actions Docker sont désactivées dans les paramètres.' },
-      { status: 403 }
-    );
-  }
-
   let resolvedHostId = 'unknown';
   try {
     const { hostId, id } = await segmentData.params;

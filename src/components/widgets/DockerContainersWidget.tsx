@@ -90,16 +90,6 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
     }
   };
 
-  if (hosts.length === 0) {
-    return (
-      <div className="nd-sidebar-card nd-animate-in" style={{ padding: '16px', textAlign: 'center' }}>
-        <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', margin: 0 }}>
-          Aucun hôte Docker configuré.
-        </p>
-      </div>
-    );
-  }
-
   // Pagination calculation
   const containerList = useMemo(() => {
     const rawList = Array.isArray(containers) ? containers : [];
@@ -123,6 +113,16 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
       return !isSecretContainer;
     });
   }, [containers, config?.categories, showSecretSections]);
+
+  if (hosts.length === 0) {
+    return (
+      <div className="nd-sidebar-card nd-animate-in" style={{ padding: '16px', textAlign: 'center' }}>
+        <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', margin: 0 }}>
+          Aucun hôte Docker configuré.
+        </p>
+      </div>
+    );
+  }
   
   // Default to 6 items per page (even number for grids)
   let ITEMS_PER_PAGE = 6;

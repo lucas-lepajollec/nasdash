@@ -126,6 +126,22 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
   await expect(settingsButton).toBeFocused();
 });
 
+test('mobile menu opens without changing the React hook order', async ({ page }) => {
+  const pageErrors: Error[] = [];
+  page.on('pageerror', error => pageErrors.push(error));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const menuButton = page.getByRole('button', { name: 'Ouvrir le menu' });
+  await expect(menuButton).toBeVisible();
+  await menuButton.click();
+
+  await expect(page.locator('.nd-mobile-menu-content')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Connexion' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fermer le menu' })).toHaveAttribute('aria-expanded', 'true');
+  expect(pageErrors).toEqual([]);
+});
+
 test('network editor dialogs keep keyboard focus without changing topology', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel("Nom d'utilisateur").fill('admin');

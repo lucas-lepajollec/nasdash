@@ -194,6 +194,40 @@ test.describe.serial('critical self-hosted paths', () => {
     await admin.dispose();
   });
 
+  test('Docker tab actions remain independent from widget button visibility', async () => {
+    const admin = await isolatedRequest(27);
+    await login(admin, 'admin', ADMIN_PASSWORD);
+
+    const configResponse = await admin.get('/api/config');
+    expect(configResponse.status()).toBe(200);
+    expect((await configResponse.json()).settings.allowDockerActions).toBe(false);
+
+    const createHost = await admin.post('/api/config', {
+      data: {
+        type: 'dockerHost',
+        name: 'E2E Mock Docker',
+        icon: '🐳',
+        url: 'mock',
+      },
+    });
+    expect(createHost.status()).toBe(201);
+    const host = await createHost.json();
+
+    const action = await admin.post(`/api/docker/${host.id}/containers/mock11111111?action=restart`);
+    expect(action.status()).toBe(200);
+    expect(await action.json()).toMatchObject({ ok: true, action: 'restart' });
+
+    const viewer = await isolatedRequest(28);
+    await login(viewer, 'viewer', VIEWER_PASSWORD);
+    const forbiddenAction = await viewer.post(`/api/docker/${host.id}/containers/mock11111111?action=restart`);
+    expect(forbiddenAction.status()).toBe(401);
+    await viewer.dispose();
+
+    const cleanup = await admin.delete(`/api/config?type=dockerHost&id=${encodeURIComponent(host.id)}`);
+    expect(cleanup.status()).toBe(200);
+    await admin.dispose();
+  });
+
   test('viewer can read but cannot mutate configuration', async () => {
     const viewer = await isolatedRequest(30);
     await login(viewer, 'viewer', VIEWER_PASSWORD);
