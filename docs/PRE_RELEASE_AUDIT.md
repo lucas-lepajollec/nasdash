@@ -78,8 +78,8 @@ These scores describe the audited candidate, not every possible third-party envi
 
 ## Release-day gate
 
-1. Merge each focused branch only after both required GitHub checks pass.
-2. Confirm the merge commit contains the stabilization, screenshots, Custom CSS and cleanup commits.
+1. Open the final integration pull request, which contains the reviewed focused commits without duplicating them in separate merges.
+2. Merge it only after both required GitHub checks pass and confirm the merge commit contains the stabilization, screenshots, Custom CSS and cleanup changes.
 3. Create and verify a complete backup of the production data volume.
 4. Let GitHub build `ghcr.io/lucas-lepajollec/nasdash:latest` from the merged commit.
 5. Pull that exact published image on the NAS and run the manual smoke checklist.
