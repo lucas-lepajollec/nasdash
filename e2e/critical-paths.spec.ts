@@ -243,6 +243,30 @@ test.describe.serial('critical self-hosted paths', () => {
     await viewer.dispose();
   });
 
+  test('custom CSS safe mode keeps recovery controls reachable', async ({ browser }) => {
+    const admin = await isolatedRequest(35);
+    await login(admin, 'admin', ADMIN_PASSWORD);
+
+    try {
+      const hideInterface = await admin.put('/api/config', {
+        data: { type: 'settings', customCss: 'body { display: none !important; }' },
+      });
+      expect(hideInterface.status()).toBe(200);
+
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto('/?safe-css=1');
+      await expect(page.locator('.nd-shell')).toBeVisible({ timeout: 30_000 });
+      await context.close();
+    } finally {
+      const reset = await admin.put('/api/config', {
+        data: { type: 'settings', customCss: '' },
+      });
+      expect(reset.status()).toBe(200);
+      await admin.dispose();
+    }
+  });
+
   test('admin logout clears the session and reloads the login page', async ({ page }) => {
     await page.addInitScript(() => {
       const originalClose = EventSource.prototype.close;

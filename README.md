@@ -193,6 +193,7 @@ Create a dedicated Proxmox API token and grant only the permissions required to 
 - Review [ACCESS_CONTROL.md](ACCESS_CONTROL.md) for the authorization model.
 - Review [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) before the first upgrade.
 - Review [the integration troubleshooting guide](docs/INTEGRATIONS_TROUBLESHOOTING.md) for Glances, Proxmox, Docker and Tailscale diagnostics.
+- Review [CUSTOM_CSS.md](CUSTOM_CSS.md) before adding interface overrides and keep the `?safe-css=1` recovery URL available.
 - Review [TESTING.md](TESTING.md) for unit, browser and container validation.
 
 ## Project layout
