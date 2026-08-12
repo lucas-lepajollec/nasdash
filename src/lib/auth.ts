@@ -331,9 +331,6 @@ export function verifyCsrf(req: AuthRequestLike): boolean {
       if (isLocalhost(originHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
         return true;
       }
-      if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(originHost)) {
-        return true;
-      }
       console.warn(`CSRF attempt blocked by Origin: ${origin} vs target ${targetHost} / host ${hostHeader}`);
       return false;
     } catch {
@@ -351,9 +348,6 @@ export function verifyCsrf(req: AuthRequestLike): boolean {
         return true;
       }
       if (isLocalhost(refererHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
-        return true;
-      }
-      if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(refererHost)) {
         return true;
       }
       console.warn(`CSRF attempt blocked by Referer: ${referer} vs target ${targetHost} / host ${hostHeader}`);

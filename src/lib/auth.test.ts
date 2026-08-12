@@ -158,6 +158,20 @@ describe('Auth Utility Tests', () => {
       expect(verifyCsrf(req)).toBe(true);
     });
 
+    it('should reject an unrelated private-network Origin', () => {
+      const headers = new Map();
+      headers.set('origin', 'http://192.168.50.20');
+      headers.set('host', '192.168.50.10:2499');
+
+      const req = {
+        method: 'POST',
+        url: 'http://192.168.50.10:2499/api/config',
+        headers,
+      };
+
+      expect(verifyCsrf(req)).toBe(false);
+    });
+
     it('should block requests if Referer does not match target host', () => {
       const headers = new Map();
       headers.set('referer', 'http://malicious-site.com/evil');
