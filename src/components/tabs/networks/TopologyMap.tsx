@@ -448,47 +448,6 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     }
   }, []);
 
-  // Listen for edit action toolbar events dispatched from the Header
-  useEffect(() => {
-    const onAddGroup = () => {
-      setGroupName('');
-      setGroupType('infra');
-      setSelectedNodeIds([]);
-      setMergeIncomingLinks(false);
-      setShowAddGroup(true);
-    };
-    const onAddLink = () => {
-      setLinkFrom('');
-      setLinkTo('');
-      setLinkLabel('');
-      setLinkDir('directional');
-      setLinkFromPort('auto');
-      setLinkToPort('auto');
-      setShowAddLink(true);
-    };
-    const onAddNode = () => {
-      setNodeName('');
-      setNodeType('stdsvc');
-      setNodeIcon('📦');
-      setNodeIp('');
-      setNodePorts('');
-      setNodeGroupId('');
-      setLinkedServiceId('');
-      setLinkedDeviceId('');
-      setShowAddNode(true);
-    };
-
-    window.addEventListener('networkActionAddGroup', onAddGroup);
-    window.addEventListener('networkActionAddLink', onAddLink);
-    window.addEventListener('networkActionAddNode', onAddNode);
-
-    return () => {
-      window.removeEventListener('networkActionAddGroup', onAddGroup);
-      window.removeEventListener('networkActionAddLink', onAddLink);
-      window.removeEventListener('networkActionAddNode', onAddNode);
-    };
-  }, []);
-  
   // Modals / forms state
   const [showAddNode, setShowAddNode] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
@@ -545,6 +504,49 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   const [linkDir, setLinkDir] = useState<'directional' | 'bidirectional'>('directional');
   const [linkFromPort, setLinkFromPort] = useState<'auto' | 'top' | 'bottom' | 'left' | 'right'>('auto');
   const [linkToPort, setLinkToPort] = useState<'auto' | 'top' | 'bottom' | 'left' | 'right'>('auto');
+
+  // Listen for edit action toolbar events dispatched from the Header. Keep
+  // this effect below every state declaration it references so React's static
+  // analysis and future compiler passes can reason about it safely.
+  useEffect(() => {
+    const onAddGroup = () => {
+      setGroupName('');
+      setGroupType('infra');
+      setSelectedNodeIds([]);
+      setMergeIncomingLinks(false);
+      setShowAddGroup(true);
+    };
+    const onAddLink = () => {
+      setLinkFrom('');
+      setLinkTo('');
+      setLinkLabel('');
+      setLinkDir('directional');
+      setLinkFromPort('auto');
+      setLinkToPort('auto');
+      setShowAddLink(true);
+    };
+    const onAddNode = () => {
+      setNodeName('');
+      setNodeType('stdsvc');
+      setNodeIcon('📦');
+      setNodeIp('');
+      setNodePorts('');
+      setNodeGroupId('');
+      setLinkedServiceId('');
+      setLinkedDeviceId('');
+      setShowAddNode(true);
+    };
+
+    window.addEventListener('networkActionAddGroup', onAddGroup);
+    window.addEventListener('networkActionAddLink', onAddLink);
+    window.addEventListener('networkActionAddNode', onAddNode);
+
+    return () => {
+      window.removeEventListener('networkActionAddGroup', onAddGroup);
+      window.removeEventListener('networkActionAddLink', onAddLink);
+      window.removeEventListener('networkActionAddNode', onAddNode);
+    };
+  }, []);
 
   // DOM measurements state for rendering connection lines
   const containerRef = useRef<HTMLDivElement>(null);
