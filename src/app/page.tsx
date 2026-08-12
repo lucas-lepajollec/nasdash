@@ -28,6 +28,17 @@ const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
 const NetworksTab = lazy(() => import('@/components/tabs/networks/NetworksTab'));
 
+function LoadingView({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
+        <span style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)' }}>{text}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Shell() {
   const { activeTab, switchTab, tabs, ready } = useTabs();
   const { 
@@ -144,15 +155,6 @@ export default function Shell() {
   }
 
   const title = config?.settings?.title || process.env.NEXT_PUBLIC_DASHBOARD_TITLE || 'NASDASH';
-
-  const LoadingView = ({ text }: { text: string }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
-        <span style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)' }}>{text}</span>
-      </div>
-    </div>
-  );
 
   const isDockHidden = config?.settings?.hideDock ?? false;
 

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Activity, Zap, RefreshCw, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Activity, Zap, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
@@ -12,7 +12,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const [isReady, setIsReady] = useState(false);
-  const gradientId = useRef(`lat-${Math.random().toString(36).substr(2, 9)}`).current;
+  const gradientId = `lat-${useId().replace(/:/g, '')}`;
 
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
