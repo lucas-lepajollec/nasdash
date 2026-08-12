@@ -2,7 +2,15 @@ import type { LocalCalendarEvent } from './types';
 
 const DEMO_EVENT_DELAY_DAYS = 3;
 
-export function createRollingDemoCalendar(now = new Date()): LocalCalendarEvent[] {
+function getDemoReferenceDate(): Date {
+  const configuredReference = process.env.NASDASH_DEMO_REFERENCE_TIME?.trim();
+  if (!configuredReference) return new Date();
+
+  const parsedReference = new Date(configuredReference);
+  return Number.isNaN(parsedReference.getTime()) ? new Date() : parsedReference;
+}
+
+export function createRollingDemoCalendar(now = getDemoReferenceDate()): LocalCalendarEvent[] {
   const start = new Date(now);
   start.setDate(start.getDate() + DEMO_EVENT_DELAY_DAYS);
   start.setHours(18, 30, 0, 0);

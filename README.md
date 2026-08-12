@@ -11,10 +11,34 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="MIT license" /></a>
   </p>
 
-  <img src="public/nasdash.png" alt="NasDash dashboard" width="800" />
+  <img src="docs/assets/screenshots/nasdash-demo-home.jpg" alt="NasDash Home dashboard running with isolated fictional demo data" width="1200" />
 </div>
 
 NasDash brings service links, live availability, server telemetry, Docker management, network topology, Tailscale state, weather and calendar widgets into one configurable interface. Configuration remains on your own server in a persistent Docker volume or bind-mounted directory.
+
+## Product preview
+
+These screenshots are generated from NasDash's isolated public-demo profile. Every service, address, metric and log line is fictional; no personal installation or real infrastructure is connected during capture.
+
+| Docker management and simulated logs | Network topology |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker container details with fictional metrics, volumes and logs" width="900" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network topology with fictional documentation addresses" width="900" /> |
+
+<details>
+<summary>More views: widgets, settings and mobile</summary>
+
+<p align="center">
+  <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash configurable widgets overview" width="900" />
+  <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings in the isolated public demo" width="900" />
+</p>
+
+| Mobile Home | Mobile Docker |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-mobile-home.jpg" alt="NasDash responsive Home dashboard on mobile" width="390" /> | <img src="docs/assets/screenshots/nasdash-demo-mobile-docker.jpg" alt="NasDash responsive Docker dashboard on mobile" width="390" /> |
+
+</details>
+
+See [DEMO.md](DEMO.md) for the isolation model and [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for the reproducible capture workflow.
 
 ## Features
 

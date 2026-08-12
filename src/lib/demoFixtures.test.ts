@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRollingDemoCalendar } from './demoCalendar';
 import { DEMO_DOCKER_SERVICES } from './demoDockerFixtures';
 
@@ -15,6 +15,10 @@ const fixtureNames = [
 ];
 
 describe('public demo fixtures', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('ships a complete parseable data set', () => {
     for (const name of fixtureNames) {
       const content = fs.readFileSync(path.join(fixturesDirectory, name), 'utf8');
@@ -91,6 +95,13 @@ describe('public demo fixtures', () => {
     expect(events).toHaveLength(1);
     expect(new Date(events[0].start).getTime()).toBeGreaterThan(now.getTime());
     expect(new Date(events[0].end!).getTime()).toBeGreaterThan(new Date(events[0].start).getTime());
+  });
+
+  it('can freeze the rolling calendar for reproducible documentation captures', () => {
+    const reference = '2026-08-12T10:00:00.000Z';
+    vi.stubEnv('NASDASH_DEMO_REFERENCE_TIME', reference);
+
+    expect(createRollingDemoCalendar()).toEqual(createRollingDemoCalendar(new Date(reference)));
   });
 
   it('ships a representative service catalogue with safe links and logos', () => {
