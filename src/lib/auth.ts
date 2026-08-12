@@ -127,6 +127,19 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   }
 }
 
+export function getDefaultPasswordUsernames(users: User[]): Array<'admin' | 'viewer'> {
+  const defaultAccounts: Array<'admin' | 'viewer'> = [];
+
+  for (const username of ['admin', 'viewer'] as const) {
+    const user = users.find(candidate => candidate.username.toLowerCase() === username);
+    if (user?.passwordHash && verifyPassword(username, user.passwordHash)) {
+      defaultAccounts.push(username);
+    }
+  }
+
+  return defaultAccounts;
+}
+
 // --- SESSION JWT NATIVE ---
 
 export function generateToken(
@@ -452,10 +465,11 @@ export function readUsers(): User[] {
     }
 
     if (!authGlobal.__warnedAboutDefaultPasswords) {
-      if (adminUser?.passwordHash && verifyPassword('admin', adminUser.passwordHash)) {
+      const defaultPasswordUsernames = getDefaultPasswordUsernames(users);
+      if (defaultPasswordUsernames.includes('admin')) {
         console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte admin utilise encore le mot de passe par défaut « admin ».');
       }
-      if (viewerUser?.passwordHash && verifyPassword('viewer', viewerUser.passwordHash)) {
+      if (defaultPasswordUsernames.includes('viewer')) {
         console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte viewer utilise encore le mot de passe par défaut « viewer ».');
       }
       authGlobal.__warnedAboutDefaultPasswords = true;
