@@ -30,7 +30,7 @@
     "recharts": "^3.8.0",
     "swr": "^2.4.1",
     "systeminformation": "^5.33.1",
-    "uuid": "13.0.1"
+    "uuid": "14.0.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
