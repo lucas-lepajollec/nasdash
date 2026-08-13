@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, readJsonObject, readStringArray } from '@/lib/requestValidation';
-import { Device, Service } from '@/lib/types';
 import { isDemoMode } from '@/lib/demoMode';
+import { collectConfiguredPingTargets, isConfiguredPingTarget } from '@/lib/pingTargets';
 
 export const dynamic = 'force-dynamic';
 const MAX_PING_BODY_BYTES = 128 * 1024;
@@ -14,22 +14,8 @@ interface PingStatus {
   latency: number;
 }
 
-function getHostAndPort(urlStr: string): string | null {
-  try {
-    let clean = urlStr;
-    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
-      clean = 'http://' + clean;
-    }
-    const parsed = new URL(clean);
-    return parsed.host;
-  } catch {
-    return null;
-  }
-}
-
-async function pingOne(url: string, allowedHosts: Set<string>) {
-  const requestedHost = getHostAndPort(url);
-  if (!requestedHost || !allowedHosts.has(requestedHost)) {
+async function pingOne(url: string, allowedTargets: Set<string>) {
+  if (!isConfiguredPingTarget(url, allowedTargets)) {
     return { url, status: 'offline', statusText: 'Accès interdit', latency: 0 };
   }
 
@@ -105,29 +91,10 @@ export async function POST(request: Request) {
       return NextResponse.json({});
     }
 
-    // SSRF Prevention: Collect all configured allowed hosts
-    const allowedHosts = new Set<string>();
-    if (config.devices) {
-      config.devices.forEach((d: Device) => {
-        if (d.host) { const h = getHostAndPort(d.host); if (h) allowedHosts.add(h); }
-        if (d.api?.url) { const h = getHostAndPort(d.api.url); if (h) allowedHosts.add(h); }
-        if (d.api?.ip) { const h = getHostAndPort(d.api.ip); if (h) allowedHosts.add(h); }
-      });
-    }
-    if (config.categories) {
-      config.categories.forEach(cat => {
-        if (cat.services) {
-          cat.services.forEach((svc: Service) => {
-            if (svc.localUrl) { const h = getHostAndPort(svc.localUrl); if (h) allowedHosts.add(h); }
-            if (svc.secondaryUrl) { const h = getHostAndPort(svc.secondaryUrl); if (h) allowedHosts.add(h); }
-            if (svc.tailscaleUrl) { const h = getHostAndPort(svc.tailscaleUrl); if (h) allowedHosts.add(h); }
-          });
-        }
-      });
-    }
+    const allowedTargets = collectConfiguredPingTargets(config);
 
     // Ping all hosts concurrently on the server
-    const pingPromises = urls.map(url => pingOne(url, allowedHosts));
+    const pingPromises = urls.map(url => pingOne(url, allowedTargets));
     const results = await Promise.all(pingPromises);
 
     // Format as a map: { [url]: { status, statusText, latency } }

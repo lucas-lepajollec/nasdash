@@ -7,7 +7,8 @@ import {
   verifyCsrf,
   isAdmin,
   isSecureRequest,
-  isSessionCurrentForUser
+  isSessionCurrentForUser,
+  getDefaultPasswordUsernames,
 } from './auth';
 
 describe('Auth Utility Tests', () => {
@@ -18,6 +19,28 @@ describe('Auth Utility Tests', () => {
       expect(hash).toContain(':');
       expect(verifyPassword(password, hash)).toBe(true);
       expect(verifyPassword('wrongPassword', hash)).toBe(false);
+    });
+
+    it('only reports built-in accounts that still use their shipped password', () => {
+      const users = [
+        {
+          username: 'admin',
+          role: 'admin' as const,
+          passwordHash: hashPassword('a-strong-admin-password'),
+          sessionVersion: 0,
+        },
+        {
+          username: 'viewer',
+          role: 'viewer' as const,
+          passwordHash: hashPassword('viewer'),
+          sessionVersion: 0,
+        },
+      ];
+
+      expect(getDefaultPasswordUsernames(users)).toEqual(['viewer']);
+
+      users[1].passwordHash = hashPassword('a-strong-viewer-password');
+      expect(getDefaultPasswordUsernames(users)).toEqual([]);
     });
   });
 
@@ -133,6 +156,20 @@ describe('Auth Utility Tests', () => {
       };
 
       expect(verifyCsrf(req)).toBe(true);
+    });
+
+    it('should reject an unrelated private-network Origin', () => {
+      const headers = new Map();
+      headers.set('origin', 'http://192.168.50.20');
+      headers.set('host', '192.168.50.10:2499');
+
+      const req = {
+        method: 'POST',
+        url: 'http://192.168.50.10:2499/api/config',
+        headers,
+      };
+
+      expect(verifyCsrf(req)).toBe(false);
     });
 
     it('should block requests if Referer does not match target host', () => {

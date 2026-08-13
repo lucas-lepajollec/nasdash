@@ -1,5 +1,14 @@
 import type { NextConfig } from 'next';
 
+const allowedDevOrigins = [
+  'localhost',
+  '127.0.0.1',
+  ...(process.env.NASDASH_ALLOWED_DEV_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean),
+];
+
 // Trigger dev server restart to reload background monitoring loop
 const nextConfig: NextConfig = {
   // Docker/self-hosted releases use Next's minimal standalone server. Vercel
@@ -13,7 +22,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NASDASH_NEXT_DIST_DIR || '.next',
   agentRules: false,
   serverExternalPackages: ['systeminformation'],
-  allowedDevOrigins: ['192.168.0.201', '192.168.0.200', '192.168.0.204', '100.65.22.51', '100.81.228.93', 'localhost', '127.0.0.1'],
+  allowedDevOrigins,
   async headers() {
     return [{
       source: '/:path*',

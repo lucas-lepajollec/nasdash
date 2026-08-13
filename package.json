@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 --port 2499",
     "demo": "node scripts/demo-dev.mjs",
+    "demo:capture": "node scripts/capture-demo.mjs",
     "demo:docker": "docker compose -f docker-compose.demo.yml up --build -d",
     "demo:docker:start": "docker compose -f docker-compose.demo.yml up -d",
     "demo:docker:logs": "docker compose -f docker-compose.demo.yml logs -f --tail=100",

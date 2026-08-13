@@ -127,6 +127,19 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   }
 }
 
+export function getDefaultPasswordUsernames(users: User[]): Array<'admin' | 'viewer'> {
+  const defaultAccounts: Array<'admin' | 'viewer'> = [];
+
+  for (const username of ['admin', 'viewer'] as const) {
+    const user = users.find(candidate => candidate.username.toLowerCase() === username);
+    if (user?.passwordHash && verifyPassword(username, user.passwordHash)) {
+      defaultAccounts.push(username);
+    }
+  }
+
+  return defaultAccounts;
+}
+
 // --- SESSION JWT NATIVE ---
 
 export function generateToken(
@@ -318,9 +331,6 @@ export function verifyCsrf(req: AuthRequestLike): boolean {
       if (isLocalhost(originHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
         return true;
       }
-      if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(originHost)) {
-        return true;
-      }
       console.warn(`CSRF attempt blocked by Origin: ${origin} vs target ${targetHost} / host ${hostHeader}`);
       return false;
     } catch {
@@ -338,9 +348,6 @@ export function verifyCsrf(req: AuthRequestLike): boolean {
         return true;
       }
       if (isLocalhost(refererHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
-        return true;
-      }
-      if (/^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(refererHost)) {
         return true;
       }
       console.warn(`CSRF attempt blocked by Referer: ${referer} vs target ${targetHost} / host ${hostHeader}`);
@@ -452,10 +459,11 @@ export function readUsers(): User[] {
     }
 
     if (!authGlobal.__warnedAboutDefaultPasswords) {
-      if (adminUser?.passwordHash && verifyPassword('admin', adminUser.passwordHash)) {
+      const defaultPasswordUsernames = getDefaultPasswordUsernames(users);
+      if (defaultPasswordUsernames.includes('admin')) {
         console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte admin utilise encore le mot de passe par défaut « admin ».');
       }
-      if (viewerUser?.passwordHash && verifyPassword('viewer', viewerUser.passwordHash)) {
+      if (defaultPasswordUsernames.includes('viewer')) {
         console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte viewer utilise encore le mot de passe par défaut « viewer ».');
       }
       authGlobal.__warnedAboutDefaultPasswords = true;

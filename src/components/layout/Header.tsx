@@ -365,7 +365,7 @@ export default function Header(props: HeaderProps) {
               <User size={13} style={{ color: 'var(--nd-accent)' }} />
               <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
             </div>
-            <button className="nd-btn" onClick={logout} title="Se déconnecter" style={{ padding: 6, minWidth: 0, justifyContent: 'center' }}>
+            <button className="nd-btn" onClick={() => logout()} title="Se déconnecter" style={{ padding: 6, minWidth: 0, justifyContent: 'center' }}>
               <LogOut size={14} />
             </button>
           </div>
@@ -625,7 +625,7 @@ export default function Header(props: HeaderProps) {
               <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Menu</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {user && !user.isAnonymous ? (
-                  <button className="nd-btn" onClick={logout} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
+                  <button className="nd-btn" onClick={() => logout()} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
                     <LogOut size={12} /> {user.username}
                   </button>
                 ) : (

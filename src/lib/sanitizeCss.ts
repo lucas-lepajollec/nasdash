@@ -54,6 +54,12 @@ const DANGEROUS_CSS_VALUE_RULES: { pattern: RegExp; replacement: string }[] = [
  * Retourne une version sûre (commentaires retirés, breakouts neutralisés,
  * constructions dangereuses bloquées).
  */
+export const CUSTOM_CSS_MAX_LENGTH = 256 * 1024;
+
+export function isCustomCssSafeMode(search: string): boolean {
+  return new URLSearchParams(search).get('safe-css') === '1';
+}
+
 export function sanitizeCustomCss(input: unknown): string {
   if (typeof input !== 'string') return '';
 
@@ -67,9 +73,8 @@ export function sanitizeCustomCss(input: unknown): string {
   }
 
   // Limite de taille anti-abus (256 KB de CSS custom, c'est déjà énorme)
-  const MAX_CSS_LENGTH = 256 * 1024;
-  if (sanitized.length > MAX_CSS_LENGTH) {
-    sanitized = sanitized.slice(0, MAX_CSS_LENGTH);
+  if (sanitized.length > CUSTOM_CSS_MAX_LENGTH) {
+    sanitized = sanitized.slice(0, CUSTOM_CSS_MAX_LENGTH);
   }
 
   return sanitized;

@@ -111,7 +111,7 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
   
   // Fill missing slots
   while (gridArray.length < TOTAL_SLOTS) {
-    gridArray.push(`empty-${Math.random().toString(36).substr(2, 9)}`);
+    gridArray.push(`empty-generated-${gridArray.length}`);
   }
   
   // Trim excess empty slots if needed

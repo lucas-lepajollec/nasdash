@@ -16,6 +16,15 @@ interface LocalUser {
   allowedWidgets?: string[];
 }
 
+interface CustomTabOption {
+  id: string;
+  name: string;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 const DEFAULT_TABS = [
   { id: 'dashboard', name: 'Home' },
   { id: 'docker', name: 'Docker' },
@@ -24,10 +33,10 @@ const DEFAULT_TABS = [
 ];
 
 export function SecurityTab() {
-  const { config, updateConfig, user: currentUser } = useConfig();
+  const { config, updateConfig, user: currentUser, logout } = useConfig();
   const [users, setUsers] = useState<LocalUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
-  const [customTabs, setCustomTabs] = useState<any[]>([]);
+  const [customTabs, setCustomTabs] = useState<CustomTabOption[]>([]);
   
   // Formulaire d'ajout / modification
   const [username, setUsername] = useState('');
@@ -98,8 +107,8 @@ export function SecurityTab() {
       setActionError(null);
       await updateConfig({ securityMode: mode });
       setActionSuccess(`Mode de sécurité mis à jour : ${mode === 'private' ? 'Privé strict' : 'Public'}`);
-    } catch (e: any) {
-      setActionError(e.message || 'Erreur lors du changement de mode.');
+    } catch (error: unknown) {
+      setActionError(getErrorMessage(error, 'Erreur lors du changement de mode.'));
     }
   };
 
@@ -109,19 +118,24 @@ export function SecurityTab() {
       setActionSuccess(null);
       const res = await fetch('/api/auth/switch-to-viewer', { method: 'POST' });
       if (res.ok) {
-        window.location.href = '/';
+        // A full reload clears every admin-only client cache after the role switch.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.assign('/');
       } else {
         const data = await res.json();
         throw new Error(data.error || 'Erreur lors du basculement');
       }
-    } catch (e: any) {
-      setActionError(e.message || 'Erreur de basculement.');
+    } catch (error: unknown) {
+      setActionError(getErrorMessage(error, 'Erreur de basculement.'));
     }
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     const isEdit = users.some(u => u.username.toLowerCase() === username.toLowerCase());
+    const changesCurrentPassword = isEdit
+      && password.length > 0
+      && currentUser?.username.toLowerCase() === username.toLowerCase();
     
     if (!username || (!password && !isEdit)) {
       setActionError('Le nom d\'utilisateur et le mot de passe sont obligatoires.');
@@ -151,6 +165,11 @@ export function SecurityTab() {
         throw new Error(data.error || 'Erreur lors de la configuration de l\'utilisateur');
       }
 
+      if (changesCurrentPassword) {
+        await logout({ reason: 'password-changed' });
+        return;
+      }
+
       setActionSuccess(`Utilisateur ${username} enregistré avec succès.`);
       setUsername('');
       setPassword('');
@@ -158,8 +177,8 @@ export function SecurityTab() {
       setSelectedTabs([]);
       setSelectedWidgets([]);
       fetchUsers();
-    } catch (err: any) {
-      setActionError(err.message || 'Une erreur est survenue.');
+    } catch (error: unknown) {
+      setActionError(getErrorMessage(error, 'Une erreur est survenue.'));
     } finally {
       setAddingUser(false);
     }
@@ -186,8 +205,8 @@ export function SecurityTab() {
 
       setActionSuccess(`Utilisateur ${userToDelete} supprimé.`);
       fetchUsers();
-    } catch (err: any) {
-      setActionError(err.message || 'Une erreur est survenue.');
+    } catch (error: unknown) {
+      setActionError(getErrorMessage(error, 'Une erreur est survenue.'));
     }
   };
 
@@ -298,7 +317,7 @@ export function SecurityTab() {
                     pointerEvents: 'none',
                     textAlign: 'left'
                   }}>
-                    Le tableau de bord est ouvert à tout le réseau en lecture seule. Les actions Docker et la modification de configuration nécessitent une session d'administration.
+                    Le tableau de bord est ouvert à tout le réseau en lecture seule. Les actions Docker et la modification de configuration nécessitent une session d’administration.
                   </div>
                 )}
               </div>
@@ -346,7 +365,7 @@ export function SecurityTab() {
                     pointerEvents: 'none',
                     textAlign: 'left'
                   }}>
-                    Rien ne s'affiche sans connexion préalable. Tout visiteur non authentifié est immédiatement redirigé vers l'écran de connexion.
+                    Rien ne s’affiche sans connexion préalable. Tout visiteur non authentifié est immédiatement redirigé vers l’écran de connexion.
                   </div>
                 )}
               </div>
@@ -438,7 +457,7 @@ export function SecurityTab() {
                         setActionError(null);
                         setActionSuccess(null);
                       }}
-                      title="Modifier l'utilisateur / permissions"
+                      title={`Modifier l'utilisateur ${u.username} / permissions`}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -484,8 +503,9 @@ export function SecurityTab() {
 
           <form onSubmit={handleAddUser} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'end' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Nom d'utilisateur</label>
+              <label htmlFor="security-username" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{"Nom d'utilisateur"}</label>
               <input
+                id="security-username"
                 type="text"
                 className="nd-input"
                 value={username}
@@ -497,9 +517,10 @@ export function SecurityTab() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Mot de passe</label>
+              <label htmlFor="security-password" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Mot de passe</label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="security-password"
                   type={showPassword ? 'text' : 'password'}
                   className="nd-input"
                   value={password}
@@ -522,7 +543,7 @@ export function SecurityTab() {
               <CustomSelect
                 value={role}
                 disabled={isDefaultAccount}
-                onChange={(val: any) => setRole(val)}
+                onChange={(value) => setRole(value as 'admin' | 'viewer')}
                 options={[
                   { value: 'viewer', label: '👁️ Observateur (Lecture)' },
                   { value: 'admin', label: '👑 Administrateur (Total)' }

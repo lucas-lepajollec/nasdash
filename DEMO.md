@@ -38,6 +38,20 @@ Open <http://localhost:2505>. This command sets the server-only demo profile
 for its child process and never copies files into `data/`. Use
 `NASDASH_DEMO_PORT` to select another port when needed.
 
+## Reproducible documentation screenshots
+
+Generate the complete desktop and mobile screenshot set from an isolated local
+demo server with:
+
+```bash
+npm run demo:capture
+```
+
+The capture process waits for simulated device, network and Docker data before
+writing images, freezes the demo clock and calendar, and never reads the normal
+`data/` directory. See [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for setup,
+output files and the review checklist.
+
 ## Production-like Docker check
 
 Build and run the hardened container through the npm shortcut:

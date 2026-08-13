@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent } from '@/lib/types';
-import { sanitizeCustomCss } from '@/lib/sanitizeCss';
+import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
 
@@ -26,7 +26,7 @@ export interface DashboardContextType {
   reorderDevices: (newDevices: Device[]) => Promise<void>;
   updateDevice: (id: string, updates: Partial<Device>) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
-  updateConfig: (updates: DashboardConfigUpdate) => Promise<void>;
+  updateConfig: (updates: DashboardConfigUpdate) => Promise<boolean>;
   updateHomeWidgetProps: (widgetId: string, newProps: Record<string, unknown>) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   
@@ -60,6 +60,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [activeBgUrl, setActiveBgUrl] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [bgStyle, setBgStyle] = useState({ top: '-10vh', height: '120vh' });
+  const customCssSafeMode = typeof window === 'undefined' || isCustomCssSafeMode(window.location.search);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -504,11 +505,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         const payload = await response.json().catch(() => null) as { error?: string } | null;
         throw new Error(payload?.error || `Échec de sauvegarde de la configuration (${response.status}).`);
       }
+      return true;
     } catch (err) {
       console.warn('Failed to persist config update:', err);
       // The UI updates optimistically. Restore the last persisted state when
       // validation, authentication, persistence or the network rejects it.
       await fetchConfig();
+      return false;
     }
   };
 
@@ -629,7 +632,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           pointerEvents: 'none',
         }}
       />
-      {config?.settings?.customCss && (
+      {!customCssSafeMode && config?.settings?.customCss && (
         <style dangerouslySetInnerHTML={{ __html: sanitizeCustomCss(config.settings.customCss) }} />
       )}
       {children}
