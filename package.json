@@ -26,13 +26,13 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "lucide-react": "^0.577.0",
-    "next": "16.3.0",
+    "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
-    "swr": "^2.5.0",
+    "swr": "^2.5.1",
     "systeminformation": "^5.33.1",
-    "uuid": "13.0.1"
+    "uuid": "13.0.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
@@ -42,7 +42,7 @@
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.0",
+    "eslint-config-next": "16.3.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
