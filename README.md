@@ -148,7 +148,9 @@ cp .env.example .env
 npm run dev
 ```
 
-The development server listens on `http://localhost:2499`.
+The development server listens only on `http://127.0.0.1:2499` by default.
+To test from another device on a trusted local network, use `npm run dev:lan`
+and open the LAN address printed by Next.js.
 
 ## Remote Docker hosts
 

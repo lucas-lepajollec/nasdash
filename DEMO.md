@@ -38,6 +38,9 @@ Open <http://localhost:2505>. This command sets the server-only demo profile
 for its child process and never copies files into `data/`. Use
 `NASDASH_DEMO_PORT` to select another port when needed.
 
+The demo binds to `127.0.0.1` by default. Use `npm run demo:lan` to test it
+from another device on a trusted local network.
+
 ## Reproducible documentation screenshots
 
 Generate the complete desktop and mobile screenshot set from an isolated local
