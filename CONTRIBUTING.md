@@ -22,7 +22,8 @@ Welcome to the NasDash project! We'd love your help to make this the ultimate ho
    ```bash
    npm run dev
    ```
-   NasDash will be running at `http://localhost:2499`.
+   NasDash will be running locally at `http://127.0.0.1:2499`.
+   Use `npm run dev:lan` only when another device on a trusted LAN must reach it.
 
 ## Testing
 

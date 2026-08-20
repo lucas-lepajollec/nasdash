@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0 --port 2499",
+    "dev": "next dev -H 127.0.0.1 --port 2499",
+    "dev:lan": "next dev -H 0.0.0.0 --port 2499",
     "demo": "node scripts/demo-dev.mjs",
+    "demo:lan": "node scripts/demo-dev.mjs --lan",
     "demo:capture": "node scripts/capture-demo.mjs",
     "demo:docker": "docker compose -f docker-compose.demo.yml up --build -d",
     "demo:docker:start": "docker compose -f docker-compose.demo.yml up -d",

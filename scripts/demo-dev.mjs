@@ -4,7 +4,8 @@ import { spawn } from 'node:child_process';
 
 const rawPort = process.env.NASDASH_DEMO_PORT?.trim() || '2505';
 const port = Number.parseInt(rawPort, 10);
-const host = process.env.NASDASH_DEMO_HOST?.trim() || '0.0.0.0';
+const lan = process.argv.includes('--lan');
+const host = lan ? '0.0.0.0' : '127.0.0.1';
 
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   console.error(`[NASDASH] Port de démonstration invalide : ${rawPort}`);
@@ -35,9 +36,9 @@ if (!(await isPortAvailable(port))) {
 }
 
 const nextEntryPoint = path.join(process.cwd(), 'node_modules', 'next', 'dist', 'bin', 'next');
-const extraArguments = process.argv.slice(2);
+const extraArguments = process.argv.slice(2).filter(argument => argument !== '--lan');
 
-console.log(`[NASDASH] Démo locale isolée : http://localhost:${port}`);
+console.log(`[NASDASH] Démo isolée ${lan ? 'sur le réseau local' : 'locale uniquement'} : http://${lan ? '<IP-DE-LA-MACHINE>' : '127.0.0.1'}:${port}`);
 console.log('[NASDASH] Rechargement à chaud actif. Arrêt : Ctrl+C');
 
 const child = spawn(
