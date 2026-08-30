@@ -1,50 +1,65 @@
-# Contributing to NasDash 📊
+# Contributing to NasDash
 
-Welcome to the NasDash project! We'd love your help to make this the ultimate homelab dashboard.
+Thank you for helping improve NasDash. Focused bug fixes, documentation improvements, accessibility work, tests, and well-scoped features are welcome.
 
-## 🛠️ Local Development Setup
+## Before you start
 
-1. **Fork and clone** the repository:
-   ```bash
-   git clone https://github.com/lucas-lepajollec/nasdash.git
-   cd nasdash
-   ```
-2. **Install dependencies**:
-   ```bash
-   npm ci
-   ```
-3. **Set up your environment**:
-   Copy the example environment file.
-   ```bash
-   cp .env.example .env
-   ```
-4. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-   NasDash will be running locally at `http://127.0.0.1:2499`.
-   Use `npm run dev:lan` only when another device on a trusted LAN must reach it.
+- Search existing GitHub issues and pull requests before opening a duplicate.
+- Open an issue before investing in a large feature or architectural change.
+- Report suspected vulnerabilities privately through [SECURITY.md](SECURITY.md), not in a public issue.
+- Keep a pull request focused on one coherent change and avoid unrelated formatting or dependency churn.
 
-## Testing
+## Local development
 
-Before opening a pull request, run the unit/API suite and the isolated browser suite:
+Fork and clone the public GitHub repository:
 
 ```bash
+git clone https://github.com/YOUR-USERNAME/nasdash.git
+cd nasdash
+npm ci
+cp .env.example .env
+npm run dev
+```
+
+NasDash listens on `http://127.0.0.1:2499` by default. Use `npm run dev:lan` only when another device on a trusted network must reach the development server.
+
+For Docker integration work, use a constrained `docker-socket-proxy` as described in the README. Never expose an unauthenticated Docker socket or proxy to the internet.
+
+## Validate your change
+
+Run the checks relevant to your change before opening a pull request. The complete pre-merge path is:
+
+```bash
+npm run lint
 npm test
+npm run build
 npx playwright install chromium
 npm run test:e2e
 docker build --tag nasdash:smoke .
 npm run test:container -- nasdash:smoke
 ```
 
-The browser suite uses disposable data and can run beside the normal development server. See [TESTING.md](TESTING.md) for the covered paths and production-mode command.
+See [TESTING.md](TESTING.md) for isolated fixtures, production-mode browser tests, and container smoke-test details.
 
-### Note on Testing Docker Features
-If you are developing features related to the Docker integration, we highly recommend spinning up a local `docker-socket-proxy` container as described in the README, rather than exposing your own host's Docker socket directly to the dev environment.
+## Pull requests
 
-## 📦 Pull Request Process
+1. Create a short-lived branch such as `feat/service-filter`, `fix/docker-timeout`, or `docs/compose-example`.
+2. Use clear conventional commit messages, for example `fix: handle unavailable Docker hosts`.
+3. Push the branch to your fork and open a GitHub pull request against `main`.
+4. Explain the problem, the chosen approach, user-visible effects, validation performed, and any remaining limitation.
+5. Add or update tests and documentation when behavior changes.
+6. Respond to review feedback with new commits; do not rewrite a branch while it is actively being reviewed unless coordinated with the maintainer.
 
-1. Create a new branch for your feature (`git checkout -b feature/amazing-feature`).
-2. Commit your changes using conventional commit messages (`git commit -m 'feat: add amazing feature'`).
-3. Push to the branch (`git push origin feature/amazing-feature`).
-4. Open a Pull Request against the `main` branch.
+GitHub is NasDash's public review and contribution surface. Forgejo is the maintainer's authoritative Git forge. Accepted contributions are integrated into the authoritative history without rewriting their reviewed commits, then mirrored back to GitHub. GitHub marks the original pull request as merged when those commits reach `main`.
+
+## Review expectations
+
+A pull request is ready to integrate when:
+
+- required GitHub checks pass;
+- review conversations are resolved;
+- the change is scoped, documented, and safe for existing installations;
+- persistence, authentication, Docker access, network exposure, and upgrade behavior have been considered when relevant;
+- no credentials, private infrastructure data, generated runtime state, or unrelated files are included.
+
+By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Contributions are made under the repository's [MIT License](LICENSE).
