@@ -1,18 +1,29 @@
-## Description
-<!-- Describe your changes in detail -->
-<!-- What problem does this PR solve? -->
+## Summary
 
-## Type of change
-<!-- Please delete options that are not relevant. -->
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
+<!-- What changed, and what user or maintainer problem does it solve? -->
 
-## Checklist:
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
+## Change type
 
-## Screenshots (if appropriate):
+- [ ] Fix
+- [ ] Feature
+- [ ] Documentation
+- [ ] Security or hardening
+- [ ] Maintenance or refactor
+- [ ] Breaking change
+
+## Validation
+
+- [ ] I ran the relevant tests, production build, and container checks described in `CONTRIBUTING.md`.
+- [ ] I checked touched files for new lint problems without expanding the repository's existing lint debt.
+- [ ] I added or updated tests when behavior changed.
+- [ ] I updated documentation and `CHANGELOG.md` when users or operators are affected.
+- [ ] I considered persistence, authentication, Docker access, network exposure, upgrades, and rollback where relevant.
+- [ ] I did not include credentials, private infrastructure data, generated runtime state, or unrelated dependency churn.
+
+## Compatibility and migration
+
+<!-- Describe breaking behavior, data/config changes, migration and rollback. Write "None" when not applicable. -->
+
+## Visual evidence
+
+<!-- Add before/after screenshots or recordings for visible changes. Remove this section when not applicable. -->
