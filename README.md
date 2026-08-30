@@ -200,6 +200,7 @@ The [public demo](https://demo.nasdash.lucas-homelab.fr) uses deterministic fict
 
 - [Documentation](https://docs.nasdash.lucas-homelab.fr)
 - [Contributing guide](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Security policy](SECURITY.md)
 - [MIT License](LICENSE)

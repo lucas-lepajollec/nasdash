@@ -30,7 +30,6 @@ For Docker integration work, use a constrained `docker-socket-proxy` as describe
 Run the checks relevant to your change before opening a pull request. The complete pre-merge path is:
 
 ```bash
-npm run lint
 npm test
 npm run build
 npx playwright install chromium
@@ -38,6 +37,8 @@ npm run test:e2e
 docker build --tag nasdash:smoke .
 npm run test:container -- nasdash:smoke
 ```
+
+`npm run lint` is useful while editing touched files, but the repository still has pre-existing lint debt and does not yet use the full-project lint result as a merge gate. Do not expand that debt in changed code.
 
 See [TESTING.md](TESTING.md) for isolated fixtures, production-mode browser tests, and container smoke-test details.
 
@@ -63,3 +64,7 @@ A pull request is ready to integrate when:
 - no credentials, private infrastructure data, generated runtime state, or unrelated files are included.
 
 By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Contributions are made under the repository's [MIT License](LICENSE).
+
+## Maintainer release process
+
+Releases are deliberate milestones, not snapshots of every merge. Prepare a release pull request that updates the declared version, moves completed entries out of `Unreleased` in [CHANGELOG.md](CHANGELOG.md), and documents compatibility, migrations, and rollback when relevant. After all required checks pass, tag the exact accepted `main` commit with an annotated `vMAJOR.MINOR.PATCH` tag and push it through the authoritative Forgejo remote. Verify that the identical tag reaches GitHub and that the versioned container finishes successfully before publishing a draft GitHub release. Never move or reuse a published version tag.
