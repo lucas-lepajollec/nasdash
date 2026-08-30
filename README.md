@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="public/logo.svg" alt="NasDash logo" width="120" height="120" />
+  <img src="public/logo.svg" alt="NasDash logo" width="112" height="112" />
   <h1>NasDash</h1>
-  <p><strong>A self-hosted dashboard for homelab services, infrastructure and Docker.</strong></p>
+  <p><strong>A self-hosted cockpit for homelab services, infrastructure, Docker, telemetry, and network visibility.</strong></p>
 
   <p>
     <a href="https://nasdash.lucas-homelab.fr"><strong>Website</strong></a> ·
@@ -10,165 +10,86 @@
   </p>
 
   <p>
-    <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" /></a>
-    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
-    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
-    <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="MIT license" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-20c8e8" alt="MIT license" /></a>
+    <img src="https://img.shields.io/badge/self--hosted-111827" alt="Self-hosted" />
+    <img src="https://img.shields.io/badge/container-GHCR-111827" alt="Container on GHCR" />
   </p>
 
-  <img src="docs/assets/screenshots/nasdash-demo-home.jpg" alt="NasDash Home dashboard running with isolated fictional demo data" width="1200" />
+  <img src="docs/assets/screenshots/nasdash-demo-home.jpg" alt="NasDash home dashboard with isolated fictional demo data" width="1200" />
 </div>
 
-NasDash brings service links, live availability, server telemetry, Docker management, network topology, Tailscale state, weather and calendar widgets into one configurable interface. Configuration remains on your own server in a persistent Docker volume or bind-mounted directory.
+## Overview
+
+NasDash brings service links, live availability, machine telemetry, Docker management, network topology, Tailscale state, widgets, theming, and local access control into one configurable interface.
+
+Configuration stays on your own server in a persistent Docker volume or bind-mounted directory. Integrations are optional: the dashboard remains useful as a service cockpit while deeper infrastructure capabilities can be enabled deliberately.
 
 ## Product preview
 
-These screenshots are generated from NasDash's isolated public-demo profile. Every service, address, metric and log line is fictional; no personal installation or real infrastructure is connected during capture.
+Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile. No personal installation or real infrastructure is connected during capture.
 
 | Docker management and simulated logs | Network topology |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker container details with fictional metrics, volumes and logs" width="900" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network topology with fictional documentation addresses" width="900" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker details with fictional metrics, volumes, and logs" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network topology with documentation-only addresses" width="640" /> |
 
 <details>
-<summary>More views: widgets, settings and mobile</summary>
+<summary>More views: widgets, settings, and mobile</summary>
 
 <p align="center">
-  <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash configurable widgets overview" width="900" />
-  <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings in the isolated public demo" width="900" />
+  <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash configurable widgets" width="900" />
+  <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings" width="900" />
 </p>
 
-| Mobile Home | Mobile Docker |
+| Mobile home | Mobile Docker |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-mobile-home.jpg" alt="NasDash responsive Home dashboard on mobile" width="390" /> | <img src="docs/assets/screenshots/nasdash-demo-mobile-docker.jpg" alt="NasDash responsive Docker dashboard on mobile" width="390" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-mobile-home.jpg" alt="NasDash responsive home dashboard" width="390" /> | <img src="docs/assets/screenshots/nasdash-demo-mobile-docker.jpg" alt="NasDash responsive Docker dashboard" width="390" /> |
 
 </details>
 
-See [DEMO.md](DEMO.md) for the isolation model and [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for the reproducible capture workflow.
+## Highlights
 
-## Features
+- Service categories with local and secondary URLs, live availability, and drag-and-drop ordering.
+- Hardware metrics from Glances, Home Assistant, Proxmox VE, and Libre Hardware Monitor.
+- Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
+- Network topology editor with groups, links, and service/device associations.
+- Custom tabs, reusable widgets, responsive layouts, and appearance profiles.
+- Public or private access mode, local admin/viewer accounts, and viewer allowlists.
+- Encrypted integration credentials, atomic configuration writes, and backup/restore tooling.
 
-- Service categories with local and secondary URLs, live ping and drag-and-drop ordering.
-- Hardware metrics from Glances, Home Assistant, Proxmox VE and Libre Hardware Monitor.
-- Docker containers, logs, images, volumes and guarded actions through a socket proxy.
-- Network topology editor with groups, links and service/device associations.
-- Custom tabs, reusable widgets, responsive layouts and appearance profiles.
-- Public or private access mode, local admin/viewer accounts and per-viewer allowlists.
-- Encrypted integration credentials, atomic configuration writes and local backup/restore tooling.
+## Quick start
 
-## Recommended Docker installation
+### Docker Compose
 
-### Requirements
+Requirements: Docker Engine with Compose v2, a Linux host for the bundled socket proxy, and host port `2504`.
 
-- Docker Engine with Docker Compose v2.
-- A Linux host for the bundled Docker socket proxy. Docker Desktop can run NasDash, but the Linux socket mount in the example must be adapted.
-- Port `2504` available, or a different host-side port in the Compose file.
-
-### 1. Download the deployment files
-
-```bash
-git clone https://github.com/lucas-lepajollec/nasdash.git
-cd nasdash
-cp .env.example .env
-```
-
-New installations should use `docker-compose.named-volume.yml` with the published image `ghcr.io/lucas-lepajollec/nasdash:latest`. The historical `docker-compose.example.yml` remains available for existing `./data` bind-mount installations and is not silently migrated.
-
-### 2. Configure the first login
-
-Edit `.env` and set strong values before the first start:
-
-```dotenv
-NASDASH_ADMIN_PASSWORD=replace-with-a-long-unique-password
-NASDASH_VIEWER_PASSWORD=replace-with-another-long-password
-NASDASH_JWT_SECRET=replace-with-output-from-openssl-rand-hex-32
-```
-
-Generate a stable secret with:
-
-```bash
-openssl rand -hex 32
-```
-
-Keep `NASDASH_JWT_SECRET` stable. Changing it later invalidates sessions and prevents previously encrypted integration credentials from being decrypted. If the values are left empty, NasDash generates passwords and persistent local keys; retrieve the one-time passwords immediately with `docker compose -f docker-compose.named-volume.yml logs nasdash`.
-
-### 3. Start NasDash
-
-```bash
-docker compose -f docker-compose.named-volume.yml up -d
-docker compose -f docker-compose.named-volume.yml ps
-```
-
-Open `http://SERVER_IP:2504`. The example uses the named volume `nasdash-data`, which avoids host UID/GID problems during a first installation.
-
-In NasDash, configure the local Docker host as `docker-proxy` on port `2375`. The proxy is reachable only inside the Compose network and the Docker socket is never mounted into the NasDash container.
-
-### 4. Update safely
-
-Create a backup first, then pull and recreate only the application stack:
-
-```bash
-docker compose -f docker-compose.named-volume.yml pull
-docker compose -f docker-compose.named-volume.yml up -d
-docker compose -f docker-compose.named-volume.yml ps
-```
-
-The `nasdash-data` volume is not deleted by these commands. Never use `docker compose down -v` unless you intentionally want to delete all NasDash data. See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures.
-
-## Bind-mounted data directory
-
-If you prefer visible host files for NAS snapshots, replace the NasDash volume with:
+Create `docker-compose.yml`:
 
 ```yaml
 services:
   nasdash:
+    image: ghcr.io/lucas-lepajollec/nasdash:latest
+    container_name: nasdash
+    ports:
+      - "2504:2504"
+    pid: "host"
     volumes:
-      - ./data:/app/data
-```
+      - nasdash-data:/app/data
+    environment:
+      NODE_ENV: production
+      PORT: 2504
+      HOSTNAME: 0.0.0.0
+      NASDASH_ADMIN_PASSWORD: ${NASDASH_ADMIN_PASSWORD:-}
+      NASDASH_VIEWER_PASSWORD: ${NASDASH_VIEWER_PASSWORD:-}
+      NASDASH_JWT_SECRET: ${NASDASH_JWT_SECRET:-}
+    depends_on:
+      - docker-proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
-Prepare permissions before the first start on Linux:
-
-```bash
-mkdir -p data/logos
-sudo chown -R 1001:1001 data
-```
-
-The application process runs as UID/GID `1001:1001`. The complete directory must remain writable and must be backed up as a unit because it contains configuration, users, password hashes, encryption material and uploaded logos.
-
-## Build from source
-
-The repository `docker-compose.yml` builds the current checkout and keeps data in `./data`:
-
-```bash
-cp .env.example .env
-mkdir -p data/logos
-sudo chown -R 1001:1001 data
-docker compose up -d --build
-```
-
-For local development, use Node.js `20.9.0` or newer (Node.js 22 LTS is recommended):
-
-```bash
-npm ci
-cp .env.example .env
-npm run dev
-```
-
-The development server listens only on `http://127.0.0.1:2499` by default.
-To test from another device on a trusted local network, use `npm run dev:lan`
-and open the LAN address printed by Next.js.
-
-## Remote Docker hosts
-
-Never publish an unauthenticated Docker API or socket proxy on every network interface. On each remote host, bind the proxy only to a private LAN or Tailscale address and restrict inbound traffic to the NasDash machine:
-
-```yaml
-services:
   docker-proxy:
     image: tecnativa/docker-socket-proxy
-    restart: unless-stopped
-    ports:
-      - "100.x.y.z:2375:2375" # Replace with the target host's Tailscale/private IP.
+    container_name: nasdash-docker-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -183,44 +104,102 @@ services:
       BUILD: 0
       EXEC: 0
       SYSTEM: 0
+    restart: unless-stopped
+
+volumes:
+  nasdash-data:
+    name: nasdash-data
 ```
 
-Port `2375` is unencrypted and unauthenticated in this configuration. Use a firewall or private overlay network; do not expose it to the internet.
+Create `.env` with strong, stable values:
 
-## Proxmox API
+```dotenv
+NASDASH_ADMIN_PASSWORD=replace-with-a-long-unique-password
+NASDASH_VIEWER_PASSWORD=replace-with-another-long-password
+NASDASH_JWT_SECRET=replace-with-output-from-openssl-rand-hex-32
+```
 
-Create a dedicated Proxmox API token and grant only the permissions required to read the selected node, VM, container or storage statistics. A read-only role such as `PVEAuditor` is preferable to disabling privilege separation globally. Enter the token ID and secret in the device editor. NasDash supports local self-signed Proxmox certificates.
+```bash
+openssl rand -hex 32
+docker compose up -d
+docker compose ps
+```
 
-## Security and operations
+Open `http://SERVER_IP:2504` and configure the local Docker host as `docker-proxy:2375`.
 
-- Put NasDash behind HTTPS before exposing it outside a trusted network.
-- Keep Docker actions disabled unless they are needed; deletion remains disabled in the example proxy.
-- Never commit `.env` or the real `data/` directory.
-- Back up the complete persistent data store before updates.
-- Report suspected vulnerabilities privately according to [SECURITY.md](SECURITY.md).
-- Review [ACCESS_CONTROL.md](ACCESS_CONTROL.md) for the authorization model.
-- Review [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) before the first upgrade.
-- Review [the integration troubleshooting guide](docs/INTEGRATIONS_TROUBLESHOOTING.md) for Glances, Proxmox, Docker and Tailscale diagnostics.
-- Review [CUSTOM_CSS.md](CUSTOM_CSS.md) before adding interface overrides and keep the `?safe-css=1` recovery URL available.
-- Review [TESTING.md](TESTING.md) for unit, browser and container validation.
+The repository also provides [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml), the historical bind-mount example, and a build-from-source Compose file.
 
-## Project layout
+### Local development
+
+```bash
+git clone https://github.com/lucas-lepajollec/nasdash.git
+cd nasdash
+npm ci
+cp .env.example .env
+npm run dev
+```
+
+Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only when deliberately testing on a trusted network.
+
+## Configuration and persistence
+
+- The recommended `nasdash-data` volume contains configuration, users, password hashes, encryption material, and uploaded logos.
+- Keep `NASDASH_JWT_SECRET` stable. Changing it invalidates sessions and prevents existing encrypted integration credentials from being decrypted.
+- Back up the entire data store before upgrades; never run `docker compose down -v` unless deleting all NasDash state is intentional.
+- For NAS snapshots, replace the named volume with `./data:/app/data` and make the directory writable by UID/GID `1001:1001`.
+
+See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures.
+
+## Security, privacy, and limitations
+
+- Put NasDash behind HTTPS before access leaves a trusted network.
+- Never expose an unauthenticated Docker socket or socket proxy to the internet.
+- Keep destructive Docker capabilities disabled unless explicitly needed.
+- Restrict remote Docker proxies to a private LAN or overlay address and firewall them to the NasDash host.
+- Use a dedicated least-privilege Proxmox API token; a read-only role such as `PVEAuditor` is preferable.
+- Never commit `.env` or a real runtime `data/` directory.
+- Public demo controls and infrastructure data are fictional and isolated.
+
+Read [ACCESS_CONTROL.md](ACCESS_CONTROL.md), [SECURITY.md](SECURITY.md), and the [integration troubleshooting guide](docs/INTEGRATIONS_TROUBLESHOOTING.md) before exposing integrations.
+
+## Architecture
+
+| Layer | Technology |
+| --- | --- |
+| Application | Next.js, React, TypeScript |
+| Persistence and auth | Local server-side data, encrypted credentials, JWT sessions |
+| Integrations | Docker proxy, Glances, Proxmox, Tailscale, Home Assistant |
+| Deployment | Non-root Docker image and Docker Compose |
 
 ```text
-NasDash/
-├── data/                       # Example files; real runtime data is ignored by Git
-├── e2e/                        # Isolated critical browser paths
-├── public/                     # Static assets
-├── scripts/                    # E2E, container smoke, backup and restore tooling
-├── src/app/                    # Next.js pages and API routes
-├── src/components/             # Dashboard UI and settings
-├── src/lib/                    # Persistence, auth, integrations and contracts
-├── docker-compose.named-volume.yml # Recommended new published-image deployment
-├── docker-compose.example.yml  # Historical bind-mount deployment
-├── docker-compose.yml          # Build-current-checkout deployment
-└── Dockerfile                  # Non-root standalone production image
+src/app/          # Next.js pages and API routes
+src/components/   # Dashboard, widgets, settings, and editors
+src/lib/          # Persistence, auth, integrations, and contracts
+e2e/              # Isolated browser paths
+scripts/          # Demo, tests, backup, restore, and smoke tooling
 ```
 
-## Contributing
+## Development and quality
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before opening a pull request. NasDash is distributed under the [MIT License](LICENSE).
+| Command | Purpose |
+| --- | --- |
+| `npm run lint` | Run ESLint. |
+| `npm test` | Run the Vitest suite. |
+| `npm run build` | Create the production build. |
+| `npm run test:e2e` | Exercise isolated critical browser paths. |
+| `npm run test:container` | Run the production-container smoke test. |
+| `npm run demo:capture` | Regenerate the documented demo screenshots. |
+
+See [TESTING.md](TESTING.md) and [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for the complete validation and capture workflows.
+
+## Public demo
+
+The [public demo](https://demo.nasdash.lucas-homelab.fr) uses deterministic fictional services, addresses, metrics, logs, and actions. Modifications are temporary and no private Docker host, Tailscale account, or personal infrastructure is reachable. See [DEMO.md](DEMO.md).
+
+## Documentation and community
+
+- [Documentation](https://docs.nasdash.lucas-homelab.fr)
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [MIT License](LICENSE)
