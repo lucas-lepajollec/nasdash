@@ -4,6 +4,12 @@
   <p><strong>A self-hosted dashboard for homelab services, infrastructure and Docker.</strong></p>
 
   <p>
+    <a href="https://nasdash.lucas-homelab.fr"><strong>Website</strong></a> ·
+    <a href="https://demo.nasdash.lucas-homelab.fr"><strong>Live demo</strong></a> ·
+    <a href="https://docs.nasdash.lucas-homelab.fr"><strong>Documentation</strong></a>
+  </p>
+
+  <p>
     <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" /></a>
     <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
