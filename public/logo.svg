@@ -1,20 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <!-- Fond Dark Space -->
-  <rect width="256" height="256" rx="60" fill="#0b1117" />
-  
-  <!-- Widget Haut Gauche (Actif / Cyan) -->
-  <rect x="44" y="44" width="76" height="76" rx="20" fill="#151e29" stroke="#00d2ff" stroke-width="4"/>
-  <circle cx="82" cy="82" r="14" fill="#00d2ff" />
-  
-  <!-- Widgets Haut Droite (Passifs) -->
-  <rect x="136" y="44" width="76" height="40" rx="16" fill="#151e29" />
-  <rect x="136" y="96" width="76" height="24" rx="12" fill="#151e29" />
-  
-  <!-- Widget Bas Gauche (Passif) -->
-  <rect x="44" y="136" width="76" height="76" rx="20" fill="#151e29" />
-  <rect x="82" y="166" width="30" height="16" rx="8" fill="#2a3847" />
-  
-  <!-- Widget Bas Droite (Actif / Cyan) -->
-  <rect x="136" y="136" width="76" height="76" rx="20" fill="#151e29" stroke="#00d2ff" stroke-width="4"/>
-  <circle cx="174" cy="174" r="14" fill="#00d2ff" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="nasdash-logo-title nasdash-logo-description">
+  <title id="nasdash-logo-title">NasDash</title>
+  <desc id="nasdash-logo-description">A blue N formed by two infrastructure pillars and a cyan connecting link.</desc>
+  <path d="M82 24L174 146V232L82 110Z" fill="#00E5FF"/>
+  <g fill="#38BDF8">
+    <rect x="20" y="24" width="52" height="208" rx="16"/>
+    <rect x="184" y="24" width="52" height="208" rx="16"/>
+  </g>
 </svg>
