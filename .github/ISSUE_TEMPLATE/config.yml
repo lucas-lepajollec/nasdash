@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation and support
+    url: https://docs.nasdash.lucas-homelab.fr
+    about: Check setup, access control, backup and troubleshooting guidance before opening an issue.
+  - name: Private security report
+    url: https://github.com/lucas-lepajollec/nasdash/security/advisories/new
+    about: Report suspected vulnerabilities privately.
