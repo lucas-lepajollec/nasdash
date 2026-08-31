@@ -69,3 +69,7 @@ commandes.md
 
 # agent configs
 .agents/
+
+# local private project context (never commit)
+AGENTS.override.md
+.project-local/
