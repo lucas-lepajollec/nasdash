@@ -3,10 +3,10 @@
 
 services:
   nasdash:
-    image: ghcr.io/lucas-lepajollec/nasdash:latest
+    image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
     container_name: nasdash
     ports:
-      - "2504:2504"
+      - "${NASDASH_BIND_ADDRESS:-127.0.0.1}:2504:2504"
     pid: "host"
     volumes:
       - nasdash-data:/app/data
@@ -21,10 +21,18 @@ services:
       - docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /app/.next/cache:size=64m,uid=1001,gid=1001,mode=0750
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     restart: unless-stopped
 
   docker-proxy:
-    image: tecnativa/docker-socket-proxy
+    image: tecnativa/docker-socket-proxy:v0.5.0
     container_name: nasdash-docker-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -40,6 +48,8 @@ services:
       BUILD: 0
       EXEC: 0
       SYSTEM: 0
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:

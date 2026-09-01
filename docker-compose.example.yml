@@ -4,11 +4,11 @@
 services:
   # Service principal NasDash
   nasdash:
-    image: ghcr.io/lucas-lepajollec/nasdash:latest
+    image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
     container_name: nasdash
     ports:
       # Port exposé sur la machine hôte : port interne de l'application
-      - "2504:2504"
+      - "${NASDASH_BIND_ADDRESS:-127.0.0.1}:2504:2504"
     # Permet à la bibliothèque 'systeminformation' d'accéder aux statistiques réelles de la machine hôte (CPU, RAM, Disques)
     # au lieu de lire uniquement les limites du conteneur de l'application.
     pid: "host"
@@ -31,11 +31,19 @@ services:
       # Permet d'accéder aux services de la machine hôte (ex: WatchYourLAN) via host.docker.internal
       # Utile sur Linux où cette entrée n'est pas créée automatiquement par Docker Desktop
       - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /app/.next/cache:size=64m,uid=1001,gid=1001,mode=0750
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     restart: unless-stopped
 
   # Proxy sécurisé pour la socket Docker (évite de monter la socket Docker directement dans le conteneur NasDash)
   docker-proxy:
-    image: tecnativa/docker-socket-proxy
+    image: tecnativa/docker-socket-proxy:v0.5.0
     container_name: nasdash-docker-proxy
     volumes:
       # Montage en lecture seule de la socket Docker de l'hôte
@@ -66,4 +74,6 @@ services:
       - BUILD=0
       - EXEC=0
       - SYSTEM=0
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped

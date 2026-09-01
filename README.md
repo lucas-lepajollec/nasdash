@@ -67,10 +67,10 @@ Create `docker-compose.yml`:
 ```yaml
 services:
   nasdash:
-    image: ghcr.io/lucas-lepajollec/nasdash:latest
+    image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
     container_name: nasdash
     ports:
-      - "2504:2504"
+      - "${NASDASH_BIND_ADDRESS:-127.0.0.1}:2504:2504"
     pid: "host"
     volumes:
       - nasdash-data:/app/data
@@ -85,10 +85,18 @@ services:
       - docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /app/.next/cache:size=64m,uid=1001,gid=1001,mode=0750
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     restart: unless-stopped
 
   docker-proxy:
-    image: tecnativa/docker-socket-proxy
+    image: tecnativa/docker-socket-proxy:v0.5.0
     container_name: nasdash-docker-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -104,6 +112,8 @@ services:
       BUILD: 0
       EXEC: 0
       SYSTEM: 0
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:
@@ -125,7 +135,7 @@ docker compose up -d
 docker compose ps
 ```
 
-Open `http://SERVER_IP:2504` and configure the local Docker host as `docker-proxy:2375`.
+Open `http://127.0.0.1:2504` and configure the local Docker host as `docker-proxy:2375`. Set `NASDASH_BIND_ADDRESS=0.0.0.0` only for deliberate trusted-LAN exposure, preferably behind an authenticated HTTPS reverse proxy.
 
 The repository also provides [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml), the historical bind-mount example, and a build-from-source Compose file.
 
@@ -146,6 +156,7 @@ Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only whe
 - The recommended `nasdash-data` volume contains configuration, users, password hashes, encryption material, and uploaded logos.
 - Keep `NASDASH_JWT_SECRET` stable. Changing it invalidates sessions and prevents existing encrypted integration credentials from being decrypted.
 - Back up the entire data store before upgrades; never run `docker compose down -v` unless deleting all NasDash state is intentional.
+- Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by setting `NASDASH_IMAGE` to the previous version or `sha-<full-commit>` tag and recreating without removing the data volume.
 - For NAS snapshots, replace the named volume with `./data:/app/data` and make the directory writable by UID/GID `1001:1001`.
 
 See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures.
@@ -154,6 +165,7 @@ See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mou
 
 - Put NasDash behind HTTPS before access leaves a trusted network.
 - Never expose an unauthenticated Docker socket or socket proxy to the internet.
+- Treat `pid: host`, `CONTAINERS=1`, and Docker socket access as explicit high-risk integration exceptions. The `:ro` socket mount prevents replacing the socket file; it does not make Docker API access read-only. The proxy is not published, destructive deletion is disabled, and only the endpoints required by NasDash are enabled.
 - Keep destructive Docker capabilities disabled unless explicitly needed.
 - Restrict remote Docker proxies to a private LAN or overlay address and firewall them to the NasDash host.
 - Use a dedicated least-privilege Proxmox API token; a read-only role such as `PVEAuditor` is preferable.
