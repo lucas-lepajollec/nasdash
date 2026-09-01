@@ -12,6 +12,7 @@ services:
       NASDASH_JWT_SECRET: public-demo-authentication-is-disabled
     read_only: true
     tmpfs:
+      - /tmp:size=32m,mode=1777
       - /app/.next/cache:uid=1001,gid=1001,mode=0750
     security_opt:
       - no-new-privileges:true
@@ -25,7 +26,7 @@ services:
     image: nginxinc/nginx-unprivileged:1.29-alpine
     container_name: nasdash-demo-proxy
     ports:
-      - "2505:8080"
+      - "${NASDASH_DEMO_BIND_ADDRESS:-127.0.0.1}:2505:8080"
     volumes:
       - ./demo/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
