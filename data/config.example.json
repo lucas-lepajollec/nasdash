@@ -1,6 +1,7 @@
 {
   "version": 1,
   "settings": {
+    "uiLanguage": "en",
     "title": "MON HOME LAB",
     "showMonitor": true,
     "totalSlots": 10,

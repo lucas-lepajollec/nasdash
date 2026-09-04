@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Cpu, Sliders, ChevronRight, Shield, Container, Home, Layout, Layers, X, Smartphone, PanelTop, Network, Languages } from 'lucide-react';
+import { Palette, Cpu, Sliders, ChevronRight, Shield, Container, Home, Layout, Layers, X, Smartphone, PanelTop, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
@@ -47,22 +47,6 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
         <div className="nd-settings-sidebar-group">
           <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>{t("Général")}</span>
           <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button
-              onClick={() => setActiveTab('language')}
-              className={`nd-settings-nav-item ${currentTab === 'language' ? 'nd-settings-nav-item--active' : ''}`}
-            >
-              <div style={{ background: 'rgba(16, 185, 129, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
-                <Languages size={18} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t('settings.language')}</span>
-                <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', lineHeight: 1.35 }}>{t('settings.languageDescription')}</span>
-              </div>
-              <span className="nd-settings-chevron">
-                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
-              </span>
-            </button>
-
             <button
               onClick={() => setActiveTab('apparence')}
               className={`nd-settings-nav-item ${currentTab === 'apparence' ? 'nd-settings-nav-item--active' : ''}`}

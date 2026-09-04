@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Layout, Layers, Monitor, X, Trash2, Type } from 'lucide-react';
+import { Palette, Layout, Layers, Monitor, X, Trash2, Type, Languages } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../../../shared/CustomSelect';
@@ -10,6 +10,7 @@ import ThemeGalleryView, { THEME_GALLERY } from '../../ThemeGalleryView';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
 import { Emoji } from '../../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
+import { LanguageTab } from './LanguageTab';
 
 interface AppearanceTabProps {
   onOpenThemeGallery?: (tab: 'themes' | 'emojis') => void;
@@ -21,7 +22,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
   const demoMode = config?.demoMode === true;
   
   // Accordions states
-  const [openAccordions, setOpenAccordions] = useState<string[]>(['theme']);
+  const [openAccordions, setOpenAccordions] = useState<string[]>(['language']);
 
   const toggleAccordion = (id: string) => {
     setOpenAccordions(prev => prev.includes(id) ? [] : [id]);
@@ -214,6 +215,16 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <SettingsAccordion
+          title={t('settings.languageTitle')}
+          description={t('settings.languageDescription')}
+          icon={<Languages size={18} />}
+          isOpen={openAccordions.includes('language')}
+          onToggle={() => toggleAccordion('language')}
+        >
+          <LanguageTab embedded />
+        </SettingsAccordion>
+
         {/* Appearance Profiles */}
         <SettingsAccordion
           title={t("Profils, Thèmes & Emojis")}

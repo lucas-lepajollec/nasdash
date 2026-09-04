@@ -311,6 +311,7 @@ async function handlePUT(req: NextRequest) {
   }
 
   if (type === 'settings') {
+    if (body.uiLanguage !== undefined) config.settings.uiLanguage = body.uiLanguage;
     if (body.title !== undefined) config.settings.title = body.title;
     if (body.titleMobile !== undefined) config.settings.titleMobile = body.titleMobile;
     if (body.titleLogo !== undefined) config.settings.titleLogo = body.titleLogo;

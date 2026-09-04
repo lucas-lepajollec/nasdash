@@ -11,8 +11,8 @@ import {
 } from 'react';
 import { BCP47, interpolate, messages, type UiLanguage } from './messages';
 
-const STORAGE_KEY = 'nasdash.ui_language';
 const languageListeners = new Set<() => void>();
+let currentLanguage: UiLanguage = 'en';
 
 function isUiLanguage(value: string | null | undefined): value is UiLanguage {
   return value === 'en' || value === 'fr' || value === 'es' || value === 'de';
@@ -24,26 +24,15 @@ export function readRequestedLanguage() {
   return isUiLanguage(requested) ? requested : null;
 }
 
-function readStoredLanguage() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return isUiLanguage(stored) ? stored : null;
-  } catch {
-    return null;
-  }
-}
-
 function readClientLanguage(): UiLanguage {
-  return readRequestedLanguage() ?? readStoredLanguage() ?? 'en';
+  return readRequestedLanguage() ?? currentLanguage;
 }
 
 function subscribeToLanguage(listener: () => void) {
   languageListeners.add(listener);
-  window.addEventListener('storage', listener);
   window.addEventListener('popstate', listener);
   return () => {
     languageListeners.delete(listener);
-    window.removeEventListener('storage', listener);
     window.removeEventListener('popstate', listener);
   };
 }
@@ -67,8 +56,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const language = useSyncExternalStore(subscribeToLanguage, readClientLanguage, readServerLanguage);
 
   const setLanguage = useCallback((nextLanguage: UiLanguage) => {
+    currentLanguage = nextLanguage;
     try {
-      localStorage.setItem(STORAGE_KEY, nextLanguage);
       const url = new URL(window.location.href);
       if (url.searchParams.has('lang')) {
         url.searchParams.set('lang', nextLanguage);

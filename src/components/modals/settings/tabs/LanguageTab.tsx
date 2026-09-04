@@ -3,13 +3,21 @@
 import { Check, Languages } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { UI_LANGUAGES } from '@/i18n/messages';
+import { useConfig } from '@/hooks/useConfig';
 
-export function LanguageTab() {
+export function LanguageTab({ embedded = false }: { embedded?: boolean }) {
   const { language, setLanguage, t } = useI18n();
+  const { config, updateConfig } = useConfig();
+
+  const selectLanguage = async (nextLanguage: typeof language) => {
+    const previousLanguage = language;
+    setLanguage(nextLanguage);
+    if (!await updateConfig({ uiLanguage: nextLanguage })) setLanguage(previousLanguage);
+  };
 
   return (
     <section aria-labelledby="nasdash-language-title" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div>
+      {!embedded && <div>
         <h4 id="nasdash-language-title" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0, fontSize: '0.95rem' }}>
           <Languages size={18} style={{ color: 'var(--nd-accent)' }} />
           {t('settings.languageTitle')}
@@ -17,7 +25,7 @@ export function LanguageTab() {
         <p style={{ color: 'var(--nd-text-muted)', fontSize: '0.72rem', lineHeight: 1.6, margin: '8px 0 0' }}>
           {t('settings.languageHint')}
         </p>
-      </div>
+      </div>}
 
       <div role="radiogroup" aria-label={t('settings.languageTitle')} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
         {UI_LANGUAGES.map((option) => {
@@ -28,7 +36,7 @@ export function LanguageTab() {
               type="button"
               role="radio"
               aria-checked={selected}
-              onClick={() => setLanguage(option.id)}
+              onClick={() => void selectLanguage(option.id)}
               className="nd-btn"
               style={{
                 justifyContent: 'space-between',
@@ -47,7 +55,7 @@ export function LanguageTab() {
       </div>
 
       <p style={{ color: 'var(--nd-text-muted)', fontSize: '0.67rem', margin: 0 }}>
-        {t('settings.languageSaved')}
+        {t(config?.demoMode ? 'settings.languageSavedDemo' : 'settings.languageSaved')}
       </p>
     </section>
   );

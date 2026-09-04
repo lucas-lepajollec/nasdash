@@ -324,6 +324,7 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   readEnum(body, 'dockerContainersStyle', ['standard', 'extended', 'minimalist', 'grid'] as const);
   readEnum(body, 'pingIndicatorMode', ['none', 'standard_only', 'all'] as const);
   readEnum(body, 'securityMode', ['public', 'private'] as const);
+  readEnum(body, 'uiLanguage', ['en', 'fr', 'es', 'de'] as const);
 
   readNumber(body, 'totalSlots', { min: 0, max: 10_000, integer: true });
   readNumber(body, 'widgetsTotalSlots', { min: 0, max: 10_000, integer: true });

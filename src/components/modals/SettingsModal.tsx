@@ -306,7 +306,6 @@ import { MobileTab } from './settings/tabs/MobileTab';
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
 import { SecurityTab } from './settings/tabs/SecurityTab';
 import { LibraryTab } from './settings/tabs/LibraryTab';
-import { LanguageTab } from './settings/tabs/LanguageTab';
 import { TabsHomeTab } from './settings/tabs/onglets/TabsHomeTab';
 import { TabsWidgetsTab } from './settings/tabs/onglets/TabsWidgetsTab';
 import { TabsGeneralTab } from './settings/tabs/onglets/TabsGeneralTab';
@@ -359,10 +358,10 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
   
   const [editingTabId, setEditingTabId] = useState<string | undefined>(settingsModal.targetCustomTabId || undefined);
   const [activeTab, setActiveTab] = useState<string | null>(() => {
-    if (settingsModal.targetTab) return settingsModal.targetTab;
+    if (settingsModal.targetTab) return settingsModal.targetTab === 'language' ? 'apparence' : settingsModal.targetTab;
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('nd_settings_last_tab');
-      if (saved) return saved;
+      if (saved) return saved === 'language' ? 'apparence' : saved;
       if (window.innerWidth > 580) return 'apparence';
     }
     return null;
@@ -447,7 +446,6 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                 )
               ) : (
                 <>
-                  {currentTab === 'language' && <><Emoji emoji="🌐" /> {t('settings.languageTitle')}</>}
                   {currentTab === 'apparence' && <><Emoji emoji="🎨" /> {t("Apparence, Fonds & CSS")}</>}
                   {currentTab === 'header' && <><Emoji emoji="📋" /> {t("En-tête")}</>}
                   {currentTab === 'mobile' && <><Emoji emoji="📱" /> {t("Mobile")}</>}
@@ -500,7 +498,6 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
             </div>
           ) : (
             <>
-              {currentTab === 'language' && <LanguageTab />}
               {currentTab === 'apparence' && (
                 <AppearanceTab 
                   onOpenThemeGallery={(tab) => {
