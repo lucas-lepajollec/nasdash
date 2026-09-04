@@ -61,9 +61,9 @@ test.describe.serial('critical self-hosted paths', () => {
 
   test('admin login through the UI persists a normal settings update', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel("Nom d'utilisateur").fill('admin');
-    await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD);
-    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await page.getByLabel('Username').fill('admin');
+    await page.getByLabel('Password').fill(ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'Log in' }).click();
 
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
     await expect(page.locator('.nd-shell')).toBeVisible({ timeout: 30_000 });
@@ -278,20 +278,20 @@ test.describe.serial('critical self-hosted paths', () => {
     });
 
     await page.goto('/login');
-    await page.getByLabel("Nom d'utilisateur").fill('admin');
-    await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD);
+    await page.getByLabel('Username').fill('admin');
+    await page.getByLabel('Password').fill(ADMIN_PASSWORD);
     const systemResponse = page.waitForResponse(response => response.url().endsWith('/api/system'));
     const initialDashboardResponses = Promise.all([
       page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-1')),
       page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-2')),
       page.waitForResponse(response => response.url().endsWith('/api/ping/batch')),
     ]);
-    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await page.getByRole('button', { name: 'Log in' }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
     await Promise.all([systemResponse, initialDashboardResponses]);
     await page.evaluate(() => sessionStorage.setItem('nasdash-e2e-event-source-close-count', '0'));
 
-    await page.getByTitle('Se déconnecter').click();
+    await page.getByTitle('Log out').click();
     await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 });
     expect(await page.evaluate(() => Number(sessionStorage.getItem('nasdash-e2e-event-source-close-count')))).toBe(1);
 
@@ -319,7 +319,7 @@ test.describe.serial('critical self-hosted paths', () => {
     const page = await context.newPage();
     await page.goto('/');
     await expect(page).toHaveURL(/\/login\?redirect=/, { timeout: 30_000 });
-    await expect(page.getByRole('button', { name: 'Se connecter' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Log in' })).toBeVisible();
     await context.close();
     await anonymous.dispose();
 
@@ -334,22 +334,22 @@ test.describe.serial('critical self-hosted paths', () => {
     const replacementPassword = 'playwright-admin-password-updated';
 
     await page.goto('/login');
-    await page.getByLabel("Nom d'utilisateur").fill('admin');
-    await page.getByLabel('Mot de passe').fill(ADMIN_PASSWORD);
-    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await page.getByLabel('Username').fill('admin');
+    await page.getByLabel('Password').fill(ADMIN_PASSWORD);
+    await page.getByRole('button', { name: 'Log in' }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
 
-    await page.getByTitle('Paramètres globaux').click();
-    const settingsDialog = page.getByRole('dialog', { name: 'Paramètres NasDash' });
-    await settingsDialog.getByRole('button', { name: 'Sécurité' }).click();
-    await settingsDialog.getByRole('button', { name: /Utilisateurs & Permissions/ }).click();
-    await settingsDialog.getByTitle("Modifier l'utilisateur admin / permissions").click();
-    await settingsDialog.getByLabel('Mot de passe').fill(replacementPassword);
-    await settingsDialog.getByRole('button', { name: 'Sauvegarder' }).click();
+    await page.getByTitle('Global Settings').click();
+    const settingsDialog = page.getByRole('dialog', { name: 'NasDash Settings' });
+    await settingsDialog.getByRole('button', { name: 'Security' }).click();
+    await settingsDialog.getByRole('button', { name: /Users & Permissions/ }).click();
+    await settingsDialog.getByTitle('Edit user admin / permissions').click();
+    await settingsDialog.getByLabel('Password').fill(replacementPassword);
+    await settingsDialog.getByRole('button', { name: 'Save' }).click();
 
     await expect(page).toHaveURL(/\/login\?reason=password-changed$/, { timeout: 30_000 });
     await expect(page.getByRole('status')).toHaveText(
-      'Votre mot de passe a été modifié. Reconnectez-vous avec votre nouveau mot de passe.',
+      'Your password has been changed. Sign in again with your new password.',
     );
 
     const expiredSession = await page.request.get('/api/auth/me');
@@ -358,9 +358,9 @@ test.describe.serial('critical self-hosted paths', () => {
       user: { role: 'viewer', isAnonymous: true },
     });
 
-    await page.getByLabel("Nom d'utilisateur").fill('admin');
-    await page.getByLabel('Mot de passe').fill(replacementPassword);
-    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await page.getByLabel('Username').fill('admin');
+    await page.getByLabel('Password').fill(replacementPassword);
+    await page.getByRole('button', { name: 'Log in' }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
   });
 });

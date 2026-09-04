@@ -42,7 +42,7 @@ export function ClockWidgetTab() {
               {t("Spécifiez le fuseau horaire de l&apos;horloge. Laissez vide pour utiliser l&apos;heure locale.")}
             </p>
             <CustomSelect
-              ariaLabel="Fuseau horaire"
+              ariaLabel={t("Fuseau Horaire")}
               value={clockTimezone || ''}
               onChange={async (val) => {
                 await updateConfig({ clockTimezone: val });

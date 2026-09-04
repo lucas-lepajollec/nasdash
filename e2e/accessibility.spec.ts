@@ -60,39 +60,39 @@ test('reduced-motion preference stops decorative movement', async ({ page }) => 
 test('core dashboard and settings stay keyboard accessible', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole('textbox', { name: 'Rechercher dans le tableau de bord' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Mois précédent' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Mois suivant' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Search dashboard' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next month' })).toBeVisible();
 
   await page.goto('/login');
-  await page.getByLabel("Nom d'utilisateur").fill('admin');
-  await page.getByLabel('Mot de passe').fill('playwright-admin-password');
-  await page.getByRole('button', { name: 'Se connecter' }).click();
+  await page.getByLabel('Username').fill('admin');
+  await page.getByLabel('Password').fill('playwright-admin-password');
+  await page.getByRole('button', { name: 'Log in' }).click();
 
   await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
-  const settingsButton = page.getByRole('button', { name: 'Paramètres globaux' });
+  const settingsButton = page.getByRole('button', { name: 'Global Settings' });
   await settingsButton.click();
 
-  const dialog = page.getByRole('dialog', { name: 'Paramètres NasDash' });
+  const dialog = page.getByRole('dialog', { name: 'NasDash Settings' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('aria-modal', 'true');
   expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
 
   const sidebar = dialog.locator('.nd-settings-sidebar');
-  await sidebar.getByRole('button', { name: 'Général', exact: true }).click();
-  await expect(dialog.getByText('Position du Dock', { exact: true })).toBeVisible();
+  await sidebar.getByRole('button', { name: 'General', exact: true }).click();
+  await expect(dialog.getByText('Dock Position', { exact: true })).toBeVisible();
 
-  await sidebar.getByRole('button', { name: 'Configuration Widgets', exact: true }).click();
+  await sidebar.getByRole('button', { name: 'Widget Settings', exact: true }).click();
   const widgetPages = [
-    { navigationName: /Appareils/, title: /Configuration — Appareils/ },
+    { navigationName: /Devices/, title: /Configuration — Devices/ },
     {
-      navigationName: /VPN Tailscale/,
-      title: /Configuration — VPN Tailscale/,
-      fieldNames: ['Nom du Tailnet', 'OAuth Client ID Tailscale', 'OAuth Client Secret Tailscale'],
+      navigationName: /Tailscale VPN/,
+      title: /Configuration — Tailscale VPN/,
+      fieldNames: ['Tailnet Name', 'Tailscale OAuth Client ID', 'Tailscale OAuth Client Secret'],
     },
-    { navigationName: /Horloge/, title: /Configuration — Horloge \/ Date/, selectName: 'Fuseau horaire' },
-    { navigationName: /Calendrier/, title: /Configuration — Calendrier/, fieldNames: ['URL du calendrier iCal'] },
-    { navigationName: /Météo/, title: /Configuration — Météo/, fieldNames: ['Rechercher une ville'] },
+    { navigationName: /Clock/, title: /Configuration — Clock \/ Date/, selectName: 'Time Zone' },
+    { navigationName: /Calendar/, title: /Configuration — Calendar/, fieldNames: ['iCal Calendar URL'] },
+    { navigationName: /Weather/, title: /Configuration — Weather/, fieldNames: ['Search for a city'] },
   ];
 
   for (const widgetPage of widgetPages) {
@@ -114,7 +114,7 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
     }
   }
 
-  await expect(dialog.getByText('Activer le widget Météo', { exact: true })).toBeVisible();
+  await expect(dialog.getByText('Enable Weather widget', { exact: true })).toBeVisible();
 
   const lastButton = dialog.locator('button:not([disabled])').last();
   await lastButton.focus();
@@ -132,32 +132,32 @@ test('mobile menu opens without changing the React hook order', async ({ page })
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
 
-  const menuButton = page.getByRole('button', { name: 'Ouvrir le menu' });
+  const menuButton = page.getByRole('button', { name: 'Open menu' });
   await expect(menuButton).toBeVisible();
   await menuButton.click();
 
   await expect(page.locator('.nd-mobile-menu-content')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Connexion' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Fermer le menu' })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true');
   expect(pageErrors).toEqual([]);
 });
 
 test('network editor dialogs keep keyboard focus without changing topology', async ({ page }) => {
   await page.goto('/login');
-  await page.getByLabel("Nom d'utilisateur").fill('admin');
-  await page.getByLabel('Mot de passe').fill('playwright-admin-password');
-  await page.getByRole('button', { name: 'Se connecter' }).click();
+  await page.getByLabel('Username').fill('admin');
+  await page.getByLabel('Password').fill('playwright-admin-password');
+  await page.getByRole('button', { name: 'Log in' }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
 
   await page.evaluate(() => localStorage.setItem('nasdash-active-tab', 'networks'));
   await page.reload();
   await expect(page.locator('.nd-networks-layout')).toBeVisible({ timeout: 30_000 });
 
-  await page.getByTitle('Mode édition').click();
+  await page.getByTitle('Edit mode').click();
   await page.getByRole('button', { name: 'Actions' }).click();
-  await page.getByRole('button', { name: 'Créer un nœud' }).click();
+  await page.getByRole('button', { name: 'Create a node' }).click();
 
-  const dialog = page.getByRole('dialog', { name: 'Ajouter un nœud topologique' });
+  const dialog = page.getByRole('dialog', { name: 'Add a topology node' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('aria-modal', 'true');
   expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
