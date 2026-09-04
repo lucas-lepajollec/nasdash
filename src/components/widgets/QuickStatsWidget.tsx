@@ -4,8 +4,10 @@ import { Server, FolderOpen, Hash, Link2 } from 'lucide-react';
 import { Category } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function QuickStatsWidget({ categories, editMode }: { categories: Category[], editMode?: boolean }) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const { size: widgetSize, width } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -30,7 +32,7 @@ export default function QuickStatsWidget({ categories, editMode }: { categories:
 
   const quickStats = [
     { label: 'Services', value: serviceCount, icon: <Server size={11} /> },
-    { label: 'Catégories', value: categoryCount, icon: <FolderOpen size={11} /> },
+    { label: t("Catégories"), value: categoryCount, icon: <FolderOpen size={11} /> },
     { label: 'Liens', value: linkCount, icon: <Link2 size={11} /> },
     { label: 'Ports', value: ports.size, icon: <Hash size={11} /> },
   ];
@@ -48,7 +50,7 @@ export default function QuickStatsWidget({ categories, editMode }: { categories:
       {!hideTitles && (
         <div className="nd-section-title">
           <Server size={12} style={{ color: 'var(--nd-accent)' }} />
-          Vue d&apos;ensemble
+          {t("Vue d&apos;ensemble")}
         </div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8, marginTop: (hideTitles && !editMode) ? 0 : 8 }}>

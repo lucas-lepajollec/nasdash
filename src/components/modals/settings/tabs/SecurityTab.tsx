@@ -8,6 +8,7 @@ import CustomSelect from '@/components/shared/CustomSelect';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
 import { Emoji } from '../../../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface LocalUser {
   username: string;
@@ -33,6 +34,7 @@ const DEFAULT_TABS = [
 ];
 
 export function SecurityTab() {
+  const { t } = useI18n();
   const { config, updateConfig, user: currentUser, logout } = useConfig();
   const [users, setUsers] = useState<LocalUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -249,8 +251,8 @@ export function SecurityTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {demoMode && (
         <div style={{ padding: 14, background: 'color-mix(in srgb, var(--nd-accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 32%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius, 8px)', fontSize: '0.72rem', lineHeight: 1.55 }}>
-          <strong style={{ display: 'block', marginBottom: 4, color: 'var(--nd-text)' }}>Aperçu de la sécurité en mode démo</strong>
-          Les changements de mode ci-dessous sont simulés dans votre session temporaire. Ils ne verrouillent pas cette démo publique et ne modifient aucun compte réel.
+          <strong style={{ display: 'block', marginBottom: 4, color: 'var(--nd-text)' }}>{t("Aperçu de la sécurité en mode démo")}</strong>
+          {t("Les changements de mode ci-dessous sont simulés dans votre session temporaire. Ils ne verrouillent pas cette démo publique et ne modifient aucun compte réel.")}
         </div>
       )}
       {/* Alertes d'action */}
@@ -267,8 +269,8 @@ export function SecurityTab() {
 
       {/* SECTION 1: MODE DE SECURITE */}
       <SettingsAccordion
-        title="Mode de sécurité global"
-        description="Configurez l'accès public ou privé du tableau de bord"
+        title={t("Mode de sécurité global")}
+        description={t("Configurez l'accès public ou privé du tableau de bord")}
         icon={<Shield size={18} />}
         isOpen={openAccordions.includes('mode')}
         onToggle={() => toggleAccordion('mode')}
@@ -291,7 +293,7 @@ export function SecurityTab() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}><Emoji emoji="🌐" /></span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: securityMode === 'public' ? 'var(--nd-accent)' : 'var(--nd-text)' }}>Public (Lecture seule)</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: securityMode === 'public' ? 'var(--nd-accent)' : 'var(--nd-text)' }}>{t("Public (Lecture seule)")}</span>
               </div>
               <div 
                 onMouseEnter={() => setHoveredMode('public')}
@@ -317,7 +319,7 @@ export function SecurityTab() {
                     pointerEvents: 'none',
                     textAlign: 'left'
                   }}>
-                    Le tableau de bord est ouvert à tout le réseau en lecture seule. Les actions Docker et la modification de configuration nécessitent une session d’administration.
+                    {t("Le tableau de bord est ouvert à tout le réseau en lecture seule. Les actions Docker et la modification de configuration nécessitent une session d’administration.")}
                   </div>
                 )}
               </div>
@@ -339,7 +341,7 @@ export function SecurityTab() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}><Emoji emoji="🔒" /></span>
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: securityMode === 'private' ? 'var(--nd-accent)' : 'var(--nd-text)' }}>Privé strict</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: securityMode === 'private' ? 'var(--nd-accent)' : 'var(--nd-text)' }}>{t("Privé strict")}</span>
               </div>
               <div 
                 onMouseEnter={() => setHoveredMode('private')}
@@ -365,7 +367,7 @@ export function SecurityTab() {
                     pointerEvents: 'none',
                     textAlign: 'left'
                   }}>
-                    Rien ne s’affiche sans connexion préalable. Tout visiteur non authentifié est immédiatement redirigé vers l’écran de connexion.
+                    {t("Rien ne s’affiche sans connexion préalable. Tout visiteur non authentifié est immédiatement redirigé vers l’écran de connexion.")}
                   </div>
                 )}
               </div>
@@ -379,25 +381,25 @@ export function SecurityTab() {
         <div style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius, 8px)', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <User size={18} style={{ color: 'var(--nd-accent)', flexShrink: 0, marginTop: 2 }} />
           <div>
-            <strong style={{ display: 'block', fontSize: '0.8rem', marginBottom: 5 }}>Utilisateurs et permissions</strong>
+            <strong style={{ display: 'block', fontSize: '0.8rem', marginBottom: 5 }}>{t("Utilisateurs et permissions")}</strong>
             <p style={{ margin: 0, color: 'var(--nd-text-muted)', fontSize: '0.7rem', lineHeight: 1.55 }}>
-              Une installation NasDash complète permet de créer des administrateurs et observateurs, puis de limiter leurs onglets et widgets. La création de comptes, les mots de passe, la suppression et le test d&apos;une session viewer sont désactivés ici afin de ne jamais recueillir de véritables identifiants.
+              {t("Une installation NasDash complète permet de créer des administrateurs et observateurs, puis de limiter leurs onglets et widgets. La création de comptes, les mots de passe, la suppression et le test d&apos;une session viewer sont désactivés ici afin de ne jamais recueillir de véritables identifiants.")}
             </p>
           </div>
         </div>
       ) : (
       <SettingsAccordion
-        title="Utilisateurs & Permissions"
-        description="Gérez les comptes d'accès, rôles et restrictions d'onglets/widgets"
+        title={t("Utilisateurs & Permissions")}
+        description={t("Gérez les comptes d'accès, rôles et restrictions d'onglets/widgets")}
         icon={<User size={18} />}
         isOpen={openAccordions.includes('users')}
         onToggle={() => toggleAccordion('users')}
       >
         <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', display: 'block', marginBottom: 12 }}>
-          👤 Utilisateurs enregistrés
+          {t("👤 Utilisateurs enregistrés")}
         </span>
         {loadingUsers ? (
-          <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.75rem', padding: 8 }}>Chargement...</div>
+          <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.75rem', padding: 8 }}>{t("Chargement...")}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
             {users.map(u => {
@@ -431,7 +433,7 @@ export function SecurityTab() {
                         {u.username} {isCurrent && <span style={{ fontSize: '0.62rem', color: 'var(--nd-accent)', marginLeft: 4 }}>(vous)</span>}
                       </span>
                       <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {u.role === 'admin' ? '👑 Administrateur' : '👁️ Observateur'}
+                        {u.role === 'admin' ? t("👑 Administrateur") : t("👁️ Observateur")}
                       </span>
                     </div>
                   </div>
@@ -440,7 +442,7 @@ export function SecurityTab() {
                     {u.username.toLowerCase() === 'viewer' && currentUser?.role === 'admin' && (
                       <button
                         onClick={handleSwitchToViewer}
-                        title="Se connecter en tant que spectateur"
+                        title={t("Se connecter en tant que spectateur")}
                         className="nd-btn"
                         style={{ padding: '4px 8px', fontSize: '0.65rem', height: 26, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center' }}
                       >
@@ -457,7 +459,7 @@ export function SecurityTab() {
                         setActionError(null);
                         setActionSuccess(null);
                       }}
-                      title={`Modifier l'utilisateur ${u.username} / permissions`}
+                      title={t('security.editUserPermissions', { name: u.username })}
                       style={{
                         background: 'none',
                         border: 'none',
@@ -498,12 +500,12 @@ export function SecurityTab() {
         {/* AJOUT / EDITION UTILISATEUR */}
         <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 18, marginTop: 18 }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', display: 'block', marginBottom: 12 }}>
-            {username && users.some(u => u.username.toLowerCase() === username.toLowerCase()) ? `✏️ Modifier les accès de ${username}` : '➕ Ajouter un nouvel utilisateur'}
+            {username && users.some(u => u.username.toLowerCase() === username.toLowerCase()) ? t('security.editAccess', { name: username }) : t("➕ Ajouter un nouvel utilisateur")}
           </span>
 
           <form onSubmit={handleAddUser} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, alignItems: 'end' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label htmlFor="security-username" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{"Nom d'utilisateur"}</label>
+              <label htmlFor="security-username" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t("Nom d'utilisateur")}</label>
               <input
                 id="security-username"
                 type="text"
@@ -511,13 +513,13 @@ export function SecurityTab() {
                 value={username}
                 disabled={isDefaultAccount}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="Ex: lucas"
+                placeholder={t("Ex: lucas")}
                 style={{ width: '100%', padding: '8px 10px', fontSize: '0.75rem', borderRadius: 4, background: isDefaultAccount ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)', cursor: isDefaultAccount ? 'not-allowed' : 'text' }}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label htmlFor="security-password" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Mot de passe</label>
+              <label htmlFor="security-password" style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t("Mot de passe")}</label>
               <div style={{ position: 'relative' }}>
                 <input
                   id="security-password"
@@ -525,7 +527,7 @@ export function SecurityTab() {
                   className="nd-input"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder={isDefaultAccount ? "Laisser vide si inchangé" : "••••••••"}
+                  placeholder={isDefaultAccount ? t("Laisser vide si inchangé") : "••••••••"}
                   style={{ width: '100%', padding: '8px 30px 8px 10px', fontSize: '0.75rem', borderRadius: 4, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', color: 'var(--nd-text)' }}
                 />
                 <button
@@ -539,14 +541,14 @@ export function SecurityTab() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Rôle</label>
+              <label style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t("Rôle")}</label>
               <CustomSelect
                 value={role}
                 disabled={isDefaultAccount}
                 onChange={(value) => setRole(value as 'admin' | 'viewer')}
                 options={[
-                  { value: 'viewer', label: '👁️ Observateur (Lecture)' },
-                  { value: 'admin', label: '👑 Administrateur (Total)' }
+                  { value: 'viewer', label: t("👁️ Observateur (Lecture)") },
+                  { value: 'admin', label: t("👑 Administrateur (Total)") }
                 ]}
               />
             </div>
@@ -555,12 +557,12 @@ export function SecurityTab() {
             <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>
-                  Onglets autorisés
+                  {t("Onglets autorisés")}
                 </span>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="button" onClick={selectAllTabs} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>Tout cocher</button>
+                  <button type="button" onClick={selectAllTabs} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>{t("Tout cocher")}</button>
                   <span style={{ color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>|</span>
-                  <button type="button" onClick={clearAllTabs} style={{ background: 'none', border: 'none', color: 'var(--nd-text-muted)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>Tout décocher</button>
+                  <button type="button" onClick={clearAllTabs} style={{ background: 'none', border: 'none', color: 'var(--nd-text-muted)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>{t("Tout décocher")}</button>
                 </div>
               </div>
               
@@ -615,12 +617,12 @@ export function SecurityTab() {
             <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>
-                  Widgets autorisés
+                  {t("Widgets autorisés")}
                 </span>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="button" onClick={selectAllWidgets} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>Tout cocher</button>
+                  <button type="button" onClick={selectAllWidgets} style={{ background: 'none', border: 'none', color: 'var(--nd-accent)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>{t("Tout cocher")}</button>
                   <span style={{ color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>|</span>
-                  <button type="button" onClick={clearAllWidgets} style={{ background: 'none', border: 'none', color: 'var(--nd-text-muted)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>Tout décocher</button>
+                  <button type="button" onClick={clearAllWidgets} style={{ background: 'none', border: 'none', color: 'var(--nd-text-muted)', fontSize: '0.65rem', cursor: 'pointer', padding: 0 }}>{t("Tout décocher")}</button>
                 </div>
               </div>
 
@@ -658,7 +660,7 @@ export function SecurityTab() {
                     >
                       <span style={{ fontSize: '1rem' }}>{w.icon}</span>
                       <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 600 : 500, color: isSelected ? 'var(--nd-accent)' : 'var(--nd-text)' }}>
-                        {w.name}
+                        {t(w.name)}
                       </span>
                     </div>
                   );
@@ -692,7 +694,7 @@ export function SecurityTab() {
                     cursor: 'pointer'
                   }}
                 >
-                  Annuler la sélection
+                  {t("Annuler la sélection")}
                 </button>
               )}
               <div style={{ flex: 1, minWidth: 10 }} />
@@ -731,8 +733,8 @@ export function SecurityTab() {
             confirmDeleteUser(deleteConfirmUser);
           }
         }}
-        title="Supprimer l'utilisateur"
-        description={`Voulez-vous vraiment supprimer l'utilisateur "${deleteConfirmUser}" ? Cette action est irréversible et supprimera définitivement ses accès.`}
+        title={t("Supprimer l'utilisateur")}
+        description={t('confirm.userDelete', { name: deleteConfirmUser || '' })}
       />
     </div>
   );

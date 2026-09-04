@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Globe } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function ClockWidget({ editMode }: { editMode?: boolean }) {
+  const { t, locale } = useI18n();
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const [time, setTime] = useState(new Date());
@@ -26,13 +28,13 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
 
   const formatTime = (date: Date) => {
     try {
-      return new Intl.DateTimeFormat('fr-FR', {
+      return new Intl.DateTimeFormat(locale, {
         hour: '2-digit',
         minute: '2-digit',
         timeZone: timezone
       }).format(date);
     } catch (e) {
-      return new Intl.DateTimeFormat('fr-FR', {
+      return new Intl.DateTimeFormat(locale, {
         hour: '2-digit',
         minute: '2-digit'
       }).format(date);
@@ -41,12 +43,12 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
 
   const formatSeconds = (date: Date) => {
     try {
-      return new Intl.DateTimeFormat('fr-FR', {
+      return new Intl.DateTimeFormat(locale, {
         second: '2-digit',
         timeZone: timezone
       }).format(date);
     } catch (e) {
-      return new Intl.DateTimeFormat('fr-FR', {
+      return new Intl.DateTimeFormat(locale, {
         second: '2-digit'
       }).format(date);
     }
@@ -54,7 +56,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
 
   const formatDate = (date: Date) => {
     try {
-      const formatted = new Intl.DateTimeFormat('fr-FR', {
+      const formatted = new Intl.DateTimeFormat(locale, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -247,7 +249,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
             <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"
+                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> {t("--format=\"HH:MM:SS\"")}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: '2.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
                   {hours}<span style={{ opacity: 0.4 }}>:</span>{mins}
@@ -255,12 +257,12 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
                   <span style={{ width: '8px', height: '1.8rem', background: 'var(--nd-accent)', marginLeft: '8px', animation: 'nd-pulse-opacity 1s infinite step-end', transform: 'translateY(2px)' }} />
                 </div>
               </div>
-              
+
               <div style={{ flex: 1, borderTop: '1px dashed var(--nd-text-muted)', opacity: 0.3 }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', flexShrink: 0 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> --format="long"
+                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> {t("--format=\"long\"")}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--nd-text-muted)' }}>
                   {dateStr}
@@ -288,7 +290,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"
+                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> {t("--format=\"HH:MM:SS\"")}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: '2.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
                   {hours}<span style={{ opacity: 0.4 }}>:</span>{mins}
@@ -298,7 +300,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> --format="long"
+                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> {t("--format=\"long\"")}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--nd-text-muted)' }}>
                   {dateStr}
@@ -324,7 +326,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-              <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"
+              <span style={{ color: 'var(--nd-accent)' }}>./clock</span> {t("--format=\"HH:MM:SS\"")}
             </div>
             <div style={{ fontFamily: 'monospace', fontSize: '2.5rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'baseline' }}>
               {hours}<span style={{ opacity: 0.4 }}>:</span>{mins}
@@ -334,7 +336,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '16px' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-              <span style={{ color: 'var(--nd-accent)' }}>./date</span> --format="long"
+              <span style={{ color: 'var(--nd-accent)' }}>./date</span> {t("--format=\"long\"")}
             </div>
             <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--nd-text-muted)', opacity: 0.9 }}>
               {dateStr}

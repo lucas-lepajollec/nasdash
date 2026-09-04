@@ -11,6 +11,7 @@ NasDash is a self-hosted cockpit for homelab services, infrastructure telemetry 
 - Install reproducibly with `npm ci`; use `npm install` only when intentionally changing dependencies.
 - Local development: `npm run dev`; trusted-LAN development: `npm run dev:lan`.
 - Validate normal changes with `npm test` and `npm run build`.
+- Keep user-facing copy complete in English, French, Spanish, and German; run `npm run check:i18n` after interface changes.
 - Use `npm run test:e2e` and the container checks documented in `TESTING.md` when the affected surface requires them.
 - Keep the Docker Compose example, ports, volumes, environment variables and persistence guidance synchronized with the real configuration.
 

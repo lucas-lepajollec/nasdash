@@ -6,8 +6,10 @@ import { Activity, Zap, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useSystemStats } from '@/hooks/useSystemStats';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function NetworkGraphWidget({ editMode }: { editMode?: boolean }) {
+  const { t } = useI18n();
   const { history } = useSystemStats();
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
@@ -76,7 +78,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
           color: 'var(--nd-text-muted)',
           fontVariantNumeric: 'tabular-nums',
         }}>
-          {currentLatency}ms · {netStatus.label}
+          {currentLatency}{t("ms ·")} {t(netStatus.label)}
         </span>
       </div>
       <ResponsiveContainer width="100%" height={height}>
@@ -149,7 +151,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
         {!hideTitles && (
           <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0, flexShrink: 0 }}>
             <Activity size={12} style={{ color: 'var(--nd-accent)' }} /> 
-            <span>Réseau & Latence</span>
+            <span>{t("Réseau & Latence")}</span>
           </div>
         )}
         <div style={{ display: 'flex', gap: 24, alignItems: 'stretch' }}>
@@ -158,12 +160,12 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
           </div>
           <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10 }}>
             <div style={{ display: 'flex', gap: 10 }}>
-              {renderStatCard('Moyenne', `${avgPing} ms`, `Min: ${minPing}ms / Max: ${maxPing}ms`, <RefreshCw size={10} />)}
-              {renderStatCard('Gigotement / Jitter', `${jitter} ms`, 'Stabilité temporelle', <Activity size={10} />)}
+              {renderStatCard(t('Moyenne'), `${avgPing} ms`, t('network.minMax', { min: minPing, max: maxPing }), <RefreshCw size={10} />)}
+              {renderStatCard(t("Gigotement / Jitter"), `${jitter} ms`, t("Stabilité temporelle"), <Activity size={10} />)}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              {renderStatCard('Qualité VPN', `${qualityScore}%`, qualityScore > 90 ? 'Liaison idéale' : qualityScore > 75 ? 'Liaison stable' : 'Liaison perturbée', <ShieldCheck size={10} style={{ color: qualityScore > 75 ? 'var(--nd-green)' : 'var(--nd-yellow)' }} />)}
-              {renderStatCard('État actuel', `${currentLatency} ms`, netStatus.label, <Zap size={10} style={{ color: netStatus.color }} />)}
+              {renderStatCard(t("Qualité VPN"), `${qualityScore}%`, qualityScore > 90 ? t("Liaison idéale") : qualityScore > 75 ? t("Liaison stable") : t("Liaison perturbée"), <ShieldCheck size={10} style={{ color: qualityScore > 75 ? 'var(--nd-green)' : 'var(--nd-yellow)' }} />)}
+              {renderStatCard(t("État actuel"), `${currentLatency} ms`, t(netStatus.label), <Zap size={10} style={{ color: netStatus.color }} />)}
             </div>
           </div>
         </div>
@@ -178,7 +180,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
         {!hideTitles && (
           <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0, flexShrink: 0 }}>
             <Activity size={12} style={{ color: 'var(--nd-accent)' }} /> 
-            <span>Latence Réseau</span>
+            <span>{t("Latence Réseau")}</span>
           </div>
         )}
         <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
@@ -187,18 +189,18 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
           </div>
           <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid var(--nd-border)', paddingBottom: 4 }}>
-              Statistiques Ping
+              {t("Statistiques Ping")}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
               <span style={{ color: 'var(--nd-text-muted)' }}>Moyenne:</span>
               <span style={{ fontWeight: 600 }}>{avgPing} ms</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-              <span style={{ color: 'var(--nd-text-muted)' }}>Gigue (Jitter):</span>
+              <span style={{ color: 'var(--nd-text-muted)' }}>{t("Gigue (Jitter):")}</span>
               <span style={{ fontWeight: 600 }}>{jitter} ms</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-              <span style={{ color: 'var(--nd-text-muted)' }}>Qualité:</span>
+              <span style={{ color: 'var(--nd-text-muted)' }}>{t("Qualité:")}</span>
               <span style={{ fontWeight: 600, color: qualityScore > 75 ? 'var(--nd-green)' : 'var(--nd-yellow)' }}>{qualityScore}%</span>
             </div>
           </div>
@@ -213,7 +215,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
       {!hideTitles && (
         <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexShrink: 0 }}>
           <Activity size={12} style={{ color: 'var(--nd-accent)' }} /> 
-          <span>Latence Réseau</span>
+          <span>{t("Latence Réseau")}</span>
         </div>
       )}
       {renderChart(160)}

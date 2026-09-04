@@ -4,8 +4,10 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function QuickStatsWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
 
   const hideQuickStats = !!config?.settings?.hideQuickStats;
@@ -20,8 +22,8 @@ export function QuickStatsWidgetTab() {
         <ToggleSwitch
           checked={!hideQuickStats}
           onChange={(val) => handleToggleWidget('hideQuickStats', !val)}
-          label="Activer le widget Vue d'ensemble"
-          sublabel="Choisissez si le résumé des statistiques du dashboard doit s'afficher dans une barre latérale."
+          label={t("Activer le widget Vue d'ensemble")}
+          sublabel={t("Choisissez si le résumé des statistiques du dashboard doit s'afficher dans une barre latérale.")}
         />
       </div>
 

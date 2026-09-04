@@ -3,6 +3,8 @@ import { Outfit, Space_Grotesk, Syne, Righteous, Montserrat } from 'next/font/go
 import './globals.css';
 import './themes.css';
 import { ConfigProvider } from '@/providers/ConfigProvider';
+import { I18nProvider } from '@/i18n/I18nProvider';
+import { messages } from '@/i18n/messages';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-outfit' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-space' });
@@ -11,8 +13,8 @@ const righteous = Righteous({ subsets: ['latin'], weight: '400', variable: '--fo
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800'], variable: '--font-montserrat' });
 
 export const metadata: Metadata = {
-  title: 'NasDash — Dashboard Privé',
-  description: 'Dashboard NAS auto-hébergé avec monitoring système temps réel',
+  title: messages.en['meta.title'],
+  description: messages.en['meta.description'],
   icons: '/logo.svg',
 };
 
@@ -22,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={`${outfit.variable} ${spaceGrotesk.variable} ${syne.variable} ${righteous.variable} ${montserrat.variable} ${outfit.className}`} data-theme="dark" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
@@ -45,9 +47,11 @@ export default function RootLayout({
             `
           }}
         />
-        <ConfigProvider>
-          {children}
-        </ConfigProvider>
+        <I18nProvider>
+          <ConfigProvider>
+            {children}
+          </ConfigProvider>
+        </I18nProvider>
       </body>
     </html>
   );

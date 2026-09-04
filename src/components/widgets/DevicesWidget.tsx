@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface DevicesWidgetProps {
   devices: Device[];
@@ -197,6 +198,7 @@ function DeviceStatGraph({
   enableAlerts?: boolean;
   colored?: boolean;
 }) {
+  const { t } = useI18n();
   const componentId = useId().replace(/:/g, '');
   const [history, setHistory] = useState<number[]>(() => {
     return percent !== undefined ? Array(15).fill(percent) : [];
@@ -336,7 +338,7 @@ function DeviceStatGraph({
         </div>
       ) : (
         <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', height: `${height}px`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          Graphique indisponible
+          {t("Graphique indisponible")}
         </div>
       )}
 
@@ -376,6 +378,7 @@ function DeviceStatVerticalBars({
   enableAlerts?: boolean;
   colored?: boolean;
 }) {
+  const { t } = useI18n();
   const { size: widgetSize } = useWidgetSize();
   let barCount = 15;
   if (widgetSize === 'medium') {
@@ -491,7 +494,7 @@ function DeviceStatVerticalBars({
         </div>
       ) : (
         <div style={{ fontSize: 'var(--stat-detail-size, 0.6rem)', color: 'var(--nd-text-dimmed)', textAlign: 'center', height: 'var(--bar-height, 36px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          Données indisponibles
+          {t("Données indisponibles")}
         </div>
       )}
 
@@ -534,6 +537,7 @@ function DeviceMonitorCardContent({
   isLast?: boolean;
   isVisible: boolean;
 }) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -546,7 +550,7 @@ function DeviceMonitorCardContent({
 
   const displayStats = isApiDevice ? (Array.isArray(stats) ? stats : device.stats || []) : (device.stats || []);
   const isOffline = error || (stats && 'error' in stats && stats.isOffline);
-  const errorMessage = stats && 'error' in stats ? stats.error : 'Impossible de joindre l\'appareil';
+  const errorMessage = t(stats && 'error' in stats ? stats.error : "Impossible de joindre l'appareil");
 
   // Read instance-specific configurations if available
   const devConfig = widgetProps?.deviceConfigs?.[device.id] || {};
@@ -634,10 +638,10 @@ function DeviceMonitorCardContent({
         </div>
         {editMode && (
           <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-            <button className="nd-action-icon accent" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} title="Configurer l'affichage">
+            <button className="nd-action-icon accent" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} title={t("Configurer l'affichage")}>
               <Pencil size={13} />
             </button>
-            <button className="nd-action-icon danger" onClick={(e) => { e.stopPropagation(); onDelete?.(); }} title={widgetInstanceId ? "Retirer du widget" : "Supprimer"}>
+            <button className="nd-action-icon danger" onClick={(e) => { e.stopPropagation(); onDelete?.(); }} title={widgetInstanceId ? t("Retirer du widget") : t("Supprimer")}>
               <Trash2 size={13} />
             </button>
           </div>
@@ -645,7 +649,7 @@ function DeviceMonitorCardContent({
       </div>
 
       {isOffline && (
-        <div style={{ fontSize: '0.65rem', color: 'var(--nd-red)', marginTop: 4 }}>Hors ligne</div>
+        <div style={{ fontSize: '0.65rem', color: 'var(--nd-red)', marginTop: 4 }}>{t("Hors ligne")}</div>
       )}
 
       {!isOffline && (
@@ -698,9 +702,9 @@ function DeviceMonitorCardContent({
                           transition: 'border-color 0.3s ease',
                           display: 'inline-block'
                         }}
-                        title={stat.label}
+                        title={t(stat.label)}
                       >
-                        {shortLabel}
+                        {t(shortLabel)}
                       </span>
                       {!currentHideValues && (
                         <div style={{ marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
@@ -759,7 +763,7 @@ function DeviceMonitorCardContent({
                 return (
                   <DeviceStatVerticalBars
                     key={i}
-                    label={shortLabel}
+                    label={t(shortLabel)}
                     value={stat.value}
                     percent={stat.percent}
                     color={stat.color}
@@ -792,7 +796,7 @@ function DeviceMonitorCardContent({
                 return (
                   <DeviceStatGraph
                     key={i}
-                    label={shortLabel}
+                    label={t(shortLabel)}
                     value={stat.value}
                     percent={stat.percent}
                     color={stat.color}
@@ -822,6 +826,7 @@ export default function DevicesWidget({
   onReorderDevices,
   isVisible = true,
 }: DevicesWidgetProps) {
+  const { t } = useI18n();
   const { config, setDeviceModal, updateConfig } = useConfig();
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -1154,7 +1159,7 @@ export default function DevicesWidget({
                 <button
                   className="nd-action-icon accent"
                   onClick={(e) => { e.stopPropagation(); setIsWidgetConfigOpen(true); }}
-                  title="Configurer le widget"
+                  title={t("Configurer le widget")}
                 >
                   <Pencil size={13} />
                 </button>
@@ -1162,7 +1167,7 @@ export default function DevicesWidget({
                 <button
                   className="nd-action-icon success"
                   onClick={handleAdd}
-                  title="Créer un nouvel appareil global"
+                  title={t("Créer un nouvel appareil global")}
                 >
                   <Plus size={13} />
                 </button>
@@ -1175,8 +1180,8 @@ export default function DevicesWidget({
       {filteredDevices.length === 0 && (
         <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>
           {editMode
-            ? 'Aucun appareil configuré ou sélectionné pour ce widget. Cliquez sur le crayon pour en configurer la liste.'
-            : 'Aucun appareil configuré ou sélectionné.'}
+            ? t("Aucun appareil configuré ou sélectionné pour ce widget. Cliquez sur le crayon pour en configurer la liste.")
+            : t("Aucun appareil configuré ou sélectionné.")}
         </p>
       )}
 
@@ -1209,25 +1214,25 @@ export default function DevicesWidget({
             setDeviceToDelete(null);
           }
         }}
-        title="Supprimer définitivement l'appareil ?"
-        description={`Êtes-vous sûr de vouloir supprimer définitivement "${deviceToDelete?.name}" de NasDash ? Cette action est définitive.`}
+        title={t("Supprimer définitivement l'appareil ?")}
+        description={t('confirm.deviceDelete', { name: deviceToDelete?.name || '' })}
       />}
 
       {/* Widget Instance Config Modal (Portal centered modal with blur) */}
       {isWidgetConfigOpen && renderPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setIsWidgetConfigOpen(false); }}>
-          <div ref={widgetConfigDialogRef} role="dialog" aria-modal="true" aria-label="Configurer le widget Appareils" tabIndex={-1} className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div ref={widgetConfigDialogRef} role="dialog" aria-modal="true" aria-label={t("Configurer le widget Appareils")} tabIndex={-1} className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="⚙️" /></span> Configurer le widget Appareils
+                <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="⚙️" /></span> {t("Configurer le widget Appareils")}
               </h2>
-              <button aria-label="Fermer la configuration du widget Appareils" className="nd-action-icon" onClick={() => setIsWidgetConfigOpen(false)}>
+              <button aria-label={t("Fermer la configuration du widget Appareils")} className="nd-action-icon" onClick={() => setIsWidgetConfigOpen(false)}>
                 <X size={16} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <span className="nd-label">Sélectionner les serveurs à afficher dans ce widget :</span>
+              <span className="nd-label">{t("Sélectionner les serveurs à afficher dans ce widget :")}</span>
 
               <div style={{
                 display: 'flex',
@@ -1241,7 +1246,7 @@ export default function DevicesWidget({
                 overflowY: 'auto'
               }}>
                 {devices.length === 0 ? (
-                  <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', padding: 2 }}>Aucun appareil configuré dans les paramètres.</span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', padding: 2 }}>{t("Aucun appareil configuré dans les paramètres.")}</span>
                 ) : (
                   devices.map(d => {
                     const isChecked = selectedIds ? selectedIds.includes(d.id) : true;
@@ -1299,11 +1304,11 @@ export default function DevicesWidget({
                 }}
               >
                 <Plus size={14} />
-                Créer un nouvel appareil global
+                {t("Créer un nouvel appareil global")}
               </button>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                <button type="button" onClick={() => setIsWidgetConfigOpen(false)} className="nd-btn nd-btn-accent" style={{ flex: 1, fontSize: '0.75rem' }}>Fermer</button>
+                <button type="button" onClick={() => setIsWidgetConfigOpen(false)} className="nd-btn nd-btn-accent" style={{ flex: 1, fontSize: '0.75rem' }}>{t("Fermer")}</button>
               </div>
             </div>
           </div>
@@ -1313,35 +1318,35 @@ export default function DevicesWidget({
       {/* Local Device Config Modal (Portal centered modal with blur) */}
       {configuringDevice && renderPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfiguringDevice(null); }}>
-          <div ref={deviceConfigDialogRef} role="dialog" aria-modal="true" aria-label={`Configuration d’affichage de ${configuringDevice.name}`} tabIndex={-1} className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div ref={deviceConfigDialogRef} role="dialog" aria-modal="true" aria-label={t('devices.displayConfig', { name: configuringDevice.name })} tabIndex={-1} className="nd-modal" style={{ maxWidth: '420px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h2 className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="🖥️" /></span> Configuration d'affichage - {configuringDevice.name}
+                <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji="🖥️" /></span> {t("Configuration d'affichage -")} {configuringDevice.name}
               </h2>
-              <button aria-label="Fermer la configuration d’affichage" className="nd-action-icon" onClick={() => setConfiguringDevice(null)}>
+              <button aria-label={t("Fermer la configuration d’affichage")} className="nd-action-icon" onClick={() => setConfiguringDevice(null)}>
                 <X size={16} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label className="nd-label">Style d&apos;affichage dans ce widget</label>
+                <label className="nd-label">{t("Style d&apos;affichage dans ce widget")}</label>
                 <CustomSelect
                   value={localStyle}
                   onChange={val => {
                     setLocalStyle(val as any);
                   }}
                   options={[
-                    { value: 'horizontal', label: 'Barres classiques' },
-                    { value: 'vertical', label: 'Barres verticales' },
-                    { value: 'graph', label: 'Graphique (Sparkline)' }
+                    { value: 'horizontal', label: t("Barres classiques") },
+                    { value: 'vertical', label: t("Barres verticales") },
+                    { value: 'graph', label: t("Graphique (Sparkline)") }
                   ]}
                 />
               </div>
 
               <div style={{ display: 'flex', gap: 12, padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid var(--nd-card-border)' }}>
                 <div style={{ flex: 1 }}>
-                  <label className="nd-label" style={{ fontSize: '0.65rem' }}>Cols (Desktop)</label>
+                  <label className="nd-label" style={{ fontSize: '0.65rem' }}>{t("Cols (Desktop)")}</label>
                   <input
                     type="number"
                     min={1}
@@ -1352,7 +1357,7 @@ export default function DevicesWidget({
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label className="nd-label" style={{ fontSize: '0.65rem' }}>Cols (Mobile)</label>
+                  <label className="nd-label" style={{ fontSize: '0.65rem' }}>{t("Cols (Mobile)")}</label>
                   <input
                     type="number"
                     min={1}
@@ -1370,8 +1375,8 @@ export default function DevicesWidget({
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)' }}>Mode minimaliste</span>
-                    <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>Masquer les valeurs chiffrées</span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Mode minimaliste")}</span>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>{t("Masquer les valeurs chiffrées")}</span>
                   </div>
                   <div style={{
                     width: '32px',
@@ -1402,8 +1407,8 @@ export default function DevicesWidget({
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)' }}>Alertes visuelles</span>
-                    <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>Ajuster la couleur de la température selon sa valeur pour alerter</span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Alertes visuelles")}</span>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>{t("Ajuster la couleur de la température selon sa valeur pour alerter")}</span>
                   </div>
                   <div style={{
                     width: '32px',
@@ -1433,8 +1438,8 @@ export default function DevicesWidget({
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)' }}>Mode coloré</span>
-                    <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>Utiliser les couleurs thématiques des métriques</span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Mode coloré")}</span>
+                    <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>{t("Utiliser les couleurs thématiques des métriques")}</span>
                   </div>
                   <div style={{
                     width: '32px',
@@ -1460,7 +1465,7 @@ export default function DevicesWidget({
               </div>
 
               <div>
-                <label className="nd-label" style={{ marginBottom: 8 }}>Métriques à afficher</label>
+                <label className="nd-label" style={{ marginBottom: 8 }}>{t("Métriques à afficher")}</label>
                 <div style={{
                   display: 'flex',
                   flexWrap: 'wrap',
@@ -1473,7 +1478,7 @@ export default function DevicesWidget({
                   borderRadius: 'var(--nd-card-radius)'
                 }}>
                   {availableStats.length === 0 ? (
-                    <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', padding: 2 }}>Aucune métrique détectée</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', padding: 2 }}>{t("Aucune métrique détectée")}</span>
                   ) : (
                     availableStats.map((statName) => {
                       const isChecked = localVisibleStats.includes(statName);
@@ -1534,7 +1539,7 @@ export default function DevicesWidget({
                   setConfiguringDevice(null);
                 }}
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Emoji emoji="⚙️" /> Modifier les paramètres de connexion globale</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Emoji emoji="⚙️" /> {t("Modifier les paramètres de connexion globale")}</span>
               </button>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>

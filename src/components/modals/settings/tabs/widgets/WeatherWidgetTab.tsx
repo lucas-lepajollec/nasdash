@@ -5,6 +5,7 @@ import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import { CheckCircle2, Trash2 } from 'lucide-react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface WeatherSearchResult {
   latitude: number;
@@ -15,6 +16,7 @@ interface WeatherSearchResult {
 }
 
 export function WeatherWidgetTab() {
+  const { t, language, locale } = useI18n();
   const { config, updateConfig } = useConfig();
   const demoMode = config?.demoMode === true;
 
@@ -39,11 +41,11 @@ export function WeatherWidgetTab() {
           { name: 'Bruxelles', country: 'Belgique', latitude: 50.8503, longitude: 4.3517 },
           { name: 'Tokyo', country: 'Japon', latitude: 35.6762, longitude: 139.6503 },
         ];
-        const query = weatherSearchQuery.trim().toLocaleLowerCase('fr');
-        setWeatherSearchResults(sampleCities.filter(city => city.name.toLocaleLowerCase('fr').includes(query)));
+        const query = weatherSearchQuery.trim().toLocaleLowerCase(locale);
+        setWeatherSearchResults(sampleCities.filter(city => city.name.toLocaleLowerCase(locale).includes(query)));
         return;
       }
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=fr&format=json`);
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=${language}&format=json`);
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json() as { results?: WeatherSearchResult[] };
       setWeatherSearchResults(data.results || []);
@@ -104,8 +106,8 @@ export function WeatherWidgetTab() {
         <ToggleSwitch
           checked={!hideWeather}
           onChange={(val) => handleToggleWidget('hideWeather', !val)}
-          label="Activer le widget Météo"
-          sublabel="Affiche la météo locale sur votre tableau de bord."
+          label={t("Activer le widget Météo")}
+          sublabel={t("Affiche la météo locale sur votre tableau de bord.")}
         />
       </div>
 
@@ -117,17 +119,17 @@ export function WeatherWidgetTab() {
 
           {/* Weather Location Search */}
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Localisation (OpenMeteo)</h4>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Localisation (OpenMeteo)")}</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Recherchez votre ville pour afficher la météo correspondante.
+              {t("Recherchez votre ville pour afficher la météo correspondante.")}
             </p>
             
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               <input
                 type="text"
-                aria-label="Rechercher une ville"
+                aria-label={t("Rechercher une ville")}
                 className="nd-input"
-                placeholder="Ex: Paris, Tokyo..."
+                placeholder={t("Ex: Paris, Tokyo...")}
                 value={weatherSearchQuery}
                 onChange={(e) => setWeatherSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && searchWeatherCity()}
@@ -163,7 +165,7 @@ export function WeatherWidgetTab() {
 
             {config?.settings?.weatherLocations && config.settings.weatherLocations.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <h5 style={{ margin: '0 0 8px 0', fontSize: '0.75rem', fontWeight: 600 }}>Villes enregistrées</h5>
+                <h5 style={{ margin: '0 0 8px 0', fontSize: '0.75rem', fontWeight: 600 }}>{t("Villes enregistrées")}</h5>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {config.settings.weatherLocations.map((loc) => {
                     const isActive = config.settings?.activeWeatherLocationId === loc.id || (config.settings?.weatherLocations?.length === 1);
@@ -197,13 +199,13 @@ export function WeatherWidgetTab() {
 
             {/* Style selector */}
             <div style={{ marginTop: 24 }}>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', marginBottom: 12 }}>Style du Widget Météo</h4>
+              <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', marginBottom: 12 }}>{t("Style du Widget Météo")}</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
                 {[
-                  { id: 'default', name: 'Standard', desc: 'Météo actuelle + 3 prochains jours' },
-                  { id: 'extended', name: 'Étendu', desc: 'Météo actuelle + 5 prochains jours' },
-                  { id: 'currentOnly', name: 'Actuelle', desc: 'Uniquement la météo actuelle avec détails' },
-                  { id: 'minimal', name: 'Minimaliste', desc: 'Juste la température et l\'icône' }
+                  { id: 'default', name: 'Standard', desc: t("Météo actuelle + 3 prochains jours") },
+                  { id: 'extended', name: t("Étendu"), desc: t("Météo actuelle + 5 prochains jours") },
+                  { id: 'currentOnly', name: 'Actuelle', desc: t("Uniquement la météo actuelle avec détails") },
+                  { id: 'minimal', name: 'Minimaliste', desc: t("Juste la température et l'icône") }
                 ].map(design => (
                   <div 
                     key={design.id}

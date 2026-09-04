@@ -5,6 +5,7 @@ import { Globe, Pencil, Trash2, GripVertical, CheckCircle2, XCircle } from 'luci
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Service } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface ServiceItemProps {
   service: Service;
@@ -17,6 +18,7 @@ interface ServiceItemProps {
 }
 
 export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard', index, total }: ServiceItemProps) {
+  const { t } = useI18n();
   const [imgError, setImgError] = useState(false);
   const { config, pingResults } = useConfig();
   const demoMode = config?.demoMode === true;
@@ -146,7 +148,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
             e.preventDefault();
           }
         }}
-        title={demoMode ? 'Lien simulé dans la démonstration publique' : undefined}
+        title={demoMode ? t("Lien simulé dans la démonstration publique") : undefined}
       >
         <div className="nd-service-icon">
           {logoContent}
@@ -158,7 +160,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
               <span className="nd-service-name">{service.name}</span>
               {showPingText && delayedStatus ? (
                 <span className="nd-service-url">
-                  {delayedStatus.status === 'online' ? 'OK' : delayedStatus.statusText} - {delayedStatus.latency}ms
+                  {delayedStatus.status === 'online' ? 'OK' : t(delayedStatus.statusText)} - {delayedStatus.latency}ms
                 </span>
               ) : (
                 <span className="nd-service-url">
@@ -182,16 +184,16 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
 
       {(service.secondaryUrl || service.tailscaleUrl) && !editMode && !demoMode && (
         <div className="nd-service-tooltip-wrapper">
-          <a href={service.secondaryUrl || service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip" title="Lien Secondaire">
+          <a href={service.secondaryUrl || service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip" title={t("Lien Secondaire")}>
             <div className="nd-service-tooltip-icon">
               {service.secondaryLogo ? (
-                <img src={service.secondaryLogo} alt="Lien secondaire" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
+                <img src={service.secondaryLogo} alt={t("Lien secondaire")} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
               ) : (
-                <img src={service.logo || "/api/logos/logo-tailscale.png"} alt="Lien alternatif" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
+                <img src={service.logo || "/api/logos/logo-tailscale.png"} alt={t("Lien alternatif")} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
               )}
               <Globe size={14} style={{ display: 'none' }} />
             </div>
-            <span className="nd-service-tooltip-text">Ouvrir le lien secondaire</span>
+            <span className="nd-service-tooltip-text">{t("Ouvrir le lien secondaire")}</span>
           </a>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import { Category } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface FooterProps {
   categories: Category[];
@@ -11,6 +12,7 @@ interface FooterProps {
 }
 
 export default function Footer({ categories, showSecretSections, showSensitive, onToggleSecretSections }: FooterProps) {
+  const { t } = useI18n();
   const { user } = useConfig();
   const isAdmin = user?.role === 'admin';
   const ports = new Set<string>();
@@ -47,10 +49,10 @@ export default function Footer({ categories, showSecretSections, showSensitive, 
       <div 
         onClick={isAdmin ? onToggleSecretSections : undefined}
         style={{ cursor: isAdmin ? 'pointer' : 'default', display: 'inline-block', marginTop: 8 }}
-        title={isAdmin ? "Activez ou désactivez les sections secrètes" : undefined}
+        title={isAdmin ? t("Activez ou désactivez les sections secrètes") : undefined}
       >
         <small style={{ opacity: 0.6, fontSize: '0.65rem', fontWeight: 500, letterSpacing: '2px', userSelect: 'none', color: 'var(--nd-text-muted)', textTransform: 'uppercase', transition: 'opacity 0.2s' }}>
-          NASDASH — Dashboard Privé
+          {t("NASDASH — Dashboard Privé")}
         </small>
       </div>
     </footer>

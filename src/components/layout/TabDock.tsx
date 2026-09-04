@@ -6,6 +6,7 @@ import { TabDef, TabId } from '@/hooks/useTabs';
 import { ChevronRight, ChevronLeft, ArrowUp, ArrowDown, Eye, EyeOff, Settings } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface TabDockProps {
   tabs: TabDef[];
@@ -28,6 +29,7 @@ export default function TabDock({
   hiddenIds = [],
   onOpenManager
 }: TabDockProps) {
+  const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { config } = useConfig();
@@ -82,7 +84,7 @@ export default function TabDock({
           <button 
             className="nd-btn" 
             onClick={() => setMobileOpen(false)}
-            title="Fermer le dock"
+            title={t("Fermer le dock")}
             style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
           >
             {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
@@ -108,7 +110,7 @@ export default function TabDock({
       <button 
         className={`nd-dock-mobile-btn ${mobileOpen ? 'nd-dock-mobile-btn--open' : ''} nd-dock-mobile-btn--${position}`}
         onClick={() => setMobileOpen(!mobileOpen)}
-        aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+        aria-label={mobileOpen ? t("Fermer le menu") : t("Ouvrir le menu")}
       >
         {position === 'left' ? 
           (mobileOpen ? <ChevronLeft size={14} /> : <ChevronRight size={14} />) : 

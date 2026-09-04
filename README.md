@@ -53,6 +53,7 @@ Every service, address, metric, and log line below comes from NasDash's isolated
 - Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
 - Network topology editor with groups, links, and service/device associations.
 - Custom tabs, reusable widgets, responsive layouts, and appearance profiles.
+- A complete English, French, Spanish, and German interface with a browser-local language preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.
 - Encrypted integration credentials, atomic configuration writes, and backup/restore tooling.
 
@@ -191,11 +192,18 @@ e2e/              # Isolated browser paths
 scripts/          # Demo, tests, backup, restore, and smoke tooling
 ```
 
+## Interface languages
+
+English is the default interface. French, Spanish, and German are maintained alongside it, and the selected language is stored only in the current browser. The public demo can also receive an explicit `?lang=en`, `?lang=fr`, `?lang=es`, or `?lang=de` handoff.
+
+New interface copy should use a semantic key in `src/i18n/messages.ts`. `src/i18n/generated.ts` is the reviewed migration dictionary for legacy French source phrases; keep its existing keys stable and update all four values together when correcting one of those messages. Use the locale exposed by `useI18n()` for dates, times, numbers, weather lookup, and other regional formatting. User-created names and content remain untouched when no maintained translation exists.
+
 ## Development and quality
 
 | Command | Purpose |
 | --- | --- |
 | `npm run lint` | Run ESLint. |
+| `npm run check:i18n` | Verify translation completeness, placeholders, and hard-coded interface copy. |
 | `npm test` | Run the Vitest suite. |
 | `npm run build` | Create the production build. |
 | `npm run test:e2e` | Exercise isolated critical browser paths. |

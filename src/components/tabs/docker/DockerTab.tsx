@@ -14,6 +14,7 @@ import { WidgetPanel } from '../../shared/WidgetPanel';
 import { Emoji } from '../../shared/Emoji';
 import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const fetcher = dockerJsonFetcher;
 
@@ -27,14 +28,15 @@ interface DockerTabProps {
 type DockerTab = 'containers' | 'images' | 'volumes';
 
 function DockerErrorNotice({ error, compact = false }: { error: unknown; compact?: boolean }) {
+  const { t } = useI18n();
   const presentation = getDockerErrorPresentation(error);
   const color = presentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)';
 
   return (
     <div className="nd-sidebar-card" style={{ textAlign: 'center', padding: compact ? 16 : 24 }}>
       <AlertCircle size={compact ? 16 : 20} style={{ color, marginBottom: 6 }} />
-      <div style={{ fontSize: compact ? '0.7rem' : '0.75rem', color, fontWeight: 600 }}>{presentation.title}</div>
-      <div style={{ fontSize: compact ? '0.6rem' : '0.64rem', color: 'var(--nd-text-dimmed)', marginTop: 4 }}>{presentation.hint}</div>
+      <div style={{ fontSize: compact ? '0.7rem' : '0.75rem', color, fontWeight: 600 }}>{t(presentation.title)}</div>
+      <div style={{ fontSize: compact ? '0.6rem' : '0.64rem', color: 'var(--nd-text-dimmed)', marginTop: 4 }}>{t(presentation.hint)}</div>
     </div>
   );
 }
@@ -42,25 +44,25 @@ function DockerErrorNotice({ error, compact = false }: { error: unknown; compact
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
-  const sizes = ['B', 'Ko', 'Mo', 'Go', 'To'];
+  const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-function formatUptime(dateStr: string): string {
+function formatUptime(dateStr: string, t: (key: string, variables?: Record<string, string | number>) => string): string {
   const started = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - started.getTime();
   const days = Math.floor(diffMs / 86400000);
   const hours = Math.floor((diffMs % 86400000) / 3600000);
   const mins = Math.floor((diffMs % 3600000) / 60000);
-  if (days > 0) return `${days}j ${hours}h`;
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
+  if (days > 0) return t('duration.daysHours', { days, hours });
+  if (hours > 0) return t('duration.hoursMinutes', { hours, minutes: mins });
+  return t('duration.minutes', { minutes: mins });
 }
 
-function formatTimestamp(ts: number): string {
-  return new Date(ts * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+function formatTimestamp(ts: number, locale: string): string {
+  return new Date(ts * 1000).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
 function condensePorts(ports: any[]): Array<{ hostDisplay: string; containerDisplay: string }> {
@@ -69,7 +71,7 @@ function condensePorts(ports: any[]): Array<{ hostDisplay: string; containerDisp
   const parsed = ports.map(p => {
     let hostPort: number | null = null;
     let hostIp = '';
-    
+
     if (p.hostBindings && p.hostBindings.length > 0) {
       const binding = p.hostBindings[0];
       const parts = binding.split(':');
@@ -85,7 +87,7 @@ function condensePorts(ports: any[]): Array<{ hostDisplay: string; containerDisp
 
     const containerPort = typeof p.containerPort === 'number' ? p.containerPort : parseInt(p.containerPort, 10);
     const validContainerPort = !isNaN(containerPort) ? containerPort : 0;
-    
+
     return {
       raw: p,
       hostPort,
@@ -118,7 +120,7 @@ function condensePorts(ports: any[]): Array<{ hostDisplay: string; containerDisp
 
     const isHostSequential = (p.hostPort !== null && last.hostPort !== null && p.hostPort === last.hostPort + 1 && p.hostIp === last.hostIp);
     const isHostBothNull = (p.hostPort === null && last.hostPort === null);
-    
+
     const isContainerSequential = (p.containerPort === last.containerPort + 1);
     const isSameType = (p.type === last.type);
 
@@ -162,6 +164,7 @@ function DockerHostFormModal({ onClose, onSave }: {
   onClose: () => void;
   onSave: (h: { name: string; icon: string; url: string }) => Promise<void>;
 }) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const demoMode = config?.demoMode === true;
   const [name, setName] = useState('');
@@ -175,25 +178,25 @@ function DockerHostFormModal({ onClose, onSave }: {
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Ajouter un hôte Docker" tabIndex={-1} className="nd-modal" style={{ maxWidth: 420 }}>
-        <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Ajouter un hôte Docker</h3>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t("Ajouter un hôte Docker")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 420 }}>
+        <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>{t("Ajouter un hôte Docker")}</h3>
         {demoMode && (
           <div style={{ padding: '10px 12px', marginBottom: 14, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
-            Cet hôte sera fictif et isolé à votre session. Utilisez par exemple <code>docker-demo.invalid</code> : ne saisissez aucune adresse de votre réseau.
+            {t("Cet hôte sera fictif et isolé à votre session. Utilisez par exemple")} <code>docker-demo.invalid</code> {t(": ne saisissez aucune adresse de votre réseau.")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          
+
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
-              <label className="nd-label">Nom de l&apos;hôte</label>
-              <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder="Mon NAS" style={{ width: '100%', boxSizing: 'border-box' }} />
+              <label className="nd-label">{t("Nom de l&apos;hôte")}</label>
+              <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder={t("Mon NAS")} style={{ width: '100%', boxSizing: 'border-box' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-              <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
+              <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>{t("Icône")}</label>
               <button
                 type="button"
-                aria-label="Choisir l’icône de l’hôte Docker"
+                aria-label={t("Choisir l’icône de l’hôte Docker")}
                 onClick={() => setIsPickerOpen(true)}
                 style={{
                   width: 38,
@@ -220,15 +223,15 @@ function DockerHostFormModal({ onClose, onSave }: {
           </div>
 
           <div>
-            <label className="nd-label">Adresse / Hôte Docker</label>
-            <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder={demoMode ? 'docker-demo.invalid' : 'docker-proxy ou 192.168.0.200'} style={{ width: '100%', boxSizing: 'border-box' }} />
+            <label className="nd-label">{t("Adresse / Hôte Docker")}</label>
+            <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder={demoMode ? 'docker-demo.invalid' : t("docker-proxy ou 192.168.0.200")} style={{ width: '100%', boxSizing: 'border-box' }} />
           </div>
           <div>
-            <label className="nd-label">Port API Docker</label>
+            <label className="nd-label">{t("Port API Docker")}</label>
             <input className="nd-input" value={port} onChange={e => setPort(e.target.value)} placeholder="2375" style={{ width: '100%', boxSizing: 'border-box' }} />
           </div>
           <p style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', lineHeight: 1.5 }}>
-            Pour des raisons de sécurité, veuillez utiliser un conteneur proxy local (ex: <code style={{ background: 'rgba(0,0,0,0.3)', padding: '1px 4px', borderRadius: 3 }}>docker-socket-proxy</code>) et indiquez son nom d&apos;hôte.
+            {t("Pour des raisons de sécurité, veuillez utiliser un conteneur proxy local (ex:")} <code style={{ background: 'rgba(0,0,0,0.3)', padding: '1px 4px', borderRadius: 3 }}>docker-socket-proxy</code>{t(") et indiquez son nom d&apos;hôte.")}
           </p>
           {saveError && <div style={{ fontSize: '0.65rem', color: 'var(--nd-red)', lineHeight: 1.4 }}>{saveError}</div>}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -250,7 +253,7 @@ function DockerHostFormModal({ onClose, onSave }: {
               } finally {
                 setIsSaving(false);
               }
-            }}>{isSaving ? 'Enregistrement…' : 'Ajouter'}</button>
+            }}>{isSaving ? t("Enregistrement…") : 'Ajouter'}</button>
           </div>
         </div>
 
@@ -271,6 +274,7 @@ function DockerHostFormModal({ onClose, onSave }: {
 
 // ======================== CONTAINER LOGS ========================
 function ContainerLogs({ hostId, containerId, showSensitive, enabled }: { hostId: string; containerId: string; showSensitive: boolean; enabled: boolean }) {
+  const { t } = useI18n();
   const { data, error } = useSWR(
     enabled ? `/api/docker/${hostId}/containers/${containerId}/logs?tail=150` : null,
     fetcher,
@@ -297,7 +301,7 @@ function ContainerLogs({ hostId, containerId, showSensitive, enabled }: { hostId
 
   if (error) {
     const presentation = getDockerErrorPresentation(error);
-    return <div style={{ fontSize: '0.7rem', color: presentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)', padding: 12 }}>{presentation.title} — {presentation.hint}</div>;
+    return <div style={{ fontSize: '0.7rem', color: presentation.tone === 'warning' ? 'var(--nd-orange)' : 'var(--nd-red)', padding: 12 }}>{t(presentation.title)} — {t(presentation.hint)}</div>;
   }
 
   return (
@@ -317,9 +321,9 @@ function ContainerLogs({ hostId, containerId, showSensitive, enabled }: { hostId
         setAutoScroll(scrollHeight - scrollTop - clientHeight < 40);
       }}>
         {!showSensitive ? (
-          <span style={{ color: 'var(--nd-text-dimmed)' }}>Logs masqués — désactivez le mode secret pour afficher</span>
+          <span style={{ color: 'var(--nd-text-dimmed)' }}>{t("Logs masqués — désactivez le mode secret pour afficher")}</span>
         ) : lines.length === 0 ? (
-          <span style={{ color: 'var(--nd-text-dimmed)' }}>Aucun log disponible</span>
+          <span style={{ color: 'var(--nd-text-dimmed)' }}>{t("Aucun log disponible")}</span>
         ) : (
           lines.map((line, i) => (
             <span key={i} className={`nd-terminal-line ${classifyLine(line)}`}>{line}{'\n'}</span>
@@ -339,6 +343,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
   showSensitive: boolean;
   isVisible: boolean;
 }) {
+  const { t } = useI18n();
   if (!detail) return null;
 
   const isRunning = detail.state === 'running';
@@ -358,10 +363,10 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
           <div style={{ display: 'flex', gap: 6 }}>
             {isRunning ? (
               <>
-                <button className="nd-action-icon accent" onClick={() => onAction(detail.fullId, 'restart')} disabled={!!actionLoading} title="Redémarrer">
+                <button className="nd-action-icon accent" onClick={() => onAction(detail.fullId, 'restart')} disabled={!!actionLoading} title={t("Redémarrer")}>
                   <RotateCcw size={14} />
                 </button>
-                <button className="nd-action-icon danger" onClick={() => onAction(detail.fullId, 'stop')} disabled={!!actionLoading} title="Arrêter">
+                <button className="nd-action-icon danger" onClick={() => onAction(detail.fullId, 'stop')} disabled={!!actionLoading} title={t("Arrêter")}>
                   <Square size={14} />
                 </button>
                 <button className="nd-action-icon danger" onClick={() => onAction(detail.fullId, 'remove')} disabled={!!actionLoading} title="Supprimer">
@@ -370,7 +375,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
               </>
             ) : (
               <>
-                <button className="nd-action-icon success" onClick={() => onAction(detail.fullId, 'start')} disabled={!!actionLoading} title="Démarrer">
+                <button className="nd-action-icon success" onClick={() => onAction(detail.fullId, 'start')} disabled={!!actionLoading} title={t("Démarrer")}>
                   <Play size={14} />
                 </button>
                 <button className="nd-action-icon danger" onClick={() => onAction(detail.fullId, 'remove')} disabled={!!actionLoading} title="Supprimer">
@@ -390,15 +395,15 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
             </div>
             <div className="nd-docker-stat-card">
               <div className="nd-docker-stat-value">{detail.stats.memPercent}%</div>
-              <div className="nd-docker-stat-label">RAM ({formatBytes(detail.stats.memUsage)} / {formatBytes(detail.stats.memLimit)})</div>
+              <div className="nd-docker-stat-label">{t("RAM (")}{formatBytes(detail.stats.memUsage)} / {formatBytes(detail.stats.memLimit)})</div>
             </div>
             <div className="nd-docker-stat-card">
               <div className="nd-docker-stat-value">{formatBytes(detail.stats.netInput)}</div>
-              <div className="nd-docker-stat-label">↓ Réseau (IN)</div>
+              <div className="nd-docker-stat-label">{t("↓ Réseau (IN)")}</div>
             </div>
             <div className="nd-docker-stat-card">
               <div className="nd-docker-stat-value">{formatBytes(detail.stats.netOutput)}</div>
-              <div className="nd-docker-stat-label">↑ Réseau (OUT)</div>
+              <div className="nd-docker-stat-label">{t("↑ Réseau (OUT)")}</div>
             </div>
           </div>
         )}
@@ -437,7 +442,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
         {/* Uptime */}
         {isRunning && detail.startedAt && (
           <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)', marginTop: 4 }}>
-            Démarré il y a {formatUptime(detail.startedAt)}
+            {t("Démarré il y a")} {formatUptime(detail.startedAt, t)}
           </div>
         )}
       </div>
@@ -452,6 +457,7 @@ function ContainerDetailView({ hostId, detail, onAction, actionLoading, showSens
 
 // ======================== IMAGES TAB ========================
 function ImagesTab({ images, error, loading, containers, hostId, refreshImages, selectedContainer }: { images: any[]; error?: unknown; loading: boolean; containers: any[]; hostId: string; refreshImages: () => void; selectedContainer?: any }) {
+  const { t, locale } = useI18n();
   const { config } = useConfig();
   const demoMode = config?.demoMode === true;
   const [selected, setSelected] = useState<string[]>([]);
@@ -515,13 +521,13 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
       {/* Top action bar if selected */}
       {selected.length > 0 && (
         <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{selected.length} image(s) sélectionnée(s)</span>
-          <button 
-            className="nd-btn" 
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t('docker.imagesSelected', { count: selected.length })}</span>
+          <button
+            className="nd-btn"
             style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }}
             onClick={() => setDeleteTargets(selected)}
           >
-            <Trash2 size={12} /> Supprimer la sélection
+            <Trash2 size={12} /> {t("Supprimer la sélection")}
           </button>
         </div>
       )}
@@ -536,7 +542,7 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: 'var(--nd-text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 1 }}>Image</th>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: 'var(--nd-text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 1 }}>Statut</th>
               <th className="nd-desktop-only" style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--nd-text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 1 }}>Taille</th>
-              <th className="nd-desktop-only" style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--nd-text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 1 }}>Créé</th>
+              <th className="nd-desktop-only" style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--nd-text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 1 }}>{t("Créé")}</th>
               <th className="nd-desktop-only" style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--nd-text-muted)', fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: 1 }}>Actions</th>
             </tr>
           </thead>
@@ -562,25 +568,25 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       {isUsed ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', background: 'rgba(63, 185, 80, 0.1)', color: 'var(--nd-green)', borderRadius: 4, fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                          <span className="nd-status-dot nd-status-dot--running" style={{ width: 6, height: 6 }} /> Utilisée
+                          <span className="nd-status-dot nd-status-dot--running" style={{ width: 6, height: 6 }} /> {t("Utilisée")}
                         </span>
                       ) : (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--nd-text-dimmed)', borderRadius: 4, fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                          <span className="nd-status-dot nd-status-dot--exited" style={{ width: 6, height: 6 }} /> Inactive
+                          <span className="nd-status-dot nd-status-dot--exited" style={{ width: 6, height: 6 }} /> {t("Inactive")}
                         </span>
                       )}
                       {/* Formatted for mobile only, groups with status */}
                       <span className="nd-mobile-only" style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', fontVariantNumeric: 'tabular-nums' }}>{formatBytes(img.size)}</span>
-                      <span className="nd-mobile-only" style={{ fontSize: '0.65rem', color: 'var(--nd-text-dimmed)' }}>{formatTimestamp(img.created)}</span>
+                      <span className="nd-mobile-only" style={{ fontSize: '0.65rem', color: 'var(--nd-text-dimmed)' }}>{formatTimestamp(img.created, locale)}</span>
                     </div>
                   </td>
                   <td className="nd-desktop-only" style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--nd-text-muted)', fontVariantNumeric: 'tabular-nums' }}>{formatBytes(img.size)}</td>
-                  <td className="nd-desktop-only" style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--nd-text-dimmed)' }}>{formatTimestamp(img.created)}</td>
+                  <td className="nd-desktop-only" style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--nd-text-dimmed)' }}>{formatTimestamp(img.created, locale)}</td>
                   <td className="nd-desktop-only" style={{ padding: '8px 12px', textAlign: 'right' }}>
-                    <button 
-                      className="nd-btn" 
-                      style={{ padding: '4px', width: 24, height: 24, justifyContent: 'center' }} 
-                      title="Supprimer"
+                    <button
+                      className="nd-btn"
+                      style={{ padding: '4px', width: 24, height: 24, justifyContent: 'center' }}
+                      title={t("Supprimer")}
                       disabled={isUsed}
                       onClick={() => setDeleteTargets([img.id])}
                     >
@@ -592,18 +598,18 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
             })}
           </tbody>
         </table>
-        {images.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: '0.72rem', color: 'var(--nd-text-dimmed)' }}>Aucune image</div>}
+        {images.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: '0.72rem', color: 'var(--nd-text-dimmed)' }}>{t("Aucune image")}</div>}
       </div>
 
       {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des images Docker" tabIndex={-1} className="nd-modal">
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? "les images" : "l'image"}</h3>
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Confirmer la suppression des images Docker")} tabIndex={-1} className="nd-modal">
+            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>{t("Supprimer")} {deleteTargets.length > 1 ? t("les images") : t("l'image")}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
               {demoMode ? (
-                <>Cette action est simulée et temporaire. {deleteTargets.length > 1 ? `${deleteTargets.length} images seront masquées` : `L’image ${deleteTargets[0].substring(0, 12)} sera masquée`} jusqu’à la réinitialisation de votre démo.</>
+                <>{t("Cette action est simulée et temporaire.")} {deleteTargets.length > 1 ? t('docker.imagesWillHide', { count: deleteTargets.length }) : t('docker.imageWillHide', { id: deleteTargets[0].substring(0, 12) })} {t("jusqu’à la réinitialisation de votre démo.")}</>
               ) : (
-                <>Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} images` : `cette image (${deleteTargets[0].substring(0, 12)})`} ? Cela libérera de l&apos;espace disque, mais vous devrez la retélécharger si un conteneur en a besoin.</>
+                <>{t("Êtes-vous sûr de vouloir supprimer")} {deleteTargets.length > 1 ? t('docker.imagesCount', { count: deleteTargets.length }) : t('docker.thisImage', { id: deleteTargets[0].substring(0, 12) })} {t("? Cela libérera de l&apos;espace disque, mais vous devrez la retélécharger si un conteneur en a besoin.")}</>
               )}
             </p>
             {deleteError && (
@@ -612,7 +618,7 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
               </div>
             )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>Annuler</button>
+              <button className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>{t("Annuler")}</button>
               <button className="nd-btn" style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }} onClick={handleDelete} disabled={isDeleting}>
                 {isDeleting ? <Loader2 size={12} className="nd-spin" /> : <Trash2 size={12} />} Supprimer
               </button>
@@ -627,6 +633,7 @@ function ImagesTab({ images, error, loading, containers, hostId, refreshImages, 
 
 // ======================== VOLUMES TAB ========================
 function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolumes, selectedContainer }: { volumes: any[]; error?: unknown; loading: boolean; containers: any[]; hostId: string; refreshVolumes: () => void; selectedContainer?: any }) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const demoMode = config?.demoMode === true;
   const [selected, setSelected] = useState<string[]>([]);
@@ -659,7 +666,7 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
     setDeleteError('');
     let hasError = false;
     let errMessage = '';
-    
+
     for (const target of deleteTargets) {
       try {
         const res = await fetch(`/api/docker/${hostId}/volumes?name=${encodeURIComponent(target)}`, {
@@ -674,7 +681,7 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
         errMessage += e.message + '\n';
       }
     }
-    
+
     refreshVolumes();
     if (hasError) {
       setDeleteError(errMessage);
@@ -690,13 +697,13 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
       {/* Top action bar if selected */}
       {selected.length > 0 && (
         <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{selected.length} volume(s) sélectionné(s)</span>
-          <button 
-            className="nd-btn" 
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{selected.length} {t("volume(s) sélectionné(s)")}</span>
+          <button
+            className="nd-btn"
             style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }}
             onClick={() => setDeleteTargets(selected)}
           >
-            <Trash2 size={12} /> Supprimer la sélection
+            <Trash2 size={12} /> {t("Supprimer la sélection")}
           </button>
         </div>
       )}
@@ -734,7 +741,7 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       {isUsed ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', background: 'rgba(63, 185, 80, 0.1)', color: 'var(--nd-green)', borderRadius: 4, fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                          <span className="nd-status-dot nd-status-dot--running" style={{ width: 6, height: 6 }} /> Utilisé
+                          <span className="nd-status-dot nd-status-dot--running" style={{ width: 6, height: 6 }} /> {t("Utilisé")}
                         </span>
                       ) : (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 6px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--nd-text-dimmed)', borderRadius: 4, fontSize: '0.58rem', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -749,9 +756,9 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
                   <td className="nd-desktop-only" style={{ padding: '8px 12px', color: 'var(--nd-text-muted)' }}>{vol.driver}</td>
                   <td className="nd-desktop-only" style={{ padding: '8px 12px', color: 'var(--nd-text-dimmed)', fontSize: '0.62rem', fontFamily: 'monospace', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vol.mountpoint}</td>
                   <td className="nd-desktop-only" style={{ padding: '8px 12px', textAlign: 'right' }}>
-                    <button 
-                      className="nd-btn" 
-                      style={{ padding: '4px', width: 24, height: 24, justifyContent: 'center' }} 
+                    <button
+                      className="nd-btn"
+                      style={{ padding: '4px', width: 24, height: 24, justifyContent: 'center' }}
                       title="Supprimer"
                       disabled={isUsed}
                       onClick={() => setDeleteTargets([vol.name])}
@@ -764,18 +771,18 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
             })}
           </tbody>
         </table>
-        {volumes.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: '0.72rem', color: 'var(--nd-text-dimmed)' }}>Aucun volume</div>}
+        {volumes.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: '0.72rem', color: 'var(--nd-text-dimmed)' }}>{t("Aucun volume")}</div>}
       </div>
 
       {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Confirmer la suppression des volumes Docker" tabIndex={-1} className="nd-modal">
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? 'les volumes' : 'un volume'}</h3>
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Confirmer la suppression des volumes Docker")} tabIndex={-1} className="nd-modal">
+            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>Supprimer {deleteTargets.length > 1 ? t("les volumes") : t("un volume")}</h3>
             <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
               {demoMode ? (
-                <>Cette suppression est simulée et réversible en réinitialisant la démo. Aucun volume ni fichier réel ne sera touché.</>
+                <>{t("Cette suppression est simulée et réversible en réinitialisant la démo. Aucun volume ni fichier réel ne sera touché.")}</>
               ) : (
-                <>Êtes-vous sûr de vouloir supprimer {deleteTargets.length > 1 ? `${deleteTargets.length} volumes` : <strong style={{ color: 'var(--nd-text)' }}>{deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '...' : deleteTargets[0]}</strong>} ? Cette action est irréversible et effacera toutes les données stockées dessus.</>
+                <>{t("Êtes-vous sûr de vouloir supprimer")} {deleteTargets.length > 1 ? t('docker.volumesCount', { count: deleteTargets.length }) : <strong style={{ color: 'var(--nd-text)' }}>{deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '...' : deleteTargets[0]}</strong>} {t("? Cette action est irréversible et effacera toutes les données stockées dessus.")}</>
               )}
             </p>
             {deleteError && (
@@ -784,7 +791,7 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
               </div>
             )}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>Annuler</button>
+              <button className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>{t("Annuler")}</button>
               <button className="nd-btn" style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }} onClick={handleDelete} disabled={isDeleting}>
                 {isDeleting ? <Loader2 size={12} className="nd-spin" /> : <Trash2 size={12} />} Supprimer
               </button>
@@ -799,6 +806,7 @@ function VolumesTab({ volumes, error, loading, containers, hostId, refreshVolume
 
 // ======================== MAIN DOCKER TAB ========================
 export default function DockerTab({ editMode, searchQuery, isVisible, showSensitive = false }: DockerTabProps) {
+  const { t } = useI18n();
   const { config, updateConfig, refresh, showSecretSections, user } = useConfig();
   const hosts = config?.dockerHosts || [];
   const [activeTab, setActiveTab] = useState<DockerTab>('containers');
@@ -897,12 +905,12 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', minHeight: 'calc(100vh - 120px)' }}>
         <div className="nd-docker-empty nd-card" style={{ borderStyle: 'dashed', borderWidth: 2, width: '100%', maxWidth: 560, boxSizing: 'border-box' }}>
           <div className="nd-docker-empty-icon mb-6" style={{ fontSize: '4rem', opacity: 0.9, display: 'flex', justifyContent: 'center' }}><Emoji emoji="🐳" /></div>
-          <div className="nd-docker-empty-title" style={{ fontSize: '1.25rem', marginBottom: 12 }}>Docker Manager</div>
+          <div className="nd-docker-empty-title" style={{ fontSize: '1.25rem', marginBottom: 12 }}>{t("Docker Manager")}</div>
           <div className="nd-docker-empty-desc" style={{ fontSize: '0.85rem', opacity: 0.8, marginBottom: 32, lineHeight: 1.6 }}>
-            Aucun hôte Docker configuré. Ajoutez un hôte pour commencer à gérer vos conteneurs, images et volumes depuis votre dashboard.
+            {t("Aucun hôte Docker configuré. Ajoutez un hôte pour commencer à gérer vos conteneurs, images et volumes depuis votre dashboard.")}
           </div>
           <button className="nd-btn nd-btn-accent px-10 py-3 h-auto text-sm shadow-lg shadow-blue-500/10" onClick={() => setShowHostForm(true)} style={{ marginTop: 8 }}>
-            <Plus size={18} /> <span className="ml-1">Ajouter un hôte Docker</span>
+            <Plus size={18} /> <span className="ml-1">{t("Ajouter un hôte Docker")}</span>
           </button>
         </div>
         {showHostForm && <DockerHostFormModal onClose={() => setShowHostForm(false)} onSave={handleAddHost} />}
@@ -914,7 +922,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
   const filteredContainers = visibleContainers.filter((c: any) => {
     if (!effectiveSearch) return true;
     const q = effectiveSearch.toLowerCase();
-    return c.names?.some((n: string) => n.toLowerCase().includes(q)) 
+    return c.names?.some((n: string) => n.toLowerCase().includes(q))
       || c.image?.toLowerCase().includes(q)
       || c.id?.toLowerCase().includes(q);
   });
@@ -969,9 +977,9 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
     <>
       <div className="nd-docker-layout nd-animate-in">
         {/* Sidebar — Host selector + Container list */}
-        <aside 
-          className="nd-docker-sidebar" 
-          style={{ 
+        <aside
+          className="nd-docker-sidebar"
+          style={{
             order: dockerSidebarOrder,
           }}
         >
@@ -979,7 +987,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           <div className="nd-sidebar-card">
             <div className="nd-section-title" style={{ marginBottom: 8 }}>
               <Box size={12} style={{ color: 'var(--nd-accent)' }} />
-              Hôtes Docker
+              {t("Hôtes Docker")}
               {editMode && (
                 <button className="nd-action-icon success" onClick={() => setShowHostForm(true)} style={{ marginLeft: 'auto' }}>
                   <Plus size={13} />
@@ -1014,7 +1022,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               </div>
               <div style={{ textAlign: 'center', padding: '6px 0' }}>
                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--nd-red)' }}>{stoppedCount}</div>
-                <div style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Stoppés</div>
+                <div style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t("Stoppés")}</div>
               </div>
             </div>
           </div>
@@ -1026,7 +1034,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               className="nd-input"
               value={localSearch}
               onChange={e => setLocalSearch(e.target.value)}
-              placeholder="Filtrer les conteneurs..."
+              placeholder={t("Filtrer les conteneurs...")}
               style={{ paddingLeft: 30, fontSize: '0.72rem' }}
             />
           </div>
@@ -1064,16 +1072,16 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
                   <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                     {c.state === 'running' ? (
                       <>
-                        <button className="nd-action-icon accent" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'restart', c.names[0] || c.id); }} title="Redémarrer" disabled={!!actionLoading}>
+                        <button className="nd-action-icon accent" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'restart', c.names[0] || c.id); }} title={t("Redémarrer")} disabled={!!actionLoading}>
                           <RotateCcw size={12} />
                         </button>
-                        <button className="nd-action-icon danger" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'stop', c.names[0] || c.id); }} title="Arrêter" disabled={!!actionLoading}>
+                        <button className="nd-action-icon danger" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'stop', c.names[0] || c.id); }} title={t("Arrêter")} disabled={!!actionLoading}>
                           <Square size={12} />
                         </button>
                       </>
                     ) : (
                       <>
-                        <button className="nd-action-icon success" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'start', c.names[0] || c.id); }} title="Démarrer" disabled={!!actionLoading}>
+                        <button className="nd-action-icon success" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'start', c.names[0] || c.id); }} title={t("Démarrer")} disabled={!!actionLoading}>
                           <Play size={12} />
                         </button>
                         <button className="nd-action-icon danger" onClick={e => { e.stopPropagation(); handleActionRequest(c.fullId, 'remove', c.names[0] || c.id); }} title="Supprimer" disabled={!!actionLoading}>
@@ -1089,7 +1097,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
 
             {!containersError && !containersLoading && filteredContainers.length === 0 && (
               <div style={{ textAlign: 'center', padding: 16, fontSize: '0.7rem', color: 'var(--nd-text-dimmed)' }}>
-                {effectiveSearch ? 'Aucun conteneur correspondant' : 'Aucun conteneur'}
+                {effectiveSearch ? t("Aucun conteneur correspondant") : t("Aucun conteneur")}
               </div>
             )}
           </div>
@@ -1099,18 +1107,18 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
         <div className="nd-docker-main" style={{ order: dockerMainOrder }}>
           <div className="nd-docker-tabs" style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 12 }}>
               <button className={`nd-docker-tab ${activeTab === 'containers' ? 'nd-docker-tab--active' : ''}`} onClick={() => setActiveTab('containers')} style={{ flexShrink: 0 }}>
-                <Container size={12} /> Conteneurs ({visibleContainers.length})
+                <Container size={12} /> {t("Conteneurs (")}{visibleContainers.length})
               </button>
               <button className={`nd-docker-tab ${activeTab === 'images' ? 'nd-docker-tab--active' : ''}`} onClick={() => setActiveTab('images')} style={{ flexShrink: 0 }}>
-                <Layers size={12} /> Images ({images.length})
+                <Layers size={12} /> {t("Images (")}{images.length})
               </button>
               <button className={`nd-docker-tab ${activeTab === 'volumes' ? 'nd-docker-tab--active' : ''}`} onClick={() => setActiveTab('volumes')} style={{ flexShrink: 0 }}>
-                <Database size={12} /> Volumes ({volumes.length})
+                <Database size={12} /> {t("Volumes (")}{volumes.length})
               </button>
-              <button 
-                className="nd-action-icon" 
-                onClick={() => refreshContainers()} 
-                title="Rafraîchir" 
+              <button
+                className="nd-action-icon"
+                onClick={() => refreshContainers()}
+                title={t("Rafraîchir")}
                 style={{ background: 'transparent', border: 'none', padding: 4, flexShrink: 0, marginLeft: 'auto' }}
               >
                 <RefreshCw size={14} style={{ color: 'var(--nd-text-muted)' }} />
@@ -1133,7 +1141,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 12 }}>
                   <Container size={32} style={{ color: 'var(--nd-text-dimmed)', opacity: 0.3 }} />
                   <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-dimmed)' }}>
-                    Sélectionnez un conteneur dans la liste pour voir ses détails
+                    {t("Sélectionnez un conteneur dans la liste pour voir ses détails")}
                   </span>
                 </div>
               </div>
@@ -1150,10 +1158,10 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
         </div>
 
         {showWidgets && (hasWidgets('docker-widgets') || editMode) && (
-          <aside 
+          <aside
             ref={widgetsSidebarRef}
-            className="nd-docker-widgets-sidebar" 
-            style={{ 
+            className="nd-docker-widgets-sidebar"
+            style={{
               order: widgetsSidebarOrder,
               position: widgetsSticky ? 'sticky' : 'static',
               maxHeight: 'none',
@@ -1177,23 +1185,22 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
           }
         }}
         title={
-          pendingConfirm?.action === 'stop' ? 'Arrêter le conteneur' :
-          pendingConfirm?.action === 'restart' ? 'Redémarrer le conteneur' :
-          'Supprimer le conteneur'
+          pendingConfirm?.action === 'stop' ? t("Arrêter le conteneur") :
+          pendingConfirm?.action === 'restart' ? t("Redémarrer le conteneur") :
+          t("Supprimer le conteneur")
         }
         description={config?.demoMode === true
-          ? `Action simulée sur « ${pendingConfirm?.name} ». Elle ne touche aucun serveur réel et sera annulée à la réinitialisation de votre démo.`
-          : `Êtes-vous sûr de vouloir ${
-              pendingConfirm?.action === 'stop' ? 'arrêter' :
-              pendingConfirm?.action === 'restart' ? 'redémarrer' :
-              'supprimer'
-            } "${pendingConfirm?.name}" ?`}
+          ? t('docker.demoAction', { name: pendingConfirm?.name || '' })
+          : t('docker.confirmAction', {
+              action: pendingConfirm?.action === 'stop' ? t("arrêter") : pendingConfirm?.action === 'restart' ? t("redémarrer") : t('supprimer'),
+              name: pendingConfirm?.name || '',
+            })}
         confirmLabel={
-          pendingConfirm?.action === 'stop' ? 'Arrêter' :
-          pendingConfirm?.action === 'restart' ? 'Redémarrer' :
-          'Supprimer'
+          pendingConfirm?.action === 'stop' ? t('Arrêter') :
+          pendingConfirm?.action === 'restart' ? t('Redémarrer') :
+          t('Supprimer')
         }
-        cancelLabel="Annuler"
+        cancelLabel={t("Annuler")}
       />
 
       {/* Confirm Delete Host Modal */}
@@ -1205,12 +1212,12 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
             handleDeleteHost(pendingDeleteHost.id);
           }
         }}
-        title="Supprimer l'hôte Docker"
+        title={t("Supprimer l'hôte Docker")}
         description={config?.demoMode === true
-          ? `L’hôte fictif « ${pendingDeleteHost?.name} » sera retiré uniquement de votre session temporaire.`
-          : `Êtes-vous sûr de vouloir supprimer l'hôte "${pendingDeleteHost?.name}" ? Cette action est irréversible.`}
-        confirmLabel="Supprimer"
-        cancelLabel="Annuler"
+          ? t('docker.demoHostRemove', { name: pendingDeleteHost?.name || '' })
+          : t('docker.confirmHostDelete', { name: pendingDeleteHost?.name || '' })}
+        confirmLabel={t("Supprimer")}
+        cancelLabel={t("Annuler")}
       />
     </>
   );

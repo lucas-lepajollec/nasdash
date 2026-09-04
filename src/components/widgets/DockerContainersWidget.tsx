@@ -7,6 +7,7 @@ import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, X
 import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
 import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
+import { useI18n } from '@/i18n/I18nProvider';
 
 function getPaddedList(list: any[], targetMultiple: number) {
   if (list.length === 0) return [];
@@ -20,6 +21,7 @@ function getPaddedList(list: any[], targetMultiple: number) {
 }
 
 export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps, isVisible = true }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void, isVisible?: boolean }) {
+  const { t } = useI18n();
   const { config, showSecretSections } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hosts = config?.dockerHosts || [];
@@ -76,7 +78,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
       const res = await fetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
-          alert("Action refusée. Session administrateur requise (veuillez vous connecter via le bouton Connexion en haut).");
+          alert(t("Action refusée. Session administrateur requise (veuillez vous connecter via le bouton Connexion en haut)."));
           return;
         }
         const data = await res.json();
@@ -118,7 +120,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
     return (
       <div className="nd-sidebar-card nd-animate-in" style={{ padding: '16px', textAlign: 'center' }}>
         <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', margin: 0 }}>
-          Aucun hôte Docker configuré.
+          {t("Aucun hôte Docker configuré.")}
         </p>
       </div>
     );
@@ -260,7 +262,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
                 display: 'flex',
                 alignItems: 'center'
               }}
-              title={isRunning ? 'Arrêter' : 'Démarrer'}
+              title={isRunning ? t("Arrêter") : t("Démarrer")}
             >
               {isLoadingAction ? (
                 <Loader2 size={12} className="nd-spin" />
@@ -390,7 +392,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
               fontWeight: 500
             }}>
               <span><Emoji emoji={activeHost.icon} /></span>
-              <span>Hôte : {activeHost.name}</span>
+              <span>{t("Hôte :")} {activeHost.name}</span>
             </div>
           )}
         </div>
@@ -478,7 +480,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
         <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '1rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji="🐳" /></span>
-            <span>Conteneurs Docker</span>
+            <span>{t("Conteneurs Docker")}</span>
           </div>
           
           {editMode && widgetInstanceId && onUpdateProps && (
@@ -486,7 +488,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsEditDropdownOpen(!isEditDropdownOpen); }}
                 className="nd-action-icon accent"
-                title="Modifier la pagination de ce widget"
+                title={t("Modifier la pagination de ce widget")}
               >
                 <Pencil size={13} />
               </button>
@@ -510,16 +512,16 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
                   letterSpacing: 'normal'
                 }}>
                   <div style={{ padding: '6px 12px', fontSize: '0.65rem', color: 'var(--nd-text-dimmed)', fontWeight: 600, borderBottom: '1px solid var(--nd-card-border)', marginBottom: 4 }}>
-                    ÉLÉMENTS PAR PAGE
+                    {t("ÉLÉMENTS PAR PAGE")}
                   </div>
                   {[
-                    { label: 'Par défaut', value: null },
-                    { label: 'Tout afficher', value: 'all' },
-                    { label: '4 par page', value: 4 },
-                    { label: '6 par page', value: 6 },
-                    { label: '8 par page', value: 8 },
-                    { label: '12 par page', value: 12 },
-                    { label: '16 par page', value: 16 }
+                    { label: t("Par défaut"), value: null },
+                    { label: t("Tout afficher"), value: 'all' },
+                    { label: t("4 par page"), value: 4 },
+                    { label: t("6 par page"), value: 6 },
+                    { label: t("8 par page"), value: 8 },
+                    { label: t("12 par page"), value: 12 },
+                    { label: t("16 par page"), value: 16 }
                   ].map(opt => (
                     <div
                       key={String(opt.value)}
@@ -547,7 +549,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
                   ))}
 
                   <div style={{ padding: '6px 12px', fontSize: '0.65rem', color: 'var(--nd-text-dimmed)', fontWeight: 600, borderBottom: '1px solid var(--nd-card-border)', marginTop: 4, marginBottom: 4 }}>
-                    DÉFILEMENT
+                    {t("DÉFILEMENT")}
                   </div>
                   <div
                     onClick={(e) => {
@@ -568,7 +570,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
                     }}
                     className="nd-weather-card-hover"
                   >
-                    Défilement automatique
+                    {t("Défilement automatique")}
                     {widgetProps?.autoScroll && <Check size={12} />}
                   </div>
                 </div>
@@ -598,7 +600,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
 
       {!isLoading && !error && containerList.length === 0 && (
         <div style={{ textAlign: 'center', padding: '24px 8px', fontSize: '0.7rem', color: 'var(--nd-text-muted)', height: minHeight, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          Aucun conteneur trouvé sur cet hôte.
+          {t("Aucun conteneur trouvé sur cet hôte.")}
         </div>
       )}
 

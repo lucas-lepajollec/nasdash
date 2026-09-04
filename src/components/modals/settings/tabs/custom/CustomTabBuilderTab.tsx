@@ -8,6 +8,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useTabs } from '@/hooks/useTabs';
 import { WidgetSelectionModal } from './WidgetSelectionModal';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface CustomTabBuilderTabProps {
   tabId?: string;
@@ -16,6 +17,7 @@ interface CustomTabBuilderTabProps {
 }
 
 export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuilderTabProps) {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { refreshTabs } = useTabs();
   const [currentTabId, setCurrentTabId] = useState<string | undefined>(tabId);
@@ -54,7 +56,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert('Veuillez donner un nom à votre onglet.');
+      alert(t("Veuillez donner un nom à votre onglet."));
       return;
     }
 
@@ -82,7 +84,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
             type: 'createTab',
             name,
             icon,
-            description: 'Onglet personnalisé',
+            description: t("Onglet personnalisé"),
             layout: { rows }
           })
         });
@@ -106,11 +108,11 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
         setTimeout(() => setSaveSuccess(false), 2000);
       } else {
         const errorData = await res.json();
-        alert(`Erreur: ${errorData.error || 'Erreur lors de la sauvegarde.'}`);
+        alert(t('errors.save', { message: errorData.error || t('Erreur lors de la sauvegarde.') }));
       }
     } catch (e) {
       console.error(e);
-      alert("Erreur réseau.");
+      alert(t("Erreur réseau."));
     } finally {
       setIsSaving(false);
     }
@@ -198,12 +200,12 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
       <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Emoji emoji={emoji} />
         <span>{name}</span>
-        {isGloballyHidden && <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>(Désactivé)</span>}
+        {isGloballyHidden && <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{t("(Désactivé)")}</span>}
       </span>
     );
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Chargement...</div>;
+  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>{t("Chargement...")}</div>;
 
   return (
     <div className="nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -211,11 +213,11 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
       {/* Propriétés de base */}
       <div className="nd-settings-card" style={{ padding: '20px', display: 'flex', flexWrap: 'nowrap', gap: '16px', alignItems: 'flex-end', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <label className="nd-label">Nom de l&apos;onglet</label>
-          <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Multimédia" style={{ width: '100%', boxSizing: 'border-box' }} />
+          <label className="nd-label">{t("Nom de l&apos;onglet")}</label>
+          <input className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder={t("Ex: Multimédia")} style={{ width: '100%', boxSizing: 'border-box' }} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-          <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
+          <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>{t("Icône")}</label>
           <button 
             type="button"
             className="nd-btn-hover-glow" 
@@ -260,20 +262,20 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
           }}
         >
           <Save size={14} />
-          {isSaving ? 'Enregistrement...' : saveSuccess ? 'Enregistré !' : 'Enregistrer'}
+          {isSaving ? t('Enregistrement...') : saveSuccess ? t("Enregistré !") : t('Enregistrer')}
         </button>
       </div>
 
         {/* Builder UI */}
         <h3 style={{ fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Layout size={18} color="var(--nd-accent)" /> 
-          Structure de la page
+          {t("Structure de la page")}
         </h3>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
           {rows.length === 0 && (
             <div style={{ padding: '40px', textAlign: 'center', background: 'var(--nd-bg-alt)', borderRadius: 'var(--nd-card-radius)', border: '1px dashed var(--nd-card-border)' }}>
-              <p style={{ color: 'var(--nd-text-muted)', marginBottom: '16px' }}>Votre onglet est vide. Ajoutez une rangée pour commencer.</p>
+              <p style={{ color: 'var(--nd-text-muted)', marginBottom: '16px' }}>{t("Votre onglet est vide. Ajoutez une rangée pour commencer.")}</p>
             </div>
           )}
 
@@ -300,7 +302,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
                   onClick={() => removeRow(row.id)}
                   className="nd-btn nd-btn-danger" 
                   style={{ width: 28, height: 28, padding: 0, borderRadius: '50%', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}
-                  title="Supprimer la rangée"
+                  title={t("Supprimer la rangée")}
                 >
                   <Trash2 size={12} />
                 </button>
@@ -344,7 +346,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
                       className="nd-btn" 
                       style={{ height: '60px', border: '1px dashed var(--nd-card-border)', background: 'transparent', display: 'flex', justifyContent: 'center', color: 'var(--nd-text-muted)', minWidth: 0, overflow: 'hidden' }}
                     >
-                      <Plus size={16} style={{ flexShrink: 0, marginRight: 6 }} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Ajouter un widget</span>
+                      <Plus size={16} style={{ flexShrink: 0, marginRight: 6 }} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t("Ajouter un widget")}</span>
                     </button>
 
                   </div>
@@ -357,31 +359,31 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
 
         {/* Add Row Section */}
         <div className="nd-settings-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text-muted)' }}>Ajouter une rangée</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text-muted)' }}>{t("Ajouter une rangée")}</span>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <button className="nd-btn" onClick={() => addRow('1-col')} title="1 Colonne (100%)">
+            <button className="nd-btn" onClick={() => addRow('1-col')} title={t("1 Colonne (100%)")}>
               <div style={{ width: 40, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
             </button>
-            <button className="nd-btn" onClick={() => addRow('50-50')} title="2 Colonnes (50% / 50%)">
+            <button className="nd-btn" onClick={() => addRow('50-50')} title={t("2 Colonnes (50% / 50%)")}>
               <div style={{ display: 'flex', gap: 4, width: 40 }}>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
               </div>
             </button>
-            <button className="nd-btn" onClick={() => addRow('3-col')} title="3 Colonnes (33% / 33% / 33%)">
+            <button className="nd-btn" onClick={() => addRow('3-col')} title={t("3 Colonnes (33% / 33% / 33%)")}>
               <div style={{ display: 'flex', gap: 2, width: 40 }}>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
               </div>
             </button>
-            <button className="nd-btn" onClick={() => addRow('25-75')} title="2 Colonnes (25% / 75%)">
+            <button className="nd-btn" onClick={() => addRow('25-75')} title={t("2 Colonnes (25% / 75%)")}>
               <div style={{ display: 'flex', gap: 4, width: 40 }}>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
                 <div style={{ flex: 3, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
               </div>
             </button>
-            <button className="nd-btn" onClick={() => addRow('75-25')} title="2 Colonnes (75% / 25%)">
+            <button className="nd-btn" onClick={() => addRow('75-25')} title={t("2 Colonnes (75% / 25%)")}>
               <div style={{ display: 'flex', gap: 4, width: 40 }}>
                 <div style={{ flex: 3, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>
                 <div style={{ flex: 1, height: 20, background: 'var(--nd-card-border)', borderRadius: 4 }}></div>

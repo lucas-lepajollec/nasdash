@@ -12,6 +12,7 @@ import DockerWidget from './DockerWidget';
 import CalendarWidget from './CalendarWidget';
 import NetworkGraphWidget from './NetworkGraphWidget';
 import DockerContainersWidget from './DockerContainersWidget';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface WidgetRendererProps {
   id: string;
@@ -36,6 +37,7 @@ export function WidgetRenderer({
   onUpdateProps,
   isVisible = true,
 }: WidgetRendererProps) {
+  const { t } = useI18n();
   const { config, setDeviceModal, deleteDevice, reorderDevices } = useConfig();
 
   // Handle widget routing based on ID
@@ -77,7 +79,7 @@ export function WidgetRenderer({
       default:
         return (
           <div style={{ padding: 20, textAlign: 'center', color: 'var(--nd-text-muted)', background: 'var(--nd-bg)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            Widget inconnu ({id})
+            {t("Widget inconnu (")}{id})
           </div>
         );
     }

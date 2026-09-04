@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Check, Sun, Moon, Sparkles, Palette, Smile } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export interface ThemeDefinition {
   key: string;
@@ -409,6 +410,7 @@ interface ThemeGalleryViewProps {
 }
 
 export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose, initialTab = 'themes' }: ThemeGalleryViewProps) {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const [galleryMode, setGalleryMode] = useState<'themes' | 'emojis'>(initialTab);
   
@@ -465,7 +467,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
           }}
         >
           <Palette size={15} />
-          Thèmes Visuels
+          {t("Thèmes Visuels")}
         </button>
         <button
           onClick={() => setGalleryMode('emojis')}
@@ -485,7 +487,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
           }}
         >
           <Smile size={15} />
-          Style des Emojis & Icônes
+          {t("Style des Emojis & Icônes")}
         </button>
       </div>
 
@@ -504,7 +506,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
               <Search size={16} style={{ position: 'absolute', left: 12, color: 'var(--nd-text-muted)' }} />
               <input 
                 type="text"
-                placeholder="Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)"
+                placeholder={t("Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
@@ -549,7 +551,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                 }}
               >
                 <Sparkles size={13} color={activeTab === 'all' ? 'var(--nd-accent)' : undefined} />
-                Tous ({THEME_GALLERY.length})
+                {t("Tous (")}{THEME_GALLERY.length})
               </button>
               <button
                 onClick={() => setActiveTab('dark')}
@@ -569,7 +571,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                 }}
               >
                 <Moon size={13} color={activeTab === 'dark' ? 'var(--nd-accent)' : undefined} />
-                Sombres ({THEME_GALLERY.filter(t => t.category === 'dark').length})
+                {t("Sombres (")}{THEME_GALLERY.filter(t => t.category === 'dark').length})
               </button>
               <button
                 onClick={() => setActiveTab('light')}
@@ -589,7 +591,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                 }}
               >
                 <Sun size={13} color={activeTab === 'light' ? 'var(--nd-accent)' : undefined} />
-                Clairs ({THEME_GALLERY.filter(t => t.category === 'light').length})
+                {t("Clairs (")}{THEME_GALLERY.filter(t => t.category === 'light').length})
               </button>
             </div>
           </div>
@@ -612,7 +614,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                 textAlign: 'center',
                 color: 'var(--nd-text-muted)'
               }}>
-                <p style={{ margin: 0, fontSize: '0.95rem' }}>Aucun thème ne correspond à votre recherche "{search}".</p>
+                <p style={{ margin: 0, fontSize: '0.95rem' }}>{t("Aucun thème ne correspond à votre recherche \"")}{search}".</p>
               </div>
             ) : (
               filteredThemes.map((theme) => {
@@ -727,10 +729,10 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                         borderRadius: 10,
                         backdropFilter: 'blur(4px)'
                       }}>
-                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title="Canvas BG" />
-                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title="Card Surface" />
-                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title="Text Color" />
-                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title="Accent Color" />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title={t("Canvas BG")} />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title={t("Card Surface")} />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title={t("Text Color")} />
+                        <div style={{ width: 9, height: 9, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title={t("Accent Color")} />
                       </div>
                     </div>
 
@@ -738,7 +740,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--nd-text)' }}>
-                          {theme.name}
+                          {t(theme.name)}
                         </span>
                         {isSelected && (
                           <div style={{
@@ -752,12 +754,12 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                             fontSize: '0.62rem',
                             fontWeight: 700
                           }}>
-                            <Check size={11} /> Actif
+                            <Check size={11} /> {t("Actif")}
                           </div>
                         )}
                       </div>
                       <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: '1.25' }}>
-                        {theme.description}
+                        {t(theme.description)}
                       </p>
                     </div>
                   </div>
@@ -843,7 +845,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--nd-text)' }}>
-                      {style.name}
+                      {t(style.name)}
                     </span>
                     {isSelected && (
                       <div style={{
@@ -857,12 +859,12 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
                         fontSize: '0.62rem',
                         fontWeight: 700
                       }}>
-                        <Check size={11} /> Actif
+                        <Check size={11} /> {t("Actif")}
                       </div>
                     )}
                   </div>
                   <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: '1.25' }}>
-                    {style.description}
+                    {t(style.description)}
                   </p>
                 </div>
               </div>
@@ -882,8 +884,8 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
       }}>
         <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
           {galleryMode === 'themes' 
-            ? `${filteredThemes.length} sur ${THEME_GALLERY.length} thèmes affichés`
-            : `${EMOJI_STYLES.length} styles d'emojis disponibles`
+            ? t('gallery.themesShown', { shown: filteredThemes.length, total: THEME_GALLERY.length })
+            : t('gallery.emojiStyles', { count: EMOJI_STYLES.length })
           }
         </span>
         {onClose && (

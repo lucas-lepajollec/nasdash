@@ -6,6 +6,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 import { Settings2, Plus, PenTool } from 'lucide-react';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface CustomTabRendererProps {
   tab: TabDef;
@@ -15,6 +16,7 @@ interface CustomTabRendererProps {
 }
 
 export default function CustomTabRenderer({ tab, editMode, showSensitive = false, isVisible = true }: CustomTabRendererProps) {
+  const { t } = useI18n();
   const { config, setSettingsModal, user } = useConfig();
   const [layout, setLayout] = useState<CustomTabLayout | null>(globalLayoutCache[tab.id] || null);
 
@@ -132,7 +134,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
           {editMode && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '80%' }}>
               <span style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', fontWeight: 600 }}>
-                Espace ({info.height || 120}px)
+                {t("Espace (")}{info.height || 120}px)
               </span>
               <input 
                 type="range" 
@@ -218,7 +220,7 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
                   opacity: 0.7
                 }}>
                   <Settings2 size={24} color="var(--nd-accent)" />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--nd-accent)' }}>Éditez l'onglet dans les paramètres</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--nd-accent)' }}>{t("Éditez l'onglet dans les paramètres")}</span>
                 </div>
               )}
             </div>
@@ -229,15 +231,15 @@ export default function CustomTabRenderer({ tab, editMode, showSensitive = false
   };
 
   if (!layout) {
-    return <div style={{ padding: '0 20px 40px', textAlign: 'center', color: 'var(--nd-text-muted)' }}>Chargement du layout...</div>;
+    return <div style={{ padding: '0 20px 40px', textAlign: 'center', color: 'var(--nd-text-muted)' }}>{t("Chargement du layout...")}</div>;
   }
 
   return (
     <div className="nd-animate-in" style={{ width: '100%', padding: '0 clamp(12px, 3vw, 20px) 40px', margin: '0 auto', overflowX: 'hidden' }}>
       {layout.rows.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--nd-text-muted)' }}>
-          <p>Ce layout est vide.</p>
-          <p style={{ fontSize: '0.8rem' }}>Allez dans les paramètres de l'onglet pour construire le layout.</p>
+          <p>{t("Ce layout est vide.")}</p>
+          <p style={{ fontSize: '0.8rem' }}>{t("Allez dans les paramètres de l'onglet pour construire le layout.")}</p>
         </div>
       ) : (
         layout.rows.map(r => renderRow(r))

@@ -6,6 +6,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface DockerActionFormModalProps {
   action?: DockerActionConfig;
@@ -22,6 +23,7 @@ const ACTION_ICONS = [
 ];
 
 export default function DockerActionFormModal({ action, onClose, onSave, onDelete }: DockerActionFormModalProps) {
+  const { t } = useI18n();
   const dialogRef = useDialogAccessibility(onClose);
   const { config } = useConfig();
   const [name, setName] = useState(action?.name || '');
@@ -38,10 +40,10 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
     const fetchContainers = async () => {
       if (!config?.dockerHosts) return;
       setLoading(true);
-      
+
       try {
         const allContainers: { hostId: string; hostName: string; container: DockerContainer }[] = [];
-        
+
         await Promise.all(config.dockerHosts.map(async (host) => {
           try {
             const res = await fetch(`/api/docker/${host.id}/containers?all=true`);
@@ -93,9 +95,9 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={action ? 'Modifier une action Docker' : 'Ajouter une action Docker'} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 450, maxWidth: '90vw' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={action ? t("Modifier une action Docker") : t("Ajouter une action Docker")} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 450, maxWidth: '90vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{action ? 'Modifier' : 'Ajouter'} une action Docker</h3>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{action ? 'Modifier' : 'Ajouter'} {t("une action Docker")}</h3>
           <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
             <X size={16} />
           </button>
@@ -103,16 +105,16 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <label className="nd-label">Nom du bouton</label>
-            <input className="nd-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="ex: Redémarrer Supabase" />
+            <label className="nd-label">{t("Nom du bouton")}</label>
+            <input className="nd-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ex: Redémarrer Supabase")} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label className="nd-label">Icône</label>
+              <label className="nd-label">{t("Icône")}</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {ACTION_ICONS.map(i => (
-                  <button 
+                  <button
                     key={i.name}
                     onClick={() => setIcon(i.name)}
                     style={{
@@ -131,14 +133,14 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
             </div>
 
             <div>
-              <label className="nd-label">Action (au clic)</label>
+              <label className="nd-label">{t("Action (au clic)")}</label>
               <CustomSelect
                 value={actionType}
                 onChange={(val) => setActionType(val as any)}
                 options={[
-                  { value: 'switch', label: 'Basculer (Stop/Start)' },
-                  { value: 'start', label: 'Démarrer (Start)' },
-                  { value: 'stop', label: 'Arrêter (Stop)' }
+                  { value: 'switch', label: t("Basculer (Stop/Start)") },
+                  { value: 'start', label: t("Démarrer (Start)") },
+                  { value: 'stop', label: t("Arrêter (Stop)") }
                 ]}
               />
             </div>
@@ -146,22 +148,22 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
 
           <div>
             <label className="nd-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Conteneurs cibles ({targets.length} sélectionnés)</span>
-              {loading && <span style={{ fontSize: '0.65rem', color: 'var(--nd-accent)' }}>Chargement...</span>}
+              <span>{t("Conteneurs cibles (")}{targets.length} {t("sélectionnés)")}</span>
+              {loading && <span style={{ fontSize: '0.65rem', color: 'var(--nd-accent)' }}>{t("Chargement...")}</span>}
             </label>
             <div className="nd-search" style={{ marginBottom: 12, maxWidth: 'none' }}>
               <Search size={14} className="nd-search-icon" />
-              <input 
-                placeholder="Rechercher un conteneur..." 
+              <input
+                placeholder={t("Rechercher un conteneur...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div style={{ 
-              maxHeight: 200, 
-              overflowY: 'auto', 
-              background: 'var(--nd-icon-bg)', 
+            <div style={{
+              maxHeight: 200,
+              overflowY: 'auto',
+              background: 'var(--nd-icon-bg)',
               borderRadius: 'var(--nd-card-radius)',
               border: '1px solid var(--nd-border)',
               display: 'flex',
@@ -169,15 +171,15 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
             }}>
               {filteredContainers.length === 0 && !loading && (
                 <div style={{ padding: 16, textAlign: 'center', fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
-                  Aucun conteneur trouvé
+                  {t("Aucun conteneur trouvé")}
                 </div>
               )}
               {filteredContainers.map(({ hostId, hostName, container }) => {
                 const cname = container.names[0].replace(/^\//, '');
                 const selected = isSelected(hostId, cname);
-                
+
                 return (
-                  <div 
+                  <div
                     key={`${hostId}-${container.id}`}
                     onClick={() => toggleTarget(hostId, cname)}
                     style={{
@@ -190,22 +192,22 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
                       gap: 12
                     }}
                   >
-                    <div style={{ 
-                      width: 16, height: 16, borderRadius: 'calc(var(--nd-card-radius) * 0.4)', 
+                    <div style={{
+                      width: 16, height: 16, borderRadius: 'calc(var(--nd-card-radius) * 0.4)',
                       border: `1px solid ${selected ? 'var(--nd-accent)' : 'var(--nd-border)'}`,
                       background: selected ? 'var(--nd-accent)' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
                       {selected && <Check size={12} color="white" />}
                     </div>
-                    
+
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cname}</span>
                       <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Server size={8} /> {hostName}
                       </span>
                     </div>
-                    
+
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: container.state === 'running' ? 'var(--nd-green)' : 'var(--nd-text-muted)' }} />
                   </div>
                 );

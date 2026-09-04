@@ -3,8 +3,10 @@ import { X, Calendar as CalendarIcon, Clock, AlignLeft, Trash2 } from 'lucide-re
 import { useConfig } from '@/hooks/useConfig';
 import ConfirmModal from './ConfirmModal';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function CalendarEventModal() {
+  const { t, locale } = useI18n();
   const { config, calendarEventModal, setCalendarEventModal, addLocalEvent, deleteLocalEvent, user } = useConfig();
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -21,7 +23,7 @@ export default function CalendarEventModal() {
 
   const dateParts = calendarEventModal.date.split('-');
   const displayDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-  const formattedDate = displayDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const formattedDate = displayDate.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   const handleSave = async () => {
     if (!title.trim()) return;
@@ -53,9 +55,9 @@ export default function CalendarEventModal() {
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Ajouter un événement" tabIndex={-1} className="nd-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%' }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t("Ajouter un événement")} tabIndex={-1} className="nd-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Ajouter un événement</h2>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t("Ajouter un événement")}</h2>
           <button aria-label="Fermer" className="nd-btn" onClick={closeModal} style={{ padding: 8 }}>
             <X size={16} />
           </button>
@@ -70,7 +72,7 @@ export default function CalendarEventModal() {
           {calendarEventModal.events && calendarEventModal.events.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
-                Événements existants
+                {t("Événements existants")}
               </div>
               {calendarEventModal.events.map(ev => {
                 const isLocal = config?.localEvents?.some(le => le.id === ev.id);
@@ -80,7 +82,7 @@ export default function CalendarEventModal() {
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</span>
                       {!ev.isAllDay && ev.start && (
                         <span style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginTop: '4px' }}>
-                          {new Date(ev.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(ev.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
                     </div>
@@ -89,7 +91,7 @@ export default function CalendarEventModal() {
                         type="button"
                         className="nd-action-icon danger"
                         onClick={(e) => { e.stopPropagation(); setConfirmDeleteEvent(ev.id); }}
-                        title="Supprimer cet événement"
+                        title={t("Supprimer cet événement")}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -101,7 +103,7 @@ export default function CalendarEventModal() {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--nd-text-muted)' }}>Titre de l'événement</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--nd-text-muted)' }}>{t("Titre de l'événement")}</label>
             <input
               type="text"
               style={{
@@ -116,7 +118,7 @@ export default function CalendarEventModal() {
               }}
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Ex: Réunion d'équipe"
+              placeholder={t("Ex: Réunion d'équipe")}
               autoFocus
             />
           </div>
@@ -128,7 +130,7 @@ export default function CalendarEventModal() {
                 checked={isAllDay} 
                 onChange={e => setIsAllDay(e.target.checked)} 
               />
-              <span style={{ fontSize: '0.8rem', color: 'var(--nd-text)' }}>Toute la journée</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--nd-text)' }}>{t("Toute la journée")}</span>
             </label>
 
             {!isAllDay && (
@@ -155,7 +157,7 @@ export default function CalendarEventModal() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 500, color: 'var(--nd-text-muted)' }}>
-              <AlignLeft size={14} /> Description (Optionnel)
+              <AlignLeft size={14} /> {t("Description (Optionnel)")}
             </label>
             <textarea
               style={{
@@ -171,7 +173,7 @@ export default function CalendarEventModal() {
               }}
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Détails de l'événement..."
+              placeholder={t("Détails de l'événement...")}
               rows={3}
             />
           </div>
@@ -196,8 +198,8 @@ export default function CalendarEventModal() {
       {confirmDeleteEvent && (
         <ConfirmModal
           isOpen={true}
-          title="Supprimer l'événement"
-          description="Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible."
+          title={t("Supprimer l'événement")}
+          description={t("Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.")}
           onConfirm={() => handleDeleteEvent(confirmDeleteEvent)}
           onClose={() => setConfirmDeleteEvent(null)}
         />

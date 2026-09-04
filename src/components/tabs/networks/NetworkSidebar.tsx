@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ShieldAlert, CheckCircle, AlertTriangle, RefreshCw, HelpCircle, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface ActivePortItem {
   port: number;
@@ -12,6 +13,7 @@ interface ActivePortItem {
 }
 
 export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boolean }) {
+  const { t } = useI18n();
   const { config, showSecretSections } = useConfig();
   const [dockerContainers, setDockerContainers] = useState<any[]>([]);
   const [loadingDocker, setLoadingDocker] = useState(false);
@@ -371,12 +373,12 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
         <div className="nd-sidebar-card">
           <div className="nd-section-title" style={{ marginBottom: 10 }}>
             <Network size={12} style={{ color: 'var(--nd-accent)' }} />
-            <span>Ports du Réseau</span>
+            <span>{t("Ports du Réseau")}</span>
             <button 
               className="nd-action-icon" 
               onClick={fetchDockerPorts} 
               disabled={loadingDocker}
-              title="Rafraîchir"
+              title={t("Rafraîchir")}
               style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}
             >
               <RefreshCw size={11} className={loadingDocker ? 'nd-spin' : ''} style={{ color: 'var(--nd-text-muted)' }} />
@@ -390,7 +392,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
               className="nd-input"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Rechercher port, IP, nom..."
+              placeholder={t("Rechercher port, IP, nom...")}
               style={{ paddingLeft: 26, fontSize: '0.68rem', height: 26 }}
             />
           </div>
@@ -399,7 +401,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
           <div className="nd-ports-list">
             {filteredPorts.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '12px 0', fontSize: '0.65rem', color: 'var(--nd-text-dimmed)' }}>
-                {searchQuery ? 'Aucun port correspondant' : 'Aucun port actif détecté'}
+                {searchQuery ? t("Aucun port correspondant") : t("Aucun port actif détecté")}
               </div>
             ) : (
               filteredPorts.map((item, i) => (
@@ -432,7 +434,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
         <div className="nd-sidebar-card">
           <div className="nd-section-title" style={{ marginBottom: 8 }}>
             <ShieldAlert size={12} style={{ color: 'var(--nd-orange)' }} />
-            <span>Vérificateur de Disponibilité</span>
+            <span>{t("Vérificateur de Disponibilité")}</span>
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <input
@@ -440,14 +442,14 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             type="number"
             min="1"
             max="65535"
-            placeholder="Port (ex: 8080)"
+            placeholder={t("Port (ex: 8080)")}
             value={checkPortInput}
             onChange={e => setCheckPortInput(e.target.value)}
             style={{ flex: 1, fontSize: '0.68rem', height: 26 }}
           />
           <input
             className="nd-input"
-            placeholder="IP (opt. ex: 192.168.1.50)"
+            placeholder={t("IP (opt. ex: 192.168.1.50)")}
             value={checkIpInput}
             onChange={e => setCheckIpInput(e.target.value)}
             style={{ flex: 1.2, fontSize: '0.68rem', height: 26 }}
@@ -472,14 +474,14 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
               {checkResult.available ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
               <span>
-                {checkResult.available ? 'Port disponible !' : 'Port déjà utilisé'}
+                {checkResult.available ? t("Port disponible !") : t("Port déjà utilisé")}
               </span>
             </div>
             {!checkResult.available && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, color: 'var(--nd-text)', fontSize: '0.6rem' }}>
                 {checkResult.collisions.map((item, idx) => (
                   <div key={idx} style={{ opacity: 0.85 }}>
-                    Occupé par <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> sur <code>{!showSensitive ? '•••' : item.ip}</code> ({item.source})
+                    {t("Occupé par")} <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> sur <code>{!showSensitive ? '•••' : item.ip}</code> ({item.source})
                   </div>
                 ))}
               </div>
@@ -492,7 +494,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
       <div className="nd-sidebar-card">
         <div className="nd-section-title" style={{ marginBottom: 8 }}>
           <HelpCircle size={12} style={{ color: 'var(--nd-purple)' }} />
-          <span>Générateur de Port Libre</span>
+          <span>{t("Générateur de Port Libre")}</span>
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <input
@@ -500,14 +502,14 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             type="number"
             min="1"
             max="65535"
-            placeholder="Port de départ"
+            placeholder={t("Port de départ")}
             value={genPortInput}
             onChange={e => setGenPortInput(e.target.value)}
             style={{ flex: 1, fontSize: '0.68rem', height: 26 }}
           />
           <input
             className="nd-input"
-            placeholder="IP cible (opt.)"
+            placeholder={t("IP cible (opt.)")}
             value={genIpInput}
             onChange={e => setGenIpInput(e.target.value)}
             style={{ flex: 1.2, fontSize: '0.68rem', height: 26 }}
@@ -518,7 +520,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
         {suggestions.length > 0 && (
           <div>
             <div style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              Suggestions de ports libres :
+              {t("Suggestions de ports libres :")}
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               {suggestions.map((p, i) => (

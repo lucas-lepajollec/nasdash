@@ -8,6 +8,7 @@ import { Plus, Pencil, GripVertical, Power, Play, RefreshCw, Layers, Loader2 } f
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const ICONS: Record<string, React.ReactNode> = {
   Power: <Power size={14} />,
@@ -59,6 +60,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
 }
 
 export default function DockerWidget({ editMode }: { editMode?: boolean }) {
+  const { t } = useI18n();
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -192,13 +194,13 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     <div className="nd-sidebar-card nd-animate-in nd-stagger-2">
       {(!hideTitles || editMode) && (
         <div className="nd-section-title">
-          <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> Actions Docker
+          <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> {t("Actions Docker")}
           {editMode && (
             <button 
               className="nd-action-icon success" 
               onClick={() => setDockerActionModal({ open: true })} 
               style={{ marginLeft: 'auto' }} 
-              title="Ajouter une action"
+              title={t("Ajouter une action")}
             >
               <Plus size={13} />
             </button>
@@ -209,7 +211,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
       <div style={listStyle}>
         {actions.length === 0 && (
           <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
-            Aucune action rapide configurée.{!editMode && " Activez le mode édition pour en ajouter."}
+            {t("Aucune action rapide configurée.")}{!editMode && t("Activez le mode édition pour en ajouter.")}
           </p>
         )}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

@@ -2,8 +2,10 @@ import React from 'react';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function ViewEventModal() {
+  const { t, locale } = useI18n();
   const { viewEventModal, setViewEventModal } = useConfig();
   const viewEvent = viewEventModal.event;
   const closeModal = () => setViewEventModal({ open: false });
@@ -27,9 +29,9 @@ export default function ViewEventModal() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--nd-text-muted)' }}>
             <CalendarIcon size={14} />
             <span style={{ textTransform: 'capitalize' }}>
-              {viewEvent.start ? new Date(viewEvent.start).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}
-              {!viewEvent.isAllDay && viewEvent.start && ` à ${new Date(viewEvent.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
-              {viewEvent.isAllDay && ' (Toute la journée)'}
+              {viewEvent.start ? new Date(viewEvent.start).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' }) : ''}
+              {!viewEvent.isAllDay && viewEvent.start && t('event.atTime', { time: new Date(viewEvent.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })}
+              {viewEvent.isAllDay && t("(Toute la journée)")}
             </span>
           </div>
           

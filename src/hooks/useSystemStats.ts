@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SystemStats } from '@/lib/types';
+import { useI18n } from '@/i18n/I18nProvider';
 
 let globalEventSource: EventSource | null = null;
 let globalStats: SystemStats | null = null;
@@ -10,6 +11,7 @@ const listeners = new Set<() => void>();
 let reconnectTimer: NodeJS.Timeout | null = null;
 let isConnecting = false;
 let visibilityHandlerAdded = false;
+let activeLocale = 'en-US';
 
 function notify() {
   listeners.forEach((l) => l());
@@ -31,7 +33,7 @@ function connect() {
     try {
       const data: SystemStats = JSON.parse(event.data);
       globalStats = data;
-      const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const now = new Date().toLocaleTimeString(activeLocale, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       const latency = data.network?.latency || 0;
       globalHistory = [...globalHistory, { cpu: 0, latency, time: now }].slice(-60);
       notify();
@@ -75,9 +77,11 @@ if (typeof document !== 'undefined' && !visibilityHandlerAdded) {
 }
 
 export function useSystemStats() {
+  const { locale } = useI18n();
   const [, forceRender] = useState({});
 
   useEffect(() => {
+    activeLocale = locale;
     const listener = () => forceRender({});
     listeners.add(listener);
 
@@ -91,7 +95,7 @@ export function useSystemStats() {
         disconnect();
       }
     };
-  }, []);
+  }, [locale]);
 
   return { stats: globalStats, history: globalHistory };
 }
