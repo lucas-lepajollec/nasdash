@@ -65,7 +65,7 @@ export default function CategoryCard({
         </button>
       )}
       <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
-      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category.title}</span>
+      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
       {editMode && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title={t("Ajouter un service")}>

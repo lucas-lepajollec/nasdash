@@ -65,7 +65,7 @@ export function DevicesWidgetTab() {
                 style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', fontSize: '0.68rem', height: 26 }}
               >
                 <Plus size={12} />
-                Ajouter
+                {t("Ajouter")}
               </button>
             </div>
 

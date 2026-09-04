@@ -363,7 +363,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                 style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
               />
               <button className="nd-btn" onClick={handleSaveProfile} disabled={!newProfileName.trim()} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                Sauvegarder
+                {t("Sauvegarder")}
               </button>
             </div>
 
@@ -377,7 +377,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                       <button className="nd-btn" onClick={() => handleApplyProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                        Appliquer
+                        {t("Appliquer")}
                       </button>
                       <button 
                         type="button"
@@ -386,7 +386,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                         style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                         title={t("Supprimer le profil")}
                       >
-                        <Trash2 size={13} /> Supprimer
+                        <Trash2 size={13} /> {t("Supprimer")}
                       </button>
                     </div>
                   </div>
@@ -417,11 +417,11 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                   style={{ flex: 1, fontSize: '0.78rem' }}
                 />
                 <button className="nd-btn" onClick={handleSaveBackground} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
-                  Enregistrer
+                  {t("Enregistrer")}
                 </button>
                 {backgroundImage && (
                   <button className="nd-btn" onClick={async () => { setBackgroundImage(''); await updateConfig({ backgroundImage: '' }); }} style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)' }}>
-                    Effacer
+                    {t("Effacer")}
                   </button>
                 )}
               </div>
@@ -470,7 +470,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             {uploadedBgs.length > 0 && (
               <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--nd-text-muted)', display: 'block', marginBottom: '8px' }}>
-                  {t("Galerie des fonds importés (")}{uploadedBgs.length})
+                  {t('appearance.importedBackgrounds', { count: uploadedBgs.length })}
                 </span>
                 <div 
                   style={{ 
@@ -625,7 +625,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
 
         {/* Accordion 4: Titles */}
         <SettingsAccordion
-          title="Titres"
+          title={t("Titres")}
           description={t("Affichage, masquage et position des titres de widgets et catégories")}
           icon={<Type size={18} />}
           isOpen={openAccordions.includes('titles')}

@@ -66,7 +66,7 @@ export function DeveloperTab() {
         </p>
         {customCssSafeMode && (
           <div role="status" style={{ padding: '10px 12px', marginBottom: 10, borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-yellow)', background: 'color-mix(in srgb, var(--nd-yellow) 8%, transparent)', color: 'var(--nd-text)', fontSize: '0.7rem', lineHeight: 1.5 }}>
-            <strong>{t("Mode de secours actif.")}</strong> {t("Le CSS enregistré est temporairement désactivé par")} <code>?safe-css=1</code>{t(". Vous pouvez le corriger ou le réinitialiser sans risquer de masquer cette page.")}
+            <strong>{t("Mode de secours actif.")}</strong> {t('developer.safeCssHint', { parameter: '?safe-css=1' })}
           </div>
         )}
         <textarea

@@ -90,7 +90,7 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
                   <Emoji emoji={config?.settings?.tabIcons?.[tab.id] || tab.icon} />
                 </button>
                 <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                  <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tab.name}</h4>
+                  <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(tab.name)}</h4>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -98,7 +98,7 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
                   <Edit2 size={14} /> {t("Éditer")}
                 </button>
                 <button className="nd-btn nd-btn-danger" onClick={() => setDeleteConfirm(tab.id)}>
-                  <Trash2 size={14} /> Supprimer
+                  <Trash2 size={14} /> {t("Supprimer")}
                 </button>
               </div>
             </div>

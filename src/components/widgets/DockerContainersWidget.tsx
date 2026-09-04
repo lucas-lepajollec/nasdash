@@ -612,10 +612,10 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--nd-border)', color: 'var(--nd-text-muted)' }}>
-                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Nom</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Image</th>
-                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: allowActions ? 'left' : 'right' }}>Statut</th>
-                {allowActions && <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>Actions</th>}
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>{t("Nom")}</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>{t("Image")}</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: allowActions ? 'left' : 'right' }}>{t("Statut")}</th>
+                {allowActions && <th style={{ padding: '8px 10px', fontWeight: 600, textAlign: 'right' }}>{t("Actions")}</th>}
               </tr>
             </thead>
             <tbody>
@@ -662,12 +662,12 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
                           ) : isRunning ? (
                             <>
                               <Square size={9} fill="var(--nd-red)" />
-                              <span>Stop</span>
+                              <span>{t("Stop")}</span>
                             </>
                           ) : (
                             <>
                               <Play size={9} fill="var(--nd-green)" />
-                              <span>Start</span>
+                              <span>{t("Start")}</span>
                             </>
                           )}
                         </button>

@@ -205,7 +205,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
     );
   };
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>{t("Chargement...")}</div>;
+  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>{t("Chargement…")}</div>;
 
   return (
     <div className="nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -262,7 +262,7 @@ export function CustomTabBuilderTab({ tabId, onBack, onSuccess }: CustomTabBuild
           }}
         >
           <Save size={14} />
-          {isSaving ? t('Enregistrement...') : saveSuccess ? t("Enregistré !") : t('Enregistrer')}
+          {isSaving ? t('Enregistrement…') : saveSuccess ? t("Enregistré !") : t('Enregistrer')}
         </button>
       </div>
 

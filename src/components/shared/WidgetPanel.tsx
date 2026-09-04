@@ -137,7 +137,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Settings size={12} style={{ color: 'var(--nd-accent)' }} />
-            {getPanelName(panelId)}
+            {t(getPanelName(panelId))}
           </span>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -237,7 +237,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
             }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, letterSpacing: -0.2, color: 'var(--nd-text)' }}>
-                  {t("Gérer :")} {getPanelName(panelId)}
+                  {t("Gérer :")} {t(getPanelName(panelId))}
                 </h3>
                 <p style={{ margin: '2px 0 0 0', fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>
                   {t("Organisez et gérez les widgets actifs dans ce panneau.")}

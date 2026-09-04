@@ -58,7 +58,7 @@ export default function CalendarEventModal() {
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t("Ajouter un événement")} tabIndex={-1} className="nd-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t("Ajouter un événement")}</h2>
-          <button aria-label="Fermer" className="nd-btn" onClick={closeModal} style={{ padding: 8 }}>
+          <button aria-label={t("Fermer")} className="nd-btn" onClick={closeModal} style={{ padding: 8 }}>
             <X size={16} />
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function CalendarEventModal() {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
           <button className="nd-btn" onClick={() => setCalendarEventModal({ open: false })}>
-            Annuler
+            {t("Annuler")}
           </button>
           <button 
             className="nd-btn nd-btn-primary" 
@@ -189,7 +189,7 @@ export default function CalendarEventModal() {
             disabled={!title.trim()}
             style={{ opacity: !title.trim() ? 0.5 : 1, cursor: !title.trim() ? 'not-allowed' : 'pointer' }}
           >
-            Enregistrer
+            {t("Enregistrer")}
           </button>
         </div>
       </div>

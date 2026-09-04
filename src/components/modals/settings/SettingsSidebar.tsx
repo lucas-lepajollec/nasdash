@@ -101,7 +101,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Smartphone size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Mobile</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Mobile")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -230,7 +230,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
 
         {/* Category: Gestion des Onglets */}
         <div className="nd-settings-sidebar-group">
-          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Onglets</span>
+          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>{t("Onglets")}</span>
           <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
               onClick={() => setActiveTab('tabs-general')}
@@ -291,7 +291,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   <Home size={18} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Home</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Home")}</span>
                 </div>
               </button>
               <button
@@ -324,7 +324,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   <Layout size={18} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Widgets</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Widgets")}</span>
                 </div>
               </button>
             </div>

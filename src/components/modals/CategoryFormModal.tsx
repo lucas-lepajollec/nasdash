@@ -105,8 +105,8 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={category ? t("Modifier une catégorie") : t("Ajouter une catégorie")} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{category ? 'Modifier' : 'Ajouter'} {t("une catégorie")}</h3>
-          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{t(category ? "Modifier une catégorie" : "Ajouter une catégorie")}</h3>
+          <button aria-label={t("Fermer")} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
             <X size={16} />
           </button>
         </div>

@@ -18,6 +18,7 @@ const ICONS: Record<string, React.ReactNode> = {
 };
 
 function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: { action: DockerActionConfig, editMode: boolean, onEdit: () => void, onExecute: () => void, isLoading: boolean }) {
+  const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: action.id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 1 };
 
@@ -46,8 +47,8 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
         </div>
       )}
       
-      <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={action.name}>
-        {action.name}
+      <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t(action.name)}>
+        {t(action.name)}
       </div>
       
       {editMode && (

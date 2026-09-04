@@ -80,10 +80,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = language;
-    document.title = messages[language]['meta.title'];
-    document
-      .querySelector<HTMLMetaElement>('meta[name="description"]')
-      ?.setAttribute('content', messages[language]['meta.description']);
+    const title = messages[language]['meta.title'];
+    const description = messages[language]['meta.description'];
+    const syncMetadata = () => {
+      document.title = title;
+      document.querySelectorAll<HTMLMetaElement>('meta[name="description"]').forEach((element) => {
+        element.setAttribute('content', description);
+      });
+    };
+
+    syncMetadata();
+    const frame = window.requestAnimationFrame(syncMetadata);
+    return () => window.cancelAnimationFrame(frame);
   }, [language]);
 
   const t = useCallback<Translate>((key, variables) => {

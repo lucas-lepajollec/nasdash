@@ -436,7 +436,7 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                 flexShrink: 0
               }}
             >
-              ← {isThemeGalleryOpen ? 'Apparence' : 'Retour'}
+              ← {isThemeGalleryOpen ? t("Apparence") : t("Retour")}
             </button>
                        <h3 className="nd-settings-title" style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, wordBreak: 'break-word', lineHeight: 1.3 }}>
               {isThemeGalleryOpen ? (
@@ -450,7 +450,7 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                   {currentTab === 'language' && <><Emoji emoji="🌐" /> {t('settings.languageTitle')}</>}
                   {currentTab === 'apparence' && <><Emoji emoji="🎨" /> {t("Apparence, Fonds & CSS")}</>}
                   {currentTab === 'header' && <><Emoji emoji="📋" /> {t("En-tête")}</>}
-                  {currentTab === 'mobile' && <><Emoji emoji="📱" /> Mobile</>}
+                  {currentTab === 'mobile' && <><Emoji emoji="📱" /> {t("Mobile")}</>}
                   {currentTab === 'developer' && <><Emoji emoji="⚙️" /> {t("Menu Développeur")}</>}
                   {currentTab === 'security' && <><Emoji emoji="🔑" /> {t("Sécurité & Utilisateurs")}</>}
                   {currentTab === 'library' && <><Emoji emoji="🎛️" /> {t("Bibliothèque Globale des Widgets")}</>}

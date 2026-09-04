@@ -152,7 +152,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
         <div style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)' }}>{t("Météo non configurée")}</div>
         {editMode && (
           <button className="nd-btn nd-btn-accent text-xs px-3 py-1.5 h-auto mt-2" onClick={() => setSettingsModal({ open: true })}>
-            Configurer
+            {t("Configurer")}
           </button>
         )}
       </div>
@@ -230,11 +230,11 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, borderLeft: '1px solid var(--nd-card-border)', paddingLeft: 48 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
                           <Thermometer size={18} className="text-blue-300" style={{ color: 'var(--nd-accent)' }} />
-                          Ressenti: {Math.round(weather.current.temperature_2m)}{t("° (Min:")} {Math.round(weather.daily.temperature_2m_min[0])}{t("° / Max:")} {Math.round(weather.daily.temperature_2m_max[0])}°)
+                          {t("Ressenti:")} {Math.round(weather.current.temperature_2m)}{t("° (Min:")} {Math.round(weather.daily.temperature_2m_min[0])}{t("° / Max:")} {Math.round(weather.daily.temperature_2m_max[0])}°)
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
                           <Wind size={18} className="text-gray-400" />
-                          Vent: {Math.round(weather.current.wind_speed_10m)} km/h
+                          {t("Vent:")} {Math.round(weather.current.wind_speed_10m)} km/h
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
                           <Droplets size={18} className="text-blue-400" style={{ color: 'var(--nd-accent)' }} />
@@ -284,7 +284,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                 {(widgetStyle === 'extended' || widgetStyle === 'default' || !widgetStyle) && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 32 }}>
                     <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 20 }}>
-                      {t("Prévisions sur")} {widgetStyle === 'extended' ? '5' : '3'} jours
+                      {t('weather.forecastDays', { count: widgetStyle === 'extended' ? 5 : 3 })}
                     </h4>
                     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${widgetStyle === 'extended' ? 5 : 3}, 1fr)`, gap: 16 }}>
                       {Array.from({length: widgetStyle === 'extended' ? 5 : 3}, (_, i) => i + 1).map((dayOffset) => {
@@ -362,7 +362,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                 {widgetStyle === 'currentOnly' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 24, borderLeft: '1px solid var(--nd-card-border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
-                      <Thermometer size={14} className="text-blue-300" /> Ressenti: {Math.round(weather.current.temperature_2m)}°
+                      <Thermometer size={14} className="text-blue-300" /> {t("Ressenti:")} {Math.round(weather.current.temperature_2m)}°
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
                       <Wind size={14} className="text-gray-400" /> {Math.round(weather.current.wind_speed_10m)} km/h

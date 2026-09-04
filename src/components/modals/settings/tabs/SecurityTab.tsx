@@ -399,7 +399,7 @@ export function SecurityTab() {
           {t("👤 Utilisateurs enregistrés")}
         </span>
         {loadingUsers ? (
-          <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.75rem', padding: 8 }}>{t("Chargement...")}</div>
+          <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.75rem', padding: 8 }}>{t("Chargement…")}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 }}>
             {users.map(u => {
@@ -430,7 +430,7 @@ export function SecurityTab() {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>
-                        {u.username} {isCurrent && <span style={{ fontSize: '0.62rem', color: 'var(--nd-accent)', marginLeft: 4 }}>(vous)</span>}
+                        {u.username} {isCurrent && <span style={{ fontSize: '0.62rem', color: 'var(--nd-accent)', marginLeft: 4 }}>{t("(vous)")}</span>}
                       </span>
                       <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         {u.role === 'admin' ? t("👑 Administrateur") : t("👁️ Observateur")}
@@ -446,7 +446,7 @@ export function SecurityTab() {
                         className="nd-btn"
                         style={{ padding: '4px 8px', fontSize: '0.65rem', height: 26, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)', display: 'flex', alignItems: 'center' }}
                       >
-                        Tester
+                        {t("Tester")}
                       </button>
                     )}
                     <button
@@ -605,7 +605,7 @@ export function SecurityTab() {
                     >
                       <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}><Emoji emoji={emoji} /></span>
                       <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 600 : 500, color: isSelected ? 'var(--nd-accent)' : 'var(--nd-text)' }}>
-                        {tab.name}
+                        {t(tab.name)}
                       </span>
                     </div>
                   );
@@ -718,7 +718,7 @@ export function SecurityTab() {
                 }}
               >
                 {addingUser ? '...' : <Plus size={14} />}
-                Sauvegarder
+                {t("Sauvegarder")}
               </button>
             </div>
           </form>

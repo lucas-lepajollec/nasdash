@@ -116,10 +116,10 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', marginTop: 8 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--nd-border)', color: 'var(--nd-text-muted)', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Appareil</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>{t("Appareil")}</th>
               <th style={{ padding: '6px 10px', fontWeight: 600 }}>{t("Adresse IP")}</th>
               <th style={{ padding: '6px 10px', fontWeight: 600 }}>{t("Système")}</th>
-              <th style={{ padding: '6px 10px', fontWeight: 600, textAlign: 'right' }}>Statut</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600, textAlign: 'right' }}>{t("Statut")}</th>
             </tr>
           </thead>
           <tbody>
@@ -170,7 +170,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
               <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
             </div>
             <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Globe size={10} /> Dashboard
+              <Globe size={10} /> {t("Dashboard")}
             </a>
           </div>
         )}

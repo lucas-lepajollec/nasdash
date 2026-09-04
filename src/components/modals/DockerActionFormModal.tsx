@@ -97,8 +97,8 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={action ? t("Modifier une action Docker") : t("Ajouter une action Docker")} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 450, maxWidth: '90vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{action ? 'Modifier' : 'Ajouter'} {t("une action Docker")}</h3>
-          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{t(action ? "Modifier une action Docker" : "Ajouter une action Docker")}</h3>
+          <button aria-label={t("Fermer")} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
             <X size={16} />
           </button>
         </div>
@@ -149,7 +149,7 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
           <div>
             <label className="nd-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{t("Conteneurs cibles (")}{targets.length} {t("sélectionnés)")}</span>
-              {loading && <span style={{ fontSize: '0.65rem', color: 'var(--nd-accent)' }}>{t("Chargement...")}</span>}
+              {loading && <span style={{ fontSize: '0.65rem', color: 'var(--nd-accent)' }}>{t("Chargement…")}</span>}
             </label>
             <div className="nd-search" style={{ marginBottom: 12, maxWidth: 'none' }}>
               <Search size={14} className="nd-search-icon" />
@@ -219,11 +219,11 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
           {action && onDelete ? (
             <button className="nd-btn" onClick={() => onDelete(action.id)} style={{ color: 'var(--nd-red)' }}>
-              <Trash2 size={12} /> Supprimer
+              <Trash2 size={12} /> {t("Supprimer")}
             </button>
           ) : <div />}
           <button className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={!name.trim() || targets.length === 0}>
-            {action ? 'Enregistrer' : 'Ajouter'}
+            {action ? t("Enregistrer") : t("Ajouter")}
           </button>
         </div>
       </div>

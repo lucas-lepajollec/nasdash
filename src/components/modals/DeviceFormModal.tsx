@@ -171,7 +171,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
 
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
           <div style={{ flex: 1 }}>
-              <label className="nd-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t("Label OS/Description")} <span style={{ opacity: 0.5, fontSize: '0.8em', fontWeight: 'normal' }}>(Optionnel)</span></label>
+              <label className="nd-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t("Label OS/Description")} <span style={{ opacity: 0.5, fontSize: '0.8em', fontWeight: 'normal' }}>{t("(Optionnel)")}</span></label>
               <input
                 type="text"
                 className="nd-input"
@@ -211,7 +211,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label className="nd-label">Port</label>
+              <label className="nd-label">{t("Port")}</label>
               <input
                 type="text"
                 className="nd-input"
@@ -249,7 +249,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                 </div>
                 {vmid && (
                   <div style={{ flex: 1 }}>
-                    <label className="nd-label">Type</label>
+                    <label className="nd-label">{t("Type")}</label>
                     <CustomSelect
                       value={vmType}
                       onChange={val => setVmType(val as any)}
@@ -274,7 +274,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                 className="nd-input"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder={apiType === 'proxmox' ? t("root@pam!token") : apiType === 'lhm' ? t("Non requis") : "Optionnel"}
+                placeholder={apiType === 'proxmox' ? t("root@pam!token") : apiType === 'lhm' ? t("Non requis") : t("Optionnel")}
                 required={apiType === 'proxmox'}
                 disabled={apiType === 'lhm'}
               />
@@ -304,11 +304,11 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                 className="nd-btn nd-btn-danger"
                 style={{ flex: 1, borderColor: 'var(--nd-red)', color: 'var(--nd-red)' }}
               >
-                Supprimer
+                {t("Supprimer")}
               </button>
             )}
             <div style={{ flex: device ? 1 : 2, display: 'flex', gap: 12 }}>
-              <button type="button" onClick={onClose} className="nd-btn" style={{ flex: 1 }}>Annuler</button>
+              <button type="button" onClick={onClose} className="nd-btn" style={{ flex: 1 }}>{t("Annuler")}</button>
               <button type="submit" className="nd-btn nd-btn-accent" style={{ flex: 1 }} disabled={isSaving}>
                 {isSaving ? <Loader2 size={14} className="nd-spin" /> : t("Enregistrer")}
               </button>

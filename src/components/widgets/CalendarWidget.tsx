@@ -160,7 +160,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             <div className="nd-calendar-tooltip">
               {dayEvents.map((e, idx) => (
                 <div key={idx} style={{ marginBottom: idx === dayEvents.length - 1 ? 0 : 4, borderBottom: idx === dayEvents.length - 1 ? 'none' : '1px solid var(--nd-card-border)', paddingBottom: idx === dayEvents.length - 1 ? 0 : 4 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--nd-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--nd-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(e.title)}</div>
                   {e.start && !e.isAllDay && (
                     <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>
                       {new Date(e.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
@@ -266,8 +266,8 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                   {start.getDate()} {monthNames[start.getMonth()].substring(0, 3)}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <div style={{ color: 'var(--nd-text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.title}>
-                    {e.title}
+                  <div style={{ color: 'var(--nd-text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t(e.title)}>
+                    {t(e.title)}
                   </div>
                   {e.start && !e.isAllDay && (
                     <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.58rem', display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
@@ -353,7 +353,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                   evt.stopPropagation();
                   setViewEventModal({ open: true, event: e });
                 }}
-                title={e.title}
+                title={t(e.title)}
                 style={{
                   fontSize: '0.62rem',
                   padding: '2px 5px',
@@ -375,7 +375,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                     {new Date(e.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
-                {e.title}
+                {t(e.title)}
               </div>
             ))}
             {dayEvents.length > 2 && (
@@ -386,7 +386,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                 paddingLeft: 3,
                 marginTop: 1
               }}>
-                + {dayEvents.length - 2} autres
+                {t('calendar.moreEvents', { count: dayEvents.length - 2 })}
               </div>
             )}
           </div>
@@ -407,7 +407,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             </button>
             {!isCurrentMonth && (
               <button onClick={goToToday} className="nd-btn" style={{ height: '28px', padding: '0 10px', fontSize: '0.65rem' }}>
-                <RotateCcw size={10} /> Revenir
+                <RotateCcw size={10} /> {t("Revenir")}
               </button>
             )}
             <button aria-label={t("Mois suivant")} onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
@@ -501,7 +501,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
       {(!hideTitles || editMode) && (
         <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <CalendarIcon size={12} style={{ color: '#fb923c' }} /> Calendrier
+            <CalendarIcon size={12} style={{ color: '#fb923c' }} /> {t("Calendrier")}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {loadingEvents && <div style={{ width: 10, height: 10, border: '2px solid rgba(251, 146, 60, 0.3)', borderTopColor: '#fb923c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
@@ -517,7 +517,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                 }}
                 title={t("Revenir au mois en cours")}
               >
-                <RotateCcw size={10} /> Revenir
+                <RotateCcw size={10} /> {t("Revenir")}
               </button>
             )}
           </div>

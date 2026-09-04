@@ -81,7 +81,7 @@ export default function EmojiPickerModal({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <h3 style={{ fontSize: '0.88rem', fontWeight: 700, margin: 0, color: 'var(--nd-text)' }}>{modalTitle}</h3>
-          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', padding: 4 }}>
+          <button aria-label={t("Fermer")} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
@@ -122,7 +122,7 @@ export default function EmojiPickerModal({
               className="nd-btn" 
               style={{ width: '100%', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: emoji === '' ? 'var(--nd-accent-glow)' : 'var(--nd-subcard-bg)', border: '1px solid var(--nd-card-border)', borderRadius: '8px', fontSize: '0.8rem', flexShrink: 0 }}
             >
-              <Ban size={14} /> Aucun
+              <Ban size={14} /> {t("Aucun")}
             </button>
           )}
 

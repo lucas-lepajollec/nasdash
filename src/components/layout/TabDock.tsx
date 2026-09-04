@@ -46,7 +46,7 @@ export default function TabDock({
     <nav
       className={`nd-dock nd-dock--${position} ${mobileOpen ? 'nd-dock--open' : ''} ${editMode ? 'nd-dock--editing' : ''}`}
       role="tablist"
-      aria-label="Tabs"
+      aria-label={t("Tabs")}
     >
       <div className="nd-dock-items">
         {visibleTabs.map((ext, index) => {
@@ -59,17 +59,17 @@ export default function TabDock({
               <button
                 role="tab"
                 aria-selected={isActive}
-                aria-label={ext.name}
+                aria-label={t(ext.name)}
                 className={`nd-dock-item ${isActive ? 'nd-dock-item--active' : ''} ${isHidden ? 'nd-dock-item--hidden' : ''}`}
                 onClick={() => {
                   onSwitch(ext.id);
                   setMobileOpen(false);
                 }}
                 disabled={isHidden && !editMode}
-                title={ext.name}
+                title={t(ext.name)}
               >
                 <span className="nd-dock-item-icon"><Emoji emoji={resolvedIcon} /></span>
-                <span className="nd-dock-item-label">{ext.name}</span>
+                <span className="nd-dock-item-label">{t(ext.name)}</span>
                 {isActive && <span className="nd-dock-item-indicator" />}
               </button>
 

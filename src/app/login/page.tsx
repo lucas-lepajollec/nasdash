@@ -18,7 +18,7 @@ function LoginFallback() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--nd-bg)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
-        <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>{t('Chargement...')}</span>
+        <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>{t('Chargement…')}</span>
       </div>
     </div>
   );
@@ -35,7 +35,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const requestedRedirect = searchParams.get('redirect');
   const notice = searchParams.get('reason') === 'password-changed'
-    ? 'Votre mot de passe a été modifié. Reconnectez-vous avec votre nouveau mot de passe.'
+    ? t('login.passwordChanged')
     : null;
   const redirectTo = requestedRedirect && /^\/(?!\/)/.test(requestedRedirect) && !requestedRedirect.includes('\\')
     ? requestedRedirect
@@ -79,13 +79,13 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Erreur d\'authentification');
+        throw new Error(data.error ? t(data.error) : t('login.authFailed'));
       }
 
       // Recharger pour que le ConfigProvider récupère la session
       window.location.href = redirectTo;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion.');
+      setError(err instanceof Error ? err.message : t('login.unexpectedError'));
     } finally {
       setLoading(false);
     }

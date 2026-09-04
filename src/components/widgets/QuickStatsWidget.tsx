@@ -31,10 +31,10 @@ export default function QuickStatsWidget({ categories, editMode }: { categories:
   });
 
   const quickStats = [
-    { label: 'Services', value: serviceCount, icon: <Server size={11} /> },
+    { label: t("Services"), value: serviceCount, icon: <Server size={11} /> },
     { label: t("Catégories"), value: categoryCount, icon: <FolderOpen size={11} /> },
-    { label: 'Liens', value: linkCount, icon: <Link2 size={11} /> },
-    { label: 'Ports', value: ports.size, icon: <Hash size={11} /> },
+    { label: t("Liens"), value: linkCount, icon: <Link2 size={11} /> },
+    { label: t("Ports"), value: ports.size, icon: <Hash size={11} /> },
   ];
 
   // Grid layout columns based on container size

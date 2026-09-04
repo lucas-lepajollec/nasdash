@@ -247,7 +247,7 @@ export function HeaderTab() {
                 style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
               />
               <button className="nd-btn" onClick={handleSaveLogo} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                Enregistrer
+                {t("Enregistrer")}
               </button>
               {titleLogo && (
                 <button 
@@ -316,7 +316,7 @@ export function HeaderTab() {
               value={titleAnimation}
               onChange={(val: string) => { setTitleAnimation(val); updateConfig({ titleAnimation: val as any }); }}
               options={[
-                { value: 'none', label: 'Aucune' },
+                { value: 'none', label: t("Aucune") },
                 { value: 'spotlight-silver', label: t("Balayage Argenté (Silver)") },
               ]}
             />
@@ -332,7 +332,7 @@ export function HeaderTab() {
                 {t("Êtes-vous sûr de vouloir supprimer ce logo ? S&apos;il s&apos;agit d&apos;un fichier importé, il sera définitivement effacé.")}
               </p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="nd-btn" onClick={() => { setIsConfirmLogoDeleteOpen(false); setLogoToDelete(null); }}>Annuler</button>
+                <button className="nd-btn" onClick={() => { setIsConfirmLogoDeleteOpen(false); setLogoToDelete(null); }}>{t("Annuler")}</button>
                 <button className="nd-btn nd-btn-danger" onClick={handleConfirmLogoDelete}>{t("Oui, supprimer")}</button>
               </div>
             </div>

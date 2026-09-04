@@ -14,6 +14,7 @@ import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
+import type { UiLanguage } from '@/i18n/messages';
 
 interface DevicesWidgetProps {
   devices: Device[];
@@ -152,6 +153,19 @@ function parseTelemetry(value: string, percent?: number) {
   };
 }
 
+function localizeCapacity(capacity: string, language: UiLanguage): string {
+  if (!capacity || language === 'fr') return capacity;
+  return capacity
+    .replace(/\bTo\b/g, 'TB')
+    .replace(/\bGo\b/g, 'GB')
+    .replace(/\bMo\b/g, 'MB')
+    .replace(/\boctets\b/gi, language === 'en' ? 'bytes' : 'Bytes');
+}
+
+function translateMetricLabel(label: string, t: (key: string) => string): string {
+  return label.replace(/^(Disque|Disk)(?=\s|$)/i, t('Disque'));
+}
+
 // Hardcoded distinct colors for each metric type.
 // We do NOT use CSS variables here because in some themes
 // (e.g. orange/amber themes) --nd-accent and --nd-orange
@@ -198,7 +212,7 @@ function DeviceStatGraph({
   enableAlerts?: boolean;
   colored?: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const componentId = useId().replace(/:/g, '');
   const [history, setHistory] = useState<number[]>(() => {
     return percent !== undefined ? Array(15).fill(percent) : [];
@@ -278,7 +292,8 @@ function DeviceStatGraph({
     );
   }
 
-  const { percentStr, tempStr, capacityStr } = parseTelemetry(value, percent);
+  const { percentStr, tempStr, capacityStr: rawCapacityStr } = parseTelemetry(value, percent);
+  const capacityStr = localizeCapacity(rawCapacityStr, language);
 
   const gradId = `gradient-${componentId}`;
   const glowId = `glow-${componentId}`;
@@ -378,7 +393,7 @@ function DeviceStatVerticalBars({
   enableAlerts?: boolean;
   colored?: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { size: widgetSize } = useWidgetSize();
   let barCount = 15;
   if (widgetSize === 'medium') {
@@ -415,7 +430,8 @@ function DeviceStatVerticalBars({
   let strokeColor = getMetricDistinctColor(label, color);
   if (!colored) strokeColor = 'var(--nd-accent)';
 
-  const { percentStr, tempStr, capacityStr } = parseTelemetry(value, percent);
+  const { percentStr, tempStr, capacityStr: rawCapacityStr } = parseTelemetry(value, percent);
+  const capacityStr = localizeCapacity(rawCapacityStr, language);
 
   return (
     <div
@@ -537,7 +553,7 @@ function DeviceMonitorCardContent({
   isLast?: boolean;
   isVisible: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { config } = useConfig();
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -684,7 +700,8 @@ function DeviceMonitorCardContent({
                 // Derive glow using color-mix dynamically
                 const glowColor = `color-mix(in srgb, ${barColor} 15%, transparent)`;
 
-                const { percentStr, tempStr, capacityStr } = parseTelemetry(stat.value, stat.percent);
+                const { percentStr, tempStr, capacityStr: rawCapacityStr } = parseTelemetry(stat.value, stat.percent);
+                const capacityStr = localizeCapacity(rawCapacityStr, language);
 
                 return (
                   <div key={i} className="nd-stat-card" style={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }}>
@@ -702,7 +719,7 @@ function DeviceMonitorCardContent({
                           transition: 'border-color 0.3s ease',
                           display: 'inline-block'
                         }}
-                        title={t(stat.label)}
+                        title={translateMetricLabel(stat.label, t)}
                       >
                         {t(shortLabel)}
                       </span>
@@ -1151,7 +1168,7 @@ export default function DevicesWidget({
         <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
-            <span>Appareils</span>
+            <span>{t("Appareils")}</span>
           </div>
           {editMode && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
@@ -1543,14 +1560,14 @@ export default function DevicesWidget({
               </button>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                <button type="button" onClick={() => setConfiguringDevice(null)} className="nd-btn" style={{ flex: 1, fontSize: '0.75rem' }}>Annuler</button>
+                <button type="button" onClick={() => setConfiguringDevice(null)} className="nd-btn" style={{ flex: 1, fontSize: '0.75rem' }}>{t("Annuler")}</button>
                 <button
                   type="button"
                   onClick={handleSaveLocalConfig}
                   className="nd-btn nd-btn-accent"
                   style={{ flex: 1, fontSize: '0.75rem' }}
                 >
-                  Enregistrer
+                  {t("Enregistrer")}
                 </button>
               </div>
             </div>

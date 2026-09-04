@@ -905,7 +905,7 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
             onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--nd-accent)'}
             onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--nd-card-border)'}
           >
-            Fermer
+            {t("Fermer")}
           </button>
         )}
       </div>

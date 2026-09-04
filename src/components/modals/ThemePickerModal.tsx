@@ -734,14 +734,14 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
           background: 'var(--nd-subcard-bg)'
         }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
-            {filteredThemes.length} sur {THEME_GALLERY.length} {t("thèmes affichés")}
+            {t('gallery.themesShown', { shown: filteredThemes.length, total: THEME_GALLERY.length })}
           </span>
           <button
             onClick={onClose}
             className="nd-btn"
             style={{ padding: '0 20px', height: 34 }}
           >
-            Fermer
+            {t("Fermer")}
           </button>
         </div>
       </div>

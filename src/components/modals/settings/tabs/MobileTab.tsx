@@ -303,11 +303,11 @@ export function MobileTab() {
                     style={{ flex: 1, fontSize: '0.78rem' }}
                   />
                   <button className="nd-btn" onClick={handleSaveMobileWallpaper} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
-                    Enregistrer
+                    {t("Enregistrer")}
                   </button>
                   {mobileWallpaper && (
                     <button className="nd-btn" onClick={async () => { setMobileWallpaper(''); await updateConfig({ mobileWallpaper: '' }); }} style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)' }}>
-                      Effacer
+                      {t("Effacer")}
                     </button>
                   )}
                 </div>
@@ -455,7 +455,7 @@ export function MobileTab() {
                     onChange={(val: string) => { setMobileTitleAnimation(val); updateConfig({ mobileTitleAnimation: val }); }}
                     options={[
                       { value: '', label: t("Hériter de Desktop") },
-                      { value: 'none', label: 'Aucune' },
+                      { value: 'none', label: t("Aucune") },
                       { value: 'spotlight-silver', label: t("Balayage Argenté (Silver)") },
                     ]}
                   />
@@ -537,7 +537,7 @@ export function MobileTab() {
                   style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
                 />
                 <button className="nd-btn" onClick={handleSaveMobileProfile} disabled={!newMobileProfileName.trim()} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                  Sauvegarder
+                  {t("Sauvegarder")}
                 </button>
               </div>
 
@@ -553,7 +553,7 @@ export function MobileTab() {
                       </div>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                         <button className="nd-btn" onClick={() => handleApplyMobileProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                          Appliquer
+                          {t("Appliquer")}
                         </button>
                         <button 
                           type="button"
@@ -578,7 +578,7 @@ export function MobileTab() {
               <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>{t("Supprimer le profil mobile ?")}</h3>
               <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>{t("Êtes-vous sûr de vouloir supprimer ce profil d&apos;apparence mobile ?")}</p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="nd-btn" onClick={() => setConfirmDeleteMobileProfile(null)}>Annuler</button>
+                <button className="nd-btn" onClick={() => setConfirmDeleteMobileProfile(null)}>{t("Annuler")}</button>
                 <button className="nd-btn nd-btn-danger" onClick={() => handleDeleteMobileProfile(confirmDeleteMobileProfile)}>{t("Oui, supprimer")}</button>
               </div>
             </div>
@@ -593,7 +593,7 @@ export function MobileTab() {
                 {t("Êtes-vous sûr de vouloir supprimer cette image ? Si elle est utilisée, elle disparaîtra.")}
               </p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="nd-btn" onClick={() => { setIsConfirmBgDeleteOpen(false); setBgToDelete(null); }}>Annuler</button>
+                <button className="nd-btn" onClick={() => { setIsConfirmBgDeleteOpen(false); setBgToDelete(null); }}>{t("Annuler")}</button>
                 <button className="nd-btn nd-btn-danger" onClick={handleConfirmBgDelete}>{t("Oui, supprimer")}</button>
               </div>
             </div>

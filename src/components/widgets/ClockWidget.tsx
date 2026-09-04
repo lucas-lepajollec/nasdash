@@ -82,7 +82,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 24, padding: '2px 18px 0 18px' }}>
@@ -117,7 +117,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 4px' }}>
@@ -141,7 +141,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: hideTitles ? '8px 0' : '16px 0 8px 0', position: 'relative' }}>
@@ -170,7 +170,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 24, padding: '2px 18px 0 18px' }}>
@@ -198,7 +198,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 4px' }}>
@@ -216,7 +216,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
@@ -238,7 +238,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 12, padding: '2px 18px 0 18px' }}>
@@ -279,7 +279,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 8, padding: '0 6px' }}>
@@ -317,7 +317,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
@@ -354,7 +354,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 32, padding: '2px 18px 0 18px' }}>
@@ -392,7 +392,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 20, padding: '0 10px' }}>
@@ -427,7 +427,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '12px 0' }}>

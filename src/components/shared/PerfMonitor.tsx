@@ -187,7 +187,7 @@ export default function PerfMonitor() {
 
   const statItems = [
     { icon: <BarChart3 size={12} />, label: 'FPS', value: `${metrics.fps}`, color: getFpsColor(metrics.fps), detail: '≥50 = OK' },
-    { icon: <HardDrive size={12} />, label: t("JS Heap"), value: `${metrics.jsHeapUsed} Mo`, color: getColor(memPercent, [60, 80]), detail: `/ ${metrics.jsHeapLimit} Mo (${Math.round(memPercent)}%)` },
+    { icon: <HardDrive size={12} />, label: t("JS Heap"), value: `${metrics.jsHeapUsed} MB`, color: getColor(memPercent, [60, 80]), detail: `/ ${metrics.jsHeapLimit} MB (${Math.round(memPercent)}%)` },
     { icon: <Layers size={12} />, label: t("DOM Nodes"), value: `${metrics.domNodes}`, color: getColor(metrics.domNodes, [1500, 3000]), detail: '< 1500 = OK' },
     { icon: <Cpu size={12} />, label: 'Re-renders/s', value: `${metrics.reactRenders}`, color: getColor(metrics.reactRenders, [5, 15]), detail: '< 5 = OK' },
     { icon: <Wifi size={12} />, label: t("Req. réseau/s"), value: `${metrics.networkRequests}`, color: getColor(metrics.networkRequests, [3, 8]), detail: '< 3 = OK' },

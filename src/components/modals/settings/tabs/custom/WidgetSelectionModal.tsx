@@ -48,7 +48,7 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
     : availableWidgets.filter(w => w.category === activeFilter);
 
   const categories = [
-    { id: 'all', label: 'Tous', count: availableWidgets.length },
+    { id: 'all', label: t("Tous"), count: availableWidgets.length },
     { id: 'Système', label: t("Système"), count: availableWidgets.filter(w => w.category === 'Système').length },
     { id: 'Réseau', label: t("Réseau"), count: availableWidgets.filter(w => w.category === 'Réseau').length },
     { id: 'Gadget', label: t("Gadgets & Espace"), count: availableWidgets.filter(w => w.category === 'Gadget').length },
@@ -112,7 +112,7 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
             </p>
           </div>
           <button 
-            aria-label="Fermer"
+            aria-label={t("Fermer")}
             onClick={onClose} 
             style={{ 
               background: 'rgba(255,255,255,0.03)', 

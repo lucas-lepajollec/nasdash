@@ -2368,7 +2368,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         {/* Column Empty State */}
         {categorized.groups.length === 0 && categorized.ungroupedNodes.length === 0 && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80, border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', background: 'rgba(255,255,255,0.01)', pointerEvents: 'auto', position: 'relative' }}>
-            <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)' }}>Vide</span>
+            <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)' }}>{t("Vide")}</span>
           </div>
         )}
       </div>
@@ -2649,11 +2649,11 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                       setEditingNode(null);
                     }}
                   >
-                    Supprimer
+                    {t("Supprimer")}
                   </button>
                 )}
-                <button className="nd-btn" onClick={() => editingNode ? setEditingNode(null) : setShowAddNode(false)}>Annuler</button>
-                <button className="nd-btn nd-btn-accent" onClick={handleCreateNode}>{editingNode ? 'Enregistrer' : 'Ajouter'}</button>
+                <button className="nd-btn" onClick={() => editingNode ? setEditingNode(null) : setShowAddNode(false)}>{t("Annuler")}</button>
+                <button className="nd-btn nd-btn-accent" onClick={handleCreateNode}>{editingNode ? t("Enregistrer") : t("Ajouter")}</button>
               </div>
 
             </div>
@@ -2806,11 +2806,11 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                       setEditingGroup(null);
                     }}
                   >
-                    Supprimer
+                    {t("Supprimer")}
                   </button>
                 )}
-                <button className="nd-btn" onClick={() => editingGroup ? setEditingGroup(null) : setShowAddGroup(false)}>Annuler</button>
-                <button className="nd-btn nd-btn-accent" onClick={handleCreateGroup}>{editingGroup ? 'Enregistrer' : t("Créer")}</button>
+                <button className="nd-btn" onClick={() => editingGroup ? setEditingGroup(null) : setShowAddGroup(false)}>{t("Annuler")}</button>
+                <button className="nd-btn nd-btn-accent" onClick={handleCreateGroup}>{editingGroup ? t("Enregistrer") : t("Créer")}</button>
               </div>
             </div>
           </div>
@@ -2958,7 +2958,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                     value={linkFromPort}
                     onChange={(val) => setLinkFromPort(val as any)}
                     options={[
-                      { value: 'auto', label: 'Auto' },
+                      { value: 'auto', label: t("Auto") },
                       { value: 'top', label: t("↑ Haut") },
                       { value: 'right', label: t("→ Droite") },
                       { value: 'bottom', label: t("↓ Bas") },
@@ -2974,7 +2974,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                     value={linkToPort}
                     onChange={(val) => setLinkToPort(val as any)}
                     options={[
-                      { value: 'auto', label: 'Auto' },
+                      { value: 'auto', label: t("Auto") },
                       { value: 'top', label: t("↑ Haut") },
                       { value: 'right', label: t("→ Droite") },
                       { value: 'bottom', label: t("↓ Bas") },
@@ -2995,7 +2995,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                       setEditingConnection(null);
                     }}
                   >
-                    Supprimer
+                    {t("Supprimer")}
                   </button>
                 )}
                 <button
@@ -3011,14 +3011,14 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                     setLinkToPort('auto');
                   }}
                 >
-                  Annuler
+                  {t("Annuler")}
                 </button>
                 <button
                   className="nd-btn nd-btn-accent"
                   onClick={handleCreateLink}
                   disabled={!linkFrom || !linkTo}
                 >
-                  {editingConnection ? 'Enregistrer' : t("Créer la liaison")}
+                  {editingConnection ? t("Enregistrer") : t("Créer la liaison")}
                 </button>
               </div>
 
@@ -3128,7 +3128,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             </div>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="nd-btn" onClick={() => setShowAutoImportModal(false)}>Annuler</button>
+              <button className="nd-btn" onClick={() => setShowAutoImportModal(false)}>{t("Annuler")}</button>
               <button
                 className="nd-btn nd-btn-accent"
                 onClick={async () => {

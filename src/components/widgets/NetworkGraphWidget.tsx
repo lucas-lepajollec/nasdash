@@ -55,9 +55,9 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
   // Connection Quality Index Formula
   const qualityScore = Math.max(10, Math.min(100, Math.round(100 - (avgPing * 0.12) - (jitter * 1.2))));
   
-  let netStatus = { label: 'Excellent', color: 'var(--nd-green)' };
-  if (currentLatency > 150) netStatus = { label: 'Lent', color: 'var(--nd-red)' };
-  else if (currentLatency > 80) netStatus = { label: 'Moyen', color: 'var(--nd-yellow)' };
+  let netStatus = { label: t("Excellent"), color: 'var(--nd-green)' };
+  if (currentLatency > 150) netStatus = { label: t("Lent"), color: 'var(--nd-red)' };
+  else if (currentLatency > 80) netStatus = { label: t("Moyen"), color: 'var(--nd-yellow)' };
 
   // Reusable Chart Component
   const renderChart = (height = 160) => (
@@ -192,7 +192,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
               {t("Statistiques Ping")}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-              <span style={{ color: 'var(--nd-text-muted)' }}>Moyenne:</span>
+              <span style={{ color: 'var(--nd-text-muted)' }}>{t("Moyenne:")}</span>
               <span style={{ fontWeight: 600 }}>{avgPing} ms</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem' }}>

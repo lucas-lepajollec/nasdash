@@ -80,8 +80,8 @@ export function TabsNetworksTab() {
             options={[
               { value: 'auto', label: t("Automatique (Adaptatif)") },
               { value: 'standard', label: t("Standard (Grand)") },
-              { value: 'compact', label: 'Compact' },
-              { value: 'mini', label: 'Mini' }
+              { value: 'compact', label: t("Compact") },
+              { value: 'mini', label: t("Mini") }
             ]}
             style={{ width: '100%' }}
           />

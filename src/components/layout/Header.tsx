@@ -94,7 +94,7 @@ export default function Header(props: HeaderProps) {
     if (isCustomTab) {
       return [
         {
-          label: 'Structure',
+          label: t("Structure"),
           onClick: () => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }),
         }
       ];
@@ -128,7 +128,7 @@ export default function Header(props: HeaderProps) {
         {titleLogo ? (
           <img 
             src={titleLogo} 
-            alt="Logo" 
+            alt={t("Logo")}
             className="nd-title-logo" 
             style={{ maxHeight: '20px', width: 'auto', objectFit: 'contain' }} 
           />
@@ -158,7 +158,7 @@ export default function Header(props: HeaderProps) {
           aria-label={t("Rechercher dans le tableau de bord")}
           value={props.searchQuery}
           onChange={(e) => props.onSearchChange(e.target.value)}
-          placeholder={t("Rechercher...")}
+          placeholder={t("Rechercher…")}
         />
         {props.searchQuery && (
           <button
@@ -209,7 +209,7 @@ export default function Header(props: HeaderProps) {
               }}
             >
               {iconVal && <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji={iconVal} /></span>}
-              <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>{tab.name}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>{t(tab.name)}</span>
             </button>
           )
         })}
@@ -260,7 +260,7 @@ export default function Header(props: HeaderProps) {
                   onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
                 >
                   <Plus size={12} />
-                  Actions
+                  {t("Actions")}
                   <ChevronDown size={12} style={{ transform: desktopDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {desktopDropdownOpen && (
@@ -346,7 +346,7 @@ export default function Header(props: HeaderProps) {
             >
               <Pencil size={14} />
             </button>
-            <button className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title={t("Paramètres globaux")}>
+            <button data-settings-trigger="true" className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title={t("Paramètres globaux")}>
               <Settings size={14} />
             </button>
           </>
@@ -529,7 +529,7 @@ export default function Header(props: HeaderProps) {
                     style={{ width: '100%', justifyContent: 'center' }}
                   >
                     <Plus size={12} />
-                    Actions
+                    {t("Actions")}
                     <ChevronDown size={12} style={{ transform: mobileDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 'auto' }} />
                   </button>
                   {mobileDropdownOpen && (
@@ -624,7 +624,7 @@ export default function Header(props: HeaderProps) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Menu</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>{t("Menu")}</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {user && !user.isAnonymous ? (
                   <button className="nd-btn" onClick={() => logout()} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
@@ -632,7 +632,7 @@ export default function Header(props: HeaderProps) {
                   </button>
                 ) : (
                   <a href="/login" className="nd-btn" style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px', textDecoration: 'none', display: 'inline-flex' }}>
-                    <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> Connexion
+                    <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Connexion")}
                   </a>
                 )}
                 <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 6 }}>
@@ -644,7 +644,7 @@ export default function Header(props: HeaderProps) {
             {/* Tabs List */}
             {props.tabs && props.tabs.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>Navigation</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>{t("Navigation")}</span>
                 {props.tabs.map(tab => {
                   const isActive = tab.id === props.activeTab;
                   return (
@@ -658,7 +658,7 @@ export default function Header(props: HeaderProps) {
                       style={{ justifyContent: 'flex-start', padding: '10px 12px', width: '100%', border: isActive ? '1px solid var(--nd-accent)' : '1px solid transparent' }}
                     >
                       <span className="nd-dock-item-icon" style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'inherit', fontSize: '16px' }}><Emoji emoji={config?.settings?.tabIcons?.[tab.id] || tab.icon} /></span>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{tab.name}</span>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{t(tab.name)}</span>
                     </button>
                   );
                 })}
@@ -671,7 +671,7 @@ export default function Header(props: HeaderProps) {
             <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'admin' ? 'repeat(3, 1fr)' : '1fr', gap: 8 }}>
               <button className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleSecret} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                 {props.secretMode ? <Eye size={18} /> : <EyeOff size={18} />}
-                <span style={{ fontSize: '0.75rem' }}>{props.secretMode ? 'Cacher' : 'Visible'}</span>
+                <span style={{ fontSize: '0.75rem' }}>{props.secretMode ? t("Cacher") : t("Visible")}</span>
               </button>
               {user?.role === 'admin' && (
                 <>

@@ -481,7 +481,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, color: 'var(--nd-text)', fontSize: '0.6rem' }}>
                 {checkResult.collisions.map((item, idx) => (
                   <div key={idx} style={{ opacity: 0.85 }}>
-                    {t("Occupé par")} <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> sur <code>{!showSensitive ? '•••' : item.ip}</code> ({item.source})
+                    {t("Occupé par")} <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> {t("sur")} <code>{!showSensitive ? '•••' : item.ip}</code> ({item.source})
                   </div>
                 ))}
               </div>

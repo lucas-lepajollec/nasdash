@@ -141,7 +141,7 @@ export function WeatherWidgetTab() {
                 disabled={isSearchingWeather || !weatherSearchQuery.trim()}
                 style={{ padding: '10px 16px', fontSize: '0.75rem' }}
               >
-                {isSearchingWeather ? '...' : 'Chercher'}
+                {isSearchingWeather ? '...' : t("Chercher")}
               </button>
             </div>
 
@@ -179,14 +179,14 @@ export function WeatherWidgetTab() {
                           onClick={(e) => {
                             e.stopPropagation();
                             // We can use native confirm to keep it self-contained instead of a custom modal for now
-                            if (window.confirm(`Voulez-vous vraiment supprimer la ville de ${loc.name} ?`)) {
+                            if (window.confirm(t('weather.confirmDeleteCity', { city: loc.name }))) {
                                 removeWeatherCity(loc.id);
                             }
                           }}
                           style={{ background: 'none', border: 'none', color: 'var(--nd-red)', cursor: 'pointer', padding: 4, opacity: 0.6, transition: 'opacity 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
                           onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
-                          title="Supprimer"
+                          title={t("Supprimer")}
                         >
                           <Trash2 size={14} />
                         </button>
