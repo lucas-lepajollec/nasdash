@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Layout, Layers, Monitor, X, Trash2, Type } from 'lucide-react';
+import { Palette, Layout, Layers, Monitor, X, Trash2, Type, Languages } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../../../shared/CustomSelect';
@@ -9,17 +9,20 @@ import { THEME_PRESETS } from '../../SettingsModal';
 import ThemeGalleryView, { THEME_GALLERY } from '../../ThemeGalleryView';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
 import { Emoji } from '../../../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
+import { LanguageTab } from './LanguageTab';
 
 interface AppearanceTabProps {
   onOpenThemeGallery?: (tab: 'themes' | 'emojis') => void;
 }
 
 export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const demoMode = config?.demoMode === true;
   
   // Accordions states
-  const [openAccordions, setOpenAccordions] = useState<string[]>(['theme']);
+  const [openAccordions, setOpenAccordions] = useState<string[]>(['language']);
 
   const toggleAccordion = (id: string) => {
     setOpenAccordions(prev => prev.includes(id) ? [] : [id]);
@@ -212,19 +215,29 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <SettingsAccordion
+          title={t('settings.languageTitle')}
+          description={t('settings.languageDescription')}
+          icon={<Languages size={18} />}
+          isOpen={openAccordions.includes('language')}
+          onToggle={() => toggleAccordion('language')}
+        >
+          <LanguageTab embedded />
+        </SettingsAccordion>
+
         {/* Appearance Profiles */}
         <SettingsAccordion
-          title="Profils, Thèmes & Emojis"
-          description="Thèmes visuels, style d'émojis globaux et profils d'apparence"
+          title={t("Profils, Thèmes & Emojis")}
+          description={t("Thèmes visuels, style d'émojis globaux et profils d'apparence")}
           icon={<Palette size={18} />}
           isOpen={openAccordions.includes('theme')}
           onToggle={() => toggleAccordion('theme')}
         >
           <div style={{ marginBottom: 16 }}>
             <div style={{ marginBottom: 10 }}>
-              <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>Thème Actif</h4>
+              <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{t("Thème Actif")}</h4>
               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
-                {currentThemeObj.name} — {currentThemeObj.description}
+                {t(currentThemeObj.name)} — {t(currentThemeObj.description)}
               </p>
             </div>
 
@@ -268,7 +281,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                 </span>
               </div>
               <span style={{ fontSize: '0.75rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
-                Ouvrir la galerie →
+                {t("Ouvrir la galerie →")}
               </span>
             </div>
           </div>
@@ -277,10 +290,10 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Mode d'affichage</h4>
+                  <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Mode d'affichage")}</h4>
                 </div>
                 <button className="nd-btn" onClick={toggleMode} style={{ flexShrink: 0, whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '0.75rem' }}>
-                  {mode === 'light' ? '☀️ Mode Clair' : '🌙 Mode Sombre'}
+                  {mode === 'light' ? t("☀️ Mode Clair") : t("🌙 Mode Sombre")}
                 </button>
               </div>
             </div>
@@ -289,9 +302,9 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
           {/* Style des Emojis / Icônes */}
           <div style={{ marginBottom: 16 }}>
             <div style={{ marginBottom: 8 }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Style des Emojis & Icônes</h4>
+              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Style des Emojis & Icônes")}</h4>
               <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                Dans la galerie interactive, vous pouvez choisir entre plusieurs styles d'émojis ou les icônes Lucide.
+                {t("Dans la galerie interactive, vous pouvez choisir entre plusieurs styles d'émojis ou les icônes Lucide.")}
               </p>
             </div>
             
@@ -341,27 +354,27 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                 </span>
               </div>
               <span style={{ fontSize: '0.72rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
-                Ouvrir la galerie →
+                {t("Ouvrir la galerie →")}
               </span>
             </div>
           </div>
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
-            <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Profils d'Apparence</h4>
+            <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Profils d'Apparence")}</h4>
             <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-              Sauvegardez votre configuration esthétique actuelle.
+              {t("Sauvegardez votre configuration esthétique actuelle.")}
             </p>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
               <input
                 type="text"
                 className="nd-input"
-                placeholder="Nom du nouveau profil..."
+                placeholder={t("Nom du nouveau profil...")}
                 value={newProfileName}
                 onChange={(e) => setNewProfileName(e.target.value)}
                 style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
               />
               <button className="nd-btn" onClick={handleSaveProfile} disabled={!newProfileName.trim()} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                Sauvegarder
+                {t("Sauvegarder")}
               </button>
             </div>
 
@@ -375,16 +388,16 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                     </div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                       <button className="nd-btn" onClick={() => handleApplyProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                        Appliquer
+                        {t("Appliquer")}
                       </button>
                       <button 
                         type="button"
                         className="nd-btn nd-btn-danger"
                         onClick={() => setConfirmDeleteProfile(profile.id)} 
                         style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        title="Supprimer le profil"
+                        title={t("Supprimer le profil")}
                       >
-                        <Trash2 size={13} /> Supprimer
+                        <Trash2 size={13} /> {t("Supprimer")}
                       </button>
                     </div>
                   </div>
@@ -396,37 +409,37 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
 
         {/* Custom Fixed Background Upload */}
         <SettingsAccordion
-          title="Fonds d'écran"
-          description="Images de fond et galerie personnalisée"
+          title={t("Fonds d'écran")}
+          description={t("Images de fond et galerie personnalisée")}
           icon={<Palette size={18} />}
           isOpen={openAccordions.includes('backgrounds')}
           onToggle={() => toggleAccordion('backgrounds')}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginLeft: 2 }}>Image de fond (Desktop & Tablette Paysage)</label>
+              <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginLeft: 2 }}>{t("Image de fond (Desktop & Tablette Paysage)")}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
                   type="text"
                   className="nd-input"
-                  placeholder="https://example.com/background.jpg ou fichier importé"
+                  placeholder={t("https://example.com/background.jpg ou fichier importé")}
                   value={backgroundImage}
                   onChange={(e) => setBackgroundImage(e.target.value)}
                   style={{ flex: 1, fontSize: '0.78rem' }}
                 />
                 <button className="nd-btn" onClick={handleSaveBackground} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
-                  Enregistrer
+                  {t("Enregistrer")}
                 </button>
                 {backgroundImage && (
                   <button className="nd-btn" onClick={async () => { setBackgroundImage(''); await updateConfig({ backgroundImage: '' }); }} style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)' }}>
-                    Effacer
+                    {t("Effacer")}
                   </button>
                 )}
               </div>
             </div>
             
             {demoMode ? (
-              <div style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>L&apos;import de fichiers est désactivé dans la démo publique. Vous pouvez tester une URL d&apos;image fictive ; elle ne sera conservée que dans cette session.</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>{t("L&apos;import de fichiers est désactivé dans la démo publique. Vous pouvez tester une URL d&apos;image fictive ; elle ne sera conservée que dans cette session.")}</div>
             ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input
@@ -460,7 +473,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                 style={{ display: 'none' }}
               />
               <label htmlFor="bg-upload-input" className="nd-btn" style={{ padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)' }}>
-                📁 Importer une image (Auto-Détection)
+                {t("📁 Importer une image (Auto-Détection)")}
               </label>
             </div>
             )}
@@ -468,7 +481,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             {uploadedBgs.length > 0 && (
               <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>
                 <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--nd-text-muted)', display: 'block', marginBottom: '8px' }}>
-                  Galerie des fonds importés ({uploadedBgs.length})
+                  {t('appearance.importedBackgrounds', { count: uploadedBgs.length })}
                 </span>
                 <div 
                   style={{ 
@@ -545,8 +558,8 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
 
         {/* Design System Customization (Typography, Opacity, Radius) */}
         <SettingsAccordion
-          title="Personnalisation Visuelle"
-          description="Ajustez en temps réel les polices et géométries"
+          title={t("Personnalisation Visuelle")}
+          description={t("Ajustez en temps réel les polices et géométries")}
           icon={<Layout size={18} />}
           isOpen={openAccordions.includes('visual')}
           onToggle={() => toggleAccordion('visual')}
@@ -554,23 +567,23 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
               <label className="nd-label" style={{ display: 'block', fontSize: '0.72rem', color: 'var(--nd-text)', marginBottom: 4 }}>
-                Typographie globale (Google Fonts)
+                {t("Typographie globale (Google Fonts)")}
               </label>
               <CustomSelect
                 value={globalFont}
                 onChange={handleFontChange}
                 options={[
-                  { value: 'Outfit', label: 'Outfit (Défaut)' },
-                  { value: 'Inter', label: 'Inter (Pure & Moderne)' },
-                  { value: 'Poppins', label: 'Poppins (Rond & Épuré)' },
-                  { value: 'Rubik', label: 'Rubik (Arrondi Confort)' },
-                  { value: 'Ubuntu', label: 'Ubuntu (Style Linux)' },
-                  { value: 'Lexend', label: 'Lexend (Haute Lisibilité)' },
-                  { value: 'JetBrains Mono', label: 'JetBrains Mono (Console Tech)' },
-                  { value: 'Fira Code', label: 'Fira Code (Developer)' },
-                  { value: 'Source Code Pro', label: 'Source Code Pro (Terminal)' },
-                  { value: 'Montserrat', label: 'Montserrat (Géométrique)' },
-                  { value: 'Roboto', label: 'Roboto (Neutre/Standard)' }
+                  { value: 'Outfit', label: t("Outfit (Défaut)") },
+                  { value: 'Inter', label: t("Inter (Pure & Moderne)") },
+                  { value: 'Poppins', label: t("Poppins (Rond & Épuré)") },
+                  { value: 'Rubik', label: t("Rubik (Arrondi Confort)") },
+                  { value: 'Ubuntu', label: t("Ubuntu (Style Linux)") },
+                  { value: 'Lexend', label: t("Lexend (Haute Lisibilité)") },
+                  { value: 'JetBrains Mono', label: t("JetBrains Mono (Console Tech)") },
+                  { value: 'Fira Code', label: t("Fira Code (Developer)") },
+                  { value: 'Source Code Pro', label: t("Source Code Pro (Terminal)") },
+                  { value: 'Montserrat', label: t("Montserrat (Géométrique)") },
+                  { value: 'Roboto', label: t("Roboto (Neutre/Standard)") }
                 ]}
               />
             </div>
@@ -578,7 +591,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
-                  Arrondi des cartes
+                  {t("Arrondi des cartes")}
                 </label>
                 <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
                   {borderRadius}px
@@ -600,7 +613,7 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
-                  Opacité du fond des cartes (Transparence)
+                  {t("Opacité du fond des cartes (Transparence)")}
                 </label>
                 <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
                   {Math.round(cardOpacity * 100)}%
@@ -623,8 +636,8 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
 
         {/* Accordion 4: Titles */}
         <SettingsAccordion
-          title="Titres"
-          description="Affichage, masquage et position des titres de widgets et catégories"
+          title={t("Titres")}
+          description={t("Affichage, masquage et position des titres de widgets et catégories")}
           icon={<Type size={18} />}
           isOpen={openAccordions.includes('titles')}
           onToggle={() => toggleAccordion('titles')}
@@ -633,15 +646,15 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
             <ToggleSwitch
               checked={!(config?.settings?.hideWidgetTitles ?? false)}
               onChange={(val) => updateConfig({ hideWidgetTitles: !val })}
-              label="Afficher les titres des widgets"
-              sublabel="Affiche ou masque les titres au-dessus de tous vos widgets (ex: APPAREILS, CALENDRIER)."
+              label={t("Afficher les titres des widgets")}
+              sublabel={t("Affiche ou masque les titres au-dessus de tous vos widgets (ex: APPAREILS, CALENDRIER).")}
             />
 
             <ToggleSwitch
               checked={!(config?.settings?.hideCategoryTitles ?? false)}
               onChange={(val) => updateConfig({ hideCategoryTitles: !val })}
-              label="Afficher les titres des catégories"
-              sublabel="Affiche ou masque le nom des catégories de services dans la section principale."
+              label={t("Afficher les titres des catégories")}
+              sublabel={t("Affiche ou masque le nom des catégories de services dans la section principale.")}
             />
 
             {/* Position Select Card */}
@@ -649,10 +662,10 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
               <div className="nd-settings-card-row">
                 <div style={{ flex: 1 }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 600, display: 'block', color: 'var(--nd-text)' }}>
-                    Position du titre des catégories
+                    {t("Position du titre des catégories")}
                   </span>
                   <span style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 2 }}>
-                    Afficher le titre à l'intérieur de sa carte ou séparé au-dessus.
+                    {t("Afficher le titre à l'intérieur de sa carte ou séparé au-dessus.")}
                   </span>
                 </div>
                 <div className="nd-settings-select-wrap" style={{ flexShrink: 0, width: 180 }}>
@@ -660,8 +673,8 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
                     value={config?.settings?.categoryTitlePosition || 'inside'}
                     onChange={(val) => updateConfig({ categoryTitlePosition: val })}
                     options={[
-                      { value: 'inside', label: 'Dans la carte (Défaut)' },
-                      { value: 'above', label: 'Au-dessus de la carte' }
+                      { value: 'inside', label: t("Dans la carte (Défaut)") },
+                      { value: 'above', label: t("Au-dessus de la carte") }
                     ]}
                   />
                 </div>
@@ -680,8 +693,8 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
         onConfirm={() => {
           if (confirmDeleteProfile) handleDeleteProfile(confirmDeleteProfile);
         }}
-        title="Supprimer le profil"
-        description="Êtes-vous sûr de vouloir supprimer ce profil d'apparence ? Cette action est irréversible."
+        title={t("Supprimer le profil")}
+        description={t("Êtes-vous sûr de vouloir supprimer ce profil d'apparence ? Cette action est irréversible.")}
         confirmLabel="Supprimer"
       />
 
@@ -689,8 +702,8 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
         isOpen={isConfirmBgDeleteOpen}
         onClose={() => setIsConfirmBgDeleteOpen(false)}
         onConfirm={handleConfirmBgDelete}
-        title="Supprimer l'image de fond"
-        description="Êtes-vous sûr de vouloir supprimer cette image ? Elle sera supprimée du serveur."
+        title={t("Supprimer l'image de fond")}
+        description={t("Êtes-vous sûr de vouloir supprimer cette image ? Elle sera supprimée du serveur.")}
         confirmLabel="Supprimer"
       />
     </>

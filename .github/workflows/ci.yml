@@ -33,6 +33,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Validate interface translations
+        run: npm run check:i18n
+
       - name: Build application
         run: npm run build
 

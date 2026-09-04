@@ -2,6 +2,7 @@ import React, { useId } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -19,9 +20,12 @@ export default function ConfirmModal({
   onConfirm,
   title,
   description,
-  confirmLabel = 'Supprimer',
-  cancelLabel = 'Annuler'
+  confirmLabel,
+  cancelLabel,
 }: ConfirmModalProps) {
+  const { t } = useI18n();
+  const resolvedConfirmLabel = confirmLabel ?? t('Supprimer');
+  const resolvedCancelLabel = cancelLabel ?? t('Annuler');
   const titleId = useId();
   const descriptionId = useId();
   const dialogRef = useDialogAccessibility(onClose, isOpen);
@@ -62,7 +66,7 @@ export default function ConfirmModal({
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
           <button className="nd-btn" onClick={onClose} style={{ padding: '0 24px' }}>
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             className="nd-btn"
@@ -72,7 +76,7 @@ export default function ConfirmModal({
               onClose();
             }}
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </div>

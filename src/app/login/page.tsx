@@ -2,30 +2,30 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--nd-bg)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              width: 36, height: 36, borderRadius: '50%',
-              border: '3px solid var(--nd-card-border)',
-              borderTopColor: 'var(--nd-accent)',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
-          <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>Chargement...</span>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<LoginFallback />}>
       <LoginForm />
     </Suspense>
   );
 }
 
+function LoginFallback() {
+  const { t } = useI18n();
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--nd-bg)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
+        <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>{t('Chargement…')}</span>
+      </div>
+    </div>
+  );
+}
+
 function LoginForm() {
+  const { t } = useI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +35,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const requestedRedirect = searchParams.get('redirect');
   const notice = searchParams.get('reason') === 'password-changed'
-    ? 'Votre mot de passe a été modifié. Reconnectez-vous avec votre nouveau mot de passe.'
+    ? t('login.passwordChanged')
     : null;
   const redirectTo = requestedRedirect && /^\/(?!\/)/.test(requestedRedirect) && !requestedRedirect.includes('\\')
     ? requestedRedirect
@@ -62,7 +62,7 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-      setError('Veuillez remplir tous les champs.');
+      setError(t("Veuillez remplir tous les champs."));
       return;
     }
 
@@ -79,13 +79,13 @@ function LoginForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Erreur d\'authentification');
+        throw new Error(data.error ? t(data.error) : t('login.authFailed'));
       }
 
       // Recharger pour que le ConfigProvider récupère la session
       window.location.href = redirectTo;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion.');
+      setError(err instanceof Error ? err.message : t('login.unexpectedError'));
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ function LoginForm() {
               animation: 'spin 0.8s linear infinite',
             }}
           />
-          <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>Vérification de la session...</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>{t("Vérification de la session...")}</span>
         </div>
       </div>
     );
@@ -166,7 +166,7 @@ function LoginForm() {
             NasDash
           </h1>
           <p style={{ fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
-            Accès sécurisé à votre tableau de bord
+            {t("Accès sécurisé à votre tableau de bord")}
           </p>
         </div>
 
@@ -203,7 +203,7 @@ function LoginForm() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label htmlFor="login-username" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Nom d&apos;utilisateur
+              {t("Nom d&apos;utilisateur")}
             </label>
             <input
               id="login-username"
@@ -211,7 +211,7 @@ function LoginForm() {
               className="nd-input"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="Ex: admin"
+              placeholder={t("Ex: admin")}
               disabled={loading}
               autoFocus
               style={{
@@ -230,7 +230,7 @@ function LoginForm() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label htmlFor="login-password" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Mot de passe
+              {t("Mot de passe")}
             </label>
             <input
               id="login-password"
@@ -287,7 +287,7 @@ function LoginForm() {
                   animation: 'spin 0.6s linear infinite',
                 }}
               />
-            ) : 'Se connecter'}
+            ) : t("Se connecter")}
           </button>
         </form>
       </div>

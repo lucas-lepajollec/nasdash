@@ -4,6 +4,7 @@ import React, { createContext } from 'react';
 import { AuthContextType, AuthProvider, useAuth } from './AuthProvider';
 import { DashboardContextType, DashboardProvider, useDashboard } from './DashboardProvider';
 import { ModalContextType, ModalProvider, useModals } from './ModalProvider';
+import { readRequestedLanguage, useI18n } from '@/i18n/I18nProvider';
 
 export interface ConfigContextType extends AuthContextType, DashboardContextType, ModalContextType {}
 
@@ -13,6 +14,13 @@ function ConfigCombinedProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const dashboard = useDashboard();
   const modals = useModals();
+  const { language, setLanguage } = useI18n();
+
+  React.useEffect(() => {
+    if (!dashboard.config || readRequestedLanguage()) return;
+    const persistedLanguage = dashboard.config.settings.uiLanguage || 'en';
+    if (persistedLanguage !== language) setLanguage(persistedLanguage);
+  }, [dashboard.config, language, setLanguage]);
 
   const value: ConfigContextType = {
     ...auth,

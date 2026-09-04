@@ -5,6 +5,7 @@ import ConfirmModal from './ConfirmModal';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -68,6 +69,7 @@ interface DeviceFormModalProps {
 }
 
 export default function DeviceFormModal({ device, onClose, onSave, onDelete, showSensitive = false }: DeviceFormModalProps) {
+  const { t } = useI18n();
   const dialogRef = useDialogAccessibility(onClose);
   const { config } = useConfig();
   const demoMode = config?.demoMode === true;
@@ -129,21 +131,21 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={device ? "Modifier l'appareil" : 'Ajouter un appareil'} tabIndex={-1} className="nd-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={device ? t("Modifier l'appareil") : t("Ajouter un appareil")} tabIndex={-1} className="nd-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <h2 className="nd-section-title" style={{ marginBottom: 20 }}>
-          {device ? 'Éditer l\'appareil' : 'Ajouter un appareil'}
+          {device ? t("Éditer l'appareil") : t("Ajouter un appareil")}
         </h2>
 
         {demoMode && (
           <div style={{ padding: '10px 12px', marginBottom: 16, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
-            Appareil entièrement simulé : les statistiques ne proviendront jamais de cette adresse. Utilisez une IP de documentation comme 192.0.2.60 et ne saisissez aucun identifiant réel.
+            {t("Appareil entièrement simulé : les statistiques ne proviendront jamais de cette adresse. Utilisez une IP de documentation comme 192.0.2.60 et ne saisissez aucun identifiant réel.")}
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ width: 60 }}>
-              <label className="nd-label">Icône</label>
+              <label className="nd-label">{t("Icône")}</label>
               <input
                 type="text"
                 className="nd-input"
@@ -155,13 +157,13 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label className="nd-label">Nom de l'appareil</label>
+              <label className="nd-label">{t("Nom de l'appareil")}</label>
               <input
                 type="text"
                 className="nd-input"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Ex: PC Fixe"
+                placeholder={t("Ex: PC Fixe")}
                 required
               />
             </div>
@@ -169,19 +171,19 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
 
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
           <div style={{ flex: 1 }}>
-              <label className="nd-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Label OS/Description <span style={{ opacity: 0.5, fontSize: '0.8em', fontWeight: 'normal' }}>(Optionnel)</span></label>
+              <label className="nd-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t("Label OS/Description")} <span style={{ opacity: 0.5, fontSize: '0.8em', fontWeight: 'normal' }}>{t("(Optionnel)")}</span></label>
               <input
                 type="text"
                 className="nd-input"
                 value={host}
                 onChange={e => setHost(e.target.value)}
-                placeholder="Ex: Windows 11"
+                placeholder={t("Ex: Windows 11")}
               />
             </div>
           </div>
 
           <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 4 }}>
-            <label className="nd-label">API de surveillance</label>
+            <label className="nd-label">{t("API de surveillance")}</label>
             <CustomSelect
               value={apiType}
               onChange={val => {
@@ -190,32 +192,32 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
               }}
               options={[
                 { value: 'glances', label: 'Glances' },
-                { value: 'proxmox', label: 'Proxmox VE' },
-                { value: 'lhm', label: 'Libre Hardware Monitor' }
+                { value: 'proxmox', label: t("Proxmox VE") },
+                { value: 'lhm', label: t("Libre Hardware Monitor") }
               ]}
             />
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 3 }}>
-              <label className="nd-label">IP (Hôte)</label>
+              <label className="nd-label">{t("IP (Hôte)")}</label>
               <input
                 type={!showSensitive ? "password" : "text"}
                 className="nd-input"
                 value={ip}
                 onChange={e => setIp(e.target.value)}
-                placeholder="ex: 192.168.1.10"
+                placeholder={t("ex: 192.168.1.10")}
                 required
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label className="nd-label">Port</label>
+              <label className="nd-label">{t("Port")}</label>
               <input
                 type="text"
                 className="nd-input"
                 value={port}
                 onChange={e => setPort(e.target.value)}
-                placeholder="ex: 61208"
+                placeholder={t("ex: 61208")}
                 required
               />
             </div>
@@ -224,36 +226,36 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
           {apiType === 'proxmox' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'rgba(0,0,0,0.1)', padding: 12, borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
               <div>
-                <label className="nd-label">Nom du Nœud (Datacenter)</label>
+                <label className="nd-label">{t("Nom du Nœud (Datacenter)")}</label>
                 <input
                   type="text"
                   className="nd-input"
                   value={nodeName}
                   onChange={e => setNodeName(e.target.value)}
-                  placeholder="ex: pve"
+                  placeholder={t("ex: pve")}
                   required
                 />
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }}>
-                  <label className="nd-label">ID VM/LXC (Optionnel)</label>
+                  <label className="nd-label">{t("ID VM/LXC (Optionnel)")}</label>
                   <input
                     type="text"
                     className="nd-input"
                     value={vmid}
                     onChange={e => setVmid(e.target.value)}
-                    placeholder="ex: 104"
+                    placeholder={t("ex: 104")}
                   />
                 </div>
                 {vmid && (
                   <div style={{ flex: 1 }}>
-                    <label className="nd-label">Type</label>
+                    <label className="nd-label">{t("Type")}</label>
                     <CustomSelect
                       value={vmType}
                       onChange={val => setVmType(val as any)}
                       options={[
-                        { value: 'qemu', label: 'VM (QEMU)' },
-                        { value: 'lxc', label: 'Conteneur (LXC)' }
+                        { value: 'qemu', label: t("VM (QEMU)") },
+                        { value: 'lxc', label: t("Conteneur (LXC)") }
                       ]}
                     />
                   </div>
@@ -265,28 +267,28 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label className="nd-label">
-                {apiType === 'proxmox' ? "Token ID (ex: root@pam!token_name)" : "Utilisateur (Si requis)"}
+                {apiType === 'proxmox' ? t("Token ID (ex: root@pam!token_name)") : t("Utilisateur (Si requis)")}
               </label>
               <input
                 type="text"
                 className="nd-input"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder={apiType === 'proxmox' ? "root@pam!token" : apiType === 'lhm' ? "Non requis" : "Optionnel"}
+                placeholder={apiType === 'proxmox' ? t("root@pam!token") : apiType === 'lhm' ? t("Non requis") : t("Optionnel")}
                 required={apiType === 'proxmox'}
                 disabled={apiType === 'lhm'}
               />
             </div>
             <div style={{ flex: 1 }}>
               <label className="nd-label">
-                {apiType === 'proxmox' ? "Token Secret (UUID)" : "Mot de passe / Jeton"}
+                {apiType === 'proxmox' ? t("Token Secret (UUID)") : t("Mot de passe / Jeton")}
               </label>
               <input
                 type="password"
                 className="nd-input"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder={device ? "Laisser vide pour garder l'actuel" : apiType === 'lhm' ? "Non requis" : "Optionnel (Masqué)"}
+                placeholder={device ? t("Laisser vide pour garder l'actuel") : apiType === 'lhm' ? t("Non requis") : t("Optionnel (Masqué)")}
                 required={!device && apiType === 'proxmox'}
                 disabled={apiType === 'lhm'}
               />
@@ -302,13 +304,13 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
                 className="nd-btn nd-btn-danger"
                 style={{ flex: 1, borderColor: 'var(--nd-red)', color: 'var(--nd-red)' }}
               >
-                Supprimer
+                {t("Supprimer")}
               </button>
             )}
             <div style={{ flex: device ? 1 : 2, display: 'flex', gap: 12 }}>
-              <button type="button" onClick={onClose} className="nd-btn" style={{ flex: 1 }}>Annuler</button>
+              <button type="button" onClick={onClose} className="nd-btn" style={{ flex: 1 }}>{t("Annuler")}</button>
               <button type="submit" className="nd-btn nd-btn-accent" style={{ flex: 1 }} disabled={isSaving}>
-                {isSaving ? <Loader2 size={14} className="nd-spin" /> : 'Enregistrer'}
+                {isSaving ? <Loader2 size={14} className="nd-spin" /> : t("Enregistrer")}
               </button>
             </div>
           </div>
@@ -319,8 +321,8 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => onDelete && device && onDelete(device.id)}
-        title="Supprimer l'appareil ?"
-        description={device ? `Voulez-vous vraiment supprimer "${device.name}" de votre tableau de bord ? Cette action est irréversible.` : ''}
+        title={t("Supprimer l'appareil ?")}
+        description={device ? t('confirm.deviceRemove', { name: device.name }) : ''}
       />
     </div>
   );

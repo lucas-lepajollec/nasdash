@@ -4,8 +4,10 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function TailscaleWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
 
   const hideTailscaleStatus = !!config?.settings?.hideTailscaleStatus;
@@ -25,8 +27,8 @@ export function TailscaleWidgetTab() {
         <ToggleSwitch
           checked={!hideTailscaleStatus}
           onChange={(val) => handleToggleWidget('hideTailscaleStatus', !val)}
-          label="Activer le widget VPN Tailscale"
-          sublabel="Choisissez si l'état général et la liste des machines Tailscale doivent s'afficher."
+          label={t("Activer le widget VPN Tailscale")}
+          sublabel={t("Choisissez si l'état général et la liste des machines Tailscale doivent s'afficher.")}
         />
       </div>
 
@@ -38,23 +40,23 @@ export function TailscaleWidgetTab() {
 
           {demoMode ? (
             <div className="nd-settings-card" style={{ padding: '14px', background: 'color-mix(in srgb, var(--nd-accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 32%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: '0 0 5px 0', fontSize: '0.8rem', fontWeight: 700 }}>Connexion Tailscale simulée</h4>
+              <h4 style={{ margin: '0 0 5px 0', fontSize: '0.8rem', fontWeight: 700 }}>{t("Connexion Tailscale simulée")}</h4>
               <p style={{ margin: 0, fontSize: '0.68rem', lineHeight: 1.55, color: 'var(--nd-text-muted)' }}>
-                La démo utilise une liste fictive d&apos;appareils et ne contacte jamais Tailscale. Les identifiants OAuth sont volontairement désactivés : ne saisissez aucun secret réel dans cette instance publique.
+                {t("La démo utilise une liste fictive d&apos;appareils et ne contacte jamais Tailscale. Les identifiants OAuth sont volontairement désactivés : ne saisissez aucun secret réel dans cette instance publique.")}
               </p>
             </div>
           ) : (
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Authentification API Tailscale</h4>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Authentification API Tailscale")}</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Connectez votre compte Tailscale pour visualiser l&apos;état de vos appareils directement sur le Dashboard.
+              {t("Connectez votre compte Tailscale pour visualiser l&apos;état de vos appareils directement sur le Dashboard.")}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <input
                 type="text"
-                aria-label="Nom du Tailnet"
+                aria-label={t("Nom du Tailnet")}
                 className="nd-input"
-                placeholder="Nom du Tailnet (ex: email@domaine.com)"
+                placeholder={t("Nom du Tailnet (ex: email@domaine.com)")}
                 value={tailscaleTailnet}
                 onChange={(e) => {
                   setTailscaleTailnet(e.target.value);
@@ -64,9 +66,9 @@ export function TailscaleWidgetTab() {
               />
               <input
                 type="password"
-                aria-label="OAuth Client ID Tailscale"
+                aria-label={t("OAuth Client ID Tailscale")}
                 className="nd-input"
-                placeholder="OAuth Client ID (kxxxx...)"
+                placeholder={t("OAuth Client ID (kxxxx...)")}
                 value={tailscaleClientId}
                 onChange={(e) => {
                   setTailscaleClientId(e.target.value);
@@ -76,9 +78,9 @@ export function TailscaleWidgetTab() {
               />
               <input
                 type="password"
-                aria-label="OAuth Client Secret Tailscale"
+                aria-label={t("OAuth Client Secret Tailscale")}
                 className="nd-input"
-                placeholder="OAuth Client Secret (tskey-client-...)"
+                placeholder={t("OAuth Client Secret (tskey-client-...)")}
                 value={tailscaleClientSecret}
                 onChange={(e) => {
                   setTailscaleClientSecret(e.target.value);

@@ -8,8 +8,10 @@ import { Pencil, Trash2, Plus, HardDrive } from 'lucide-react';
 import ConfirmModal from '../../../ConfirmModal';
 import { Device } from '@/lib/types';
 import { Emoji } from '../../../../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function DevicesWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig, setDeviceModal, deleteDevice } = useConfig();
   const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
 
@@ -39,8 +41,8 @@ export function DevicesWidgetTab() {
         <ToggleSwitch
           checked={!hideDevices}
           onChange={(val) => handleToggleWidget('hideDevices', !val)}
-          label="Activer le widget Appareils"
-          sublabel="Choisissez si ce module de monitoring matériel doit s'afficher sur votre tableau de bord."
+          label={t("Activer le widget Appareils")}
+          sublabel={t("Choisissez si ce module de monitoring matériel doit s'afficher sur votre tableau de bord.")}
         />
       </div>
 
@@ -55,7 +57,7 @@ export function DevicesWidgetTab() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--nd-card-border)', paddingBottom: 8 }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <HardDrive size={14} style={{ color: 'var(--nd-orange)' }} />
-                Liste des appareils connectés
+                {t("Liste des appareils connectés")}
               </span>
               <button
                 onClick={handleAddDevice}
@@ -63,14 +65,14 @@ export function DevicesWidgetTab() {
                 style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', fontSize: '0.68rem', height: 26 }}
               >
                 <Plus size={12} />
-                Ajouter
+                {t("Ajouter")}
               </button>
             </div>
 
             {devicesList.length === 0 ? (
               <div style={{ padding: '24px 12px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
                 <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                  Aucun appareil connecté pour le moment. Cliquez sur &quot;Ajouter&quot; pour lier un serveur.
+                  {t("Aucun appareil connecté pour le moment. Cliquez sur &quot;Ajouter&quot; pour lier un serveur.")}
                 </p>
               </div>
             ) : (
@@ -98,7 +100,7 @@ export function DevicesWidgetTab() {
                           {dev.name}
                         </span>
                         <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {dev.host || 'Pas de description'} • <code style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)' }}>{dev.api?.ip || 'IP inconnue'}</code>
+                          {dev.host || t("Pas de description")} • <code style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)' }}>{dev.api?.ip || t("IP inconnue")}</code>
                         </span>
                       </div>
                     </div>
@@ -111,14 +113,14 @@ export function DevicesWidgetTab() {
                         <button
                           className="nd-action-icon accent"
                           onClick={() => handleEditDevice(dev)}
-                          title="Modifier les informations de connexion"
+                          title={t("Modifier les informations de connexion")}
                         >
                           <Pencil size={12} />
                         </button>
                         <button
                           className="nd-action-icon danger"
                           onClick={() => setDeviceToDelete(dev)}
-                          title="Supprimer l'appareil de NasDash"
+                          title={t("Supprimer l'appareil de NasDash")}
                         >
                           <Trash2 size={12} />
                         </button>
@@ -137,10 +139,10 @@ export function DevicesWidgetTab() {
           isOpen={!!deviceToDelete}
           onClose={() => setDeviceToDelete(null)}
           onConfirm={() => handleDeleteDevice(deviceToDelete.id)}
-          title="Supprimer l'appareil ?"
-          description={`Êtes-vous sûr de vouloir supprimer définitivement "${deviceToDelete.name}" de NasDash ? Cette action déconnectera cet appareil de tous vos widgets.`}
-          confirmLabel="Supprimer"
-          cancelLabel="Annuler"
+          title={t("Supprimer l'appareil ?")}
+          description={t('confirm.deviceDeleteAndDisconnect', { name: deviceToDelete.name })}
+          confirmLabel={t("Supprimer")}
+          cancelLabel={t("Annuler")}
         />
       )}
     </div>

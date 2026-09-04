@@ -9,5 +9,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - A consistent repository, quality, security, and release foundation.
+- A maintained English, French, Spanish, and German interface with persisted language selection and locale-aware formatting.
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.

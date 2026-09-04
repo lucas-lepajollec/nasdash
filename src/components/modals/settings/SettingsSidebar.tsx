@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Palette, Cpu, Sliders, ChevronRight, Shield, Container, Home, Layout, Layers, X, Smartphone, PanelTop, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { Emoji } from '../../shared/Emoji';
 
@@ -12,15 +13,16 @@ interface SettingsSidebarProps {
 
 export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsSidebarProps) {
   const { config } = useConfig();
+  const { t } = useI18n();
   const [isWidgetsMenuOpen, setIsWidgetsMenuOpen] = useState(() => currentTab?.startsWith('widget-'));
   const [isTabsMenuOpen, setIsTabsMenuOpen] = useState(() => currentTab?.startsWith('tabs-'));
 
   return (
     <div className="nd-settings-sidebar">
       <div className="nd-settings-sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 12px 4px' }}>
-        <h2 className="nd-settings-sidebar-title" style={{ fontSize: '0.78rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>NasDash Config</h2>
+        <h2 className="nd-settings-sidebar-title" style={{ fontSize: '0.78rem', fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--nd-text-muted)' }}>{t("NasDash Config")}</h2>
         <button 
-          aria-label="Fermer les paramètres"
+          aria-label={t("Fermer les paramètres")}
           className="nd-settings-sidebar-close-btn" 
           onClick={onClose} 
           style={{ 
@@ -43,7 +45,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
         
         {/* Category: Général */}
         <div className="nd-settings-sidebar-group">
-          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Général</span>
+          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>{t("Général")}</span>
           <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
               onClick={() => setActiveTab('apparence')}
@@ -53,7 +55,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Palette size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Apparence & Thèmes</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Apparence & Thèmes")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -68,7 +70,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <PanelTop size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>En-tête</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("En-tête")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -83,7 +85,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Smartphone size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Mobile</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Mobile")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -98,7 +100,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Cpu size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Développeur</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Développeur")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -113,7 +115,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Shield size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Sécurité</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Sécurité")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -128,7 +130,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Sliders size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Bibliothèque Globale</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Bibliothèque Globale")}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
@@ -156,7 +158,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
               onMouseLeave={e => e.currentTarget.style.color = 'var(--nd-text-muted)'}
             >
               <span style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Configuration Widgets
+                {t("Configuration Widgets")}
               </span>
               <ChevronRight size={14} style={{ transform: isWidgetsMenuOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
             </button>
@@ -178,7 +180,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                       {isFirstInactive && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0' }}>
                           <div style={{ flex: 1, height: 1, background: 'var(--nd-card-border)' }} />
-                          <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Désactivés</span>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>{t("Désactivés")}</span>
                           <div style={{ flex: 1, height: 1, background: 'var(--nd-card-border)' }} />
                         </div>
                       )}
@@ -191,7 +193,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                           <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            {w.name}
+                            {t(w.name)}
                             <span style={{
                               width: 6,
                               height: 6,
@@ -212,7 +214,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
 
         {/* Category: Gestion des Onglets */}
         <div className="nd-settings-sidebar-group">
-          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>Onglets</span>
+          <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--nd-text-muted)', letterSpacing: '0.5px', marginLeft: 4, display: 'block', marginBottom: 8 }}>{t("Onglets")}</span>
           <div className="nd-settings-sidebar-group-items" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
               onClick={() => setActiveTab('tabs-general')}
@@ -222,7 +224,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Layers size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Général</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Général")}</span>
               </div>
             </button>
             <button
@@ -233,8 +235,8 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                 <Layout size={18} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Onglets Personnalisés</span>
-                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)' }}>Mises en page libres</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Onglets Personnalisés")}</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)' }}>{t("Mises en page libres")}</span>
               </div>
             </button>
           </div>
@@ -259,7 +261,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
             onMouseEnter={e => e.currentTarget.style.color = 'var(--nd-text)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--nd-text-muted)'}
           >
-            <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block' }}>Paramètres Spécifiques</span>
+            <span className="nd-settings-sidebar-group-title" style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block' }}>{t("Paramètres Spécifiques")}</span>
             <ChevronRight size={14} style={{ transform: isTabsMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
           </button>
           
@@ -273,7 +275,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   <Home size={18} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Home</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Home")}</span>
                 </div>
               </button>
               <button
@@ -295,7 +297,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   <Network size={18} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Réseaux</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Réseaux")}</span>
                 </div>
               </button>
               <button
@@ -306,7 +308,7 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
                   <Layout size={18} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>Widgets</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Widgets")}</span>
                 </div>
               </button>
             </div>

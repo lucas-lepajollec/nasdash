@@ -11,6 +11,7 @@ import { Category, Service, Device, DockerActionConfig } from '@/lib/types';
 import { WidgetPanel } from '../../shared/WidgetPanel';
 import { DndContext, pointerWithin, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay, defaultDropAnimationSideEffects } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface HomeTabProps {
   editMode: boolean;
@@ -29,6 +30,7 @@ export default function HomeTab({
   onToggleSecretSections,
   isVisible
 }: HomeTabProps) {
+  const { t } = useI18n();
   const {
     config,
     loading,
@@ -248,9 +250,9 @@ export default function HomeTab({
 
             {!tabConf.hideBottomPanel && hasWidgets('home-bottom') && (
               <section className="nd-bottom-panel" style={{ marginTop: 24, marginBottom: 24 }}>
-                {(tabConf.bottomPanelTitle ?? 'Activité réseau') && (
+                {(tabConf.bottomPanelTitle ?? t("Activité réseau")) && (
                   <div className="nd-section-title" style={{ marginBottom: 16 }}>
-                    {tabConf.bottomPanelTitle ?? 'Activité réseau'}
+                    {tabConf.bottomPanelTitle ?? t("Activité réseau")}
                   </div>
                 )}
                 <div style={{ 

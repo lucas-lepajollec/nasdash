@@ -7,6 +7,7 @@ import { Trash2, Plus } from 'lucide-react';
 
 import { WidgetRenderer } from '../../widgets/WidgetRenderer';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
+import { useI18n } from '@/i18n/I18nProvider';
 
 function DroppableSlot({ id, editMode, children }: { id: string, editMode: boolean, children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
@@ -30,6 +31,7 @@ function DraggableWidget({ id, editMode, children }: { id: string, editMode: boo
 }
 
 export default function WidgetsTab({ editMode, isVisible, showSensitive, categories }: { editMode: boolean, isVisible: boolean, showSensitive: boolean, categories: any[] }) {
+  const { t } = useI18n();
   const { 
     config, 
     updateConfig, 
@@ -222,12 +224,12 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
                       }}>
                         {editMode && (
                           <>
-                            <span>Emplacement vide</span>
+                            <span>{t("Emplacement vide")}</span>
                             <button 
                               onClick={(e) => { e.stopPropagation(); handleRemoveSlot(itemId); }}
                               className="nd-action-icon danger"
                               style={{ position: 'absolute', right: 16 }}
-                              title="Supprimer cet emplacement"
+                              title={t("Supprimer cet emplacement")}
                             >
                               <Trash2 size={13} />
                             </button>
@@ -261,7 +263,7 @@ export default function WidgetsTab({ editMode, isVisible, showSensitive, categor
                   fontSize: '0.75rem',
                   fontWeight: 600,
                 }}>
-                  <span>Emplacement vide</span>
+                  <span>{t("Emplacement vide")}</span>
                 </div>
               ) : (
                 visibleWidgets.find(w => w.id === activeWidgetId)?.component

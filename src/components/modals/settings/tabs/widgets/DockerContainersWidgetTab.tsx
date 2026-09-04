@@ -4,8 +4,10 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function DockerContainersWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const hideDockerContainers = config?.settings?.hideDockerContainers ?? true;
   const handleToggleWidget = async (key: string, value: boolean) => {
@@ -18,8 +20,8 @@ export function DockerContainersWidgetTab() {
         <ToggleSwitch
           checked={!hideDockerContainers}
           onChange={(val) => handleToggleWidget('hideDockerContainers', !val)}
-          label="Activer le widget Conteneurs Docker"
-          sublabel="Affichage paginé de vos conteneurs Docker avec état en temps réel et durée de fonctionnement."
+          label={t("Activer le widget Conteneurs Docker")}
+          sublabel={t("Affichage paginé de vos conteneurs Docker avec état en temps réel et durée de fonctionnement.")}
         />
       </div>
 
@@ -36,8 +38,8 @@ export function DockerContainersWidgetTab() {
               onChange={async (val) => {
                 await updateConfig({ allowDockerActions: val });
               }}
-              label="Boutons d'action (Start/Stop)"
-              sublabel="Affiche les boutons pour contrôler les conteneurs. Désactivez-le pour un design plus épuré sur les petits widgets."
+              label={t("Boutons d'action (Start/Stop)")}
+              sublabel={t("Affiche les boutons pour contrôler les conteneurs. Désactivez-le pour un design plus épuré sur les petits widgets.")}
             />
           </div>
         </>

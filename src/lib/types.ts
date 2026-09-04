@@ -195,6 +195,7 @@ export interface DashboardConfig {
   appearanceProfiles?: AppearanceProfile[];
   localEvents?: LocalCalendarEvent[];
   settings: {
+    uiLanguage?: 'en' | 'fr' | 'es' | 'de';
     panels?: Record<string, PanelConfig>;
     title: string;
     titleMobile?: string;

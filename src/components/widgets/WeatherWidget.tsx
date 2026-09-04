@@ -5,6 +5,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { Thermometer, Droplets, Wind, MapPin, ChevronLeft, ChevronRight, CloudRain, Cloud } from 'lucide-react';
 import AnimatedWeatherIcon from '@/components/shared/AnimatedWeatherIcons';
 import { useWidgetSize } from './WidgetContainer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface WeatherData {
   current: {
@@ -54,20 +55,21 @@ const getWeatherGlow = (code: number) => {
 };
 
 const getWeatherLabel = (code: number) => {
-  if (code === 0) return "Ciel dégagé";
-  if (code === 1 || code === 2) return "Partiellement nuageux";
-  if (code === 3) return "Couvert";
-  if (code === 45 || code === 48) return "Brouillard";
-  if (code >= 51 && code <= 55) return "Bruine";
-  if (code >= 61 && code <= 67) return "Pluie";
-  if (code >= 71 && code <= 77) return "Neige";
-  if (code >= 80 && code <= 82) return "Averses";
-  if (code >= 85 && code <= 86) return "Averses de neige";
-  if (code >= 95 && code <= 99) return "Orage";
-  return "Inconnu";
+  if (code === 0) return 'weather.clear';
+  if (code === 1 || code === 2) return 'weather.partlyCloudy';
+  if (code === 3) return 'weather.overcast';
+  if (code === 45 || code === 48) return 'weather.fog';
+  if (code >= 51 && code <= 55) return 'weather.drizzle';
+  if (code >= 61 && code <= 67) return 'weather.rain';
+  if (code >= 71 && code <= 77) return 'weather.snow';
+  if (code >= 80 && code <= 82) return 'weather.showers';
+  if (code >= 85 && code <= 86) return 'weather.snowShowers';
+  if (code >= 95 && code <= 99) return 'weather.thunderstorm';
+  return 'weather.unknown';
 };
 
 export default function WeatherWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
+  const { t, locale } = useI18n();
   const { config, setSettingsModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -147,10 +149,10 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
     return (
       <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center', gap: 12 }}>
         <CloudRain size={32} className="text-gray-400 opacity-50" />
-        <div style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)' }}>Météo non configurée</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)' }}>{t("Météo non configurée")}</div>
         {editMode && (
           <button className="nd-btn nd-btn-accent text-xs px-3 py-1.5 h-auto mt-2" onClick={() => setSettingsModal({ open: true })}>
-            Configurer
+            {t("Configurer")}
           </button>
         )}
       </div>
@@ -163,7 +165,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
       {(!hideTitles || editMode) && (
         <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
           <Cloud size={12} style={{ color: 'var(--nd-accent)' }} />
-          Météo
+          {t("Météo")}
         </div>
       )}
 
@@ -202,7 +204,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
 
         {error ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--nd-red)', fontSize: '0.8rem', minHeight: '100px' }}>
-            Erreur de chargement de la météo
+            {t("Erreur de chargement de la météo")}
           </div>
         ) : weather ? (
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center' }}>
@@ -221,22 +223,22 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                         {Math.round(weather.current.temperature_2m)}°
                       </div>
                       <div style={{ fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginTop: 8, fontWeight: 500 }}>
-                        {getWeatherLabel(weather.current.weather_code)}
+                        {t(getWeatherLabel(weather.current.weather_code))}
                       </div>
                     </div>
                     {widgetStyle === 'currentOnly' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, borderLeft: '1px solid var(--nd-card-border)', paddingLeft: 48 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
                           <Thermometer size={18} className="text-blue-300" style={{ color: 'var(--nd-accent)' }} />
-                          Ressenti: {Math.round(weather.current.temperature_2m)}° (Min: {Math.round(weather.daily.temperature_2m_min[0])}° / Max: {Math.round(weather.daily.temperature_2m_max[0])}°)
+                          {t("Ressenti:")} {Math.round(weather.current.temperature_2m)}{t("° (Min:")} {Math.round(weather.daily.temperature_2m_min[0])}{t("° / Max:")} {Math.round(weather.daily.temperature_2m_max[0])}°)
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
                           <Wind size={18} className="text-gray-400" />
-                          Vent: {Math.round(weather.current.wind_speed_10m)} km/h
+                          {t("Vent:")} {Math.round(weather.current.wind_speed_10m)} km/h
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem', color: 'var(--nd-text-muted)' }}>
                           <Droplets size={18} className="text-blue-400" style={{ color: 'var(--nd-accent)' }} />
-                          Humidité: {weather.current.relative_humidity_2m}%
+                          {t("Humidité:")} {weather.current.relative_humidity_2m}%
                         </div>
                       </div>
                     )}
@@ -250,7 +252,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                             {Math.round(weather.current.temperature_2m)}°
                           </div>
                           <div style={{ fontSize: '0.95rem', color: 'var(--nd-text-muted)', marginTop: 6, fontWeight: 500 }}>
-                            {getWeatherLabel(weather.current.weather_code)}
+                            {t(getWeatherLabel(weather.current.weather_code))}
                           </div>
                         </div>
                         <div className="weather-glow" style={{ padding: 16, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
@@ -261,7 +263,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
                           <Thermometer size={16} className="text-blue-300" style={{ color: 'var(--nd-accent)' }} />
-                          Ressenti : {Math.round(weather.current.temperature_2m)}° (Min: {Math.round(weather.daily.temperature_2m_min[0])}° / Max: {Math.round(weather.daily.temperature_2m_max[0])}°)
+                          {t("Ressenti :")} {Math.round(weather.current.temperature_2m)}{t("° (Min:")} {Math.round(weather.daily.temperature_2m_min[0])}{t("° / Max:")} {Math.round(weather.daily.temperature_2m_max[0])}°)
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
@@ -282,12 +284,12 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                 {(widgetStyle === 'extended' || widgetStyle === 'default' || !widgetStyle) && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 32 }}>
                     <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 20 }}>
-                      Prévisions sur {widgetStyle === 'extended' ? '5' : '3'} jours
+                      {t('weather.forecastDays', { count: widgetStyle === 'extended' ? 5 : 3 })}
                     </h4>
                     <div style={{ display: 'grid', gridTemplateColumns: `repeat(${widgetStyle === 'extended' ? 5 : 3}, 1fr)`, gap: 16 }}>
                       {Array.from({length: widgetStyle === 'extended' ? 5 : 3}, (_, i) => i + 1).map((dayOffset) => {
                         const date = new Date(weather.daily.time[dayOffset]);
-                        const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                        const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
                         return (
                           <div key={dayOffset} style={{ 
                             display: 'flex', 
@@ -305,7 +307,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                             <span style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>{dayName}</span>
                             <AnimatedWeatherIcon code={weather.daily.weather_code[dayOffset]} size={32} />
                             <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--nd-text-muted)', marginTop: 4, textAlign: 'center', lineHeight: 1.2 }}>
-                              {getWeatherLabel(weather.daily.weather_code[dayOffset])}
+                              {t(getWeatherLabel(weather.daily.weather_code[dayOffset]))}
                             </span>
                             <div style={{ fontSize: '0.9rem', fontWeight: 700, display: 'flex', gap: 6, marginTop: 4 }}>
                               <span style={{ color: 'var(--nd-text)' }}>{Math.round(weather.daily.temperature_2m_max[dayOffset])}°</span>
@@ -333,7 +335,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                       {Math.round(weather.current.temperature_2m)}°
                     </div>
                     <div style={{ fontSize: '0.9rem', color: 'var(--nd-text-muted)', marginTop: 6, fontWeight: 500 }}>
-                      {getWeatherLabel(weather.current.weather_code)}
+                      {t(getWeatherLabel(weather.current.weather_code))}
                     </div>
                   </div>
                 </div>
@@ -343,7 +345,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                   <div style={{ display: 'flex', gap: 24, paddingLeft: 24, borderLeft: '1px solid var(--nd-card-border)' }}>
                     {Array.from({length: widgetStyle === 'extended' ? 4 : 3}, (_, i) => i + 1).map((dayOffset) => {
                       const date = new Date(weather.daily.time[dayOffset]);
-                      const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
                       return (
                         <div key={dayOffset} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                           <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--nd-text-muted)', fontWeight: 600 }}>{dayName}</span>
@@ -360,7 +362,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                 {widgetStyle === 'currentOnly' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 24, borderLeft: '1px solid var(--nd-card-border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
-                      <Thermometer size={14} className="text-blue-300" /> Ressenti: {Math.round(weather.current.temperature_2m)}°
+                      <Thermometer size={14} className="text-blue-300" /> {t("Ressenti:")} {Math.round(weather.current.temperature_2m)}°
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>
                       <Wind size={14} className="text-gray-400" /> {Math.round(weather.current.wind_speed_10m)} km/h
@@ -379,7 +381,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                       {Math.round(weather.current.temperature_2m)}°
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', marginTop: 4, fontWeight: 500 }}>
-                      {getWeatherLabel(weather.current.weather_code)}
+                      {t(getWeatherLabel(weather.current.weather_code))}
                     </div>
                   </div>
                   <div className="weather-glow" style={{ padding: 10, background: 'rgba(255,255,255,0.03)', borderRadius: '50%', boxShadow: getWeatherGlow(weather.current.weather_code) }}>
@@ -410,7 +412,7 @@ export default function WeatherWidget({ editMode, isVisible = true }: { editMode
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--nd-card-border)' }}>
                     {(widgetStyle === 'extended' ? [1, 2, 3, 4, 5] : [1, 2, 3]).map((dayOffset) => {
                       const date = new Date(weather.daily.time[dayOffset]);
-                      const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
                       return (
                         <div key={dayOffset} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                           <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--nd-text-muted)' }}>{dayName}</div>

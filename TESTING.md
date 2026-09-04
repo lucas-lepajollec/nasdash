@@ -1,8 +1,9 @@
 # Testing NasDash
 
-NasDash uses two complementary test layers:
+NasDash uses complementary static, unit, browser, and container validation layers:
 
 - `npm test` runs the fast unit and API contract suite with Vitest.
+- `npm run check:i18n` validates EN/FR/ES/DE key parity, placeholders and untranslated TSX copy.
 - `npm run test:e2e` starts an isolated NasDash instance and runs the critical browser paths with Playwright Chromium.
 - `npm run test:container -- <image>` verifies a built image, initial login, the non-root UID/GID and reuse of its persistent volume.
 

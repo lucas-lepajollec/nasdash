@@ -8,6 +8,7 @@ import EmojiPickerModal from '../../modals/EmojiPickerModal';
 import CustomSelect from '../../shared/CustomSelect';
 import { Emoji } from '../../shared/Emoji';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface TopologyMapProps {
   editMode: boolean;
@@ -426,6 +427,7 @@ function TopologyAnchor({ nodeId, corner, isParentHovered, onDragStart }: Topolo
 }
 
 export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMapProps) {
+  const { t } = useI18n();
   const { config, updateConfig, showSecretSections } = useConfig();
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null);
@@ -453,7 +455,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [showAddLink, setShowAddLink] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
-  
+
   // Element selections for editing/deletions
   const [editingNode, setEditingNode] = useState<NetworkNode | null>(null);
   const [editingGroup, setEditingGroup] = useState<NetworkGroup | null>(null);
@@ -626,10 +628,10 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
   // Resolve card size based on configuration or auto-detection
   const cardSizeSetting = config?.settings?.tabs?.networks?.cardSize || 'auto';
-  
+
   const resolvedCardSize = useMemo(() => {
     if (cardSizeSetting !== 'auto') return cardSizeSetting as 'standard' | 'compact' | 'mini';
-    
+
     // Auto-detection based on the number of services
     const serviceCount = topology.nodes.filter(n => n.type === 'stdsvc').length;
     if (serviceCount <= 8) return 'standard';
@@ -713,7 +715,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     const parentRect = innerRef.current.getBoundingClientRect();
     const newWidth = parentRect.width;
     const newHeight = parentRect.height;
-    
+
     setCanvasSize(prev => {
       if (prev.width === newWidth && prev.height === newHeight) return prev;
       return { width: newWidth, height: newHeight };
@@ -753,7 +755,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       const prevKeys = Object.keys(prev);
       const newKeys = Object.keys(newCoords);
       if (prevKeys.length !== newKeys.length) return newCoords;
-      
+
       const hasChanged = newKeys.some(key => {
         const p = prev[key];
         const n = newCoords[key];
@@ -930,7 +932,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   // Auto-import generator: creates nodes based on NasDash config
   const handleAutoImport = async (useHomeCategories: boolean) => {
     if (!config) return;
-    
+
     const nodes: NetworkNode[] = [];
     const groups: NetworkGroup[] = [];
     const connections: NetworkConnection[] = [];
@@ -952,11 +954,11 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     // 2. Import Devices as hosts
     const deviceMap = new Map<string, string>(); // NasDash deviceId -> Node Id
     const deviceIpMap = new Map<string, string>(); // Hostname/IP -> Node Id
-    
+
     (config.devices || []).forEach(d => {
       const nodeId = `auto-dev-${genId()}`;
       deviceMap.set(d.id, nodeId);
-      
+
       const ip = d.api?.ip || d.host || '';
       if (ip) {
         deviceIpMap.set(ip.trim(), nodeId);
@@ -982,7 +984,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
     // 3. Scan services to distinguish between Network Services and Standard Apps
     const netKeywords = ['pihole', 'pi-hole', 'adguard', 'tailscale', 'wireguard', 'vpn', 'dns', 'tunnel', 'cloudflare', 'traefik', 'proxy', 'nginx', 'npm'];
-    
+
     (config.categories || []).forEach(cat => {
       let groupStdId = '';
       let groupNetId = '';
@@ -1029,7 +1031,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         // Parse IP/Host if available
         let hostIp = '';
         let portNum: number | undefined;
-        
+
         if (svc.localUrl) {
           try {
             const urlObj = new URL(svc.localUrl.match(/^https?:\/\//i) ? svc.localUrl : `http://${svc.localUrl}`);
@@ -1087,7 +1089,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       if (groupNodeIds.length === 0) return;
 
       // Find all incoming connections from outside the group targeting nodes inside the group
-      const incoming = connections.filter(c => 
+      const incoming = connections.filter(c =>
         groupNodeIds.includes(c.toId) && !groupNodeIds.includes(c.fromId)
       );
 
@@ -1191,7 +1193,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     saveTopology(updated);
     setShowAddNode(false);
     setEditingNode(null);
-    
+
     // Reset form
     setNodeName('');
     setNodeType('stdsvc');
@@ -1240,7 +1242,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     let updatedConnections = [...topology.connections];
     if (mergeIncomingLinks) {
       // Find all incoming connections from outside the group targeting nodes inside the group
-      const incoming = topology.connections.filter(c => 
+      const incoming = topology.connections.filter(c =>
         selectedNodeIds.includes(c.toId) && !selectedNodeIds.includes(c.fromId)
       );
 
@@ -1369,7 +1371,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
     topology.connections.forEach((conn) => {
       if (
-        conn.fromId === hoveredNodeId || 
+        conn.fromId === hoveredNodeId ||
         conn.toId === hoveredNodeId ||
         (gId && (conn.fromId === gId || conn.toId === gId))
       ) {
@@ -1467,7 +1469,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
     let x1 = fromCoord.x;
     let y1 = fromCoord.y;
-    
+
     if (draggingConn.fromCorner === 'top') {
       x1 += fromCoord.width / 2;
     } else if (draggingConn.fromCorner === 'bottom') {
@@ -1961,11 +1963,11 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                 style={{ opacity: 0.8, pointerEvents: 'none' }}
               />
             )}
-            
+
             <path
               d={pathData}
               fill="none"
-              style={{ 
+              style={{
                 transition: 'stroke 0.2s, stroke-width 0.2s',
                 pointerEvents: 'none',
                 ...strokeStyle
@@ -2005,8 +2007,8 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             fill="none"
             stroke="transparent"
             strokeWidth="12"
-            style={{ 
-              cursor: 'pointer', 
+            style={{
+              cursor: 'pointer',
               pointerEvents: 'stroke'
             }}
             onMouseEnter={() => setHoveredConnectionId(conn.id)}
@@ -2029,12 +2031,12 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
   // Node Component Renderer
   const renderNodeCard = (n: NetworkNode) => {
-    const isHighlighted = (hoveredNodeId ? highlightedNodeIds.has(n.id) : false) || 
+    const isHighlighted = (hoveredNodeId ? highlightedNodeIds.has(n.id) : false) ||
       (dragOverId === n.id) ||
       (hoveredConnectionId ? (() => {
         const conn = topology.connections.find(c => c.id === hoveredConnectionId);
         if (!conn) return false;
-        return conn.fromId === n.id || conn.toId === n.id || 
+        return conn.fromId === n.id || conn.toId === n.id ||
                (n.groupId && (conn.fromId === n.groupId || conn.toId === n.groupId));
       })() : false);
     const isDimmed = (hoveredNodeId || hoveredConnectionId) ? !isHighlighted : false;
@@ -2047,18 +2049,18 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       if (count <= 12) return 'compact';
       return 'mini';
     })();
-    
+
     const typeColors = {
       infra: 'var(--nd-accent)',
       device: '#9b5de5', // Professional violet
       netsvc: '#f15bb5', // Professional magenta/orange
       stdsvc: 'rgba(255, 255, 255, 0.15)' // Semi-transparent clean gray
     };
-    
-    const borderColor = isHighlighted 
-      ? 'var(--nd-accent)' 
+
+    const borderColor = isHighlighted
+      ? 'var(--nd-accent)'
       : 'var(--nd-card-border)';
-      
+
     const borderLeftColor = isHighlighted
       ? 'var(--nd-accent)'
       : typeColors[n.type];
@@ -2140,34 +2142,34 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
       >
         <span style={{ fontSize: iconSize, flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji={n.icon} /></span>
         <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', justifyContent: 'center' }}>
-          <div 
-            style={{ 
-              fontSize: nameFontSize, 
-              fontWeight: 700, 
-              color: 'var(--nd-text)', 
+          <div
+            style={{
+              fontSize: nameFontSize,
+              fontWeight: 700,
+              color: 'var(--nd-text)',
               width: '100%',
-              overflow: 'hidden', 
-              textOverflow: 'ellipsis', 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               lineHeight: 1.2
-            }} 
+            }}
             title={n.name}
           >
             {n.name}
           </div>
           {size !== 'mini' && showSensitive && n.ip ? (
-            <div 
-              style={{ 
-                fontSize: ipFontSize, 
-                color: 'var(--nd-text-muted)', 
-                fontFamily: 'monospace', 
+            <div
+              style={{
+                fontSize: ipFontSize,
+                color: 'var(--nd-text-muted)',
+                fontFamily: 'monospace',
                 width: '100%',
-                overflow: 'hidden', 
-                textOverflow: 'ellipsis', 
-                whiteSpace: 'nowrap', 
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
                 marginTop: 1,
                 lineHeight: 1
-              }} 
+              }}
               title={`${n.ip}${n.ports && n.ports.length > 0 ? `:${n.ports[0]}` : ''}`}
             >
               {n.ip}
@@ -2198,7 +2200,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
     const isGroupDimmed = (hoveredNodeId || hoveredConnectionId) ? !isGroupHighlighted : false;
 
     return (
-      <div 
+      <div
         key={g.id}
         id={`group-box-${g.id}`}
         data-group-id={g.id}
@@ -2214,12 +2216,12 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           }
         }}
         style={{
-          border: isGroupHighlighted 
-            ? '1px solid var(--nd-accent)' 
+          border: isGroupHighlighted
+            ? '1px solid var(--nd-accent)'
             : '1px dashed rgba(255,255,255,0.15)',
           borderRadius: 'var(--nd-card-radius)',
-          background: isGroupHighlighted 
-            ? 'var(--nd-accent-glow)' 
+          background: isGroupHighlighted
+            ? 'var(--nd-accent-glow)'
             : 'rgba(0,0,0,0.1)',
           padding: '14px 12px 14px',
           display: 'flex',
@@ -2233,20 +2235,20 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           cursor: editMode ? 'pointer' : 'default'
         }}
       >
-        <div 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             height: 16
           }}
         >
-          <span 
-            style={{ 
-              fontSize: '0.62rem', 
-              fontWeight: 700, 
-              textTransform: 'uppercase', 
-              letterSpacing: 0.5, 
+          <span
+            style={{
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: 0.5,
               color: isGroupHighlighted ? 'var(--nd-accent)' : 'var(--nd-text-muted)',
               borderBottom: editMode ? '1px dashed rgba(255, 255, 255, 0.25)' : 'none',
               display: 'inline-flex',
@@ -2254,15 +2256,15 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               gap: 4,
               transition: 'color 0.25s ease'
             }}
-            title={editMode ? "Cliquer pour modifier/supprimer le groupe" : undefined}
+            title={editMode ? t("Cliquer pour modifier/supprimer le groupe") : undefined}
           >
             {g.name}
             {editMode && <Edit3 size={8} style={{ opacity: 0.6 }} />}
           </span>
         </div>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))',
           gap: 10,
           width: '100%',
           minHeight: (groupedNodes[g.id] && groupedNodes[g.id].length > 0) ? 0 : 36,
@@ -2272,7 +2274,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           {(!groupedNodes[g.id] || groupedNodes[g.id].length === 0) && (
             <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>
-                Groupe vide
+                {t("Groupe vide")}
               </span>
             </div>
           )}
@@ -2292,17 +2294,17 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
   const renderColumn = (colType: 'infra' | 'device' | 'netsvc' | 'stdsvc') => {
     const colInfo = {
-      infra: { title: 'Infrastructure', desc: 'Box, switchs, routeurs' },
-      device: { title: 'Machines / Hôtes', desc: 'Serveurs, NAS, hyperviseurs' },
-      netsvc: { title: 'Services Réseau', desc: 'DNS, AdBlock, VPN, tunnels' },
-      stdsvc: { title: 'Applications', desc: 'Jellyfin, Nextcloud, etc.' }
+      infra: { title: t('Infrastructure'), desc: t('Box, switchs, routeurs') },
+      device: { title: t("Machines / Hôtes"), desc: t('Serveurs, NAS, hyperviseurs') },
+      netsvc: { title: t("Services Réseau"), desc: t('DNS, AdBlock, VPN, tunnels') },
+      stdsvc: { title: t('Applications'), desc: t('Jellyfin, Nextcloud, etc.') }
     }[colType];
 
     const categorized = getCategorized(colType);
 
     return (
-      <div 
-        key={colType} 
+      <div
+        key={colType}
         className="nd-topology-col"
         style={{
           flex: 1,
@@ -2314,10 +2316,10 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         }}
       >
         {/* Column Header */}
-        <div style={{ 
-          borderBottom: '1px solid var(--nd-card-border)', 
-          paddingBottom: 6, 
-          marginBottom: 4, 
+        <div style={{
+          borderBottom: '1px solid var(--nd-card-border)',
+          paddingBottom: 6,
+          marginBottom: 4,
           pointerEvents: 'auto',
           display: 'flex',
           alignItems: 'baseline',
@@ -2334,9 +2336,9 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         {/* Grouped items */}
         {categorized.groups.length > 0 && (
           colType === 'stdsvc' ? (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobileLayout ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))', 
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobileLayout ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))',
               gap: 16,
               width: '100%',
               pointerEvents: 'none'
@@ -2352,9 +2354,9 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
         {/* Ungrouped items */}
         {categorized.ungroupedNodes.length > 0 && (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))', 
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))',
             gap: 12,
             width: '100%',
             pointerEvents: 'auto'
@@ -2366,7 +2368,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
         {/* Column Empty State */}
         {categorized.groups.length === 0 && categorized.ungroupedNodes.length === 0 && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 80, border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', background: 'rgba(255,255,255,0.01)', pointerEvents: 'auto', position: 'relative' }}>
-            <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)' }}>Vide</span>
+            <span style={{ fontSize: '0.62rem', color: 'var(--nd-text-dimmed)' }}>{t("Vide")}</span>
           </div>
         )}
       </div>
@@ -2375,36 +2377,36 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
-      
+
       {/* Empty state importer trigger */}
       {topology.nodes.length === 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '0 4px', marginBottom: 12 }}>
-          <button 
-            className="nd-btn" 
+          <button
+            className="nd-btn"
             onClick={() => {
               setAutoImportGroupCategories(true);
               setShowAutoImportModal(true);
-            }} 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 6, 
-              padding: '6px 12px', 
-              fontSize: '0.72rem', 
-              borderColor: 'var(--nd-accent)', 
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              fontSize: '0.72rem',
+              borderColor: 'var(--nd-accent)',
               background: 'var(--nd-accent-glow)',
               color: 'var(--nd-accent)',
               fontWeight: 700
             }}
           >
             <Sparkles size={13} />
-            <span>Générer la carte automatiquement</span>
+            <span>{t("Générer la carte automatiquement")}</span>
           </button>
         </div>
       )}
 
       {/* Main Map Canvas */}
-      <div 
+      <div
         ref={containerRef}
         className="nd-topology-canvas"
         style={{
@@ -2431,15 +2433,15 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           }}
         >
           {/* Dynamic connection lines overlay */}
-          <svg 
-            style={{ 
-              position: 'absolute', 
-              top: 0, 
-              left: 0, 
-              width: '100%', 
-              height: '100%', 
-              pointerEvents: 'none', 
-              zIndex: -1 
+          <svg
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: -1
             }}
           >
             <defs>
@@ -2481,15 +2483,15 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
           {/* Interaction/Click targets (On top) */}
           {editMode && (
-            <svg 
-              style={{ 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                width: '100%', 
-                height: '100%', 
-                pointerEvents: 'none', 
-                zIndex: 2 
+            <svg
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 2
               }}
             >
               {renderConnectionLines(false)}
@@ -2503,26 +2505,26 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {(showAddNode || editingNode) && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && (editingNode ? setEditingNode(null) : setShowAddNode(false))}>
-          <div ref={nodeDialogRef} role="dialog" aria-modal="true" aria-label={editingNode ? 'Modifier le nœud' : 'Ajouter un nœud topologique'} tabIndex={-1} className="nd-modal" style={{ maxWidth: 420, overflow: 'visible' }}>
+          <div ref={nodeDialogRef} role="dialog" aria-modal="true" aria-label={editingNode ? t("Modifier le nœud") : t("Ajouter un nœud topologique")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 420, overflow: 'visible' }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
               {editingNode ? <Edit3 size={16} /> : <Plus size={16} />}
-              <span>{editingNode ? 'Modifier le nœud' : 'Ajouter un nœud topologique'}</span>
+              <span>{editingNode ? t("Modifier le nœud") : t("Ajouter un nœud topologique")}</span>
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              
+
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
-                  <label className="nd-label">Nom du Nœud</label>
+                  <label className="nd-label">{t("Nom du Nœud")}</label>
                   <input
                     className="nd-input"
                     style={{ width: '100%', height: 38, boxSizing: 'border-box' }}
                     value={nodeName}
                     onChange={e => setNodeName(e.target.value)}
-                    placeholder="Ex: Proxmox Hypervisor, DNS local..."
+                    placeholder={t("Ex: Proxmox Hypervisor, DNS local...")}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                  <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>Icône</label>
+                  <label className="nd-label" style={{ whiteSpace: 'nowrap', margin: 0, marginBottom: 6 }}>{t("Icône")}</label>
                   <button
                     onClick={() => setShowIconPicker(true)}
                     style={{
@@ -2544,7 +2546,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                     }}
                     className="nd-btn-hover-glow"
                     type="button"
-                    title="Choisir une icône"
+                    title={t("Choisir une icône")}
                   >
                     <Emoji emoji={nodeIcon || '📦'} />
                   </button>
@@ -2552,37 +2554,37 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               </div>
 
               <div>
-                <label className="nd-label">Type / Catégorie</label>
+                <label className="nd-label">{t("Type / Catégorie")}</label>
                 <CustomSelect
                   value={nodeType}
                   onChange={(val) => setNodeType(val as any)}
                   options={[
-                    { value: 'infra', label: 'Infrastructure' },
-                    { value: 'device', label: 'Machines / Hôtes' },
-                    { value: 'netsvc', label: 'Services Réseau' },
-                    { value: 'stdsvc', label: 'Applications' }
+                    { value: 'infra', label: t('Infrastructure') },
+                    { value: 'device', label: t("Machines / Hôtes") },
+                    { value: 'netsvc', label: t("Services Réseau") },
+                    { value: 'stdsvc', label: t('Applications') }
                   ]}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 8 }}>
                 <div>
-                  <label className="nd-label">Adresse IP</label>
-                  <input className="nd-input" value={nodeIp} onChange={e => setNodeIp(e.target.value)} placeholder="Ex: 192.168.1.100" />
+                  <label className="nd-label">{t("Adresse IP")}</label>
+                  <input className="nd-input" value={nodeIp} onChange={e => setNodeIp(e.target.value)} placeholder={t("Ex: 192.168.1.100")} />
                 </div>
                 <div>
-                  <label className="nd-label">Port(s) (sép. virgule)</label>
-                  <input className="nd-input" value={nodePorts} onChange={e => setNodePorts(e.target.value)} placeholder="Ex: 80, 443" />
+                  <label className="nd-label">{t("Port(s) (sép. virgule)")}</label>
+                  <input className="nd-input" value={nodePorts} onChange={e => setNodePorts(e.target.value)} placeholder={t("Ex: 80, 443")} />
                 </div>
               </div>
 
               <div>
-                <label className="nd-label">Associer à un groupe (sous-catégorie)</label>
+                <label className="nd-label">{t("Associer à un groupe (sous-catégorie)")}</label>
                 <CustomSelect
                   value={nodeGroupId}
                   onChange={setNodeGroupId}
                   options={[
-                    { value: '', label: '-- Aucun groupe --' },
+                    { value: '', label: t("-- Aucun groupe --") },
                     ...topology.groups.filter(g => g.type === nodeType).map(g => ({ value: g.id, label: g.name }))
                   ]}
                 />
@@ -2590,7 +2592,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, borderTop: '1px solid var(--nd-card-border)', paddingTop: 10 }}>
                 <div>
-                  <label className="nd-label">Lier Appareil NasDash</label>
+                  <label className="nd-label">{t("Lier Appareil NasDash")}</label>
                   <CustomSelect
                     value={linkedDeviceId}
                     onChange={(val) => {
@@ -2604,13 +2606,13 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                       }
                     }}
                     options={[
-                      { value: '', label: '-- Aucun --' },
+                      { value: '', label: t("-- Aucun --") },
                       ...(config?.devices || []).map(d => ({ value: d.id, label: d.name }))
                     ]}
                   />
                 </div>
                 <div>
-                  <label className="nd-label">Lier Service NasDash</label>
+                  <label className="nd-label">{t("Lier Service NasDash")}</label>
                   <CustomSelect
                     value={linkedServiceId}
                     onChange={(val) => {
@@ -2630,7 +2632,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                       }
                     }}
                     options={[
-                      { value: '', label: '-- Aucun --' },
+                      { value: '', label: t("-- Aucun --") },
                       ...config?.categories.flatMap(c => c.services).map(s => ({ value: s.id, label: s.name })) || []
                     ]}
                   />
@@ -2639,19 +2641,19 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
                 {editingNode && (
-                  <button 
-                    className="nd-btn" 
+                  <button
+                    className="nd-btn"
                     style={{ background: 'var(--nd-red)', color: '#fff', borderColor: 'var(--nd-red)', marginRight: 'auto' }}
                     onClick={() => {
                       setPendingDeleteNode(editingNode);
                       setEditingNode(null);
                     }}
                   >
-                    Supprimer
+                    {t("Supprimer")}
                   </button>
                 )}
-                <button className="nd-btn" onClick={() => editingNode ? setEditingNode(null) : setShowAddNode(false)}>Annuler</button>
-                <button className="nd-btn nd-btn-accent" onClick={handleCreateNode}>{editingNode ? 'Enregistrer' : 'Ajouter'}</button>
+                <button className="nd-btn" onClick={() => editingNode ? setEditingNode(null) : setShowAddNode(false)}>{t("Annuler")}</button>
+                <button className="nd-btn nd-btn-accent" onClick={handleCreateNode}>{editingNode ? t("Enregistrer") : t("Ajouter")}</button>
               </div>
 
             </div>
@@ -2665,17 +2667,17 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {(showAddGroup || editingGroup) && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && (editingGroup ? setEditingGroup(null) : setShowAddGroup(false))}>
-          <div ref={groupDialogRef} role="dialog" aria-modal="true" aria-label={editingGroup ? 'Modifier le groupe' : 'Créer un groupe de nœuds'} tabIndex={-1} className="nd-modal" style={{ maxWidth: 360, overflow: 'visible' }}>
+          <div ref={groupDialogRef} role="dialog" aria-modal="true" aria-label={editingGroup ? t("Modifier le groupe") : t("Créer un groupe de nœuds")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 360, overflow: 'visible' }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>
-              {editingGroup ? 'Modifier le groupe' : 'Créer un groupe de nœuds'}
+              {editingGroup ? t("Modifier le groupe") : t("Créer un groupe de nœuds")}
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label className="nd-label">Nom du groupe</label>
-                <input className="nd-input" value={groupName} onChange={e => setGroupName(e.target.value)} placeholder="Ex: Grappe PVE, Cluster Docker..." />
+                <label className="nd-label">{t("Nom du groupe")}</label>
+                <input className="nd-input" value={groupName} onChange={e => setGroupName(e.target.value)} placeholder={t("Ex: Grappe PVE, Cluster Docker...")} />
               </div>
               <div>
-                <label className="nd-label">Colonne / Catégorie cible</label>
+                <label className="nd-label">{t("Colonne / Catégorie cible")}</label>
                 <CustomSelect
                   value={groupType}
                   onChange={(val) => {
@@ -2683,29 +2685,29 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                     setSelectedNodeIds([]); // Reset selections if group category changes
                   }}
                   options={[
-                    { value: 'infra', label: 'Infrastructure' },
-                    { value: 'device', label: 'Machines / Hôtes' },
-                    { value: 'netsvc', label: 'Services Réseau' },
-                    { value: 'stdsvc', label: 'Applications' }
+                    { value: 'infra', label: t('Infrastructure') },
+                    { value: 'device', label: t("Machines / Hôtes") },
+                    { value: 'netsvc', label: t("Services Réseau") },
+                    { value: 'stdsvc', label: t('Applications') }
                   ]}
                 />
               </div>
 
               <div>
-                <label className="nd-label">Nœuds à inclure dans ce groupe</label>
+                <label className="nd-label">{t("Nœuds à inclure dans ce groupe")}</label>
                 <div style={{ maxHeight: 150, overflowY: 'auto', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: 6, display: 'flex', flexDirection: 'column', gap: 4, background: 'rgba(0,0,0,0.15)' }}>
                   {topology.nodes.filter(n => n.type === groupType).length === 0 ? (
                     <div style={{ fontSize: '0.65rem', color: 'var(--nd-text-dimmed)', padding: '8px 4px', textAlign: 'center' }}>
-                      Aucun nœud dans cette catégorie
+                      {t("Aucun nœud dans cette catégorie")}
                     </div>
                   ) : (
                     topology.nodes.filter(n => n.type === groupType).map(n => {
                       const isSelected = selectedNodeIds.includes(n.id);
                       return (
-                        <div 
+                        <div
                           key={n.id}
                           onClick={() => {
-                            setSelectedNodeIds(prev => 
+                            setSelectedNodeIds(prev =>
                               prev.includes(n.id) ? prev.filter(id => id !== n.id) : [...prev, n.id]
                             );
                           }}
@@ -2748,12 +2750,12 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               </div>
 
               {selectedNodeIds.length > 0 && (
-                <div 
+                <div
                   onClick={() => setMergeIncomingLinks(!mergeIncomingLinks)}
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 8, 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
                     cursor: 'pointer',
                     padding: '8px 10px',
                     borderRadius: 'var(--nd-card-radius)',
@@ -2765,7 +2767,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                   onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--nd-accent)'}
                   onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--nd-card-border)'}
                 >
-                  <div 
+                  <div
                     style={{
                       width: 14,
                       height: 14,
@@ -2785,10 +2787,10 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--nd-text)' }}>
-                      Consolider les liaisons entrantes vers le groupe
+                      {t("Consolider les liaisons entrantes vers le groupe")}
                     </span>
                     <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', lineHeight: 1.2 }}>
-                      Redirige les connexions arrivant sur les éléments de ce groupe vers le groupe lui-même en les fusionnant (ex: ports multiples).
+                      {t("Redirige les connexions arrivant sur les éléments de ce groupe vers le groupe lui-même en les fusionnant (ex: ports multiples).")}
                     </span>
                   </div>
                 </div>
@@ -2796,19 +2798,19 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
                 {editingGroup && (
-                  <button 
-                    className="nd-btn" 
+                  <button
+                    className="nd-btn"
                     style={{ background: 'var(--nd-red)', color: '#fff', borderColor: 'var(--nd-red)', marginRight: 'auto' }}
                     onClick={() => {
                       setPendingDeleteGroup(editingGroup);
                       setEditingGroup(null);
                     }}
                   >
-                    Supprimer
+                    {t("Supprimer")}
                   </button>
                 )}
-                <button className="nd-btn" onClick={() => editingGroup ? setEditingGroup(null) : setShowAddGroup(false)}>Annuler</button>
-                <button className="nd-btn nd-btn-accent" onClick={handleCreateGroup}>{editingGroup ? 'Enregistrer' : 'Créer'}</button>
+                <button className="nd-btn" onClick={() => editingGroup ? setEditingGroup(null) : setShowAddGroup(false)}>{t("Annuler")}</button>
+                <button className="nd-btn nd-btn-accent" onClick={handleCreateGroup}>{editingGroup ? t("Enregistrer") : t("Créer")}</button>
               </div>
             </div>
           </div>
@@ -2821,10 +2823,10 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {(showAddLink || editingConnection) && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && (editingConnection ? setEditingConnection(null) : setShowAddLink(false))}>
-          <div ref={connectionDialogRef} role="dialog" aria-modal="true" aria-label={editingConnection ? 'Modifier la liaison' : 'Nouvelle liaison réseau'} tabIndex={-1} className="nd-modal" style={{ maxWidth: 460, overflow: 'visible' }}>
+          <div ref={connectionDialogRef} role="dialog" aria-modal="true" aria-label={editingConnection ? t("Modifier la liaison") : t("Nouvelle liaison réseau")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 460, overflow: 'visible' }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 6 }}>
               <ArrowRight size={16} style={{ color: 'var(--nd-accent)' }} />
-              <span>{editingConnection ? 'Modifier la liaison' : 'Nouvelle liaison réseau'}</span>
+              <span>{editingConnection ? t("Modifier la liaison") : t("Nouvelle liaison réseau")}</span>
             </h3>
 
             {/* Visual flow indicator */}
@@ -2857,7 +2859,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                         <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fromLabel}</span>
                       </>
                     ) : (
-                      <span style={{ fontSize: '0.6', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>Source ?</span>
+                      <span style={{ fontSize: '0.6', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>{t("Source ?")}</span>
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0, color: 'var(--nd-accent)' }}>
@@ -2876,38 +2878,38 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                         <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{toLabel}</span>
                       </>
                     ) : (
-                      <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>Cible ?</span>
+                      <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', fontStyle: 'italic' }}>{t("Cible ?")}</span>
                     )}
                   </div>
                 </div>
               );
             })()}
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              
+
               {/* Source & Target */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="nd-label">Source (Départ)</label>
+                  <label className="nd-label">{t("Source (Départ)")}</label>
                   <CustomSelect
                     value={linkFrom}
                     onChange={setLinkFrom}
                     disabled={!!editingConnection}
                     options={[
-                      { value: '', label: '-- Sélectionner --' },
+                      { value: '', label: t("-- Sélectionner --") },
                       ...topology.nodes.map(n => ({ value: n.id, label: `${n.icon} ${n.name}` })),
                       ...topology.groups.map(g => ({ value: g.id, label: `📦 ${g.name}` }))
                     ]}
                   />
                 </div>
                 <div>
-                  <label className="nd-label">Cible (Arrivée)</label>
+                  <label className="nd-label">{t("Cible (Arrivée)")}</label>
                   <CustomSelect
                     value={linkTo}
                     onChange={setLinkTo}
                     disabled={!!editingConnection}
                     options={[
-                      { value: '', label: '-- Sélectionner --' },
+                      { value: '', label: t("-- Sélectionner --") },
                       ...topology.nodes.filter(n => n.id !== linkFrom).map(n => ({ value: n.id, label: `${n.icon} ${n.name}` })),
                       ...topology.groups.filter(g => g.id !== linkFrom).map(g => ({ value: g.id, label: `📦 ${g.name}` }))
                     ]}
@@ -2918,65 +2920,65 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               {/* Label & Direction */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="nd-label">Libellé (optionnel)</label>
-                  <input 
-                    className="nd-input" 
-                    style={{ height: 38, boxSizing: 'border-box' }} 
-                    value={linkLabel} 
-                    onChange={e => setLinkLabel(e.target.value)} 
-                    placeholder="Ex: 443, HTTP, Tunnel..." 
+                  <label className="nd-label">{t("Libellé (optionnel)")}</label>
+                  <input
+                    className="nd-input"
+                    style={{ height: 38, boxSizing: 'border-box' }}
+                    value={linkLabel}
+                    onChange={e => setLinkLabel(e.target.value)}
+                    placeholder={t("Ex: 443, HTTP, Tunnel...")}
                   />
                 </div>
                 <div>
-                  <label className="nd-label">Type de flux</label>
+                  <label className="nd-label">{t("Type de flux")}</label>
                   <CustomSelect
                     value={linkDir}
                     onChange={(val) => setLinkDir(val as any)}
                     options={[
-                      { value: 'directional', label: 'Directionnel →' },
-                      { value: 'bidirectional', label: 'Bidirectionnel ↔' }
+                      { value: 'directional', label: t("Directionnel →") },
+                      { value: 'bidirectional', label: t("Bidirectionnel ↔") }
                     ]}
                   />
                 </div>
               </div>
 
               {/* Port attachment points */}
-              <div style={{ 
-                borderTop: '1px solid var(--nd-card-border)', 
+              <div style={{
+                borderTop: '1px solid var(--nd-card-border)',
                 paddingTop: 12,
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: 12 
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 12
               }}>
                 <div>
                   <label className="nd-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    Point d'attache source
+                    {t("Point d'attache source")}
                   </label>
                   <CustomSelect
                     value={linkFromPort}
                     onChange={(val) => setLinkFromPort(val as any)}
                     options={[
-                      { value: 'auto', label: 'Auto' },
-                      { value: 'top', label: '↑ Haut' },
-                      { value: 'right', label: '→ Droite' },
-                      { value: 'bottom', label: '↓ Bas' },
-                      { value: 'left', label: '← Gauche' }
+                      { value: 'auto', label: t("Auto") },
+                      { value: 'top', label: t("↑ Haut") },
+                      { value: 'right', label: t("→ Droite") },
+                      { value: 'bottom', label: t("↓ Bas") },
+                      { value: 'left', label: t("← Gauche") }
                     ]}
                   />
                 </div>
                 <div>
                   <label className="nd-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    Point d'attache cible
+                    {t("Point d'attache cible")}
                   </label>
                   <CustomSelect
                     value={linkToPort}
                     onChange={(val) => setLinkToPort(val as any)}
                     options={[
-                      { value: 'auto', label: 'Auto' },
-                      { value: 'top', label: '↑ Haut' },
-                      { value: 'right', label: '→ Droite' },
-                      { value: 'bottom', label: '↓ Bas' },
-                      { value: 'left', label: '← Gauche' }
+                      { value: 'auto', label: t("Auto") },
+                      { value: 'top', label: t("↑ Haut") },
+                      { value: 'right', label: t("→ Droite") },
+                      { value: 'bottom', label: t("↓ Bas") },
+                      { value: 'left', label: t("← Gauche") }
                     ]}
                   />
                 </div>
@@ -2985,19 +2987,19 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               {/* Actions */}
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4, borderTop: '1px solid var(--nd-card-border)', paddingTop: 14 }}>
                 {editingConnection && (
-                  <button 
-                    className="nd-btn" 
+                  <button
+                    className="nd-btn"
                     style={{ background: 'var(--nd-red)', color: '#fff', borderColor: 'var(--nd-red)', marginRight: 'auto' }}
                     onClick={() => {
                       handleDeleteConnection(editingConnection.id);
                       setEditingConnection(null);
                     }}
                   >
-                    Supprimer
+                    {t("Supprimer")}
                   </button>
                 )}
-                <button 
-                  className="nd-btn" 
+                <button
+                  className="nd-btn"
                   onClick={() => {
                     if (editingConnection) setEditingConnection(null);
                     else setShowAddLink(false);
@@ -3009,14 +3011,14 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                     setLinkToPort('auto');
                   }}
                 >
-                  Annuler
+                  {t("Annuler")}
                 </button>
-                <button 
-                  className="nd-btn nd-btn-accent" 
-                  onClick={handleCreateLink} 
+                <button
+                  className="nd-btn nd-btn-accent"
+                  onClick={handleCreateLink}
                   disabled={!linkFrom || !linkTo}
                 >
-                  {editingConnection ? 'Enregistrer' : 'Créer la liaison'}
+                  {editingConnection ? t("Enregistrer") : t("Créer la liaison")}
                 </button>
               </div>
 
@@ -3034,10 +3036,10 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           isOpen={!!pendingDeleteNode}
           onClose={() => setPendingDeleteNode(null)}
           onConfirm={() => handleDeleteNode(pendingDeleteNode.id)}
-          title="Supprimer le nœud ?"
-          description={`Êtes-vous sûr de vouloir supprimer définitivement le nœud "${pendingDeleteNode.name}" ? Toutes ses liaisons seront également supprimées.`}
-          confirmLabel="Supprimer"
-          cancelLabel="Annuler"
+          title={t("Supprimer le nœud ?")}
+          description={t('confirm.nodeDelete', { name: pendingDeleteNode.name })}
+          confirmLabel={t("Supprimer")}
+          cancelLabel={t("Annuler")}
         />
       )}
 
@@ -3046,10 +3048,10 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
           isOpen={!!pendingDeleteGroup}
           onClose={() => setPendingDeleteGroup(null)}
           onConfirm={() => handleDeleteGroup(pendingDeleteGroup.id)}
-          title="Supprimer le groupe ?"
-          description={`Êtes-vous sûr de vouloir supprimer le groupe "${pendingDeleteGroup.name}" ? Les nœuds à l'intérieur ne seront pas supprimés, ils seront simplement sortis du groupe.`}
-          confirmLabel="Supprimer le groupe"
-          cancelLabel="Annuler"
+          title={t("Supprimer le groupe ?")}
+          description={t('confirm.groupDelete', { name: pendingDeleteGroup.name })}
+          confirmLabel={t("Supprimer le groupe")}
+          cancelLabel={t("Annuler")}
         />
       )}
 
@@ -3070,22 +3072,22 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
          ====================================================================== */}
       {showAutoImportModal && mounted && typeof document !== 'undefined' && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && setShowAutoImportModal(false)}>
-          <div ref={autoImportDialogRef} role="dialog" aria-modal="true" aria-label="Générer la carte réseau automatiquement" tabIndex={-1} className="nd-modal" style={{ maxWidth: 380 }}>
+          <div ref={autoImportDialogRef} role="dialog" aria-modal="true" aria-label={t("Générer la carte réseau automatiquement")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 380 }}>
             <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
               <Sparkles size={16} style={{ color: 'var(--nd-accent)' }} />
-              <span>Générer la carte réseau automatiquement ?</span>
+              <span>{t("Générer la carte réseau automatiquement ?")}</span>
             </h3>
             <p style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)', marginBottom: 16, lineHeight: 1.4 }}>
-              NasDash va analyser vos appareils et services configurés pour créer automatiquement votre cartographie topologique de départ.
+              {t("NasDash va analyser vos appareils et services configurés pour créer automatiquement votre cartographie topologique de départ.")}
             </p>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18 }}>
-              <div 
+              <div
                 onClick={() => setAutoImportGroupCategories(!autoImportGroupCategories)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8, 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
                   cursor: 'pointer',
                   padding: '8px 10px',
                   borderRadius: 'var(--nd-card-radius)',
@@ -3096,7 +3098,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                 onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--nd-accent)'}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--nd-card-border)'}
               >
-                <div 
+                <div
                   style={{
                     width: 14,
                     height: 14,
@@ -3116,25 +3118,25 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--nd-text)' }}>
-                    Regrouper par catégories du Dashboard
+                    {t("Regrouper par catégories du Dashboard")}
                   </span>
                   <span style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)' }}>
-                    Crée automatiquement des groupes basés sur vos catégories d'applications de l'onglet Accueil.
+                    {t("Crée automatiquement des groupes basés sur vos catégories d'applications de l'onglet Accueil.")}
                   </span>
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="nd-btn" onClick={() => setShowAutoImportModal(false)}>Annuler</button>
-              <button 
-                className="nd-btn nd-btn-accent" 
+              <button className="nd-btn" onClick={() => setShowAutoImportModal(false)}>{t("Annuler")}</button>
+              <button
+                className="nd-btn nd-btn-accent"
                 onClick={async () => {
                   setShowAutoImportModal(false);
                   await handleAutoImport(autoImportGroupCategories);
                 }}
               >
-                Générer
+                {t("Générer")}
               </button>
             </div>
           </div>

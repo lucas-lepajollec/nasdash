@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Activity, X, Cpu, HardDrive, Wifi, BarChart3, Clock, Layers } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface PerfMetrics {
   fps: number;
@@ -52,6 +53,7 @@ function interceptFetch() {
 }
 
 export default function PerfMonitor() {
+  const { t, locale } = useI18n();
   const { config } = useConfig();
   const [isOpen, setIsOpen] = useState(false);
   const [metrics, setMetrics] = useState<PerfMetrics>({
@@ -120,8 +122,8 @@ export default function PerfMonitor() {
 
       if (isOpen) {
         setHistory(prev => {
-          const t = new Date().toLocaleTimeString('fr-FR', { second: '2-digit', minute: '2-digit' });
-          const next = [...prev, { fps, mem: memoryUsed, time: t }];
+          const time = new Date().toLocaleTimeString(locale, { second: '2-digit', minute: '2-digit' });
+          const next = [...prev, { fps, mem: memoryUsed, time }];
           return next.slice(-30);
         });
       }
@@ -129,7 +131,7 @@ export default function PerfMonitor() {
 
     frameCountRef.current++;
     animFrameRef.current = requestAnimationFrame(measure);
-  }, [isOpen]);
+  }, [isOpen, locale]);
 
   useEffect(() => {
     if (isOpen) {
@@ -163,7 +165,7 @@ export default function PerfMonitor() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        title="Performance Monitor"
+        title={t("Performance Monitor")}
         style={{
           position: 'fixed', bottom: 16, right: 16, zIndex: 99999,
           width: 36, height: 36, borderRadius: '50%',
@@ -185,11 +187,11 @@ export default function PerfMonitor() {
 
   const statItems = [
     { icon: <BarChart3 size={12} />, label: 'FPS', value: `${metrics.fps}`, color: getFpsColor(metrics.fps), detail: '≥50 = OK' },
-    { icon: <HardDrive size={12} />, label: 'JS Heap', value: `${metrics.jsHeapUsed} Mo`, color: getColor(memPercent, [60, 80]), detail: `/ ${metrics.jsHeapLimit} Mo (${Math.round(memPercent)}%)` },
-    { icon: <Layers size={12} />, label: 'DOM Nodes', value: `${metrics.domNodes}`, color: getColor(metrics.domNodes, [1500, 3000]), detail: '< 1500 = OK' },
+    { icon: <HardDrive size={12} />, label: t("JS Heap"), value: `${metrics.jsHeapUsed} MB`, color: getColor(memPercent, [60, 80]), detail: `/ ${metrics.jsHeapLimit} MB (${Math.round(memPercent)}%)` },
+    { icon: <Layers size={12} />, label: t("DOM Nodes"), value: `${metrics.domNodes}`, color: getColor(metrics.domNodes, [1500, 3000]), detail: '< 1500 = OK' },
     { icon: <Cpu size={12} />, label: 'Re-renders/s', value: `${metrics.reactRenders}`, color: getColor(metrics.reactRenders, [5, 15]), detail: '< 5 = OK' },
-    { icon: <Wifi size={12} />, label: 'Req. réseau/s', value: `${metrics.networkRequests}`, color: getColor(metrics.networkRequests, [3, 8]), detail: '< 3 = OK' },
-    { icon: <Clock size={12} />, label: 'Latence API', value: `${metrics.avgResponseTime} ms`, color: getColor(metrics.avgResponseTime, [200, 1000]), detail: '< 200ms = OK' },
+    { icon: <Wifi size={12} />, label: t("Req. réseau/s"), value: `${metrics.networkRequests}`, color: getColor(metrics.networkRequests, [3, 8]), detail: '< 3 = OK' },
+    { icon: <Clock size={12} />, label: t("Latence API"), value: `${metrics.avgResponseTime} ms`, color: getColor(metrics.avgResponseTime, [200, 1000]), detail: '< 200ms = OK' },
   ];
 
   // Simple mini sparkline
@@ -214,7 +216,7 @@ export default function PerfMonitor() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Activity size={14} style={{ color: 'var(--nd-accent)' }} />
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--nd-text)', letterSpacing: 0.5 }}>
-            PERF MONITOR
+            {t("PERF MONITOR")}
           </span>
           <span style={{
             fontSize: '0.55rem', padding: '2px 6px', borderRadius: 4,
@@ -262,7 +264,7 @@ export default function PerfMonitor() {
       {history.length > 2 && (
         <div style={{ padding: '8px 14px 12px' }}>
           <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.3 }}>
-            Historique FPS & Mémoire (30s)
+            {t("Historique FPS & Mémoire (30s)")}
           </div>
           <svg width="100%" height="50" viewBox={`0 0 ${history.length - 1} 50`} preserveAspectRatio="none" style={{ borderRadius: 6, background: 'rgba(128, 128, 128, 0.05)' }}>
             {/* FPS line */}
@@ -288,7 +290,7 @@ export default function PerfMonitor() {
               <span style={{ width: 8, height: 2, background: 'var(--nd-green)', borderRadius: 1 }} /> FPS
             </span>
             <span style={{ fontSize: '0.5rem', color: 'var(--nd-purple, #a855f7)', display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ width: 8, height: 2, background: 'var(--nd-purple, #a855f7)', borderRadius: 1, borderTop: '1px dashed' }} /> Mémoire
+              <span style={{ width: 8, height: 2, background: 'var(--nd-purple, #a855f7)', borderRadius: 1, borderTop: '1px dashed' }} /> {t("Mémoire")}
             </span>
           </div>
         </div>
@@ -300,11 +302,11 @@ export default function PerfMonitor() {
         fontSize: '0.6rem', color: 'var(--nd-text-muted)',
       }}>
         {metrics.fps >= 50 && metrics.reactRenders < 5 && memPercent < 60 ? (
-          <span style={{ color: 'var(--nd-green)' }}>✅ Performances excellentes</span>
+          <span style={{ color: 'var(--nd-green)' }}>{t("✅ Performances excellentes")}</span>
         ) : metrics.fps >= 30 && metrics.reactRenders < 15 && memPercent < 80 ? (
-          <span style={{ color: 'var(--nd-yellow)' }}>⚠️ Performances acceptables</span>
+          <span style={{ color: 'var(--nd-yellow)' }}>{t("⚠️ Performances acceptables")}</span>
         ) : (
-          <span style={{ color: 'var(--nd-red)' }}>🔴 Performances dégradées — vérifier les fuites</span>
+          <span style={{ color: 'var(--nd-red)' }}>{t("🔴 Performances dégradées — vérifier les fuites")}</span>
         )}
       </div>
     </div>

@@ -6,8 +6,10 @@ import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig'
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import CustomSelect from '../../../../shared/CustomSelect';
 import { Emoji } from '../../../../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function ClockWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
 
   const hideClock = !!config?.settings?.hideClock;
@@ -23,8 +25,8 @@ export function ClockWidgetTab() {
       <ToggleSwitch
         checked={!hideClock}
         onChange={(val) => handleToggleWidget('hideClock', !val)}
-        label="Activer le widget Horloge / Date"
-        sublabel="Choisissez si l'horloge doit s'afficher sur votre tableau de bord."
+        label={t("Activer le widget Horloge / Date")}
+        sublabel={t("Choisissez si l'horloge doit s'afficher sur votre tableau de bord.")}
       />
 
       {!hideClock && (
@@ -35,18 +37,18 @@ export function ClockWidgetTab() {
 
           {/* Timezone Configuration */}
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Fuseau Horaire</h4>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Fuseau Horaire")}</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Spécifiez le fuseau horaire de l&apos;horloge. Laissez vide pour utiliser l&apos;heure locale.
+              {t("Spécifiez le fuseau horaire de l&apos;horloge. Laissez vide pour utiliser l&apos;heure locale.")}
             </p>
             <CustomSelect
-              ariaLabel="Fuseau horaire"
+              ariaLabel={t("Fuseau Horaire")}
               value={clockTimezone || ''}
               onChange={async (val) => {
                 await updateConfig({ clockTimezone: val });
               }}
               options={[
-                { value: '', label: <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Emoji emoji="🏠" /> Heure locale (Défaut)</span> },
+                { value: '', label: <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Emoji emoji="🏠" /> {t("Heure locale (Défaut)")}</span> },
                 ...(Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone').map(tz => ({
                   value: tz,
                   label: tz.replace('_', ' ')
@@ -57,16 +59,16 @@ export function ClockWidgetTab() {
 
           {/* Design Configuration */}
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Design & Style</h4>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Design & Style")}</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Sélectionnez l&apos;apparence visuelle de l&apos;horloge.
+              {t("Sélectionnez l&apos;apparence visuelle de l&apos;horloge.")}
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {[
-                { id: 'default', name: 'Défaut', desc: 'Design classique et propre' },
-                { id: 'minimal', name: 'Minimaliste', desc: 'Discret, texte seul' },
-                { id: 'glow', name: 'Terminal', desc: 'Style ligne de commande minimaliste' },
-                { id: 'split', name: 'Split Cards', desc: 'Boîtes séparées (style Flip)' }
+                { id: 'default', name: t("Défaut"), desc: t("Design classique et propre") },
+                { id: 'minimal', name: 'Minimaliste', desc: t("Discret, texte seul") },
+                { id: 'glow', name: 'Terminal', desc: t("Style ligne de commande minimaliste") },
+                { id: 'split', name: t("Split Cards"), desc: t("Boîtes séparées (style Flip)") }
               ].map(design => (
                 <button
                   key={design.id}

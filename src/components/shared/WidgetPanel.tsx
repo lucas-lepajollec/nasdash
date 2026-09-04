@@ -9,6 +9,7 @@ import { PanelWidgetConfig } from '@/lib/types';
 import { ArrowUp, ArrowDown, Trash2, X, Settings, Plus } from 'lucide-react';
 import { WidgetSelectionModal } from '@/components/modals/settings/tabs/custom/WidgetSelectionModal';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface WidgetPanelProps {
   panelId: string;
@@ -18,6 +19,7 @@ interface WidgetPanelProps {
 }
 
 export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true }: WidgetPanelProps) {
+  const { t } = useI18n();
   const { config, updateConfig, user } = useConfig();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
@@ -135,7 +137,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Settings size={12} style={{ color: 'var(--nd-accent)' }} />
-            {getPanelName(panelId)}
+            {t(getPanelName(panelId))}
           </span>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -153,7 +155,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
               cursor: 'pointer'
             }}
           >
-            Gérer
+            {t("Gérer")}
           </button>
         </div>
       )}
@@ -214,7 +216,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
             border: '1px dashed var(--nd-card-border)',
             borderRadius: 'var(--nd-card-radius)'
           }}>
-            Aucun widget dans ce panneau.
+            {t("Aucun widget dans ce panneau.")}
           </div>
         )
       )}
@@ -222,7 +224,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
       {/* Modal de gestion du panneau */}
       {isModalOpen && mounted && createPortal(
         <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }} style={{ zIndex: 99999 }}>
-          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={`Gérer ${getPanelName(panelId)}`} tabIndex={-1} className="nd-modal nd-animate-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, maxHeight: '80svh', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={t('widgets.manage', { name: t(getPanelName(panelId)) })} tabIndex={-1} className="nd-modal nd-animate-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, maxHeight: '80svh', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             
             {/* Header */}
             <div style={{ 
@@ -235,14 +237,14 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
             }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, letterSpacing: -0.2, color: 'var(--nd-text)' }}>
-                  Gérer : {getPanelName(panelId)}
+                  {t("Gérer :")} {t(getPanelName(panelId))}
                 </h3>
                 <p style={{ margin: '2px 0 0 0', fontSize: '0.62rem', color: 'var(--nd-text-muted)' }}>
-                  Organisez et gérez les widgets actifs dans ce panneau.
+                  {t("Organisez et gérez les widgets actifs dans ce panneau.")}
                 </p>
               </div>
               <button 
-                aria-label="Fermer la gestion du panneau"
+                aria-label={t("Fermer la gestion du panneau")}
                 onClick={() => setIsModalOpen(false)} 
                 style={{ 
                   background: 'rgba(255,255,255,0.03)', 
@@ -342,7 +344,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
                 })
               ) : (
                 <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--nd-text-muted)', fontSize: '0.74rem', border: '1px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                  Aucun widget actif dans ce panneau.
+                  {t("Aucun widget actif dans ce panneau.")}
                 </div>
               )}
             </div>
@@ -368,7 +370,7 @@ export function WidgetPanel({ panelId, editMode, showSensitive, isVisible = true
                 }}
               >
                 <Plus size={12} />
-                Ajouter un widget
+                {t("Ajouter un widget")}
               </button>
             </div>
 

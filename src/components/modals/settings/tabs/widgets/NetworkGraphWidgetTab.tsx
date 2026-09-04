@@ -4,8 +4,10 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function NetworkGraphWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const hideNetworkGraph = !!config?.settings?.hideNetworkGraph;
     
@@ -20,8 +22,8 @@ export function NetworkGraphWidgetTab() {
         <ToggleSwitch
           checked={!hideNetworkGraph}
           onChange={(val) => handleToggleWidget('hideNetworkGraph', !val)}
-          label="Activer le widget Graphe Réseau"
-          sublabel="Affichage graphique de la latence réseau (Ping) avec historique et jauge d'état."
+          label={t("Activer le widget Graphe Réseau")}
+          sublabel={t("Affichage graphique de la latence réseau (Ping) avec historique et jauge d'état.")}
         />
       </div>
 

@@ -23,6 +23,7 @@ import CategoryFormModal from '@/components/modals/CategoryFormModal';
 import DeviceFormModal from '@/components/modals/DeviceFormModal';
 import DockerActionFormModal from '@/components/modals/DockerActionFormModal';
 import { WidgetSelectionModal } from '@/components/modals/settings/tabs/custom/WidgetSelectionModal';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
 const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
@@ -40,6 +41,7 @@ function LoadingView({ text }: { text: string }) {
 }
 
 export default function Shell() {
+  const { t } = useI18n();
   const { activeTab, switchTab, tabs, ready } = useTabs();
   const { 
     config, loading, refresh, addSlot, addWidgetsSlot, 
@@ -147,7 +149,7 @@ export default function Shell() {
             }}
           />
           <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--nd-text-muted)' }}>
-            Chargement…
+            {t("Chargement…")}
           </span>
         </div>
       </div>
@@ -222,21 +224,21 @@ export default function Shell() {
 
           {/* Docker */}
           <div className="flex-1" style={{ display: activeTab === 'docker' ? 'block' : 'none' }}>
-            <Suspense fallback={<LoadingView text="Chargement Docker…" />}>
+            <Suspense fallback={<LoadingView text={t('loading.docker')} />}>
               <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} showSensitive={showSensitive} />
             </Suspense>
           </div>
 
           {/* Networks */}
           <div className="flex-1" style={{ display: activeTab === 'networks' ? 'block' : 'none' }}>
-            <Suspense fallback={<LoadingView text="Chargement Réseaux…" />}>
+            <Suspense fallback={<LoadingView text={t('loading.networks')} />}>
               <NetworksTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'networks'} showSensitive={showSensitive} />
             </Suspense>
           </div>
 
           {/* Widgets Tab */}
           <div className="flex-1" style={{ display: activeTab === 'widgets' ? 'block' : 'none' }}>
-            <Suspense fallback={<LoadingView text="Chargement Widgets…" />}>
+            <Suspense fallback={<LoadingView text={t('loading.widgets')} />}>
               <WidgetsTab editMode={editMode} isVisible={activeTab === 'widgets'} showSensitive={showSensitive} categories={config?.categories || []} />
             </Suspense>
           </div>
@@ -255,7 +257,7 @@ export default function Shell() {
           setSettingsModal({ open: false });
         }} restoreFocus={() => {
           if (settingsTriggerRef.current?.isConnected) return settingsTriggerRef.current;
-          return Array.from(document.querySelectorAll<HTMLButtonElement>('button[title="Paramètres globaux"]'))
+          return Array.from(document.querySelectorAll<HTMLButtonElement>('[data-settings-trigger="true"]'))
             .find(button => button.getClientRects().length > 0) ?? null;
         }} />
       )}

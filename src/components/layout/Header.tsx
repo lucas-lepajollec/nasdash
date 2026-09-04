@@ -6,6 +6,7 @@ import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
 import { Emoji } from '../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface HeaderProps {
   title: string;
@@ -30,6 +31,7 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
+  const { t } = useI18n();
   const { config, setSettingsModal, user, logout } = useConfig();
   const currentTabDef = props.tabs?.find(t => t.id === props.activeTab);
   const isCustomTab = currentTabDef?.isCustom === true;
@@ -58,15 +60,15 @@ export default function Header(props: HeaderProps) {
     if (props.activeTab === 'dashboard' || !props.activeTab) {
       return [
         {
-          label: 'Créer un emplacement',
+          label: t("Créer un emplacement"),
           onClick: () => props.onAddSlot?.(),
         },
         {
-          label: 'Ajouter un widget',
+          label: t("Ajouter un widget"),
           onClick: () => props.onAddWidget?.(),
         },
         {
-          label: 'Créer une catégorie',
+          label: t("Créer une catégorie"),
           onClick: () => props.onAddCategory?.(),
         }
       ];
@@ -75,15 +77,15 @@ export default function Header(props: HeaderProps) {
     if (props.activeTab === 'networks') {
       return [
         {
-          label: 'Créer un groupe',
+          label: t("Créer un groupe"),
           onClick: () => window.dispatchEvent(new Event('networkActionAddGroup')),
         },
         {
-          label: 'Lier des nœuds',
+          label: t("Lier des nœuds"),
           onClick: () => window.dispatchEvent(new Event('networkActionAddLink')),
         },
         {
-          label: 'Créer un nœud',
+          label: t("Créer un nœud"),
           onClick: () => window.dispatchEvent(new Event('networkActionAddNode')),
         }
       ];
@@ -92,7 +94,7 @@ export default function Header(props: HeaderProps) {
     if (isCustomTab) {
       return [
         {
-          label: 'Structure',
+          label: t("Structure"),
           onClick: () => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }),
         }
       ];
@@ -126,7 +128,7 @@ export default function Header(props: HeaderProps) {
         {titleLogo ? (
           <img 
             src={titleLogo} 
-            alt="Logo" 
+            alt={t("Logo")}
             className="nd-title-logo" 
             style={{ maxHeight: '20px', width: 'auto', objectFit: 'contain' }} 
           />
@@ -153,14 +155,14 @@ export default function Header(props: HeaderProps) {
         <Search size={13} className="nd-search-icon" />
         <input
           type="text"
-          aria-label="Rechercher dans le tableau de bord"
+          aria-label={t("Rechercher dans le tableau de bord")}
           value={props.searchQuery}
           onChange={(e) => props.onSearchChange(e.target.value)}
-          placeholder="Rechercher..."
+          placeholder={t("Rechercher…")}
         />
         {props.searchQuery && (
           <button
-            aria-label="Effacer la recherche"
+            aria-label={t("Effacer la recherche")}
             onClick={() => props.onSearchChange('')}
             style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
@@ -207,7 +209,7 @@ export default function Header(props: HeaderProps) {
               }}
             >
               {iconVal && <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji={iconVal} /></span>}
-              <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>{tab.name}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>{t(tab.name)}</span>
             </button>
           )
         })}
@@ -258,7 +260,7 @@ export default function Header(props: HeaderProps) {
                   onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
                 >
                   <Plus size={12} />
-                  Actions
+                  {t("Actions")}
                   <ChevronDown size={12} style={{ transform: desktopDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
                 {desktopDropdownOpen && (
@@ -331,7 +333,7 @@ export default function Header(props: HeaderProps) {
         <button
           className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`}
           onClick={props.onToggleSecret}
-          title={props.secretMode ? 'Masquer les infos' : 'Afficher les infos'}
+          title={props.secretMode ? t("Masquer les infos") : t("Afficher les infos")}
         >
           {props.secretMode ? <Eye size={14} /> : <EyeOff size={14} />}
         </button>
@@ -340,11 +342,11 @@ export default function Header(props: HeaderProps) {
             <button
               className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`}
               onClick={props.onToggleEdit}
-              title="Mode édition"
+              title={t("Mode édition")}
             >
               <Pencil size={14} />
             </button>
-            <button className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title="Paramètres globaux">
+            <button data-settings-trigger="true" className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title={t("Paramètres globaux")}>
               <Settings size={14} />
             </button>
           </>
@@ -365,12 +367,12 @@ export default function Header(props: HeaderProps) {
               <User size={13} style={{ color: 'var(--nd-accent)' }} />
               <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.username}</span>
             </div>
-            <button className="nd-btn" onClick={() => logout()} title="Se déconnecter" style={{ padding: 6, minWidth: 0, justifyContent: 'center' }}>
+            <button className="nd-btn" onClick={() => logout()} title={t("Se déconnecter")} style={{ padding: 6, minWidth: 0, justifyContent: 'center' }}>
               <LogOut size={14} />
             </button>
           </div>
         ) : (
-          <a href="/login" className="nd-btn" title="Se connecter" style={{ textDecoration: 'none', minWidth: 0, justifyContent: 'center' }}>
+          <a href="/login" className="nd-btn" title={t("Se connecter")} style={{ textDecoration: 'none', minWidth: 0, justifyContent: 'center' }}>
             <LogIn size={14} />
           </a>
         )}
@@ -384,19 +386,19 @@ export default function Header(props: HeaderProps) {
         <aside
           className="nd-demo-banner"
           role="note"
-          aria-label="Démonstration publique isolée avec des données fictives, des actions simulées et aucune connexion à une infrastructure réelle"
+          aria-label={t("Démonstration publique isolée avec des données fictives, des actions simulées et aucune connexion à une infrastructure réelle")}
         >
           <div className="nd-demo-banner-inner">
             <div className="nd-demo-banner-icon" aria-hidden="true">
               <ShieldCheck size={15} strokeWidth={1.8} />
             </div>
             <div className="nd-demo-banner-content">
-              <strong>Démo publique</strong>
+              <strong>{t("Démo publique")}</strong>
               <span className="nd-demo-banner-copy-desktop">
-                Environnement isolé · données, journaux et actions simulés · aucune connexion à une infrastructure réelle · modifications temporaires · aperçu non exhaustif
+                {t("Environnement isolé · données, journaux et actions simulés · aucune connexion à une infrastructure réelle · modifications temporaires · aperçu non exhaustif")}
               </span>
               <span className="nd-demo-banner-copy-mobile" aria-hidden="true">
-                Données fictives · mode isolé
+                {t("Données fictives · mode isolé")}
               </span>
             </div>
             <div className="nd-demo-banner-actions">
@@ -407,17 +409,17 @@ export default function Header(props: HeaderProps) {
                   await fetch('/api/demo/reset', { method: 'POST' });
                   window.location.reload();
                 }}
-                aria-label="Réinitialiser les données de démonstration"
-                title="Réinitialiser la démonstration"
+                aria-label={t("Réinitialiser les données de démonstration")}
+                title={t("Réinitialiser la démonstration")}
               >
-                <RotateCcw size={13} /> <span>Réinitialiser</span>
+                <RotateCcw size={13} /> <span>{t("Réinitialiser")}</span>
               </button>
               <button
                 type="button"
                 className="nd-demo-banner-close"
                 onClick={hideDemoBanner}
-                aria-label="Masquer le bandeau de démonstration"
-                title="Masquer pour cette session"
+                aria-label={t("Masquer le bandeau de démonstration")}
+                title={t("Masquer pour cette session")}
               >
                 <X size={15} />
               </button>
@@ -490,7 +492,7 @@ export default function Header(props: HeaderProps) {
               }}>
                 <button
                   className={`nd-btn ${mobileMenuOpen ? 'nd-btn-active' : ''}`}
-                  aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+                  aria-label={mobileMenuOpen ? t("Fermer le menu") : t("Ouvrir le menu")}
                   aria-expanded={mobileMenuOpen}
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 >
@@ -527,7 +529,7 @@ export default function Header(props: HeaderProps) {
                     style={{ width: '100%', justifyContent: 'center' }}
                   >
                     <Plus size={12} />
-                    Actions
+                    {t("Actions")}
                     <ChevronDown size={12} style={{ transform: mobileDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 'auto' }} />
                   </button>
                   {mobileDropdownOpen && (
@@ -622,7 +624,7 @@ export default function Header(props: HeaderProps) {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Menu</h3>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>{t("Menu")}</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {user && !user.isAnonymous ? (
                   <button className="nd-btn" onClick={() => logout()} style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px' }}>
@@ -630,7 +632,7 @@ export default function Header(props: HeaderProps) {
                   </button>
                 ) : (
                   <a href="/login" className="nd-btn" style={{ fontSize: '0.75rem', gap: 6, padding: '4px 8px', textDecoration: 'none', display: 'inline-flex' }}>
-                    <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> Connexion
+                    <LogIn size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Connexion")}
                   </a>
                 )}
                 <button className="nd-btn" onClick={() => setMobileMenuOpen(false)} style={{ padding: 6 }}>
@@ -642,7 +644,7 @@ export default function Header(props: HeaderProps) {
             {/* Tabs List */}
             {props.tabs && props.tabs.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>Navigation</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 4, marginBottom: 2, fontWeight: 600 }}>{t("Navigation")}</span>
                 {props.tabs.map(tab => {
                   const isActive = tab.id === props.activeTab;
                   return (
@@ -656,7 +658,7 @@ export default function Header(props: HeaderProps) {
                       style={{ justifyContent: 'flex-start', padding: '10px 12px', width: '100%', border: isActive ? '1px solid var(--nd-accent)' : '1px solid transparent' }}
                     >
                       <span className="nd-dock-item-icon" style={{ marginRight: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'inherit', fontSize: '16px' }}><Emoji emoji={config?.settings?.tabIcons?.[tab.id] || tab.icon} /></span>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{tab.name}</span>
+                      <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>{t(tab.name)}</span>
                     </button>
                   );
                 })}
@@ -669,17 +671,17 @@ export default function Header(props: HeaderProps) {
             <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'admin' ? 'repeat(3, 1fr)' : '1fr', gap: 8 }}>
               <button className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleSecret} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                 {props.secretMode ? <Eye size={18} /> : <EyeOff size={18} />}
-                <span style={{ fontSize: '0.75rem' }}>{props.secretMode ? 'Cacher' : 'Visible'}</span>
+                <span style={{ fontSize: '0.75rem' }}>{props.secretMode ? t("Cacher") : t("Visible")}</span>
               </button>
               {user?.role === 'admin' && (
                 <>
                   <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleEdit} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                     <Pencil size={18} />
-                    <span style={{ fontSize: '0.75rem' }}>Éditer</span>
+                    <span style={{ fontSize: '0.75rem' }}>{t("Éditer")}</span>
                   </button>
                   <button className="nd-btn" onClick={(event) => { props.onOpenSettings(event.currentTarget); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                     <Settings size={18} />
-                    <span style={{ fontSize: '0.75rem' }}>Paramètres</span>
+                    <span style={{ fontSize: '0.75rem' }}>{t("Paramètres")}</span>
                   </button>
                 </>
               )}

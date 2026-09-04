@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Search, Check, Palette, X, Sun, Moon, Sparkles } from 'lucide-react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export interface ThemeDefinition {
   key: string;
@@ -356,6 +357,7 @@ interface ThemePickerModalProps {
 }
 
 export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSelectTheme }: ThemePickerModalProps) {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'dark' | 'light'>('all');
 
@@ -431,10 +433,10 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--nd-text)' }}>
-                  Galerie de Thèmes Visuels
+                  {t("Galerie de Thèmes Visuels")}
                 </h2>
                 <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
-                  Personnalisez l’ambiance de NasDash parmi {THEME_GALLERY.length} thèmes uniques.
+                  {t('theme.pickerIntro', { count: THEME_GALLERY.length })}
                 </p>
               </div>
             </div>
@@ -460,7 +462,7 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
               <Search size={16} style={{ position: 'absolute', left: 12, color: 'var(--nd-text-muted)' }} />
               <input 
                 type="text"
-                placeholder="Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)"
+                placeholder={t("Rechercher un thème (ex: Apple, GitHub, Vert, OLED...)")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
@@ -505,7 +507,7 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
                 }}
               >
                 <Sparkles size={13} color={activeTab === 'all' ? 'var(--nd-accent)' : undefined} />
-                Tous ({THEME_GALLERY.length})
+                {t("Tous (")}{THEME_GALLERY.length})
               </button>
               <button
                 onClick={() => setActiveTab('dark')}
@@ -525,7 +527,7 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
                 }}
               >
                 <Moon size={13} color={activeTab === 'dark' ? 'var(--nd-accent)' : undefined} />
-                Sombres ({THEME_GALLERY.filter(t => t.category === 'dark').length})
+                {t("Sombres (")}{THEME_GALLERY.filter(t => t.category === 'dark').length})
               </button>
               <button
                 onClick={() => setActiveTab('light')}
@@ -545,7 +547,7 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
                 }}
               >
                 <Sun size={13} color={activeTab === 'light' ? 'var(--nd-accent)' : undefined} />
-                Clairs ({THEME_GALLERY.filter(t => t.category === 'light').length})
+                {t("Clairs (")}{THEME_GALLERY.filter(t => t.category === 'light').length})
               </button>
             </div>
           </div>
@@ -569,7 +571,7 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
               textAlign: 'center',
               color: 'var(--nd-text-muted)'
             }}>
-              <p style={{ margin: 0, fontSize: '0.95rem' }}>Aucun thème ne correspond à votre recherche "{search}".</p>
+              <p style={{ margin: 0, fontSize: '0.95rem' }}>{t("Aucun thème ne correspond à votre recherche \"")}{search}".</p>
             </div>
           ) : (
             filteredThemes.map((theme) => {
@@ -683,10 +685,10 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
                       borderRadius: 10,
                       backdropFilter: 'blur(4px)'
                     }}>
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title="Canvas BG" />
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title="Card Surface" />
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title="Text Color" />
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title="Accent Color" />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.bg, border: '1px solid #fff' }} title={t("Canvas BG")} />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.cardBg, border: '1px solid #fff' }} title={t("Card Surface")} />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.text, border: '1px solid #fff' }} title={t("Text Color")} />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme.accent, border: '1px solid #fff' }} title={t("Accent Color")} />
                     </div>
                   </div>
 
@@ -694,7 +696,7 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--nd-text)' }}>
-                        {theme.name}
+                        {t(theme.name)}
                       </span>
                       {isSelected && (
                         <div style={{
@@ -708,12 +710,12 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
                           fontSize: '0.62rem',
                           fontWeight: 700
                         }}>
-                          <Check size={11} /> Actif
+                          <Check size={11} /> {t("Actif")}
                         </div>
                       )}
                     </div>
                     <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: '1.25' }}>
-                      {theme.description}
+                      {t(theme.description)}
                     </p>
                   </div>
                 </div>
@@ -732,14 +734,14 @@ export default function ThemePickerModal({ isOpen, onClose, currentTheme, onSele
           background: 'var(--nd-subcard-bg)'
         }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
-            {filteredThemes.length} sur {THEME_GALLERY.length} thèmes affichés
+            {t('gallery.themesShown', { shown: filteredThemes.length, total: THEME_GALLERY.length })}
           </span>
           <button
             onClick={onClose}
             className="nd-btn"
             style={{ padding: '0 20px', height: 34 }}
           >
-            Fermer
+            {t("Fermer")}
           </button>
         </div>
       </div>

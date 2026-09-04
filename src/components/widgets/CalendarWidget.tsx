@@ -5,8 +5,10 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Plus, C
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
 import { CalendarDisplayEvent } from '@/lib/types';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function CalendarWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
+  const { t, locale } = useI18n();
   const { config, setCalendarEventModal, setViewEventModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const calendarUrl = config?.settings?.calendarUrl;
@@ -54,11 +56,12 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
     fetchEvents();
   }, [calendarUrl, isVisible, localEvents]);
 
-  const daysOfWeek = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
-  const monthNames = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-  ];
+  const daysOfWeek = Array.from({ length: 7 }, (_, index) =>
+    new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2024, 0, index + 1)).replace('.', ''),
+  );
+  const monthNames = Array.from({ length: 12 }, (_, index) =>
+    new Intl.DateTimeFormat(locale, { month: 'long' }).format(new Date(2024, index, 1)),
+  );
 
   if (!mounted) {
     return (
@@ -157,10 +160,10 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             <div className="nd-calendar-tooltip">
               {dayEvents.map((e, idx) => (
                 <div key={idx} style={{ marginBottom: idx === dayEvents.length - 1 ? 0 : 4, borderBottom: idx === dayEvents.length - 1 ? 'none' : '1px solid var(--nd-card-border)', paddingBottom: idx === dayEvents.length - 1 ? 0 : 4 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--nd-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--nd-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(e.title)}</div>
                   {e.start && !e.isAllDay && (
                     <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.65rem' }}>
-                      {new Date(e.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(e.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   )}
                 </div>
@@ -178,10 +181,10 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             {monthNames[month]} {year}
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button aria-label="Mois précédent" onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
+            <button aria-label={t("Mois précédent")} onClick={prevMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
               <ChevronLeft size={13} />
             </button>
-            <button aria-label="Mois suivant" onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
+            <button aria-label={t("Mois suivant")} onClick={nextMonth} style={{ background: 'transparent', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '4px' }}>
               <ChevronRight size={13} />
             </button>
           </div>
@@ -209,7 +212,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--nd-text-dimmed)', fontWeight: 700, letterSpacing: '0.5px' }}>
-          Agenda / À venir
+          {t("Agenda / À venir")}
         </div>
         {editMode && (
           <button 
@@ -219,7 +222,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
               date: `${realToday.getFullYear()}-${String(realToday.getMonth() + 1).padStart(2, '0')}-${String(realToday.getDate()).padStart(2, '0')}`,
               events: []
             })}
-            title="Ajouter un événement"
+            title={t("Ajouter un événement")}
           >
             <Plus size={12} />
           </button>
@@ -263,12 +266,12 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                   {start.getDate()} {monthNames[start.getMonth()].substring(0, 3)}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <div style={{ color: 'var(--nd-text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.title}>
-                    {e.title}
+                  <div style={{ color: 'var(--nd-text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t(e.title)}>
+                    {t(e.title)}
                   </div>
                   {e.start && !e.isAllDay && (
                     <div style={{ color: 'var(--nd-text-muted)', fontSize: '0.58rem', display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
-                      <Clock size={9} /> {new Date(e.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      <Clock size={9} /> {new Date(e.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   )}
                 </div>
@@ -350,7 +353,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                   evt.stopPropagation();
                   setViewEventModal({ open: true, event: e });
                 }}
-                title={e.title}
+                title={t(e.title)}
                 style={{
                   fontSize: '0.62rem',
                   padding: '2px 5px',
@@ -369,10 +372,10 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
               >
                 {e.start && !e.isAllDay && (
                   <span style={{ opacity: 0.7, marginRight: 3, fontWeight: 500 }}>
-                    {new Date(e.start).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(e.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
-                {e.title}
+                {t(e.title)}
               </div>
             ))}
             {dayEvents.length > 2 && (
@@ -383,7 +386,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                 paddingLeft: 3,
                 marginTop: 1
               }}>
-                + {dayEvents.length - 2} autres
+                {t('calendar.moreEvents', { count: dayEvents.length - 2 })}
               </div>
             )}
           </div>
@@ -399,15 +402,15 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
             <span style={{ color: 'var(--nd-accent)' }}>●</span> {monthNames[month]} {year}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button aria-label="Mois précédent" onClick={prevMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
+            <button aria-label={t("Mois précédent")} onClick={prevMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
               <ChevronLeft size={14} />
             </button>
             {!isCurrentMonth && (
               <button onClick={goToToday} className="nd-btn" style={{ height: '28px', padding: '0 10px', fontSize: '0.65rem' }}>
-                <RotateCcw size={10} /> Revenir
+                <RotateCcw size={10} /> {t("Revenir")}
               </button>
             )}
-            <button aria-label="Mois suivant" onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
+            <button aria-label={t("Mois suivant")} onClick={nextMonth} className="nd-btn" style={{ height: '28px', padding: '0 8px' }}>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -498,7 +501,7 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
       {(!hideTitles || editMode) && (
         <div className="nd-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <CalendarIcon size={12} style={{ color: '#fb923c' }} /> Calendrier
+            <CalendarIcon size={12} style={{ color: '#fb923c' }} /> {t("Calendrier")}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {loadingEvents && <div style={{ width: 10, height: 10, border: '2px solid rgba(251, 146, 60, 0.3)', borderTopColor: '#fb923c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />}
@@ -512,9 +515,9 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
                   height: 'auto',
                   borderWidth: '1px'
                 }}
-                title="Revenir au mois en cours"
+                title={t("Revenir au mois en cours")}
               >
-                <RotateCcw size={10} /> Revenir
+                <RotateCcw size={10} /> {t("Revenir")}
               </button>
             )}
           </div>

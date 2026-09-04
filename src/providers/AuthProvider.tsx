@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export interface AuthContextType {
   user: AuthUser | null;
@@ -21,6 +22,7 @@ export interface AuthUser {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch(url, options);
       if (res.status === 401 || res.status === 403) {
-        alert("Accès refusé. Session administrateur requise.");
+        alert(t("Accès refusé. Session administrateur requise."));
         // A full reload prevents protected provider state surviving the redirect.
         // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
@@ -71,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Erreur Fetch sécurisé:', err);
       throw err;
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchUser();

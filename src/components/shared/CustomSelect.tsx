@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface Option {
   value: string;
@@ -20,6 +21,7 @@ interface CustomSelectProps {
 }
 
 export default function CustomSelect({ value, options, onChange, className, style, disabled, ariaLabel }: CustomSelectProps) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -151,7 +153,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
         <div
           id={listboxId}
           role="listbox"
-          aria-label={ariaLabel || 'Options'}
+          aria-label={ariaLabel || t("Options")}
           data-dialog-escape-boundary="true"
           style={{
           position: 'absolute',

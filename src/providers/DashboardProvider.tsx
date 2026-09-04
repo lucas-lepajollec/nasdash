@@ -5,6 +5,7 @@ import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCa
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export interface DashboardContextType {
   config: DashboardConfig | null;
@@ -48,6 +49,7 @@ export type DashboardConfigUpdate = { type?: string } & Record<string, unknown>;
 export const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const auth = useContext(AuthContext);
   const fetchWithAuth = auth?.fetchWithAuth || fetch;
   const user = auth?.user || null;
@@ -286,7 +288,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const assertApiOk = async (response: Response, fallback: string) => {
     if (response.ok) return;
     const payload = await response.json().catch(() => null) as { error?: string } | null;
-    throw new Error(payload?.error || `${fallback} (${response.status}).`);
+    throw new Error(payload?.error ? t(payload.error) : `${t(fallback)} (${response.status}).`);
   };
 
   const addCategory = async (title: string, emoji: string, isSecret = false, layout?: Category['layout']) => {
@@ -295,7 +297,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'category', title, emoji, isSecret, layout }),
     });
-    await assertApiOk(res, 'Impossible d’ajouter la catégorie');
+    await assertApiOk(res, 'errors.categoryAdd');
     await fetchConfig();
   };
 
@@ -305,13 +307,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'category', id, ...updates }),
     });
-    await assertApiOk(res, 'Impossible de modifier la catégorie');
+    await assertApiOk(res, 'errors.categoryUpdate');
     await fetchConfig();
   };
 
   const deleteCategory = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=category&id=${id}`, { method: 'DELETE' });
-    await assertApiOk(res, 'Impossible de supprimer la catégorie');
+    await assertApiOk(res, 'errors.categoryDelete');
     await fetchConfig();
   };
 
@@ -321,7 +323,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'service', categoryId, ...service }),
     });
-    await assertApiOk(res, 'Impossible d’ajouter le service');
+    await assertApiOk(res, 'errors.serviceAdd');
     await fetchConfig();
   };
 
@@ -331,13 +333,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'service', id, ...updates }),
     });
-    await assertApiOk(res, 'Impossible de modifier le service');
+    await assertApiOk(res, 'errors.serviceUpdate');
     await fetchConfig();
   };
 
   const deleteService = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=service&id=${id}`, { method: 'DELETE' });
-    await assertApiOk(res, 'Impossible de supprimer le service');
+    await assertApiOk(res, 'errors.serviceDelete');
     await fetchConfig();
   };
 
@@ -415,7 +417,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'device', ...device }),
     });
-    await assertApiOk(res, 'Impossible d’ajouter l’appareil');
+    await assertApiOk(res, 'errors.deviceAdd');
     await fetchConfig();
   };
 
@@ -436,13 +438,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'device', id, ...updates }),
     });
-    await assertApiOk(res, 'Impossible de modifier l’appareil');
+    await assertApiOk(res, 'errors.deviceUpdate');
     await fetchConfig();
   };
 
   const deleteDevice = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=device&id=${id}`, { method: 'DELETE' });
-    await assertApiOk(res, 'Impossible de supprimer l’appareil');
+    await assertApiOk(res, 'errors.deviceDelete');
     await fetchConfig();
   };
 
@@ -503,7 +505,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => null) as { error?: string } | null;
-        throw new Error(payload?.error || `Échec de sauvegarde de la configuration (${response.status}).`);
+        throw new Error(payload?.error ? t(payload.error) : t('errors.configSave', { status: response.status }));
       }
       return true;
     } catch (err) {
@@ -519,7 +521,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const formData = new FormData();
     formData.append('file', file);
     const res = await fetchWithAuth('/api/upload', { method: 'POST', body: formData });
-    await assertApiOk(res, 'Impossible d’importer le logo');
+    await assertApiOk(res, 'errors.logoUpload');
     const data = await res.json();
     return data.url;
   };

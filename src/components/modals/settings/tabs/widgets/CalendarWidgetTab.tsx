@@ -4,8 +4,10 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function CalendarWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const demoMode = config?.demoMode === true;
 
@@ -22,8 +24,8 @@ export function CalendarWidgetTab() {
         <ToggleSwitch
           checked={!hideCalendar}
           onChange={(val) => handleToggleWidget('hideCalendar', !val)}
-          label="Activer le widget Calendrier"
-          sublabel="Affiche un calendrier simple sur votre tableau de bord."
+          label={t("Activer le widget Calendrier")}
+          sublabel={t("Affiche un calendrier simple sur votre tableau de bord.")}
         />
       </div>
 
@@ -36,20 +38,20 @@ export function CalendarWidgetTab() {
           {/* Calendar Sync URL */}
           {demoMode ? (
             <div className="nd-settings-card" style={{ padding: '14px', background: 'color-mix(in srgb, var(--nd-accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Synchronisation iCal simulée</h4>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Synchronisation iCal simulée")}</h4>
               <p style={{ margin: 0, fontSize: '0.68rem', color: 'var(--nd-text-muted)', lineHeight: 1.55 }}>
-                Les événements affichés sont fictifs. La démo n’accepte ni ne télécharge d’URL de calendrier réelle afin de protéger vos données privées.
+                {t("Les événements affichés sont fictifs. La démo n’accepte ni ne télécharge d’URL de calendrier réelle afin de protéger vos données privées.")}
               </p>
             </div>
           ) : (
           <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>Synchronisation iCal</h4>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Synchronisation iCal")}</h4>
             <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              Collez l&apos;URL d&apos;un calendrier au format .ics (Google Agenda, Apple, etc.) pour afficher vos événements.
+              {t("Collez l&apos;URL d&apos;un calendrier au format .ics (Google Agenda, Apple, etc.) pour afficher vos événements.")}
             </p>
             <input
               type="url"
-              aria-label="URL du calendrier iCal"
+              aria-label={t("URL du calendrier iCal")}
               className="nd-input"
               placeholder="https://..."
               value={calendarUrl}

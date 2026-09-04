@@ -5,12 +5,14 @@ import ConfirmModal from '../../../ConfirmModal';
 import EmojiPickerModal from '../../../EmojiPickerModal';
 import { Emoji } from '../../../../shared/Emoji';
 import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface CustomTabsListTabProps {
   onEditTab: (tabId?: string) => void;
 }
 
 export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { tabs, refreshTabs } = useTabs();
   const customTabs = tabs.filter(t => t.isCustom);
@@ -37,12 +39,12 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {actionError && <div style={{ padding: 10, color: 'var(--nd-red)', border: '1px solid color-mix(in srgb, var(--nd-red) 30%, transparent)', borderRadius: 'var(--nd-card-radius)', fontSize: '0.7rem' }}>{actionError}</div>}
       <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-        <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>Onglets Libres</h4>
+        <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Onglets Libres")}</h4>
         <p style={{ margin: '4px 0 16px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-          Créez vos propres pages de dashboard avec des layouts sur mesure, et ajoutez-y tous les widgets que vous souhaitez.
+          {t("Créez vos propres pages de dashboard avec des layouts sur mesure, et ajoutez-y tous les widgets que vous souhaitez.")}
         </p>
         <button className="nd-btn nd-btn-primary" onClick={() => onEditTab()} style={{ width: '100%', justifyContent: 'center' }}>
-          + Créer un nouvel onglet
+          {t("+ Créer un nouvel onglet")}
         </button>
       </div>
 
@@ -50,10 +52,10 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
         {customTabs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--nd-bg-alt)', borderRadius: 'var(--nd-card-radius)', border: '1px dashed var(--nd-card-border)' }}>
             <Layout size={32} style={{ color: 'var(--nd-text-muted)', marginBottom: 12, opacity: 0.5 }} />
-            <h3 style={{ fontSize: '0.9rem', marginBottom: 4 }}>Aucun onglet libre</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', marginBottom: 16 }}>Commencez par en créer un pour organiser vos widgets comme bon vous semble.</p>
+            <h3 style={{ fontSize: '0.9rem', marginBottom: 4 }}>{t("Aucun onglet libre")}</h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', marginBottom: 16 }}>{t("Commencez par en créer un pour organiser vos widgets comme bon vous semble.")}</p>
             <button className="nd-btn nd-btn-primary" onClick={() => onEditTab()} style={{ margin: '0 auto' }}>
-              Créer mon premier onglet
+              {t("Créer mon premier onglet")}
             </button>
           </div>
         ) : (
@@ -64,7 +66,7 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
                 <button
                   type="button"
                   onClick={() => setIconPickerTabId(tab.id)}
-                  title="Changer l'icône"
+                  title={t("Changer l'icône")}
                   className="nd-btn-hover-glow"
                   style={{
                     width: 38,
@@ -88,15 +90,15 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
                   <Emoji emoji={config?.settings?.tabIcons?.[tab.id] || tab.icon} />
                 </button>
                 <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                  <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tab.name}</h4>
+                  <h4 style={{ margin: 0, fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(tab.name)}</h4>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="nd-btn" onClick={() => onEditTab(tab.id)}>
-                  <Edit2 size={14} /> Éditer
+                  <Edit2 size={14} /> {t("Éditer")}
                 </button>
                 <button className="nd-btn nd-btn-danger" onClick={() => setDeleteConfirm(tab.id)}>
-                  <Trash2 size={14} /> Supprimer
+                  <Trash2 size={14} /> {t("Supprimer")}
                 </button>
               </div>
             </div>
@@ -136,8 +138,8 @@ export function CustomTabsListTab({ onEditTab }: CustomTabsListTabProps) {
           if (deleteConfirm) handleDelete(deleteConfirm);
           setDeleteConfirm(null);
         }}
-        title="Supprimer cet onglet ?"
-        description={`Voulez-vous vraiment supprimer l'onglet "${customTabs.find(t => t.id === deleteConfirm)?.name}" ? Cette action est irréversible.`}
+        title={t("Supprimer cet onglet ?")}
+        description={t('confirm.customTabDelete', { name: customTabs.find(tab => tab.id === deleteConfirm)?.name || '' })}
       />
     </div>
   );

@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Globe } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export default function ClockWidget({ editMode }: { editMode?: boolean }) {
+  const { t, locale } = useI18n();
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const [time, setTime] = useState(new Date());
@@ -24,37 +26,35 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
 
   if (!mounted) return null;
 
-  const formatTime = (date: Date) => {
+  const formatTimeParts = (date: Date) => {
+    let parts: Intl.DateTimeFormatPart[];
     try {
-      return new Intl.DateTimeFormat('fr-FR', {
+      parts = new Intl.DateTimeFormat(locale, {
         hour: '2-digit',
         minute: '2-digit',
-        timeZone: timezone
-      }).format(date);
-    } catch (e) {
-      return new Intl.DateTimeFormat('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
-    }
-  };
-
-  const formatSeconds = (date: Date) => {
-    try {
-      return new Intl.DateTimeFormat('fr-FR', {
         second: '2-digit',
         timeZone: timezone
-      }).format(date);
+      }).formatToParts(date);
     } catch (e) {
-      return new Intl.DateTimeFormat('fr-FR', {
+      parts = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
         second: '2-digit'
-      }).format(date);
+      }).formatToParts(date);
     }
+
+    const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? '';
+    return {
+      hours: read('hour'),
+      mins: read('minute'),
+      secs: read('second'),
+      dayPeriod: read('dayPeriod').toUpperCase(),
+    };
   };
 
   const formatDate = (date: Date) => {
     try {
-      const formatted = new Intl.DateTimeFormat('fr-FR', {
+      const formatted = new Intl.DateTimeFormat(locale, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
@@ -67,11 +67,34 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
     }
   };
 
-  const timeStr = formatTime(time);
-  const hours = timeStr.split(':')[0];
-  const mins = timeStr.split(':')[1];
-  const secs = formatSeconds(time);
+  const { hours, mins, secs, dayPeriod } = formatTimeParts(time);
   const dateStr = formatDate(time);
+
+  const renderTimeDetail = (style: React.CSSProperties = {}) => (
+    <span
+      style={{
+        display: 'inline-flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        lineHeight: 1,
+        ...style,
+      }}
+    >
+      {dayPeriod && (
+        <span style={{ fontSize: '0.46em', lineHeight: 1, letterSpacing: '0.08em', opacity: 0.72 }}>
+          {dayPeriod}
+        </span>
+      )}
+      <span>{secs}</span>
+    </span>
+  );
+
+  const renderDayPeriod = (style: React.CSSProperties = {}) => dayPeriod ? (
+    <span style={{ fontSize: '0.5em', lineHeight: 1, letterSpacing: '0.08em', verticalAlign: 'super', ...style }}>
+      {dayPeriod}
+    </span>
+  ) : null;
 
   // ==================== DESIGN 1: DEFAULT ====================
   if (design === 'default') {
@@ -80,19 +103,17 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 24, padding: '2px 18px 0 18px' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, flexShrink: 0 }}>
               <span style={{ fontSize: '3.6rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
                 {hours}
                 <span style={{ animation: 'nd-pulse-opacity 2s infinite ease-in-out', display: 'inline-block' }}>:</span>
                 {mins}
               </span>
-              <span style={{ fontSize: '1.4rem', fontWeight: 600, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums', opacity: 0.8 }}>
-                {secs}
-              </span>
+              {renderTimeDetail({ height: '3.6rem', fontSize: '1.4rem', fontWeight: 600, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums', opacity: 0.8 })}
             </div>
 
             <div style={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, transparent, var(--nd-card-border), transparent)', opacity: 0.5 }} />
@@ -115,16 +136,14 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 4px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%', padding: '0 4px' }}>
             <span style={{ fontSize: '2.8rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums' }}>
               {hours}<span style={{ animation: 'nd-pulse-opacity 2s infinite ease-in-out' }}>:</span>{mins}
             </span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums' }}>
-              {secs}
-            </span>
+            {renderTimeDetail({ height: '2.8rem', fontSize: '1.1rem', fontWeight: 600, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums' })}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)' }}>{dateStr}</span>
@@ -139,19 +158,17 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: hideTitles ? '8px 0' : '16px 0 8px 0', position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: '4px' }}>
             <span style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, color: 'var(--nd-text)', fontVariantNumeric: 'tabular-nums', textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
               {hours}
               <span style={{ animation: 'nd-pulse-opacity 2s infinite ease-in-out', display: 'inline-block', transform: 'translateY(-2px)' }}>:</span>
               {mins}
             </span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums', opacity: 0.8 }}>
-              {secs}
-            </span>
+            {renderTimeDetail({ height: '2.5rem', fontSize: '1.1rem', fontWeight: 600, color: 'var(--nd-accent)', fontVariantNumeric: 'tabular-nums', opacity: 0.8 })}
           </div>
           <div style={{ marginTop: '8px', fontSize: '0.85rem', fontWeight: 500, color: 'var(--nd-text-muted)', textTransform: 'capitalize', letterSpacing: '0.5px' }}>
             {dateStr}
@@ -168,12 +185,12 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 24, padding: '2px 18px 0 18px' }}>
             <div style={{ fontSize: '3.6rem', fontWeight: 200, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px', flexShrink: 0 }}>
-              {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}<span style={{ fontSize: '1.4rem', fontWeight: 300, color: 'var(--nd-text-muted)', marginLeft: 8 }}>{secs}</span>
+              {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}{renderTimeDetail({ height: '3.6rem', fontSize: '1.4rem', fontWeight: 300, color: 'var(--nd-text-muted)', marginLeft: 8 })}
             </div>
 
             <div style={{ flex: 1, height: '1px', background: 'var(--nd-card-border)', opacity: 0.4 }} />
@@ -196,11 +213,11 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 4px' }}>
-            {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}
+            {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}{renderDayPeriod({ marginLeft: 6, color: 'var(--nd-text-muted)' })}
           </div>
           <div style={{ fontSize: '0.85rem', color: 'var(--nd-text-muted)', fontWeight: 400, textTransform: 'lowercase' }}>
             {dateStr}
@@ -214,12 +231,12 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
           <div style={{ fontSize: '2.5rem', fontWeight: 300, lineHeight: 1, color: 'var(--nd-text)', letterSpacing: '-2px' }}>
-            {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}
+            {hours}<span style={{ opacity: 0.3 }}>:</span>{mins}{renderDayPeriod({ marginLeft: 6, color: 'var(--nd-text-muted)' })}
           </div>
           <div style={{ fontSize: '0.9rem', color: 'var(--nd-text-muted)', fontWeight: 500, letterSpacing: '1px', textTransform: 'lowercase' }}>
             {dateStr}
@@ -236,7 +253,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 12, padding: '2px 18px 0 18px' }}>
@@ -247,20 +264,20 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
             <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"
+                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> {t("--format=\"HH:MM:SS\"")}
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '2.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '2.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
                   {hours}<span style={{ opacity: 0.4 }}>:</span>{mins}
-                  <span style={{ fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginLeft: '6px', fontWeight: 500 }}>{secs}</span>
+                  {renderTimeDetail({ height: '2.8rem', fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginLeft: '6px', fontWeight: 500 })}
                   <span style={{ width: '8px', height: '1.8rem', background: 'var(--nd-accent)', marginLeft: '8px', animation: 'nd-pulse-opacity 1s infinite step-end', transform: 'translateY(2px)' }} />
                 </div>
               </div>
-              
+
               <div style={{ flex: 1, borderTop: '1px dashed var(--nd-text-muted)', opacity: 0.3 }} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end', flexShrink: 0 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> --format="long"
+                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> {t("--format=\"long\"")}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--nd-text-muted)' }}>
                   {dateStr}
@@ -277,7 +294,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 8, padding: '0 6px' }}>
@@ -288,17 +305,17 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"
+                  <span style={{ color: 'var(--nd-accent)' }}>./clock</span> {t("--format=\"HH:MM:SS\"")}
                 </div>
-                <div style={{ fontFamily: 'monospace', fontSize: '2.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '2.8rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
                   {hours}<span style={{ opacity: 0.4 }}>:</span>{mins}
-                  <span style={{ fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginLeft: '6px', fontWeight: 500 }}>{secs}</span>
+                  {renderTimeDetail({ height: '2.8rem', fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginLeft: '6px', fontWeight: 500 })}
                   <span style={{ width: '8px', height: '1.8rem', background: 'var(--nd-accent)', marginLeft: '8px', animation: 'nd-pulse-opacity 1s infinite step-end', transform: 'translateY(2px)' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> --format="long"
+                  <span style={{ color: 'var(--nd-accent)' }}>./date</span> {t("--format=\"long\"")}
                 </div>
                 <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: 'var(--nd-text-muted)' }}>
                   {dateStr}
@@ -315,7 +332,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', padding: hideTitles ? '8px 0' : '16px 0 8px 0' }}>
@@ -324,17 +341,17 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-              <span style={{ color: 'var(--nd-accent)' }}>./clock</span> --format="HH:MM:SS"
+              <span style={{ color: 'var(--nd-accent)' }}>./clock</span> {t("--format=\"HH:MM:SS\"")}
             </div>
-            <div style={{ fontFamily: 'monospace', fontSize: '2.5rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'baseline' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '2.5rem', fontWeight: 600, color: 'var(--nd-text)', display: 'flex', alignItems: 'flex-start' }}>
               {hours}<span style={{ opacity: 0.4 }}>:</span>{mins}
-              <span style={{ fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginLeft: '6px', fontWeight: 500 }}>{secs}</span>
+              {renderTimeDetail({ height: '2.5rem', fontSize: '1.2rem', color: 'var(--nd-text-muted)', marginLeft: '6px', fontWeight: 500 })}
               <span style={{ width: '10px', height: '2rem', background: 'var(--nd-accent)', marginLeft: '12px', animation: 'nd-pulse-opacity 1s infinite step-end', transform: 'translateY(4px)' }} />
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '16px' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--nd-text)' }}>
-              <span style={{ color: 'var(--nd-accent)' }}>./date</span> --format="long"
+              <span style={{ color: 'var(--nd-accent)' }}>./date</span> {t("--format=\"long\"")}
             </div>
             <div style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--nd-text-muted)', opacity: 0.9 }}>
               {dateStr}
@@ -352,7 +369,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: 32, padding: '2px 18px 0 18px' }}>
@@ -369,9 +386,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
                 <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(0,0,0,0.5)', boxShadow: '0 1px 0 rgba(255,255,255,0.05)' }} />
                 {mins}
               </div>
-              <div style={{ background: 'var(--nd-accent-glow)', border: '1px solid var(--nd-accent)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.95rem', fontWeight: 800, color: 'var(--nd-accent)', marginLeft: '4px' }}>
-                {secs}
-              </div>
+              {renderTimeDetail({ background: 'var(--nd-accent-glow)', border: '1px solid var(--nd-accent)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.95rem', fontWeight: 800, color: 'var(--nd-accent)', marginLeft: '4px' })}
             </div>
 
             <div style={{ flex: 1, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)' }} />
@@ -390,7 +405,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
         <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column' }}>
           {(!hideTitles || editMode) && (
             <div className="nd-section-title">
-              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+              <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
             </div>
           )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 20, padding: '0 10px' }}>
@@ -407,9 +422,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
                 <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(0,0,0,0.5)', boxShadow: '0 1px 0 rgba(255,255,255,0.05)' }} />
                 {mins}
               </div>
-              <div style={{ background: 'var(--nd-accent-glow)', border: '1px solid var(--nd-accent)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.95rem', fontWeight: 800, color: 'var(--nd-accent)', marginLeft: '4px' }}>
-                {secs}
-              </div>
+              {renderTimeDetail({ background: 'var(--nd-accent-glow)', border: '1px solid var(--nd-accent)', borderRadius: '4px', padding: '4px 6px', fontSize: '0.95rem', fontWeight: 800, color: 'var(--nd-accent)', marginLeft: '4px' })}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
               <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--nd-text)' }}>{dateStr}</span>
@@ -425,7 +438,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
         {!hideTitles && (
           <div className="nd-section-title">
-            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> Horloge
+            <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '12px 0' }}>
@@ -443,9 +456,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
               {mins}
             </div>
             <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '4px' }}>
-              <div style={{ background: 'var(--nd-accent-glow)', border: '1px solid var(--nd-accent)', borderRadius: '4px', padding: '2px 4px', fontSize: '0.8rem', fontWeight: 800, color: 'var(--nd-accent)', marginLeft: '2px' }}>
-                {secs}
-              </div>
+              {renderTimeDetail({ background: 'var(--nd-accent-glow)', border: '1px solid var(--nd-accent)', borderRadius: '4px', padding: '2px 4px', fontSize: '0.8rem', fontWeight: 800, color: 'var(--nd-accent)', marginLeft: '2px' })}
             </div>
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)', fontWeight: 500, letterSpacing: '0.5px' }}>

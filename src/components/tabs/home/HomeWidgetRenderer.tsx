@@ -3,6 +3,7 @@ import { CustomTabWidgetInfo } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
 
 import { WidgetRenderer } from '../../widgets/WidgetRenderer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface HomeWidgetRendererProps {
   widget: CustomTabWidgetInfo & { id: string, order: number };
@@ -14,6 +15,7 @@ interface HomeWidgetRendererProps {
 }
 
 export default function HomeWidgetRenderer({ widget, editMode, showSensitive = false, isVisible = true, onDelete, onUpdateHeight }: HomeWidgetRendererProps) {
+  const { t } = useI18n();
   const { config, updateHomeWidgetProps } = useConfig();
   
   // By default, widgets in Home BentoGrid slots occupy the medium slot size
@@ -39,7 +41,7 @@ export default function HomeWidgetRenderer({ widget, editMode, showSensitive = f
           {editMode && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, width: '80%' }}>
               <span style={{ fontSize: '0.8rem', color: 'var(--nd-text-muted)', fontWeight: 600 }}>
-                Espace ({widget.height || 120}px)
+                {t("Espace (")}{widget.height || 120}px)
               </span>
               <input 
                 type="range" 

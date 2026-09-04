@@ -44,6 +44,7 @@ export interface BentoGridProps {
 }
 
 const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, searchQuery, showSecretSections, showSensitive, isVisible, onReorder, onReorderWidgets, onEditCategory, onDeleteCategory, onDeleteWidget, onUpdateWidgetHeight, onAddService, onDeleteSlot }: BentoGridProps) => {
+  const { t } = useI18n();
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
@@ -339,14 +340,14 @@ const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, 
           setDeleteItem(null);
         }}
         title={
-          deleteItem?.type === 'category' ? 'Supprimer la catégorie ?' :
-          deleteItem?.type === 'widget' ? 'Supprimer ce widget ?' :
-          'Supprimer l\'emplacement ?'
+          deleteItem?.type === 'category' ? t("Supprimer la catégorie ?") :
+          deleteItem?.type === 'widget' ? t("Supprimer ce widget ?") :
+          t("Supprimer l'emplacement ?")
         }
         description={
-          deleteItem?.type === 'category' ? `Voulez-vous vraiment supprimer "${deleteItem.name}" et tous ses services de votre tableau de bord ?` :
-          deleteItem?.type === 'widget' ? `Voulez-vous vraiment supprimer ce widget de votre tableau de bord ?` :
-          'Voulez-vous vraiment supprimer cet emplacement vide de la grille et décaler le reste des éléments ?'
+          deleteItem?.type === 'category' ? t('confirm.bentoCategoryDelete', { name: deleteItem.name || '' }) :
+          deleteItem?.type === 'widget' ? t("Voulez-vous vraiment supprimer ce widget de votre tableau de bord ?") :
+          t("Voulez-vous vraiment supprimer cet emplacement vide de la grille et décaler le reste des éléments ?")
         }
       />}
     </DndContext>
@@ -354,12 +355,13 @@ const BentoGridWithDnd = ({ categories, homeWidgets = [], totalSlots, editMode, 
 };
 
 const DroppableSlot = ({ slotId, item, editMode, children, onDeleteSlot }: any) => {
+  const { t } = useI18n();
   const { setNodeRef, isOver } = useDroppable({ id: `slot-${slotId}`, data: { type: 'category-slot', slotId } });
   if (!editMode && !item) return null;
   if (editMode && !item) {
     return (
       <div ref={setNodeRef} style={{ height: 60, position: 'relative', border: isOver ? '2px dashed var(--nd-accent)' : '2px dashed var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--nd-text-dimmed)', fontSize: '0.75rem', fontWeight: 600, background: isOver ? 'var(--nd-accent-glow)' : 'transparent', transition: 'all 0.2s', margin: '0' }}>
-        <span>Emplacement vide</span>
+        <span>{t("Emplacement vide")}</span>
         <button
           className="nd-action-icon danger"
           onClick={(e) => { e.stopPropagation(); onDeleteSlot(slotId); }}
@@ -377,8 +379,10 @@ const DroppableSlot = ({ slotId, item, editMode, children, onDeleteSlot }: any) 
 };
 
 import { useDraggable } from '@dnd-kit/core';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const DraggableWidgetWrapper = ({ widget, editMode, onDelete, children }: { widget: any, editMode: boolean, onDelete: () => void, children: React.ReactNode }) => {
+  const { t } = useI18n();
   const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
     id: `widget-${widget.id}`,
     data: { type: 'widget', widget, widgetId: widget.id },
@@ -410,14 +414,14 @@ const DraggableWidgetWrapper = ({ widget, editMode, onDelete, children }: { widg
             {...listeners} 
             {...attributes} 
             style={{ cursor: 'grab', background: 'none', border: 'none', color: 'var(--nd-text-dimmed)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title="Déplacer"
+            title={t("Déplacer")}
           >
             <GripHorizontal size={14} />
           </button>
           <button
             className="nd-action-icon danger"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            title="Supprimer le widget"
+            title={t("Supprimer le widget")}
           >
             <Trash2 size={14} />
           </button>

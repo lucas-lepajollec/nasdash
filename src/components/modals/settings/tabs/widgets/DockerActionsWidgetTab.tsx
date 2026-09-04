@@ -4,8 +4,10 @@ import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
 import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
 import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function DockerActionsWidgetTab() {
+  const { t } = useI18n();
   const { config, updateConfig } = useConfig();
 
   const hideDockerActions = config?.settings?.hideDockerActions ?? true;
@@ -20,8 +22,8 @@ export function DockerActionsWidgetTab() {
         <ToggleSwitch
           checked={!hideDockerActions}
           onChange={(val) => handleToggleWidget('hideDockerActions', !val)}
-          label="Activer le widget Actions Docker"
-          sublabel="Choisissez si la section d'alimentation des conteneurs doit s'afficher sur votre dashboard."
+          label={t("Activer le widget Actions Docker")}
+          sublabel={t("Choisissez si la section d'alimentation des conteneurs doit s'afficher sur votre dashboard.")}
         />
       </div>
 

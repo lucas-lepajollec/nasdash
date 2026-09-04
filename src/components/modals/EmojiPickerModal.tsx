@@ -9,6 +9,7 @@ import { Emoji, EMOJI_TO_LUCIDE, normalizeEmoji } from '../shared/Emoji';
 import { useConfig } from '@/hooks/useConfig';
 import ThemeGalleryView from './ThemeGalleryView';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface EmojiPickerModalProps {
   initialEmoji?: string;
@@ -28,6 +29,7 @@ export default function EmojiPickerModal({
   title,
   allowNone = true
 }: EmojiPickerModalProps) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const emojiTheme = config?.settings?.emojiTheme || 'native';
   const isLucideActive = emojiTheme === 'lucide';
@@ -79,7 +81,7 @@ export default function EmojiPickerModal({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <h3 style={{ fontSize: '0.88rem', fontWeight: 700, margin: 0, color: 'var(--nd-text)' }}>{modalTitle}</h3>
-          <button aria-label="Fermer" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', padding: 4 }}>
+          <button aria-label={t("Fermer")} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
@@ -89,9 +91,9 @@ export default function EmojiPickerModal({
           <Search size={14} style={{ position: 'absolute', left: 10, color: 'var(--nd-text-muted)' }} />
           <input
             type="text"
-            aria-label={isLucideActive ? "Rechercher une icône" : "Rechercher un émoji"}
+            aria-label={isLucideActive ? t("Rechercher une icône") : t("Rechercher un émoji")}
             data-dialog-autofocus
-            placeholder={isLucideActive ? "Rechercher une icône (ex: server, cloud, home...)" : "Rechercher un émoji (ex: maison, dev, café...)"}
+            placeholder={isLucideActive ? t("Rechercher une icône (ex: server, cloud, home...)") : t("Rechercher un émoji (ex: maison, dev, café...)")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -120,7 +122,7 @@ export default function EmojiPickerModal({
               className="nd-btn" 
               style={{ width: '100%', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: emoji === '' ? 'var(--nd-accent-glow)' : 'var(--nd-subcard-bg)', border: '1px solid var(--nd-card-border)', borderRadius: '8px', fontSize: '0.8rem', flexShrink: 0 }}
             >
-              <Ban size={14} /> Aucun
+              <Ban size={14} /> {t("Aucun")}
             </button>
           )}
 
@@ -128,7 +130,7 @@ export default function EmojiPickerModal({
           {!isLucideActive && filteredEmojis.length > 0 && (
             <div>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
-                🎨 Emojis disponibles ({filteredEmojis.length})
+                {t("🎨 Emojis disponibles (")}{filteredEmojis.length})
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))', gap: 6 }}>
                 {filteredEmojis.map((e) => {
@@ -158,7 +160,7 @@ export default function EmojiPickerModal({
           {isLucideActive && filteredLucideIcons.length > 0 && (
             <div>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
-                ✨ Icônes Vectorielles (Lucide) ({filteredLucideIcons.length})
+                {t("✨ Icônes Vectorielles (Lucide) (")}{filteredLucideIcons.length})
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))', gap: 6 }}>
                 {filteredLucideIcons.map((name) => {
@@ -195,7 +197,7 @@ export default function EmojiPickerModal({
 
           {((!isLucideActive && filteredEmojis.length === 0) || (isLucideActive && filteredLucideIcons.length === 0)) && (
             <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--nd-text-muted)', fontSize: '0.78rem' }}>
-              Aucun élément ne correspond à votre recherche "{searchQuery}"
+              {t("Aucun élément ne correspond à votre recherche \"")}{searchQuery}"
             </div>
           )}
         </div>
@@ -234,13 +236,13 @@ export default function EmojiPickerModal({
               e.currentTarget.style.opacity = '0.7';
             }}
           >
-            <Palette size={12} /> Galerie des bibliothèques d'icônes
+            <Palette size={12} /> {t("Galerie des bibliothèques d'icônes")}
           </button>
         </div>
 
         {showGallery && (
           <div className="nd-modal-overlay" onClick={() => setShowGallery(false)} style={{ zIndex: 10001 }}>
-            <div ref={galleryDialogRef} role="dialog" aria-modal="true" aria-label="Galerie des icônes" tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 850, maxWidth: '95%', height: '85vh', padding: 0, overflow: 'hidden' }}>
+            <div ref={galleryDialogRef} role="dialog" aria-modal="true" aria-label={t("Galerie des icônes")} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 850, maxWidth: '95%', height: '85vh', padding: 0, overflow: 'hidden' }}>
               <ThemeGalleryView
                 currentTheme={config?.settings?.theme || 'default'}
                 onSelectTheme={async () => {}}

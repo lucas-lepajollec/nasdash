@@ -5,6 +5,7 @@ import { CustomTabWidgetInfo } from '@/lib/types';
 import { WIDGET_REGISTRY, getWidgetConfigKeys } from '@/lib/widgetRegistry';
 import { useConfig } from '@/hooks/useConfig';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface WidgetSelectionModalProps {
   onClose: () => void;
@@ -12,6 +13,7 @@ interface WidgetSelectionModalProps {
 }
 
 export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModalProps) {
+  const { t } = useI18n();
   const [activeFilter, setActiveFilter] = useState('all');
   const { config } = useConfig();
   const dialogRef = useDialogAccessibility(onClose);
@@ -46,10 +48,10 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
     : availableWidgets.filter(w => w.category === activeFilter);
 
   const categories = [
-    { id: 'all', label: 'Tous', count: availableWidgets.length },
-    { id: 'Système', label: 'Système', count: availableWidgets.filter(w => w.category === 'Système').length },
-    { id: 'Réseau', label: 'Réseau', count: availableWidgets.filter(w => w.category === 'Réseau').length },
-    { id: 'Gadget', label: 'Gadgets & Espace', count: availableWidgets.filter(w => w.category === 'Gadget').length },
+    { id: 'all', label: t("Tous"), count: availableWidgets.length },
+    { id: 'Système', label: t("Système"), count: availableWidgets.filter(w => w.category === 'Système').length },
+    { id: 'Réseau', label: t("Réseau"), count: availableWidgets.filter(w => w.category === 'Réseau').length },
+    { id: 'Gadget', label: t("Gadgets & Espace"), count: availableWidgets.filter(w => w.category === 'Gadget').length },
   ];
 
   return createPortal(
@@ -79,7 +81,7 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Bibliothèque de widgets"
+        aria-label={t("Bibliothèque de widgets")}
         tabIndex={-1}
         className="nd-modal nd-animate-in" 
         onClick={e => e.stopPropagation()}
@@ -103,14 +105,14 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
         }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, letterSpacing: -0.2, color: 'var(--nd-text)' }}>
-              Bibliothèque de Widgets
+              {t("Bibliothèque de Widgets")}
             </h3>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.65rem', color: 'var(--nd-text-muted)' }}>
-              Choisissez le widget à rajouter.
+              {t("Choisissez le widget à rajouter.")}
             </p>
           </div>
           <button 
-            aria-label="Fermer"
+            aria-label={t("Fermer")}
             onClick={onClose} 
             style={{ 
               background: 'rgba(255,255,255,0.03)', 
@@ -297,10 +299,10 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
                 {/* Text */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: '0.78rem', color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {w.name}
+                    {t(w.name)}
                   </div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', lineHeight: 1.4, marginTop: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {w.desc}
+                    {t(w.desc)}
                   </div>
                 </div>
 
@@ -318,7 +320,7 @@ export function WidgetSelectionModal({ onClose, onSelect }: WidgetSelectionModal
                     fontWeight: 700
                   }}
                 >
-                  {isSpacer ? 'Layout' : w.category}
+                  {isSpacer ? t('Layout') : t(w.category)}
                 </span>
               </div>
             );

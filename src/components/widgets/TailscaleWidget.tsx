@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
+import { useI18n } from '@/i18n/I18nProvider';
 
 const getOsIcon = (os: string, hostname: string) => {
   const lower = os?.toLowerCase() || '';
@@ -17,6 +18,7 @@ const getOsIcon = (os: string, hostname: string) => {
 };
 
 export default function TailscaleWidget({ editMode, showSensitive = false, isVisible = true }: { editMode?: boolean; showSensitive?: boolean; isVisible?: boolean }) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -73,7 +75,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
           </div>
         )}
         <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: '8px 4px' }}>
-          Tailscale n'est pas configuré. Allez dans les paramètres pour lier votre compte.
+          {t("Tailscale n'est pas configuré. Allez dans les paramètres pour lier votre compte.")}
         </p>
       </div>
     );
@@ -84,13 +86,13 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
         {!hideTitles && (
           <div className="nd-section-title" style={{ color: 'var(--nd-red)' }}>
-            <AlertCircle size={12} /> Tailscale Error
+            <AlertCircle size={12} /> {t("Tailscale Error")}
           </div>
         )}
         <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: hideTitles ? 0 : 4, marginBottom: 8 }}>
-          <Globe size={10} /> Dashboard Tailscale
+          <Globe size={10} /> {t("Dashboard Tailscale")}
         </a>
-        <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: 4 }}>Démon indisponible ou configuration invalide</p>
+        <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', margin: 0, padding: 4 }}>{t("Démon indisponible ou configuration invalide")}</p>
       </div>
     );
   }
@@ -104,20 +106,20 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
         {!hideTitles && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
             <div className="nd-section-title" style={{ flex: 1 }}>
-              <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale VPN
+              <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> {t("Tailscale VPN")}
             </div>
             <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Globe size={10} /> Admin Panel
+              <Globe size={10} /> {t("Admin Panel")}
             </a>
           </div>
         )}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', marginTop: 8 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--nd-border)', color: 'var(--nd-text-muted)', textAlign: 'left' }}>
-              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Appareil</th>
-              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Adresse IP</th>
-              <th style={{ padding: '6px 10px', fontWeight: 600 }}>Système</th>
-              <th style={{ padding: '6px 10px', fontWeight: 600, textAlign: 'right' }}>Statut</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>{t("Appareil")}</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>{t("Adresse IP")}</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600 }}>{t("Système")}</th>
+              <th style={{ padding: '6px 10px', fontWeight: 600, textAlign: 'right' }}>{t("Statut")}</th>
             </tr>
           </thead>
           <tbody>
@@ -126,7 +128,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
                 <td style={{ padding: '8px 10px', fontWeight: 600 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {device.hostname}
-                    {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>Hôte</span>}
+                    {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t("Hôte")}</span>}
                   </div>
                 </td>
                 <td style={{ padding: '8px 10px', fontFamily: 'monospace', color: 'var(--nd-text-muted)' }}>
@@ -141,7 +143,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
                 <td style={{ padding: '8px 10px', textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: '0.65rem', color: device.online ? 'var(--nd-green)' : 'var(--nd-text-muted)', fontWeight: 600 }}>
-                      {device.online ? 'En ligne' : 'Hors ligne'}
+                      {device.online ? t("En ligne") : t("Hors ligne")}
                     </span>
                     <div style={{
                       width: 6, height: 6, borderRadius: '50%',
@@ -168,7 +170,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
               <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
             </div>
             <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Globe size={10} /> Dashboard
+              <Globe size={10} /> {t("Dashboard")}
             </a>
           </div>
         )}
@@ -188,7 +190,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                   <div style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--nd-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
                     {device.hostname}
-                    {device.isSelf && <span style={{ fontSize: '0.5rem', padding: '1px 3px', background: 'rgba(255,255,255,0.06)', borderRadius: 3 }}>Hôte</span>}
+                    {device.isSelf && <span style={{ fontSize: '0.5rem', padding: '1px 3px', background: 'rgba(255,255,255,0.06)', borderRadius: 3 }}>{t("Hôte")}</span>}
                   </div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--nd-text-muted)', fontFamily: 'monospace' }}>{!showSensitive ? '•••' : device.ip}</div>
                 </div>
@@ -218,7 +220,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
         </div>
       )}
       <a href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.65rem', color: 'var(--nd-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: hideTitles ? 0 : 4, marginBottom: 8 }}>
-        <Globe size={10} /> Dashboard Tailscale
+        <Globe size={10} /> {t("Dashboard Tailscale")}
       </a>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {devices.map((device: any) => (
@@ -228,7 +230,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                 <div className="nd-ts-device-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {device.hostname}
-                  {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Hôte</span>}
+                  {device.isSelf && <span style={{ fontSize: '0.55rem', padding: '1px 4px', background: 'rgba(255,255,255,0.06)', borderRadius: 4, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{t("Hôte")}</span>}
                 </div>
                 <div className="nd-ts-device-os">{!showSensitive ? '•••' : device.ip}</div>
               </div>
@@ -237,7 +239,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
               background: device.online ? 'var(--nd-green)' : 'var(--nd-border)',
               boxShadow: device.online ? '0 0 8px var(--nd-green)' : 'none',
               opacity: device.online ? 1 : 0.4
-            }} title={device.online ? 'En ligne' : 'Hors ligne'} />
+            }} title={device.online ? t("En ligne") : t("Hors ligne")} />
           </div>
         ))}
       </div>

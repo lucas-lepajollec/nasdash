@@ -7,6 +7,7 @@ import ServiceItem from './ServiceItem';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../../shared/Emoji';
+import { useI18n } from '@/i18n/I18nProvider';
 
 interface CategoryCardProps {
   category: Category;
@@ -22,6 +23,7 @@ export default function CategoryCard({
   category, editMode, searchQuery,
   onEditCategory, onDeleteCategory, onAddService, showSensitive,
 }: CategoryCardProps) {
+  const { t } = useI18n();
   const { config } = useConfig();
   const hideCategoryTitles = config?.settings?.hideCategoryTitles ?? false;
   const categoryTitlePosition = config?.settings?.categoryTitlePosition || 'inside';
@@ -63,16 +65,16 @@ export default function CategoryCard({
         </button>
       )}
       <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
-      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category.title}</span>
+      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
       {editMode && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title="Ajouter un service">
+          <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title={t("Ajouter un service")}>
             <Plus size={13} />
           </button>
-          <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title="Modifier la catégorie">
+          <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title={t("Modifier la catégorie")}>
             <Pencil size={13} />
           </button>
-          <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title="Supprimer la catégorie">
+          <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title={t("Supprimer la catégorie")}>
             <Trash2 size={13} />
           </button>
         </div>
@@ -118,7 +120,7 @@ export default function CategoryCard({
         {showDropGap && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}
         {filteredServices.length === 0 && !searchQuery && (
           <div style={{ gridColumn: '1 / -1', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <p style={{ fontSize: '0.7rem', textAlign: 'center', padding: '12px 0', color: 'var(--nd-text-dimmed)' }}>Aucun service</p>
+            <p style={{ fontSize: '0.7rem', textAlign: 'center', padding: '12px 0', color: 'var(--nd-text-dimmed)' }}>{t("Aucun service")}</p>
           </div>
         )}
       </div>

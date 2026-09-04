@@ -128,6 +128,7 @@ describe('configuration entity payloads', () => {
   it('accepts the complete settings shapes emitted by the current UI', () => {
     expect(() => validateConfigMutationBody({
       type: 'settings',
+      uiLanguage: 'de',
       mode: 'light',
       title: 'Mon homelab',
       titleLogo: '/api/logos/title.png',
@@ -162,6 +163,18 @@ describe('configuration entity payloads', () => {
       dockerContainersOrder: 4,
       'docker-dockercontainersProps': { hostId: 'docker-host-1', compact: true },
     }, 'settings', 'PUT')).not.toThrow();
+  });
+
+  it('accepts only maintained interface languages', () => {
+    expect(() => validateConfigMutationBody({
+      type: 'settings',
+      uiLanguage: 'fr',
+    }, 'settings', 'PUT')).not.toThrow();
+
+    expect(() => validateConfigMutationBody({
+      type: 'settings',
+      uiLanguage: 'it',
+    }, 'settings', 'PUT')).toThrow();
   });
 
   it('keeps the nullable mobile overrides sent by the sliders compatible', () => {

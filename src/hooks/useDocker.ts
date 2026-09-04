@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import useSWR from 'swr';
 import { DockerHost } from '@/lib/types';
 import { dockerJsonFetcher } from '@/lib/dockerErrorContract';
+import { useI18n } from '@/i18n/I18nProvider';
 
 export function getDockerRequestKeys(
   activeHostId: string | null,
@@ -21,6 +22,7 @@ export function getDockerRequestKeys(
 }
 
 export function useDocker(hosts: DockerHost[], enabled = true) {
+  const { t } = useI18n();
   const [activeHostId, setActiveHostId] = useState<string | null>(hosts[0]?.id || null);
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -64,10 +66,10 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
       });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
-          throw new Error("Session administrateur requise. Veuillez vous connecter en haut à droite.");
+          throw new Error(t('errors.adminSessionRequired'));
         }
         const data = await res.json();
-        throw new Error(data.error || 'Action failed');
+        throw new Error(data.error ? t(data.error) : t('errors.dockerAction'));
       }
       // Wait a beat then refresh
       await new Promise(r => setTimeout(r, 500));
@@ -86,7 +88,7 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
     } finally {
       setActionLoading(null);
     }
-  }, [activeHostId, selectedContainerId, refreshContainers, refreshDetail]);
+  }, [activeHostId, selectedContainerId, refreshContainers, refreshDetail, t]);
 
   return {
     // Host
