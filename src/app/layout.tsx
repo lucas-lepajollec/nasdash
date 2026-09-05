@@ -5,6 +5,7 @@ import './themes.css';
 import { ConfigProvider } from '@/providers/ConfigProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { messages } from '@/i18n/messages';
+import { isDemoMode } from '@/lib/demoMode';
 
 const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-outfit' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-space' });
@@ -12,11 +13,27 @@ const syne = Syne({ subsets: ['latin'], weight: ['400', '500', '600', '700', '80
 const righteous = Righteous({ subsets: ['latin'], weight: '400', variable: '--font-righteous' });
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800'], variable: '--font-montserrat' });
 
-export const metadata: Metadata = {
-  title: messages.en['meta.title'],
-  description: messages.en['meta.description'],
-  icons: '/logo.svg',
-};
+export function generateMetadata(): Metadata {
+  const demoMode = isDemoMode();
+
+  return {
+    title: messages.en['meta.title'],
+    description: messages.en['meta.description'],
+    icons: '/logo.svg',
+    robots: demoMode
+      ? {
+          index: false,
+          follow: false,
+          nocache: true,
+          googleBot: {
+            index: false,
+            follow: false,
+            noimageindex: true,
+          },
+        }
+      : undefined,
+  };
+}
 
 export default function RootLayout({
   children,
