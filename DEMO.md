@@ -20,6 +20,11 @@ When `NASDASH_DEMO_MODE=true`:
 - Docker logs are fictional but fully inspectable;
 - account management, uploads and real service links stay blocked.
 
+The public profile also emits a `noindex` robots meta directive, an
+`X-Robots-Tag` response header and a restrictive `/robots.txt`. These controls
+are enabled only by `NASDASH_DEMO_MODE=true`; a normal self-hosted instance
+keeps standard indexing behavior.
+
 The Docker demo adds another layer: its container filesystem is read-only, it
 drops all Linux capabilities, has no host PID namespace, volume, Docker socket
 or Docker proxy, and uses an internal Docker network. A fixed unprivileged
