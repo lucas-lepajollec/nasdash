@@ -2,6 +2,7 @@
 
 import { useState, useCallback, Suspense, lazy, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
+import DemoExperience from '@/components/demo/DemoExperience';
 import TabDock from '@/components/layout/TabDock';
 import HomeTab from '@/components/tabs/home/HomeTab';
 import { useTabs, TabId } from '@/hooks/useTabs';
@@ -364,6 +365,7 @@ export default function Shell() {
           }}
         />
       )}
+      {config?.demoMode === true && <DemoExperience />}
     </div>
   );
 }

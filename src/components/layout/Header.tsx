@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Search, Pencil, Settings, Plus, X, Eye, EyeOff, Menu, LogIn, LogOut, User, ChevronDown, ShieldCheck, RotateCcw } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Pencil, Settings, Plus, X, Eye, EyeOff, Menu, LogIn, LogOut, User, ChevronDown } from 'lucide-react';
 import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
@@ -38,16 +38,6 @@ export default function Header(props: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
-  const [demoBannerHidden, setDemoBannerHidden] = useState(false);
-
-  useEffect(() => {
-    setDemoBannerHidden(sessionStorage.getItem('nd-demo-banner-hidden') === 'true');
-  }, []);
-
-  const hideDemoBanner = () => {
-    sessionStorage.setItem('nd-demo-banner-hidden', 'true');
-    setDemoBannerHidden(true);
-  };
 
   interface EditAction {
     label: string;
@@ -116,7 +106,6 @@ export default function Header(props: HeaderProps) {
   const title = config?.settings?.title || props.title || 'MON HOME LAB';
   const titleMobile = config?.settings?.titleMobile || props.titleMobile;
   const titleLogo = config?.settings?.titleLogo || props.titleLogo;
-  const demoMode = config?.demoMode === true;
 
   const renderAnimatedTitleText = (txt: string) => txt;
 
@@ -382,51 +371,6 @@ export default function Header(props: HeaderProps) {
 
   return (
     <>
-      {demoMode && !demoBannerHidden && (
-        <aside
-          className="nd-demo-banner"
-          role="note"
-          aria-label={t("Démonstration publique isolée avec des données fictives, des actions simulées et aucune connexion à une infrastructure réelle")}
-        >
-          <div className="nd-demo-banner-inner">
-            <div className="nd-demo-banner-icon" aria-hidden="true">
-              <ShieldCheck size={15} strokeWidth={1.8} />
-            </div>
-            <div className="nd-demo-banner-content">
-              <strong>{t("Démo publique")}</strong>
-              <span className="nd-demo-banner-copy-desktop">
-                {t("Environnement isolé · données, journaux et actions simulés · aucune connexion à une infrastructure réelle · modifications temporaires · aperçu non exhaustif")}
-              </span>
-              <span className="nd-demo-banner-copy-mobile" aria-hidden="true">
-                {t("Données fictives · mode isolé")}
-              </span>
-            </div>
-            <div className="nd-demo-banner-actions">
-              <button
-                type="button"
-                className="nd-demo-banner-reset"
-                onClick={async () => {
-                  await fetch('/api/demo/reset', { method: 'POST' });
-                  window.location.reload();
-                }}
-                aria-label={t("Réinitialiser les données de démonstration")}
-                title={t("Réinitialiser la démonstration")}
-              >
-                <RotateCcw size={13} /> <span>{t("Réinitialiser")}</span>
-              </button>
-              <button
-                type="button"
-                className="nd-demo-banner-close"
-                onClick={hideDemoBanner}
-                aria-label={t("Masquer le bandeau de démonstration")}
-                title={t("Masquer pour cette session")}
-              >
-                <X size={15} />
-              </button>
-            </div>
-          </div>
-        </aside>
-      )}
       <header className="nd-header">
         {/* Desktop Layout */}
         <div className="nd-header-desktop" style={{ width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
