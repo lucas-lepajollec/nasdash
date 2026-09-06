@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-06
+
+### Security
+
+- Restrict service ping requests to administrator-configured targets instead of accepting arbitrary outbound destinations.
+- Restore normal TLS certificate verification for Proxmox requests and document custom-CA trust through the runtime environment.
+- Render custom CSS without an HTML injection sink and remove unsafe previews of untrusted logo URLs.
+
+### Changed
+
+- Add complete dependency auditing and a non-regression lint ceiling to the protected quality gates.
+
 ## [0.1.0] - 2026-09-06
 
 ### Added
@@ -19,5 +31,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/lucas-lepajollec/nasdash/releases/tag/v0.1.0
