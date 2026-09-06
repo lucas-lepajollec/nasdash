@@ -1035,6 +1035,7 @@ export default function DockerTab({ editMode, searchQuery, isVisible, showSensit
               value={localSearch}
               onChange={e => setLocalSearch(e.target.value)}
               placeholder={t("Filtrer les conteneurs...")}
+              aria-label={t("Filtrer les conteneurs...")}
               style={{ paddingLeft: 30, fontSize: '0.72rem' }}
             />
           </div>
