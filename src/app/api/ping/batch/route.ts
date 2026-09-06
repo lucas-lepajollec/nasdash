@@ -3,7 +3,7 @@ import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, readJsonObject, readStringArray } from '@/lib/requestValidation';
 import { isDemoMode } from '@/lib/demoMode';
-import { collectConfiguredPingTargets, isConfiguredPingTarget } from '@/lib/pingTargets';
+import { collectConfiguredPingTargets, resolveConfiguredPingTarget } from '@/lib/pingTargets';
 
 export const dynamic = 'force-dynamic';
 const MAX_PING_BODY_BYTES = 128 * 1024;
@@ -15,7 +15,8 @@ interface PingStatus {
 }
 
 async function pingOne(url: string, allowedTargets: Set<string>) {
-  if (!isConfiguredPingTarget(url, allowedTargets)) {
+  const configuredUrl = resolveConfiguredPingTarget(url, allowedTargets);
+  if (!configuredUrl) {
     return { url, status: 'offline', statusText: 'Accès interdit', latency: 0 };
   }
 
@@ -24,7 +25,7 @@ async function pingOne(url: string, allowedTargets: Set<string>) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    const response = await fetch(url, {
+    const response = await fetch(configuredUrl, {
       method: 'GET',
       signal: controller.signal,
       cache: 'no-store',

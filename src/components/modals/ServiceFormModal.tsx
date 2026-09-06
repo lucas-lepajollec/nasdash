@@ -42,7 +42,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
     setIsSaving(true);
     setSaveError('');
     try {
-      await onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId, tailscaleUrl: '' } as any);
+      await onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId });
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Impossible d’enregistrer ce service.');
     } finally {
@@ -81,9 +81,6 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           <div>
             <label className="nd-label">{t("Logo")}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {logo && (
-                <img src={logo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
-              )}
               {demoMode ? (
                 <input className="nd-input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://cdn.example/logo.svg" />
               ) : <label className="nd-btn" style={{ cursor: 'pointer' }}>
@@ -122,9 +119,6 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           <div>
             <label className="nd-label">{t("Logo Secondaire (Optionnel)")}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {secondaryLogo && (
-                <img src={secondaryLogo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
-              )}
               {demoMode ? (
                 <input className="nd-input" value={secondaryLogo} onChange={(e) => setSecondaryLogo(e.target.value)} placeholder="https://cdn.example/logo-alt.svg" />
               ) : <label className="nd-btn" style={{ cursor: 'pointer' }}>

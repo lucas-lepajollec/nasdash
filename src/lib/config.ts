@@ -740,7 +740,6 @@ export function startBackgroundMonitoring() {
           'Authorization': `PVEAPIToken=${token}`,
           'Accept': 'application/json'
         },
-        agent: new https.Agent({ rejectUnauthorized: false }), // BYPASS SELF-SIGNED SECRETS
         timeout: 4000
       };
 
