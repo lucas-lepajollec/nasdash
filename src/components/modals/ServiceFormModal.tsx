@@ -6,7 +6,6 @@ import { X, Upload, Trash2 } from 'lucide-react';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
-import { safeImageSource } from '@/lib/imageSource';
 
 interface ServiceFormModalProps {
   service?: Service;
@@ -30,8 +29,6 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
   const [secondaryLogo, setSecondaryLogo] = useState(service?.secondaryLogo || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const logoPreview = safeImageSource(logo);
-  const secondaryLogoPreview = safeImageSource(secondaryLogo);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,9 +81,6 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           <div>
             <label className="nd-label">{t("Logo")}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {logoPreview && (
-                <img src={logoPreview} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
-              )}
               {demoMode ? (
                 <input className="nd-input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://cdn.example/logo.svg" />
               ) : <label className="nd-btn" style={{ cursor: 'pointer' }}>
@@ -125,9 +119,6 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           <div>
             <label className="nd-label">{t("Logo Secondaire (Optionnel)")}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {secondaryLogoPreview && (
-                <img src={secondaryLogoPreview} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
-              )}
               {demoMode ? (
                 <input className="nd-input" value={secondaryLogo} onChange={(e) => setSecondaryLogo(e.target.value)} placeholder="https://cdn.example/logo-alt.svg" />
               ) : <label className="nd-btn" style={{ cursor: 'pointer' }}>

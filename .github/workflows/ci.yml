@@ -33,10 +33,15 @@ jobs:
       - name: Run tests
         run: |
           npm run check:version
+          npm run lint
+          npx tsc --noEmit
           npm test
 
       - name: Validate interface translations
         run: npm run check:i18n
+
+      - name: Audit all dependencies
+        run: npm audit --audit-level=moderate
 
       - name: Build application
         run: npm run build
