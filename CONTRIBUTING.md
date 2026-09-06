@@ -67,4 +67,6 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Maintainer release process
 
+`package.json` is the authoritative product version; `package-lock.json` must match and `npm run check:version` enforces the contract, including the tag name in release CI.
+
 Releases are deliberate milestones, not snapshots of every merge. Prepare a release pull request that updates the declared version, moves completed entries out of `Unreleased` in [CHANGELOG.md](CHANGELOG.md), and documents compatibility, migrations, and rollback when relevant. After all required checks pass, tag the exact accepted `main` commit with an annotated `vMAJOR.MINOR.PATCH` tag and push it through the authoritative Forgejo remote. Verify that the identical tag reaches GitHub and that the versioned container finishes successfully before publishing a draft GitHub release. Never move or reuse a published version tag.
