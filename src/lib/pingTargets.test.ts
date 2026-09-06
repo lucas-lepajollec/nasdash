@@ -3,6 +3,7 @@ import {
   collectConfiguredPingTargets,
   isConfiguredPingTarget,
   normalizePingTarget,
+  resolveConfiguredPingTarget,
 } from './pingTargets';
 import type { DashboardConfig } from './types';
 
@@ -33,6 +34,8 @@ describe('configured ping targets', () => {
   it('allows the exact configured endpoint', () => {
     const targets = collectConfiguredPingTargets(config);
     expect(isConfiguredPingTarget('http://nas.local:8080/status', targets)).toBe(true);
+    expect(resolveConfiguredPingTarget('nas.local:8080/status', targets))
+      .toBe('http://nas.local:8080/status');
   });
 
   it('rejects another path on an otherwise allowed host', () => {

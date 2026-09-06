@@ -635,7 +635,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         }}
       />
       {!customCssSafeMode && config?.settings?.customCss && (
-        <style dangerouslySetInnerHTML={{ __html: sanitizeCustomCss(config.settings.customCss) }} />
+        <style>{sanitizeCustomCss(config.settings.customCss)}</style>
       )}
       {children}
     </DashboardContext.Provider>

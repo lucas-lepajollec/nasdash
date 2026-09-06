@@ -6,6 +6,7 @@ import { X, Upload, Trash2 } from 'lucide-react';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import { safeImageSource } from '@/lib/imageSource';
 
 interface ServiceFormModalProps {
   service?: Service;
@@ -29,6 +30,8 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
   const [secondaryLogo, setSecondaryLogo] = useState(service?.secondaryLogo || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const logoPreview = safeImageSource(logo);
+  const secondaryLogoPreview = safeImageSource(secondaryLogo);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,7 +45,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
     setIsSaving(true);
     setSaveError('');
     try {
-      await onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId, tailscaleUrl: '' } as any);
+      await onSave({ name, localUrl, secondaryUrl, logo, secondaryLogo, categoryId });
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Impossible d’enregistrer ce service.');
     } finally {
@@ -81,8 +84,8 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           <div>
             <label className="nd-label">{t("Logo")}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {logo && (
-                <img src={logo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
+              {logoPreview && (
+                <img src={logoPreview} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
               )}
               {demoMode ? (
                 <input className="nd-input" value={logo} onChange={(e) => setLogo(e.target.value)} placeholder="https://cdn.example/logo.svg" />
@@ -122,8 +125,8 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
           <div>
             <label className="nd-label">{t("Logo Secondaire (Optionnel)")}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {secondaryLogo && (
-                <img src={secondaryLogo} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
+              {secondaryLogoPreview && (
+                <img src={secondaryLogoPreview} alt="" style={{ width: 28, height: 28, borderRadius: 'var(--nd-card-radius)', objectFit: 'contain', background: 'var(--nd-icon-bg)' }} />
               )}
               {demoMode ? (
                 <input className="nd-input" value={secondaryLogo} onChange={(e) => setSecondaryLogo(e.target.value)} placeholder="https://cdn.example/logo-alt.svg" />

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { isDemoMode } from '@/lib/demoMode';
-import { collectConfiguredPingTargets, isConfiguredPingTarget } from '@/lib/pingTargets';
+import { collectConfiguredPingTargets, resolveConfiguredPingTarget } from '@/lib/pingTargets';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,8 @@ export async function GET(request: Request) {
   // Prevent SSRF and side effects: a viewer may probe only an exact endpoint
   // already persisted by an administrator, not another path on the same host.
   const allowedTargets = collectConfiguredPingTargets(config);
-  if (!isConfiguredPingTarget(url, allowedTargets)) {
+  const configuredUrl = resolveConfiguredPingTarget(url, allowedTargets);
+  if (!configuredUrl) {
     return NextResponse.json({ status: 'offline', statusText: 'Accès interdit (URL non configurée)', latency: 0 }, { status: 403 });
   }
 
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     // We do a GET instead of HEAD because some minimal self-hosted servers block HEAD requests
-    const response = await fetch(url, {
+    const response = await fetch(configuredUrl, {
       method: 'GET',
       signal: controller.signal,
       cache: 'no-store',

@@ -38,6 +38,15 @@ export function collectConfiguredPingTargets(config: DashboardConfig): Set<strin
 }
 
 export function isConfiguredPingTarget(value: string, targets: Set<string>): boolean {
+  return resolveConfiguredPingTarget(value, targets) !== null;
+}
+
+export function resolveConfiguredPingTarget(value: string, targets: Set<string>): string | null {
   const normalized = normalizePingTarget(value);
-  return normalized !== null && targets.has(normalized);
+  if (!normalized) return null;
+
+  // Return the value owned by the trusted configuration set. This keeps the
+  // untrusted request parameter out of the network sink even when both strings
+  // happen to be equal.
+  return Array.from(targets).find(target => target === normalized) ?? null;
 }
