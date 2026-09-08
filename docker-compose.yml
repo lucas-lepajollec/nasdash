@@ -1,9 +1,11 @@
 services:
   nasdash:
     image: ghcr.io/lucas-lepajollec/nasdash:latest
-    container_name: nasdash
     ports:
       - "2504:2504"
+    env_file:
+      - path: .env
+        required: false
     volumes:
       - ./data:/app/data
     pid: host
@@ -15,7 +17,6 @@ services:
 
   docker-proxy:
     image: tecnativa/docker-socket-proxy:v0.5.0
-    container_name: nasdash-docker-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
