@@ -75,7 +75,7 @@ services:
       - path: .env
         required: false
     volumes:
-      - nasdash-data:/app/data
+      - ./data:/app/data
     pid: host
     depends_on:
       - docker-proxy
@@ -96,10 +96,6 @@ services:
       POST: 1
       DELETE: 0
     restart: unless-stopped
-
-volumes:
-  nasdash-data:
-    name: nasdash-data
 ```
 
 ```bash
@@ -108,9 +104,9 @@ docker compose ps
 docker compose logs nasdash
 ```
 
-No `.env` is required. The first startup prints strong generated passwords once in the logs and stores the account data plus cryptographic keys in the persistent volume. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
+No `.env` is required. The first startup prints strong generated passwords once in the logs and stores the account data plus cryptographic keys in `./data`. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
-The repository's default Compose file pulls the published image and preserves the historical `./data` bind mount. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is the easier choice for a new installation. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
+The repository's default Compose file pulls the published image and stores data in `./data`. Do not replace that folder with a named volume on an existing installation: the app would start empty while the real files stay on disk. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is only an optional alternative for a brand-new install. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
@@ -130,11 +126,11 @@ Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only whe
 
 ## Configuration and persistence
 
-- The recommended `nasdash-data` volume contains configuration, users, password hashes, encryption material, and uploaded logos.
+- The default `./data` folder contains configuration, users, password hashes, encryption material, and uploaded logos.
 - Keep `NASDASH_JWT_SECRET` stable. Changing it invalidates sessions and prevents existing encrypted integration credentials from being decrypted.
 - Back up the entire data store before upgrades; never run `docker compose down -v` unless deleting all NasDash state is intentional.
-- Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by changing the `image:` line to the previous version or `sha-<full-commit>` tag and recreating without removing the data volume.
-- For folder-based snapshots or backup tools, replace the named volume with `./data:/app/data` and make the directory writable by UID/GID `1001:1001`.
+- Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by changing the `image:` line to the previous version or `sha-<full-commit>` tag and recreating without removing the data directory.
+- Make `./data` writable by UID/GID `1001:1001`. Use [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) only when you deliberately want a named volume instead of a host folder.
 
 See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures.
 

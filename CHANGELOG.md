@@ -6,10 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Security
+
+- Update Next.js to `16.3.4` and pin patched Vitest/js-yaml so the protected dependency audit can pass.
+
 ### Changed
 
 - Treat `.env` as an optional advanced override while preserving generated first-start credentials when it is absent.
 - Let Docker Compose derive stack and container names, avoiding fixed global names and allowing multiple installations to coexist.
+- Keep every copy-ready Compose example on `./data`. A named volume is an optional new-install alternative, not the default: switching an existing folder install to `nasdash-data` leaves the real files unused.
 
 ## [0.1.4] - 2026-09-08
 
