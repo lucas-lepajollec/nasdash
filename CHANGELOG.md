@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Compose now pulls the published image and uses Docker's standard all-interface port mapping by default. Use `127.0.0.1:2504:2504` for localhost-only publication; source builds use the explicit build override.
+
 ## [0.1.1] - 2026-09-06
 
 ### Security

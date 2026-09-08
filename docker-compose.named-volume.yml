@@ -6,7 +6,7 @@ services:
     image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
     container_name: nasdash
     ports:
-      - "${NASDASH_BIND_ADDRESS:-127.0.0.1}:2504:2504"
+      - "2504:2504"
     pid: "host"
     volumes:
       - nasdash-data:/app/data

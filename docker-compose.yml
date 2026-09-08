@@ -4,12 +4,11 @@
 services:
   # Service principal NasDash
   nasdash:
-    build: .
-    image: nasdash:local
+    image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
     container_name: nasdash
     ports:
       # Port exposé sur la machine hôte : port interne de l'application
-      - "${NASDASH_BIND_ADDRESS:-127.0.0.1}:2504:2504"
+      - "2504:2504"
     # Permet à la bibliothèque 'systeminformation' d'accéder aux statistiques réelles de la machine hôte (CPU, RAM, Disques)
     # au lieu de lire uniquement les limites du conteneur de l'application.
     pid: "host"

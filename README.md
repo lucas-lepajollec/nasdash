@@ -71,7 +71,7 @@ services:
     image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
     container_name: nasdash
     ports:
-      - "${NASDASH_BIND_ADDRESS:-127.0.0.1}:2504:2504"
+      - "2504:2504"
     pid: "host"
     volumes:
       - nasdash-data:/app/data
@@ -136,9 +136,13 @@ docker compose up -d
 docker compose ps
 ```
 
-Open `http://127.0.0.1:2504` and configure the local Docker host as `docker-proxy:2375`. Set `NASDASH_BIND_ADDRESS=0.0.0.0` only for deliberate trusted-LAN exposure, preferably behind an authenticated HTTPS reverse proxy.
+Open `http://127.0.0.1:2504` on the host, or `http://<host-ip>:2504` from the LAN, and configure the local Docker host as `docker-proxy:2375`. Docker publishes the port on the host interfaces by default; change the mapping to `127.0.0.1:2504:2504` when only the host or a same-host reverse proxy should reach it. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
-The repository also provides [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml), the historical bind-mount example, and a build-from-source Compose file.
+The repository's default Compose file pulls the published image and preserves the historical `./data` bind mount. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is the easier choice for a new installation. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
 
 ### Local development
 
