@@ -4,9 +4,50 @@ NasDash stores all persistent state in `/app/data`: configuration, local account
 
 Backups contain secrets. Keep them private and never commit them to Git.
 
-## Named Docker volume (recommended Compose example)
+## Bind-mounted `./data` directory (default Compose example)
 
-The published-image example uses the stable volume name `nasdash-data`.
+The published-image example stores data in `./data`. Use the named-volume override only for a new install that should not expose a host folder.
+
+The repository includes tested snapshot tooling for the default host folder.
+
+### Backup
+
+```bash
+docker compose stop nasdash
+npm run data:backup
+docker compose start nasdash
+```
+
+The command creates a timestamped directory below `backups/`. To use another destination:
+
+```bash
+npm run data:backup -- --output /mnt/backups/nasdash-2026-08-10
+```
+
+A plain archive of the folder also works:
+
+```bash
+mkdir -p backups
+docker compose stop nasdash
+tar -czf backups/nasdash-data-backup.tar.gz -C data .
+docker compose start nasdash
+```
+
+### Restore
+
+```bash
+docker compose stop nasdash
+npm run data:restore -- --from /mnt/backups/nasdash-2026-08-10 --force
+docker compose start nasdash
+```
+
+Before replacing the target, the tool renames the current directory to `data.pre-restore-*`. Keep that recovery directory until the restored instance has been checked.
+
+Use `--source` for backup or `--target` for restore when the active directory is not `<project>/data`. Never restore while NasDash is running.
+
+## Named Docker volume (optional)
+
+Use this path only when the running Compose file mounts `nasdash-data` instead of `./data`.
 
 ### Backup
 
@@ -39,55 +80,25 @@ docker compose -f docker-compose.named-volume.yml start nasdash
 
 Verify login, services, logos, topology and integrations before deleting the pre-restore backup archive.
 
-## Bind-mounted `./data` directory
-
-The repository includes tested snapshot tooling for installations that expose their data directory on the host.
-
-### Backup
-
-```bash
-docker compose stop nasdash
-npm run data:backup
-docker compose start nasdash
-```
-
-The command creates a timestamped directory below `backups/`. To use another destination:
-
-```bash
-npm run data:backup -- --output /mnt/backups/nasdash-2026-08-10
-```
-
-### Restore
-
-```bash
-docker compose stop nasdash
-npm run data:restore -- --from /mnt/backups/nasdash-2026-08-10 --force
-docker compose start nasdash
-```
-
-Before replacing the target, the tool renames the current directory to `data.pre-restore-*`. Keep that recovery directory until the restored instance has been checked.
-
-Use `--source` for backup or `--target` for restore when the active directory is not `<project>/data`. Never restore while NasDash is running.
-
 ## Safe upgrade checklist
 
 1. Create and verify a backup.
 2. Keep the current image tag or digest recorded so rollback remains possible.
 3. Pull/build the new image.
-4. Recreate the containers without deleting the persistent volume.
+4. Recreate the containers without deleting the persistent `./data` folder or named volume.
 5. Verify `/api/health`, login, configuration, topology, logos and each configured integration.
 6. Keep the backup until the new version has run normally for an appropriate period.
 
 For the published image:
 
 ```bash
-docker compose -f docker-compose.named-volume.yml pull
-docker compose -f docker-compose.named-volume.yml up -d
-docker compose -f docker-compose.named-volume.yml ps
-docker compose -f docker-compose.named-volume.yml logs --tail 100 nasdash
+docker compose pull
+docker compose up -d
+docker compose ps
+docker compose logs --tail 100 nasdash
 ```
 
-Do not use `docker compose down -v` during an ordinary update: `-v` deletes the named data volume.
+Do not use `docker compose down -v` during an ordinary update: `-v` deletes a named data volume.
 
 ## Secrets and key continuity
 
