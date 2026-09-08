@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Security
+
+- Update Next.js to `16.3.4` and pin patched Vitest/js-yaml so the protected dependency audit can pass.
+
 ### Changed
 
 - Treat `.env` as an optional advanced override while preserving generated first-start credentials when it is absent.

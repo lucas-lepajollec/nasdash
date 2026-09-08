@@ -33,7 +33,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "lucide-react": "^0.577.0",
-    "next": "16.3.0",
+    "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
@@ -49,9 +49,13 @@
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.0",
+    "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.10"
+    "vitest": "4.1.11"
+  },
+  "overrides": {
+    "@vitest/mocker": "4.1.11",
+    "js-yaml": "4.3.2"
   }
 }
