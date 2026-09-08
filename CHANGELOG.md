@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Treat `.env` as an optional advanced override while preserving generated first-start credentials when it is absent.
+- Let Docker Compose derive stack and container names, avoiding fixed global names and allowing multiple installations to coexist.
+
 ## [0.1.4] - 2026-09-08
 
 ### Changed
@@ -16,7 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Simplify the default Compose files to the settings NasDash actually needs, while preserving the established NAS port `2504`, persistence and restricted Docker socket proxy.
+- Simplify the default Compose files to the settings NasDash actually needs, while preserving the established Docker host port `2504`, persistence and restricted Docker socket proxy.
 - Use matching port `2505` on both sides of the isolated public-demo proxy mapping; the production application remains on `2504:2504`.
 
 ## [0.1.2] - 2026-09-08

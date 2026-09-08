@@ -1,7 +1,6 @@
 services:
   nasdash-demo:
     build: .
-    container_name: nasdash-demo
     expose:
       - "2504"
     environment:
@@ -24,7 +23,6 @@ services:
 
   demo-proxy:
     image: nginxinc/nginx-unprivileged:1.29-alpine
-    container_name: nasdash-demo-proxy
     ports:
       - "${NASDASH_DEMO_BIND_ADDRESS:-127.0.0.1}:2505:2505"
     volumes:

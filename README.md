@@ -61,7 +61,7 @@ Every service, address, metric, and log line below comes from NasDash's isolated
 
 ### Docker Compose
 
-Requirements: Docker Engine with Compose v2, a Linux host for the bundled socket proxy, and host port `2504`.
+Requirements: Docker Engine with Compose `2.24.0` or newer, a Linux host for the bundled socket proxy, and host port `2504`.
 
 Create `docker-compose.yml`:
 
@@ -69,9 +69,11 @@ Create `docker-compose.yml`:
 services:
   nasdash:
     image: ghcr.io/lucas-lepajollec/nasdash:latest
-    container_name: nasdash
     ports:
       - "2504:2504"
+    env_file:
+      - path: .env
+        required: false
     volumes:
       - nasdash-data:/app/data
     pid: host
@@ -83,7 +85,6 @@ services:
 
   docker-proxy:
     image: tecnativa/docker-socket-proxy:v0.5.0
-    container_name: nasdash-docker-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -107,7 +108,7 @@ docker compose ps
 docker compose logs nasdash
 ```
 
-The first startup prints strong generated passwords once in the logs and stores the account data plus cryptographic keys in the persistent volume. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the NAS port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
+No `.env` is required. The first startup prints strong generated passwords once in the logs and stores the account data plus cryptographic keys in the persistent volume. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
 The repository's default Compose file pulls the published image and preserves the historical `./data` bind mount. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is the easier choice for a new installation. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
 
@@ -133,7 +134,7 @@ Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only whe
 - Keep `NASDASH_JWT_SECRET` stable. Changing it invalidates sessions and prevents existing encrypted integration credentials from being decrypted.
 - Back up the entire data store before upgrades; never run `docker compose down -v` unless deleting all NasDash state is intentional.
 - Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by changing the `image:` line to the previous version or `sha-<full-commit>` tag and recreating without removing the data volume.
-- For NAS snapshots, replace the named volume with `./data:/app/data` and make the directory writable by UID/GID `1001:1001`.
+- For folder-based snapshots or backup tools, replace the named volume with `./data:/app/data` and make the directory writable by UID/GID `1001:1001`.
 
 See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures.
 
