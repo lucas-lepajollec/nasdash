@@ -72,28 +72,17 @@ services:
     container_name: nasdash
     ports:
       - "2504:2504"
-    pid: "host"
     volumes:
       - nasdash-data:/app/data
     environment:
-      NODE_ENV: production
-      PORT: 2504
-      HOSTNAME: 0.0.0.0
       NASDASH_ADMIN_PASSWORD: ${NASDASH_ADMIN_PASSWORD:-}
       NASDASH_VIEWER_PASSWORD: ${NASDASH_VIEWER_PASSWORD:-}
       NASDASH_JWT_SECRET: ${NASDASH_JWT_SECRET:-}
+    pid: host
     depends_on:
       - docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    read_only: true
-    tmpfs:
-      - /tmp:size=32m,mode=1777
-      - /app/.next/cache:size=64m,uid=1001,gid=1001,mode=0750
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
     restart: unless-stopped
 
   docker-proxy:
@@ -109,12 +98,6 @@ services:
       INFO: 1
       POST: 1
       DELETE: 0
-      AUTH: 0
-      BUILD: 0
-      EXEC: 0
-      SYSTEM: 0
-    security_opt:
-      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:
@@ -136,7 +119,7 @@ docker compose up -d
 docker compose ps
 ```
 
-Open `http://127.0.0.1:2504` on the host, or `http://<host-ip>:2504` from the LAN, and configure the local Docker host as `docker-proxy:2375`. Docker publishes the port on the host interfaces by default; change the mapping to `127.0.0.1:2504:2504` when only the host or a same-host reverse proxy should reach it. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
+Open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the NAS port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
 The repository's default Compose file pulls the published image and preserves the historical `./data` bind mount. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is the easier choice for a new installation. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
 

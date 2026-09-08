@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-08
+
+### Changed
+
+- Simplify the default Compose files to the settings NasDash actually needs, while preserving the established NAS port `2504`, persistence and restricted Docker socket proxy.
+- Use matching port `2505` on both sides of the isolated public-demo proxy mapping; the production application remains on `2504:2504`.
+
 ## [0.1.2] - 2026-09-08
 
 ### Changed
@@ -38,7 +45,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/lucas-lepajollec/nasdash/releases/tag/v0.1.0

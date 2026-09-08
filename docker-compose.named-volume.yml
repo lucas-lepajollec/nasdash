@@ -1,5 +1,4 @@
 # Recommended deployment for a new NasDash installation.
-# Existing bind-mount installations should keep docker-compose.example.yml.
 
 services:
   nasdash:
@@ -11,9 +10,6 @@ services:
     volumes:
       - nasdash-data:/app/data
     environment:
-      NODE_ENV: production
-      PORT: 2504
-      HOSTNAME: 0.0.0.0
       NASDASH_ADMIN_PASSWORD: ${NASDASH_ADMIN_PASSWORD:-}
       NASDASH_VIEWER_PASSWORD: ${NASDASH_VIEWER_PASSWORD:-}
       NASDASH_JWT_SECRET: ${NASDASH_JWT_SECRET:-}
@@ -21,14 +17,6 @@ services:
       - docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    read_only: true
-    tmpfs:
-      - /tmp:size=32m,mode=1777
-      - /app/.next/cache:size=64m,uid=1001,gid=1001,mode=0750
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
     restart: unless-stopped
 
   docker-proxy:
@@ -44,12 +32,6 @@ services:
       INFO: 1
       POST: 1
       DELETE: 0
-      AUTH: 0
-      BUILD: 0
-      EXEC: 0
-      SYSTEM: 0
-    security_opt:
-      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:
