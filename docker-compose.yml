@@ -1,15 +1,11 @@
 services:
   nasdash:
-    image: ${NASDASH_IMAGE:-ghcr.io/lucas-lepajollec/nasdash:latest}
+    image: ghcr.io/lucas-lepajollec/nasdash:latest
     container_name: nasdash
     ports:
       - "2504:2504"
     volumes:
       - ./data:/app/data
-    environment:
-      NASDASH_ADMIN_PASSWORD: ${NASDASH_ADMIN_PASSWORD:-}
-      NASDASH_VIEWER_PASSWORD: ${NASDASH_VIEWER_PASSWORD:-}
-      NASDASH_JWT_SECRET: ${NASDASH_JWT_SECRET:-}
     pid: host
     depends_on:
       - docker-proxy
