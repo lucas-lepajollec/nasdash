@@ -15,6 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Treat `.env` as an optional advanced override while preserving generated first-start credentials when it is absent.
 - Let Docker Compose derive stack and container names, avoiding fixed global names and allowing multiple installations to coexist.
 - Keep every copy-ready Compose example on `./data`. A named volume is an optional new-install alternative, not the default: switching an existing folder install to `nasdash-data` leaves the real files unused.
+- Refresh README product screenshots from the isolated English public demo, with the intro dialog closed and additional views of Docker, networks, widgets, settings, theme variants, layout options, and mobile.
 
 ## [0.1.4] - 2026-09-08
 
