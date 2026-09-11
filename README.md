@@ -26,18 +26,35 @@ Configuration stays on your own server in a persistent Docker volume or bind-mou
 
 ## Product preview
 
-Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile. No personal installation or real infrastructure is connected during capture.
+Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile. No personal installation or real infrastructure is connected during capture. Screenshots use the English interface with the demo intro dialog closed.
 
 | Docker management and simulated logs | Network topology |
 | --- | --- |
 | <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker details with fictional metrics, volumes, and logs" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network topology with documentation-only addresses" width="640" /> |
 
+| Configurable widgets | Appearance settings |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash widget catalog and customizable dashboard tiles" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings with English selected" width="640" /> |
+
+Theme, layout, and visual profiles are first-class product surfaces, not a single default look:
+
+| Visual Themes gallery | GitHub Light |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-themes.jpg" alt="NasDash Visual Themes gallery with 26 bundled themes" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-github-light.jpg" alt="NasDash home dashboard in the GitHub Light theme" width="640" /> |
+
+| Apple Dark | Cyberpunk |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-home-apple-dark.jpg" alt="NasDash home dashboard in the Apple Dark theme" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-cyberpunk.jpg" alt="NasDash home dashboard in the Cyberpunk theme" width="640" /> |
+
 <details>
-<summary>More views: widgets, settings, and mobile</summary>
+<summary>More themes, layout options, and mobile</summary>
+
+| Dracula | Nord |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-home-dracula.jpg" alt="NasDash home dashboard in the Dracula theme" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-nord.jpg" alt="NasDash home dashboard in the Nord theme" width="640" /> |
 
 <p align="center">
-  <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash configurable widgets" width="900" />
-  <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings" width="900" />
+  <img src="docs/assets/screenshots/nasdash-demo-home-layout.jpg" alt="NasDash home with the dock visible and widget titles shown" width="900" />
 </p>
 
 | Mobile home | Mobile Docker |
