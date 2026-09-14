@@ -34,15 +34,15 @@
     "@dnd-kit/utilities": "^3.2.2",
     "lucide-react": "^0.577.0",
     "next": "16.3.4",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "recharts": "^3.10.1",
-    "swr": "^2.5.0",
-    "systeminformation": "^5.33.1",
-    "uuid": "13.0.1"
+    "swr": "^2.5.1",
+    "systeminformation": "^5.33.10",
+    "uuid": "13.0.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
