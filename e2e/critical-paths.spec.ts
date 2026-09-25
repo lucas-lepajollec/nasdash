@@ -110,11 +110,10 @@ test.describe.serial('critical self-hosted paths', () => {
     expect(create.status()).toBe(201);
     const { page } = await create.json();
 
-    const column = page.sections[0].columns[0];
+    // Pages are a free grid: each widget has its place (columns out of 24, rows of 4 px).
     const edited = {
       ...page,
-      widgets: [...page.widgets, { id: 'e2e-clock', type: 'clock', settings: {} }],
-      sections: [{ ...page.sections[0], columns: [{ ...column, items: [...column.items, 'e2e-clock'] }] }],
+      widgets: [...page.widgets, { id: 'e2e-clock', type: 'clock', settings: {}, x: 0, y: 0, w: 6, h: 40 }],
     };
     const save = await admin.put('/api/pages', { data: { page: edited } });
     expect(save.status()).toBe(200);
@@ -127,7 +126,7 @@ test.describe.serial('critical self-hosted paths', () => {
     const saved = await admin.get('/api/pages');
     expect(saved.status()).toBe(200);
     const stored = (await saved.json()).pages.find((candidate: { id: string }) => candidate.id === page.id);
-    expect(stored.sections[0].columns[0].items).toEqual(['e2e-clock']);
+    expect(stored.widgets.find((widget: { id: string }) => widget.id === 'e2e-clock')).toMatchObject({ type: 'clock', x: 0, w: 6 });
     await admin.dispose();
   });
 
@@ -341,10 +340,10 @@ test.describe.serial('critical self-hosted paths', () => {
 
     await page.getByTitle('Global Settings').click();
     const settingsDialog = page.getByRole('dialog', { name: 'NasDash Settings' });
-    await settingsDialog.getByRole('button', { name: 'Security' }).click();
-    await settingsDialog.getByRole('button', { name: /Users & Permissions/ }).click();
+    // Users are listed straight on the "Users and access" page.
+    await settingsDialog.locator('.nd-settings-sidebar').getByRole('button', { name: 'Users and access', exact: true }).click();
     await settingsDialog.getByTitle('Edit user admin / permissions').click();
-    await settingsDialog.getByLabel('Password').fill(replacementPassword);
+    await settingsDialog.getByLabel('Password', { exact: true }).fill(replacementPassword);
     await settingsDialog.getByRole('button', { name: 'Save' }).click();
 
     await expect(page).toHaveURL(/\/login\?reason=password-changed$/, { timeout: 30_000 });

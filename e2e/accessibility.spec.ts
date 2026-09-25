@@ -79,27 +79,34 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
   expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
 
   const sidebar = dialog.locator('.nd-settings-sidebar');
-  await sidebar.getByRole('button', { name: 'General', exact: true }).click();
+  await sidebar.getByRole('button', { name: 'Tabs and dock', exact: true }).click();
   await expect(dialog.getByText('Dock Position', { exact: true })).toBeVisible();
 
-  await sidebar.getByRole('button', { name: 'Widget Settings', exact: true }).click();
+  // Every connection lives on the Integrations page, one block per category.
+  await sidebar.getByRole('button', { name: 'Integrations', exact: true }).click();
+  await expect(dialog.getByRole('heading', { level: 2, name: 'Integrations' })).toBeVisible();
+  for (const category of ['Machine monitoring', 'Docker containers', 'Private network']) {
+    await expect(dialog.getByRole('heading', { level: 3, name: category })).toBeVisible();
+  }
+
+  // Widget settings open from the Widgets hub.
   const widgetPages = [
-    { navigationName: /Devices/, title: /Configuration — Devices/ },
-    {
-      navigationName: /Tailscale VPN/,
-      title: /Configuration — Tailscale VPN/,
-      fieldNames: ['Tailnet Name', 'Tailscale OAuth Client ID', 'Tailscale OAuth Client Secret'],
-    },
-    { navigationName: /Clock/, title: /Configuration — Clock \/ Date/, selectName: 'Time Zone' },
-    { navigationName: /Calendar/, title: /Configuration — Calendar/, fieldNames: ['iCal Calendar URL'] },
-    { navigationName: /Weather/, title: /Configuration — Weather/, fieldNames: ['Search for a city'] },
+    { hub: /^\W*Devices\b/u, title: 'Devices' },
+    { hub: /^\W*Tailscale VPN\b/u, title: 'Tailscale VPN', buttonNames: ['Open Integrations'] },
+    { hub: /^\W*Clock\b/u, title: 'Clock', selectName: 'Time Zone' },
+    { hub: /^\W*Calendar\b/u, title: 'Calendar', fieldNames: ['iCal Calendar URL'] },
+    { hub: /^\W*Weather\b/u, title: 'Weather', fieldNames: ['Search for a city'] },
   ];
 
   for (const widgetPage of widgetPages) {
-    await sidebar.getByRole('button', { name: widgetPage.navigationName }).click();
-    await expect(dialog.getByRole('heading', { level: 3, name: widgetPage.title })).toBeVisible();
+    await sidebar.getByRole('button', { name: 'Widgets', exact: true }).click();
+    await dialog.getByRole('button', { name: widgetPage.hub }).first().click();
+    await expect(dialog.getByRole('heading', { level: 2, name: widgetPage.title, exact: true })).toBeVisible();
     for (const fieldName of widgetPage.fieldNames || []) {
       await expect(dialog.getByLabel(fieldName)).toBeVisible();
+    }
+    for (const buttonName of widgetPage.buttonNames || []) {
+      await expect(dialog.getByRole('button', { name: buttonName })).toBeVisible();
     }
     if (widgetPage.selectName) {
       const select = dialog.getByRole('button', { name: widgetPage.selectName });
@@ -114,8 +121,6 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
       await expect(select).toBeFocused();
     }
   }
-
-  await expect(dialog.getByText('Enable Weather widget', { exact: true })).toBeVisible();
 
   const lastButton = dialog.locator('button:not([disabled])').last();
   await lastButton.focus();
@@ -152,7 +157,8 @@ test('network editor dialogs keep keyboard focus without changing topology', asy
 
   await page.evaluate(() => localStorage.setItem('nasdash-active-tab', 'networks'));
   await page.reload();
-  await expect(page.locator('.nd-networks-layout')).toBeVisible({ timeout: 30_000 });
+  // The network page shows its map (Calme) once loaded.
+  await expect(page.locator('.ndc-map').first()).toBeVisible({ timeout: 30_000 });
 
   await page.getByTitle('Edit mode').click();
   await page.getByRole('button', { name: 'Actions' }).click();

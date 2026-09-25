@@ -322,11 +322,11 @@ export function SecurityTab() {
               {editing ? t('security.editAccess', { name: username }).replace(/^[^\p{L}]+/u, '') : t('settings.calme.newUser')}
             </CalmeHeading>
             <CalmeRow label={t("Nom d'utilisateur")}>
-              <input id="security-username" type="text" className="nd-input" style={{ width: 240 }} value={username} disabled={isDefaultAccount} onChange={e => setUsername(e.target.value)} placeholder={t("Ex: lucas")} />
+              <input id="security-username" aria-label={t("Nom d'utilisateur")} type="text" className="nd-input" style={{ width: 240 }} value={username} disabled={isDefaultAccount} onChange={e => setUsername(e.target.value)} placeholder={t("Ex: lucas")} />
             </CalmeRow>
             <CalmeRow label={t("Mot de passe")} info={isDefaultAccount || editing ? t("Laisser vide si inchangé") : undefined}>
               <span className="ndc-password" style={{ width: 240 }}>
-                <input id="security-password" type={showPassword ? 'text' : 'password'} className="nd-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+                <input id="security-password" aria-label={t("Mot de passe")} type={showPassword ? 'text' : 'password'} className="nd-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
                 <button type="button" className="ndc-icon-button" onClick={() => setShowPassword(!showPassword)} aria-label={t("settings.calme.showPassword")}>{showPassword ? <EyeOff size={14} /> : <Eye size={14} />}</button>
               </span>
             </CalmeRow>
