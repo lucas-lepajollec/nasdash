@@ -152,12 +152,11 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!config) return;
 
     const activeTheme = (isMobile && config.settings?.mobileTheme) ? config.settings.mobileTheme : (config.settings?.theme || 'nasdash');
-    // With the Calme style, values equal to the historical defaults (written
-    // into every configuration by config.example.json) count as "not
-    // customised", so the style's own radius, opacity and font show. Values
-    // the user actually chose still win.
-    const calme = config.settings?.designStyle !== 'classic';
-    const custom = <T,>(value: T | undefined, legacyDefault: T): T | undefined => (calme && value === legacyDefault ? undefined : value);
+    // Values equal to the historical defaults (written into every
+    // configuration by config.example.json) count as "not customised", so the
+    // interface's own radius, opacity and font show. Values the user actually
+    // chose still win.
+    const custom = <T,>(value: T | undefined, legacyDefault: T): T | undefined => (value === legacyDefault ? undefined : value);
     const activeRadius = custom((isMobile && config.settings?.mobileBorderRadius !== undefined) ? config.settings.mobileBorderRadius : config.settings?.borderRadius, 12);
     const activeOpacity = custom((isMobile && config.settings?.mobileCardOpacity !== undefined) ? config.settings.mobileCardOpacity : config.settings?.cardOpacity, 0.8);
     const activeFont = custom((isMobile && config.settings?.mobileGlobalFont) ? config.settings.mobileGlobalFont : config.settings?.globalFont, 'Outfit');
@@ -187,12 +186,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
     const activeMode = config?.settings?.mode || (typeof window !== 'undefined' ? localStorage.getItem('nd-theme') : 'dark');
     const isLightTheme = LIGHT_THEMES.includes(activeTheme) || (activeTheme === 'nasdash' && activeMode === 'light');
-
-    // Interface style (design-calme.css applies only with data-design="calme").
-    const designStyle = config.settings?.designStyle === 'classic' ? 'classic' : 'calme';
-    if (designStyle === 'calme') document.body.setAttribute('data-design', 'calme');
-    else document.body.removeAttribute('data-design');
-    localStorage.setItem('nd-design', designStyle);
 
     const themeClasses = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
     themeClasses.forEach(cls => document.body.classList.remove(cls));

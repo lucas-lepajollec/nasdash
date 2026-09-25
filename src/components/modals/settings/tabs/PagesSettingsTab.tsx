@@ -10,7 +10,6 @@ import { usePages } from '@/providers/PagesProvider';
 import ConfirmModal from '../../ConfirmModal';
 import EmojiPickerModal from '../../EmojiPickerModal';
 import { Emoji } from '../../../shared/Emoji';
-import { useCalme } from '@/widgets/calme';
 import { CalmeHeading } from '../shared/CalmeControls';
 
 /** Miniature of a template, so the choice is visual rather than technical. */
@@ -51,7 +50,6 @@ export function PagesSettingsTab({ onEditPage }: { onEditPage: (pageId: string) 
     const indexB = order.indexOf(b.id);
     return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
   });
-  const calme = useCalme();
   const iconFor = (page: Page) => config?.settings?.tabIcons?.[page.id] ?? page.icon;
 
   const run = async (key: string, action: () => Promise<unknown>) => {
@@ -89,10 +87,7 @@ export function PagesSettingsTab({ onEditPage }: { onEditPage: (pageId: string) 
       {editing && <div className="nd-page-settings-note">{t('pages.settings.editingNote')}</div>}
 
       <section className="nd-settings-card nd-page-settings-card">
-        {calme ? <CalmeHeading info={t('pages.settings.createDescription')}>{t('pages.settings.createTitle')}</CalmeHeading> : <>
-          <h4>{t('pages.settings.createTitle')}</h4>
-          <p>{t('pages.settings.createDescription')}</p>
-        </>}
+        <CalmeHeading info={t('pages.settings.createDescription')}>{t('pages.settings.createTitle')}</CalmeHeading>
         <div className="nd-page-settings-create-row">
           <button type="button" className="nd-page-settings-icon" onClick={() => setIconTarget('new')} aria-label={t('pages.settings.chooseIcon')} title={t('pages.settings.chooseIcon')}>
             <Emoji emoji={icon} />
@@ -114,10 +109,7 @@ export function PagesSettingsTab({ onEditPage }: { onEditPage: (pageId: string) 
       </section>
 
       <section className="nd-settings-card nd-page-settings-card">
-        {calme ? <CalmeHeading info={t('pages.settings.listDescription')}>{t('pages.settings.listTitle')}</CalmeHeading> : <>
-          <h4>{t('pages.settings.listTitle')}</h4>
-          <p>{t('pages.settings.listDescription')}</p>
-        </>}
+        <CalmeHeading info={t('pages.settings.listDescription')}>{t('pages.settings.listTitle')}</CalmeHeading>
         <ul className="nd-page-settings-list">
           {sorted.map(page => {
             const official = isOfficialPageId(page.id) || !!page.preset;

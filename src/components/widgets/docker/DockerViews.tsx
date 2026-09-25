@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
-import { Box, Container, Image, HardDrive, Play, Square, RotateCcw, Trash2, Search, Loader2, AlertCircle, ChevronDown, Terminal, Layers, Database, Plus, X, RefreshCw } from 'lucide-react';
-import ConfirmModal from '../../modals/ConfirmModal';
+import { Play, Square, RotateCcw, Trash2, Loader2, AlertCircle, Terminal } from 'lucide-react';
 import EmojiPickerModal from '../../modals/EmojiPickerModal';
 import useSWR from 'swr';
 import { Emoji } from '../../shared/Emoji';
 import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
-import CustomSelect from '@/components/shared/CustomSelect';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 

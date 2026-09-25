@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Globe, Pencil, Trash2, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
+import { Globe, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Service } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
@@ -84,7 +84,6 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
 
   const activeLayout = layout === 'grid' ? 'bento' : layout;
   const isLogoOnly = activeLayout?.startsWith('bento-logo');
-  const isBento = activeLayout === 'bento' || isLogoOnly;
   const statusIconSize = activeLayout === 'compact' ? 16 : 20;
   const statusColor = delayedStatus?.status === 'online' ? 'var(--nd-green)' : (delayedStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
 

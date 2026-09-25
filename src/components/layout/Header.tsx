@@ -33,7 +33,7 @@ interface HeaderProps {
 
 export default function Header(props: HeaderProps) {
   const { t } = useI18n();
-  const { config, setSettingsModal, user, logout } = useConfig();
+  const { config, user, logout } = useConfig();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);

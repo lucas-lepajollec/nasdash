@@ -4,7 +4,7 @@ import { readConfig } from '@/lib/config';
 import { isDemoMode } from '@/lib/demoMode';
 import { DEVICE_COLLECTORS, TARGET_LISTERS } from '@/integrations/collectors';
 import { getDeviceIntegration } from '@/integrations/registry';
-import { MASKED_SECRET } from '@/integrations/instances';
+import { MASKED_SECRET, reusesSecretElsewhere } from '@/integrations/instances';
 import { isMonitoringType, sourceInput } from '@/integrations/sources';
 import { CollectError, type CollectContext } from '@/integrations/types';
 import { isCertificateError } from '@/integrations/http';
@@ -46,6 +46,11 @@ export async function POST(request: NextRequest) {
 
   const draft = body.settings && typeof body.settings === 'object' ? body.settings as Record<string, unknown> : null;
   const password = text(body.password, 8_192);
+  const draftSettings = draft ? { ip: text(draft.ip), port: text(draft.port, 16) } : undefined;
+  // The saved password only goes to the address it was saved for.
+  if (reusesSecretElsewhere(saved, draftSettings, { password })) {
+    return NextResponse.json({ ok: false, message: 'integrations.secretRequired' });
+  }
   const instance: IntegrationInstance = {
     id: saved?.id ?? 'draft',
     type,

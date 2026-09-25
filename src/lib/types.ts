@@ -269,8 +269,6 @@ export interface DashboardConfig {
     dockPosition?: 'left' | 'right';
 
     theme?: string;
-    /** Interface style: "calme" (default) or the historical "classic" look. */
-    designStyle?: 'calme' | 'classic';
     /** Accent colour (#rrggbb) replacing the theme's; empty = the theme's own. */
     accentColor?: string;
     /** Colours kept in the colour picker of the widgets (#rrggbb). */

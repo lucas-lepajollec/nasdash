@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
-import { useWidgetSize } from './WidgetContainer';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
 import { Plus, Pencil, GripVertical, Power, Play, RefreshCw, Layers, Loader2 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
@@ -10,7 +9,7 @@ import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useS
 import { CSS } from '@dnd-kit/utilities';
 import { useI18n } from '@/i18n/I18nProvider';
 import { WidgetHeaderActions } from './WidgetHeaderActions';
-import { CalmeWidget, useCalme } from '@/widgets/calme';
+import { CalmeWidget } from '@/widgets/calme';
 
 const ICONS: Record<string, React.ReactNode> = {
   Power: <Power size={14} />,
@@ -19,73 +18,34 @@ const ICONS: Record<string, React.ReactNode> = {
   Layers: <Layers size={14} />,
 };
 
-function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading, calme }: { action: DockerActionConfig, editMode: boolean, onEdit: () => void, onExecute: () => void, isLoading: boolean, calme?: boolean }) {
+function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: { action: DockerActionConfig, editMode: boolean, onEdit: () => void, onExecute: () => void, isLoading: boolean }) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: action.id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 1 };
 
   // Calme: a quiet row (icon, name, number of containers), styled in design-calme.css.
-  if (calme) {
-    return (
-      <div
-        ref={setNodeRef}
-        style={{ ...style, opacity: isDragging ? 0.5 : 1 }}
-        className={`ndc-action ${editMode ? 'ndc-action--editing' : ''}`}
-        role={editMode ? undefined : 'button'}
-        tabIndex={editMode ? undefined : 0}
-        aria-busy={isLoading || undefined}
-        onClick={() => { if (!editMode && !isLoading) onExecute(); }}
-        onKeyDown={(e) => { if (!editMode && !isLoading && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onExecute(); } }}
-      >
-        {editMode ? (
-          <span {...attributes} {...listeners} className="ndc-action-icon ndc-action-grip"><GripVertical size={14} /></span>
-        ) : (
-          <span className="ndc-action-icon">{isLoading ? <Loader2 size={14} className="nd-spin" /> : ICONS[action.icon] || <Play size={14} />}</span>
-        )}
-        <span className="ndc-action-text">
-          <span className="ndc-action-name" title={t(action.name)}>{t(action.name)}</span>
-          <span className="ndc-action-sub">{action.targets.length === 1 ? t('docker.calme.target') : t('docker.calme.targets', { count: action.targets.length })}</span>
-        </span>
-        {editMode && (
-          <button type="button" className="ndc-icon-button" onClick={(e) => { e.stopPropagation(); onEdit(); }} aria-label={t('Modifier')}>
-            <Pencil size={12} />
-          </button>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div 
-      ref={setNodeRef} 
-      style={{
-        ...style,
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 12px',
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px solid var(--nd-border)',
-        borderRadius: 'var(--nd-card-radius)',
-        cursor: editMode ? 'default' : 'pointer',
-        opacity: isDragging ? 0.5 : 1,
-      }}
+    <div
+      ref={setNodeRef}
+      style={{ ...style, opacity: isDragging ? 0.5 : 1 }}
+      className={`ndc-action ${editMode ? 'ndc-action--editing' : ''}`}
+      role={editMode ? undefined : 'button'}
+      tabIndex={editMode ? undefined : 0}
+      aria-busy={isLoading || undefined}
       onClick={() => { if (!editMode && !isLoading) onExecute(); }}
+      onKeyDown={(e) => { if (!editMode && !isLoading && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onExecute(); } }}
     >
       {editMode ? (
-        <div {...attributes} {...listeners} style={{ cursor: 'grab', display: 'flex', color: 'var(--nd-text-muted)' }}>
-          <GripVertical size={14} />
-        </div>
+        <span {...attributes} {...listeners} className="ndc-action-icon ndc-action-grip"><GripVertical size={14} /></span>
       ) : (
-        <div style={{ color: 'var(--nd-accent)' }}>
-          {isLoading ? <Loader2 size={14} className="animate-spin" /> : ICONS[action.icon] || <Play size={14} />}
-        </div>
+        <span className="ndc-action-icon">{isLoading ? <Loader2 size={14} className="nd-spin" /> : ICONS[action.icon] || <Play size={14} />}</span>
       )}
-      
-      <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={t(action.name)}>
-        {t(action.name)}
-      </div>
-      
+      <span className="ndc-action-text">
+        <span className="ndc-action-name" title={t(action.name)}>{t(action.name)}</span>
+        <span className="ndc-action-sub">{action.targets.length === 1 ? t('docker.calme.target') : t('docker.calme.targets', { count: action.targets.length })}</span>
+      </span>
       {editMode && (
-        <button onClick={(e) => { e.stopPropagation(); onEdit(); }} style={{ background: 'none', border: 'none', color: 'var(--nd-text-muted)', cursor: 'pointer' }}>
+        <button type="button" className="ndc-icon-button" onClick={(e) => { e.stopPropagation(); onEdit(); }} aria-label={t('Modifier')}>
           <Pencil size={12} />
         </button>
       )}
@@ -96,10 +56,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading, ca
 export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const { t } = useI18n();
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
-  const { size: widgetSize } = useWidgetSize();
-  const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
-  const calme = useCalme();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -209,22 +166,6 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     }
   };
 
-  let listStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, marginTop: hideTitles ? 0 : 8 };
-  
-  const actionsCount = actions.length;
-  if (widgetSize === 'wide') {
-    let gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))';
-    if (actionsCount === 1) gridTemplateColumns = '1fr';
-    else if (actionsCount === 2) gridTemplateColumns = 'repeat(2, 1fr)';
-    else if (actionsCount === 3) gridTemplateColumns = 'repeat(3, 1fr)';
-    else if (actionsCount === 4) gridTemplateColumns = 'repeat(4, 1fr)';
-    
-    listStyle = { display: 'grid', gridTemplateColumns, gap: 10, marginTop: hideTitles ? 0 : 8 };
-  } else if (widgetSize === 'medium') {
-    const cols = actionsCount === 1 ? 1 : 2;
-    listStyle = { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginTop: hideTitles ? 0 : 8 };
-  }
-
   const addButton = editMode && (
     <WidgetHeaderActions>
       <button
@@ -241,7 +182,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const list = (
     <>
       {actions.length === 0 && (
-        <p className={calme ? 'ndc-empty' : undefined} style={calme ? undefined : { fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
+        <p className="ndc-empty">
           {t("Aucune action rapide configurée.")}{!editMode && t("Activez le mode édition pour en ajouter.")}
         </p>
       )}
@@ -255,7 +196,6 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
               onEdit={() => setDockerActionModal({ open: true, action })}
               onExecute={() => executeAction(action)}
               isLoading={!!loadingActions[action.id]}
-              calme={calme}
             />
           ))}
         </SortableContext>
@@ -263,27 +203,10 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     </>
   );
 
-  if (calme) {
-    return (
-      <CalmeWidget title={t("Actions Docker")} editMode={editMode}>
-        {addButton}
-        <div className="ndc-actions">{list}</div>
-      </CalmeWidget>
-    );
-  }
-
   return (
-    <div className="nd-sidebar-card nd-animate-in nd-stagger-2">
-      {(!hideTitles || editMode) && (
-        <div className="nd-section-title">
-          <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> {t("Actions Docker")}
-          {addButton}
-        </div>
-      )}
-
-      <div style={listStyle}>
-        {list}
-      </div>
-    </div>
+    <CalmeWidget title={t("Actions Docker")} editMode={editMode}>
+      {addButton}
+      <div className="ndc-actions">{list}</div>
+    </CalmeWidget>
   );
 }

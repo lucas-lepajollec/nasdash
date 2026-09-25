@@ -3,16 +3,7 @@
 import React from 'react';
 import { useConfig } from '@/hooks/useConfig';
 
-/**
- * Shared pieces of the "Calme" widget versions: the title sits above a quiet
- * block, as in the Calme mock-ups. Widgets pick their Calme version with
- * `useCalme()`; the historical component stays in use for the Classic style.
- */
-
-export function useCalme(): boolean {
-  const { config } = useConfig();
-  return config?.settings?.designStyle !== 'classic';
-}
+/** Shared widget shell of the Calme interface: the title sits above a quiet block. */
 
 export function CalmeWidget({ title, aside, editMode, children, flush }: {
   title: string;

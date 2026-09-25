@@ -320,7 +320,6 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   readEnum(body, 'titleFont', ['outfit', 'space-grotesk', 'syne', 'righteous', 'montserrat'] as const);
   readEnum(body, 'titleAnimation', ['none', 'spotlight-silver'] as const);
   readEnum(body, 'mode', ['light', 'dark'] as const);
-  readEnum(body, 'designStyle', ['calme', 'classic'] as const);
   if (body.accentColor !== undefined && (typeof body.accentColor !== 'string' || !/^(#[0-9a-fA-F]{6})?$/.test(body.accentColor))) {
     throw new RequestValidationError('Le champ « accentColor » doit être une couleur #rrggbb.');
   }
@@ -430,6 +429,8 @@ function validateDeviceSource(value: unknown): void {
   for (const [key, item] of Object.entries(values ?? {})) {
     if (!['target', 'nodeName', 'vmid', 'vmType'].includes(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour la source.`);
     if (typeof item !== 'string' || item.length > 256) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
+    if (key === 'vmid' && !/^\d*$/.test(item)) throw new RequestValidationError('Le champ « vmid » doit être un nombre.');
+    if (key === 'vmType' && !['', 'qemu', 'lxc'].includes(item)) throw new RequestValidationError('Le champ « vmType » doit valoir qemu ou lxc.');
   }
 }
 

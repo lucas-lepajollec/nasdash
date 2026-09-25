@@ -65,7 +65,8 @@ export function buildConfigForPrincipal(
     delete host.token;
   }
   for (const device of safeConfig.devices) {
-    if (device.api) delete device.api.token;
+    // Like saved connections: the type is enough, the address and account stay server-side.
+    if (device.api) device.api = { type: device.api.type, url: '' };
   }
   stripInstanceSecrets(safeConfig);
   // Monitoring connections: their address stays server-side too (name and type are enough).

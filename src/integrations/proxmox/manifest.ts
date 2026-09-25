@@ -20,8 +20,10 @@ export const proxmoxManifest: DeviceIntegrationManifest = {
   ],
 
   connect(input, previousToken) {
-    const node = `https://${input.ip}:${input.port || 8006}/api2/json/nodes/${input.nodeName || 'pve'}`;
-    const url = input.vmid ? `${node}/${input.vmType || 'qemu'}/${input.vmid}/status/current` : `${node}/status`;
+    // Node, type and id stay inside their path segments.
+    const node = `https://${input.ip}:${input.port || 8006}/api2/json/nodes/${encodeURIComponent(input.nodeName || 'pve')}`;
+    const vmid = /^\d+$/.test(input.vmid ?? '') ? input.vmid : '';
+    const url = vmid ? `${node}/${input.vmType === 'lxc' ? 'lxc' : 'qemu'}/${vmid}/status/current` : `${node}/status`;
     // The token is `tokenId=secret`; an empty secret keeps the stored one.
     const equals = previousToken?.indexOf('=') ?? -1;
     const secret = input.password || (equals !== -1 ? previousToken!.substring(equals + 1) : '');

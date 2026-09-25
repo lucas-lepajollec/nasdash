@@ -15,7 +15,7 @@ import {
 } from '@/lib/requestValidation';
 import { withDemoSession } from '@/lib/demoSession';
 import { getDeviceIntegration } from '@/integrations/registry';
-import { maskInstanceSecrets, upsertInstance } from '@/integrations/instances';
+import { maskInstanceSecrets, SecretReuseError, upsertInstance } from '@/integrations/instances';
 import { isMonitoringType } from '@/integrations/sources';
 import type { DeviceSource } from '@/lib/types';
 
@@ -247,7 +247,13 @@ async function handlePUT(req: NextRequest) {
     // monitoring connection gets its own id (several per type are allowed).
     const update = body.integration;
     if (!update.id && isMonitoringType(update.type)) update.id = `${update.type}-${uuidv4().slice(0, 8)}`;
-    const instance = upsertInstance(config, update);
+    let instance;
+    try {
+      instance = upsertInstance(config, update);
+    } catch (error) {
+      if (error instanceof SecretReuseError) return NextResponse.json({ error: error.message }, { status: 400 });
+      throw error;
+    }
     if (!writeConfig(config)) return persistenceError();
     const safe = JSON.parse(JSON.stringify(instance)) as typeof instance;
     maskInstanceSecrets({ integrations: [safe] });
@@ -331,7 +337,6 @@ async function handlePUT(req: NextRequest) {
     if (body.tabIcons !== undefined) config.settings.tabIcons = body.tabIcons;
     if (body.theme !== undefined) config.settings.theme = body.theme;
     if (body.mode !== undefined) config.settings.mode = body.mode;
-    if (body.designStyle !== undefined) config.settings.designStyle = body.designStyle;
     if (body.accentColor !== undefined) config.settings.accentColor = body.accentColor || undefined;
     if (body.favoriteColors !== undefined) config.settings.favoriteColors = body.favoriteColors;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
@@ -457,7 +462,8 @@ async function handlePUT(req: NextRequest) {
       else delete device.source;
     } else if (body.api) {
       const oldApiObj: Partial<DeviceApiConfig> = device.api || {};
-      const isChangingPlatform = oldApiObj.type !== body.api.type;
+      // A stored token is only kept for the same platform and address.
+      const isChangingPlatform = oldApiObj.type !== body.api.type || oldApiObj.ip !== body.api.ip || oldApiObj.port !== body.api.port;
 
       // Check if username or password was specifically sent in the PUT request
       const updatingCredentials = body.api.password !== undefined || body.api.username !== undefined;

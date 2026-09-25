@@ -62,7 +62,7 @@ remain valid; they are not selectable and show their static stats.
 Some integrations are a connection used by widgets rather than a device to
 monitor. They are saved once in `config.integrations` (`id`, `type`, `name`,
 `settings`, `secrets`). Their manifest (`ServiceIntegrationManifest`) lists the
-fields; `IntegrationConnectionForm` draws the settings form from it; the
+fields; `ServiceConnectionDialog` (Integrations page) draws the form from it; the
 request validator only accepts those fields, and secrets only in secret fields.
 Secrets are encrypted on disk, shown masked to admins and never sent to other
 users. Older configurations are migrated on read (`settings.tailscale*` →

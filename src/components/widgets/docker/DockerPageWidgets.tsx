@@ -8,7 +8,7 @@ import { Emoji } from '../../shared/Emoji';
 import { ContainerDetailView, DockerErrorNotice, ImagesTab, VolumesTab } from './DockerViews';
 import { useDockerWorkspace } from './DockerWorkspace';
 import { WidgetHeaderActions } from '../WidgetHeaderActions';
-import { CalmeWidget, useCalme } from '@/widgets/calme';
+import { CalmeWidget } from '@/widgets/calme';
 
 /**
  * The historical Docker page, split into linked widgets. Their markup and
@@ -81,34 +81,17 @@ export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
 
 export function DockerSummaryWidget({ editMode }: Partial<DockerWidgetProps>) {
   const { t } = useI18n();
-  const calme = useCalme();
   const { hosts, visibleContainers } = useDockerWorkspace();
   if (hosts.length === 0) return null;
   const running = visibleContainers.filter(container => container.state === 'running').length;
   const stopped = visibleContainers.filter(container => container.state === 'exited').length;
-  if (calme) {
-    return (
-      <CalmeWidget title={t('docker.calme.counters')} editMode={editMode}>
-        <dl className="ndc-counters">
-          <div><dt><span className="ndc-dot ndc-dot--running" />{t('Actifs')}</dt><dd>{running}</dd></div>
-          <div><dt><span className="ndc-dot ndc-dot--stopped" />{t('Stoppés')}</dt><dd>{stopped}</dd></div>
-        </dl>
-      </CalmeWidget>
-    );
-  }
   return (
-    <div className="nd-sidebar-card">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        <div style={{ textAlign: 'center', padding: '6px 0' }}>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--nd-green)' }}>{running}</div>
-          <div style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t('Actifs')}</div>
-        </div>
-        <div style={{ textAlign: 'center', padding: '6px 0' }}>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--nd-red)' }}>{stopped}</div>
-          <div style={{ fontSize: '0.58rem', color: 'var(--nd-text-muted)', textTransform: 'uppercase' }}>{t('Stoppés')}</div>
-        </div>
-      </div>
-    </div>
+    <CalmeWidget title={t('docker.calme.counters')} editMode={editMode}>
+      <dl className="ndc-counters">
+        <div><dt><span className="ndc-dot ndc-dot--running" />{t('Actifs')}</dt><dd>{running}</dd></div>
+        <div><dt><span className="ndc-dot ndc-dot--stopped" />{t('Stoppés')}</dt><dd>{stopped}</dd></div>
+      </dl>
+    </CalmeWidget>
   );
 }
 

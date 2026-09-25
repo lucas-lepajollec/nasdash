@@ -103,7 +103,7 @@ export function MonitoringConnectionDialog({ type, instance, onClose, showSensit
       }
       onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('integrations.saveFailed'));
+      setError(reason instanceof Error ? t(reason.message) : t('integrations.saveFailed'));
     } finally {
       setSaving(false);
     }

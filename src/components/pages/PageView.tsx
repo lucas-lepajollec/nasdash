@@ -32,7 +32,6 @@ import { DockerWorkspaceProvider } from '../widgets/docker/DockerWorkspace';
 import { WidgetActionsSlotContext } from '../widgets/WidgetHeaderActions';
 import { Emoji } from '../shared/Emoji';
 import { PageWidgetContent } from './PageWidgetContent';
-import { useCalme } from '@/widgets/calme';
 
 /**
  * A page is one free grid (GridStack). In edit mode a widget is dragged from
@@ -577,7 +576,6 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
   const { updateWidgetSettings } = usePages();
   const { setSettingsModal } = useConfig();
   const widgetName = useWidgetName();
-  const calme = useCalme();
   const ref = useRef<HTMLDivElement>(null);
   const [slot, setSlot] = useState<HTMLSpanElement | null>(null);
   const actions = useRef<HTMLDivElement>(null);
@@ -616,7 +614,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
       data-widget-id={widget.id}
       style={editMode ? { '--nd-page-actions-width': `${actionsWidth}px` } as React.CSSProperties : undefined}
     >
-      {editMode && UNTITLED_TYPES.has(widget.type) && !(calme && CALME_TITLED_TYPES.has(widget.type)) && (
+      {editMode && UNTITLED_TYPES.has(widget.type) && !CALME_TITLED_TYPES.has(widget.type) && (
         <div className="nd-page-widget-edit-title nd-section-title">
           <Emoji emoji={entry?.icon ?? '🧩'} /> {name}
         </div>

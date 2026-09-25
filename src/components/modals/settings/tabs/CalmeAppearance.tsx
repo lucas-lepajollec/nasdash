@@ -137,14 +137,6 @@ function Appearance(props: CalmeAppearanceProps) {
 
       <section className="ndc-set-block">
         <CalmeHeading>{t('settings.calme.display')}</CalmeHeading>
-        <CalmeRow label={t('settings.designStyle.title')} info={t('settings.designStyle.description')}>
-          <CalmeSegmented
-            label={t('settings.designStyle.title')}
-            value={settings?.designStyle === 'classic' ? 'classic' : 'calme'}
-            options={[{ value: 'calme', label: t('settings.designStyle.calme') }, { value: 'classic', label: t('settings.designStyle.classic') }]}
-            onChange={style => { void updateConfig({ designStyle: style }); }}
-          />
-        </CalmeRow>
         <CalmeRow label={t('settings.languageTitle')}>
           <div style={{ width: 200 }}>
             <CustomSelect value={language} onChange={value => void selectLanguage(value as typeof language)} options={UI_LANGUAGES.map(option => ({ value: option.id, label: option.label }))} />

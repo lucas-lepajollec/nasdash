@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Pencil, Trash2, Plus, GripVertical } from 'lucide-react';
-import { Category, Service } from '@/lib/types';
+import { Category } from '@/lib/types';
 import ServiceItem from './ServiceItem';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useConfig } from '@/hooks/useConfig';
@@ -31,8 +31,8 @@ export default function CategoryCard({
   const { t } = useI18n();
   const { config } = useConfig();
   const hideCategoryTitles = config?.settings?.hideCategoryTitles ?? false;
-  // Calme style puts the title above the card unless the user chose a position.
-  const categoryTitlePosition = config?.settings?.categoryTitlePosition || (config?.settings?.designStyle === 'classic' ? 'inside' : 'above');
+  // The title sits above the card unless the user chose a position.
+  const categoryTitlePosition = config?.settings?.categoryTitlePosition || 'above';
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
     id: `drag-cat-${dndScope ?? category.id}`, disabled: !editMode || embedded, data: { type: 'category', category }

@@ -246,8 +246,6 @@ interface Grid {
   search?: { cost: Float32Array; previous: Int32Array; stamp: Uint32Array; run: number };
 }
 
-const startState0 = (cell: number, dir: number) => cell * 4 + dir;
-
 function buildGrid(width: number, height: number, cards: PlacedBox[], groups: PlacedBox[], headings: PlacedBox[], column?: Rect): Grid {
   const cols = Math.ceil(width / CELL) + 1;
   const rows = Math.ceil(height / CELL) + 1;

@@ -51,8 +51,6 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  // Interface style chosen in Appearance (Calme by default).
-                  if (localStorage.getItem('nd-design') === 'classic') document.body.removeAttribute('data-design');
                   var theme = localStorage.getItem('nd-theme-preset');
                   if (theme && theme !== 'nasdash') {
                     document.body.classList.add('theme-' + theme);

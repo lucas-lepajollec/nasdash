@@ -40,7 +40,7 @@ export function ServiceConnectionDialog({ type, onClose }: { type: string; onClo
       await saveIntegration({ id: instance?.id, type, name: instance?.name ?? manifest.name, settings, secrets });
       onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('integrations.saveFailed'));
+      setError(reason instanceof Error ? t(reason.message) : t('integrations.saveFailed'));
     } finally {
       setSaving(false);
     }

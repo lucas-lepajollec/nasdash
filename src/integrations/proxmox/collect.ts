@@ -148,7 +148,7 @@ export const listProxmoxTargets: TargetLister = async connection => {
       targets.push({ values: { nodeName: node.node! }, label: node.node!, ...(node.status ? { detail: node.status } : {}) });
       for (const kind of ['qemu', 'lxc'] as const) {
         try {
-          const guests = await request<Array<{ vmid?: number; name?: string; status?: string }>>(`${base}/nodes/${node.node}/${kind}`, connection.token, self);
+          const guests = await request<Array<{ vmid?: number; name?: string; status?: string }>>(`${base}/nodes/${encodeURIComponent(node.node!)}/${kind}`, connection.token, self);
           for (const guest of guests.filter(item => item.vmid !== undefined)) {
             targets.push({
               values: { nodeName: node.node!, vmid: String(guest.vmid), vmType: kind },

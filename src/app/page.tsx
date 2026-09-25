@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import DemoExperience from '@/components/demo/DemoExperience';
 import TabDock from '@/components/layout/TabDock';
-import { useTabs, TabId } from '@/hooks/useTabs';
+import { useTabs } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import SettingsModal from '@/components/modals/SettingsModal';
 import CalendarEventModal from '@/components/modals/CalendarEventModal';

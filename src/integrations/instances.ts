@@ -46,9 +46,35 @@ export function stripInstanceSecrets(config: Pick<DashboardConfig, 'integrations
   for (const instance of config.integrations ?? []) delete instance.secrets;
 }
 
+/** Settings that decide where the secrets are sent. */
+const ENDPOINT_SETTINGS = ['ip', 'port', 'url'];
+
+/** A connection moved to another address while keeping its stored secrets. */
+export class SecretReuseError extends Error {
+  constructor() {
+    super('integrations.secretRequired');
+  }
+}
+
+/**
+ * True when `next` points to another address than `current` while a stored
+ * secret would be kept: that secret must then be typed again, so it is never
+ * sent to an address it was not given for.
+ */
+export function reusesSecretElsewhere(current: IntegrationInstance | undefined, next: Record<string, string> | undefined, freshSecrets: Record<string, string | null> | undefined): boolean {
+  if (!current?.secrets || !next) return false;
+  const moved = ENDPOINT_SETTINGS.some(key => key in next && (next[key] ?? '') !== (current.settings[key] ?? ''));
+  if (!moved) return false;
+  return Object.entries(current.secrets).some(([key, value]) => {
+    const fresh = freshSecrets?.[key];
+    return !!value && fresh !== null && (!fresh || fresh === MASKED_SECRET);
+  });
+}
+
 /**
  * Creates or updates an instance. A secret sent back masked (or empty while
- * one is stored) keeps the stored value; `null` clears it explicitly.
+ * one is stored) keeps the stored value; `null` clears it explicitly. Moving
+ * a connection to another address requires its secrets again.
  */
 export function upsertInstance(
   config: Pick<DashboardConfig, 'integrations'>,
@@ -56,6 +82,7 @@ export function upsertInstance(
 ): IntegrationInstance {
   config.integrations ??= [];
   const existing = config.integrations.find(instance => update.id ? instance.id === update.id : instance.type === update.type);
+  if (reusesSecretElsewhere(existing, update.settings, update.secrets)) throw new SecretReuseError();
   const instance: IntegrationInstance = existing ?? { id: update.id || `${update.type}-main`, type: update.type, name: update.name || update.type, settings: {} };
   if (update.name !== undefined) instance.name = update.name;
   if (update.settings) instance.settings = { ...instance.settings, ...update.settings };

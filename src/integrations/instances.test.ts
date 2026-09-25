@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { validateConfigMutationBody } from '@/lib/configEntityValidation';
 import type { DashboardConfig } from '@/lib/types';
-import { findInstance, mapInstanceSecrets, maskInstanceSecrets, MASKED_SECRET, migrateLegacyIntegrations, stripInstanceSecrets, upsertInstance } from './instances';
+import { findInstance, mapInstanceSecrets, maskInstanceSecrets, MASKED_SECRET, migrateLegacyIntegrations, SecretReuseError, stripInstanceSecrets, upsertInstance } from './instances';
 import { sortTailscaleDevices, toTailscaleDevice } from './tailscale/collect';
 import { toHeadscaleDevices } from './headscale/collect';
 import headscaleNodes from './headscale/samples/nodes.json';
@@ -56,6 +56,24 @@ describe('integration instances', () => {
     // A secret cannot be smuggled in plain settings, nor an unknown field.
     expect(() => validateConfigMutationBody({ integration: { type: 'tailscale', settings: { clientSecret: 'x' } } }, 'integration', 'PUT')).toThrow();
     expect(() => validateConfigMutationBody({ integration: { type: 'tailscale', secrets: { tailnet: 'x' } } }, 'integration', 'PUT')).toThrow();
+  });
+});
+
+describe('secrets and addresses', () => {
+  const saved = () => ({ integrations: [{ id: 'glances-1', type: 'glances', name: 'NAS', settings: { ip: '10.0.0.2', port: '61208' }, secrets: { password: 'stored' } }] });
+
+  it('keeps a stored secret while the address stays the same', () => {
+    const config = saved();
+    upsertInstance(config, { id: 'glances-1', type: 'glances', settings: { ip: '10.0.0.2', port: '61208', username: 'admin' }, secrets: { password: MASKED_SECRET } });
+    expect(config.integrations[0].secrets?.password).toBe('stored');
+  });
+
+  it('asks for the secret again when the address changes', () => {
+    const config = saved();
+    expect(() => upsertInstance(config, { id: 'glances-1', type: 'glances', settings: { ip: 'attacker.example', port: '61208' }, secrets: { password: MASKED_SECRET } })).toThrow(SecretReuseError);
+    expect(config.integrations[0].settings.ip).toBe('10.0.0.2');
+    upsertInstance(config, { id: 'glances-1', type: 'glances', settings: { ip: 'nas.lan', port: '61208' }, secrets: { password: 'typed again' } });
+    expect(config.integrations[0].secrets?.password).toBe('typed again');
   });
 });
 

@@ -376,17 +376,6 @@ export function checkAdmin(req: AuthRequestLike): NextResponse | null {
   return null;
 }
 
-export function checkAuth(req: AuthRequestLike): NextResponse | null {
-  if (!verifyCsrf(req)) {
-    return NextResponse.json({ error: 'Validation CSRF échouée.' }, { status: 403 });
-  }
-  if (!isAuthenticated(req)) {
-    return NextResponse.json({ error: 'Accès non autorisé.' }, { status: 401 });
-  }
-  return null;
-}
-
-
 // --- GESTION DES UTILISATEURS LOCAUX ---
 
 export function readUsers(): User[] {
