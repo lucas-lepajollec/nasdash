@@ -52,7 +52,10 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
   const shown = selected ? devices.filter(device => selected.includes(device.id)) : devices;
   const data = useDevicesData(shown.map(device => device.id), '1h', isVisible);
   const online = shown.filter(device => stateOf(data[device.id] ?? {}) === 'online').length;
-  const look = readLook(settings, FLEET_DEFAULTS);
+  // A GPU is shown by default as soon as one of the machines reports one.
+  const anyGpu = shown.some(device => (data[device.id]?.data?.metrics ?? []).some(metric => metric.kind === 'gpu'));
+  const defaults: LookDefaults = anyGpu ? { ...FLEET_DEFAULTS, shown: [...FLEET_DEFAULTS.shown, 'gpu'] } : FLEET_DEFAULTS;
+  const look = readLook(settings, defaults);
   const metrics = FLEET_DEFAULTS.offered.filter(id => look.metrics[id].shown);
   const needed = NAME_PX + metrics.reduce((sum, id) => sum + CELL_PX[look.metrics[id].display] + 12, 0) + 32;
   const stacked = width < needed;
@@ -71,7 +74,7 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
       )}
       {editMode && (
         <SettingsButton
-          options={{ title: t('devices.look.settingsOf', { name: t('devices.calme.fleet') }), devices, deviceMode: 'multi', deviceKey: 'selectedDeviceIds', defaults: FLEET_DEFAULTS }}
+          options={{ title: t('devices.look.settingsOf', { name: t('devices.calme.fleet') }), devices, deviceMode: 'multi', deviceKey: 'selectedDeviceIds', defaults }}
           settings={settings}
           onSave={onUpdateSettings}
         />

@@ -15,6 +15,8 @@ import {
   type ChartLook, type Display, type Facet, type LookDefaults, type MetricId, type ValuePart, type WidgetLook,
 } from './look';
 import { SERIES_COLORS } from './parts';
+import { useDevicesData } from './deviceData';
+import { readingsOf } from './readings';
 
 type Translate = (key: string, variables?: Record<string, string | number>) => string;
 
@@ -104,7 +106,7 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
   onSave: (settings: WidgetSettings) => void;
   onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [draft, setDraft] = useState<WidgetSettings>(settings);
   const [picking, setPicking] = useState<{ kind: 'metric'; id: MetricId } | { kind: 'device'; id: string; index: number } | { kind: 'danger' } | null>(null);
   const change = (patch: WidgetSettings) => setDraft(current => ({ ...current, ...patch }));
@@ -120,6 +122,12 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
   const chosen = options.deviceMode === 'single'
     ? [typeof draft.deviceId === 'string' && devices.some(device => device.id === draft.deviceId) ? draft.deviceId : devices[0]?.id].filter(Boolean) as string[]
     : Array.isArray(draft[options.deviceKey]) ? (draft[options.deviceKey] as string[]).filter(id => devices.some(device => device.id === id)) : devices.map(device => device.id);
+  // What the chosen machines actually report: the other measures are flagged.
+  const readings = useDevicesData(chosen, '1h');
+  const loaded = chosen.some(id => readings[id]?.data);
+  const reported = (id: MetricId) => id === 'history'
+    ? chosen.some(device => readingsOf(readings[device]?.data, 'cpu', t, language).length > 0)
+    : chosen.some(device => readingsOf(readings[device]?.data, id, t, language).length > 0);
   const toggleDevice = (id: string) => {
     if (options.deviceMode === 'single') { change({ deviceId: id }); return; }
     const next = chosen.includes(id) ? chosen.filter(item => item !== id) : [...chosen, id];
@@ -234,8 +242,8 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
                   <div key={id} className={`ndc-dlg-metric-block ${metric.shown || single ? '' : 'is-off'}`}>
                     <div className="ndc-dlg-metric">
                       {single
-                        ? <span className="ndc-dlg-name">{metricName(id, t)}</span>
-                        : <CalmeCheckRow checked={metric.shown} onChange={() => setMetric(id, { shown: !metric.shown })}><span className="ndc-dlg-name">{metricName(id, t)}</span></CalmeCheckRow>}
+                        ? <span className="ndc-dlg-name">{metricName(id, t)}{loaded && !reported(id) && <span className="ndc-dlg-missing">{t('devices.look.notReported')}</span>}</span>
+                        : <CalmeCheckRow checked={metric.shown} onChange={() => setMetric(id, { shown: !metric.shown })}><span className="ndc-dlg-name">{metricName(id, t)}{loaded && !reported(id) && <span className="ndc-dlg-missing" title={t('devices.look.notReportedHint')}>{t('devices.look.notReported')}</span>}</span></CalmeCheckRow>}
                       {eachDisplay ? (
                         <div className="ndc-dlg-select">
                           <CustomSelect

@@ -3578,3 +3578,4 @@ body.light {
 .ndc-int-tile-name { font-size: 0.8rem; color: var(--nd-text); }
 .ndc-int-tile-desc { font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @media (max-width: 520px) { .ndc-int-state { display: none; } }
+.ndc-dlg-missing { margin-left: 8px; padding: 1px 6px; border-radius: 999px; font-size: 0.64rem; color: var(--nd-text-dimmed); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
