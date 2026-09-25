@@ -139,8 +139,10 @@ function load() {
   if (store.__deviceHistoryLoaded || !file) return;
   store.__deviceHistoryLoaded = true;
   try {
-    if (!fs.existsSync(file)) return;
-    const saved = JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, Record<string, number[]>>;
+    // The file lives in the data directory, chosen at run time (see getDataPath):
+    // Turbopack must not trace the whole project for it.
+    if (!fs.existsSync(/* turbopackIgnore: true */ file)) return;
+    const saved = JSON.parse(fs.readFileSync(/* turbopackIgnore: true */ file, 'utf8')) as Record<string, Record<string, number[]>>;
     const now = Date.now();
     for (const [deviceId, seriesById] of Object.entries(saved)) {
       const history = (histories[deviceId] ??= {});
