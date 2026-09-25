@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Palette, Cpu, Sliders, ChevronRight, Shield, Layout, Layers, X, Smartphone, PanelTop } from 'lucide-react';
+import { Palette, Cpu, Sliders, ChevronRight, Shield, Layout, Layers, X, Smartphone, PanelTop, Plug } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { WIDGET_CATALOG } from '@/lib/widgets/catalog';
 import { Emoji } from '../../shared/Emoji';
@@ -98,6 +98,21 @@ export function SettingsSidebar({ currentTab, setActiveTab, onClose }: SettingsS
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t("Développeur")}</span>
+              </div>
+              <span className="nd-settings-chevron">
+                <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('integrations')}
+              className={`nd-settings-nav-item ${currentTab === 'integrations' ? 'nd-settings-nav-item--active' : ''}`}
+            >
+              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: 8, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', flexShrink: 0 }}>
+                <Plug size={18} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t('integrations.title')}</span>
               </div>
               <span className="nd-settings-chevron">
                 <ChevronRight size={14} style={{ color: 'var(--nd-text-muted)', flexShrink: 0 }} />

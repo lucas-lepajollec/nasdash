@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { Box, Container, Database, Layers, Loader2, Play, Plus, RefreshCw, RotateCcw, Search, Square, Trash2, X } from 'lucide-react';
-import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Emoji } from '../../shared/Emoji';
 import { ContainerDetailView, DockerErrorNotice, ImagesTab, VolumesTab } from './DockerViews';
@@ -23,24 +23,9 @@ interface DockerWidgetProps {
   isVisible?: boolean;
 }
 
+/** No Docker engine yet: the first step, linking to the Integrations page. */
 function NoHostCallToAction() {
-  const { t } = useI18n();
-  const { user } = useConfig();
-  const { openHostForm } = useDockerWorkspace();
-  return (
-    <div className="nd-docker-empty nd-card" style={{ borderStyle: 'dashed', borderWidth: 2, width: '100%', boxSizing: 'border-box' }}>
-      <div className="nd-docker-empty-icon" style={{ fontSize: '3rem', opacity: 0.9, display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Emoji emoji="🐳" /></div>
-      <div className="nd-docker-empty-title" style={{ fontSize: '1.1rem', marginBottom: 10 }}>{t('Docker Manager')}</div>
-      <div className="nd-docker-empty-desc" style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: 20, lineHeight: 1.6 }}>
-        {t('Aucun hôte Docker configuré. Ajoutez un hôte pour commencer à gérer vos conteneurs, images et volumes depuis votre dashboard.')}
-      </div>
-      {user?.role === 'admin' && (
-        <button className="nd-btn nd-btn-accent" onClick={openHostForm} style={{ margin: '0 auto' }}>
-          <Plus size={16} /> {t('Ajouter un hôte Docker')}
-        </button>
-      )}
-    </div>
-  );
+  return <div className="nd-card ndc-box"><SetupGuide kind="docker" /></div>;
 }
 
 export function DockerHostsWidget({ editMode }: DockerWidgetProps) {

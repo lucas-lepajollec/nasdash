@@ -1,7 +1,8 @@
 import { readConfig } from '@/lib/config';
 import { isDemoMode } from '@/lib/demoMode';
 import { classifyMonitoringError } from '@/lib/monitoringError';
-import type { Device, DeviceStat } from '@/lib/types';
+import type { DashboardConfig, Device, DeviceStat } from '@/lib/types';
+import { resolveDeviceConnection } from './sources';
 import { DEVICE_COLLECTORS } from './collectors';
 import { isCertificateError } from './http';
 import { getDeviceIntegration } from './registry';
@@ -75,12 +76,14 @@ export { isCertificateError } from './http';
 
 const interpolateEnv = (text: string) => text.replace(/\${([^}]+)}/g, (_, name: string) => process.env[name] || '');
 
-/** Polls one device through its integration. Never throws. */
-export async function pollDevice(device: Device): Promise<DeviceStatus> {
-  const integration = getDeviceIntegration(device.api?.type);
+/** Polls one device through its saved connection (or its legacy one). Never throws. */
+export async function pollDevice(device: Device, config: Pick<DashboardConfig, 'integrations'> = readConfig()): Promise<DeviceStatus> {
+  const resolved = resolveDeviceConnection(device, config);
+  const integration = getDeviceIntegration(resolved?.type);
   const collect = integration ? DEVICE_COLLECTORS[integration.id] : undefined;
-  if (!device.api || !integration || !collect) {
-    // No integration (or a legacy one): the stats typed by hand, if any.
+  if (!resolved || !integration || !collect) {
+    // No source (or a legacy one): the stats typed by hand, if any.
+    if (device.source && !resolved) return { online: false, error: 'integrations.sourceMissing', isOffline: true, updatedAt: Date.now() };
     return { online: true, stats: device.stats || [], updatedAt: Date.now() };
   }
   const context: CollectContext = {
@@ -89,13 +92,11 @@ export async function pollDevice(device: Device): Promise<DeviceStatus> {
     clearWarning: name => clearLog(device.id, name),
   };
   try {
+    const { connection } = resolved;
     const result = await collect({
-      url: device.api.url ? interpolateEnv(device.api.url) : '',
-      token: device.api.token ? interpolateEnv(device.api.token) : undefined,
-      vmid: device.api.vmid,
-      vmType: device.api.vmType,
-      allowSelfSigned: device.api.allowSelfSigned === true,
-      target: device.api.target,
+      ...connection,
+      url: connection.url ? interpolateEnv(connection.url) : '',
+      token: connection.token ? interpolateEnv(connection.token) : undefined,
     }, context);
     clearLog(device.id, integration.name);
     const { metrics, vitals } = Array.isArray(result) ? { metrics: result, vitals: undefined } : result;
@@ -113,9 +114,10 @@ export async function pollDevice(device: Device): Promise<DeviceStatus> {
 async function pollAll() {
   runtime.__lastPollAt = Date.now();
   try {
-    const devices = readConfig().devices ?? [];
+    const config = readConfig();
+    const devices = config.devices ?? [];
     await Promise.all(devices.map(async device => {
-      const status = await pollDevice(device);
+      const status = await pollDevice(device, config);
       devicesStatusCache[device.id] = status;
       if (status.online) recordSamples(device.id, samplesOf(status.metrics, status.vitals), status.updatedAt);
     }));

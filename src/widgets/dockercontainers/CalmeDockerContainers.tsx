@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { ChevronLeft, ChevronRight, Loader2, Pencil, Play, Square } from 'lucide-react';
 import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 import { useWidgetSize } from '@/components/widgets/WidgetContainer';
@@ -34,7 +35,7 @@ export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateP
   const title = t('Conteneurs Docker');
 
   if (hosts.length === 0) {
-    return <CalmeWidget title={title} editMode={editMode}><div className="ndc-empty">{t('Aucun hôte Docker configuré.')}</div></CalmeWidget>;
+    return <CalmeWidget title={title} editMode={editMode}><SetupGuide kind="docker" /></CalmeWidget>;
   }
 
   let perPage = size === 'wide' && containerList.length > 5 ? 10 : 6;

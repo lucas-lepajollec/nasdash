@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import type { HistoryRange } from '@/integrations/history';
 import type { Device } from '@/lib/types';
 import type { WidgetSettings } from '@/lib/pages/types';
@@ -62,7 +63,7 @@ export default function CalmeDevice({ devices, settings, editMode, isVisible, sh
   );
 
   if (!device) {
-    return <CalmeWidget title={t('devices.calme.device')} editMode={editMode}>{settingsButton}<div className="ndc-empty">{t('devices.calme.noDevice')}</div></CalmeWidget>;
+    return <CalmeWidget title={t('devices.calme.device')} editMode={editMode}>{settingsButton}<SetupGuide kind="devices" /></CalmeWidget>;
   }
 
   const state = stateOf(entry);

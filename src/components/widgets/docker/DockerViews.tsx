@@ -163,9 +163,11 @@ export type DockerHostDraft =
 
 type DockerConnection = DockerHostDraft['type'];
 
-export function DockerHostFormModal({ onClose, onSave }: {
+export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp' }: {
   onClose: () => void;
   onSave: (h: DockerHostDraft) => Promise<void>;
+  /** Kind of connection selected when the form opens (from the Integrations page tiles). */
+  initialConnection?: DockerHostDraft['type'];
 }) {
   const { t } = useI18n();
   const { config } = useConfig();
@@ -174,7 +176,7 @@ export function DockerHostFormModal({ onClose, onSave }: {
   const [icon, setIcon] = useState('🐳');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('2375');
-  const [connection, setConnection] = useState<DockerConnection>('tcp');
+  const [connection, setConnection] = useState<DockerConnection>(initialConnection);
   const [serverUrl, setServerUrl] = useState('');
   const [environment, setEnvironment] = useState('1');
   const [apiKey, setApiKey] = useState('');

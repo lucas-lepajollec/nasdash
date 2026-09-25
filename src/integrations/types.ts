@@ -90,6 +90,13 @@ export interface ConnectionField {
   flex?: number;
   /** Fields of the same panel are grouped in a framed box. */
   panel?: boolean;
+  /**
+   * `machine`: belongs to one monitored machine (Beszel system, Prometheus
+   * instance, Proxmox node or VM), set on the device; otherwise it belongs to
+   * the saved connection (address, port, credentials), set on the
+   * Integrations page.
+   */
+  scope?: 'machine';
 }
 
 /** Stored endpoint of a device (`DeviceApiConfig.url` / `token`). */
@@ -128,6 +135,18 @@ export interface DeviceIntegrationManifest {
   /** Builds the stored endpoint. `previousToken` is the stored token when editing the same type. */
   connect(input: ConnectionInput, previousToken?: string): Connection;
 }
+
+/** A machine a multi-machine server offers (Beszel system, Prometheus instance, Proxmox node or VM). */
+export interface SourceTarget {
+  /** Values to store on the device (`target`, or `nodeName` + `vmid` + `vmType`). */
+  values: Record<string, string>;
+  label: string;
+  /** Second line (state, type). */
+  detail?: string;
+}
+
+/** Lists the machines of a server (server only); throws `CollectError` on failure. */
+export type TargetLister = (connection: ResolvedConnection, context: CollectContext) => Promise<SourceTarget[]>;
 
 /** Reads an endpoint (server only); throws `CollectError` with a message for the interface. */
 export type DeviceCollector = (connection: ResolvedConnection, context: CollectContext) => Promise<CollectResult>;

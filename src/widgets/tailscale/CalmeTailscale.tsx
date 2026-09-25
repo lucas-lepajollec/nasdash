@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { ArrowUpRight, Laptop, Loader2, Monitor, Server, Smartphone } from 'lucide-react';
-import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeWidget } from '../calme';
 import { useTailscaleDevices } from './useTailscaleDevices';
@@ -24,7 +24,6 @@ function OsIcon({ os, hostname }: { os?: string; hostname?: string }) {
  */
 export default function CalmeTailscale({ editMode, showSensitive = false, isVisible = true }: { editMode?: boolean; showSensitive?: boolean; isVisible?: boolean }) {
   const { t } = useI18n();
-  const { setSettingsModal } = useConfig();
   const { devices, error, unconfigured, loading } = useTailscaleDevices(isVisible);
   const admin = (
     <a className="ndc-link" href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer">
@@ -38,10 +37,7 @@ export default function CalmeTailscale({ editMode, showSensitive = false, isVisi
   if (unconfigured) {
     return (
       <CalmeWidget title="Tailscale" editMode={editMode}>
-        <div className="ndc-empty">
-          <span>{t("Tailscale n'est pas configuré. Allez dans les paramètres pour lier votre compte.")}</span>
-          {editMode && <button type="button" className="nd-btn nd-btn-accent" onClick={() => setSettingsModal({ open: true, targetTab: 'widget-tailscale' })}>{t('Configurer')}</button>}
-        </div>
+        <SetupGuide kind="vpn" />
       </CalmeWidget>
     );
   }

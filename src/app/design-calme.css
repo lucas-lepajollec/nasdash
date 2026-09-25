@@ -205,9 +205,12 @@ body[data-design="calme"] .nd-page {
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--nd-text-muted);
-  /* Leaves room for the edit-mode controls drawn in the corner. */
+  /* Leaves room for the edit-mode controls drawn in the corner, with a gap
+     so a note beside the title ("2 / 4 online") never touches them. */
   padding-right: var(--nd-page-actions-width, 0px);
 }
+
+.nd-page-widget--editing .ndc-title { padding-right: calc(var(--nd-page-actions-width, 0px) + 12px); }
 
 /* Edit mode: widget controls appear on hover (always on touch screens). */
 body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-actions {
@@ -3494,3 +3497,84 @@ body.light {
 .ndc-dlg-unit { min-width: 32px; }
 .ndc-dlg-device-edit { flex-shrink: 0; color: var(--nd-text-dimmed); }
 .ndc-dlg-device-edit:hover { color: var(--nd-accent); }
+
+/* ======================================================================
+   Integrations page, connection dialogs and first steps in the widgets
+   ====================================================================== */
+.ndc-setup { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; }
+.ndc-setup-step { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--nd-card-border); border-radius: 8px; min-width: 0; }
+.ndc-setup-step.is-done { border-color: color-mix(in srgb, var(--nd-green) 35%, var(--nd-card-border)); }
+.ndc-setup-number { width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--nd-subcard-bg); color: var(--nd-text); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.is-done > .ndc-setup-number { background: transparent; color: var(--nd-green); }
+.ndc-setup-label { flex: 1; min-width: 0; font-size: 0.8rem; color: var(--nd-text); }
+.ndc-setup-step .ndc-text-button { white-space: nowrap; }
+
+.ndc-int-list { display: flex; flex-direction: column; gap: 8px; }
+.ndc-int { border: 1px solid var(--nd-card-border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.ndc-int.is-set { border-color: color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border)); }
+.ndc-int-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ndc-int-icon { width: 30px; height: 30px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--nd-subcard-bg); font-size: 0.95rem; }
+.ndc-int-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ndc-int-name { font-size: 0.84rem; color: var(--nd-text); }
+.ndc-int-desc { font-size: 0.72rem; color: var(--nd-text-dimmed); line-height: 1.4; }
+.ndc-int-connection { display: flex; align-items: center; gap: 10px; padding: 8px 0 2px 42px; border-top: 1px solid var(--nd-card-border); min-width: 0; }
+.ndc-int-list > .ndc-int-connection { padding: 8px 10px; border: 1px solid var(--nd-card-border); border-radius: 8px; }
+.ndc-int-connection-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.ndc-int-connection-name { font-size: 0.8rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-int-actions { display: flex; gap: 2px; flex-shrink: 0; }
+@media (max-width: 520px) { .ndc-int-connection { padding-left: 0; } }
+
+.ndc-test { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 0.76rem; line-height: 1.4; }
+.ndc-test.is-ok { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 9%, transparent); }
+.ndc-test.is-error { color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 9%, transparent); }
+.ndc-test svg { flex-shrink: 0; margin-top: 1px; }
+.ndc-test--inline { padding: 0; background: transparent !important; font-size: 0.7rem; align-items: center; gap: 5px; }
+
+.ndc-callout { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border-radius: 10px; border: 1px dashed color-mix(in srgb, var(--nd-accent) 45%, var(--nd-card-border)); background: color-mix(in srgb, var(--nd-accent) 5%, transparent); }
+.ndc-callout-title { font-size: 0.84rem; color: var(--nd-text); font-weight: 500; }
+.ndc-callout-text { font-size: 0.76rem; color: var(--nd-text-muted); line-height: 1.5; }
+.ndc-source-row { flex-wrap: nowrap; }
+
+/* First steps inside a widget */
+.ndc-guide { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ndc-guide-title { font-size: 0.82rem; color: var(--nd-text); }
+.ndc-guide-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ndc-guide-step { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; min-width: 0; color: var(--nd-text-dimmed); }
+.ndc-guide-step.is-next { color: var(--nd-text); }
+.ndc-guide-step.is-done { color: var(--nd-text-muted); }
+.ndc-guide-step.is-done .ndc-guide-label { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--nd-text) 30%, transparent); }
+.ndc-guide-label { flex: 1 1 140px; min-width: 0; font-size: 0.76rem; line-height: 1.4; }
+.ndc-guide-action { height: 28px; font-size: 0.72rem; gap: 6px; }
+.ndc-guide-note { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+
+/* Integrations page, second pass: connections set up, then the tiles to add one. */
+.ndc-int-page .ndc-setup-step { width: 100%; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.ndc-int-page .ndc-setup-step:hover { border-color: var(--nd-card-hover-border); }
+.ndc-setup-step.is-next { border-color: color-mix(in srgb, var(--nd-accent) 45%, var(--nd-card-border)); }
+.ndc-setup-step.is-next .ndc-setup-number { background: var(--nd-accent); color: var(--nd-bg); }
+.ndc-setup-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.ndc-setup-state { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+.ndc-int-section { display: flex; flex-direction: column; gap: 10px; }
+.ndc-int-logo { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 9px; background: color-mix(in srgb, var(--nd-text) 6%, transparent); color: var(--nd-text-muted); }
+.ndc-int-logo img { object-fit: contain; display: block; }
+.ndc-int-rows { display: flex; flex-direction: column; border: 1px solid var(--nd-card-border); border-radius: 10px; overflow: hidden; }
+.ndc-int-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-width: 0; }
+.ndc-int-row + .ndc-int-row { border-top: 1px solid var(--nd-card-border); }
+.ndc-int-row-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.ndc-int-row-name { font-size: 0.84rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-int-row-details { font-size: 0.72rem; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-int-row-error { font-size: 0.7rem; color: var(--nd-red); line-height: 1.4; }
+.ndc-int-state { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 3px 9px; border-radius: 999px; font-size: 0.68rem; color: var(--nd-text-dimmed); background: color-mix(in srgb, var(--nd-text) 5%, transparent); }
+.ndc-int-state-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ndc-int-state.is-ok { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 10%, transparent); }
+.ndc-int-state.is-error { color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 10%, transparent); }
+.ndc-int-row-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.ndc-int-empty { font-size: 0.76rem; color: var(--nd-text-dimmed); padding: 12px; border: 1px dashed var(--nd-card-border); border-radius: 10px; }
+.ndc-int-add-label { margin-top: 4px; font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.ndc-int-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 8px; }
+.ndc-int-tile { display: flex; align-items: center; gap: 11px; padding: 10px 12px; min-width: 0; border: 1px solid var(--nd-card-border); border-radius: 10px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+.ndc-int-tile:hover, .ndc-int-tile:focus-visible { border-color: color-mix(in srgb, var(--nd-accent) 45%, var(--nd-card-border)); background: color-mix(in srgb, var(--nd-accent) 5%, transparent); }
+.ndc-int-tile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ndc-int-tile-name { font-size: 0.8rem; color: var(--nd-text); }
+.ndc-int-tile-desc { font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 520px) { .ndc-int-state { display: none; } }

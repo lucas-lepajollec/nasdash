@@ -9,7 +9,8 @@ import {
   readString,
   readStringArray,
 } from './requestValidation';
-import { DEVICE_INTEGRATION_IDS, getServiceIntegration } from '@/integrations/registry';
+import { DEVICE_INTEGRATION_IDS, getDeviceIntegration, getServiceIntegration } from '@/integrations/registry';
+import { connectionFields, isMonitoringType } from '@/integrations/sources';
 import { validateDockerHostUrl, validateDockerSocketPath } from './dockerClient';
 
 const CATEGORY_LAYOUTS = [
@@ -421,6 +422,17 @@ function validateDeviceApi(value: unknown): void {
   if (value.mapping !== undefined) assertBoundedJson(value.mapping, 'api.mapping');
 }
 
+/** A device's saved connection and its own fields on it (Beszel system, Prometheus instance, Proxmox node/VM). */
+function validateDeviceSource(value: unknown): void {
+  if (!isJsonObject(value)) throw new RequestValidationError('Le champ « source » doit être un objet.');
+  readIdentifier(value, 'integrationId');
+  const values = readObject(value, 'values');
+  for (const [key, item] of Object.entries(values ?? {})) {
+    if (!['target', 'nodeName', 'vmid', 'vmType'].includes(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour la source.`);
+    if (typeof item !== 'string' || item.length > 256) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
+  }
+}
+
 function validateDevice(value: unknown, requireId: boolean): void {
   if (!isJsonObject(value)) throw new RequestValidationError('Chaque appareil doit être un objet.');
   readIdentifier(value, 'id', requireId);
@@ -434,6 +446,7 @@ function validateDevice(value: unknown, requireId: boolean): void {
   readNumber(value, 'colsDesktop', { min: 1, max: 6, integer: true });
   readNumber(value, 'colsMobile', { min: 1, max: 6, integer: true });
   if (value.api !== undefined && value.api !== null) validateDeviceApi(value.api);
+  if (value.source !== undefined && value.source !== null) validateDeviceSource(value.source);
   if (value.stats !== undefined) assertBoundedJson(value.stats, 'stats');
 }
 
@@ -470,11 +483,16 @@ function validateIntegrationInstance(payload: JsonObject): void {
   const body = readObject(payload, 'integration');
   if (!body) throw new RequestValidationError('Le champ « integration » est requis.');
   if (body.id !== undefined) readIdentifier(body);
-  const manifest = getServiceIntegration(readString(body, 'type', { maxLength: 64 }));
+  const type = readString(body, 'type', { maxLength: 64 });
+  // A service connection (Tailscale…) or a monitoring connection (Glances…):
+  // for the latter, only the fields of the connection, not the machine's.
+  const service = getServiceIntegration(type);
+  const monitoring = !service && isMonitoringType(type) ? getDeviceIntegration(type) : undefined;
+  const manifest = service ?? (monitoring ? { name: monitoring.name, fields: connectionFields(monitoring).map(field => ({ id: field.id, kind: field.kind === 'secret' ? 'secret' : 'text' })) } : undefined);
   if (!manifest) throw new RequestValidationError('Intégration inconnue.');
   readString(body, 'name', { maxLength: 200 });
-  const plain = new Set(manifest.fields.filter(field => field.kind !== 'secret').map(field => field.id));
-  const secret = new Set(manifest.fields.filter(field => field.kind === 'secret').map(field => field.id));
+  const plain = new Set(manifest.fields.filter(field => field.kind !== 'secret').map(field => field.id as string));
+  const secret = new Set(manifest.fields.filter(field => field.kind === 'secret').map(field => field.id as string));
   for (const [key, value] of Object.entries(readObject(body, 'settings') ?? {})) {
     if (!plain.has(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour ${manifest.name}.`);
     if (typeof value !== 'string' || value.length > 2_048) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);

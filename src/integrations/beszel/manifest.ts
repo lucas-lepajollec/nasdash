@@ -12,7 +12,7 @@ export const beszelManifest: DeviceIntegrationManifest = {
   fields: [
     addressField(),
     portField('8090'),
-    { id: 'target', kind: 'text', label: 'integrations.beszel.system', placeholder: 'ex: nas', required: true, row: 1 },
+    { id: 'target', kind: 'text', label: 'integrations.beszel.system', placeholder: 'ex: nas', required: true, row: 1, scope: 'machine' },
     { id: 'username', kind: 'text', label: 'integrations.email', placeholder: 'ex: nasdash@example.com', required: true, row: 2 },
     { id: 'password', kind: 'secret', label: 'Mot de passe / Jeton', required: 'create', row: 2 },
     selfSignedField,

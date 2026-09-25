@@ -50,13 +50,26 @@ export interface DeviceApiConfig {
   mapping?: DeviceApiMapping;
 }
 
+/**
+ * Where a device's measures come from: a saved monitoring connection
+ * (`config.integrations`, set on the Integrations page) and the fields that
+ * belong to this machine on it (Beszel system, Prometheus instance, Proxmox
+ * node or VM).
+ */
+export interface DeviceSource {
+  integrationId: string;
+  values?: Record<string, string>;
+}
+
 export interface Device {
   id: string;
   name: string;
   host: string;
   system?: string;
   icon: string;
+  /** Legacy: a connection stored on the device (migrated to `source` on read when possible). */
   api?: DeviceApiConfig;
+  source?: DeviceSource;
   stats?: DeviceStat[];
   statStyle?: 'horizontal' | 'vertical' | 'graph';
   hideValues?: boolean;

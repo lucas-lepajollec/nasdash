@@ -184,7 +184,7 @@ export default function Shell() {
       </div>
 
       {settingsModal.open && user?.role === 'admin' && (
-        <SettingsModal onClose={() => {
+        <SettingsModal showSensitive={showSensitive} onClose={() => {
           setSettingsModal({ open: false });
         }} restoreFocus={() => {
           if (settingsTriggerRef.current?.isConnected) return settingsTriggerRef.current;

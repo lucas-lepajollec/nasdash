@@ -217,6 +217,10 @@
       }
     }
   },
+  "integrations": [
+    { "id": "glances-1", "type": "glances", "name": "Glances · Atlas NAS", "settings": { "ip": "http://demo-device-1.invalid", "port": "61208", "username": "", "allowSelfSigned": "" } },
+    { "id": "proxmox-1", "type": "proxmox", "name": "Proxmox VE", "settings": { "ip": "https://demo-device-2.invalid", "port": "8006", "username": "", "allowSelfSigned": "" } }
+  ],
   "devices": [
     {
       "id": "demo-device-1",
@@ -226,7 +230,7 @@
       "icon": "lucide:HardDrive",
       "statStyle": "vertical",
       "hideValues": false,
-      "api": { "type": "glances", "url": "http://demo-device-1.invalid/api/3/all" }
+      "source": { "integrationId": "glances-1" }
     },
     {
       "id": "demo-device-2",
@@ -236,7 +240,7 @@
       "icon": "lucide:Server",
       "statStyle": "graph",
       "hideValues": false,
-      "api": { "type": "proxmox", "url": "https://demo-device-2.invalid/api2/json/nodes/orion/status" }
+      "source": { "integrationId": "proxmox-1", "values": { "nodeName": "orion" } }
     }
   ],
   "dockerHosts": [

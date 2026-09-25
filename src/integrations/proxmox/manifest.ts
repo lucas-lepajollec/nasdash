@@ -8,10 +8,10 @@ export const proxmoxManifest: DeviceIntegrationManifest = {
   fields: [
     { id: 'ip', kind: 'address', label: 'IP (Hôte)', placeholder: 'ex: 192.168.1.10', required: true, row: 0, flex: 3 },
     { id: 'port', kind: 'text', label: 'Port', required: true, defaultValue: '8006', row: 0 },
-    { id: 'nodeName', kind: 'text', label: 'Nom du Nœud (Datacenter)', placeholder: 'ex: pve', required: true, defaultValue: 'pve', row: 1, panel: true },
-    { id: 'vmid', kind: 'text', label: 'ID VM/LXC (Optionnel)', placeholder: 'ex: 104', row: 2, panel: true },
+    { id: 'nodeName', kind: 'text', label: 'Nom du Nœud (Datacenter)', placeholder: 'ex: pve', required: true, defaultValue: 'pve', row: 1, panel: true, scope: 'machine' },
+    { id: 'vmid', kind: 'text', label: 'ID VM/LXC (Optionnel)', placeholder: 'ex: 104', row: 2, panel: true, scope: 'machine' },
     {
-      id: 'vmType', kind: 'select', label: 'Type', defaultValue: 'qemu', showWhen: 'vmid', row: 2, panel: true,
+      id: 'vmType', kind: 'select', label: 'Type', defaultValue: 'qemu', showWhen: 'vmid', row: 2, panel: true, scope: 'machine',
       options: [{ value: 'qemu', label: 'VM (QEMU)' }, { value: 'lxc', label: 'Conteneur (LXC)' }],
     },
     { id: 'username', kind: 'text', label: 'Token ID (ex: root@pam!token_name)', placeholder: 'root@pam!token', required: true, row: 3 },

@@ -1,7 +1,7 @@
 import { MonitoringConfigurationError, MonitoringHttpError, MonitoringInvalidResponseError } from '@/lib/monitoringError';
 import { splitUserPassword } from '../connect';
 import { basicAuthHeader, httpGet } from '../http';
-import { CollectError, type DeviceCollector, type DeviceVitals, type Metric } from '../types';
+import { CollectError, type DeviceCollector, type DeviceVitals, type Metric, type ResolvedConnection, type TargetLister } from '../types';
 
 /**
  * Prometheus HTTP API, instant queries on node_exporter metrics:
@@ -86,11 +86,41 @@ export function prometheusVitals(results: Results): DeviceVitals {
   return vitals;
 }
 
+function authOf(connection: ResolvedConnection): Record<string, string> {
+  const { username, password } = splitUserPassword(connection.token);
+  return username ? basicAuthHeader(connection.token) : password ? { Authorization: `Bearer ${password}` } : {};
+}
+
+/** The node_exporter instances Prometheus knows (with their host name when reported). */
+export const listPrometheusInstances: TargetLister = async connection => {
+  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('URL Prometheus manquante.'));
+  const base = connection.url.replace(/\/$/, '');
+  const query = async (promql: string) => {
+    let answer;
+    try {
+      answer = await httpGet(`${base}/api/v1/query?query=${encodeURIComponent(promql)}`, { headers: { Accept: 'application/json', ...authOf(connection) }, allowSelfSigned: connection.allowSelfSigned });
+    } catch (error) {
+      throw new CollectError('Impossible de joindre Prometheus', error);
+    }
+    if (!answer.ok) throw new CollectError(`Erreur serveur (${answer.status})`, new MonitoringHttpError('Prometheus', answer.status, answer.statusText));
+    try {
+      const body = JSON.parse(await answer.text()) as { status?: string; data?: { result?: Sample[] } };
+      return body.status === 'success' ? body.data?.result ?? [] : [];
+    } catch {
+      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Réponse Prometheus non JSON.'));
+    }
+  };
+  const named = await query('node_uname_info');
+  const samples = named.length ? named : await query('up{job=~".*node.*"}');
+  const seen = new Map<string, string | undefined>();
+  for (const sample of samples) if (sample.metric.instance && !seen.has(sample.metric.instance)) seen.set(sample.metric.instance, sample.metric.nodename);
+  return [...seen].map(([instance, nodename]) => ({ values: { target: instance }, label: nodename || instance, ...(nodename ? { detail: instance } : {}) }));
+};
+
 export const collectPrometheus: DeviceCollector = async connection => {
   if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('URL Prometheus manquante.'));
   if (!connection.target) throw new CollectError('Instance Prometheus non choisie.', new MonitoringConfigurationError('Instance Prometheus non choisie.'));
-  const { username, password } = splitUserPassword(connection.token);
-  const auth = username ? basicAuthHeader(connection.token) : password ? { Authorization: `Bearer ${password}` } : {};
+  const auth = authOf(connection);
   const queries = prometheusQueries(connection.target);
   const results = {} as Results;
   // The queries are independent: sent together.

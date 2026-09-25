@@ -13,7 +13,7 @@ export const prometheusManifest: DeviceIntegrationManifest = {
   fields: [
     addressField(),
     portField('9090'),
-    { id: 'target', kind: 'text', label: 'integrations.prometheus.instance', placeholder: 'ex: 192.168.1.10:9100', required: true, row: 1 },
+    { id: 'target', kind: 'text', label: 'integrations.prometheus.instance', placeholder: 'ex: 192.168.1.10:9100', required: true, row: 1, scope: 'machine' },
     ...optionalCredentialFields(2),
     selfSignedField,
   ],

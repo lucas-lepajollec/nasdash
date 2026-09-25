@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { Plus } from 'lucide-react';
 import type { Device } from '@/lib/types';
 import type { WidgetSettings } from '@/lib/pages/types';
@@ -76,7 +77,7 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
         />
       )}
       {shown.length === 0 ? (
-        <div className="ndc-empty">{t('devices.calme.noDevice')}</div>
+        devices.length === 0 ? <SetupGuide kind="devices" /> : <div className="ndc-empty">{t('devices.calme.noDevice')}</div>
       ) : (
         <div className={`ndc-fleet ${stacked ? 'is-stacked' : ''}`}>
           {shown.map(device => {

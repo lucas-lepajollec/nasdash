@@ -9,6 +9,7 @@ import { isDemoMode } from './demoMode';
 import { getDemoSessionConfig, setDemoSessionConfig } from './demoSession';
 import { createRollingDemoCalendar } from './demoCalendar';
 import { mapInstanceSecrets, migrateLegacyIntegrations } from '@/integrations/instances';
+import { migrateDeviceConnections } from '@/integrations/sources';
 
 function hasLegacyIntegrationSettings(config: { settings?: object }): boolean {
   return Boolean(config.settings && ('tailscaleTailnet' in config.settings || 'tailscaleClientId' in config.settings || 'tailscaleClientSecret' in config.settings));
@@ -201,6 +202,23 @@ export function readConfig(): DashboardConfig {
       // Legacy secrets are already encrypted; encrypt() leaves those unchanged.
       mapInstanceSecrets(configData, encrypt);
       migrated = true;
+    }
+
+    // F. Connexions de surveillance : device.api → connexion enregistrée (config.integrations)
+    //    + device.source. Une copie du fichier d'avant est gardée une fois (config.pre-sources.json).
+    if (!isDemoMode() && (configData.devices ?? []).some(device => device.api && !device.source)) {
+      const before = JSON.stringify(configData);
+      if (migrateDeviceConnections(configData, decrypt, encrypt)) {
+        if (canPersistRecoveredConfig) {
+          const backup = path.join(DATA_DIR, 'config.pre-sources.json');
+          try {
+            if (!fs.existsSync(backup)) safeWriteFileSync(backup, JSON.stringify(JSON.parse(before), null, 2));
+          } catch (e) {
+            console.error('⚠️ Impossible de sauvegarder config.json avant la migration des connexions de surveillance.', e);
+          }
+        }
+        migrated = true;
+      }
     }
 
     if (migrated && canPersistRecoveredConfig) {

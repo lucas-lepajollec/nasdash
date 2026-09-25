@@ -46,6 +46,7 @@ export function useCalmeSettingsSections(): CalmeSettingsSection[] {
       { id: 'pages', group: dashboard, label: t('settings.calme.pages'), description: t('settings.calme.descPages') },
       { id: 'library', group: dashboard, label: widgetsLabel, description: t('settings.calme.descWidgets') },
       ...widgetSections,
+      { id: 'integrations', group: system, label: t('integrations.title'), description: t('integrations.navDescription') },
       { id: 'security', group: system, label: t('settings.calme.security'), description: t('settings.calme.descSecurity') },
       { id: 'developer', group: system, label: t('settings.calme.developer'), description: t('settings.calme.descDeveloper') },
     ];

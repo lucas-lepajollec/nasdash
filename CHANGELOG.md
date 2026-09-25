@@ -72,6 +72,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Logo tiles are more visible, and logos are bigger in the grid layouts.
 - The edit controls of a widget are a small solid pill again, flush in its corner.
 - The resize arrow follows the edge: vertical on top and bottom, diagonal on corners. The resize still changes the width only.
+- New **Settings → Integrations** page: every connection of the dashboard in one place, in the order a newcomer needs them. It starts with two steps (connect a monitoring source, then add your machines) ticked when done, then one block per category with the connections already set up (real logos, their state tested when the page opens, the machines using them) and the tiles to add one:
+  - **machine monitoring**: Glances, Netdata, Beszel, Prometheus, Proxmox VE and Libre Hardware Monitor, each with its connections, the machines using them, a test and edit/remove;
+  - **Docker containers**: the Docker/Podman engines;
+  - **private network**: Tailscale or Headscale, in a dialog (the Tailscale widget settings now link there).
+  A monitoring connection is saved once and shared: machines on the same Beszel, Prometheus or Proxmox server use one connection. Its test lists the server's machines, so they can be added at once when saving, and the device form picks the machine from that list instead of typing it. Single-machine sources (Glances, Netdata, LHM) can create their machine when the connection is saved.
+- The device form no longer asks for addresses and credentials: it picks the source of its measures (with a link to manage the sources), and on a server the machine; with no source yet it explains the first step and links to the Integrations page. Existing devices are migrated on start (previous file kept as `config.pre-sources.json`); a device whose address cannot be read keeps its former connection. Connection addresses are no longer sent to non-admin users.
+- In edit mode, the note beside a widget title ("2 / 4 online") keeps a gap before the widget's buttons.
+- Widgets that cannot work yet show their first steps with direct links, in order: the machine widgets (connect a source, then add the machines), the Docker widgets (add an engine) and the Tailscale widget (connect Tailscale or Headscale). Visitors are told an administrator sets this up.
 - Device widgets are set up in a real dialog (✎ in edit mode) instead of a drop-down menu; Docker Containers too (items per page, automatic scrolling). One model, shared by every device widget:
   - the machines to show (one for Device) and the measures to show: CPU, RAM, GPU, temperature (hottest part), load, network, disks and, for Device, the CPU + RAM history;
   - the display: figure, bar, ring or chart, the same for every measure or one per measure (a throughput is a figure or a chart);

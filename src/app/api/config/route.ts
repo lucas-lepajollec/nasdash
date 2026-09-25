@@ -16,6 +16,14 @@ import {
 import { withDemoSession } from '@/lib/demoSession';
 import { getDeviceIntegration } from '@/integrations/registry';
 import { maskInstanceSecrets, upsertInstance } from '@/integrations/instances';
+import { isMonitoringType } from '@/integrations/sources';
+import type { DeviceSource } from '@/lib/types';
+
+/** A device's source as sent by the form (already validated). */
+function sourceOf(value: { integrationId: string; values?: Record<string, string> }): DeviceSource {
+  const values = Object.fromEntries(Object.entries(value.values ?? {}).filter(([, item]) => item !== ''));
+  return { integrationId: value.integrationId, ...(Object.keys(values).length ? { values } : {}) };
+}
 
 const MAX_CONFIG_BODY_BYTES = 2 * 1024 * 1024;
 const CONFIG_POST_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
@@ -32,7 +40,7 @@ const CONFIG_PUT_TYPES = [
   'dockerAction',
   'localEvent',
 ] as const;
-const CONFIG_DELETE_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
+const CONFIG_DELETE_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent', 'integration'] as const;
 
 function persistenceError() {
   return NextResponse.json({ error: 'Impossible d’enregistrer la configuration.' }, { status: 500 });
@@ -139,7 +147,9 @@ async function handlePOST(req: NextRequest) {
       stats: [],
     };
 
-    if (body.api) {
+    if (body.source) {
+      newDevice.source = sourceOf(body.source);
+    } else if (body.api) {
       newDevice.api = {
         type: body.api.type,
         url: '',
@@ -233,8 +243,11 @@ async function handlePUT(req: NextRequest) {
   const type = parsed.type;
 
   if (type === 'integration') {
-    // One saved service connection; secrets sent masked or empty are kept.
-    const instance = upsertInstance(config, body.integration);
+    // One saved connection; secrets sent masked or empty are kept. A new
+    // monitoring connection gets its own id (several per type are allowed).
+    const update = body.integration;
+    if (!update.id && isMonitoringType(update.type)) update.id = `${update.type}-${uuidv4().slice(0, 8)}`;
+    const instance = upsertInstance(config, update);
     if (!writeConfig(config)) return persistenceError();
     const safe = JSON.parse(JSON.stringify(instance)) as typeof instance;
     maskInstanceSecrets({ integrations: [safe] });
@@ -438,7 +451,11 @@ async function handlePUT(req: NextRequest) {
     if (body.colsDesktop !== undefined) device.colsDesktop = body.colsDesktop;
     if (body.colsMobile !== undefined) device.colsMobile = body.colsMobile;
 
-    if (body.api) {
+    if (body.source !== undefined) {
+      // A saved connection replaces a connection stored on the device.
+      if (body.source) { device.source = sourceOf(body.source); delete device.api; }
+      else delete device.source;
+    } else if (body.api) {
       const oldApiObj: Partial<DeviceApiConfig> = device.api || {};
       const isChangingPlatform = oldApiObj.type !== body.api.type;
 
@@ -561,6 +578,13 @@ async function handleDELETE(req: NextRequest) {
       cat.services = cat.services.filter(s => s.id !== id);
     }
     if (!writeServices(config.categories)) return persistenceError();
+    return NextResponse.json({ ok: true });
+  }
+
+  if (type === 'integration') {
+    // Devices using it keep their source and show it as missing.
+    config.integrations = (config.integrations ?? []).filter(instance => instance.id !== id);
+    if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ok: true });
   }
 

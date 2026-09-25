@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { applySoftEdges } from '@/lib/appearance';
-import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent } from '@/lib/types';
+import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
@@ -28,7 +28,9 @@ export interface DashboardContextType {
   deleteDevice: (id: string) => Promise<void>;
   updateConfig: (updates: DashboardConfigUpdate) => Promise<boolean>;
   /** Saves one service connection (`config.integrations`); empty or masked secrets are kept. */
-  saveIntegration: (update: IntegrationUpdate) => Promise<void>;
+  /** Saves a connection and returns it (secrets masked). */
+  saveIntegration: (update: IntegrationUpdate) => Promise<IntegrationInstance>;
+  deleteIntegration: (id: string) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   
   // Docker Actions
@@ -454,6 +456,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       const payload = await res.json().catch(() => null) as { error?: string } | null;
       throw new Error(payload?.error ? t(payload.error) : t('errors.configSave', { status: res.status }));
     }
+    const saved = await res.json() as IntegrationInstance;
+    await fetchConfig();
+    return saved;
+  };
+
+  const deleteIntegration = async (id: string) => {
+    const res = await fetchWithAuth(`/api/config?type=integration&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await assertApiOk(res, 'errors.configSave');
     await fetchConfig();
   };
 
@@ -589,6 +599,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         deleteDevice,
         updateConfig,
         saveIntegration,
+        deleteIntegration,
         uploadLogo,
         addDockerAction,
         updateDockerAction,

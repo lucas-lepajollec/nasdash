@@ -9,6 +9,8 @@ import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 interface SettingsModalProps {
   onClose: () => void;
   restoreFocus?: () => HTMLElement | null;
+  /** Privacy mode off: addresses are shown in the integration forms. */
+  showSensitive?: boolean;
 }
 
 export const THEME_PRESETS: Record<string, {
@@ -336,9 +338,10 @@ const SETTINGS_TAB_ALIASES: Record<string, string> = {
 const resolveSettingsTab = (tab: string) => SETTINGS_TAB_ALIASES[tab] ?? tab;
 
 import ThemeGalleryView from './ThemeGalleryView';
+import { IntegrationsTab } from './settings/tabs/IntegrationsTab';
 import { useI18n } from '@/i18n/I18nProvider';
 
-export default function SettingsModal({ onClose, restoreFocus }: SettingsModalProps) {
+export default function SettingsModal({ onClose, restoreFocus, showSensitive = false }: SettingsModalProps) {
   const dialogRef = useDialogAccessibility(onClose, true, restoreFocus);
   const { config, updateConfig, settingsModal } = useConfig();
   const { t } = useI18n();
@@ -381,6 +384,11 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
     return null;
   });
   const currentTab = activeTab || (typeof window !== 'undefined' && window.innerWidth > 580 ? 'apparence' : '');
+
+  // Already open and asked for another tab (a link from a tab or a dialog).
+  useEffect(() => {
+    if (settingsModal.targetTab) setActiveTab(resolveSettingsTab(settingsModal.targetTab));
+  }, [settingsModal.targetTab, settingsModal.targetSection]); // eslint-disable-line react-hooks/set-state-in-effect
 
   useEffect(() => {
     if (activeTab && typeof window !== 'undefined') {
@@ -516,6 +524,7 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                   {currentTab === 'header' && <><Emoji emoji="📋" /> {t("En-tête")}</>}
                   {currentTab === 'mobile' && <><Emoji emoji="📱" /> {t("Mobile")}</>}
                   {currentTab === 'developer' && <><Emoji emoji="⚙️" /> {t("Menu Développeur")}</>}
+                  {currentTab === 'integrations' && <><Emoji emoji="🔌" /> {t('integrations.title')}</>}
                   {currentTab === 'security' && <><Emoji emoji="🔑" /> {t("Sécurité & Utilisateurs")}</>}
                   {currentTab === 'library' && <><Emoji emoji="🎛️" /> {t('settings.library.title')}</>}
                   {currentTab === 'tabs-general' && <><Emoji emoji="🌐" /> {t("Général (Dock & Onglets)")}</>}
@@ -588,6 +597,7 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
           {/* ==========================================
              TAB: SECURITY
              ========================================== */}
+          {currentTab === 'integrations' && <IntegrationsTab targetSection={settingsModal.targetSection} onOpenTab={setActiveTab} showSensitive={showSensitive} />}
           {currentTab === 'security' && <SecurityTab />}
 
           {/* ==========================================

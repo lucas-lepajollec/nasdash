@@ -1,6 +1,7 @@
 import { AccessPrincipal, canAccessTab, canAccessWidget } from './access';
 import { DashboardConfig } from './types';
 import { maskInstanceSecrets, stripInstanceSecrets } from '@/integrations/instances';
+import { isMonitoringType } from '@/integrations/sources';
 
 type SerializableConfig = DashboardConfig & {
   slots?: Array<Record<string, unknown>>;
@@ -67,6 +68,10 @@ export function buildConfigForPrincipal(
     if (device.api) delete device.api.token;
   }
   stripInstanceSecrets(safeConfig);
+  // Monitoring connections: their address stays server-side too (name and type are enough).
+  for (const instance of safeConfig.integrations ?? []) {
+    if (isMonitoringType(instance.type)) instance.settings = {};
+  }
 
   const canReadDocker =
     canAccessTab(principal, 'docker') ||

@@ -1,7 +1,7 @@
 import { MonitoringConfigurationError, MonitoringHttpError } from '@/lib/monitoringError';
 import { splitUserPassword } from '../connect';
 import { httpGet, httpRequest } from '../http';
-import { CollectError, type DeviceCollector, type DeviceVitals, type Metric, type ResolvedConnection } from '../types';
+import { CollectError, type DeviceCollector, type DeviceVitals, type Metric, type ResolvedConnection, type TargetLister } from '../types';
 
 /**
  * Beszel hub (a PocketBase app). Login, then the systems list:
@@ -65,20 +65,36 @@ async function login(connection: ResolvedConnection): Promise<string> {
   throw new CollectError('Identifiants Beszel refusés.', new MonitoringHttpError('Beszel', lastStatus || 401, 'Login refused'));
 }
 
+/** Signs in (token kept between calls) and reads the systems list. */
+async function listSystems(connection: ResolvedConnection, context: Parameters<DeviceCollector>[1]): Promise<BeszelSystem[]> {
+  const listUrl = `${connection.url}/api/collections/systems/records?page=1&perPage=500`;
+  let token = context.memory.token || await login(connection);
+  let answer = await httpGet(listUrl, { headers: { Authorization: token, Accept: 'application/json' }, allowSelfSigned: connection.allowSelfSigned });
+  if (answer.status === 401 || answer.status === 403) {
+    token = await login(connection);
+    answer = await httpGet(listUrl, { headers: { Authorization: token, Accept: 'application/json' }, allowSelfSigned: connection.allowSelfSigned });
+  }
+  if (!answer.ok) throw new CollectError(`Erreur serveur (${answer.status})`, new MonitoringHttpError('Beszel', answer.status, answer.statusText));
+  context.memory.token = token;
+  return (JSON.parse(await answer.text()) as { items?: BeszelSystem[] }).items ?? [];
+}
+
+/** The systems of the hub, to pick one per device. */
+export const listBeszelSystems: TargetLister = async (connection, context) => {
+  if (!connection.url || !connection.token) throw new CollectError('Adresse ou identifiants Beszel manquants.', new MonitoringConfigurationError('Adresse ou identifiants Beszel manquants.'));
+  try {
+    return (await listSystems(connection, context)).filter(system => system.name).map(system => ({ values: { target: system.name! }, label: system.name!, ...(system.status ? { detail: system.status } : {}) }));
+  } catch (error) {
+    if (error instanceof CollectError) throw error;
+    throw new CollectError('Impossible de joindre Beszel', error);
+  }
+};
+
 export const collectBeszel: DeviceCollector = async (connection, context) => {
   if (!connection.url || !connection.token) throw new CollectError('Adresse ou identifiants Beszel manquants.', new MonitoringConfigurationError('Adresse ou identifiants Beszel manquants.'));
   if (!connection.target) throw new CollectError('Système Beszel non choisi.', new MonitoringConfigurationError('Système Beszel non choisi.'));
-  const listUrl = `${connection.url}/api/collections/systems/records?page=1&perPage=500`;
   try {
-    let token = context.memory.token || await login(connection);
-    let answer = await httpGet(listUrl, { headers: { Authorization: token, Accept: 'application/json' }, allowSelfSigned: connection.allowSelfSigned });
-    if (answer.status === 401 || answer.status === 403) {
-      token = await login(connection);
-      answer = await httpGet(listUrl, { headers: { Authorization: token, Accept: 'application/json' }, allowSelfSigned: connection.allowSelfSigned });
-    }
-    if (!answer.ok) throw new CollectError(`Erreur serveur (${answer.status})`, new MonitoringHttpError('Beszel', answer.status, answer.statusText));
-    context.memory.token = token;
-    const systems = (JSON.parse(await answer.text()) as { items?: BeszelSystem[] }).items ?? [];
+    const systems = await listSystems(connection, context);
     const wanted = connection.target.trim().toLowerCase();
     const system = systems.find(candidate => candidate.name?.toLowerCase() === wanted || candidate.id === connection.target);
     if (!system) throw new CollectError(`Système « ${connection.target} » introuvable dans Beszel.`, undefined, true);

@@ -1,6 +1,6 @@
 import https from 'https';
 import { MonitoringConfigurationError, MonitoringHttpError, MonitoringInvalidResponseError } from '@/lib/monitoringError';
-import { CollectError, type CollectContext, type DeviceCollector, type DeviceVitals, type Metric } from '../types';
+import { CollectError, type CollectContext, type DeviceCollector, type DeviceVitals, type Metric, type SourceTarget, type TargetLister } from '../types';
 
 /**
  * Proxmox VE API with an API token: a node (`…/nodes/<node>/status`, storage
@@ -134,4 +134,35 @@ export const collectProxmox: DeviceCollector = async (connection, context) => {
   const metrics = proxmoxMetrics(data, storage);
   if (metrics.length === 0) throw new CollectError('VM arrêtée ou aucune stat.', undefined, true);
   return { metrics, vitals: proxmoxVitals(data, context.memory) };
+};
+
+/** The nodes of the cluster and their VMs / containers, to pick one per device. */
+export const listProxmoxTargets: TargetLister = async connection => {
+  if (!connection.url || !connection.token) throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('URL ou jeton Proxmox manquant.'));
+  const base = connection.url.slice(0, connection.url.indexOf('/api2/json') + '/api2/json'.length);
+  const self = connection.allowSelfSigned === true;
+  try {
+    const nodes = await request<Array<{ node?: string; status?: string }>>(`${base}/nodes`, connection.token, self);
+    const targets: SourceTarget[] = [];
+    for (const node of nodes.filter(item => item.node)) {
+      targets.push({ values: { nodeName: node.node! }, label: node.node!, ...(node.status ? { detail: node.status } : {}) });
+      for (const kind of ['qemu', 'lxc'] as const) {
+        try {
+          const guests = await request<Array<{ vmid?: number; name?: string; status?: string }>>(`${base}/nodes/${node.node}/${kind}`, connection.token, self);
+          for (const guest of guests.filter(item => item.vmid !== undefined)) {
+            targets.push({
+              values: { nodeName: node.node!, vmid: String(guest.vmid), vmType: kind },
+              label: guest.name || `${kind === 'qemu' ? 'VM' : 'LXC'} ${guest.vmid}`,
+              detail: [node.node, kind === 'qemu' ? 'VM' : 'LXC', guest.vmid, guest.status].filter(Boolean).join(' · '),
+            });
+          }
+        } catch {
+          // A token may see the node but not its guests: the node stays offered.
+        }
+      }
+    }
+    return targets;
+  } catch (error) {
+    throw new CollectError((error instanceof Error && error.message) || 'Impossible de joindre Proxmox', error);
+  }
 };

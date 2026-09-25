@@ -1,10 +1,10 @@
-import { collectBeszel } from './beszel/collect';
+import { collectBeszel, listBeszelSystems } from './beszel/collect';
 import { collectGlances } from './glances/collect';
 import { collectLhm } from './lhm/collect';
 import { collectNetdata } from './netdata/collect';
-import { collectPrometheus } from './prometheus/collect';
-import { collectProxmox } from './proxmox/collect';
-import type { DeviceCollector } from './types';
+import { collectPrometheus, listPrometheusInstances } from './prometheus/collect';
+import { collectProxmox, listProxmoxTargets } from './proxmox/collect';
+import type { DeviceCollector, TargetLister } from './types';
 
 /**
  * Server-only readers of the integrations listed in `registry.ts`, by id.
@@ -17,4 +17,11 @@ export const DEVICE_COLLECTORS: Readonly<Record<string, DeviceCollector>> = {
   prometheus: collectPrometheus,
   proxmox: collectProxmox,
   lhm: collectLhm,
+};
+
+/** Servers that watch several machines: how to list them (the picker of the device form). */
+export const TARGET_LISTERS: Readonly<Record<string, TargetLister>> = {
+  beszel: listBeszelSystems,
+  prometheus: listPrometheusInstances,
+  proxmox: listProxmoxTargets,
 };

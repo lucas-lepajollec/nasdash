@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import type { HistoryRange } from '@/integrations/history';
 import type { Device } from '@/lib/types';
 import type { WidgetSettings } from '@/lib/pages/types';
@@ -101,7 +102,7 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
         />
       )}
       {entries.length === 0 ? (
-        <div className="ndc-empty">{shown.length === 0 ? t('devices.calme.noDevice') : metric === 'disk' ? t('devices.calme.noDisk') : t('devices.calme.noData')}</div>
+        devices.length === 0 ? <SetupGuide kind="devices" /> : <div className="ndc-empty">{shown.length === 0 ? t('devices.calme.noDevice') : metric === 'disk' ? t('devices.calme.noDisk') : t('devices.calme.noData')}</div>
       ) : display === 'chart' ? (
         <div className="ndc-dev-chart ndc-dev-chart--multi">
           <div className="ndc-legend">

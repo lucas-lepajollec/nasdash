@@ -31,6 +31,12 @@ test.describe.serial('critical self-hosted paths', () => {
     const config = await configResponse.json();
     expect(config.settings.securityMode).toBe('public');
     expect(config.devices[0]?.api?.token).toBeUndefined();
+    // Monitoring connections reach visitors without their address or secrets.
+    const monitoring = (config.integrations ?? []).filter((instance: { type: string }) => ['glances', 'netdata', 'beszel', 'prometheus', 'proxmox', 'lhm'].includes(instance.type));
+    for (const instance of monitoring) {
+      expect(instance.secrets).toBeUndefined();
+      expect(instance.settings).toEqual({});
+    }
     expect(config.dockerHosts[0]?.url).toBe('');
 
     const forbiddenWrite = await anonymous.put('/api/config', {
@@ -275,8 +281,9 @@ test.describe.serial('critical self-hosted paths', () => {
     await page.getByLabel('Password').fill(ADMIN_PASSWORD);
     const systemResponse = page.waitForResponse(response => response.url().endsWith('/api/system'));
     const initialDashboardResponses = Promise.all([
-      page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-1')),
-      page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-2')),
+      // The Calme device widgets read the history route (Classic reads /api/devices/<id>).
+      page.waitForResponse(response => /\/api\/devices\/demo-device-1(\/history|$|\?)/.test(response.url())),
+      page.waitForResponse(response => /\/api\/devices\/demo-device-2(\/history|$|\?)/.test(response.url())),
       page.waitForResponse(response => response.url().endsWith('/api/ping/batch')),
     ]);
     await page.getByRole('button', { name: 'Log in' }).click();

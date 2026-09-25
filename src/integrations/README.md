@@ -22,6 +22,21 @@ The rest of the app only uses the registry, the collectors and the types.
 | `<id>/collect.ts` | How that integration reads its endpoint and maps it to metrics. |
 | `<id>/samples/*.json` | Real-looking answers of that API, used by the tests and by `npm run fake:integrations`. |
 
+## Monitoring sources
+
+A monitoring connection is saved once, on **Settings → Integrations**, in
+`config.integrations` (like Tailscale): address, port, credentials (the
+password in `secrets`, encrypted on disk) and the certificate choice. A device
+only points to it with `source: { integrationId, values }`, where `values`
+holds the fields marked `scope: 'machine'` in the manifest (Beszel system,
+Prometheus instance, Proxmox node or VM). `sources.ts` resolves a device's
+endpoint, lists the connections and migrates devices that still hold their
+own `api` (one connection per address, shared per server for Beszel,
+Prometheus and Proxmox; the previous file is kept as
+`config.pre-sources.json`). `POST /api/integrations/test` tries a connection;
+for servers it answers with their machines (`TARGET_LISTERS` in
+`collectors.ts`), used by the device form's picker.
+
 ## Adding a monitoring integration
 
 1. Create `src/integrations/<id>/manifest.ts` exporting a `DeviceIntegrationManifest`
