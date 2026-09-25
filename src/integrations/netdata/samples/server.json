@@ -1,0 +1,193 @@
+{
+  "system.cpu": {
+    "name": "system.cpu",
+    "family": "cpu",
+    "context": "system.cpu",
+    "units": "percentage",
+    "last_updated": 1758710000,
+    "dimensions": {
+      "guest_nice": {
+        "name": "guest_nice",
+        "value": 0
+      },
+      "guest": {
+        "name": "guest",
+        "value": 0
+      },
+      "steal": {
+        "name": "steal",
+        "value": 0
+      },
+      "softirq": {
+        "name": "softirq",
+        "value": 0.25
+      },
+      "irq": {
+        "name": "irq",
+        "value": 0
+      },
+      "user": {
+        "name": "user",
+        "value": 14.5
+      },
+      "system": {
+        "name": "system",
+        "value": 3.75
+      },
+      "nice": {
+        "name": "nice",
+        "value": 0
+      },
+      "iowait": {
+        "name": "iowait",
+        "value": 0.5
+      }
+    }
+  },
+  "system.ram": {
+    "name": "system.ram",
+    "family": "ram",
+    "context": "system.ram",
+    "units": "MiB",
+    "last_updated": 1758710000,
+    "dimensions": {
+      "free": {
+        "name": "free",
+        "value": 4096
+      },
+      "used": {
+        "name": "used",
+        "value": 8192
+      },
+      "cached": {
+        "name": "cached",
+        "value": 3584
+      },
+      "buffers": {
+        "name": "buffers",
+        "value": 512
+      }
+    }
+  },
+  "disk_space._": {
+    "name": "disk_space._",
+    "family": "/",
+    "context": "disk.space",
+    "units": "GiB",
+    "last_updated": 1758710000,
+    "dimensions": {
+      "avail": {
+        "name": "avail",
+        "value": 180
+      },
+      "used": {
+        "name": "used",
+        "value": 60
+      },
+      "reserved_for_root": {
+        "name": "reserved for root",
+        "value": 10
+      }
+    }
+  },
+  "disk_space._mnt_data": {
+    "name": "disk_space._mnt_data",
+    "family": "/mnt/data",
+    "context": "disk.space",
+    "units": "GiB",
+    "last_updated": 1758710000,
+    "dimensions": {
+      "avail": {
+        "name": "avail",
+        "value": 1200
+      },
+      "used": {
+        "name": "used",
+        "value": 2400
+      },
+      "reserved_for_root": {
+        "name": "reserved for root",
+        "value": 0
+      }
+    }
+  },
+  "disk_space._boot_efi": {
+    "name": "disk_space._boot_efi",
+    "family": "/boot/efi",
+    "context": "disk.space",
+    "units": "GiB",
+    "last_updated": 1758710000,
+    "dimensions": {
+      "avail": {
+        "name": "avail",
+        "value": 0.5
+      },
+      "used": {
+        "name": "used",
+        "value": 0.01
+      }
+    }
+  },
+  "sensors.coretemp-isa-0000_temperature": {
+    "name": "sensors.coretemp-isa-0000_temperature",
+    "family": "temperature",
+    "context": "sensors.temperature",
+    "units": "Celsius",
+    "last_updated": 1758710000,
+    "dimensions": {
+      "temp1": {
+        "name": "Package id 0",
+        "value": 54
+      },
+      "temp2": {
+        "name": "Core 0",
+        "value": 51
+      }
+    }
+  },
+  "system.net": {
+    "name": "system.net",
+    "family": "network",
+    "units": "kilobits/s",
+    "dimensions": {
+      "received": {
+        "name": "received",
+        "value": 19600.5
+      },
+      "sent": {
+        "name": "sent",
+        "value": -6640.2
+      }
+    }
+  },
+  "system.load": {
+    "name": "system.load",
+    "family": "load",
+    "units": "load",
+    "dimensions": {
+      "load1": {
+        "name": "load1",
+        "value": 1.12
+      },
+      "load5": {
+        "name": "load5",
+        "value": 0.98
+      },
+      "load15": {
+        "name": "load15",
+        "value": 0.87
+      }
+    }
+  },
+  "system.uptime": {
+    "name": "system.uptime",
+    "family": "uptime",
+    "units": "seconds",
+    "dimensions": {
+      "uptime": {
+        "name": "uptime",
+        "value": 1045230
+      }
+    }
+  }
+}

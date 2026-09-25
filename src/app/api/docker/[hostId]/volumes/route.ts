@@ -55,7 +55,7 @@ async function handleGET(
       return NextResponse.json(DEMO_DOCKER_VOLUMES.filter(volume => !isDemoVolumeRemoved(volume.name)));
     }
 
-    const response = await fetchDockerApi(host.url, '/volumes');
+    const response = await fetchDockerApi(host, '/volumes');
     const raw = await readDockerJson(response) as { Volumes?: DockerApiVolume[] };
 
     const volumes = (raw.Volumes || []).map(v => ({
@@ -101,7 +101,7 @@ async function handleDELETE(
     }
 
     const res = await fetchDockerApi(
-      host.url,
+      host,
       `/volumes/${encodeURIComponent(volumeName)}`,
       { method: 'DELETE' },
       5_000,

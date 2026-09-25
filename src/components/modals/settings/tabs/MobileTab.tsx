@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Monitor, Layers, Trash2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import CustomSelect from '../../../shared/CustomSelect';
 import { THEME_PRESETS } from '../../SettingsModal';
-import { SettingsAccordion } from '../shared/SettingsAccordion';
 
-import { ToggleSwitch } from '../shared/ToggleSwitch';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
+import { Plus, X } from 'lucide-react';
+import { CalmeHeading, CalmeOrderList, CalmeRow, CalmeSegmented, CalmeSlider } from '../shared/CalmeControls';
 
 export function MobileTab() {
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const demoMode = config?.demoMode === true;
   
-  // Accordions states
-  const [openAccordions, setOpenAccordions] = useState<string[]>(['mobile-layout']);
-
-  const toggleAccordion = (id: string) => {
-    setOpenAccordions(prev => prev.includes(id) ? [] : [id]);
-  };
-
   // Local States initialized from Config
   const [titleMobile, setTitleMobile] = useState('');
   const [mobileWallpaper, setMobileWallpaper] = useState('');
@@ -205,402 +197,180 @@ export function MobileTab() {
     });
   };
 
+  const [addingProfile, setAddingProfile] = useState(false);
+  const inherit = t("Hériter de Desktop");
+  const currentLayout = [leftElement, centerElement].filter(x => x !== 'none');
+  const uploadMobileWallpaper = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'background');
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setMobileWallpaper(data.url);
+        await updateConfig({ mobileWallpaper: data.url });
+        fetchUploadedBgs();
+      }
+    } catch (err) {
+      console.error('Failed to upload background:', err);
+    }
+  };
   return (
-    <>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        
-        {/* En-tête Mobile */}
-        <SettingsAccordion
-          title={t("Disposition de l'En-tête Mobile")}
-          description={t("Gérez la position des éléments en haut de l'écran")}
-          icon={<Layers size={18} />}
-          isOpen={openAccordions.includes('mobile-layout')}
-          onToggle={() => toggleAccordion('mobile-layout')}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Titre de l'application (Mobile)")}</h4>
-              <input type="text" className="nd-input" value={titleMobile} onChange={(e) => setTitleMobile(e.target.value)} onBlur={() => updateConfig({ titleMobile })} placeholder={t("Laissez vide pour utiliser le titre principal")} style={{ fontSize: '0.75rem', padding: '6px 10px', width: '100%', marginTop: '8px' }} />
-            </div>
+    <div className="ndc-set-page">
+      <section className="ndc-set-block">
+        <CalmeHeading info={t("Le bouton du menu principal reste toujours accessible à droite de l'écran.")}>{t('settings.calme.mobileHeader')}</CalmeHeading>
+        <CalmeRow label={t('settings.calme.titleText')} info={t("Laissez vide pour utiliser le titre principal")}>
+          <input type="text" className="nd-input" style={{ width: 240 }} value={titleMobile} onChange={(e) => setTitleMobile(e.target.value)} onBlur={() => updateConfig({ titleMobile })} aria-label={t('settings.calme.titleText')} />
+        </CalmeRow>
+        <CalmeOrderList
+          moveUpLabel={t("Monter")}
+          moveDownLabel={t("Descendre")}
+          onMove={(index, direction) => { void moveItem(index, direction); }}
+          items={itemsOrder.map((item, index) => ({
+            id: item,
+            label: item === 'title' ? t('Titre / Logo') : t('Barre de Recherche'),
+            sub: currentLayout.includes(item) ? (index === 0 ? t('Zone Gauche') : t('Zone Centrale')) : t("Masqué"),
+            enabled: currentLayout.includes(item),
+            onToggle: value => { void toggleMobileVisibility(item, value); },
+          }))}
+        />
+      </section>
 
-            <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Gestion des Éléments")}</h4>
-              <p style={{ margin: '4px 0 16px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                {t("Activez/désactivez les éléments et utilisez les flèches pour définir leur ordre de gauche à droite. L'élément Menu est toujours épinglé à droite.")}
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {itemsOrder.map((item, i) => {
-                  const currentLayout = [leftElement, centerElement].filter(x => x !== 'none');
-                  const isHidden = !currentLayout.includes(item);
-                  const toggleAction = (val: boolean) => toggleMobileVisibility(item, val);
+      <section className="ndc-set-block">
+        <CalmeHeading info={t("Surchargez les paramètres globaux (thème, fond, géométrie)")}>{t('settings.calme.mobileLook')}</CalmeHeading>
+        <CalmeRow label={t('settings.calme.theme')}>
+          <div style={{ width: 220 }}>
+            <CustomSelect
+              value={mobileTheme}
+              onChange={(val: string) => { setMobileTheme(val); updateConfig({ mobileTheme: val }); }}
+              options={[{ value: '', label: inherit }, ...Object.keys(THEME_PRESETS).map(themeKey => ({ value: themeKey, label: t(THEME_PRESETS[themeKey].name) }))]}
+            />
+          </div>
+        </CalmeRow>
+        <CalmeRow label={t('settings.calme.font')}>
+          <div style={{ width: 220 }}>
+            <CustomSelect
+              value={mobileGlobalFont}
+              onChange={(val: string) => { setMobileGlobalFont(val); updateConfig({ mobileGlobalFont: val }); }}
+              options={[{ value: '', label: inherit }, ...['Outfit', 'Inter', 'Poppins', 'Rubik', 'Ubuntu', 'Lexend', 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Montserrat', 'Roboto'].map(font => ({ value: font, label: font }))]}
+            />
+          </div>
+        </CalmeRow>
+        <CalmeRow label={t("Animation du titre")}>
+          <CalmeSegmented
+            label={t("Animation du titre")}
+            value={mobileTitleAnimation || 'inherit'}
+            options={[{ value: 'inherit', label: t("Hérité") }, { value: 'none', label: t("Aucune") }, { value: 'spotlight-silver', label: t('settings.calme.sweep') }]}
+            onChange={value => { const next = value === 'inherit' ? '' : value; setMobileTitleAnimation(next); updateConfig({ mobileTitleAnimation: next }); }}
+          />
+        </CalmeRow>
+        <CalmeRow label={t('settings.calme.radius')} info={t('settings.calme.inheritHint')}>
+          <CalmeSlider
+            label={t('settings.calme.radius')}
+            value={mobileBorderRadius === '' ? -1 : mobileBorderRadius}
+            min={-1} max={24} step={1}
+            onChange={value => setMobileBorderRadius(value < 0 ? '' : value)}
+            onCommit={value => updateConfig({ mobileBorderRadius: value < 0 ? null : value })}
+            format={value => value < 0 ? t("Hérité") : `${value} px`}
+          />
+        </CalmeRow>
+        <CalmeRow label={t('settings.calme.opacity')} info={t('settings.calme.inheritHint')}>
+          <CalmeSlider
+            label={t('settings.calme.opacity')}
+            value={mobileCardOpacity === '' ? -0.05 : mobileCardOpacity}
+            min={-0.05} max={1} step={0.05}
+            onChange={value => setMobileCardOpacity(value < 0 ? '' : value)}
+            onCommit={value => updateConfig({ mobileCardOpacity: value < 0 ? null : value })}
+            format={value => value < 0 ? t("Hérité") : `${Math.round(value * 100)} %`}
+          />
+        </CalmeRow>
+      </section>
 
-                  const label = item === 'title' ? t('Titre / Logo') : t('Barre de Recherche');
-                  const zoneLabel = i === 0 ? t('Zone Gauche') : t('Zone Centrale');
-
-                  return (
-                    <div key={item} style={{ display: 'flex', flexDirection: 'column', padding: '14px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-                        <ToggleSwitch 
-                          checked={!isHidden}
-                          onChange={toggleAction}
-                          label={label}
-                          sublabel={!isHidden ? t('header.displayedIn', { zone: zoneLabel }) : t("Masqué")}
-                        />
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', opacity: !isHidden ? 1 : 0.5, transition: 'opacity 0.2s', flexWrap: 'wrap' }}>
-                          <button onClick={() => moveItem(i, -1)} disabled={i === 0} style={{ padding: '6px 10px', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: '6px', cursor: i === 0 ? 'not-allowed' : 'pointer', color: i === 0 ? 'var(--nd-text-muted)' : 'var(--nd-text)', opacity: i === 0 ? 0.3 : 1, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }} title={t("Monter")}>
-                            {t("↑ Monter")}
-                          </button>
-                          <button onClick={() => moveItem(i, 1)} disabled={i === 1} style={{ padding: '6px 10px', background: 'var(--nd-bg-alt)', border: '1px solid var(--nd-card-border)', borderRadius: '6px', cursor: i === 1 ? 'not-allowed' : 'pointer', color: i === 1 ? 'var(--nd-text-muted)' : 'var(--nd-text)', opacity: i === 1 ? 0.3 : 1, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap' }} title={t("Descendre")}>
-                            {t("Descendre ↓")}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+      <section className="ndc-set-block">
+        <CalmeHeading
+          info={demoMode ? t("Import de fond mobile désactivé dans la démo publique.") : undefined}
+          action={!demoMode && (
+            <label className="ndc-text-button" style={{ cursor: 'pointer' }}>
+              <Plus size={12} style={{ verticalAlign: -2 }} /> {t('settings.calme.importImage')}
+              <input type="file" accept="image/*" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadMobileWallpaper(file); e.target.value = ''; }} />
+            </label>
+          )}
+        >{t('settings.calme.mobileWallpaper')}</CalmeHeading>
+        <div className="ndc-field">
+          <input type="text" className="nd-input" placeholder="https://…" value={mobileWallpaper} onChange={(e) => setMobileWallpaper(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void handleSaveMobileWallpaper(); }} aria-label={t('settings.calme.mobileWallpaper')} />
+          <button type="button" className="nd-btn" onClick={handleSaveMobileWallpaper}>{t("Enregistrer")}</button>
+          {mobileWallpaper && <button type="button" className="ndc-icon-button" aria-label={t("Effacer")} title={t("Effacer")} onClick={async () => { setMobileWallpaper(''); await updateConfig({ mobileWallpaper: '' }); }}><X size={14} /></button>}
+        </div>
+        {uploadedBgs.length > 0 && (
+          <div className="ndc-wallpapers" style={{ marginTop: 12 }}>
+            {uploadedBgs.map(bg => (
+              <div
+                key={bg.name}
+                role="button"
+                tabIndex={0}
+                aria-pressed={mobileWallpaper === bg.url}
+                className="ndc-wallpaper"
+                style={{ backgroundImage: `url("${bg.url}")` }}
+                title={bg.name}
+                onClick={async () => { setMobileWallpaper(bg.url); await updateConfig({ mobileWallpaper: bg.url }); }}
+                onKeyDown={async (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileWallpaper(bg.url); await updateConfig({ mobileWallpaper: bg.url }); } }}
+              >
+                <button type="button" className="ndc-wallpaper-remove" aria-label={t("Supprimer l’image")} onClick={(e) => { e.stopPropagation(); setBgToDelete(bg.url); setIsConfirmBgDeleteOpen(true); }}><X size={11} /></button>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="ndc-set-block">
+        <CalmeHeading
+          info={t("Sauvegardez votre configuration mobile.")}
+          action={!addingProfile && <button type="button" className="ndc-text-button" onClick={() => setAddingProfile(true)}><Plus size={12} style={{ verticalAlign: -2 }} /> {t('settings.calme.saveCurrent')}</button>}
+        >{t('settings.calme.profiles')}</CalmeHeading>
+        {addingProfile && (
+          <div className="ndc-field" style={{ marginBottom: 6 }}>
+            <input autoFocus type="text" className="nd-input" placeholder={t('settings.calme.profileName')} aria-label={t('settings.calme.profileName')} value={newMobileProfileName} onChange={(e) => setNewMobileProfileName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && newMobileProfileName.trim()) { void handleSaveMobileProfile(); setAddingProfile(false); } if (e.key === 'Escape') setAddingProfile(false); }} />
+            <button type="button" className="nd-btn nd-btn-accent" disabled={!newMobileProfileName.trim()} onClick={() => { void handleSaveMobileProfile(); setAddingProfile(false); }}>{t("Sauvegarder")}</button>
+            <button type="button" className="ndc-icon-button" aria-label={t("Annuler")} onClick={() => setAddingProfile(false)}><X size={14} /></button>
+          </div>
+        )}
+        {mobileAppearanceProfiles.length === 0 && !addingProfile && <div className="ndc-set-empty">{t('settings.calme.noProfile')}</div>}
+        {mobileAppearanceProfiles.map(profile => (
+          <CalmeRow key={profile.id} label={profile.name} value={[profile.settings.mobileTheme || t("Hérité"), profile.settings.mobileGlobalFont || t("Hérité")].join(' · ')}>
+            <button type="button" className="nd-btn" onClick={() => handleApplyMobileProfile(profile)}>{t("Appliquer")}</button>
+            <button type="button" className="ndc-icon-button" aria-label={t("Supprimer le profil mobile")} title={t("Supprimer le profil mobile")} onClick={() => setConfirmDeleteMobileProfile(profile.id)}><X size={14} /></button>
+          </CalmeRow>
+        ))}
+      </section>
+      {confirmDeleteMobileProfile && (
+        <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
+          <div ref={profileDeleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Supprimer le profil mobile")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>{t("Supprimer le profil mobile ?")}</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>{t("Êtes-vous sûr de vouloir supprimer ce profil d&apos;apparence mobile ?")}</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button className="nd-btn" onClick={() => setConfirmDeleteMobileProfile(null)}>{t("Annuler")}</button>
+              <button className="nd-btn nd-btn-danger" onClick={() => handleDeleteMobileProfile(confirmDeleteMobileProfile)}>{t("Oui, supprimer")}</button>
             </div>
-            
-            <p style={{ margin: '0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-              {t("Le bouton du menu principal reste toujours accessible à droite de l'écran.")}
+          </div>
+        </div>
+      )}
+
+      {isConfirmBgDeleteOpen && (
+        <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
+          <div ref={backgroundDeleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Supprimer l’image")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>{t("Supprimer l&apos;image ?")}</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)', lineHeight: 1.5 }}>
+              {t("Êtes-vous sûr de vouloir supprimer cette image ? Si elle est utilisée, elle disparaîtra.")}
             </p>
-          </div>
-        </SettingsAccordion>
-
-        {/* Configuration Mobile */}
-        <SettingsAccordion
-          title={t("Apparence Spéciale Mobile")}
-          description={t("Surchargez les paramètres globaux (thème, fond, géométrie)")}
-          icon={<Monitor size={18} />}
-          isOpen={openAccordions.includes('mobile')}
-          onToggle={() => toggleAccordion('mobile')}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-            <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, marginBottom: '8px' }}>{t("Thème (Mobile)")}</h4>
-              <CustomSelect
-                value={mobileTheme}
-                onChange={(val: string) => { setMobileTheme(val); updateConfig({ mobileTheme: val }); }}
-                options={[
-                  { value: '', label: t("Hériter du thème Desktop") },
-                  ...Object.keys(THEME_PRESETS).map(themeKey => ({ value: themeKey, label: t(THEME_PRESETS[themeKey].name) }))
-                ]}
-              />
-            </div>
-
-            <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, marginBottom: '8px' }}>{t("Fonds d'écran personnalisés (Mobile)")}</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="text"
-                    className="nd-input"
-                    placeholder={t("https://example.com/mobile-bg.jpg ou fichier importé")}
-                    value={mobileWallpaper}
-                    onChange={(e) => setMobileWallpaper(e.target.value)}
-                    style={{ flex: 1, fontSize: '0.78rem' }}
-                  />
-                  <button className="nd-btn" onClick={handleSaveMobileWallpaper} style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
-                    {t("Enregistrer")}
-                  </button>
-                  {mobileWallpaper && (
-                    <button className="nd-btn" onClick={async () => { setMobileWallpaper(''); await updateConfig({ mobileWallpaper: '' }); }} style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'var(--nd-red)', background: 'rgba(239, 68, 68, 0.1)' }}>
-                      {t("Effacer")}
-                    </button>
-                  )}
-                </div>
-                
-                {demoMode ? (
-                  <div style={{ fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>{t("Import de fond mobile désactivé dans la démo publique.")}</div>
-                ) : (
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    id="mobile-bg-upload-input"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-
-                      const formData = new FormData();
-                      formData.append('file', file);
-                      formData.append('type', 'background');
-
-                      try {
-                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                        const data = await res.json();
-                        if (data.url) {
-                          setMobileWallpaper(data.url);
-                          await updateConfig({ mobileWallpaper: data.url });
-                          fetchUploadedBgs();
-                        }
-                      } catch (err) {
-                        console.error('Failed to upload background:', err);
-                      }
-                    }}
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="mobile-bg-upload-input" className="nd-btn" style={{ padding: '6px 12px', fontSize: '0.72rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--nd-card-border)' }}>
-                    {t("📁 Importer une image mobile")}
-                  </label>
-                </div>
-                )}
-
-                {uploadedBgs.length > 0 && (
-                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--nd-card-border)' }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--nd-text-muted)', display: 'block', marginBottom: '8px' }}>
-                      {t("Galerie des fonds importés")}
-                    </span>
-                    <div 
-                      style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
-                        gap: '8px',
-                        maxHeight: '180px',
-                        overflowY: 'auto',
-                        paddingRight: '4px'
-                      }}
-                    >
-                      {uploadedBgs.map((bg) => {
-                        const isActive = mobileWallpaper === bg.url;
-                        return (
-                          <div
-                            key={bg.name}
-                            onClick={async () => {
-                              setMobileWallpaper(bg.url);
-                              await updateConfig({ mobileWallpaper: bg.url });
-                            }}
-                            style={{
-                              position: 'relative',
-                              height: '50px',
-                              borderRadius: 'var(--nd-card-radius)',
-                              overflow: 'hidden',
-                              border: isActive ? '2px solid var(--nd-accent)' : '1px solid var(--nd-card-border)',
-                              boxShadow: isActive ? '0 0 8px var(--nd-accent)' : 'none',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              backgroundImage: `url("${bg.url}")`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center'
-                            }}
-                            title={bg.name}
-                          >
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setBgToDelete(bg.url);
-                                setIsConfirmBgDeleteOpen(true);
-                              }}
-                              style={{
-                                position: 'absolute',
-                                top: '2px',
-                                right: '2px',
-                                width: '16px',
-                                height: '16px',
-                                borderRadius: '50%',
-                                background: 'rgba(0, 0, 0, 0.6)',
-                                border: 'none',
-                                color: '#fff',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '9px',
-                                cursor: 'pointer',
-                                zIndex: 2
-                              }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, marginBottom: '8px' }}>{t("Personnalisation Visuelle (Mobile)")}</h4>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>{t("Typographie globale (Mobile)")}</label>
-                  <CustomSelect
-                    value={mobileGlobalFont}
-                    onChange={(val: string) => { setMobileGlobalFont(val); updateConfig({ mobileGlobalFont: val }); }}
-                    options={[
-                      { value: '', label: t("Hériter de Desktop") },
-                      { value: 'Outfit', label: t("Outfit (Défaut)") },
-                      { value: 'Inter', label: t("Inter (Pure & Moderne)") },
-                      { value: 'Poppins', label: t("Poppins (Rond & Épuré)") },
-                      { value: 'Rubik', label: t("Rubik (Arrondi Confort)") },
-                      { value: 'Ubuntu', label: t("Ubuntu (Style Linux)") },
-                      { value: 'Lexend', label: t("Lexend (Haute Lisibilité)") },
-                      { value: 'JetBrains Mono', label: t("JetBrains Mono (Console Tech)") },
-                      { value: 'Fira Code', label: t("Fira Code (Developer)") },
-                      { value: 'Source Code Pro', label: t("Source Code Pro (Terminal)") },
-                      { value: 'Montserrat', label: t("Montserrat (Géométrique)") },
-                      { value: 'Roboto', label: t("Roboto (Neutre/Standard)") }
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', marginBottom: 4, display: 'block' }}>{t("Animation du titre (Mobile)")}</label>
-                  <CustomSelect
-                    value={mobileTitleAnimation}
-                    onChange={(val: string) => { setMobileTitleAnimation(val); updateConfig({ mobileTitleAnimation: val }); }}
-                    options={[
-                      { value: '', label: t("Hériter de Desktop") },
-                      { value: 'none', label: t("Aucune") },
-                      { value: 'spotlight-silver', label: t("Balayage Argenté (Silver)") },
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
-                      {t("Arrondi des cartes (Mobile)")}
-                    </label>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
-                      {mobileBorderRadius === '' ? t("Hérité") : `${mobileBorderRadius}px`}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-1"
-                    max="24"
-                    step="1"
-                    value={mobileBorderRadius === '' ? -1 : mobileBorderRadius}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val === -1) {
-                        setMobileBorderRadius('');
-                      } else {
-                        setMobileBorderRadius(val);
-                      }
-                    }}
-                    onMouseUp={() => updateConfig({ mobileBorderRadius: mobileBorderRadius === '' ? null : mobileBorderRadius })}
-                    onTouchEnd={() => updateConfig({ mobileBorderRadius: mobileBorderRadius === '' ? null : mobileBorderRadius })}
-                    style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
-                  />
-                </div>
-
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <label className="nd-label" style={{ fontSize: '0.72rem', color: 'var(--nd-text)', margin: 0 }}>
-                      {t("Opacité du fond des cartes (Mobile)")}
-                    </label>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--nd-accent)', fontWeight: 600 }}>
-                      {mobileCardOpacity === '' ? t("Hérité") : `${Math.round((mobileCardOpacity as number) * 100)}%`}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-0.05"
-                    max="1"
-                    step="0.05"
-                    value={mobileCardOpacity === '' ? -0.05 : mobileCardOpacity}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val < 0) {
-                        setMobileCardOpacity('');
-                      } else {
-                        setMobileCardOpacity(val);
-                      }
-                    }}
-                    onMouseUp={() => updateConfig({ mobileCardOpacity: mobileCardOpacity === '' ? null : mobileCardOpacity })}
-                    onTouchEnd={() => updateConfig({ mobileCardOpacity: mobileCardOpacity === '' ? null : mobileCardOpacity })}
-                    style={{ width: '100%', accentColor: 'var(--nd-accent)', cursor: 'pointer' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-              <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600 }}>{t("Profils d'Apparence Mobile")}</h4>
-              <p style={{ margin: '4px 0 12px 0', fontSize: '0.7rem', color: 'var(--nd-text-muted)' }}>
-                {t("Sauvegardez votre configuration mobile.")}
-              </p>
-              
-              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <input
-                  type="text"
-                  className="nd-input"
-                  placeholder={t("Nom du profil mobile...")}
-                  value={newMobileProfileName}
-                  onChange={(e) => setNewMobileProfileName(e.target.value)}
-                  style={{ flex: 1, fontSize: '0.75rem', padding: '6px 10px' }}
-                />
-                <button className="nd-btn" onClick={handleSaveMobileProfile} disabled={!newMobileProfileName.trim()} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                  {t("Sauvegarder")}
-                </button>
-              </div>
-
-              {mobileAppearanceProfiles.length > 0 && (
-                <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr' }}>
-                  {mobileAppearanceProfiles.map(profile => (
-                    <div key={profile.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--nd-card-bg)', padding: '12px 16px', borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
-                      <div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--nd-text)' }}>{profile.name}</span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--nd-text-muted)', display: 'block', marginTop: 4 }}>
-                          {profile.settings.mobileTheme || t("Hérité")} • {profile.settings.mobileGlobalFont || t("Hérité")}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <button className="nd-btn" onClick={() => handleApplyMobileProfile(profile)} style={{ padding: '6px 12px', fontSize: '0.75rem' }}>
-                          {t("Appliquer")}
-                        </button>
-                        <button 
-                          type="button"
-                          className="nd-btn nd-btn-danger"
-                          onClick={() => setConfirmDeleteMobileProfile(profile.id)} 
-                          style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button className="nd-btn" onClick={() => { setIsConfirmBgDeleteOpen(false); setBgToDelete(null); }}>{t("Annuler")}</button>
+              <button className="nd-btn nd-btn-danger" onClick={handleConfirmBgDelete}>{t("Oui, supprimer")}</button>
             </div>
           </div>
-        </SettingsAccordion>
+        </div>
+      )}
 
-        {confirmDeleteMobileProfile && (
-          <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
-            <div ref={profileDeleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Supprimer le profil mobile")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>{t("Supprimer le profil mobile ?")}</h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)' }}>{t("Êtes-vous sûr de vouloir supprimer ce profil d&apos;apparence mobile ?")}</p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="nd-btn" onClick={() => setConfirmDeleteMobileProfile(null)}>{t("Annuler")}</button>
-                <button className="nd-btn nd-btn-danger" onClick={() => handleDeleteMobileProfile(confirmDeleteMobileProfile)}>{t("Oui, supprimer")}</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isConfirmBgDeleteOpen && (
-          <div className="nd-modal-overlay" style={{ zIndex: 1000002 }}>
-            <div ref={backgroundDeleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Supprimer l’image")} tabIndex={-1} className="nd-modal" style={{ maxWidth: 400 }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--nd-red)' }}>{t("Supprimer l&apos;image ?")}</h3>
-              <p style={{ margin: '0 0 24px 0', fontSize: '0.85rem', color: 'var(--nd-text-muted)', lineHeight: 1.5 }}>
-                {t("Êtes-vous sûr de vouloir supprimer cette image ? Si elle est utilisée, elle disparaîtra.")}
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                <button className="nd-btn" onClick={() => { setIsConfirmBgDeleteOpen(false); setBgToDelete(null); }}>{t("Annuler")}</button>
-                <button className="nd-btn nd-btn-danger" onClick={handleConfirmBgDelete}>{t("Oui, supprimer")}</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
-    </>
+    </div>
   );
 }

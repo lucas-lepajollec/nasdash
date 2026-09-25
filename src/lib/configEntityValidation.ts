@@ -9,7 +9,9 @@ import {
   readString,
   readStringArray,
 } from './requestValidation';
-import { validateDockerHostUrl } from './dockerClient';
+import { DEVICE_INTEGRATION_IDS, getDeviceIntegration, getServiceIntegration } from '@/integrations/registry';
+import { connectionFields, isMonitoringType } from '@/integrations/sources';
+import { validateDockerHostUrl, validateDockerSocketPath } from './dockerClient';
 
 const CATEGORY_LAYOUTS = [
   'standard',
@@ -20,7 +22,8 @@ const CATEGORY_LAYOUTS = [
   'bento-logo-medium',
   'bento-logo-small',
 ] as const;
-const DEVICE_API_TYPES = ['homeassistant', 'proxmox', 'custom', 'glances', 'lhm'] as const;
+/** Every registered integration, including legacy ones still stored by older versions. */
+const DEVICE_API_TYPES = DEVICE_INTEGRATION_IDS;
 const DEVICE_STAT_STYLES = ['horizontal', 'vertical', 'graph', 'circle'] as const;
 const DOCKER_ACTION_TYPES = ['start', 'stop', 'switch'] as const;
 const NETWORK_NODE_TYPES = ['infra', 'device', 'netsvc', 'stdsvc'] as const;
@@ -34,11 +37,11 @@ const SETTINGS_BOOLEAN_KEYS = [
   'enablePerfMonitor', 'dockerContainersAutoScroll', 'allowDockerActions',
   'hideHeaderTitle', 'hideHeaderSearch', 'hideHeaderMenu', 'showHeaderMenuIcons',
   'showPingDetails',
+  'networkGraphStats',
 ] as const;
 
 const SETTINGS_STRING_KEYS: ReadonlyArray<readonly [string, number]> = [
-  ['title', 200], ['titleMobile', 200], ['tailscaleTailnet', 512],
-  ['tailscaleClientId', 2_048], ['tailscaleClientSecret', 8_192],
+  ['title', 200], ['titleMobile', 200],
   ['theme', 128], ['calendarUrl', 4_096], ['clockTimezone', 256],
   ['globalFont', 128], ['emojiTheme', 128], ['mobileTheme', 128],
   ['mobileGlobalFont', 128], ['mobileTitleAnimation', 128],
@@ -317,6 +320,9 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   readEnum(body, 'titleFont', ['outfit', 'space-grotesk', 'syne', 'righteous', 'montserrat'] as const);
   readEnum(body, 'titleAnimation', ['none', 'spotlight-silver'] as const);
   readEnum(body, 'mode', ['light', 'dark'] as const);
+  if (body.accentColor !== undefined && (typeof body.accentColor !== 'string' || !/^(#[0-9a-fA-F]{6})?$/.test(body.accentColor))) {
+    throw new RequestValidationError('Le champ « accentColor » doit être une couleur #rrggbb.');
+  }
   readEnum(body, 'dockPosition', ['left', 'right'] as const);
   readEnum(body, 'categoryTitlePosition', ['inside', 'above'] as const);
   readEnum(body, 'clockDesign', ['default', 'minimal', 'glow', 'split'] as const);
@@ -330,6 +336,15 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   readNumber(body, 'widgetsTotalSlots', { min: 0, max: 10_000, integer: true });
   readNumber(body, 'borderRadius', { min: 0, max: 100 });
   readNumber(body, 'cardOpacity', { min: 0, max: 1 });
+  readNumber(body, 'surfaceBlur', { min: 0, max: 40 });
+  readNumber(body, 'softEdges', { min: 0, max: 32 });
+  readBoolean(body, 'hideOutlines');
+  if (body.favoriteColors !== undefined) {
+    const colors = readArray(body, 'favoriteColors', 24);
+    if (colors && !colors.every(color => typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color))) {
+      throw new RequestValidationError('Le champ « favoriteColors » doit être une liste de couleurs #rrggbb.');
+    }
+  }
   readNumber(body, 'mobileBorderRadius', { min: 0, max: 100 });
   readNumber(body, 'mobileCardOpacity', { min: 0, max: 1 });
 
@@ -401,7 +416,22 @@ function validateDeviceApi(value: unknown): void {
   readString(value, 'nodeName', { maxLength: 256 });
   readString(value, 'vmid', { maxLength: 64 });
   readEnum(value, 'vmType', ['qemu', 'lxc'] as const);
+  readBoolean(value, 'allowSelfSigned');
+  readString(value, 'target', { maxLength: 256 });
   if (value.mapping !== undefined) assertBoundedJson(value.mapping, 'api.mapping');
+}
+
+/** A device's saved connection and its own fields on it (Beszel system, Prometheus instance, Proxmox node/VM). */
+function validateDeviceSource(value: unknown): void {
+  if (!isJsonObject(value)) throw new RequestValidationError('Le champ « source » doit être un objet.');
+  readIdentifier(value, 'integrationId');
+  const values = readObject(value, 'values');
+  for (const [key, item] of Object.entries(values ?? {})) {
+    if (!['target', 'nodeName', 'vmid', 'vmType'].includes(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour la source.`);
+    if (typeof item !== 'string' || item.length > 256) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
+    if (key === 'vmid' && !/^\d*$/.test(item)) throw new RequestValidationError('Le champ « vmid » doit être un nombre.');
+    if (key === 'vmType' && !['', 'qemu', 'lxc'].includes(item)) throw new RequestValidationError('Le champ « vmType » doit valoir qemu ou lxc.');
+  }
 }
 
 function validateDevice(value: unknown, requireId: boolean): void {
@@ -417,6 +447,7 @@ function validateDevice(value: unknown, requireId: boolean): void {
   readNumber(value, 'colsDesktop', { min: 1, max: 6, integer: true });
   readNumber(value, 'colsMobile', { min: 1, max: 6, integer: true });
   if (value.api !== undefined && value.api !== null) validateDeviceApi(value.api);
+  if (value.source !== undefined && value.source !== null) validateDeviceSource(value.source);
   if (value.stats !== undefined) assertBoundedJson(value.stats, 'stats');
 }
 
@@ -445,11 +476,44 @@ function validateCalendarMutation(body: JsonObject, method: MutationMethod): voi
   readBoolean(body, 'isAllDay');
 }
 
+/**
+ * A saved service connection: only the fields its manifest declares, secrets
+ * only in secret fields (`null` clears one, the mask keeps it).
+ */
+function validateIntegrationInstance(payload: JsonObject): void {
+  const body = readObject(payload, 'integration');
+  if (!body) throw new RequestValidationError('Le champ « integration » est requis.');
+  if (body.id !== undefined) readIdentifier(body);
+  const type = readString(body, 'type', { maxLength: 64 });
+  // A service connection (Tailscale…) or a monitoring connection (Glances…):
+  // for the latter, only the fields of the connection, not the machine's.
+  const service = getServiceIntegration(type);
+  const monitoring = !service && isMonitoringType(type) ? getDeviceIntegration(type) : undefined;
+  const manifest = service ?? (monitoring ? { name: monitoring.name, fields: connectionFields(monitoring).map(field => ({ id: field.id, kind: field.kind === 'secret' ? 'secret' : 'text' })) } : undefined);
+  if (!manifest) throw new RequestValidationError('Intégration inconnue.');
+  readString(body, 'name', { maxLength: 200 });
+  const plain = new Set(manifest.fields.filter(field => field.kind !== 'secret').map(field => field.id as string));
+  const secret = new Set(manifest.fields.filter(field => field.kind === 'secret').map(field => field.id as string));
+  for (const [key, value] of Object.entries(readObject(body, 'settings') ?? {})) {
+    if (!plain.has(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour ${manifest.name}.`);
+    if (typeof value !== 'string' || value.length > 2_048) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
+  }
+  for (const [key, value] of Object.entries(readObject(body, 'secrets') ?? {})) {
+    if (!secret.has(key)) throw new RequestValidationError(`Secret « ${key} » inconnu pour ${manifest.name}.`);
+    if (value !== null && (typeof value !== 'string' || value.length > 8_192)) throw new RequestValidationError(`Le secret « ${key} » est invalide.`);
+  }
+}
+
 export function validateConfigMutationBody(
   body: JsonObject,
   type: string,
   method: MutationMethod,
 ): void {
+  if (type === 'integration') {
+    validateIntegrationInstance(body);
+    return;
+  }
+
   if (type === 'settings') {
     validateSettingsPayload(body);
     return;
@@ -497,6 +561,21 @@ export function validateConfigMutationBody(
   if (type === 'dockerHost') {
     readString(body, 'name', { maxLength: 200 });
     readString(body, 'icon', { maxLength: 64, trim: false });
+    const connection = readEnum(body, 'connection', ['tcp', 'socket', 'portainer', 'dockhand'] as const) ?? 'tcp';
+    readBoolean(body, 'allowSelfSigned');
+    if (connection === 'portainer' || connection === 'dockhand') {
+      const environment = readString(body, 'target', { maxLength: 64 });
+      if (!environment || !/^[A-Za-z0-9_-]+$/.test(environment)) throw new RequestValidationError('L’identifiant d’environnement est requis (ex. 1).');
+      if (!readString(body, 'token', { maxLength: 4_096, trim: false })) throw new RequestValidationError('La clé API est requise.');
+    }
+    if (connection === 'socket') {
+      try {
+        validateDockerSocketPath(readString(body, 'socketPath', { maxLength: 512 }) || '');
+      } catch {
+        throw new RequestValidationError('Le chemin du socket Docker doit être absolu et finir par .sock (ex. /var/run/docker.sock).');
+      }
+      return;
+    }
     const url = readString(body, 'url', { maxLength: 4_096, trim: false });
     try {
       validateDockerHostUrl(url || '');

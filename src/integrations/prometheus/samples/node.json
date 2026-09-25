@@ -1,0 +1,202 @@
+{
+  "cpu": [
+    {
+      "metric": {},
+      "value": [
+        1758710000.1,
+        "21.75"
+      ]
+    }
+  ],
+  "memoryTotal": [
+    {
+      "metric": {
+        "__name__": "node_memory_MemTotal_bytes",
+        "instance": "192.0.2.10:9100",
+        "job": "node"
+      },
+      "value": [
+        1758710000.1,
+        "33554432000"
+      ]
+    }
+  ],
+  "memoryAvailable": [
+    {
+      "metric": {
+        "__name__": "node_memory_MemAvailable_bytes",
+        "instance": "192.0.2.10:9100",
+        "job": "node"
+      },
+      "value": [
+        1758710000.1,
+        "20132659200"
+      ]
+    }
+  ],
+  "fsSize": [
+    {
+      "metric": {
+        "__name__": "node_filesystem_size_bytes",
+        "device": "/dev/nvme0n1p2",
+        "fstype": "ext4",
+        "mountpoint": "/",
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1758710000.1,
+        "499963174912"
+      ]
+    },
+    {
+      "metric": {
+        "__name__": "node_filesystem_size_bytes",
+        "device": "/dev/nvme0n1p1",
+        "fstype": "vfat",
+        "mountpoint": "/boot/efi",
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1758710000.1,
+        "536608768"
+      ]
+    },
+    {
+      "metric": {
+        "__name__": "node_filesystem_size_bytes",
+        "device": "/dev/md0",
+        "fstype": "ext4",
+        "mountpoint": "/srv/storage",
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1758710000.1,
+        "7999415648256"
+      ]
+    }
+  ],
+  "fsAvail": [
+    {
+      "metric": {
+        "__name__": "node_filesystem_avail_bytes",
+        "device": "/dev/nvme0n1p2",
+        "fstype": "ext4",
+        "mountpoint": "/",
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1758710000.1,
+        "349974222438"
+      ]
+    },
+    {
+      "metric": {
+        "__name__": "node_filesystem_avail_bytes",
+        "device": "/dev/nvme0n1p1",
+        "fstype": "vfat",
+        "mountpoint": "/boot/efi",
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1758710000.1,
+        "530000000"
+      ]
+    },
+    {
+      "metric": {
+        "__name__": "node_filesystem_avail_bytes",
+        "device": "/dev/md0",
+        "fstype": "ext4",
+        "mountpoint": "/srv/storage",
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1758710000.1,
+        "2399824694476"
+      ]
+    }
+  ],
+  "temperature": [
+    {
+      "metric": {},
+      "value": [
+        1758710000.1,
+        "46"
+      ]
+    }
+  ],
+  "cores": [
+    {
+      "metric": {},
+      "value": [
+        1727000000,
+        "8"
+      ]
+    }
+  ],
+  "netRx": [
+    {
+      "metric": {},
+      "value": [
+        1727000000,
+        "2450000.5"
+      ]
+    }
+  ],
+  "netTx": [
+    {
+      "metric": {},
+      "value": [
+        1727000000,
+        "830000.2"
+      ]
+    }
+  ],
+  "load1": [
+    {
+      "metric": {
+        "instance": "192.0.2.10:9100",
+        "__name__": "node_load1"
+      },
+      "value": [
+        1727000000,
+        "0.82"
+      ]
+    }
+  ],
+  "load5": [
+    {
+      "metric": {
+        "instance": "192.0.2.10:9100",
+        "__name__": "node_load5"
+      },
+      "value": [
+        1727000000,
+        "0.74"
+      ]
+    }
+  ],
+  "load15": [
+    {
+      "metric": {
+        "instance": "192.0.2.10:9100",
+        "__name__": "node_load15"
+      },
+      "value": [
+        1727000000,
+        "0.66"
+      ]
+    }
+  ],
+  "uptime": [
+    {
+      "metric": {
+        "instance": "192.0.2.10:9100"
+      },
+      "value": [
+        1727000000,
+        "1045230.4"
+      ]
+    }
+  ]
+}

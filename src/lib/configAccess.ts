@@ -1,5 +1,7 @@
 import { AccessPrincipal, canAccessTab, canAccessWidget } from './access';
 import { DashboardConfig } from './types';
+import { maskInstanceSecrets, stripInstanceSecrets } from '@/integrations/instances';
+import { isMonitoringType } from '@/integrations/sources';
 
 type SerializableConfig = DashboardConfig & {
   slots?: Array<Record<string, unknown>>;
@@ -13,10 +15,11 @@ function maskSecrets(config: SerializableConfig): void {
   for (const device of config.devices || []) {
     if (device.api?.token) device.api.token = '********';
   }
-
-  if (config.settings?.tailscaleClientSecret) {
-    config.settings.tailscaleClientSecret = '********';
+  for (const host of config.dockerHosts || []) {
+    if (host.token) host.token = '********';
   }
+
+  maskInstanceSecrets(config);
 }
 
 function filterSecretCategories(config: SerializableConfig): void {
@@ -55,13 +58,21 @@ export function buildConfigForPrincipal(
   filterSecretCategories(safeConfig);
 
   for (const host of safeConfig.dockerHosts) {
-    // The browser only needs the stable host id/name. The daemon URL stays server-side.
+    // The browser only needs the stable host id/name. The daemon address stays server-side.
     host.url = '';
+    delete host.socketPath;
+    delete host.target;
+    delete host.token;
   }
   for (const device of safeConfig.devices) {
-    if (device.api) delete device.api.token;
+    // Like saved connections: the type is enough, the address and account stay server-side.
+    if (device.api) device.api = { type: device.api.type, url: '' };
   }
-  delete safeConfig.settings.tailscaleClientSecret;
+  stripInstanceSecrets(safeConfig);
+  // Monitoring connections: their address stays server-side too (name and type are enough).
+  for (const instance of safeConfig.integrations ?? []) {
+    if (isMonitoringType(instance.type)) instance.settings = {};
+  }
 
   const canReadDocker =
     canAccessTab(principal, 'docker') ||
@@ -92,9 +103,7 @@ export function buildConfigForPrincipal(
     canAccessTab(principal, 'networks') ||
     canAccessWidget(principal, 'tailscale');
   if (!canReadTailscale) {
-    delete safeConfig.settings.tailscaleTailnet;
-    delete safeConfig.settings.tailscaleClientId;
-    delete safeConfig.settings.tailscaleClientSecret;
+    safeConfig.integrations = (safeConfig.integrations ?? []).filter(instance => instance.type !== 'tailscale' && instance.type !== 'headscale');
   }
 
   return safeConfig;

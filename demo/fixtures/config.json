@@ -44,9 +44,7 @@
     "customCss": "",
     "enablePerfMonitor": false,
     "backgroundImage": "",
-    "borderRadius": 10,
     "cardOpacity": 0.8,
-    "globalFont": "JetBrains Mono",
     "titleFont": "outfit",
     "titleAnimation": "spotlight-silver",
     "clockDesign": "default",
@@ -140,7 +138,7 @@
           "colsDesktop": 2,
           "colsMobile": 2,
           "hideValues": false,
-          "visibleStats": ["CPU", "RAM", "Stockage", "GPU"],
+          "visibleStats": ["CPU", "RAM", "Disque (Stockage)", "GPU"],
           "enableAlerts": false,
           "coloredGraphs": true
         }
@@ -162,7 +160,7 @@
           "colsDesktop": 2,
           "colsMobile": 2,
           "hideValues": false,
-          "visibleStats": ["CPU", "RAM", "Stockage", "GPU"],
+          "visibleStats": ["CPU", "RAM", "Disque (Stockage)", "GPU"],
           "enableAlerts": false,
           "coloredGraphs": true
         }
@@ -188,7 +186,7 @@
             "props": {
               "deviceConfigs": {
                 "demo-device-1": { "statStyle": "vertical", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Disque (Données)", "Disque (Système)"], "enableAlerts": false, "coloredGraphs": true },
-                "demo-device-2": { "statStyle": "graph", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Stockage", "GPU"], "enableAlerts": false, "coloredGraphs": true }
+                "demo-device-2": { "statStyle": "graph", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Disque (Stockage)", "GPU"], "enableAlerts": false, "coloredGraphs": true }
               }
             }
           }
@@ -219,6 +217,10 @@
       }
     }
   },
+  "integrations": [
+    { "id": "glances-1", "type": "glances", "name": "Glances · Atlas NAS", "settings": { "ip": "http://demo-device-1.invalid", "port": "61208", "username": "", "allowSelfSigned": "" } },
+    { "id": "proxmox-1", "type": "proxmox", "name": "Proxmox VE", "settings": { "ip": "https://demo-device-2.invalid", "port": "8006", "username": "", "allowSelfSigned": "" } }
+  ],
   "devices": [
     {
       "id": "demo-device-1",
@@ -228,7 +230,7 @@
       "icon": "lucide:HardDrive",
       "statStyle": "vertical",
       "hideValues": false,
-      "api": { "type": "glances", "url": "http://demo-device-1.invalid/api/3/all" }
+      "source": { "integrationId": "glances-1" }
     },
     {
       "id": "demo-device-2",
@@ -238,7 +240,7 @@
       "icon": "lucide:Server",
       "statStyle": "graph",
       "hideValues": false,
-      "api": { "type": "proxmox", "url": "https://demo-device-2.invalid/api2/json/nodes/orion/status" }
+      "source": { "integrationId": "proxmox-1", "values": { "nodeName": "orion" } }
     }
   ],
   "dockerHosts": [

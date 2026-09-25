@@ -1,0 +1,72 @@
+{
+  "cpu": {
+    "total": 12.34
+  },
+  "mem": {
+    "percent": 64.2,
+    "total": 68719476736
+  },
+  "fs": [
+    {
+      "mnt_point": "/",
+      "size": 536870912000,
+      "percent": 40
+    },
+    {
+      "mnt_point": "/boot/efi",
+      "size": 1073741824,
+      "percent": 3
+    },
+    {
+      "mnt_point": "/mnt/data",
+      "size": 2147483648000,
+      "percent": 55.55
+    },
+    {
+      "mnt_point": "/mnt/data/bind",
+      "size": 2147483648000,
+      "percent": 55.55
+    }
+  ],
+  "sensors": [
+    {
+      "label": "Package id 0",
+      "value": 61.6
+    },
+    {
+      "label": "nvme0",
+      "value": 40.2
+    }
+  ],
+  "gpu": [
+    {
+      "name": "RTX 4070",
+      "proc": 7,
+      "temperature": 50
+    }
+  ],
+  "network": [
+    {
+      "interface_name": "lo",
+      "bytes_recv_rate_per_sec": 5200,
+      "bytes_sent_rate_per_sec": 5200
+    },
+    {
+      "interface_name": "eth0",
+      "bytes_recv_rate_per_sec": 2450000,
+      "bytes_sent_rate_per_sec": 830000
+    },
+    {
+      "interface_name": "docker0",
+      "bytes_recv_rate_per_sec": 120000,
+      "bytes_sent_rate_per_sec": 90000
+    }
+  ],
+  "load": {
+    "min1": 0.82,
+    "min5": 0.74,
+    "min15": 0.66,
+    "cpucore": 8
+  },
+  "uptime": "12 days, 4:05:06"
+}

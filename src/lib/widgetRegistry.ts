@@ -1,3 +1,10 @@
+import { RESPONSIVE_WIDGET_FORMATS, type WidgetSizeBucket } from './widgetSizing';
+
+/**
+ * Historical widget list (hide/sidebar/order keys of the pre-page settings).
+ * Only the legacy migration (`pages/legacy-migration.ts`) reads it now; widget
+ * types themselves are described in `src/widgets/<type>/definition.ts`.
+ */
 export interface WidgetDefinition {
   id: string; // The base ID for the widget, used for config keys like hide{Id}, {id}Sidebar, etc.
   name: string; // Display name
@@ -10,11 +17,14 @@ export interface WidgetDefinition {
   defaultOrder: number;
   defaultHidden: boolean;
   hasConfig: boolean; // Does this widget have a dedicated configuration tab?
+  /** Presentations actually implemented by this widget; not a size-forcing prop. */
+  responsiveFormats: readonly WidgetSizeBucket[];
 }
 
 export const WIDGET_REGISTRY: WidgetDefinition[] = [
   {
     id: 'devices',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Appareils',
     icon: '🖥️',
     description: 'Vitalités en temps réel des serveurs connectés (Glances, Proxmox, LHM).',
@@ -28,6 +38,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'quickstats',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Vue d\'ensemble',
     icon: '📊',
     description: 'Résumé rapide (services, catégories, ports ouverts et statuts).',
@@ -41,6 +52,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'tailscale',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'VPN Tailscale',
     icon: '🔒',
     description: 'État général et liste des machines Tailscale connectées.',
@@ -54,6 +66,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'dockeractions',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Actions Docker',
     icon: '🐳',
     description: 'Boutons de démarrage et d\'arrêt pour tous les conteneurs.',
@@ -67,6 +80,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'clock',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Horloge',
     icon: '🕒',
     description: 'Affiche l\'heure actuelle et la date.',
@@ -80,6 +94,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'calendar',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Calendrier',
     icon: '📅',
     description: 'Affiche un mini calendrier du mois en cours.',
@@ -93,6 +108,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'weather',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Météo',
     icon: '☁️',
     description: 'Conditions météorologiques actuelles.',
@@ -106,6 +122,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'networkgraph',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Graphe Réseau',
     icon: '📶',
     description: 'Latence réseau en temps réel.',
@@ -119,6 +136,7 @@ export const WIDGET_REGISTRY: WidgetDefinition[] = [
   },
   {
     id: 'dockercontainers',
+    responsiveFormats: RESPONSIVE_WIDGET_FORMATS,
     name: 'Conteneurs Docker',
     icon: '🐳',
     description: 'Visualisation et état détaillé de vos conteneurs Docker.',

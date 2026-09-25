@@ -70,7 +70,7 @@ describe('public demo fixtures', () => {
       statStyle: 'graph',
       colsDesktop: 2,
       colsMobile: 2,
-      visibleStats: ['CPU', 'RAM', 'Stockage', 'GPU'],
+      visibleStats: ['CPU', 'RAM', 'Disque (Stockage)', 'GPU'],
     });
   });
 

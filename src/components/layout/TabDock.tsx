@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { TabDef, TabId } from '@/hooks/useTabs';
-import { ChevronRight, ChevronLeft, ArrowUp, ArrowDown, Eye, EyeOff, Settings } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';

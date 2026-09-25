@@ -31,6 +31,12 @@ test.describe.serial('critical self-hosted paths', () => {
     const config = await configResponse.json();
     expect(config.settings.securityMode).toBe('public');
     expect(config.devices[0]?.api?.token).toBeUndefined();
+    // Monitoring connections reach visitors without their address or secrets.
+    const monitoring = (config.integrations ?? []).filter((instance: { type: string }) => ['glances', 'netdata', 'beszel', 'prometheus', 'proxmox', 'lhm'].includes(instance.type));
+    for (const instance of monitoring) {
+      expect(instance.secrets).toBeUndefined();
+      expect(instance.settings).toEqual({});
+    }
     expect(config.dockerHosts[0]?.url).toBe('');
 
     const forbiddenWrite = await anonymous.put('/api/config', {
@@ -94,41 +100,33 @@ test.describe.serial('critical self-hosted paths', () => {
     });
   });
 
-  test('admin can persist a custom-tab layout through its real API contract', async () => {
+  test('admin can create, edit and persist a page through its real API contract', async () => {
     const admin = await isolatedRequest(20);
     await login(admin, 'admin', ADMIN_PASSWORD);
 
-    const create = await admin.post('/api/custom-tabs', {
-      data: {
-        type: 'createTab',
-        name: 'E2E Tab',
-        icon: 'lucide:LayoutDashboard',
-        description: 'Isolated browser test',
-      },
+    const create = await admin.post('/api/pages', {
+      data: { action: 'create', name: 'E2E Page', icon: 'lucide:LayoutDashboard', template: 'blank' },
     });
     expect(create.status()).toBe(201);
-    const created = await create.json();
+    const { page } = await create.json();
 
-    const layout = {
-      rows: [{
-        id: 'e2e-row',
-        type: '1-col',
-        columns: [{
-          id: 'e2e-column',
-          width: '100%',
-          content: null,
-          widgets: [{ type: 'clock' }],
-        }],
-      }],
+    // Pages are a free grid: each widget has its place (columns out of 24, rows of 4 px).
+    const edited = {
+      ...page,
+      widgets: [...page.widgets, { id: 'e2e-clock', type: 'clock', settings: {}, x: 0, y: 0, w: 6, h: 40 }],
     };
-    const saveLayout = await admin.put('/api/custom-tabs', {
-      data: { id: created.tab.id, layoutUpdates: layout },
-    });
-    expect(saveLayout.status()).toBe(200);
+    const save = await admin.put('/api/pages', { data: { page: edited } });
+    expect(save.status()).toBe(200);
+    expect((await save.json()).page.revision).toBe(page.revision + 1);
 
-    const saved = await admin.get('/api/custom-tabs');
+    // A second writer holding the old revision is refused instead of overwriting.
+    const stale = await admin.put('/api/pages', { data: { page: edited } });
+    expect(stale.status()).toBe(409);
+
+    const saved = await admin.get('/api/pages');
     expect(saved.status()).toBe(200);
-    expect((await saved.json()).layouts[created.tab.id].rows).toEqual(layout.rows);
+    const stored = (await saved.json()).pages.find((candidate: { id: string }) => candidate.id === page.id);
+    expect(stored.widgets.find((widget: { id: string }) => widget.id === 'e2e-clock')).toMatchObject({ type: 'clock', x: 0, w: 6 });
     await admin.dispose();
   });
 
@@ -282,8 +280,9 @@ test.describe.serial('critical self-hosted paths', () => {
     await page.getByLabel('Password').fill(ADMIN_PASSWORD);
     const systemResponse = page.waitForResponse(response => response.url().endsWith('/api/system'));
     const initialDashboardResponses = Promise.all([
-      page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-1')),
-      page.waitForResponse(response => response.url().endsWith('/api/devices/demo-device-2')),
+      // The Calme device widgets read the history route (Classic reads /api/devices/<id>).
+      page.waitForResponse(response => /\/api\/devices\/demo-device-1(\/history|$|\?)/.test(response.url())),
+      page.waitForResponse(response => /\/api\/devices\/demo-device-2(\/history|$|\?)/.test(response.url())),
       page.waitForResponse(response => response.url().endsWith('/api/ping/batch')),
     ]);
     await page.getByRole('button', { name: 'Log in' }).click();
@@ -341,10 +340,10 @@ test.describe.serial('critical self-hosted paths', () => {
 
     await page.getByTitle('Global Settings').click();
     const settingsDialog = page.getByRole('dialog', { name: 'NasDash Settings' });
-    await settingsDialog.getByRole('button', { name: 'Security' }).click();
-    await settingsDialog.getByRole('button', { name: /Users & Permissions/ }).click();
+    // Users are listed straight on the "Users and access" page.
+    await settingsDialog.locator('.nd-settings-sidebar').getByRole('button', { name: 'Users and access', exact: true }).click();
     await settingsDialog.getByTitle('Edit user admin / permissions').click();
-    await settingsDialog.getByLabel('Password').fill(replacementPassword);
+    await settingsDialog.getByLabel('Password', { exact: true }).fill(replacementPassword);
     await settingsDialog.getByRole('button', { name: 'Save' }).click();
 
     await expect(page).toHaveURL(/\/login\?reason=password-changed$/, { timeout: 30_000 });

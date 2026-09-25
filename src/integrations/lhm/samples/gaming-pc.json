@@ -1,0 +1,189 @@
+{
+  "Children": [
+    {
+      "Text": "GAMING-PC",
+      "Children": [
+        {
+          "Text": "AMD Ryzen 7",
+          "Children": [
+            {
+              "Text": "CPU Total",
+              "Value": "23,5 %"
+            },
+            {
+              "Text": "Core (Tctl/Tdie)",
+              "Value": "55,0 \u00b0C"
+            }
+          ]
+        },
+        {
+          "Text": "Generic Memory",
+          "Children": [
+            {
+              "Text": "Memory",
+              "Value": "50,0 %"
+            },
+            {
+              "Text": "Memory Used",
+              "Value": "8,0 GB"
+            },
+            {
+              "Text": "Memory Available",
+              "Value": "8192 MB"
+            }
+          ]
+        },
+        {
+          "Text": "NVIDIA GeForce RTX 3080",
+          "Children": [
+            {
+              "Text": "GPU Core",
+              "Value": "10,0 %"
+            },
+            {
+              "Text": "GPU Core",
+              "Value": "45,0 \u00b0C"
+            }
+          ]
+        },
+        {
+          "Text": "Samsung SSD 980",
+          "Children": [
+            {
+              "Text": "Used Space",
+              "Value": "30,0 %"
+            },
+            {
+              "Text": "Total Space",
+              "Value": "931,5 GB"
+            }
+          ]
+        },
+        {
+          "id": 0,
+          "Text": "Ethernet",
+          "Min": "",
+          "Value": "",
+          "Max": "",
+          "ImageURL": "images_icon/nic.png",
+          "Children": [
+            {
+              "id": 0,
+              "Text": "Data",
+              "Min": "",
+              "Value": "",
+              "Max": "",
+              "ImageURL": "images_icon/data.png",
+              "Children": [
+                {
+                  "id": 0,
+                  "Text": "Data Uploaded",
+                  "Min": "",
+                  "Value": "12,4 GB",
+                  "Max": "",
+                  "Children": []
+                },
+                {
+                  "id": 0,
+                  "Text": "Data Downloaded",
+                  "Min": "",
+                  "Value": "48,1 GB",
+                  "Max": "",
+                  "Children": []
+                }
+              ]
+            },
+            {
+              "id": 0,
+              "Text": "Throughput",
+              "Min": "",
+              "Value": "",
+              "Max": "",
+              "ImageURL": "images_icon/throughput.png",
+              "Children": [
+                {
+                  "id": 0,
+                  "Text": "Upload Speed",
+                  "Min": "",
+                  "Value": "812,5 KB/s",
+                  "Max": "",
+                  "Children": []
+                },
+                {
+                  "id": 0,
+                  "Text": "Download Speed",
+                  "Min": "",
+                  "Value": "2,3 MB/s",
+                  "Max": "",
+                  "Children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 0,
+          "Text": "vEthernet (WSL)",
+          "Min": "",
+          "Value": "",
+          "Max": "",
+          "ImageURL": "images_icon/nic.png",
+          "Children": [
+            {
+              "id": 0,
+              "Text": "Data",
+              "Min": "",
+              "Value": "",
+              "Max": "",
+              "ImageURL": "images_icon/data.png",
+              "Children": [
+                {
+                  "id": 0,
+                  "Text": "Data Uploaded",
+                  "Min": "",
+                  "Value": "12,4 GB",
+                  "Max": "",
+                  "Children": []
+                },
+                {
+                  "id": 0,
+                  "Text": "Data Downloaded",
+                  "Min": "",
+                  "Value": "48,1 GB",
+                  "Max": "",
+                  "Children": []
+                }
+              ]
+            },
+            {
+              "id": 0,
+              "Text": "Throughput",
+              "Min": "",
+              "Value": "",
+              "Max": "",
+              "ImageURL": "images_icon/throughput.png",
+              "Children": [
+                {
+                  "id": 0,
+                  "Text": "Upload Speed",
+                  "Min": "",
+                  "Value": "60,0 KB/s",
+                  "Max": "",
+                  "Children": []
+                },
+                {
+                  "id": 0,
+                  "Text": "Download Speed",
+                  "Min": "",
+                  "Value": "64,0 KB/s",
+                  "Max": "",
+                  "Children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -20,7 +20,8 @@ interface HeaderProps {
   onToggleEdit: () => void;
   onOpenSettings: (trigger?: HTMLButtonElement) => void;
   onAddCategory: () => void;
-  onAddSlot?: () => Promise<void> | void;
+  /** The active page shows the network topology: offer its editing actions. */
+  hasTopology?: boolean;
   secretMode: boolean;
   onToggleSecret?: () => void;
   activeTab?: TabId;
@@ -32,9 +33,7 @@ interface HeaderProps {
 
 export default function Header(props: HeaderProps) {
   const { t } = useI18n();
-  const { config, setSettingsModal, user, logout } = useConfig();
-  const currentTabDef = props.tabs?.find(t => t.id === props.activeTab);
-  const isCustomTab = currentTabDef?.isCustom === true;
+  const { config, user, logout } = useConfig();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
@@ -44,53 +43,20 @@ export default function Header(props: HeaderProps) {
     onClick: () => void;
   }
 
+  // Every page is built from the same widgets, so every page offers the same
+  // building actions; the topology keeps its own actions wherever it is placed.
   const getEditActions = (): EditAction[] => {
     if (!props.editMode) return [];
-
-    if (props.activeTab === 'dashboard' || !props.activeTab) {
-      return [
-        {
-          label: t("Créer un emplacement"),
-          onClick: () => props.onAddSlot?.(),
-        },
-        {
-          label: t("Ajouter un widget"),
-          onClick: () => props.onAddWidget?.(),
-        },
-        {
-          label: t("Créer une catégorie"),
-          onClick: () => props.onAddCategory?.(),
-        }
-      ];
+    // Adding widgets and categories lives in the editor bar and the library.
+    const actions: EditAction[] = [];
+    if (props.hasTopology) {
+      actions.push(
+        { label: t("Créer un groupe"), onClick: () => window.dispatchEvent(new Event('networkActionAddGroup')) },
+        { label: t("Lier des nœuds"), onClick: () => window.dispatchEvent(new Event('networkActionAddLink')) },
+        { label: t("Créer un nœud"), onClick: () => window.dispatchEvent(new Event('networkActionAddNode')) },
+      );
     }
-
-    if (props.activeTab === 'networks') {
-      return [
-        {
-          label: t("Créer un groupe"),
-          onClick: () => window.dispatchEvent(new Event('networkActionAddGroup')),
-        },
-        {
-          label: t("Lier des nœuds"),
-          onClick: () => window.dispatchEvent(new Event('networkActionAddLink')),
-        },
-        {
-          label: t("Créer un nœud"),
-          onClick: () => window.dispatchEvent(new Event('networkActionAddNode')),
-        }
-      ];
-    }
-
-    if (isCustomTab) {
-      return [
-        {
-          label: t("Structure"),
-          onClick: () => setSettingsModal({ open: true, targetTab: 'custom-tab-builder', targetCustomTabId: props.activeTab }),
-        }
-      ];
-    }
-
-    return [];
+    return actions;
   };
 
   // Settings
@@ -263,7 +229,7 @@ export default function Header(props: HeaderProps) {
                         position: 'absolute', 
                         top: 'calc(100% + 6px)', 
                         right: 0, 
-                        background: 'var(--nd-card-bg)', 
+                        background: 'var(--nd-bg-surface, var(--nd-bg))', 
                         border: '1px solid var(--nd-card-border)', 
                         borderRadius: 'var(--nd-card-radius)', 
                         boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
@@ -488,7 +454,7 @@ export default function Header(props: HeaderProps) {
                           top: 'calc(100% + 6px)', 
                           left: 0, 
                           right: 0, 
-                          background: 'var(--nd-card-bg)', 
+                          background: 'var(--nd-bg-surface, var(--nd-bg))', 
                           border: '1px solid var(--nd-card-border)', 
                           borderRadius: 'var(--nd-card-radius)', 
                           boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
@@ -557,7 +523,7 @@ export default function Header(props: HeaderProps) {
             style={{
               position: 'absolute',
               top: 16, right: 16, left: 16,
-              background: 'var(--nd-card-bg)',
+              background: 'var(--nd-bg-surface, var(--nd-bg))',
               border: '1px solid var(--nd-card-border)',
               borderRadius: 'var(--nd-card-radius)',
               padding: 16,

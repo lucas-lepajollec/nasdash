@@ -145,13 +145,13 @@ async function handleGET(
       return NextResponse.json(result);
     }
 
-    const detailResponse = await fetchDockerApi(host.url, `/containers/${encodeURIComponent(id)}/json`);
+    const detailResponse = await fetchDockerApi(host, `/containers/${encodeURIComponent(id)}/json`);
     const detail = await readDockerJson(detailResponse) as DockerContainerInspect;
 
     // Also get one-shot stats
     let stats: DockerContainerStats | null = null;
     try {
-      const statsResponse = await fetchDockerApi(host.url, `/containers/${encodeURIComponent(id)}/stats?stream=false`);
+      const statsResponse = await fetchDockerApi(host, `/containers/${encodeURIComponent(id)}/stats?stream=false`);
       stats = await readDockerJson(statsResponse) as DockerContainerStats;
     } catch { /* stats optional */ }
 
@@ -258,11 +258,11 @@ async function handlePOST(
 
     // For DELETE we need a custom fetch
     if (action === 'remove') {
-      await fetchDockerApi(host.url, endpoint, { method: 'DELETE' }, 30_000, [304]);
+      await fetchDockerApi(host, endpoint, { method: 'DELETE' }, 30_000, [304]);
       return NextResponse.json({ ok: true, action });
     }
 
-    await fetchDockerApi(host.url, endpoint, { method }, 30_000, [304]);
+    await fetchDockerApi(host, endpoint, { method }, 30_000, [304]);
     return NextResponse.json({ ok: true, action });
   } catch (error: unknown) {
     const failure = classifyDockerError(error);

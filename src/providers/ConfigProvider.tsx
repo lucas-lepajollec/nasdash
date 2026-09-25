@@ -4,6 +4,7 @@ import React, { createContext } from 'react';
 import { AuthContextType, AuthProvider, useAuth } from './AuthProvider';
 import { DashboardContextType, DashboardProvider, useDashboard } from './DashboardProvider';
 import { ModalContextType, ModalProvider, useModals } from './ModalProvider';
+import { PagesProvider } from './PagesProvider';
 import { readRequestedLanguage, useI18n } from '@/i18n/I18nProvider';
 
 export interface ConfigContextType extends AuthContextType, DashboardContextType, ModalContextType {}
@@ -41,7 +42,9 @@ export function ConfigProvider({ children }: { children: React.ReactNode }) {
       <DashboardProvider>
         <ModalProvider>
           <ConfigCombinedProvider>
-            {children}
+            <PagesProvider>
+              {children}
+            </PagesProvider>
           </ConfigCombinedProvider>
         </ModalProvider>
       </DashboardProvider>

@@ -1,0 +1,28 @@
+{
+  "page": 1,
+  "perPage": 500,
+  "totalItems": 2,
+  "totalPages": 1,
+  "items": [
+    {
+      "id": "k3j2h1g0f9e8d7c",
+      "name": "nas",
+      "status": "up",
+      "host": "192.0.2.10",
+      "port": "45876",
+      "info": { "u": 864000, "cpu": 17.4, "mp": 41.8, "dp": 63.2, "bb": 125000, "v": "0.12.0", "t": 8, "dt": 48, "la": [0.4, 0.5, 0.6], "efs": { "data": 72.5 }, "rdn": "system" },
+      "created": "2026-01-10 10:00:00.000Z",
+      "updated": "2026-09-24 12:00:00.000Z"
+    },
+    {
+      "id": "a1b2c3d4e5f6g7h",
+      "name": "backup",
+      "status": "down",
+      "host": "192.0.2.11",
+      "port": "45876",
+      "info": { "u": 0, "cpu": 0, "mp": 0, "dp": 0, "bb": 0, "v": "0.12.0" },
+      "created": "2026-01-10 10:00:00.000Z",
+      "updated": "2026-09-20 08:00:00.000Z"
+    }
+  ]
+}

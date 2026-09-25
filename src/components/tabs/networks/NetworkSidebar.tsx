@@ -459,17 +459,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
         {/* Checker Results */}
         {checkResult && (
           <div 
-            style={{ 
-              padding: 8, 
-              borderRadius: 'calc(var(--nd-card-radius) * 0.6)', 
-              background: checkResult.available ? 'rgba(48, 209, 88, 0.06)' : 'rgba(255, 69, 58, 0.06)',
-              border: `1px solid ${checkResult.available ? 'rgba(48, 209, 88, 0.2)' : 'rgba(255, 69, 58, 0.2)'}`,
-              fontSize: '0.66rem',
-              color: checkResult.available ? 'var(--nd-green)' : 'var(--nd-red)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4
-            }}
+            className={`ndc-check ${checkResult.available ? 'ndc-check--free' : 'ndc-check--busy'}`}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
               {checkResult.available ? <CheckCircle size={12} /> : <AlertTriangle size={12} />}
@@ -526,21 +516,10 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
               {suggestions.map((p, i) => (
                 <button
                   key={i}
-                  className="nd-btn"
+                  className="ndc-suggestion"
                   onClick={() => {
                     setCheckPortInput(String(p));
                     if (genIpInput) setCheckIpInput(genIpInput);
-                  }}
-                  style={{ 
-                    flex: 1, 
-                    fontSize: '0.68rem', 
-                    padding: '3px 0', 
-                    height: 'auto',
-                    fontFamily: 'monospace',
-                    fontWeight: 700,
-                    borderColor: 'var(--nd-purple)',
-                    background: 'rgba(191, 90, 242, 0.05)',
-                    color: 'var(--nd-purple)'
                   }}
                 >
                   {p}

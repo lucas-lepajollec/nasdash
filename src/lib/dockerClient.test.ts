@@ -90,3 +90,32 @@ describe('Docker failure classification', () => {
     expect(info).toHaveBeenCalledOnce();
   });
 });
+
+describe('docker transports', () => {
+  it('reads the API through a mounted Unix socket', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const http = await import('node:http');
+    const { fetchDockerApi, readDockerJson, DockerApiHttpError } = await import('./dockerClient');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nasdash-sock-'));
+    const socketPath = path.join(dir, 'docker.sock');
+    const containers = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src/integrations/docker/samples/containers.json'), 'utf8'));
+    const server = http.createServer((req, res) => {
+      if (req.url?.startsWith('/containers/json')) { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(containers)); return; }
+      res.statusCode = 404; res.end('{"message":"page not found"}');
+    });
+    await new Promise<void>(resolve => server.listen(socketPath, resolve));
+    try {
+      const host = { type: 'socket' as const, url: '', socketPath };
+      const list = await readDockerJson(await fetchDockerApi(host, '/containers/json?all=true')) as { Names: string[] }[];
+      expect(list.map(container => container.Names[0])).toEqual(['/jellyfin', '/forgejo']);
+      await expect(fetchDockerApi(host, '/nope')).rejects.toBeInstanceOf(DockerApiHttpError);
+      // Only absolute `.sock` paths, no traversal.
+      await expect(fetchDockerApi({ type: 'socket', url: '', socketPath: 'relative.sock' }, '/containers/json')).rejects.toThrow();
+      await expect(fetchDockerApi({ type: 'socket', url: '', socketPath: '/etc/../etc/passwd' }, '/containers/json')).rejects.toThrow();
+    } finally {
+      server.close();
+    }
+  });
+});

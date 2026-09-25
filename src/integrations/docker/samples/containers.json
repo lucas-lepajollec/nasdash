@@ -1,0 +1,28 @@
+[
+  {
+    "Id": "8dfafdbc3a40a1b2c3d4e5f60718293a4b5c6d7e8f9012345678901234567890",
+    "Names": ["/jellyfin"],
+    "Image": "jellyfin/jellyfin:10.10",
+    "ImageID": "sha256:7f0c7e0a1b2c3d4e5f60718293a4b5c6d7e8f9012345678901234567890abcd",
+    "Command": "/jellyfin/jellyfin",
+    "Created": 1758700000,
+    "State": "running",
+    "Status": "Up 3 days",
+    "Ports": [{ "IP": "0.0.0.0", "PrivatePort": 8096, "PublicPort": 8096, "Type": "tcp" }],
+    "Labels": { "com.docker.compose.project": "media" },
+    "Mounts": [{ "Type": "volume", "Name": "jellyfin-config", "Source": "/var/lib/docker/volumes/jellyfin-config/_data", "Destination": "/config", "RW": true }]
+  },
+  {
+    "Id": "9eab0cde4b51b2c3d4e5f60718293a4b5c6d7e8f9012345678901234567890ab",
+    "Names": ["/forgejo"],
+    "Image": "codeberg.org/forgejo/forgejo:9",
+    "ImageID": "sha256:1a2b3c4d5e6f70718293a4b5c6d7e8f9012345678901234567890abcdef0123",
+    "Command": "/usr/bin/entrypoint",
+    "Created": 1758600000,
+    "State": "exited",
+    "Status": "Exited (0) 2 hours ago",
+    "Ports": [],
+    "Labels": {},
+    "Mounts": []
+  }
+]

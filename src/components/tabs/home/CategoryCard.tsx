@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { Pencil, Trash2, Plus, GripVertical } from 'lucide-react';
-import { Category, Service } from '@/lib/types';
+import { Category } from '@/lib/types';
 import ServiceItem from './ServiceItem';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
+import { WidgetHeaderActions } from '../../widgets/WidgetHeaderActions';
 
 interface CategoryCardProps {
   category: Category;
@@ -17,23 +18,28 @@ interface CategoryCardProps {
   onDeleteCategory: (id: string, name: string) => void;
   onAddService: (categoryId: string) => void;
   showSensitive?: boolean;
+  /** Rendered as a page widget: the page owns the outer drag handle. */
+  embedded?: boolean;
+  /** Distinguishes drag targets when one category is displayed by several widgets. */
+  dndScope?: string;
 }
 
 export default function CategoryCard({
   category, editMode, searchQuery,
-  onEditCategory, onDeleteCategory, onAddService, showSensitive,
+  onEditCategory, onDeleteCategory, onAddService, showSensitive, embedded = false, dndScope,
 }: CategoryCardProps) {
   const { t } = useI18n();
   const { config } = useConfig();
   const hideCategoryTitles = config?.settings?.hideCategoryTitles ?? false;
-  const categoryTitlePosition = config?.settings?.categoryTitlePosition || 'inside';
+  // The title sits above the card unless the user chose a position.
+  const categoryTitlePosition = config?.settings?.categoryTitlePosition || 'above';
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
-    id: `drag-cat-${category.id}`, disabled: !editMode, data: { type: 'category', category }
+    id: `drag-cat-${dndScope ?? category.id}`, disabled: !editMode || embedded, data: { type: 'category', category }
   });
 
   const { setNodeRef: setDroppable, isOver: isCategoryOver } = useDroppable({
-    id: `drop-cat-srvs-${category.id}`,
+    id: `drop-cat-srvs-${dndScope ?? category.id}`,
     data: { type: 'category-empty-drop', categoryId: category.id },
     disabled: !editMode
   });
@@ -55,30 +61,36 @@ export default function CategoryCard({
 
   const showDropGap = editMode && (category.layout !== 'bento' && category.layout !== 'grid' && !category.layout?.startsWith('bento-logo'));
 
+  // Titles are always shown while editing; the page reflows when they hide again.
   const showTitle = !hideCategoryTitles || editMode;
 
+  // On a page, these buttons join the widget's controls in its top-right corner.
+  const editActions = editMode && (
+    <WidgetHeaderActions>
+      <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title={t("Ajouter un service")}>
+        <Plus size={13} />
+      </button>
+      <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title={t("Modifier la catégorie")}>
+        <Pencil size={13} />
+      </button>
+      {!embedded && (
+        <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title={t("Supprimer la catégorie")}>
+          <Trash2 size={13} />
+        </button>
+      )}
+    </WidgetHeaderActions>
+  );
+
   const titleElement = showTitle && (
-    <div className={categoryTitlePosition === 'above' ? 'nd-category-title-above' : 'nd-category-title'}>
-      {editMode && (
+    <div className={`${categoryTitlePosition === 'above' ? 'nd-category-title-above' : 'nd-category-title'}`}>
+      {editMode && !embedded && (
         <button {...attributes} {...listeners} style={{ cursor: 'grab', background: 'none', border: 'none', color: 'var(--nd-text-dimmed)', padding: 2 }}>
           <GripVertical size={13} />
         </button>
       )}
       <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
-      {editMode && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <button className="nd-action-icon success" onClick={() => onAddService(category.id)} title={t("Ajouter un service")}>
-            <Plus size={13} />
-          </button>
-          <button className="nd-action-icon accent" onClick={() => onEditCategory(category)} title={t("Modifier la catégorie")}>
-            <Pencil size={13} />
-          </button>
-          <button className="nd-action-icon danger" onClick={() => onDeleteCategory(category.id, category.title)} title={t("Supprimer la catégorie")}>
-            <Trash2 size={13} />
-          </button>
-        </div>
-      )}
+      {editActions && <div className="nd-category-edit-actions">{editActions}</div>}
     </div>
   );
 
@@ -89,6 +101,7 @@ export default function CategoryCard({
         {categoryTitlePosition === 'inside' && titleElement}
       <div 
         ref={setDroppable} 
+        data-service={embedded ? 'category-content' : undefined}
         className={`nd-services-grid nd-services-grid--${category.layout || 'standard'}`} 
         style={{
           minHeight: filteredServices.length === 0 ? 40 : undefined,
@@ -100,11 +113,12 @@ export default function CategoryCard({
           
           return (
             <div key={service.id} style={{ position: 'relative' }}>
-              {isGrid && editMode && <DropGap categoryId={category.id} index={index} isVertical />}
-              {!isGrid && showDropGap && <DropGap categoryId={category.id} index={index} />}
+              {isGrid && editMode && <DropGap categoryId={category.id} scope={dndScope} index={index} isVertical />}
+              {!isGrid && showDropGap && <DropGap categoryId={category.id} scope={dndScope} index={index} />}
               <ServiceItem
                 service={service}
                 categoryId={category.id}
+                dndScope={dndScope}
                 editMode={editMode}
                 showSensitive={showSensitive}
                 layout={category.layout}
@@ -112,12 +126,14 @@ export default function CategoryCard({
                 total={filteredServices.length}
               />
               {isGrid && editMode && index === filteredServices.length - 1 && (
-                <DropGap categoryId={category.id} index={index + 1} isVertical isLast />
+                <DropGap categoryId={category.id} scope={dndScope} index={index + 1} isVertical isLast />
+              )}
+              {showDropGap && index === filteredServices.length - 1 && (
+                <DropGap categoryId={category.id} scope={dndScope} index={index + 1} isLast />
               )}
             </div>
           );
         })}
-        {showDropGap && filteredServices.length > 0 && <DropGap categoryId={category.id} index={filteredServices.length} />}
         {filteredServices.length === 0 && !searchQuery && (
           <div style={{ gridColumn: '1 / -1', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ fontSize: '0.7rem', textAlign: 'center', padding: '12px 0', color: 'var(--nd-text-dimmed)' }}>{t("Aucun service")}</p>
@@ -129,9 +145,9 @@ export default function CategoryCard({
 );
 }
 
-const DropGap = ({ categoryId, index, isVertical, isLast }: { categoryId: string, index: number, isVertical?: boolean, isLast?: boolean }) => {
+const DropGap = ({ categoryId, scope, index, isVertical, isLast }: { categoryId: string, scope?: string, index: number, isVertical?: boolean, isLast?: boolean }) => {
   const { setNodeRef, isOver } = useDroppable({
-    id: `drop-gap-${categoryId}-${index}`,
+    id: `drop-gap-${scope ?? categoryId}-${index}`,
     data: { type: 'service-gap', categoryId, index },
   });
 
@@ -153,12 +169,14 @@ const DropGap = ({ categoryId, index, isVertical, isLast }: { categoryId: string
     );
   }
 
+  // Takes no room: the drop area straddles the edge between two services.
   return (
     <div ref={setNodeRef} style={{
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      [isLast ? 'bottom' : 'top']: -6,
       height: 12,
-      marginTop: -6,
-      marginBottom: -6,
-      position: 'relative',
       zIndex: isOver ? 10 : 1,
       display: 'flex',
       alignItems: 'center',

@@ -69,7 +69,7 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 - Hardware metrics from Glances, Home Assistant, Proxmox VE, and Libre Hardware Monitor.
 - Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
 - Network topology editor with groups, links, and service/device associations.
-- Custom tabs, reusable widgets, responsive layouts, and appearance profiles.
+- Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
 - A complete English, French, Spanish, and German interface with an instance-wide server preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.
 - Encrypted integration credentials, atomic configuration writes, and backup/restore tooling.
@@ -157,6 +157,10 @@ See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mou
 - Never expose an unauthenticated Docker socket or socket proxy to the internet.
 - Treat `pid: host`, `CONTAINERS=1`, and Docker socket access as explicit high-risk integration exceptions. The `:ro` socket mount prevents replacing the socket file; it does not make Docker API access read-only. The proxy is not published, destructive deletion is disabled, and only the endpoints required by NasDash are enabled.
 - Keep destructive Docker capabilities disabled unless explicitly needed.
+- A Docker host can also use a Unix socket mounted directly into the NasDash container (Docker `/var/run/docker.sock`, Podman `/run/podman/podman.sock`). That gives NasDash full control of the engine; the bundled socket proxy remains the recommended setup because it limits the endpoints.
+- Portainer and Dockhand Docker hosts use an API key or token: create a dedicated one, it is stored encrypted and never shown again.
+- Service pings accept self-signed HTTPS certificates automatically (they carry no credentials and only check that the service answers).
+- "Accept a self-signed certificate" (devices and Docker hosts) skips the HTTPS certificate check for that address only. Enable it only for your own servers, such as Proxmox's default certificate.
 - Restrict remote Docker proxies to a private LAN or overlay address and firewall them to the NasDash host.
 - Use a dedicated least-privilege Proxmox API token; a read-only role such as `PVEAuditor` is preferable.
 - Never commit `.env` or a real runtime `data/` directory.

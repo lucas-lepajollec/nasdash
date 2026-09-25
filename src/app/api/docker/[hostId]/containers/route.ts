@@ -101,7 +101,7 @@ async function handleGET(
     const url = new URL(request.url);
     const all = url.searchParams.get('all') !== 'false'; // default true
     
-    const response = await fetchDockerApi(host.url, `/containers/json?all=${all}&size=false`);
+    const response = await fetchDockerApi(host, `/containers/json?all=${all}&size=false`);
     const rawContainers = await readDockerJson(response) as DockerApiContainerSummary[];
     
     const containers = rawContainers.map(c => ({

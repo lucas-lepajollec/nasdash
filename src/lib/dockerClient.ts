@@ -1,3 +1,7 @@
+import http from 'http';
+import https from 'https';
+import type { DockerHost } from './types';
+import { dockhandCall } from './dockhand';
 import type {
   DockerFailureCode,
   DockerFailurePayload,
@@ -39,31 +43,115 @@ export function validateDockerHostUrl(value: string): void {
   }
 }
 
-function dockerApiUrl(hostUrl: string, endpoint: string): string {
-  validateDockerHostUrl(hostUrl);
-  return `${hostUrl.replace(/\/$/, '')}${endpoint}`;
+/** Socket paths accepted for `socket` hosts: absolute, ending in `.sock`, no `..`. */
+export function validateDockerSocketPath(value: string): void {
+  if (!/^\/[A-Za-z0-9._\/-]+\.sock$/.test(value) || value.includes('..')) {
+    throw new DockerHostConfigurationError('invalid_url');
+  }
+}
+
+/** Where and how to reach one engine (a stored `DockerHost`, or a bare URL). */
+export type DockerTarget = string | Pick<DockerHost, 'type' | 'url' | 'socketPath' | 'allowSelfSigned' | 'target' | 'token'>;
+
+/** Upper bound for answers read through the socket/self-signed transport. */
+const MAX_NODE_RESPONSE_BYTES = 32 * 1024 * 1024;
+
+/**
+ * Transport for what `fetch` cannot do: a Unix socket, or HTTPS with a
+ * self-signed certificate. Returns a standard `Response` so every route reads
+ * it the same way.
+ */
+function nodeRequest(request: { url: string; socketPath?: string; allowSelfSigned?: boolean; headers?: Record<string, string> }, options: RequestInit, timeoutMs: number): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(request.url);
+    const client = !request.socketPath && target.protocol === 'https:' ? https : http;
+    const req = client.request({
+      ...(request.socketPath ? { socketPath: request.socketPath } : { hostname: target.hostname, port: target.port || undefined }),
+      path: `${target.pathname}${target.search}`,
+      method: options.method ?? 'GET',
+      headers: { Host: request.socketPath ? 'docker' : target.host, ...request.headers },
+      timeout: timeoutMs,
+      ...(!request.socketPath && target.protocol === 'https:' ? { rejectUnauthorized: !request.allowSelfSigned } : {}),
+    }, res => {
+      const chunks: Buffer[] = [];
+      let size = 0;
+      res.on('data', (chunk: Buffer) => {
+        size += chunk.length;
+        if (size > MAX_NODE_RESPONSE_BYTES) { req.destroy(new Error('Docker API response too large')); return; }
+        chunks.push(chunk);
+      });
+      res.on('end', () => {
+        const status = res.statusCode ?? 500;
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(res.headers)) if (typeof value === 'string') headers.set(key, value);
+        // 204/304 carry no body in the Fetch API.
+        resolve(new Response(status === 204 || status === 304 ? null : Buffer.concat(chunks), { status, headers }));
+      });
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new DOMException('Docker API timeout', 'AbortError')); });
+    req.end();
+  });
+}
+
+/** One HTTP(S) call: `fetch`, or Node's client when a self-signed certificate is accepted. */
+async function send(url: string, options: RequestInit, timeoutMs: number, headers: Record<string, string> = {}, allowSelfSigned = false): Promise<Response> {
+  if (allowSelfSigned && url.startsWith('https:')) return nodeRequest({ url, headers, allowSelfSigned: true }, options, timeoutMs);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, headers: { ...(options.headers as Record<string, string> | undefined), ...headers }, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** Dockhand: the Docker endpoint is translated, then its answer shaped like Docker's. */
+async function viaDockhand(host: Exclude<DockerTarget, string>, endpoint: string, options: RequestInit, timeoutMs: number): Promise<Response> {
+  const call = dockhandCall(endpoint, options.method ?? 'GET', host.target ?? '');
+  if (!call) return new Response(JSON.stringify({ message: 'Not supported by Dockhand' }), { status: 501 });
+  const response = await send(`${host.url.replace(/\/$/, '')}${call.path}`, { method: call.method }, timeoutMs, { Authorization: `Bearer ${host.token ?? ''}`, Accept: 'application/json' }, host.allowSelfSigned);
+  if (!response.ok) return response;
+  const text = await response.text();
+  let body: unknown = null;
+  try { body = text ? JSON.parse(text) : null; } catch { throw new DockerInvalidResponseError(); }
+  const converted = call.convert(body);
+  const status = converted.status ?? 200;
+  if (status === 204) return new Response(null, { status });
+  return converted.text !== undefined
+    ? new Response(converted.text, { status, headers: { 'content-type': 'text/plain' } })
+    : new Response(JSON.stringify(converted.json ?? null), { status, headers: { 'content-type': 'application/json' } });
 }
 
 export async function fetchDockerApi(
-  hostUrl: string,
+  target: DockerTarget,
   endpoint: string,
   options: RequestInit = {},
   timeoutMs = 5_000,
   acceptedStatuses: number[] = [],
 ): Promise<Response> {
-  const url = dockerApiUrl(hostUrl, endpoint);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
-    if (!response.ok && !acceptedStatuses.includes(response.status)) {
-      throw new DockerApiHttpError(response.status);
-    }
-    return response;
-  } finally {
-    clearTimeout(timeout);
+  const host = typeof target === 'string' ? { type: 'tcp' as const, url: target } : target;
+  let response: Response;
+  if (host.type === 'socket') {
+    validateDockerSocketPath(host.socketPath ?? '');
+    response = await nodeRequest({ url: `http://docker${endpoint}`, socketPath: host.socketPath }, options, timeoutMs);
+  } else if (host.type === 'portainer') {
+    // Portainer relays the Docker Engine API of one environment.
+    validateDockerHostUrl(host.url);
+    const base = `${host.url.replace(/\/$/, '')}/api/endpoints/${encodeURIComponent(host.target ?? '')}/docker`;
+    response = await send(`${base}${endpoint}`, options, timeoutMs, { 'X-API-Key': host.token ?? '' }, host.allowSelfSigned);
+  } else if (host.type === 'dockhand') {
+    validateDockerHostUrl(host.url);
+    response = await viaDockhand(host, endpoint, options, timeoutMs);
+  } else {
+    validateDockerHostUrl(host.url);
+    response = await send(`${host.url.replace(/\/$/, '')}${endpoint}`, options, timeoutMs, {}, host.allowSelfSigned);
   }
+  if (!response.ok && !acceptedStatuses.includes(response.status)) {
+    throw new DockerApiHttpError(response.status);
+  }
+  return response;
 }
 
 export async function readDockerJson(response: Response): Promise<unknown> {

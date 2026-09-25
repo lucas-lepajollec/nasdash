@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent } from '@/lib/types';
+import { applySoftEdges } from '@/lib/appearance';
+import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
@@ -13,22 +14,23 @@ export interface DashboardContextType {
   refresh: () => Promise<void>;
   showSecretSections: boolean;
   setShowSecretSections: React.Dispatch<React.SetStateAction<boolean>>;
-  addCategory: (title: string, emoji: string, isSecret?: boolean, layout?: Category['layout']) => Promise<void>;
+  /** Resolves with the created category so a view of it can be placed on a page. */
+  addCategory: (title: string, emoji: string, isSecret?: boolean, layout?: Category['layout']) => Promise<Category | null>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   addService: (categoryId: string, service: Omit<Service, 'id'>) => Promise<void>;
   updateService: (id: string, updates: Partial<Service>) => Promise<void>;
   deleteService: (id: string) => Promise<void>;
   saveCategories: (newCategories: Category[]) => Promise<void>;
-  addSlot: () => Promise<void>;
-  addWidgetsSlot: () => Promise<void>;
-  removeSlot: (slotId: number) => Promise<void>;
   addDevice: (device: Omit<Device, 'id'>) => Promise<void>;
   reorderDevices: (newDevices: Device[]) => Promise<void>;
   updateDevice: (id: string, updates: Partial<Device>) => Promise<void>;
   deleteDevice: (id: string) => Promise<void>;
   updateConfig: (updates: DashboardConfigUpdate) => Promise<boolean>;
-  updateHomeWidgetProps: (widgetId: string, newProps: Record<string, unknown>) => Promise<void>;
+  /** Saves one service connection (`config.integrations`); empty or masked secrets are kept. */
+  /** Saves a connection and returns it (secrets masked). */
+  saveIntegration: (update: IntegrationUpdate) => Promise<IntegrationInstance>;
+  deleteIntegration: (id: string) => Promise<void>;
   uploadLogo: (file: File) => Promise<string>;
   
   // Docker Actions
@@ -41,10 +43,18 @@ export interface DashboardContextType {
   addLocalEvent: (event: Omit<LocalCalendarEvent, 'id'>) => Promise<void>;
   updateLocalEvent: (id: string, updates: Partial<LocalCalendarEvent>) => Promise<void>;
   deleteLocalEvent: (id: string) => Promise<void>;
-  pingResults: Record<string, { status: string; statusText: string; latency: number }>;
+  pingResults: Record<string, { status: string; statusText: string; latency: number; selfSigned?: boolean }>;
 }
 
 export type DashboardConfigUpdate = { type?: string } & Record<string, unknown>;
+
+export interface IntegrationUpdate {
+  id?: string;
+  type: string;
+  name?: string;
+  settings?: Record<string, string>;
+  secrets?: Record<string, string | null>;
+}
 
 export const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
 
@@ -57,7 +67,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   const [config, setConfig] = useState<DashboardConfig | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pingResults, setPingResults] = useState<Record<string, { status: string; statusText: string; latency: number }>>({});
+  const [pingResults, setPingResults] = useState<Record<string, { status: string; statusText: string; latency: number; selfSigned?: boolean }>>({});
   const [showSecretSections, setShowSecretSections] = useState(false);
   const [activeBgUrl, setActiveBgUrl] = useState('');
   const [isMobile, setIsMobile] = useState(false);
@@ -142,9 +152,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!config) return;
 
     const activeTheme = (isMobile && config.settings?.mobileTheme) ? config.settings.mobileTheme : (config.settings?.theme || 'nasdash');
-    const activeRadius = (isMobile && config.settings?.mobileBorderRadius !== undefined) ? config.settings.mobileBorderRadius : config.settings?.borderRadius;
-    const activeOpacity = (isMobile && config.settings?.mobileCardOpacity !== undefined) ? config.settings.mobileCardOpacity : config.settings?.cardOpacity;
-    const activeFont = (isMobile && config.settings?.mobileGlobalFont) ? config.settings.mobileGlobalFont : config.settings?.globalFont;
+    // Values equal to the historical defaults (written into every
+    // configuration by config.example.json) count as "not customised", so the
+    // interface's own radius, opacity and font show. Values the user actually
+    // chose still win.
+    const custom = <T,>(value: T | undefined, legacyDefault: T): T | undefined => (value === legacyDefault ? undefined : value);
+    const activeRadius = custom((isMobile && config.settings?.mobileBorderRadius !== undefined) ? config.settings.mobileBorderRadius : config.settings?.borderRadius, 12);
+    const activeOpacity = custom((isMobile && config.settings?.mobileCardOpacity !== undefined) ? config.settings.mobileCardOpacity : config.settings?.cardOpacity, 0.8);
+    const activeFont = custom((isMobile && config.settings?.mobileGlobalFont) ? config.settings.mobileGlobalFont : config.settings?.globalFont, 'Outfit');
     const activeBg = (isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || '');
     
     setActiveBgUrl(activeBg);
@@ -185,6 +200,30 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.body.classList.remove('light');
       localStorage.setItem('nd-theme', 'dark');
+    }
+
+    // Outlines and background blur of surfaces (Appearance).
+    if (config.settings?.hideOutlines) document.body.setAttribute('data-outlines', 'off');
+    else document.body.removeAttribute('data-outlines');
+    const blur = config.settings?.surfaceBlur ?? 0;
+    if (blur > 0) {
+      document.body.style.setProperty('--nd-surface-blur', `${blur}px`);
+      document.body.setAttribute('data-blur', 'on');
+    } else {
+      document.body.style.removeProperty('--nd-surface-blur');
+      document.body.removeAttribute('data-blur');
+    }
+
+    applySoftEdges(config.settings?.softEdges ?? 0);
+
+    // Accent colour chosen in Appearance; otherwise the theme's own accent.
+    const accent = config.settings?.accentColor;
+    if (accent && /^#[0-9a-f]{6}$/i.test(accent)) {
+      document.body.style.setProperty('--nd-accent', accent);
+      document.body.style.setProperty('--nd-accent-glow', `color-mix(in srgb, ${accent} 14%, transparent)`);
+      document.body.style.setProperty('--nd-accent-dim', `color-mix(in srgb, ${accent} 50%, transparent)`);
+    } else {
+      ['--nd-accent', '--nd-accent-glow', '--nd-accent-dim'].forEach(name => document.body.style.removeProperty(name));
     }
 
     if (activeRadius !== undefined) {
@@ -243,30 +282,32 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Effectuer un ping global groupé toutes les 30 secondes pour économiser les sockets du navigateur
+  // Addresses to ping, as a stable key: saving an unrelated setting (theme,
+  // blur…) no longer restarts every ping.
+  const securityMode = config?.settings?.securityMode || 'public';
+  const pingKey = React.useMemo(() => {
+    const urls = new Set<string>();
+    config?.categories?.forEach(cat => cat.services?.forEach(svc => {
+      if (svc.localUrl) urls.add(svc.localUrl);
+      if (svc.secondaryUrl) urls.add(svc.secondaryUrl);
+    }));
+    return Array.from(urls).join('\n');
+  }, [config?.categories]);
+
+  // Grouped ping of every service every 30 seconds (saves browser sockets),
+  // paused while the tab is in the background.
   useEffect(() => {
-    if (!config) return;
-
-    // Si en mode privé et non connecté, ne rien faire
-    const securityMode = config.settings?.securityMode || 'public';
+    if (!pingKey) return;
+    // Private mode without a session: nothing to ping.
     if (securityMode === 'private' && !user) return;
-
-    const urlsToPing = new Set<string>();
-
-    config.categories?.forEach((cat) => {
-      cat.services?.forEach((svc) => {
-        if (svc.localUrl) urlsToPing.add(svc.localUrl);
-        if (svc.secondaryUrl) urlsToPing.add(svc.secondaryUrl);
-      });
-    });
-
-    const urlsArray = Array.from(urlsToPing);
-    if (urlsArray.length === 0) return;
+    const urlsArray = pingKey.split('\n');
 
     let cancelled = false;
     let nextRun: ReturnType<typeof setTimeout> | undefined;
+    let pending = false;
 
     const runBatchPing = async () => {
+      if (document.visibilityState === 'hidden') { pending = true; return; }
       try {
         const results = await fetchPingBatches(urlsArray);
         if (!cancelled) setPingResults(results);
@@ -276,13 +317,18 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         if (!cancelled) nextRun = setTimeout(runBatchPing, 30000);
       }
     };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && pending && !cancelled) { pending = false; void runBatchPing(); }
+    };
 
+    document.addEventListener('visibilitychange', onVisible);
     runBatchPing();
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
       if (nextRun) clearTimeout(nextRun);
     };
-  }, [config, user]);
+  }, [pingKey, securityMode, user]);
 
   // API operations
   const assertApiOk = async (response: Response, fallback: string) => {
@@ -298,7 +344,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ type: 'category', title, emoji, isSecret, layout }),
     });
     await assertApiOk(res, 'errors.categoryAdd');
+    const created = await res.json().catch(() => null) as Category | null;
     await fetchConfig();
+    return created && typeof created.id === 'string' ? created : null;
   };
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
@@ -354,63 +402,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
-  const addSlot = async () => {
-    if (!config) return;
-    const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length);
-    setConfig(prev => prev ? { ...prev, settings: { ...prev.settings, totalSlots: currentSlots + 1 } } : prev);
-    await fetchWithAuth('/api/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'settings', totalSlots: currentSlots + 1 }),
-    });
-  };
-
-  const addWidgetsSlot = async () => {
-    if (!config) return;
-    const currentSlots = config.settings.widgetsTotalSlots || config.settings.widgetsOrder?.length || 5;
-    const newGrid = [...(config.settings.widgetsOrder || [])];
-    newGrid.push(`empty-${Math.random().toString(36).substr(2, 9)}`);
-
-    setConfig(prev => prev ? {
-      ...prev,
-      settings: { ...prev.settings, widgetsTotalSlots: currentSlots + 1, widgetsOrder: newGrid }
-    } : prev);
-
-    await fetchWithAuth('/api/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'settings', widgetsTotalSlots: currentSlots + 1, widgetsOrder: newGrid }),
-    });
-  };
-
-  const removeSlot = async (slotId: number) => {
-    if (!config) return;
-    const currentSlots = config.settings.totalSlots || Math.max(12, config.categories.length);
-    const newTotalSlots = Math.max(1, currentSlots - 1);
-    const newCategories = config.categories.map(c => {
-      if (c.order > slotId) return { ...c, order: c.order - 1 };
-      return c;
-    });
-
-    setConfig(prev => prev ? {
-      ...prev,
-      settings: { ...prev.settings, totalSlots: newTotalSlots },
-      categories: newCategories
-    } : prev);
-
-    await fetchWithAuth('/api/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'settings', totalSlots: newTotalSlots }),
-    });
-
-    await fetchWithAuth('/api/config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'reorder', categories: newCategories }),
-    });
-  };
-
   const addDevice = async (device: Omit<Device, 'id'>) => {
     const res = await fetchWithAuth('/api/config', {
       method: 'POST',
@@ -448,28 +439,25 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     await fetchConfig();
   };
 
-  const updateHomeWidgetProps = async (widgetId: string, newProps: Record<string, unknown>) => {
-    setConfig(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        settings: {
-          ...prev.settings,
-          homeWidgets: prev.settings.homeWidgets?.map(w => w.id === widgetId ? { ...w, props: { ...w.props, ...newProps } } : w) || []
-        }
-      };
-    });
-
+  const saveIntegration = async (update: IntegrationUpdate) => {
     const res = await fetchWithAuth('/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'homeWidgetProps', id: widgetId, props: newProps }),
+      body: JSON.stringify({ type: 'integration', integration: update }),
     });
-    if (res.status === 429) {
-      setLoading(false);
-      return;
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null) as { error?: string } | null;
+      throw new Error(payload?.error ? t(payload.error) : t('errors.configSave', { status: res.status }));
     }
-    if (!res.ok) await fetchConfig();
+    const saved = await res.json() as IntegrationInstance;
+    await fetchConfig();
+    return saved;
+  };
+
+  const deleteIntegration = async (id: string) => {
+    const res = await fetchWithAuth(`/api/config?type=integration&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await assertApiOk(res, 'errors.configSave');
+    await fetchConfig();
   };
 
   const updateConfig = async (updates: DashboardConfigUpdate) => {
@@ -598,15 +586,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         updateService,
         deleteService,
         saveCategories,
-        addSlot,
-        addWidgetsSlot,
-        removeSlot,
         addDevice,
         reorderDevices,
         updateDevice,
         deleteDevice,
         updateConfig,
-        updateHomeWidgetProps,
+        saveIntegration,
+        deleteIntegration,
         uploadLogo,
         addDockerAction,
         updateDockerAction,
@@ -649,3 +635,4 @@ export function useDashboard() {
   }
   return context;
 }
+
