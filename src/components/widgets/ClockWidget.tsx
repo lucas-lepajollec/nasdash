@@ -156,7 +156,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
     // Narrow
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title">
             <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
@@ -229,7 +229,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
     // Narrow
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title">
             <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
@@ -330,7 +330,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
     // Narrow
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title">
             <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>
@@ -436,7 +436,7 @@ export default function ClockWidget({ editMode }: { editMode?: boolean }) {
     // Narrow
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ display: 'flex', flexDirection: 'column' }}>
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title">
             <Clock size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Horloge")}
           </div>

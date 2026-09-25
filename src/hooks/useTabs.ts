@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { CustomTabLayout } from '@/lib/types';
+import { useMemo } from 'react';
+import { isOfficialPageId } from '@/lib/pages/types';
+import { usePages } from '@/providers/PagesProvider';
 
-export type TabId = 'dashboard' | 'widgets' | 'docker' | 'networks' | string;
+export type TabId = string;
 
+/** Navigation entry derived from a page. */
 export interface TabDef {
   id: TabId;
   name: string;
@@ -13,66 +15,19 @@ export interface TabDef {
   isCustom?: boolean;
 }
 
-export const TABS: TabDef[] = [
-  { id: 'dashboard', name: 'Home', icon: '🏠', description: 'Services & monitoring' },
-  { id: 'docker', name: 'Docker', icon: '🐳', description: 'Conteneurs & images' },
-  { id: 'networks', name: 'Réseaux', icon: '📶', description: 'Cartographie & outils réseau' },
-  { id: 'widgets', name: 'Widgets', icon: '🎛️', description: 'Grille de widgets fluide' },
-];
-
-const STORAGE_KEY = 'nasdash-active-tab';
-
-export const globalLayoutCache: Record<string, CustomTabLayout> = {};
-
+/**
+ * Compatibility view of the pages for navigation components (dock, header,
+ * settings). Pages are the single source of truth.
+ */
 export function useTabs() {
-  const [activeTab, setActiveTab] = useState<TabId>('dashboard');
-  const [ready, setReady] = useState(false);
-  const [customTabs, setCustomTabs] = useState<TabDef[]>([]);
+  const { pages, loading, activePageId, setActivePageId, refreshPages } = usePages();
+  const tabs = useMemo<TabDef[]>(() => pages.map(page => ({
+    id: page.id,
+    name: page.name,
+    icon: page.icon,
+    description: page.description ?? '',
+    isCustom: !isOfficialPageId(page.id),
+  })), [pages]);
 
-  const fetchCustomTabs = useCallback(async () => {
-    try {
-      const res = await fetch('/api/custom-tabs');
-      if (res.ok) {
-        const data = await res.json();
-        const loadedTabs = data.tabs || [];
-        const loadedLayouts = data.layouts || {};
-
-        Object.assign(globalLayoutCache, loadedLayouts);
-        setCustomTabs(loadedTabs);
-
-        const saved = typeof window !== 'undefined' ? (localStorage.getItem(STORAGE_KEY) as TabId | null) : null;
-        const allTabs = [...TABS, ...loadedTabs];
-        if (saved && allTabs.some(e => e.id === saved)) {
-          setActiveTab(saved);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to fetch custom tabs:', e);
-    } finally {
-      setReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCustomTabs();
-    const handleUpdate = () => fetchCustomTabs();
-    window.addEventListener('customTabsUpdated', handleUpdate);
-    return () => window.removeEventListener('customTabsUpdated', handleUpdate);
-  }, [fetchCustomTabs]);
-
-
-  const switchTab = useCallback((id: TabId) => {
-    setActiveTab(id);
-    localStorage.setItem(STORAGE_KEY, id);
-  }, []);
-
-  const allTabs = [...TABS, ...customTabs];
-
-  const refreshTabs = useCallback(() => {
-    fetchCustomTabs().then(() => {
-      window.dispatchEvent(new Event('customTabsUpdated'));
-    });
-  }, [fetchCustomTabs]);
-
-  return { activeTab, switchTab, tabs: allTabs, ready, refreshTabs };
+  return { activeTab: activePageId, switchTab: setActivePageId, tabs, ready: !loading, refreshTabs: refreshPages };
 }

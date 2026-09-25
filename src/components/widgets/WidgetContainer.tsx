@@ -1,10 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { getWidgetSizeBucket, type WidgetSizeBucket } from '@/lib/widgetSizing';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-export type WidgetSizeBucket = 'narrow' | 'medium' | 'wide';
+export type { WidgetSizeBucket } from '@/lib/widgetSizing';
 
 interface WidgetSizeContextType {
   width: number;
@@ -22,37 +23,23 @@ export const useWidgetSize = () => useContext(WidgetSizeContext);
 
 export function WidgetContainer({ children, className = '', style = {} }: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState<WidgetSizeContextType>(() => {
-    if (typeof window !== 'undefined') {
-      const approxW = Math.max(300, window.innerWidth - 500);
-      let bucket: WidgetSizeBucket = 'narrow';
-      if (approxW >= 720) bucket = 'wide';
-      else if (approxW >= 380) bucket = 'medium';
-      return { width: approxW, height: 200, size: bucket };
-    }
-    return { width: 500, height: 200, size: 'medium' };
-  });
+  // Match server HTML on the first client render. Measure the actual container
+  // in the layout effect, before paint, rather than guessing from viewport width.
+  const [size, setSize] = useState<WidgetSizeContextType>({ width: 500, height: 200, size: 'medium' });
 
   useIsomorphicLayoutEffect(() => {
     if (!containerRef.current) return;
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     if (width > 0) {
-      let bucket: WidgetSizeBucket = 'narrow';
-      if (width >= 720) bucket = 'wide';
-      else if (width >= 380) bucket = 'medium';
-      setSize({ width, height, size: bucket });
+      setSize({ width, height, size: getWidgetSizeBucket(width) });
     }
 
     const observer = new ResizeObserver((entries) => {
       if (!entries || entries.length === 0) return;
       const { width: w, height: h } = entries[0].contentRect;
       if (w <= 0) return;
-      let bucket: WidgetSizeBucket = 'narrow';
-      if (w >= 720) bucket = 'wide';
-      else if (w >= 380) bucket = 'medium';
-      
-      setSize({ width: w, height: h, size: bucket });
+      setSize({ width: w, height: h, size: getWidgetSizeBucket(w) });
     });
 
     observer.observe(containerRef.current);

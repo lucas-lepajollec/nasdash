@@ -1,5 +1,6 @@
 import { getSystemStats } from '@/lib/system';
-import { incrementActiveClients, decrementActiveClients, readConfig } from '@/lib/config';
+import { readConfig } from '@/lib/config';
+import { decrementActiveClients, incrementActiveClients } from '@/integrations/runtime';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { isDemoMode } from '@/lib/demoMode';
 

@@ -1,0 +1,4 @@
+[
+  { "id": "8dfafdbc3a40", "name": "jellyfin", "image": "jellyfin/jellyfin:10.10", "state": "running", "status": "Up 3 days" },
+  { "id": "9eab0cde4b51", "name": "forgejo", "image": "codeberg.org/forgejo/forgejo:9", "state": "exited", "status": "Exited (0) 2 hours ago" }
+]

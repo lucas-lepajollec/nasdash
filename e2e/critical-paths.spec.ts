@@ -94,41 +94,34 @@ test.describe.serial('critical self-hosted paths', () => {
     });
   });
 
-  test('admin can persist a custom-tab layout through its real API contract', async () => {
+  test('admin can create, edit and persist a page through its real API contract', async () => {
     const admin = await isolatedRequest(20);
     await login(admin, 'admin', ADMIN_PASSWORD);
 
-    const create = await admin.post('/api/custom-tabs', {
-      data: {
-        type: 'createTab',
-        name: 'E2E Tab',
-        icon: 'lucide:LayoutDashboard',
-        description: 'Isolated browser test',
-      },
+    const create = await admin.post('/api/pages', {
+      data: { action: 'create', name: 'E2E Page', icon: 'lucide:LayoutDashboard', template: 'blank' },
     });
     expect(create.status()).toBe(201);
-    const created = await create.json();
+    const { page } = await create.json();
 
-    const layout = {
-      rows: [{
-        id: 'e2e-row',
-        type: '1-col',
-        columns: [{
-          id: 'e2e-column',
-          width: '100%',
-          content: null,
-          widgets: [{ type: 'clock' }],
-        }],
-      }],
+    const column = page.sections[0].columns[0];
+    const edited = {
+      ...page,
+      widgets: [...page.widgets, { id: 'e2e-clock', type: 'clock', settings: {} }],
+      sections: [{ ...page.sections[0], columns: [{ ...column, items: [...column.items, 'e2e-clock'] }] }],
     };
-    const saveLayout = await admin.put('/api/custom-tabs', {
-      data: { id: created.tab.id, layoutUpdates: layout },
-    });
-    expect(saveLayout.status()).toBe(200);
+    const save = await admin.put('/api/pages', { data: { page: edited } });
+    expect(save.status()).toBe(200);
+    expect((await save.json()).page.revision).toBe(page.revision + 1);
 
-    const saved = await admin.get('/api/custom-tabs');
+    // A second writer holding the old revision is refused instead of overwriting.
+    const stale = await admin.put('/api/pages', { data: { page: edited } });
+    expect(stale.status()).toBe(409);
+
+    const saved = await admin.get('/api/pages');
     expect(saved.status()).toBe(200);
-    expect((await saved.json()).layouts[created.tab.id].rows).toEqual(layout.rows);
+    const stored = (await saved.json()).pages.find((candidate: { id: string }) => candidate.id === page.id);
+    expect(stored.sections[0].columns[0].items).toEqual(['e2e-clock']);
     await admin.dispose();
   });
 

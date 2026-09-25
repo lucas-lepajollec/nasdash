@@ -70,7 +70,7 @@ async function handleGET(
 
     const query = new URLSearchParams({ stdout: 'true', stderr: 'true', tail, timestamps: String(timestamps) });
     const res = await fetchDockerApi(
-      host.url,
+      host,
       `/containers/${encodeURIComponent(id)}/logs?${query.toString()}`,
       {},
       8_000,

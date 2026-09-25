@@ -11,15 +11,20 @@ import { SettingsAccordion } from '../shared/SettingsAccordion';
 import { Emoji } from '../../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguageTab } from './LanguageTab';
+import { CalmeAppearance } from './CalmeAppearance';
+import { useCalme } from '@/widgets/calme';
 
 interface AppearanceTabProps {
   onOpenThemeGallery?: (tab: 'themes' | 'emojis') => void;
+  /** Calme only: the wallpaper has its own section. */
+  part?: 'appearance' | 'wallpaper';
 }
 
-export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
+export function AppearanceTab({ onOpenThemeGallery, part = 'appearance' }: AppearanceTabProps = {}) {
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const demoMode = config?.demoMode === true;
+  const calme = useCalme();
   
   // Accordions states
   const [openAccordions, setOpenAccordions] = useState<string[]>(['language']);
@@ -205,12 +210,103 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
     await updateConfig(settings);
   };
 
+  const uploadBackground = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', 'background');
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.url) {
+        setBackgroundImage(data.url);
+        await updateConfig({ backgroundImage: data.url });
+        fetchUploadedBgs();
+      }
+    } catch (err) {
+      console.error('Failed to upload background:', err);
+    }
+  };
+
+  const pickBackground = (url: string) => {
+    const img = new Image();
+    img.src = url;
+    img.onload = async () => {
+      setBackgroundImage(url);
+      await updateConfig({ backgroundImage: url });
+    };
+  };
+
   const handleDeleteProfile = async (id: string) => {
     const updatedProfiles = appearanceProfiles.filter(p => p.id !== id);
     setAppearanceProfiles(updatedProfiles);
     await updateConfig({ appearanceProfiles: updatedProfiles });
     setConfirmDeleteProfile(null);
   };
+
+  const confirmDialogs = (
+    <>
+      <ConfirmModal
+        isOpen={!!confirmDeleteProfile}
+        onClose={() => setConfirmDeleteProfile(null)}
+        onConfirm={() => {
+          if (confirmDeleteProfile) handleDeleteProfile(confirmDeleteProfile);
+        }}
+        title={t("Supprimer le profil")}
+        description={t("Êtes-vous sûr de vouloir supprimer ce profil d'apparence ? Cette action est irréversible.")}
+        confirmLabel="Supprimer"
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmBgDeleteOpen}
+        onClose={() => setIsConfirmBgDeleteOpen(false)}
+        onConfirm={handleConfirmBgDelete}
+        title={t("Supprimer l'image de fond")}
+        description={t("Êtes-vous sûr de vouloir supprimer cette image ? Elle sera supprimée du serveur.")}
+        confirmLabel="Supprimer"
+      />
+    </>
+  );
+
+  if (calme) {
+    return (
+      <>
+        <CalmeAppearance
+          part={part}
+          theme={theme}
+          mode={mode}
+          onThemeChange={handleThemeChange}
+          onToggleMode={toggleMode}
+          onOpenThemeGallery={onOpenThemeGallery}
+          globalFont={globalFont}
+          onFontChange={handleFontChange}
+          borderRadius={borderRadius}
+          onRadiusChange={handleRadiusChange}
+          onRadiusSave={handleRadiusSave}
+          cardOpacity={cardOpacity}
+          onOpacityChange={handleOpacityChange}
+          onOpacitySave={handleOpacitySave}
+          backgroundImage={backgroundImage}
+          setBackgroundImage={setBackgroundImage}
+          onSaveBackground={handleSaveBackground}
+          onClearBackground={async () => { setBackgroundImage(''); await updateConfig({ backgroundImage: '' }); }}
+          uploadedBgs={uploadedBgs}
+          onPickBackground={pickBackground}
+          onRequestBackgroundDelete={url => { setBgToDelete(url); setIsConfirmBgDeleteOpen(true); }}
+          onUploadBackground={uploadBackground}
+          profiles={appearanceProfiles}
+          onSaveProfile={async name => {
+            if (!name.trim()) return;
+            const updated = [...appearanceProfiles, { id: Date.now().toString(), name, settings: { theme, backgroundImage, globalFont, borderRadius, cardOpacity } }];
+            setAppearanceProfiles(updated);
+            await updateConfig({ appearanceProfiles: updated });
+          }}
+          onApplyProfile={handleApplyProfile}
+          onRequestProfileDelete={setConfirmDeleteProfile}
+        />
+        {confirmDialogs}
+      </>
+    );
+  }
 
   return (
     <>
@@ -224,6 +320,37 @@ export function AppearanceTab({ onOpenThemeGallery }: AppearanceTabProps = {}) {
         >
           <LanguageTab embedded />
         </SettingsAccordion>
+
+        {/* Interface style: the new "Calme" look or the historical one */}
+        <div className="nd-design-style" role="radiogroup" aria-label={t('settings.designStyle.title')} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700 }}>{t('settings.designStyle.title')}</h4>
+            <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>{t('settings.designStyle.description')}</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+            {(['calme', 'classic'] as const).map(style => {
+              const selected = (config?.settings?.designStyle ?? 'calme') === style;
+              return (
+                <button
+                  key={style}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => { void updateConfig({ designStyle: style }); }}
+                  style={{
+                    textAlign: 'left', padding: '12px 14px', borderRadius: 'var(--nd-card-radius)', cursor: 'pointer',
+                    border: `1px solid ${selected ? 'var(--nd-accent)' : 'var(--nd-card-border)'}`,
+                    background: selected ? 'var(--nd-accent-glow)' : 'transparent', color: 'var(--nd-text)',
+                    display: 'flex', flexDirection: 'column', gap: 3,
+                  }}
+                >
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{t(`settings.designStyle.${style}`)}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)' }}>{t(`settings.designStyle.${style}Hint`)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Appearance Profiles */}
         <SettingsAccordion

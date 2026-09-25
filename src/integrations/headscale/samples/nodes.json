@@ -1,0 +1,14 @@
+{
+  "nodes": [
+    {
+      "id": "1", "name": "atlas-nas", "givenName": "atlas-nas", "user": { "id": "1", "name": "lucas" },
+      "ipAddresses": ["100.64.0.1", "fd7a:115c:a1e0::1"], "online": true, "lastSeen": "2026-09-24T12:00:00Z",
+      "approvedRoutes": [], "availableRoutes": [], "subnetRoutes": [], "tags": [], "registerMethod": "REGISTER_METHOD_AUTH_KEY"
+    },
+    {
+      "id": "2", "name": "laptop-7f3a", "givenName": "laptop", "user": { "id": "1", "name": "lucas" },
+      "ipAddresses": ["fd7a:115c:a1e0::2", "100.64.0.2"], "online": false, "lastSeen": "2026-09-20T08:30:00Z",
+      "approvedRoutes": [], "availableRoutes": [], "subnetRoutes": [], "tags": [], "registerMethod": "REGISTER_METHOD_OIDC"
+    }
+  ]
+}

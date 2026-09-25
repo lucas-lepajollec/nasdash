@@ -5,6 +5,8 @@ import { Search, Check, Sun, Moon, Sparkles, Palette, Smile } from 'lucide-react
 import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useCalme } from '@/widgets/calme';
+import { CalmeInfo, CalmeSegmented } from './settings/shared/CalmeControls';
 
 export interface ThemeDefinition {
   key: string;
@@ -431,6 +433,72 @@ export default function ThemeGalleryView({ currentTheme, onSelectTheme, onClose,
       return matchesTab && matchesSearch;
     });
   }, [search, activeTab]);
+
+  const calme = useCalme();
+  // Calme: the same choices as quiet thumbnails and rows, the mode switch and
+  // the search on one line (the frame and title come from the settings).
+  if (calme) {
+    const cleanName = (name: string) => t(name).replace(/\s*\(.*\)|\s*[^\p{L}\p{N}\s'’&-]+$/gu, '');
+    type EmojiTheme = NonNullable<React.ComponentProps<typeof Emoji>['forcedTheme']>;
+    return (
+      <div className="ndc-gallery">
+        <div className="ndc-gallery-bar">
+          <CalmeSegmented
+            label={t('settings.calme.theme')}
+            value={galleryMode}
+            options={[{ value: 'themes', label: t('settings.calme.themes') }, { value: 'emojis', label: t('settings.calme.icons') }]}
+            onChange={setGalleryMode}
+          />
+          {galleryMode === 'themes' && (
+            <>
+              <label className="ndc-settings-search ndc-gallery-search">
+                <Search size={14} aria-hidden="true" />
+                <input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={t('settings.calme.searchTheme')} aria-label={t('settings.calme.searchTheme')} />
+              </label>
+              <CalmeSegmented
+                label={t('settings.calme.mode')}
+                value={activeTab}
+                options={[{ value: 'all', label: t('settings.calme.all') }, { value: 'dark', label: t('settings.calme.dark') }, { value: 'light', label: t('settings.calme.light') }]}
+                onChange={setActiveTab}
+              />
+            </>
+          )}
+        </div>
+
+        {galleryMode === 'themes' ? (
+          <div className="ndc-gallery-grid" role="radiogroup" aria-label={t('settings.calme.theme')}>
+            {filteredThemes.map(theme => (
+              <button key={theme.key} type="button" role="radio" aria-checked={currentTheme === theme.key} className="ndc-theme" onClick={() => onSelectTheme(theme.key)} title={t(theme.description)}>
+                <span className="ndc-theme-mini" style={{ background: theme.bg }}>
+                  <span className="ndc-theme-bar">
+                    <span style={{ width: 14, background: theme.accent }} />
+                    <span style={{ width: 18, background: theme.text, opacity: 0.35 }} />
+                    <span style={{ width: 12, background: theme.text, opacity: 0.35 }} />
+                  </span>
+                  <span className="ndc-theme-cards">
+                    {[0, 1, 2].map(i => <span key={i} style={{ background: theme.cardBg, border: `1px solid ${theme.subcardBg}` }} />)}
+                  </span>
+                </span>
+                <span className="ndc-theme-name">{cleanName(theme.name)}</span>
+              </button>
+            ))}
+            {filteredThemes.length === 0 && <div className="ndc-set-empty">{t('settings.calme.noTheme')}</div>}
+          </div>
+        ) : (
+          <div className="ndc-icon-styles" role="radiogroup" aria-label={t('settings.calme.icons')}>
+            {EMOJI_STYLES.map(style => (
+              <button key={style.key} type="button" role="radio" aria-checked={currentEmojiTheme === style.key} className="ndc-icon-style" onClick={() => updateConfig({ emojiTheme: style.key })}>
+                <span className="ndc-icon-style-samples">
+                  {style.samples.map((char, index) => <Emoji key={index} emoji={char} forcedTheme={style.key as EmojiTheme} />)}
+                </span>
+                <span className="ndc-icon-style-name">{cleanName(style.name)}<CalmeInfo text={t(style.description)} /></span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{

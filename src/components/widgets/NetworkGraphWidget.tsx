@@ -148,7 +148,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
   if (widgetSize === 'wide') {
     return (
       <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0, flexShrink: 0 }}>
             <Activity size={12} style={{ color: 'var(--nd-accent)' }} /> 
             <span>{t("Réseau & Latence")}</span>
@@ -177,7 +177,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
   if (widgetSize === 'medium') {
     return (
       <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0, flexShrink: 0 }}>
             <Activity size={12} style={{ color: 'var(--nd-accent)' }} /> 
             <span>{t("Latence Réseau")}</span>
@@ -212,7 +212,7 @@ export default function NetworkGraphWidget({ editMode }: { editMode?: boolean })
   // ==================== NARROW LAYOUT ====================
   return (
     <div className="nd-sidebar-card nd-animate-in" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {!hideTitles && (
+      {(!hideTitles || editMode) && (
         <div className="nd-section-title" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexShrink: 0 }}>
           <Activity size={12} style={{ color: 'var(--nd-accent)' }} /> 
           <span>{t("Latence Réseau")}</span>

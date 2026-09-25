@@ -2,13 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useConfig } from '@/hooks/useConfig';
-import { User, Plus, Trash2, Key, Shield, Eye, EyeOff, Info } from 'lucide-react';
-import { WIDGET_REGISTRY } from '@/lib/widgetRegistry';
+import { User, Plus, Trash2, Key, Shield, Eye, EyeOff, Info, Pencil, X } from 'lucide-react';
+import { WIDGET_CATALOG } from '@/lib/widgets/catalog';
+
+/** Widgets a viewer can be allowed individually: those whose definition names a permission. */
+const PERMISSION_WIDGETS = WIDGET_CATALOG.flatMap(entry => entry.access && 'permission' in entry.access
+  ? [{ id: entry.access.permission, icon: entry.icon, nameKey: entry.nameKey }]
+  : []);
 import CustomSelect from '@/components/shared/CustomSelect';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { SettingsAccordion } from '../shared/SettingsAccordion';
+import { useCalme } from '@/widgets/calme';
+import { CalmeHeading, CalmeRow, CalmeSegmented } from '../shared/CalmeControls';
 import { Emoji } from '../../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
+import { usePages } from '@/providers/PagesProvider';
 
 interface LocalUser {
   username: string;
@@ -38,7 +46,9 @@ export function SecurityTab() {
   const { config, updateConfig, user: currentUser, logout } = useConfig();
   const [users, setUsers] = useState<LocalUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
-  const [customTabs, setCustomTabs] = useState<CustomTabOption[]>([]);
+  // Pages created by admins can be allowed like the official ones (same ids).
+  const { pages } = usePages();
+  const customTabs: CustomTabOption[] = pages.filter(page => !DEFAULT_TABS.some(tab => tab.id === page.id)).map(page => ({ id: page.id, name: page.name }));
   
   // Formulaire d'ajout / modification
   const [username, setUsername] = useState('');
@@ -51,6 +61,7 @@ export function SecurityTab() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [addingUser, setAddingUser] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   // Hover states pour les tooltips d'info
   const [hoveredMode, setHoveredMode] = useState<'public' | 'private' | null>(null);
@@ -83,21 +94,8 @@ export function SecurityTab() {
     }
   };
 
-  const fetchCustomTabs = async () => {
-    try {
-      const res = await fetch('/api/custom-tabs');
-      if (res.ok) {
-        const data = await res.json();
-        setCustomTabs(data.tabs || []);
-      }
-    } catch (e) {
-      console.error('Erreur chargement onglets personnalisés:', e);
-    }
-  };
-
   useEffect(() => {
     fetchUsers();
-    fetchCustomTabs();
   }, []);
 
   const securityMode = config?.settings?.securityMode || 'public';
@@ -178,6 +176,7 @@ export function SecurityTab() {
       setRole('viewer');
       setSelectedTabs([]);
       setSelectedWidgets([]);
+      setEditorOpen(false);
       fetchUsers();
     } catch (error: unknown) {
       setActionError(getErrorMessage(error, 'Une erreur est survenue.'));
@@ -240,16 +239,139 @@ export function SecurityTab() {
   };
 
   const selectAllWidgets = () => {
-    setSelectedWidgets(WIDGET_REGISTRY.map(w => w.id));
+    setSelectedWidgets(PERMISSION_WIDGETS.map(w => w.id));
   };
 
   const clearAllWidgets = () => {
     setSelectedWidgets([]);
   };
 
+  const calme = useCalme();
+  const resetForm = () => {
+    setUsername(''); setPassword(''); setRole('viewer'); setSelectedTabs([]); setSelectedWidgets([]);
+    setActionError(null); setActionSuccess(null);
+  };
+  const deleteDialog = (
+    <ConfirmModal
+      isOpen={deleteConfirmUser !== null}
+      onClose={() => setDeleteConfirmUser(null)}
+      onConfirm={() => { if (deleteConfirmUser) confirmDeleteUser(deleteConfirmUser); }}
+      title={t("Supprimer l'utilisateur")}
+      description={t('confirm.userDelete', { name: deleteConfirmUser || '' })}
+    />
+  );
+  if (calme) {
+    const editing = users.some(u => u.username.toLowerCase() === username.toLowerCase()) && !!username;
+    const tabIcon = (id: string) => ({ dashboard: '🏠', docker: '🐳', networks: '📶', widgets: '🧩' } as Record<string, string>)[id] ?? (config?.settings?.tabIcons?.[id] || '📄');
+    return (
+      <div className="ndc-set-page">
+        <section className="ndc-set-block">
+          <CalmeHeading info={demoMode ? t("Les changements de mode ci-dessous sont simulés dans votre session temporaire. Ils ne verrouillent pas cette démo publique et ne modifient aucun compte réel.") : undefined}>{t('settings.calme.access')}</CalmeHeading>
+          <CalmeRow label={t("Mode de sécurité global")} info={[t("Le tableau de bord est ouvert à tout le réseau en lecture seule. Les actions Docker et la modification de configuration nécessitent une session d’administration."), t("Rien ne s’affiche sans connexion préalable. Tout visiteur non authentifié est immédiatement redirigé vers l’écran de connexion.")].join(" / ")}>
+            <CalmeSegmented
+              label={t("Mode de sécurité global")}
+              value={securityMode === 'private' ? 'private' : 'public'}
+              options={[{ value: 'public', label: t('settings.calme.public') }, { value: 'private', label: t('settings.calme.private') }]}
+              onChange={value => handleModeChange(value)}
+            />
+          </CalmeRow>
+        </section>
+
+        {(actionError || actionSuccess) && (
+          <div role="status" className={`ndc-set-note ${actionError ? 'is-error' : 'is-ok'}`}>{actionError || actionSuccess}</div>
+        )}
+
+        <section className="ndc-set-block">
+          <CalmeHeading
+            info={demoMode ? t("Une installation NasDash complète permet de créer des administrateurs et observateurs, puis de limiter leurs onglets et widgets. La création de comptes, les mots de passe, la suppression et le test d&apos;une session viewer sont désactivés ici afin de ne jamais recueillir de véritables identifiants.") : undefined}
+            action={!demoMode && !editorOpen && (
+              <button type="button" className="ndc-text-button" onClick={() => { resetForm(); setEditorOpen(true); }}><Plus size={12} /> {t('settings.calme.addUser')}</button>
+            )}
+          >{t('settings.calme.users')}</CalmeHeading>
+          {!demoMode && (loadingUsers ? <div className="ndc-set-empty">{t("Chargement…")}</div> : users.map(u => {
+            const isCurrent = currentUser?.username.toLowerCase() === u.username.toLowerCase();
+            const isSystemUser = u.username.toLowerCase() === 'admin' || u.username.toLowerCase() === 'viewer';
+            return (
+              <div key={u.username} className="ndc-lib-row ndc-lib-row--actions">
+                <span className="ndc-lib-icon"><User size={15} /></span>
+                <span className="ndc-lib-name" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <span>{u.username}{isCurrent && <span className="ndc-tag" style={{ marginLeft: 8 }}>{t('settings.calme.you')}</span>}</span>
+                  <span className="ndc-set-list-sub">{u.role === 'admin' ? t('settings.calme.admin') : t('settings.calme.viewer')}</span>
+                </span>
+                {u.username.toLowerCase() === 'viewer' && currentUser?.role === 'admin' ? (
+                  <button type="button" className="nd-btn" onClick={handleSwitchToViewer} title={t("Se connecter en tant que spectateur")}>{t("Tester")}</button>
+                ) : <span />}
+                <span style={{ display: 'flex', gap: 2 }}>
+                  <button
+                    type="button"
+                    className="ndc-icon-button"
+                    title={t('security.editUserPermissions', { name: u.username })}
+                    aria-label={t('security.editUserPermissions', { name: u.username })}
+                    onClick={() => { setUsername(u.username); setRole(u.role); setPassword(''); setSelectedTabs(u.allowedTabs || []); setSelectedWidgets(u.allowedWidgets || []); setActionError(null); setActionSuccess(null); setEditorOpen(true); }}
+                  ><Pencil size={13} /></button>
+                  <button type="button" className="ndc-icon-button" disabled={isCurrent || isSystemUser} onClick={() => handleDeleteUser(u.username)} title={t("Supprimer l'utilisateur")} aria-label={t("Supprimer l'utilisateur")}><Trash2 size={13} /></button>
+                </span>
+              </div>
+            );
+          }))}
+        </section>
+
+        {!demoMode && editorOpen && (
+          <form className="ndc-set-block" onSubmit={async event => { await handleAddUser(event); }}>
+            <CalmeHeading action={<button type="button" className="ndc-icon-button" aria-label={t("Annuler")} onClick={() => { resetForm(); setEditorOpen(false); }}><X size={14} /></button>}>
+              {editing ? t('security.editAccess', { name: username }).replace(/^[^\p{L}]+/u, '') : t('settings.calme.newUser')}
+            </CalmeHeading>
+            <CalmeRow label={t("Nom d'utilisateur")}>
+              <input id="security-username" type="text" className="nd-input" style={{ width: 240 }} value={username} disabled={isDefaultAccount} onChange={e => setUsername(e.target.value)} placeholder={t("Ex: lucas")} />
+            </CalmeRow>
+            <CalmeRow label={t("Mot de passe")} info={isDefaultAccount || editing ? t("Laisser vide si inchangé") : undefined}>
+              <span className="ndc-password" style={{ width: 240 }}>
+                <input id="security-password" type={showPassword ? 'text' : 'password'} className="nd-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" />
+                <button type="button" className="ndc-icon-button" onClick={() => setShowPassword(!showPassword)} aria-label={t("settings.calme.showPassword")}>{showPassword ? <EyeOff size={14} /> : <Eye size={14} />}</button>
+              </span>
+            </CalmeRow>
+            <CalmeRow label={t("Rôle")}>
+              <CalmeSegmented
+                label={t("Rôle")}
+                value={role}
+                options={[{ value: 'viewer', label: t('settings.calme.viewer') }, { value: 'admin', label: t('settings.calme.admin') }]}
+                onChange={value => { if (!isDefaultAccount) setRole(value); }}
+              />
+            </CalmeRow>
+            {role === 'viewer' && (
+              <>
+                <CalmeHeading action={<span className="ndc-chip-actions"><button type="button" className="ndc-text-button" onClick={selectAllTabs}>{t('settings.calme.all')}</button><button type="button" className="ndc-text-button" onClick={clearAllTabs}>{t('settings.calme.none')}</button></span>}>{t("Onglets autorisés")}</CalmeHeading>
+                <div className="ndc-chips">
+                  {allSelectableTabs.map(tab => (
+                    <button key={tab.id} type="button" className="ndc-chip" aria-pressed={selectedTabs.includes(tab.id)} onClick={() => toggleTabSelect(tab.id)}>
+                      <Emoji emoji={tabIcon(tab.id)} /> {t(tab.name)}
+                    </button>
+                  ))}
+                </div>
+                <CalmeHeading action={<span className="ndc-chip-actions"><button type="button" className="ndc-text-button" onClick={selectAllWidgets}>{t('settings.calme.all')}</button><button type="button" className="ndc-text-button" onClick={clearAllWidgets}>{t('settings.calme.none')}</button></span>}>{t("Widgets autorisés")}</CalmeHeading>
+                <div className="ndc-chips">
+                  {PERMISSION_WIDGETS.map(w => (
+                    <button key={w.id} type="button" className="ndc-chip" aria-pressed={selectedWidgets.includes(w.id)} onClick={() => toggleWidgetSelect(w.id)}>
+                      <Emoji emoji={w.icon} /> {t(w.nameKey)}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="ndc-form-actions">
+              <button type="button" className="nd-btn" onClick={() => { resetForm(); setEditorOpen(false); }}>{t("Annuler")}</button>
+              <button type="submit" className="nd-btn nd-btn-accent" disabled={addingUser}>{addingUser ? '…' : t("Sauvegarder")}</button>
+            </div>
+          </form>
+        )}
+        {deleteDialog}
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {demoMode && (
+      {demoMode && !calme && (
         <div style={{ padding: 14, background: 'color-mix(in srgb, var(--nd-accent) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 32%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius, 8px)', fontSize: '0.72rem', lineHeight: 1.55 }}>
           <strong style={{ display: 'block', marginBottom: 4, color: 'var(--nd-text)' }}>{t("Aperçu de la sécurité en mode démo")}</strong>
           {t("Les changements de mode ci-dessous sont simulés dans votre session temporaire. Ils ne verrouillent pas cette démo publique et ne modifient aucun compte réel.")}
@@ -268,7 +390,7 @@ export function SecurityTab() {
       )}
 
       {/* SECTION 1: MODE DE SECURITE */}
-      <SettingsAccordion
+      {!calme && <SettingsAccordion
         title={t("Mode de sécurité global")}
         description={t("Configurez l'accès public ou privé du tableau de bord")}
         icon={<Shield size={18} />}
@@ -374,7 +496,7 @@ export function SecurityTab() {
             </div>
           </div>
         </div>
-      </SettingsAccordion>
+      </SettingsAccordion>}
 
       {/* SECTION 2: GESTION DES UTILISATEURS */}
       {demoMode ? (
@@ -627,7 +749,7 @@ export function SecurityTab() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
-                {WIDGET_REGISTRY.map(w => {
+                {PERMISSION_WIDGETS.map(w => {
                   const isSelected = selectedWidgets.includes(w.id);
                   return (
                     <div
@@ -658,9 +780,9 @@ export function SecurityTab() {
                         }
                       }}
                     >
-                      <span style={{ fontSize: '1rem' }}>{w.icon}</span>
+                      <span style={{ fontSize: '1rem' }}><Emoji emoji={w.icon} /></span>
                       <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 600 : 500, color: isSelected ? 'var(--nd-accent)' : 'var(--nd-text)' }}>
-                        {t(w.name)}
+                        {t(w.nameKey)}
                       </span>
                     </div>
                   );

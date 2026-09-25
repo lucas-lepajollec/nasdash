@@ -106,8 +106,9 @@ test('core dashboard and settings stay keyboard accessible', async ({ page }) =>
       await select.focus();
       await page.keyboard.press('ArrowDown');
       await expect(select).toHaveAttribute('aria-expanded', 'true');
-      await expect(dialog.getByRole('listbox', { name: widgetPage.selectName })).toBeVisible();
-      await expect(dialog.getByRole('option', { selected: true })).toBeFocused();
+      // The list is drawn above the page (portal), outside the dialog box.
+      await expect(page.getByRole('listbox', { name: widgetPage.selectName })).toBeVisible();
+      await expect(page.getByRole('option', { selected: true })).toBeFocused();
       await page.keyboard.press('Escape');
       await expect(select).toHaveAttribute('aria-expanded', 'false');
       await expect(select).toBeFocused();

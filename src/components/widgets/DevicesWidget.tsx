@@ -1,8 +1,10 @@
 'use client';
 
 import useSWR from 'swr';
-import { HardDrive, Plus, Pencil, Trash2, Loader2, AlertCircle, GripVertical, Settings, X } from 'lucide-react';
+import { HardDrive, Plus, Pencil, Trash2, Loader2, AlertCircle, Settings, X } from 'lucide-react';
 import { Device, DeviceStat } from '@/lib/types';
+import type { Metric } from '@/integrations/types';
+import { percentText, temperatureText, toReadings, type DeviceReading } from './deviceReadings';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useState, useRef, useEffect, useId } from 'react';
@@ -14,7 +16,14 @@ import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
-import type { UiLanguage } from '@/i18n/messages';
+import { WidgetHeaderActions } from './WidgetHeaderActions';
+import { useCalme } from '@/widgets/calme';
+
+
+/** Unique per widget instance, so two device widgets can share a page. */
+const deviceSortableId = (widgetInstanceId: string | undefined, deviceId: string) => (
+  `drag-device-${widgetInstanceId ? `${widgetInstanceId}-` : ''}${deviceId}`
+);
 
 interface DevicesWidgetProps {
   devices: Device[];
@@ -59,7 +68,8 @@ function SortableDeviceCard({
     transition,
     isDragging,
   } = useSortable({
-    id: `drag-device-${device.id}`,
+    id: deviceSortableId(widgetInstanceId, device.id),
+    data: { type: 'device', deviceId: device.id, scope: widgetInstanceId ?? null },
     disabled: !editMode,
   });
 
@@ -116,56 +126,6 @@ function getTemperatureColor(tempStr: string, enableAlerts?: boolean): string {
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-function parseTelemetry(value: string, percent?: number) {
-  if (!value) {
-    return {
-      percentStr: percent !== undefined ? `${Math.round(percent)}%` : '',
-      tempStr: '',
-      capacityStr: ''
-    };
-  }
-
-  // Extract percentage (e.g. 12.4% or 70.1%)
-  const pctMatch = value.match(/(\d+(?:[.,]\d+)?\s*%)/);
-  let percentStr = pctMatch ? pctMatch[1].trim() : (percent !== undefined ? `${Math.round(percent)}%` : '');
-  percentStr = percentStr.replace(/[.,]\d+/, '');
-
-  // Extract temperature (e.g. 34°C)
-  const tempMatch = value.match(/(\d+\s*°[Cc])/);
-  const tempStr = tempMatch ? tempMatch[1].trim() : '';
-
-  // Extract capacity/space in parentheses
-  const parenMatch = value.match(/\(([^)]+)\)/);
-  let capacityStr = parenMatch ? `(${parenMatch[1].trim()})` : '';
-
-  if (!capacityStr) {
-    // Check if there is capacity outside parentheses
-    const sizeMatch = value.match(/(\d+(?:[.,]\d+)?\s*(?:Go|To|GB|TB|Mo|MB|octets|Bytes))/i);
-    if (sizeMatch) {
-      capacityStr = `(${sizeMatch[1].trim()})`;
-    }
-  }
-
-  return {
-    percentStr,
-    tempStr,
-    capacityStr
-  };
-}
-
-function localizeCapacity(capacity: string, language: UiLanguage): string {
-  if (!capacity || language === 'fr') return capacity;
-  return capacity
-    .replace(/\bTo\b/g, 'TB')
-    .replace(/\bGo\b/g, 'GB')
-    .replace(/\bMo\b/g, 'MB')
-    .replace(/\boctets\b/gi, language === 'en' ? 'bytes' : 'Bytes');
-}
-
-function translateMetricLabel(label: string, t: (key: string) => string): string {
-  return label.replace(/^(Disque|Disk)(?=\s|$)/i, t('Disque'));
-}
-
 // Hardcoded distinct colors for each metric type.
 // We do NOT use CSS variables here because in some themes
 // (e.g. orange/amber themes) --nd-accent and --nd-orange
@@ -194,25 +154,34 @@ function getMetricDistinctColor(label: string, originalColor?: string): string {
   return 'var(--nd-yellow, #fbbf24)'; // Yellow fallback
 }
 
+const KIND_COLORS: Record<Exclude<DeviceReading['kind'], 'other'>, string> = {
+  cpu: 'var(--nd-blue, #38bdf8)',
+  memory: 'var(--nd-green, #4ade80)',
+  disk: 'var(--nd-orange, #fb923c)',
+  gpu: 'var(--nd-purple, #c084fc)',
+};
+
+/** Integrations say what a reading measures; hand-written stats are guessed from their label. */
+function readingColor(reading: DeviceReading, colored: boolean): string {
+  if (!colored) return 'var(--nd-accent)';
+  return reading.kind === 'other' ? getMetricDistinctColor(reading.id, reading.colorHint) : KIND_COLORS[reading.kind];
+}
+
 // Sparkline component with local history
 function DeviceStatGraph({
-  label,
-  value,
-  percent,
-  color,
+  reading,
   hideValues,
   enableAlerts,
   colored,
 }: {
-  label: string;
-  value: string;
-  percent?: number;
-  color?: string;
+  reading: DeviceReading;
   hideValues?: boolean;
   enableAlerts?: boolean;
   colored?: boolean;
 }) {
-  const { t, language } = useI18n();
+  const { percent } = reading;
+  const { t } = useI18n();
+  const label = t(reading.name);
   const componentId = useId().replace(/:/g, '');
   const [history, setHistory] = useState<number[]>(() => {
     return percent !== undefined ? Array(15).fill(percent) : [];
@@ -228,7 +197,7 @@ function DeviceStatGraph({
     }
   }, [percent]);
 
-  let strokeColor = colored ? getMetricDistinctColor(label, color) : 'var(--nd-accent, #00e5ff)';
+  const strokeColor = colored ? readingColor(reading, true) : 'var(--nd-accent, #00e5ff)';
 
   const { size: widgetSize } = useWidgetSize();
   let height = 36;
@@ -292,8 +261,9 @@ function DeviceStatGraph({
     );
   }
 
-  const { percentStr, tempStr, capacityStr: rawCapacityStr } = parseTelemetry(value, percent);
-  const capacityStr = localizeCapacity(rawCapacityStr, language);
+  const percentStr = percentText(reading);
+  const tempStr = temperatureText(reading);
+  const capacityStr = reading.capacity ? `(${reading.capacity})` : '';
 
   const gradId = `gradient-${componentId}`;
   const glowId = `glow-${componentId}`;
@@ -377,23 +347,19 @@ function DeviceStatGraph({
 
 // Vertical historical bar-graph component (equalizer style)
 function DeviceStatVerticalBars({
-  label,
-  value,
-  percent,
-  color,
+  reading,
   hideValues,
   enableAlerts,
   colored,
 }: {
-  label: string;
-  value: string;
-  percent?: number;
-  color?: string;
+  reading: DeviceReading;
   hideValues?: boolean;
   enableAlerts?: boolean;
   colored?: boolean;
 }) {
-  const { t, language } = useI18n();
+  const { percent } = reading;
+  const { t } = useI18n();
+  const label = t(reading.name);
   const { size: widgetSize } = useWidgetSize();
   let barCount = 15;
   if (widgetSize === 'medium') {
@@ -427,11 +393,10 @@ function DeviceStatVerticalBars({
     }
   }, [percent, barCount]);
 
-  let strokeColor = getMetricDistinctColor(label, color);
-  if (!colored) strokeColor = 'var(--nd-accent)';
-
-  const { percentStr, tempStr, capacityStr: rawCapacityStr } = parseTelemetry(value, percent);
-  const capacityStr = localizeCapacity(rawCapacityStr, language);
+  const strokeColor = readingColor(reading, Boolean(colored));
+  const percentStr = percentText(reading);
+  const tempStr = temperatureText(reading);
+  const capacityStr = reading.capacity ? `(${reading.capacity})` : '';
 
   return (
     <div
@@ -558,13 +523,14 @@ function DeviceMonitorCardContent({
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const isApiDevice = !!device.api;
-  const { data: stats, error, isLoading } = useSWR<DeviceStat[] | { error: string, isOffline?: boolean }>(
+  // Integrations answer with numeric metrics; other devices with their hand-written stats.
+  const { data: stats, error, isLoading } = useSWR<(Metric | DeviceStat)[] | { error: string, isOffline?: boolean }>(
     isVisible && isApiDevice ? `/api/devices/${device.id}` : null,
     fetcher,
     { refreshInterval: 5000 } // Poll every 5s
   );
 
-  const displayStats = isApiDevice ? (Array.isArray(stats) ? stats : device.stats || []) : (device.stats || []);
+  const readings = toReadings(isApiDevice && Array.isArray(stats) ? stats : device.stats || [], language);
   const isOffline = error || (stats && 'error' in stats && stats.isOffline);
   const errorMessage = t(stats && 'error' in stats ? stats.error : "Impossible de joindre l'appareil");
 
@@ -595,9 +561,9 @@ function DeviceMonitorCardContent({
   const currentColoredGraphs = devConfig.coloredGraphs !== undefined ? devConfig.coloredGraphs : true;
 
   // Filter stats based on visible selection if configured
-  const filteredStats = displayStats.filter(stat => {
+  const filteredStats = readings.filter(reading => {
     if (!currentVisibleStats || currentVisibleStats.length === 0) return true;
-    return currentVisibleStats.includes(stat.label);
+    return currentVisibleStats.includes(reading.id);
   });
 
   // Clamping grid cols to prevent empty holes and adjust layout based on container width
@@ -621,23 +587,19 @@ function DeviceMonitorCardContent({
   return (
     <div
       style={{
-        marginTop: (hideTitles && !editMode) ? 0 : 4,
+        marginTop: hideTitles ? 0 : 4,
         paddingTop: isFirst ? 6 : 12,
         paddingBottom: isLast ? 2 : 12,
         borderBottom: borderBottomStyle,
         opacity: isOffline ? 0.6 : 1,
         filter: isOffline ? 'grayscale(0.8)' : 'none',
         transition: 'all 0.3s',
-        userSelect: editMode ? 'none' : 'auto'
+        userSelect: editMode ? 'none' : 'auto',
+        position: 'relative'
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5, flex: 1, minWidth: 0 }}>
-          {editMode && (
-            <div style={{ cursor: 'grab', display: 'flex', alignItems: 'center', padding: 4, marginRight: -4, flexShrink: 0, marginTop: -2 }}>
-              <GripVertical size={12} style={{ color: 'var(--nd-text-dimmed)' }} />
-            </div>
-          )}
           <span style={{ flexShrink: 0, fontSize: '0.75rem', marginTop: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji={device.icon} /></span>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '2px 6px', flex: 1, minWidth: 0 }}>
             <span style={{ fontWeight: 700, fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
@@ -653,7 +615,8 @@ function DeviceMonitorCardContent({
           </div>
         </div>
         {editMode && (
-          <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          // Drawn over the card (the whole card is the drag handle), so the layout keeps its size.
+          <div className="nd-device-edit-actions" style={{ top: isFirst ? 2 : 8 }}>
             <button className="nd-action-icon accent" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} title={t("Configurer l'affichage")}>
               <Pencil size={13} />
             </button>
@@ -687,21 +650,12 @@ function DeviceMonitorCardContent({
                 gap: 16
               }}
             >
-              {filteredStats.map((stat, i) => {
-                const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
-                let shortLabel = stat.label;
-                if (isDisk) {
-                  const match = shortLabel.match(/\(([^)]+)\)/);
-                  if (match) shortLabel = match[1];
-                  else shortLabel = shortLabel.replace(/disque|disk/i, '').trim();
-                }
-
-                const barColor = currentColoredGraphs ? getMetricDistinctColor(stat.label, stat.color) : 'var(--nd-accent)';
+              {filteredStats.map((reading, i) => {
+                const barColor = readingColor(reading, currentColoredGraphs);
                 // Derive glow using color-mix dynamically
                 const glowColor = `color-mix(in srgb, ${barColor} 15%, transparent)`;
-
-                const { percentStr, tempStr, capacityStr: rawCapacityStr } = parseTelemetry(stat.value, stat.percent);
-                const capacityStr = localizeCapacity(rawCapacityStr, language);
+                const percentStr = percentText(reading);
+                const tempStr = temperatureText(reading);
 
                 return (
                   <div key={i} className="nd-stat-card" style={{ display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }}>
@@ -719,15 +673,15 @@ function DeviceMonitorCardContent({
                           transition: 'border-color 0.3s ease',
                           display: 'inline-block'
                         }}
-                        title={translateMetricLabel(stat.label, t)}
+                        title={reading.id.replace(/^Disque(?=\s|$)/, t('Disque'))}
                       >
-                        {t(shortLabel)}
+                        {t(reading.name)}
                       </span>
                       {!currentHideValues && (
                         <div style={{ marginLeft: 'auto', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                          {capacityStr && (
+                          {reading.capacity && (
                             <span style={{ fontSize: 'var(--stat-detail-size, 0.62rem)', color: 'var(--nd-text-dimmed)', marginRight: 6 }}>
-                              {capacityStr.replace(/[()]/g, '')}
+                              {reading.capacity}
                             </span>
                           )}
                           {tempStr && (
@@ -741,12 +695,12 @@ function DeviceMonitorCardContent({
                         </div>
                       )}
                     </div>
-                    {stat.percent !== undefined && (
+                    {reading.percent !== undefined && (
                       <div className="nd-progress" style={{ height: 'var(--progress-bar-height, 5px)', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--nd-card-border)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div
                           className="nd-progress-fill"
                           style={{
-                            width: `${stat.percent}%`,
+                            width: `${reading.percent}%`,
                             backgroundColor: barColor,
                             boxShadow: `0 0 4px ${glowColor}`,
                             borderRadius: '3px',
@@ -771,19 +725,11 @@ function DeviceMonitorCardContent({
                 '--cols-mobile': actualColsMobile,
               } as React.CSSProperties}
             >
-              {filteredStats.map((stat, i) => {
-                const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
-                const shortLabel = isDisk
-                  ? (stat.label.match(/\(([^)]+)\)/)?.[1] || stat.label.replace(/disque|disk/i, '').trim())
-                  : stat.label;
-
+              {filteredStats.map((reading, i) => {
                 return (
                   <DeviceStatVerticalBars
                     key={i}
-                    label={t(shortLabel)}
-                    value={stat.value}
-                    percent={stat.percent}
-                    color={stat.color}
+                    reading={reading}
                     hideValues={currentHideValues}
                     enableAlerts={currentEnableAlerts}
                     colored={currentColoredGraphs}
@@ -804,19 +750,11 @@ function DeviceMonitorCardContent({
                 '--cols-mobile': actualColsMobile,
               } as React.CSSProperties}
             >
-              {filteredStats.map((stat, i) => {
-                const isDisk = stat.label.toLowerCase().startsWith('disque') || stat.label.toLowerCase().startsWith('disk');
-                const shortLabel = isDisk
-                  ? (stat.label.match(/\(([^)]+)\)/)?.[1] || stat.label.replace(/disque|disk/i, '').trim())
-                  : stat.label;
-
+              {filteredStats.map((reading, i) => {
                 return (
                   <DeviceStatGraph
                     key={i}
-                    label={t(shortLabel)}
-                    value={stat.value}
-                    percent={stat.percent}
-                    color={stat.color}
+                    reading={reading}
                     hideValues={currentHideValues}
                     enableAlerts={currentEnableAlerts}
                     colored={currentColoredGraphs}
@@ -843,7 +781,8 @@ export default function DevicesWidget({
   onReorderDevices,
   isVisible = true,
 }: DevicesWidgetProps) {
-  const { t } = useI18n();
+  const calme = useCalme();
+  const { t, language } = useI18n();
   const { config, setDeviceModal, updateConfig } = useConfig();
   const { size: widgetSize, width: containerWidth } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
@@ -882,9 +821,7 @@ export default function DevicesWidget({
     fetcher
   );
 
-  const availableStats = Array.isArray(configStats)
-    ? configStats.map(s => s.label)
-    : (configuringDevice?.stats || []).map(s => s.label);
+  const availableStats = toReadings(Array.isArray(configStats) ? configStats : configuringDevice?.stats || [], language).map(reading => reading.id);
 
   useEffect(() => {
     if (configuringDevice) {
@@ -1018,8 +955,40 @@ export default function DevicesWidget({
     </div>
   );
 
+  const list = (
+    <>
+      {filteredDevices.length === 0 && (
+        <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>
+          {editMode
+            ? t("Aucun appareil configuré ou sélectionné pour ce widget. Cliquez sur le crayon pour en configurer la liste.")
+            : t("Aucun appareil configuré ou sélectionné.")}
+        </p>
+      )}
+
+      <SortableContext items={filteredDevices.map(d => deviceSortableId(widgetInstanceId, d.id))} strategy={verticalListSortingStrategy}>
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: hideTitles || calme ? 0 : 6 }}>
+          {filteredDevices.map((device, idx) => (
+            <SortableDeviceCard
+              key={device.id}
+              device={device}
+              editMode={editMode}
+              widgetInstanceId={widgetInstanceId}
+              widgetProps={widgetProps}
+              onEdit={() => handleCardEdit(device)}
+              onDelete={() => handleCardDelete(device)}
+              isFirst={idx === 0}
+              isLast={idx === filteredDevices.length - 1}
+              isVisible={isVisible}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </>
+  );
+
   return (
-    <div className="nd-sidebar-card nd-animate-in nd-stagger-1" style={{ position: 'relative' }}>
+    // Calme style: the title above a quiet block (src/widgets/calme.tsx); Classic: the historical card.
+    <div className={calme ? 'ndc-widget ndc-devices' : 'nd-sidebar-card nd-animate-in nd-stagger-1'} style={calme ? undefined : { position: 'relative' }}>
       <style dangerouslySetInnerHTML={{
         __html: `
         .nd-sidebar-card {
@@ -1165,13 +1134,13 @@ export default function DevicesWidget({
       `}} />
 
       {(!hideTitles || editMode) && (
-        <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <div className={calme ? 'ndc-title' : 'nd-section-title'} style={calme ? undefined : { margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />
+            {!calme && <HardDrive size={12} style={{ color: 'var(--nd-orange)' }} />}
             <span>{t("Appareils")}</span>
           </div>
           {editMode && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <WidgetHeaderActions>
               {widgetInstanceId && onUpdateProps ? (
                 <button
                   className="nd-action-icon accent"
@@ -1189,37 +1158,12 @@ export default function DevicesWidget({
                   <Plus size={13} />
                 </button>
               )}
-            </div>
+            </WidgetHeaderActions>
           )}
         </div>
       )}
 
-      {filteredDevices.length === 0 && (
-        <p style={{ fontSize: '0.7rem', color: 'var(--nd-text-dimmed)', textAlign: 'center', padding: '12px 8px' }}>
-          {editMode
-            ? t("Aucun appareil configuré ou sélectionné pour ce widget. Cliquez sur le crayon pour en configurer la liste.")
-            : t("Aucun appareil configuré ou sélectionné.")}
-        </p>
-      )}
-
-      <SortableContext items={filteredDevices.map(d => `drag-device-${d.id}`)} strategy={verticalListSortingStrategy}>
-        <div style={{ display: 'flex', flexDirection: 'column', marginTop: (hideTitles && !editMode) ? 0 : 6 }}>
-          {filteredDevices.map((device, idx) => (
-            <SortableDeviceCard
-              key={device.id}
-              device={device}
-              editMode={editMode}
-              widgetInstanceId={widgetInstanceId}
-              widgetProps={widgetProps}
-              onEdit={() => handleCardEdit(device)}
-              onDelete={() => handleCardDelete(device)}
-              isFirst={idx === 0}
-              isLast={idx === filteredDevices.length - 1}
-              isVisible={isVisible}
-            />
-          ))}
-        </div>
-      </SortableContext>
+      {calme ? <div className="ndc-box">{list}</div> : list}
 
       {/* Global Delete Modal */}
       {editMode && deviceToDelete && <ConfirmModal

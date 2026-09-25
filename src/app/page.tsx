@@ -1,51 +1,31 @@
 'use client';
 
-import { useState, useCallback, Suspense, lazy, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import DemoExperience from '@/components/demo/DemoExperience';
 import TabDock from '@/components/layout/TabDock';
-import HomeTab from '@/components/tabs/home/HomeTab';
 import { useTabs, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
-import { Category, Service, Device } from '@/lib/types';
 import SettingsModal from '@/components/modals/SettingsModal';
 import CalendarEventModal from '@/components/modals/CalendarEventModal';
 import ViewEventModal from '@/components/modals/ViewEventModal';
 import PerfMonitor from '@/components/shared/PerfMonitor';
-import dynamic from 'next/dynamic';
-
-const CustomTabRenderer = dynamic(
-  () => import('@/components/tabs/custom/CustomTabRenderer'),
-  { ssr: false }
-);
-
 import ServiceFormModal from '@/components/modals/ServiceFormModal';
 import CategoryFormModal from '@/components/modals/CategoryFormModal';
 import DeviceFormModal from '@/components/modals/DeviceFormModal';
 import DockerActionFormModal from '@/components/modals/DockerActionFormModal';
-import { WidgetSelectionModal } from '@/components/modals/settings/tabs/custom/WidgetSelectionModal';
 import { useI18n } from '@/i18n/I18nProvider';
-
-const DockerTab = lazy(() => import('@/components/tabs/docker/DockerTab'));
-const WidgetsTab = lazy(() => import('@/components/tabs/widgets/WidgetsTab'));
-const NetworksTab = lazy(() => import('@/components/tabs/networks/NetworksTab'));
-
-function LoadingView({ text }: { text: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--nd-card-border)', borderTopColor: 'var(--nd-accent)', animation: 'spin 0.8s linear infinite' }} />
-        <span style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)' }}>{text}</span>
-      </div>
-    </div>
-  );
-}
+import { PageView, type LibraryTarget } from '@/components/pages/PageView';
+import { PageEditorBar } from '@/components/pages/PageEditorBar';
+import { WidgetLibraryModal } from '@/components/pages/WidgetLibraryModal';
+import { usePages } from '@/providers/PagesProvider';
+import { insertWidget, newWidgetInstance, removeWidget } from '@/lib/pages/operations';
 
 export default function Shell() {
   const { t } = useI18n();
   const { activeTab, switchTab, tabs, ready } = useTabs();
-  const { 
-    config, loading, refresh, addSlot, addWidgetsSlot, 
+  const {
+    config, loading, refresh,
     settingsModal, setSettingsModal, updateConfig,
     serviceModal, setServiceModal, addService, updateService, deleteService, uploadLogo,
     categoryModal, setCategoryModal, addCategory, updateCategory, deleteCategory,
@@ -55,21 +35,18 @@ export default function Shell() {
     user
   } = useConfig();
 
-  const [isDark, setIsDark] = useState(true);
-  const [editModeState, setEditModeState] = useState(false);
-  const editMode = user?.role === 'admin' && editModeState;
-  const [widgetModalOpen, setWidgetModalOpen] = useState(false);
+  const { pages, editing, startEditing, finishEditing, getPage, applyToPage, applyToPages, loadError: pagesError } = usePages();
+  const editMode = user?.role === 'admin' && editing;
+  const [libraryTarget, setLibraryTarget] = useState<LibraryTarget | null>(null);
+  // Pages are mounted on first visit, then kept mounted to preserve their state.
+  const [visitedPages, setVisitedPages] = useState<string[]>([]);
   const settingsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSensitive, setShowSensitive] = useState(true);
-  const toggleTheme = useCallback(() => {
-    setIsDark(prev => {
-      const next = !prev;
-      document.body.dataset.theme = next ? 'dark' : 'light';
-      document.body.classList.toggle('light', !next);
-      return next;
-    });
-  }, []);
+  if (activeTab && !visitedPages.includes(activeTab)) {
+    // Derived during render: the first visit mounts the page once.
+    setVisitedPages([...visitedPages, activeTab]);
+  }
 
   useEffect(() => {
     if (!loading && ready && user && user.role !== 'admin' && user.allowedTabs && user.allowedTabs.length > 0) {
@@ -108,35 +85,6 @@ export default function Shell() {
     return mapped;
   })();
 
-  const handleToggleTabHidden = async (id: TabId) => {
-    const newHidden = hiddenIds.includes(id) 
-      ? hiddenIds.filter((h: string) => h !== id)
-      : [...hiddenIds, id];
-    
-    await updateConfig({ type: 'settings', hiddenTabs: newHidden });
-    refresh();
-
-    // If current is now hidden, fallback to first visible
-    if (activeTab === id && !hiddenIds.includes(id)) {
-      const firstVisible = tabs.find(e => !newHidden.includes(e.id));
-      if (firstVisible) switchTab(firstVisible.id);
-    }
-  };
-
-  const handleMoveTab = async (id: TabId, direction: 'up' | 'down') => {
-    const tabOrder = config?.settings?.tabOrder || tabs.map(t => t.id);
-    const idx = tabOrder.indexOf(id);
-    if (idx === -1) return;
-    
-    const newOrder = [...tabOrder];
-    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= newOrder.length) return;
-    
-    [newOrder[idx], newOrder[targetIdx]] = [newOrder[targetIdx], newOrder[idx]];
-    await updateConfig({ type: 'settings', tabOrder: newOrder });
-    refresh();
-  };
-
   if (loading || !ready || !config) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -158,6 +106,7 @@ export default function Shell() {
   }
 
   const title = config?.settings?.title || process.env.NEXT_PUBLIC_DASHBOARD_TITLE || 'NASDASH';
+  const activePage = getPage(activeTab);
 
   const isDockHidden = config?.settings?.hideDock ?? false;
 
@@ -194,14 +143,16 @@ export default function Shell() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           editMode={editMode}
-          onToggleEdit={() => setEditModeState(prev => !prev)}
+          onToggleEdit={() => { if (editing) void finishEditing(); else startEditing(); }}
           onOpenSettings={(trigger) => {
             settingsTriggerRef.current = trigger ?? null;
             setSettingsModal({ open: true });
           }}
-          onAddCategory={() => setCategoryModal({ open: true })} 
-          onAddSlot={() => activeTab === 'widgets' ? addWidgetsSlot() : addSlot()}
-          onAddWidget={() => setWidgetModalOpen(true)}
+          onAddCategory={() => {
+            setCategoryModal({ open: true, placement: activePage ? { pageId: activePage.id } : undefined });
+          }}
+          onAddWidget={() => setLibraryTarget({ pageId: activeTab })}
+          hasTopology={!!activePage?.widgets.some(widget => widget.type === 'network-topology' && !widget.hidden)}
           secretMode={showSensitive}
           onToggleSecret={() => setShowSensitive(prev => !prev)}
           activeTab={activeTab}
@@ -209,45 +160,24 @@ export default function Shell() {
           onSwitchTab={switchTab}
         />
 
-        {/* Tab views - Kept mounted to preserve state */}
+        {pagesError && (
+          <div className="nd-page-load-error" role="alert">{t('pages.loadError', { error: pagesError })}</div>
+        )}
+
+        {/* Every page, official or custom, is rendered by the same engine.
+            Visited pages stay mounted (hidden) to preserve their state. */}
         <div className="nd-tab-view">
-          {/* Dashboard */}
-          <div className="flex-1" style={{ display: activeTab === 'dashboard' ? 'block' : 'none' }}>
-            <HomeTab
-              editMode={editMode}
-              searchQuery={searchQuery}
-              showSecretSections={showSecretSections}
-              showSensitive={showSensitive}
-              onToggleSecretSections={() => setShowSecretSections(prev => !prev)}
-              isVisible={activeTab === 'dashboard'}
-            />
-          </div>
-
-          {/* Docker */}
-          <div className="flex-1" style={{ display: activeTab === 'docker' ? 'block' : 'none' }}>
-            <Suspense fallback={<LoadingView text={t('loading.docker')} />}>
-              <DockerTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'docker'} showSensitive={showSensitive} />
-            </Suspense>
-          </div>
-
-          {/* Networks */}
-          <div className="flex-1" style={{ display: activeTab === 'networks' ? 'block' : 'none' }}>
-            <Suspense fallback={<LoadingView text={t('loading.networks')} />}>
-              <NetworksTab editMode={editMode} searchQuery={searchQuery} isVisible={activeTab === 'networks'} showSensitive={showSensitive} />
-            </Suspense>
-          </div>
-
-          {/* Widgets Tab */}
-          <div className="flex-1" style={{ display: activeTab === 'widgets' ? 'block' : 'none' }}>
-            <Suspense fallback={<LoadingView text={t('loading.widgets')} />}>
-              <WidgetsTab editMode={editMode} isVisible={activeTab === 'widgets'} showSensitive={showSensitive} categories={config?.categories || []} />
-            </Suspense>
-          </div>
-
-          {/* Custom Tabs */}
-          {tabs.filter(t => t.isCustom).map(t => (
-            <div key={t.id} className="flex-1" style={{ display: activeTab === t.id ? 'block' : 'none', minHeight: '100%', position: 'relative' }}>
-              <CustomTabRenderer tab={t} editMode={editMode} showSensitive={showSensitive} isVisible={activeTab === t.id} />
+          {tabs.filter(tab => tab.id === activeTab || visitedPages.includes(tab.id)).map(tab => (
+            <div key={tab.id} className="flex-1" style={{ display: activeTab === tab.id ? 'block' : 'none' }}>
+              <PageView
+                pageId={tab.id}
+                isVisible={activeTab === tab.id}
+                searchQuery={searchQuery}
+                showSensitive={showSensitive}
+                showSecretSections={showSecretSections}
+                onToggleSecretSections={() => setShowSecretSections(prev => !prev)}
+                onOpenLibrary={setLibraryTarget}
+              />
             </div>
           ))}
         </div>
@@ -285,10 +215,29 @@ export default function Shell() {
           onClose={() => setCategoryModal({ open: false })}
           onSave={async (data: any) => {
             if (categoryModal.category) await updateCategory(categoryModal.category.id, data);
-            else await addCategory(data.title, data.emoji, data.isSecret, data.layout);
+            else {
+              const created = await addCategory(data.title, data.emoji, data.isSecret, data.layout);
+              const placement = categoryModal.placement;
+              // A new category appears where it was requested, as a page widget.
+              if (created && placement && editing) {
+                applyToPage(placement.pageId, page => insertWidget(page, newWidgetInstance('service-category', { categoryId: created.id }, page)));
+              }
+            }
             setCategoryModal({ open: false });
           }}
-          onDelete={categoryModal.category ? async (id: string) => { await deleteCategory(id); setCategoryModal({ open: false }); } : undefined}
+          onDelete={categoryModal.category ? async (id: string) => {
+            await deleteCategory(id);
+            // Views of a deleted category disappear from the pages being edited.
+            if (editing) {
+              const affected = pages.filter(page => (getPage(page.id) ?? page).widgets.some(widget => widget.type === 'service-category' && widget.settings.categoryId === id));
+              if (affected.length) {
+                applyToPages(affected.map(page => page.id), drafts => drafts.map(draft => draft.widgets
+                  .filter(widget => widget.type === 'service-category' && widget.settings.categoryId === id)
+                  .reduce((current, widget) => removeWidget(current, widget.id), draft)));
+              }
+            }
+            setCategoryModal({ open: false });
+          } : undefined}
           showSecretSections={showSecretSections}
           showSensitive={showSensitive}
         />
@@ -327,44 +276,10 @@ export default function Shell() {
       {/* Performance Monitor — petit bouton en bas à droite */}
       <PerfMonitor />
 
-      {widgetModalOpen && user?.role === 'admin' && (
-        <WidgetSelectionModal
-          onClose={() => setWidgetModalOpen(false)}
-          onSelect={(widgetInfo) => {
-            const currentWidgets = config?.settings.homeWidgets || [];
-            const categories = config?.categories || [];
-            
-            const occupiedSlots = new Set([
-              ...categories.map(c => c.order),
-              ...currentWidgets.map(w => w.order)
-            ]);
-            
-            let firstEmptySlot = 0;
-            while (occupiedSlots.has(firstEmptySlot)) {
-              firstEmptySlot++;
-            }
-
-            const newWidget = {
-              type: widgetInfo.type,
-              id: `hw-${Math.random().toString(36).substr(2, 9)}`,
-              order: firstEmptySlot,
-              props: {}
-            };
-            
-            // @ts-ignore
-            if (widgetInfo.type === 'spacer') newWidget.height = 120;
-            
-            const currentSlots = config?.settings.totalSlots || Math.max(12, categories.length + currentWidgets.length);
-            const newTotalSlots = Math.max(currentSlots, firstEmptySlot + 1);
-
-            updateConfig({ 
-              homeWidgets: [...currentWidgets, newWidget],
-              totalSlots: newTotalSlots
-            });
-            setWidgetModalOpen(false);
-          }}
-        />
+      {libraryTarget && user?.role === 'admin' && editing && (
+        <WidgetLibraryModal target={libraryTarget} onClose={() => setLibraryTarget(null)} />
       )}
+      {user?.role === 'admin' && <PageEditorBar onAddWidget={() => setLibraryTarget({ pageId: activeTab })} />}
       {config?.demoMode === true && <DemoExperience />}
     </div>
   );

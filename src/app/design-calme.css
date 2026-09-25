@@ -1,0 +1,3496 @@
+/*
+ * "Calme" interface style (default). Everything here is scoped to
+ * body[data-design="calme"]; removing the attribute (Appearance → Style →
+ * Classic) gives the historical look back, untouched.
+ *
+ * Principles: tinted neutrals, one accent used sparingly, hierarchy through
+ * text colour rather than size, hairline borders, no glow or gradient,
+ * generous spacing. Colours below apply to the default theme only; the other
+ * themes keep their palette and get the same structure.
+ */
+
+/* ---------- Tokens: default theme, dark ---------- */
+body[data-design="calme"]:not([class*="theme-"]):not(.light) {
+  --nd-bg: hsl(222 14% 8%);
+  --nd-bg-surface: hsl(222 14% 9.6%);
+  --nd-bg-gradient: none;
+  --nd-card-bg-rgb: 21, 23, 28;
+  --nd-card-bg-opacity: 1;
+  --nd-card-bg: rgb(21 23 28);
+  --nd-subcard-bg: hsl(222 14% 12%);
+  --nd-card-border: hsl(222 13% 14.5%);
+  --nd-border: var(--nd-card-border);
+  --nd-card-hover-border: hsl(222 12% 22%);
+  --nd-text: hsl(222 14% 90%);
+  --nd-text-muted: hsl(222 8% 58%);
+  --nd-text-dimmed: hsl(222 7% 40%);
+  --nd-accent: #5fd3e6;
+  --nd-accent-glow: rgba(95, 211, 230, 0.12);
+  --nd-accent-dim: rgba(95, 211, 230, 0.5);
+  --nd-green: hsl(150 45% 62%);
+  --nd-orange: hsl(28 72% 64%);
+  --nd-yellow: hsl(40 72% 66%);
+  --nd-red: hsl(0 66% 68%);
+  --nd-purple: hsl(255 72% 76%);
+  --nd-blue: hsl(200 72% 68%);
+  --nd-progress-bg: hsl(222 14% 12%);
+  --nd-icon-bg: hsl(222 14% 12%);
+  --nd-icon-border: hsl(222 13% 15%);
+  --nd-dropdown-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Tokens: default theme, light ---------- */
+body[data-design="calme"].light:not([class*="theme-"]) {
+  --nd-bg: hsl(40 20% 96%);
+  --nd-bg-surface: hsl(40 25% 99%);
+  --nd-bg-gradient: none;
+  --nd-card-bg-rgb: 253, 252, 250;
+  --nd-card-bg-opacity: 1;
+  --nd-card-bg: rgb(253 252 250);
+  --nd-subcard-bg: hsl(40 14% 93%);
+  --nd-card-border: hsl(40 12% 88%);
+  --nd-border: var(--nd-card-border);
+  --nd-card-hover-border: hsl(40 10% 78%);
+  --nd-text: hsl(222 18% 14%);
+  --nd-text-muted: hsl(222 7% 42%);
+  --nd-text-dimmed: hsl(222 6% 60%);
+  --nd-accent: #0e7490;
+  --nd-accent-glow: rgba(14, 116, 144, 0.12);
+  --nd-accent-dim: rgba(14, 116, 144, 0.5);
+}
+
+/* ---------- Structure: every theme ---------- */
+body[data-design="calme"] {
+  --nd-card-radius: 6px;
+  --nd-card-shadow: none;
+  --nd-transition: 0.16s ease;
+  font-family: var(--font-geist-mono), ui-monospace, 'SFMono-Regular', monospace;
+  letter-spacing: -0.005em;
+}
+
+/* Text inputs and search use the interface font, not a hard-coded one. */
+body[data-design="calme"] .nd-search input,
+body[data-design="calme"] .nd-input,
+body[data-design="calme"] .nd-btn,
+body[data-design="calme"] .nd-brand {
+  font-family: inherit;
+}
+
+/* Header: a quiet bar with a hairline under it. */
+body[data-design="calme"] .nd-header {
+  padding: 12px 40px;
+  margin-bottom: 8px;
+}
+
+body[data-design="calme"] .nd-header-menu {
+  gap: 20px !important;
+}
+
+body[data-design="calme"] .nd-btn-menu-link span {
+  font-size: 0.86rem !important;
+  font-weight: 500 !important;
+}
+
+body[data-design="calme"] .nd-search input {
+  height: 32px;
+  border-radius: 6px;
+  background: var(--nd-card-bg);
+  font-size: 0.8rem;
+}
+
+body[data-design="calme"] .nd-search input:focus {
+  border-color: var(--nd-card-hover-border);
+  box-shadow: none;
+}
+
+/* Cards: flat surface, hairline border, no shadow or glow. */
+body[data-design="calme"] .nd-card {
+  box-shadow: none;
+}
+
+body[data-design="calme"] .nd-card:hover {
+  box-shadow: none;
+}
+
+/* Other themes: cards melt into the page (half card, half background) so
+   they stay readable without standing out; an opacity set by the user still
+   shows through --nd-card-bg. The default theme has its own calm tokens. */
+body[data-design="calme"][class*="theme-"] .nd-card,
+body[data-design="calme"][class*="theme-"] .ndc-box {
+  background: color-mix(in srgb, var(--nd-card-bg) 50%, var(--nd-bg));
+  border-color: color-mix(in srgb, var(--nd-card-border) 65%, var(--nd-bg));
+}
+
+/* Widget and category titles: small, uppercase, muted, no underline. */
+body[data-design="calme"] .nd-section-title {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: var(--nd-text-muted);
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 10px;
+}
+
+/* Buttons: quiet by default, the accent only for the main action. */
+body[data-design="calme"] .nd-btn {
+  border-radius: 6px;
+  box-shadow: none;
+  font-weight: 500;
+}
+
+body[data-design="calme"] .nd-btn-accent,
+body[data-design="calme"] .nd-btn-active {
+  box-shadow: none;
+  color: hsl(222 40% 8%);
+}
+
+body[data-design="calme"] .nd-action-icon {
+  border-color: transparent;
+  border-radius: 6px;
+}
+
+body[data-design="calme"] .nd-action-icon:hover {
+  background: var(--nd-subcard-bg);
+  border-color: transparent;
+}
+
+/* Fields */
+body[data-design="calme"] .nd-input {
+  border-radius: 6px;
+  background: var(--nd-bg);
+  box-shadow: none;
+}
+
+body[data-design="calme"] .nd-input:focus {
+  border-color: var(--nd-accent-dim);
+  box-shadow: 0 0 0 3px var(--nd-accent-glow);
+}
+
+/* Dialogs: one surface, a slightly stronger border, a calm backdrop. */
+body[data-design="calme"] .nd-modal {
+  border-radius: 8px;
+  border-color: var(--nd-card-hover-border);
+  background: var(--nd-bg-surface);
+  box-shadow: 0 24px 64px -24px rgba(0, 0, 0, 0.6);
+}
+
+body[data-design="calme"] .nd-modal-overlay {
+  background: color-mix(in srgb, var(--nd-bg) 78%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+/* Page grid: a bit more air between widgets. */
+body[data-design="calme"] .nd-page {
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+/* ---------- Calme widget kit (src/widgets/calme.tsx) ---------- */
+.ndc-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  container-type: inline-size;
+}
+
+.ndc-title {
+  margin: 0;
+  padding: 0 2px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--nd-text-muted);
+  /* Leaves room for the edit-mode controls drawn in the corner. */
+  padding-right: var(--nd-page-actions-width, 0px);
+}
+
+/* Edit mode: widget controls appear on hover (always on touch screens). */
+body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-actions {
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+body[data-design="calme"] .grid-stack-item:hover .nd-page-widget-actions,
+body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .nd-page-widget-actions {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-actions { opacity: 1; }
+}
+
+/* Edit mode: the title row is tall enough for the widget controls drawn in
+   its top-right corner, and its text stays clear of them. */
+.nd-page-widget--editing .ndc-title {
+  min-height: 32px;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.ndc-title-aside {
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-box {
+  background: var(--nd-card-bg);
+  border: 1px solid var(--nd-card-border);
+  border-radius: var(--nd-card-radius);
+  padding: 15px 17px;
+  min-width: 0;
+}
+
+.ndc-box--flush {
+  padding: 6px;
+}
+
+.ndc-sub {
+  color: var(--nd-text-dimmed);
+  font-size: 0.78rem;
+}
+
+/* Clock: a large, light time (sized by the block, never wrapped), the date
+   on one line and a hairline filling as the day goes by. */
+.ndc-clock-time {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3em;
+  white-space: nowrap;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-clock-hm,
+.ndc-clock-split {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+.ndc-clock-hm { font-size: clamp(2.3rem, 23cqi, 3.9rem); }
+
+.ndc-clock-colon {
+  display: inline-block;
+  margin: 0 0.02em;
+  opacity: 0.45;
+}
+
+.ndc-clock-small {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 0.35em;
+  font-size: 0.78rem;
+  line-height: 1;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-clock-split {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(2.6rem, 30cqi, 4.6rem);
+  line-height: 0.9;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-clock-split span + span { color: var(--nd-text-muted); }
+
+.ndc-clock--glow .ndc-clock-hm,
+.ndc-clock--glow .ndc-clock-split span:first-child { color: var(--nd-accent); }
+
+.ndc-clock-date {
+  display: flex;
+  gap: 0.45em;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--nd-text-dimmed);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndc-clock-weekday {
+  color: var(--nd-text);
+  text-transform: capitalize;
+}
+
+.ndc-clock-day {
+  height: 2px;
+  margin-top: 12px;
+  border-radius: 2px;
+  background: var(--nd-subcard-bg);
+  overflow: hidden;
+}
+
+.ndc-clock-day > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--nd-accent) 70%, transparent);
+  transition: width 1s linear;
+}
+
+.ndc-empty {
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--nd-text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.ndc-empty--error {
+  color: var(--nd-red);
+}
+
+.ndc-icon-button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--nd-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ndc-icon-button:hover {
+  background: var(--nd-subcard-bg);
+  color: var(--nd-text);
+}
+
+/* ---------- Weather ---------- */
+.ndc-box:has(> .ndc-weather) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ndc-weather {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ndc-weather > :not(.ndc-weather-scene) {
+  position: relative;
+  z-index: 1;
+}
+
+.ndc-weather-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ndc-weather-temp {
+  font-size: clamp(1.9rem, 15cqi, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-weather-range {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 0.74rem;
+  color: var(--nd-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ndc-weather-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.ndc-weather-place {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+  color: var(--nd-text);
+}
+
+.ndc-weather-icon { display: inline-flex; flex-shrink: 0; }
+
+.ndc-weather-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 8px;
+  font-size: 0.74rem;
+  color: var(--nd-text-dimmed);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-weather-hours {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  align-items: end;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.ndc-weather-hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.64rem;
+  color: var(--nd-text-dimmed);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-weather-hour-now {
+  color: var(--nd-text);
+}
+
+.ndc-weather-bar {
+  width: 100%;
+  max-width: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--nd-text) 12%, transparent);
+}
+
+.ndc-weather-bar--now {
+  background: var(--nd-accent);
+}
+
+.ndc-weather-days {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--nd-card-border) 80%, transparent);
+}
+
+.ndc-weather-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: var(--nd-text-muted);
+}
+
+.ndc-weather-day-name {
+  font-size: 0.7rem;
+  text-transform: capitalize;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-weather-day-temps {
+  display: flex;
+  gap: 5px;
+  font-size: 0.74rem;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-weather-day-min {
+  color: var(--nd-text-dimmed);
+}
+
+/* Narrow blocks: fewer, calmer parts rather than squeezed ones. */
+@container (max-width: 300px) {
+  .ndc-weather-hours { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .ndc-weather-hour:nth-child(n + 7) { display: none; }
+  .ndc-weather-day:nth-child(n + 4) { display: none; }
+}
+
+@container (max-width: 250px) {
+  .ndc-weather-details span:nth-child(n + 2) { display: none; }
+  .ndc-weather-hours { display: none; }
+  .ndc-weather-day-min { display: none; }
+  .ndc-weather-range { display: none; }
+}
+
+@container (max-width: 190px) {
+  .ndc-weather-days { display: none; }
+  .ndc-weather-main .ndc-wi { width: 28px; height: 28px; }
+}
+
+/* ---------- Weather scene: quiet light and motion behind the content ---------- */
+.ndc-weather-scene {
+  position: absolute;
+  inset: -16px -18px;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  /* A hint of atmosphere, fading out before the forecast: the block stays a
+     card of the dashboard like the others. */
+  opacity: 0.55;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.6) 35%, transparent 70%);
+}
+
+.ndc-weather-scene > span {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* Light of the moment */
+.ndc-weather[data-time="day"] .ndc-scene-light { opacity: 1; background: radial-gradient(120% 70% at 100% 0%, hsl(205 80% 60% / 0.13), transparent 70%); }
+.ndc-weather[data-time="night"] .ndc-scene-light { opacity: 1; background: linear-gradient(180deg, hsl(232 55% 40% / 0.2), transparent 75%); }
+.ndc-weather[data-time="dawn"] .ndc-scene-light { opacity: 1; background: radial-gradient(110% 70% at 0% 0%, hsl(22 95% 62% / 0.2), transparent 70%); }
+.ndc-weather[data-time="dusk"] .ndc-scene-light { opacity: 1; background: radial-gradient(110% 70% at 100% 0%, hsl(335 75% 62% / 0.18), transparent 70%); }
+.ndc-weather[data-sky="clear"][data-time="day"] .ndc-scene-light {
+  background: radial-gradient(70% 60% at 92% 6%, hsl(42 96% 62% / 0.26), transparent 70%), radial-gradient(120% 70% at 100% 0%, hsl(205 80% 60% / 0.1), transparent 70%);
+  animation: ndc-breathe 7s ease-in-out infinite;
+}
+
+/* Stars: clear or partly cloudy nights */
+.ndc-weather[data-time="night"]:is([data-sky="clear"], [data-sky="partly"]) .ndc-scene-stars {
+  opacity: 1;
+  background-image:
+    radial-gradient(1px 1px at 18% 22%, hsl(0 0% 100% / 0.8), transparent),
+    radial-gradient(1px 1px at 62% 14%, hsl(0 0% 100% / 0.6), transparent),
+    radial-gradient(1.2px 1.2px at 84% 34%, hsl(0 0% 100% / 0.7), transparent),
+    radial-gradient(1px 1px at 38% 40%, hsl(0 0% 100% / 0.45), transparent),
+    radial-gradient(1px 1px at 74% 58%, hsl(0 0% 100% / 0.4), transparent),
+    radial-gradient(1px 1px at 10% 64%, hsl(0 0% 100% / 0.35), transparent);
+  animation: ndc-twinkle 5s ease-in-out infinite;
+}
+
+/* Soft drifting clouds */
+.ndc-scene-cloud {
+  inset: auto !important;
+  width: 70%;
+  height: 50%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--nd-text) 9%, transparent);
+  filter: blur(22px);
+}
+.ndc-scene-cloud--a { top: -10%; left: -20%; animation: ndc-drift 38s ease-in-out infinite alternate; }
+.ndc-scene-cloud--b { top: 20%; right: -25%; animation: ndc-drift 46s ease-in-out infinite alternate-reverse; }
+.ndc-weather:is([data-sky="partly"]) .ndc-scene-cloud--a { opacity: 0.7; }
+.ndc-weather:is([data-sky="cloudy"], [data-sky="rain"], [data-sky="snow"], [data-sky="storm"]) .ndc-scene-cloud { opacity: 1; }
+
+/* Rain, snow */
+.ndc-weather:is([data-sky="rain"], [data-sky="storm"]) .ndc-scene-precip {
+  opacity: 1;
+  background-image: repeating-linear-gradient(104deg, transparent 0 13px, hsl(205 85% 72% / 0.16) 13px 14px);
+  background-size: 100% 60px;
+  mask-image: linear-gradient(180deg, #000, transparent 85%);
+  animation: ndc-rain 0.9s linear infinite;
+}
+.ndc-weather[data-sky="snow"] .ndc-scene-precip {
+  opacity: 1;
+  background-image: radial-gradient(1.4px 1.4px at 20% 30%, hsl(0 0% 100% / 0.55), transparent), radial-gradient(1.2px 1.2px at 60% 10%, hsl(0 0% 100% / 0.45), transparent), radial-gradient(1.6px 1.6px at 85% 50%, hsl(0 0% 100% / 0.5), transparent), radial-gradient(1.2px 1.2px at 40% 70%, hsl(0 0% 100% / 0.4), transparent);
+  background-size: 90px 90px;
+  mask-image: linear-gradient(180deg, #000, transparent 90%);
+  animation: ndc-snow 9s linear infinite;
+}
+.ndc-weather[data-sky="storm"] .ndc-scene-flash { background: hsl(0 0% 100% / 0.08); animation: ndc-flash 8s steps(1) infinite; }
+.ndc-weather[data-sky="fog"] .ndc-scene-cloud { opacity: 1; height: 28%; border-radius: 40%; filter: blur(14px); }
+
+/* ---------- Calme weather icons ---------- */
+.ndc-wi { flex-shrink: 0; overflow: visible; color: var(--nd-text-muted); }
+.ndc-wi .ndc-wi-sun { stroke: hsl(42 90% 64%); }
+.ndc-wi .ndc-wi-moon { stroke: hsl(222 40% 84%); fill: hsl(222 40% 84% / 0.12); }
+.ndc-wi .ndc-wi-cloud { stroke: currentColor; fill: var(--nd-card-bg); }
+.ndc-wi .ndc-wi-drop { stroke: hsl(205 85% 70%); }
+.ndc-wi .ndc-wi-flake { fill: hsl(210 30% 92%); stroke: none; }
+.ndc-wi .ndc-wi-bolt { stroke: hsl(46 96% 62%); }
+.ndc-wi .ndc-wi-fog { stroke: currentColor; }
+.ndc-wi--animated { color: var(--nd-text); }
+.ndc-wi--animated .ndc-wi-rays { transform-origin: 12px 12px; animation: ndc-spin 40s linear infinite; }
+.ndc-wi--animated .ndc-wi-sun--small .ndc-wi-rays { animation-duration: 50s; }
+.ndc-wi--animated .ndc-wi-moon { animation: ndc-breathe 6s ease-in-out infinite; }
+.ndc-wi--animated .ndc-wi-drift { animation: ndc-cloud 6s ease-in-out infinite alternate; }
+.ndc-wi--animated .ndc-wi-drop { animation: ndc-drop 1.2s ease-in infinite; }
+.ndc-wi--animated .ndc-wi-flake { animation: ndc-flake 2.4s ease-in-out infinite; }
+.ndc-wi--animated .ndc-wi-bolt { animation: ndc-bolt 4s steps(1) infinite; }
+.ndc-wi--animated .ndc-wi-fog line { animation: ndc-fog 5s ease-in-out infinite alternate; }
+.ndc-wi--animated .ndc-wi-fog line:nth-child(2) { animation-delay: -2s; }
+
+@keyframes ndc-spin { to { transform: rotate(360deg); } }
+@keyframes ndc-breathe { 50% { opacity: 0.72; } }
+@keyframes ndc-twinkle { 50% { opacity: 0.55; } }
+@keyframes ndc-drift { to { transform: translateX(28%); } }
+@keyframes ndc-cloud { to { transform: translateX(1.2px); } }
+@keyframes ndc-rain { to { background-position: -18px 60px; } }
+@keyframes ndc-snow { to { background-position: 20px 90px; } }
+@keyframes ndc-flash { 0%, 95% { opacity: 0; } 96% { opacity: 1; } 97% { opacity: 0; } 98% { opacity: 0.7; } }
+@keyframes ndc-drop { 0% { transform: translateY(-1.5px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(2px); opacity: 0; } }
+@keyframes ndc-flake { 0% { transform: translateY(-1px); opacity: 0.2; } 50% { opacity: 1; } 100% { transform: translateY(2px); opacity: 0.2; } }
+@keyframes ndc-bolt { 0%, 88% { opacity: 1; } 90% { opacity: 0.2; } 92% { opacity: 1; } 94% { opacity: 0.3; } }
+@keyframes ndc-fog { to { transform: translateX(1.5px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ndc-weather *, .ndc-wi * { animation: none !important; }
+}
+
+/* ---------- Devices (Calme container around the historical content) ---------- */
+.ndc-devices .ndc-box {
+  padding: 4px 17px;
+}
+
+.ndc-devices .nd-progress {
+  height: 4px !important;
+  border: none !important;
+  border-radius: 2px !important;
+  background: var(--nd-subcard-bg) !important;
+}
+
+.ndc-devices .nd-progress-fill {
+  box-shadow: none !important;
+  border-radius: 2px !important;
+}
+
+.ndc-devices .nd-device-stats-grid .nd-stat-card,
+.ndc-devices .nd-device-stats-grid .nd-stat-card:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.ndc-devices .nd-stat-label {
+  color: var(--nd-text-muted) !important;
+  font-weight: 400 !important;
+}
+
+.ndc-devices .nd-stat-value {
+  font-weight: 500 !important;
+}
+
+/* ---------- Service categories (pings and their display unchanged) ---------- */
+body[data-design="calme"] .nd-category-title,
+body[data-design="calme"] .nd-category-title-above {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: var(--nd-text-muted);
+}
+
+body[data-design="calme"] .nd-category-title {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 10px;
+}
+
+body[data-design="calme"] .nd-category-title-above {
+  margin-bottom: 9px;
+  padding: 0 2px;
+  /* Room for the edit-mode controls drawn in the corner. */
+  padding-right: var(--nd-page-actions-width, 0px);
+}
+
+body[data-design="calme"] .nd-page-widget--editing .nd-category-title-above {
+  min-height: 32px;
+}
+
+body[data-design="calme"] .nd-service {
+  border-radius: 5px;
+}
+
+body[data-design="calme"] .nd-service:hover {
+  background: var(--nd-subcard-bg);
+  border-color: transparent;
+}
+
+body[data-design="calme"] .nd-service-name {
+  font-weight: 500;
+}
+
+/* ---------- Calendar ---------- */
+.ndc-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-cal-month { min-width: 0; }
+
+.ndc-cal-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.ndc-cal-label {
+  margin-right: auto;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--nd-text);
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndc-cal-today {
+  border: none;
+  background: transparent;
+  color: var(--nd-accent);
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.ndc-cal-today:hover { background: var(--nd-subcard-bg); }
+
+.ndc-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.ndc-cal-weekdays {
+  margin-bottom: 4px;
+  text-align: center;
+  font-size: 0.66rem;
+  color: var(--nd-text-dimmed);
+  text-transform: uppercase;
+}
+
+.ndc-cal-day {
+  position: relative;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.76rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ndc-cal-day:hover { background: var(--nd-subcard-bg); color: var(--nd-text); }
+
+.ndc-cal-num {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.ndc-cal-day.is-today .ndc-cal-num {
+  background: var(--nd-accent);
+  color: var(--nd-bg);
+  font-weight: 600;
+}
+
+/* A dot under days with events; the titles only fit in wide blocks. */
+.ndc-cal-day.has-events::after {
+  content: "";
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background: var(--nd-accent);
+}
+
+.ndc-cal-cell-events { display: none; }
+
+.ndc-cal-agenda { min-width: 0; }
+
+.ndc-cal-agenda-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  margin-bottom: 6px;
+}
+
+.ndc-cal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ndc-cal-event {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 4px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ndc-cal-event:hover { background: var(--nd-subcard-bg); }
+
+.ndc-cal-date {
+  flex: 0 0 4.6em;
+  color: var(--nd-text-dimmed);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.ndc-cal-date.is-today { color: var(--nd-accent); }
+
+.ndc-cal-event-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.35;
+}
+
+.ndc-cal-time {
+  color: var(--nd-text-dimmed);
+  font-size: 0.72rem;
+}
+
+@container (min-width: 520px) {
+  .ndc-calendar { flex-direction: row; gap: 24px; }
+  .ndc-cal-month { flex: 0 0 min(300px, 52%); }
+  .ndc-cal-agenda { flex: 1; padding-top: 1px; }
+  .ndc-cal-day { height: 34px; }
+}
+
+/* Wide blocks: a planner, with the events written inside the days. */
+@container (min-width: 760px) {
+  .ndc-cal-month { flex: 1 1 auto; }
+  .ndc-cal-agenda { flex: 0 0 min(280px, 30%); }
+  .ndc-cal-grid:not(.ndc-cal-weekdays) { gap: 3px; }
+  .ndc-cal-day {
+    height: auto;
+    min-height: 62px;
+    padding: 4px;
+    align-items: stretch;
+    justify-content: flex-start;
+    border-radius: 0;
+    border-top: 1px solid var(--nd-card-border);
+  }
+  .ndc-cal-day:hover { background: var(--nd-subcard-bg); border-radius: 5px; }
+  .ndc-cal-num { align-self: flex-end; width: 22px; height: 22px; font-size: 0.72rem; }
+  .ndc-cal-day.has-events::after { display: none; }
+  .ndc-cal-cell-events { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ndc-cal-chip {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--nd-accent) 14%, transparent);
+    color: var(--nd-text);
+    font-size: 0.64rem;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ndc-cal-more { font-size: 0.6rem; color: var(--nd-text-dimmed); text-align: left; padding-left: 5px; }
+}
+
+/* ---------- Overview ---------- */
+.ndc-overview { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.ndc-overview-main { display: flex; align-items: baseline; gap: 8px; }
+
+.ndc-overview-value {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: clamp(2rem, 16cqi, 2.8rem);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-overview-label { font-size: 0.8rem; color: var(--nd-text-muted); }
+
+.ndc-overview-bar { display: flex; gap: 2px; height: 4px; }
+
+.ndc-overview-bar > span {
+  flex-basis: 0;
+  min-width: 3px;
+  border-radius: 2px;
+  background: var(--nd-accent);
+}
+
+.ndc-overview-others {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 0.76rem;
+}
+
+.ndc-overview-others > div { display: flex; gap: 6px; }
+.ndc-overview-others dt { color: var(--nd-text-dimmed); }
+.ndc-overview-others dd { margin: 0; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+
+/* ---------- Calme shell for the other widgets ----------
+   Widgets that still draw the historical card (Docker, network, Tailscale,
+   ports…) get the Calme layout without changing their code: the card becomes
+   transparent, its title sits above, and the block is drawn behind the rest
+   of the content (::before, starting under the title). The Classic style
+   does not match these rules. */
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) {
+  --ndc-shell-top: 0px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 15px 17px;
+  isolation: isolate;
+  container-type: inline-size;
+}
+
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before {
+  content: "";
+  position: absolute;
+  inset: var(--ndc-shell-top) 0 0 0;
+  z-index: -1;
+  background: var(--nd-card-bg);
+  border: 1px solid var(--nd-card-border);
+  border-radius: var(--nd-card-radius);
+  pointer-events: none;
+}
+
+body[data-design="calme"][class*="theme-"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before {
+  background: color-mix(in srgb, var(--nd-card-bg) 50%, var(--nd-bg));
+  border-color: color-mix(in srgb, var(--nd-card-border) 65%, var(--nd-bg));
+}
+
+/* With a title: the title row is 18 px tall (32 px in edit mode), then a
+   9 px gap, as in the Calme kit. */
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card):has(> .nd-section-title) {
+  --ndc-shell-top: 27px;
+  padding-top: 0;
+}
+
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) > .nd-section-title {
+  box-sizing: border-box;
+  height: 18px;
+  margin: 0 -15px 24px !important;
+  padding: 0 var(--nd-page-actions-width, 0px) 0 2px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  color: var(--nd-text-muted) !important;
+  white-space: nowrap;
+}
+
+body[data-design="calme"] .nd-page-widget--editing .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card):has(> .nd-section-title) {
+  --ndc-shell-top: 41px;
+}
+
+body[data-design="calme"] .nd-page-widget--editing .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) > .nd-section-title {
+  height: 32px;
+}
+
+/* The small coloured icon before each historical title is dropped. */
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) > .nd-section-title > svg:first-child,
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) > .nd-section-title > div:first-child > svg:first-child {
+  display: none;
+}
+
+/* ---------- Docker ---------- */
+body[data-design="calme"] .nd-docker-tabs {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+  gap: 4px;
+}
+
+body[data-design="calme"] .nd-docker-tab,
+body[data-design="calme"] .nd-host-btn {
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+body[data-design="calme"] .nd-docker-tab--active {
+  background: var(--nd-subcard-bg);
+}
+
+body[data-design="calme"] .nd-host-btn {
+  background: transparent;
+}
+
+body[data-design="calme"] .nd-host-btn--active {
+  border-color: var(--nd-card-hover-border);
+  background: var(--nd-subcard-bg);
+}
+
+/* Containers: the status is the dot, not a coloured edge; the selection is
+   a quiet surface instead of a glow. */
+body[data-design="calme"] .nd-container-card {
+  border-color: var(--nd-card-border);
+  border-left-width: 1px;
+  background: transparent;
+  border-radius: 6px;
+}
+
+body[data-design="calme"] .nd-container-card:hover {
+  background: var(--nd-subcard-bg);
+}
+
+body[data-design="calme"] .nd-container-card--selected {
+  border-color: var(--nd-card-hover-border) !important;
+  background: var(--nd-subcard-bg);
+  box-shadow: inset 2px 0 0 var(--nd-accent);
+}
+
+body[data-design="calme"] .nd-status-dot {
+  width: 6px;
+  height: 6px;
+  box-shadow: none;
+  animation: none;
+}
+
+body[data-design="calme"] .nd-docker-stat-card {
+  background: transparent;
+  box-shadow: none;
+}
+
+body[data-design="calme"] .nd-docker-stat-value {
+  color: var(--nd-text);
+  font-weight: 500;
+  text-shadow: none;
+}
+
+body[data-design="calme"] .nd-docker-stat-label {
+  letter-spacing: 0.04em;
+  color: var(--nd-text-dimmed);
+}
+
+body[data-design="calme"] .nd-terminal {
+  background: var(--nd-bg);
+  font-family: inherit;
+}
+
+body[data-design="calme"] .nd-port-pill {
+  font-family: inherit;
+  background: transparent;
+}
+
+/* Edit mode: the name shown above widgets without a title of their own. */
+body[data-design="calme"] .nd-page-widget-edit-title {
+  box-sizing: border-box;
+  min-height: 32px;
+  margin: 0 0 9px;
+  padding: 2px var(--nd-page-actions-width, 0px) 0 2px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+}
+
+body[data-design="calme"] .nd-page-widget-edit-title > :first-child { display: none; }
+
+/* ---------- Services in bento / grid layouts ----------
+   One level only, as in the row layouts: the tile has no frame of its own
+   (a quiet surface on hover), the icon keeps its small box, no shadows. */
+body[data-design="calme"] :is(.nd-service--bento, .nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small) {
+  border-color: transparent;
+  background: transparent;
+  border-radius: 6px;
+}
+
+body[data-design="calme"] :is(.nd-service--bento, .nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small):hover {
+  border-color: transparent;
+  background: var(--nd-subcard-bg);
+  transform: none;
+}
+
+body[data-design="calme"] :is(.nd-service--bento, .nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small) .nd-service-icon {
+  box-shadow: none !important;
+}
+
+body[data-design="calme"] .nd-service--bento .nd-service-name {
+  font-weight: 500;
+}
+
+/* ---------- Network latency ---------- */
+.ndc-net { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.ndc-net-graph { min-width: 0; }
+
+.ndc-net-now { display: flex; align-items: baseline; gap: 10px; }
+
+.ndc-net-value {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: clamp(1.8rem, 12cqi, 2.4rem);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-net-value small { font-size: 0.4em; letter-spacing: 0; color: var(--nd-text-dimmed); }
+
+.ndc-net-state { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--nd-text-muted); }
+.ndc-net-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--nd-green); }
+.ndc-net-state--warn::before { background: var(--nd-yellow); }
+.ndc-net-state--bad::before { background: var(--nd-red); }
+
+.ndc-net-chart { height: 110px; margin: 12px -8px 0; }
+.ndc-net-pulse { fill: var(--nd-accent); opacity: 0.25; transform-box: fill-box; transform-origin: center; animation: ndc-net-pulse 2s ease-out infinite; }
+@keyframes ndc-net-pulse { 0% { transform: scale(0.5); opacity: 0.45; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ndc-net-pulse { animation: none; } }
+.nd-page-widget--sized .ndc-net, .nd-page-widget--sized .ndc-net-graph { flex: 1; display: flex; flex-direction: column; }
+.nd-page-widget--sized .ndc-net-chart { flex: 1; min-height: 110px; }
+
+.ndc-net-figures {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 0.76rem;
+}
+
+.ndc-net-figures > div { display: flex; gap: 6px; }
+.ndc-net-figures dt { color: var(--nd-text-dimmed); }
+.ndc-net-figures dd { margin: 0; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+
+@container (min-width: 620px) {
+  .ndc-net--stats { flex-direction: row; align-items: stretch; gap: 28px; }
+  .ndc-net-graph { flex: 1; }
+  .ndc-net-chart { height: 120px; }
+  .ndc-net-figures {
+    flex: 0 0 180px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding-left: 24px;
+    border-left: 1px solid var(--nd-card-border);
+  }
+  .ndc-net-figures > div { justify-content: space-between; }
+}
+
+/* ---------- Shared small pieces ---------- */
+.ndc-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--nd-text-dimmed);
+}
+
+.ndc-dot--running,
+.ndc-dot--online { background: var(--nd-green); }
+.ndc-dot--stopped,
+.ndc-dot--offline { background: var(--nd-red); }
+.ndc-dot--other { background: var(--nd-yellow); }
+
+.ndc-select {
+  height: 26px;
+  max-width: 100%;
+  padding: 0 24px 0 8px;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.ndc-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.72rem;
+  color: var(--nd-text-dimmed);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-icon-button:disabled { opacity: 0.35; cursor: default; background: transparent; }
+
+.ndc-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  min-width: 190px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  background: var(--nd-bg-surface);
+  border: 1px solid var(--nd-card-hover-border);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.55);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.ndc-menu-label {
+  padding: 8px 8px 4px;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ndc-menu-item:hover { background: var(--nd-subcard-bg); }
+.ndc-menu-item[aria-checked="true"] { color: var(--nd-accent); }
+
+/* ---------- Docker containers ---------- */
+.ndc-ctrs { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.ndc-ctrs-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ndc-ctrs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+  gap: 6px 18px;
+  margin: 0 -8px;
+}
+
+.ndc-ctr {
+  height: 46px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  border-radius: 5px;
+  min-width: 0;
+}
+
+.ndc-ctr:hover { background: var(--nd-subcard-bg); }
+
+.ndc-ctr-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+
+.ndc-ctr-name,
+.ndc-ctr-image {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndc-ctr-name { font-size: 0.8rem; color: var(--nd-text); }
+.ndc-ctr-image { font-size: 0.68rem; color: var(--nd-text-dimmed); }
+
+.ndc-ctr-status {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--nd-text-dimmed);
+  white-space: nowrap;
+}
+
+/* Start/stop appears with the row (always on touch screens). */
+.ndc-ctr-action { opacity: 0; transition: opacity 0.12s ease; }
+.ndc-ctr:hover .ndc-ctr-action,
+.ndc-ctr-action:focus-visible,
+.ndc-ctr-action:disabled { opacity: 1; }
+@media (hover: none) { .ndc-ctr-action { opacity: 1; } }
+
+@container (max-width: 300px) {
+  .ndc-ctr-status { display: none; }
+}
+
+/* Automatic scrolling: an endless, slow loop that pauses under the mouse. */
+.ndc-ctrs-viewport {
+  height: calc(var(--ndc-rows, 6) * 52px);
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+
+.ndc-ctrs-loop { animation: ndc-loop linear infinite; }
+.ndc-ctrs-viewport:hover .ndc-ctrs-loop { animation-play-state: paused; }
+
+@keyframes ndc-loop {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-50% - 1px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ndc-ctrs-loop { animation: none; }
+  .ndc-ctrs-viewport { overflow-y: auto; }
+}
+
+/* ---------- Docker actions ---------- */
+.ndc-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+  gap: 2px 12px;
+  margin: 0 -8px;
+}
+
+.ndc-actions > .ndc-empty { grid-column: 1 / -1; }
+
+.ndc-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  min-width: 0;
+  outline: none;
+}
+
+.ndc-action:hover,
+.ndc-action:focus-visible { background: var(--nd-subcard-bg); }
+.ndc-action--editing { cursor: default; }
+
+.ndc-action-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--nd-accent) 10%, transparent);
+  color: var(--nd-accent);
+}
+
+.ndc-action-grip { background: transparent; color: var(--nd-text-dimmed); cursor: grab; }
+
+.ndc-action-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+.ndc-action-name {
+  font-size: 0.8rem;
+  color: var(--nd-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndc-action-sub { font-size: 0.68rem; color: var(--nd-text-dimmed); }
+
+/* ---------- Small shared bits ---------- */
+.ndc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--nd-text-muted);
+  text-decoration: none;
+}
+
+.ndc-link:hover { color: var(--nd-accent); }
+
+.ndc-tag {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--nd-subcard-bg);
+  color: var(--nd-text-dimmed);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- Tailscale mesh ---------- */
+.ndc-mesh {
+  list-style: none;
+  margin: 0 -8px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 2px 12px;
+}
+
+.ndc-mesh-device {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 5px;
+  min-width: 0;
+}
+
+.ndc-mesh-device:hover { background: var(--nd-subcard-bg); }
+.ndc-mesh-device.is-offline { opacity: 0.5; }
+
+.ndc-mesh-icon { display: inline-flex; color: var(--nd-text-dimmed); flex-shrink: 0; }
+
+.ndc-mesh-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+.ndc-mesh-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--nd-text);
+}
+
+.ndc-mesh-name > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.ndc-mesh-sub {
+  font-size: 0.68rem;
+  color: var(--nd-text-dimmed);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Network page tools ---------- */
+body[data-design="calme"] .nd-port-row { border-bottom: none; border-radius: 5px; }
+body[data-design="calme"] .nd-port-row:hover { background: var(--nd-subcard-bg); }
+
+body[data-design="calme"] .nd-port-tag {
+  min-width: 3.4em;
+  text-align: center;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--nd-accent);
+  background: transparent;
+  border-color: transparent;
+  padding: 1px 0;
+}
+
+body[data-design="calme"] .nd-port-protocol {
+  font-weight: 500;
+  font-size: 0.6rem;
+  background: transparent;
+  border-color: transparent;
+  color: var(--nd-text-dimmed);
+}
+
+body[data-design="calme"] .nd-port-protocol--exited { color: var(--nd-red); }
+
+.ndc-check {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--nd-subcard-bg);
+  font-size: 0.74rem;
+  color: var(--nd-text);
+  box-shadow: inset 2px 0 0 var(--nd-green);
+}
+
+.ndc-check--busy { box-shadow: inset 2px 0 0 var(--nd-red); }
+.ndc-check svg { color: var(--nd-green); }
+.ndc-check--busy svg { color: var(--nd-red); }
+.ndc-check strong { color: var(--nd-text) !important; font-weight: 500; }
+
+.ndc-suggestion {
+  flex: 1;
+  height: 28px;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.ndc-suggestion:hover { border-color: var(--nd-accent); color: var(--nd-accent); }
+
+/* ---------- Service ports ---------- */
+.ndc-ports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.8rem;
+  color: var(--nd-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ndc-port { min-width: 2.6em; }
+
+.ndc-signature {
+  margin-top: 14px;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nd-text-dimmed);
+  user-select: none;
+  opacity: 0.7;
+}
+
+/* ---------- Docker counters ---------- */
+.ndc-counters {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ndc-counters > div { display: flex; flex-direction: column-reverse; gap: 4px; min-width: 0; }
+
+.ndc-counters dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-counters dd {
+  margin: 0;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: clamp(1.6rem, 12cqi, 2.2rem);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--nd-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Settings (frame) ----------
+   One surface, a text navigation with search on the left, and on the right
+   where you are, a large title and what the section is for. */
+body[data-design="calme"] .nd-settings-modal.ndc-settings {
+  width: 1040px !important;
+  height: 760px !important;
+  background: var(--nd-bg-surface);
+  border-radius: 8px;
+}
+
+.ndc-settings .ndc-settings-nav {
+  width: 232px !important;
+  padding: 16px 12px !important;
+  gap: 8px !important;
+  background: transparent !important;
+  border-right: 1px solid var(--nd-card-border) !important;
+}
+
+.ndc-settings-nav-top { display: flex; align-items: center; gap: 6px; }
+
+.ndc-settings-search {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 6px;
+  background: var(--nd-bg);
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-settings-search:focus-within { border-color: var(--nd-card-hover-border); }
+
+.ndc-settings-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.ndc-settings-search input::-webkit-search-cancel-button { display: none; }
+
+.ndc-settings-nav-groups { display: flex; flex-direction: column; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+
+.ndc-settings-nav-label {
+  padding: 16px 10px 6px;
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-settings-nav-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndc-settings-nav-item:hover { color: var(--nd-text); }
+.ndc-settings-nav-item.is-active { background: var(--nd-subcard-bg); color: var(--nd-text); }
+
+.ndc-settings-nav-empty { padding: 16px 10px; font-size: 0.76rem; color: var(--nd-text-dimmed); }
+
+.ndc-settings .nd-settings-content { padding: 26px 34px 34px !important; }
+
+.ndc-settings-head { position: relative; margin-bottom: 22px; padding-right: 40px; }
+
+.ndc-settings-crumb { font-size: 0.72rem; color: var(--nd-text-dimmed); text-transform: lowercase; }
+
+.ndc-settings-title {
+  margin: 6px 0 4px;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: var(--nd-text);
+}
+
+.ndc-settings-desc { margin: 0; font-size: 0.8rem; color: var(--nd-text-muted); max-width: 60ch; }
+
+.ndc-settings-close { position: absolute; top: -6px; right: -12px; width: 30px; height: 30px; }
+
+.ndc-settings .ndc-settings-back {
+  margin-bottom: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+/* Small screens: the historical menu → section drill-down is kept. */
+@media (max-width: 900px) {
+  .ndc-settings .ndc-settings-nav { width: 100% !important; border-right: none !important; }
+  .ndc-settings .nd-settings-content { padding: 18px 16px 24px !important; }
+  .ndc-settings-close { right: -4px; }
+}
+
+/* ---------- Settings (content) ---------- */
+/* Sections: no box, a hairline above, the title as a quiet row. */
+.ndc-set-section { border-top: 1px solid var(--nd-card-border); }
+.ndc-set-section:last-child { border-bottom: 1px solid var(--nd-card-border); }
+.ndc-set-section + .ndc-set-section { margin-top: 0; }
+
+.ndc-set-section-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ndc-set-section-lead { display: flex; align-items: center; gap: 12px; }
+.ndc-set-section-icon { display: inline-flex; color: var(--nd-text-dimmed); }
+.ndc-set-section-title { display: block; font-size: 0.86rem; font-weight: 500; color: var(--nd-text); }
+.ndc-set-section-desc { display: block; margin-top: 2px; font-size: 0.74rem; color: var(--nd-text-dimmed); }
+
+.ndc-set-chevron { flex-shrink: 0; color: var(--nd-text-dimmed); transition: transform 0.16s ease; }
+.ndc-set-section.is-open .ndc-set-chevron { transform: rotate(180deg); }
+
+.ndc-set-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 2px 0 20px;
+}
+
+/* Switch rows: label on the left, the switch on the right. */
+.ndc-switch-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ndc-switch-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ndc-switch-label { font-size: 0.82rem; color: var(--nd-text); }
+.ndc-switch-sub { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+
+.ndc-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  border: 1px solid var(--nd-card-hover-border);
+  background: var(--nd-subcard-bg);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ndc-switch > span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--nd-text-dimmed);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.ndc-switch.is-on { background: var(--nd-accent); border-color: transparent; }
+.ndc-switch.is-on > span { transform: translateX(14px); background: var(--nd-bg); }
+.ndc-switch-row:focus-visible .ndc-switch { box-shadow: 0 0 0 3px var(--nd-accent-glow); }
+
+/* Historical blocks inside the tabs: flat, no second frame. */
+body[data-design="calme"] .ndc-settings .nd-settings-card {
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--nd-card-border);
+  border-radius: 0;
+  padding: 16px 0;
+}
+
+body[data-design="calme"] .ndc-settings .nd-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--nd-text-muted);
+}
+
+body[data-design="calme"] .ndc-settings .nd-input,
+body[data-design="calme"] .ndc-settings select {
+  height: 34px;
+  font-size: 0.8rem;
+}
+
+body[data-design="calme"] .ndc-settings textarea.nd-input { height: auto; }
+
+.ndc-demo-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: -8px 0 18px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--nd-text-dimmed);
+}
+
+.ndc-demo-note svg { width: 13px; height: 13px; margin-top: 2px; color: var(--nd-text-dimmed) !important; }
+.ndc-demo-note strong { font-weight: 500; }
+
+.ndc-placement { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 0 8px; font-size: 0.8rem; color: var(--nd-text-muted); }
+
+.ndc-placement-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--nd-text-muted);
+}
+
+.ndc-tag--page { text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text); padding: 1px 7px; }
+
+.ndc-placement-hint { margin: 6px 0 0; font-size: 0.72rem; color: var(--nd-text-dimmed); max-width: 64ch; }
+
+/* Transitional: blocks the tabs still draw with inline styles (a light
+   surface and a border) become hairline-separated rows, so there is never a
+   frame inside a section. Buttons (choices) keep their frame. */
+body[data-design="calme"] .ndc-settings .nd-settings-content div:is(
+  [style*="rgba(255,255,255,0.02)"], [style*="rgba(255, 255, 255, 0.02)"],
+  [style*="rgba(255,255,255,0.01)"], [style*="rgba(255, 255, 255, 0.01)"],
+  [style*="rgba(0,0,0,0.2)"], [style*="rgba(0, 0, 0, 0.2)"]
+):not([role="listbox"]):not([role="menu"]):not([style*="position: absolute"]):not([style*="position: fixed"]) {
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid var(--nd-card-border) !important;
+  border-radius: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Choices (theme, clock style, weather style…): quiet frame, accent when selected. */
+body[data-design="calme"] .ndc-settings .nd-settings-content button:is([style*="var(--nd-accent-glow)"], [style*="rgba(0, 229, 255"], [style*="rgba(0,229,255"]) {
+  background: color-mix(in srgb, var(--nd-accent) 7%, transparent) !important;
+  box-shadow: none !important;
+}
+
+/* Small inline buttons of the tabs (move up/down, edit an icon…): ghost buttons. */
+body[data-design="calme"] .ndc-settings .nd-settings-content button[style*="var(--nd-bg-alt)"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  font-weight: 500 !important;
+  color: var(--nd-text-muted) !important;
+}
+
+body[data-design="calme"] .ndc-settings .nd-settings-content button[style*="var(--nd-bg-alt)"]:not(:disabled):hover {
+  background: var(--nd-subcard-bg) !important;
+  color: var(--nd-text) !important;
+}
+
+/* Section titles written inline inside the tabs (h4, bold labels). */
+body[data-design="calme"] .ndc-settings .nd-settings-content h4 { font-weight: 500 !important; }
+
+/* ---------- Settings controls (shared/CalmeControls.tsx) ---------- */
+.ndc-set-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 30px 0 10px;
+}
+
+.ndc-set-heading:first-child { margin-top: 4px; }
+
+.ndc-set-heading h3 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--nd-text-muted);
+}
+
+.ndc-set-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  padding: 13px 0;
+  border-top: 1px solid var(--nd-card-border);
+}
+
+.ndc-set-row--stacked { grid-template-columns: 1fr; gap: 10px; }
+.ndc-set-row-label { font-size: 0.84rem; color: var(--nd-text); }
+.ndc-set-row-hint { margin-top: 2px; font-size: 0.74rem; color: var(--nd-text-dimmed); max-width: 56ch; }
+.ndc-set-row-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ndc-set-row--stacked .ndc-set-row-control { flex-wrap: wrap; }
+
+.ndc-seg {
+  display: inline-flex;
+  border: 1px solid var(--nd-card-hover-border);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ndc-seg > button {
+  height: 30px;
+  padding: 0 13px;
+  border: none;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ndc-seg > button + button { border-left: 1px solid var(--nd-card-hover-border); }
+.ndc-seg > button:hover { color: var(--nd-text); }
+.ndc-seg > button.is-on { background: var(--nd-subcard-bg); color: var(--nd-text); }
+
+.ndc-slider { display: flex; align-items: center; gap: 12px; width: 240px; max-width: 100%; }
+
+.ndc-slider input {
+  flex: 1;
+  min-width: 0;
+  height: 4px;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--nd-accent) var(--ndc-fill, 50%), var(--nd-subcard-bg) var(--ndc-fill, 50%));
+  cursor: pointer;
+}
+
+.ndc-slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--nd-text);
+  border: 2px solid var(--nd-bg-surface);
+}
+
+.ndc-slider input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--nd-text);
+  border: 2px solid var(--nd-bg-surface);
+}
+
+.ndc-slider-value { min-width: 3.2em; text-align: right; font-size: 0.78rem; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+
+/* Theme thumbnails */
+.ndc-themes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+
+.ndc-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ndc-theme-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ndc-theme[aria-checked="true"] { color: var(--nd-text); }
+
+.ndc-theme-mini {
+  display: block;
+  height: 78px;
+  padding: 9px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid var(--nd-card-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ndc-theme:hover .ndc-theme-mini { border-color: var(--nd-card-hover-border); }
+.ndc-theme[aria-checked="true"] .ndc-theme-mini { border-color: var(--nd-accent); box-shadow: 0 0 0 3px var(--nd-accent-glow); }
+
+.ndc-theme-bar { display: flex; gap: 5px; margin-bottom: 8px; }
+.ndc-theme-bar > span { height: 4px; border-radius: 2px; }
+.ndc-theme-cards { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 5px; }
+.ndc-theme-cards > span { height: 44px; border-radius: 3px; }
+
+.ndc-text-button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.ndc-text-button:hover { color: var(--nd-accent); }
+
+.ndc-wallpapers { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; width: 100%; }
+
+.ndc-wallpaper {
+  position: relative;
+  height: 58px;
+  border-radius: 6px;
+  border: 1px solid var(--nd-card-border);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ndc-wallpaper[aria-pressed="true"] { border-color: var(--nd-accent); box-shadow: 0 0 0 3px var(--nd-accent-glow); }
+
+.ndc-wallpaper-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ndc-wallpaper:hover .ndc-wallpaper-remove,
+.ndc-wallpaper-remove:focus-visible { display: inline-flex; }
+
+.ndc-field { display: flex; gap: 8px; width: 100%; }
+.ndc-field .nd-input { flex: 1; min-width: 0; }
+
+@media (max-width: 700px) {
+  .ndc-themes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ndc-set-row { grid-template-columns: 1fr; gap: 10px; }
+}
+
+.ndc-set-row:has(> .ndc-switch-row) { grid-template-columns: 1fr; }
+
+/* ⓘ tooltips (CalmeInfo) */
+.ndc-info {
+  position: relative;
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-left: 6px;
+  color: var(--nd-text-dimmed);
+  cursor: help;
+  outline: none;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.ndc-info:hover,
+.ndc-info:focus-visible { color: var(--nd-text); }
+
+.ndc-info-bubble {
+  position: fixed;
+  z-index: 2000000;
+  width: max-content;
+  padding: 7px 10px;
+  transform: translateY(-100%);
+  border-radius: 6px;
+  border: 1px solid var(--nd-card-hover-border);
+  background: var(--nd-bg-surface, var(--nd-bg));
+  color: var(--nd-text);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-transform: none;
+  white-space: normal;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  animation: ndc-info-in 0.12s ease;
+}
+
+.ndc-info-bubble.is-below { transform: none; }
+
+@keyframes ndc-info-in { from { opacity: 0; } to { opacity: 1; } }
+
+.ndc-set-row-label { display: flex; align-items: center; }
+
+.ndc-switch-button { padding: 4px 0; border: none; background: transparent; cursor: pointer; display: inline-flex; }
+.ndc-switch-button:focus-visible .ndc-switch { box-shadow: 0 0 0 3px var(--nd-accent-glow); }
+
+/* Accent swatches */
+.ndc-swatches { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.ndc-swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.ndc-swatch:hover { transform: scale(1.08); }
+.ndc-swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--nd-bg-surface), 0 0 0 3.5px var(--nd-text); }
+
+.ndc-swatch--theme {
+  background: conic-gradient(from 45deg, var(--ndc-theme-accent) 0 50%, transparent 0) , var(--nd-subcard-bg);
+  border: 1px dashed var(--nd-card-hover-border);
+}
+
+.ndc-swatch-value { margin-left: 6px; font-size: 0.76rem; color: var(--nd-text-dimmed); }
+
+.ndc-inline-row { display: flex; align-items: center; gap: 16px; margin-top: 14px; font-size: 0.8rem; color: var(--nd-text-muted); }
+
+.ndc-appearance, .ndc-set-page { display: flex; flex-direction: column; }
+.ndc-set-block + .ndc-set-block { margin-top: 30px; }
+
+.ndc-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--nd-card-hover-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.ndc-pick:hover { border-color: var(--nd-accent); }
+.ndc-pick > span:last-child { margin-left: 4px; }
+
+.ndc-set-empty { padding: 12px 0; font-size: 0.78rem; color: var(--nd-text-dimmed); border-top: 1px solid var(--nd-card-border); }
+
+.ndc-settings-nav-item--sub { padding-left: 20px; }
+.ndc-crumb-link { padding: 0; border: none; background: transparent; color: inherit; font: inherit; cursor: pointer; text-transform: inherit; }
+.ndc-crumb-link:hover { color: var(--nd-accent); }
+.ndc-demo-tag { margin-left: 8px; cursor: help; text-transform: lowercase; }
+
+/* Widgets hub (LibraryTab) */
+.ndc-lib-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 6px;
+  margin: 0 -6px;
+  box-sizing: content-box;
+  border: none;
+  border-top: 1px solid var(--nd-card-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+button.ndc-lib-row { cursor: pointer; }
+button.ndc-lib-row:hover { background: var(--nd-subcard-bg); border-radius: 5px; }
+.ndc-lib-icon { display: inline-flex; justify-content: center; }
+.ndc-lib-name { display: flex; align-items: center; min-width: 0; }
+.ndc-lib-pages { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.ndc-lib-unused { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+.ndc-lib-chevron { color: var(--nd-text-dimmed); }
+
+/* Lists inside settings (places, search results…) */
+.ndc-set-list { display: flex; flex-direction: column; }
+
+.ndc-set-list-item,
+.ndc-set-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--nd-card-border);
+  font-size: 0.82rem;
+  color: var(--nd-text);
+}
+
+.ndc-set-list-item { width: 100%; border-left: none; border-right: none; border-bottom: none; background: transparent; font: inherit; font-size: 0.82rem; text-align: left; cursor: pointer; justify-content: flex-start; }
+.ndc-set-list-item:hover { color: var(--nd-accent); }
+.ndc-set-list-sub { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+
+.ndc-radio-label { display: inline-flex; align-items: center; gap: 10px; padding: 0; border: none; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+
+.ndc-radio {
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid var(--nd-card-hover-border);
+}
+
+.ndc-radio.is-on { border: 4px solid var(--nd-accent); }
+
+.ndc-set-form { padding-top: 12px; border-top: 1px solid var(--nd-card-border); }
+
+body[data-design="calme"] .nd-btn.ndc-danger { color: var(--nd-red); border-color: color-mix(in srgb, var(--nd-red) 40%, transparent); background: transparent; }
+body[data-design="calme"] .nd-btn.ndc-danger:hover { background: color-mix(in srgb, var(--nd-red) 10%, transparent); }
+.ndc-lib-row--actions { grid-template-columns: 26px minmax(0, 1fr) auto auto; }
+.ndc-placement + .ndc-set-block { margin-top: 18px; }
+.ndc-text-button { white-space: nowrap; }
+
+/* Ordered lists (header elements, dock tabs) */
+.ndc-order { list-style: none; margin: 0; padding: 0; }
+
+.ndc-order-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--nd-card-border);
+}
+
+.ndc-order-index { width: 16px; font-size: 0.72rem; color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
+.ndc-order-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.ndc-order-label { font-size: 0.84rem; color: var(--nd-text); display: flex; align-items: center; gap: 8px; }
+.ndc-order-sub { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+.ndc-order-item.is-off .ndc-order-label { color: var(--nd-text-dimmed); }
+.ndc-order-moves { display: flex; gap: 2px; opacity: 0.55; transition: opacity 0.12s ease; }
+.ndc-order-item:hover .ndc-order-moves, .ndc-order-moves:focus-within { opacity: 1; }
+@media (hover: none) { .ndc-order-moves { opacity: 1; } }
+.ndc-order-icon { width: 28px; height: 28px; border: 1px solid var(--nd-card-border); }
+
+.ndc-code { width: 100%; min-height: 200px; resize: vertical; font-family: var(--font-geist-mono), monospace !important; font-size: 0.76rem !important; line-height: 1.55; }
+.ndc-code-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
+/* Pages section */
+body[data-design="calme"] .ndc-settings .nd-page-settings-card { background: transparent; border: none; padding: 0; border-radius: 0; }
+body[data-design="calme"] .ndc-settings .nd-page-settings-card + .nd-page-settings-card { margin-top: 30px; }
+body[data-design="calme"] .ndc-settings .nd-page-settings-item { border: none; border-top: 1px solid var(--nd-card-border); border-radius: 0; background: transparent; padding-left: 0; padding-right: 0; }
+body[data-design="calme"] .ndc-settings .nd-page-settings-item strong { font-weight: 500; }
+body[data-design="calme"] .ndc-settings .nd-page-settings-template { background: transparent; box-shadow: none; }
+body[data-design="calme"] .ndc-settings .nd-page-settings-template strong { font-weight: 500; }
+
+/* Text buttons with an icon: the icon sits beside the label. */
+.ndc-text-button { display: inline-flex; align-items: center; gap: 4px; }
+.ndc-text-button svg { flex-shrink: 0; vertical-align: 0 !important; }
+body[data-design="calme"] .nd-btn { white-space: nowrap; flex-shrink: 0; }
+
+/* Users and access */
+.ndc-set-note { margin-top: 16px; padding: 8px 10px; border-radius: 6px; font-size: 0.76rem; background: var(--nd-subcard-bg); box-shadow: inset 2px 0 0 var(--nd-green); color: var(--nd-text); }
+.ndc-set-note.is-error { box-shadow: inset 2px 0 0 var(--nd-red); }
+
+.ndc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ndc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 15px;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.ndc-chip:hover { border-color: var(--nd-card-hover-border); color: var(--nd-text); }
+.ndc-chip[aria-pressed="true"] { border-color: var(--nd-accent); color: var(--nd-text); background: color-mix(in srgb, var(--nd-accent) 10%, transparent); }
+
+.ndc-chip-actions { display: inline-flex; gap: 12px; }
+
+.ndc-password { position: relative; display: inline-flex; }
+.ndc-password .nd-input { width: 100%; padding-right: 34px; }
+.ndc-password .ndc-icon-button { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); }
+
+.ndc-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--nd-card-border); }
+
+/* ---------- Dialogs (forms, confirmations, pickers) ---------- */
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) {
+  padding: 22px 26px 24px;
+  border-radius: 8px;
+}
+
+/* Title row: a calm heading, the close button quiet. */
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) h2,
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) h3 {
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 1.08rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
+  color: var(--nd-text);
+}
+
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) > div:first-child:has(> h3, > h2) { margin-bottom: 20px !important; }
+
+body[data-design="calme"] .nd-modal .nd-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--nd-text-muted);
+}
+
+body[data-design="calme"] .nd-modal .nd-input { height: 36px; background: var(--nd-bg); }
+body[data-design="calme"] .nd-modal textarea.nd-input { height: auto; }
+
+/* Notices written inline in dialogs (demo, hints): quiet text instead of a tinted box. */
+body[data-design="calme"] .nd-modal div[style*="color-mix(in srgb, var(--nd-accent)"] {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 0.72rem !important;
+  color: var(--nd-text-dimmed) !important;
+}
+
+/* Inline light boxes inside dialogs: flat rows, like in the settings. */
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) div:is([style*="rgba(255,255,255,0.02)"], [style*="rgba(255, 255, 255, 0.02)"], [style*="rgba(0,0,0,0.2)"], [style*="rgba(0, 0, 0, 0.2)"]):not([role="listbox"]):not([role="menu"]):not([style*="position: absolute"]):not([style*="position: fixed"]) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Confirmation (ConfirmModal, Calme branch) */
+.ndc-confirm { max-width: 420px !important; text-align: left; }
+.ndc-confirm-text { margin: 8px 0 0; font-size: 0.84rem; line-height: 1.55; color: var(--nd-text-muted); }
+.ndc-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+body[data-design="calme"] .nd-btn.ndc-btn-danger { background: var(--nd-red); border-color: var(--nd-red); color: #fff; }
+body[data-design="calme"] .nd-btn.ndc-btn-danger:hover { filter: brightness(1.08); }
+
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) :is(h2, h3) { text-transform: none !important; }
+
+/* Footers: buttons keep their natural width, grouped on the right; a
+   destructive action stands apart on the left. */
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) div:has(> .nd-btn[style*="flex: 1"]) { justify-content: flex-end; }
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) .nd-btn[style*="flex: 1"] { flex: 0 0 auto !important; min-width: 88px; }
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) .nd-btn-danger[style*="flex: 1"] { margin-right: auto; }
+body[data-design="calme"] .nd-modal .nd-btn-danger { background: transparent !important; }
+
+/* Lists drawn as separate boxes inside dialogs (services of a category,
+   containers of an action): hairline rows. */
+body[data-design="calme"] .nd-modal:not(.nd-settings-modal) div[style*="background: var(--nd-bg-alt)"][style*="border: 1px solid var(--nd-card-border)"] {
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid var(--nd-card-border) !important;
+  border-radius: 0 !important;
+}
+
+/* Widget library */
+body[data-design="calme"] .nd-page-library .nd-page-library-section h3 {
+  font-family: inherit;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.07em;
+  text-transform: uppercase !important;
+  color: var(--nd-text-muted);
+  margin-bottom: 10px;
+}
+
+body[data-design="calme"] .nd-page-library-card {
+  background: transparent;
+  border-color: var(--nd-card-border);
+  box-shadow: none;
+}
+
+body[data-design="calme"] .nd-page-library-card:hover:not(:disabled) { background: var(--nd-subcard-bg); border-color: var(--nd-card-hover-border); }
+body[data-design="calme"] .nd-page-library-card strong { font-weight: 500; }
+body[data-design="calme"] .nd-page-library-card-icon { background: transparent; border-color: transparent; }
+body[data-design="calme"] .nd-page-library-search:focus-within { border-color: var(--nd-card-hover-border); box-shadow: none; }
+
+/* ---------- Appearance options: outlines and background blur ---------- */
+body[data-outlines="off"] :is(.ndc-box, .nd-card, .nd-modal, .nd-settings-modal, .nd-page-library-card, .ndc-theme-mini) {
+  border-color: transparent !important;
+}
+
+body[data-outlines="off"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before { border-color: transparent !important; }
+body[data-outlines="off"] .ndc-theme[aria-checked="true"] .ndc-theme-mini { border-color: var(--nd-accent) !important; }
+
+/* Blur what is behind translucent surfaces (visible with a wallpaper and a
+   card opacity below 100 %). */
+body[data-blur="on"] :is(.ndc-box, .nd-card, .nd-sidebar-card, .nd-modal, .nd-settings-modal) {
+  -webkit-backdrop-filter: blur(var(--nd-surface-blur)) !important;
+  backdrop-filter: blur(var(--nd-surface-blur)) !important;
+}
+
+body[data-blur="on"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body[data-blur="on"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before {
+  -webkit-backdrop-filter: blur(var(--nd-surface-blur));
+  backdrop-filter: blur(var(--nd-surface-blur));
+}
+
+/* Theme and icon gallery (inside the settings) */
+.ndc-gallery { display: flex; flex-direction: column; gap: 18px; }
+.ndc-gallery-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ndc-gallery-search { flex: 1; min-width: 180px; }
+.ndc-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 18px 14px; }
+
+.ndc-icon-styles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+.ndc-icon-style {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ndc-icon-style-samples {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  height: 64px;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 6px;
+  font-size: 1.35rem;
+  color: var(--nd-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ndc-icon-style:hover .ndc-icon-style-samples { border-color: var(--nd-card-hover-border); }
+.ndc-icon-style[aria-checked="true"] { color: var(--nd-text); }
+.ndc-icon-style[aria-checked="true"] .ndc-icon-style-samples { border-color: var(--nd-accent); box-shadow: 0 0 0 3px var(--nd-accent-glow); }
+.ndc-icon-style-name { display: flex; align-items: center; }
+
+/* ---------- Form dialogs (shared/CalmeDialog.tsx) ---------- */
+.nd-modal.ndc-dialog {
+  width: 100%;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  border-radius: 8px;
+  background: var(--nd-bg-surface, var(--nd-bg));
+  border: 1px solid var(--nd-card-hover-border);
+}
+
+.ndc-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px 4px; }
+.ndc-dialog-head h2 { margin: 0; font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.08rem !important; font-weight: 500 !important; letter-spacing: -0.01em; color: var(--nd-text); }
+.ndc-dialog-head p { margin: 4px 0 0; font-size: 0.78rem; color: var(--nd-text-muted); line-height: 1.5; }
+
+.ndc-dialog-body { display: flex; flex-direction: column; gap: 16px; padding: 16px 24px 20px; max-height: calc(90svh - 150px); overflow-y: auto; }
+
+.ndc-dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--nd-card-border);
+}
+
+.ndc-dialog-actions { display: flex; gap: 8px; }
+
+.ndc-field-block { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.ndc-field-label { display: flex; align-items: center; font-size: 0.76rem; color: var(--nd-text-muted); }
+.ndc-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ndc-field-inline { display: flex; align-items: flex-end; gap: 10px; }
+.ndc-field-inline > .ndc-field-block { flex: 1; }
+
+.ndc-dialog .nd-input { height: 36px; background: var(--nd-bg); }
+
+.ndc-icon-pick {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--nd-card-border);
+  border-radius: 6px;
+  background: var(--nd-bg);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.ndc-icon-pick:hover { border-color: var(--nd-accent); }
+
+.ndc-dialog .ndc-seg { width: 100%; display: flex; }
+.ndc-dialog .ndc-seg > button { flex: 1; padding: 0 8px; }
+
+.ndc-check-list { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; border-top: 1px solid var(--nd-card-border); }
+
+.ndc-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px;
+  border: none;
+  border-bottom: 1px solid var(--nd-card-border);
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ndc-check-row[aria-checked="true"] { color: var(--nd-text); }
+
+.ndc-checkbox {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid var(--nd-card-hover-border);
+}
+
+.ndc-checkbox.is-on {
+  border-color: var(--nd-accent);
+  background: var(--nd-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 10px no-repeat;
+}
+
+.ndc-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 0.82rem;
+  color: var(--nd-text);
+}
+
+.ndc-flow > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.ndc-flow-arrow { color: var(--nd-accent); }
+.ndc-flow-empty { color: var(--nd-text-dimmed); }
+
+.ndc-dialog-hint { margin: 0; font-size: 0.78rem; line-height: 1.55; color: var(--nd-text-muted); }
+
+.nd-btn.ndc-danger-ghost { color: var(--nd-red); border-color: transparent; background: transparent; }
+.nd-btn.ndc-danger-ghost:hover { background: color-mix(in srgb, var(--nd-red) 10%, transparent); }
+
+/* The entry animation must not stay applied once finished: a held opacity/
+   transform animation isolates widgets from the page, and the background
+   blur then has nothing to blur. */
+/* With a blur, no fade-in at all: while a block fades in, the browser cannot
+   blur behind it, so the blur only appeared once the animation ended (page
+   switches). */
+body[data-blur="on"] .nd-animate-in { animation: none !important; }
+
+/* ---------- Resizing from all around ----------
+   Top and bottom edges resize the width too (from the nearest side): the
+   height always follows the content. */
+.nd-page-resize--n,
+.nd-page-resize--s {
+  left: 14px;
+  right: 14px;
+  height: 12px;
+  cursor: ns-resize;
+}
+
+/* Each edge shows the arrow of its direction (the resize itself stays on the
+   width, the height following the content). */
+.nd-page-resize--ne, .nd-page-resize--sw { cursor: nesw-resize !important; }
+.nd-page-resize--nw, .nd-page-resize--se { cursor: nwse-resize !important; }
+
+.nd-page-resize--n { top: -6px; }
+.nd-page-resize--s { bottom: -6px; }
+
+/* ---------- Edit bar (bottom of the page in edit mode) ---------- */
+body[data-design="calme"] .nd-page-editor-bar {
+  gap: 4px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--nd-card-hover-border);
+  background: color-mix(in srgb, var(--nd-bg-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.7);
+}
+
+body[data-design="calme"] .nd-page-editor-status {
+  padding: 0 10px 0 8px;
+  font-weight: 500;
+  color: var(--nd-text-muted);
+}
+
+body[data-design="calme"] .nd-page-editor-dot { width: 6px; height: 6px; }
+
+body[data-design="calme"] .nd-page-editor-bar > * + * {
+  position: relative;
+  margin-left: 6px;
+  padding-left: 6px;
+}
+
+body[data-design="calme"] .nd-page-editor-bar > * + *::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--nd-card-border);
+}
+
+body[data-design="calme"] .nd-page-editor-bar .nd-btn:not(.nd-btn-accent) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--nd-text-muted);
+}
+
+body[data-design="calme"] .nd-page-editor-bar .nd-btn:not(.nd-btn-accent):hover:not(:disabled) {
+  background: var(--nd-subcard-bg);
+  color: var(--nd-text);
+}
+
+body[data-design="calme"] .nd-page-editor-bar .nd-page-editor-add { color: var(--nd-text) !important; }
+
+body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button {
+  width: 32px;
+  height: 32px;
+  border-color: transparent;
+  background: transparent;
+  border-radius: 6px;
+}
+
+body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button:hover:not(:disabled) { background: var(--nd-subcard-bg); }
+
+body[data-design="calme"] .nd-page-editor-bar .nd-btn { border-radius: 8px; }
+
+body[data-design="calme"] .nd-page-editor-alert {
+  border-radius: 10px;
+  background: var(--nd-bg-surface);
+  border: 1px solid var(--nd-card-hover-border);
+  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.7);
+}
+
+.ndc-logo-field { display: flex; align-items: center; gap: 8px; }
+.ndc-logo-field .nd-input { flex: 1; min-width: 0; }
+.ndc-logo-preview { cursor: default; color: var(--nd-text-dimmed); overflow: hidden; }
+.ndc-logo-preview img { width: 22px; height: 22px; object-fit: contain; }
+.ndc-icon-button.ndc-icon-danger { color: var(--nd-red); }
+
+/* Expandable sub-list inside a dialog (services of a category) */
+.ndc-sub-list { display: flex; flex-direction: column; border-top: 1px solid var(--nd-card-border); }
+.ndc-sub-item { border-bottom: 1px solid var(--nd-card-border); }
+.ndc-sub-head { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 2px; border: none; background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.82rem; text-align: left; cursor: pointer; }
+.ndc-sub-head:hover, .ndc-sub-item.is-open .ndc-sub-head { color: var(--nd-text); }
+.ndc-sub-logo { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ndc-sub-logo img { width: 18px; height: 18px; object-fit: contain; }
+.ndc-sub-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-sub-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 0 14px 30px; }
+
+.ndc-form { display: flex; flex-direction: column; gap: 16px; }
+.ndc-form-row { display: flex; gap: 14px; }
+.ndc-form-panel { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; border-top: 1px solid var(--nd-card-border); }
+.ndc-emoji-input { width: 52px !important; text-align: center; }
+.ndc-field-inline > .ndc-field-block:has(.ndc-emoji-input) { flex: 0 0 auto; }
+
+.ndc-icon-choices { display: flex; gap: 6px; flex-wrap: wrap; }
+.ndc-icon-choices .ndc-icon-pick[aria-checked="true"] { border-color: var(--nd-accent); color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 10%, transparent); }
+.ndc-field-count { margin-left: 8px; padding: 0 6px; border-radius: 8px; background: var(--nd-subcard-bg); color: var(--nd-text); font-size: 0.7rem; }
+.ndc-check-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.ndc-check-row .ndc-dot { margin-left: auto; }
+.ndc-event-row { display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--nd-card-border); font-size: 0.82rem; color: var(--nd-text); }
+.ndc-dialog-body > *, .ndc-field-block > *, .ndc-form > * { flex-shrink: 0; }
+.ndc-dialog .ndc-settings-search { height: 36px; }
+
+/* ======================================================================
+   One surface for every block (widgets, categories, Docker panels, logs,
+   network map, header controls, edit bar). Opacity, blur and outlines from
+   Appearance apply to all of them the same way; what sits inside a surface
+   stays transparent with a hairline, never a second background.
+   ====================================================================== */
+body[data-design="calme"] {
+  --ndc-surface: var(--nd-card-bg);
+  --ndc-surface-line: var(--nd-card-border);
+}
+
+/* Other themes: half as strong, still translucent (was mixed with the opaque
+   page colour, which ignored the card opacity). */
+/* Other themes: the card colour exactly as the opacity slider sets it (at
+   100 % the cards are fully opaque, as in the default theme). The secondary
+   tones some themes do not define are derived from the theme's own text
+   colour, so nothing falls back to the default theme's dark values (black
+   buttons, invisible sliders). */
+body[data-design="calme"][class*="theme-"] {
+  /* The theme's own card colour, opaque; the opacity slider replaces it inline. */
+  --nd-card-bg: rgb(var(--nd-card-bg-rgb));
+  --ndc-surface: var(--nd-card-bg);
+  --ndc-surface-line: var(--nd-card-border);
+  --nd-subcard-bg: color-mix(in srgb, var(--nd-text) 8%, transparent);
+  --nd-icon-bg: color-mix(in srgb, var(--nd-text) 9%, transparent);
+  --nd-icon-border: color-mix(in srgb, var(--nd-text) 12%, transparent);
+  --nd-progress-bg: color-mix(in srgb, var(--nd-text) 10%, transparent);
+  --nd-border: var(--nd-card-border);
+}
+
+body[data-design="calme"] :is(.ndc-box, .nd-card, .nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-container-card),
+body[data-design="calme"][class*="theme-"] :is(.ndc-box, .nd-card, .nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-container-card) {
+  background: var(--ndc-surface) !important;
+  border-color: var(--ndc-surface-line);
+}
+
+body[data-design="calme"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before,
+body[data-design="calme"][class*="theme-"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before {
+  background: var(--ndc-surface);
+  border-color: var(--ndc-surface-line);
+}
+
+/* Logs: same surface as the rest, text keeps the monospace. */
+body[data-design="calme"] .nd-terminal { color: var(--nd-text-muted); }
+
+/* Inside a surface: transparent, hairline only. */
+body[data-design="calme"] :is(.nd-docker-detail, .ndc-box) :is(.nd-docker-stat-card, .nd-port-pill) {
+  background: transparent !important;
+  border-color: var(--ndc-surface-line) !important;
+}
+
+body[data-design="calme"] .nd-container-card--selected { background: color-mix(in srgb, var(--nd-accent) 7%, var(--ndc-surface)) !important; }
+body[data-design="calme"] .nd-container-card:hover { background: color-mix(in srgb, var(--nd-text) 4%, var(--ndc-surface)) !important; }
+
+body[data-design="calme"] .nd-docker-tabs { background: var(--ndc-surface); border: 1px solid var(--ndc-surface-line); padding: 3px; }
+body[data-design="calme"] .nd-docker-tab--active { background: color-mix(in srgb, var(--nd-text) 7%, transparent); }
+
+/* Network map: nodes and groups sit on the map surface. */
+body[data-design="calme"] .nd-topology-node { background: color-mix(in srgb, var(--nd-text) 3%, transparent) !important; border-color: var(--ndc-surface-line) !important; box-shadow: none !important; }
+
+/* Header controls: the same surface as the widgets. */
+body[data-design="calme"] .nd-header :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-search input),
+body[data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
+  background: var(--ndc-surface) !important;
+  border-color: var(--ndc-surface-line) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Edit bar: same surface too (slightly stronger so it reads over widgets). */
+body[data-design="calme"] .nd-page-editor-bar {
+  background: color-mix(in srgb, var(--nd-bg-surface) 70%, var(--ndc-surface));
+  border-color: var(--ndc-surface-line);
+}
+
+/* Blur: every surface (header controls and edit bar included). */
+body[data-blur="on"][data-design="calme"] :is(.nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-container-card, .nd-page-editor-bar, .nd-docker-tabs),
+body[data-blur="on"][data-design="calme"] .nd-header :is(.nd-btn, .nd-search input),
+body[data-blur="on"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
+  -webkit-backdrop-filter: blur(var(--nd-surface-blur)) !important;
+  backdrop-filter: blur(var(--nd-surface-blur)) !important;
+}
+
+/* No outlines: everywhere, header controls and edit bar included. */
+body[data-outlines="off"] :is(.nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-container-card, .nd-page-editor-bar, .nd-docker-tabs, .nd-page-editor-alert, .ndc-dialog),
+body[data-outlines="off"] .nd-header :is(.nd-btn, .nd-search input),
+body[data-outlines="off"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
+  border-color: transparent !important;
+}
+
+body[data-outlines="off"] .nd-container-card--selected { box-shadow: inset 2px 0 0 var(--nd-accent) !important; }
+
+/* No outlines, inside surfaces too: the hairlines of inner elements become a
+   very light fill, so shapes stay readable without any border. */
+body[data-outlines="off"] :is(.nd-docker-stat-card, .nd-port-pill, .nd-host-btn, .nd-topology-node, .ndc-seg, .nd-container-card, .ndc-icon-pick, .ndc-chip, .ndc-theme-mini, .ndc-icon-style-samples, .nd-page-library-card, .ndc-pick, .ndc-suggestion) {
+  border-color: transparent !important;
+}
+
+body[data-outlines="off"] :is(.nd-docker-stat-card, .nd-port-pill, .nd-host-btn, .nd-topology-node, .ndc-seg, .ndc-icon-pick, .ndc-chip, .ndc-pick, .ndc-suggestion) {
+  background: color-mix(in srgb, var(--nd-text) 5%, transparent) !important;
+}
+
+body[data-outlines="off"] .ndc-seg > button + button { border-left-color: transparent; }
+body[data-outlines="off"] .nd-host-btn--active,
+body[data-outlines="off"] .ndc-chip[aria-pressed="true"],
+body[data-outlines="off"] .ndc-icon-choices .ndc-icon-pick[aria-checked="true"] { background: color-mix(in srgb, var(--nd-accent) 14%, transparent) !important; }
+
+/* Network map groups (dashed frames drawn inline). */
+body[data-outlines="off"] .nd-topology-canvas div[style*="1px dashed"] {
+  border-color: transparent !important;
+  background: color-mix(in srgb, var(--nd-text) 3%, transparent) !important;
+}
+
+/* Hairline separators between rows keep their role (lists, sections). */
+
+/* ---------- Service logos ----------
+   Lists: the logo on a light translucent tile (no outline), a bit larger.
+   Grids: tiles share the width of the category (as many columns as fit),
+   no heavy background; the logo is the tile's content. */
+body[data-design="calme"] :is(.nd-service--standard, .nd-service--compact) .nd-service-icon {
+  background: color-mix(in srgb, var(--nd-text) 10%, transparent);
+  border: none;
+  box-shadow: none;
+}
+
+body[data-design="calme"] .nd-service--standard .nd-service-icon { width: 34px; height: 34px; border-radius: 9px; }
+body[data-design="calme"] .nd-service--standard .nd-service-icon img { width: 24px; height: 24px; }
+body[data-design="calme"] .nd-service--compact .nd-service-icon { width: 28px; height: 28px; border-radius: 8px; }
+body[data-design="calme"] .nd-service--compact .nd-service-icon img { width: 18px; height: 18px; }
+
+/* Grid with names */
+body[data-design="calme"] .nd-services-grid--bento {
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 6px;
+}
+
+body[data-design="calme"] .nd-service--bento {
+  height: auto;
+  min-height: 108px;
+  padding: 12px 6px 10px;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px;
+}
+
+body[data-design="calme"] .nd-service--bento:hover {
+  background: color-mix(in srgb, var(--nd-text) 5%, transparent) !important;
+}
+
+body[data-design="calme"] .nd-service--bento .nd-service-link { gap: 10px !important; }
+
+body[data-design="calme"] .nd-service--bento .nd-service-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--nd-text) 10%, transparent);
+  border: none;
+  box-shadow: none !important;
+}
+
+body[data-design="calme"] .nd-service--bento .nd-service-icon img { width: 40px; height: 40px; }
+body[data-design="calme"] .nd-service--bento .nd-service-name { font-size: 0.76rem; font-weight: 500; }
+
+/* Logo-only grids: columns stretch to fill the width; each tile has a fixed
+   height per size and the logo tile inside is square, centred. */
+body[data-design="calme"] .nd-services-grid--bento-logo-large { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+body[data-design="calme"] .nd-services-grid--bento-logo-medium { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 6px; }
+body[data-design="calme"] .nd-services-grid--bento-logo-small { grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 4px; }
+
+body[data-design="calme"] :is(.nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small) {
+  aspect-ratio: auto;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+body[data-design="calme"] .nd-service--bento-logo-large { height: 112px; }
+body[data-design="calme"] .nd-service--bento-logo-medium { height: 92px; }
+body[data-design="calme"] .nd-service--bento-logo-small { height: 66px; }
+
+body[data-design="calme"] :is(.nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small):hover {
+  background: color-mix(in srgb, var(--nd-text) 4%, transparent) !important;
+}
+
+body[data-design="calme"] :is(.nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small) .nd-service-icon {
+  width: auto !important;
+  height: 86% !important;
+  aspect-ratio: 1 / 1;
+  padding: 11% !important;
+  border-radius: 22% !important;
+  background: color-mix(in srgb, var(--nd-text) 10%, transparent) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+body[data-outlines="off"][data-design="calme"] :is(.nd-docker-detail, .ndc-box) :is(.nd-docker-stat-card, .nd-port-pill) {
+  border-color: transparent !important;
+  background: color-mix(in srgb, var(--nd-text) 5%, transparent) !important;
+}
+
+body[data-outlines="off"][data-design="calme"] .nd-input:not(:focus) { border-color: transparent; }
+
+/* ---------- Alignment on the grid ----------
+   The header uses the page side padding plus the grid margin, so its search
+   field and its buttons line up exactly with the outer edges of the widgets. */
+@media (min-width: 769px) {
+  body[data-design="calme"] .nd-header { padding-left: 32px; padding-right: 32px; }
+}
+
+/* Edit controls sit in the widget's top-right corner, flush with its edge and
+   centred on its title row (32 px in edit mode). */
+body[data-design="calme"] .nd-page-widget-actions {
+  top: 2px;
+  right: 0;
+  height: 28px;
+  padding: 0 2px;
+  gap: 2px;
+  background: var(--nd-bg-surface);
+  border: 1px solid var(--ndc-surface-line);
+  border-radius: 7px;
+  box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
+}
+
+body[data-outlines="off"] .nd-page-widget-actions { border-color: transparent; }
+
+body[data-design="calme"] .nd-page-widget-actions .nd-action-icon { width: 26px; height: 24px; }
+
+/* The top resize edge stops before the edit controls. */
+.nd-page-resize--n { right: calc(var(--nd-page-actions-width, 0px) + 14px); }
+
+/* Sliders: light themes paint every input white (globals.css), which hid the
+   track; the track is drawn explicitly here, for every theme. */
+body[data-design="calme"] .ndc-slider input[type="range"] {
+  height: 4px !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: linear-gradient(to right, var(--nd-accent) var(--ndc-fill, 50%), color-mix(in srgb, var(--nd-text) 16%, transparent) var(--ndc-fill, 50%)) !important;
+}
+
+body[data-design="calme"] .ndc-slider input[type="range"]::-webkit-slider-thumb { background: var(--nd-text); border-color: var(--nd-bg-surface); }
+
+/* ======================================================================
+   Network map (TopologyCanvas): layered layout computed by ELK.
+   Scoped to .ndc-map, so it reads the same in both interface styles.
+   ====================================================================== */
+.ndc-map {
+  --ndc-map-infra: var(--nd-accent);
+  --ndc-map-device: var(--nd-purple);
+  --ndc-map-netsvc: var(--nd-orange);
+  --ndc-map-stdsvc: var(--nd-green, #3fb950);
+  --ndc-map-line: color-mix(in srgb, var(--nd-text) 26%, transparent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ndc-map-tools {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--nd-bg-surface);
+  border: 1px solid var(--ndc-surface-line, var(--nd-card-border));
+}
+
+/* Only sideways overflow: the wheel keeps scrolling the page over the map. */
+.ndc-map-viewport { overflow-x: auto; overflow-y: hidden; max-width: 100%; min-height: 200px; }
+.ndc-map-sizer { position: relative; margin: 0 auto; }
+.ndc-map-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+.ndc-map-layer {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 18px;
+  font-size: 0.68rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--nd-text-dimmed);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ndc-map-layer-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ndc-node-accent); }
+
+/* Groups: a quiet box, its title on top. */
+.ndc-map-group {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--nd-text) 3.5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--nd-text) 7%, transparent);
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.ndc-map-group-title {
+  position: absolute;
+  top: 9px;
+  left: 12px;
+  right: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--nd-text-muted);
+  font: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ndc-map.is-editing .ndc-map-group-title { cursor: pointer; }
+.ndc-map.is-editing .ndc-map-group-title:hover { color: var(--nd-accent); }
+.ndc-map-group.is-lit { border-color: color-mix(in srgb, var(--nd-accent) 55%, transparent); background: color-mix(in srgb, var(--nd-accent) 6%, transparent); }
+.ndc-map-group.is-lit .ndc-map-group-title { color: var(--nd-text); }
+.ndc-map-group.is-drop { border-color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 8%, transparent); }
+
+/* Links */
+.ndc-map-links { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+
+.ndc-map-link-line {
+  fill: none;
+  stroke: var(--ndc-map-line);
+  stroke-width: 1.4;
+  transition: stroke 0.15s ease, opacity 0.15s ease;
+}
+
+.ndc-map-link.is-lit .ndc-map-link-line { stroke: var(--nd-accent); stroke-width: 1.8; }
+.ndc-map-link.is-dim { opacity: 0.25; }
+
+.ndc-map-link-hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; cursor: pointer; }
+.ndc-map-link:has(.ndc-map-link-hit:hover) .ndc-map-link-line { stroke: var(--nd-accent); }
+
+.ndc-map-draft { fill: none; stroke: var(--nd-accent); stroke-width: 1.6; stroke-dasharray: 4 4; }
+
+.ndc-map-label {
+  position: absolute;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--nd-bg-surface);
+  border: 1px solid color-mix(in srgb, var(--nd-text) 9%, transparent);
+  color: var(--nd-text-muted);
+  font-size: 0.64rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ndc-map-label.is-dim { opacity: 0.25; }
+/* A label with no free spot shows while its link is lit (hover a node). */
+.ndc-map-label.is-crowded { display: none; }
+.ndc-map-label.is-raised { z-index: 3; color: var(--nd-text); border-color: color-mix(in srgb, var(--nd-accent) 45%, transparent); }
+
+/* Nodes: an icon on a tile tinted by the layer, a name, the address. */
+.ndc-map-node {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px 0 8px;
+  border-radius: 8px;
+  background: var(--nd-bg-surface);
+  border: 1px solid color-mix(in srgb, var(--nd-text) 10%, transparent);
+  transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  outline: none;
+}
+
+.ndc-map-type--infra { --ndc-node-accent: var(--ndc-map-infra); }
+.ndc-map-type--device { --ndc-node-accent: var(--ndc-map-device); }
+.ndc-map-type--netsvc { --ndc-node-accent: var(--ndc-map-netsvc); }
+.ndc-map-type--stdsvc { --ndc-node-accent: var(--ndc-map-stdsvc); }
+
+.ndc-map-node.is-lit { border-color: color-mix(in srgb, var(--nd-accent) 55%, transparent); }
+.ndc-map-node.is-drop { border-color: var(--nd-accent); box-shadow: 0 0 0 3px var(--nd-accent-glow); }
+.ndc-map-node.is-dim, .ndc-map-group.is-dim { opacity: 0.3; }
+.ndc-map.is-editing .ndc-map-node { cursor: pointer; }
+.ndc-map-node.is-link { cursor: pointer; }
+.ndc-map-node.is-link:hover { border-color: color-mix(in srgb, var(--nd-accent) 55%, transparent); }
+.ndc-map.is-editing .ndc-map-node:hover, .ndc-map-node:focus-visible { border-color: var(--nd-accent); }
+
+.ndc-map-node-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  font-size: 1rem;
+  background: color-mix(in srgb, var(--ndc-node-accent) 17%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ndc-node-accent) 28%, transparent);
+}
+.ndc-map-node-text { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 1px; }
+.ndc-map-node-name { font-size: 0.74rem; color: var(--nd-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ndc-map-node-sub { font-size: 0.64rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+.ndc-map--compact .ndc-map-node { gap: 8px; padding: 0 9px 0 6px; }
+.ndc-map--compact .ndc-map-node-icon { width: 28px; height: 28px; font-size: 0.92rem; }
+.ndc-map--mini .ndc-map-node { gap: 6px; padding: 0 8px 0 4px; border-radius: 6px; }
+.ndc-map--mini .ndc-map-node-icon { width: 22px; height: 22px; border-radius: 5px; font-size: 0.8rem; }
+.ndc-map--mini .ndc-map-node-name { font-size: 0.68rem; }
+
+/* Edit mode: the handle that draws a new link. */
+.ndc-map-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--nd-bg-surface);
+  background: var(--nd-accent);
+  cursor: crosshair;
+  opacity: 0;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  touch-action: none;
+}
+
+.ndc-map-handle--right { right: -6px; top: 50%; margin-top: -6px; }
+.ndc-map-handle--bottom { bottom: -6px; left: 50%; margin-left: -6px; }
+.ndc-map-node:hover .ndc-map-handle, .ndc-map-node:focus-within .ndc-map-handle { opacity: 1; }
+.ndc-map-handle:hover { transform: scale(1.25); }
+@media (hover: none) { .ndc-map.is-editing .ndc-map-handle { opacity: 1; } }
+
+body[data-outlines="off"] :is(.ndc-map-node, .ndc-map-group, .ndc-map-tools, .ndc-map-label) { border-color: transparent; }
+
+.ndc-map-tools .ndc-icon-button.is-on { background: var(--nd-subcard-bg); color: var(--nd-text); }
+.ndc-map-tools-sep { width: 1px; margin: 4px 3px; background: var(--ndc-surface-line, var(--nd-card-border)); }
+.ndc-map-viewport { cursor: grab; }
+.ndc-map-viewport.is-panning { cursor: grabbing; user-select: none; }
+.ndc-map-viewport[hidden] { display: none; }
+
+/* List view (phones) */
+.ndc-maplist { display: flex; flex-direction: column; gap: 22px; padding: 44px 2px 8px; }
+.ndc-maplist-layer h4 { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.ndc-maplist ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ndc-maplist-node { padding: 8px 0; border-top: 1px solid color-mix(in srgb, var(--nd-text) 8%, transparent); }
+.ndc-maplist-node.is-dim { opacity: 0.35; }
+.ndc-maplist-head { width: 100%; display: flex; align-items: center; gap: 10px; padding: 0; border: none; background: transparent; color: inherit; font: inherit; text-align: left; }
+.ndc-maplist-head:not(:disabled) { cursor: pointer; }
+.ndc-maplist-links { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0 40px; }
+.ndc-maplist-link { padding: 1px 8px; border-radius: 9px; border: 1px solid color-mix(in srgb, var(--nd-text) 10%, transparent); background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.68rem; }
+.ndc-maplist-link:not(:disabled) { cursor: pointer; }
+.ndc-maplist-group { margin-top: 10px; padding: 8px 10px 4px; border-radius: 10px; background: color-mix(in srgb, var(--nd-text) 3.5%, transparent); }
+.ndc-maplist-group-title { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: 0 0 6px; border: none; background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.72rem; text-align: left; }
+.ndc-maplist-group-links { font-size: 0.66rem; color: var(--nd-text-dimmed); }
+.ndc-maplist-link-label { margin-left: 6px; color: var(--nd-text-dimmed); }
+
+/* ---------- Appearance: soft edges ----------
+   The surface colour carries on past the box and fades out over
+   --nd-soft-edge, so blocks melt into the page instead of ending on a line.
+   Only outermost surfaces: a surface inside another stays as it is. The
+   content is untouched (nothing is masked), and the outline gives way. */
+body[data-soft-edges="on"] :is(.ndc-box, .nd-card, .nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-docker-tabs, .nd-page-editor-bar):not(:is(.ndc-box, .nd-card, .nd-docker-detail, .nd-topology-canvas, .nd-terminal) *),
+body[data-soft-edges="on"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card)::before {
+  border-color: transparent !important;
+  box-shadow: 0 0 var(--nd-soft-edge) calc(var(--nd-soft-edge) * 0.45) var(--ndc-surface, var(--nd-card-bg)) !important;
+}
+
+/* Header controls: the same fade, half as wide (they are small). */
+body[data-soft-edges="on"][data-design="calme"] .nd-header :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-search input),
+body[data-soft-edges="on"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
+  border-color: transparent !important;
+  box-shadow: 0 0 calc(var(--nd-soft-edge) * 0.5) calc(var(--nd-soft-edge) * 0.2) var(--ndc-surface) !important;
+}
+
+/* ======================================================================
+   Devices: Device, Fleet, Chart and Storage widgets, and the chart kit
+   (src/components/charts). One colour per kind of measurement everywhere;
+   the alert tone only for hot parts and nearly full disks.
+   ====================================================================== */
+body {
+  --ndc-kind-cpu: var(--nd-accent);
+  --ndc-kind-memory: hsl(262 62% 72%);
+  --ndc-kind-disk: hsl(36 72% 62%);
+  --ndc-kind-gpu: hsl(152 45% 55%);
+  --ndc-kind-alert: hsl(24 88% 60%);
+  --ndc-series-5: hsl(330 65% 70%);
+  --ndc-series-6: hsl(210 70% 68%);
+}
+
+body.light {
+  --ndc-kind-memory: hsl(262 48% 52%);
+  --ndc-kind-disk: hsl(32 78% 42%);
+  --ndc-kind-gpu: hsl(152 50% 34%);
+  --ndc-kind-alert: hsl(20 85% 46%);
+  --ndc-series-5: hsl(330 55% 48%);
+  --ndc-series-6: hsl(210 62% 45%);
+}
+
+/* Chart kit */
+.ndc-chart { position: relative; width: 100%; min-width: 0; user-select: none; touch-action: pan-y; }
+.ndc-chart svg { display: block; overflow: visible; cursor: crosshair; }
+.ndc-chart-grid { stroke: color-mix(in srgb, var(--nd-text) 7%, transparent); stroke-width: 1; fill: none; }
+.ndc-chart-line { fill: none; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+.ndc-chart-live-halo { fill: currentColor; opacity: 0.18; }
+.ndc-chart-cursor { stroke: color-mix(in srgb, var(--nd-text) 30%, transparent); stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
+.ndc-chart-dot { fill: var(--nd-card-bg); stroke-width: 1.75; }
+.ndc-chart-axis, .ndc-chart-scale { fill: var(--nd-text-dimmed); font-size: 10px; font-family: inherit; }
+.ndc-chart-scale { font-size: 9.5px; opacity: 0.8; }
+.ndc-chart-tip {
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--nd-bg-surface);
+  border: 1px solid var(--nd-card-hover-border);
+  box-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.55);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ndc-chart-tip-time { color: var(--nd-text-muted); }
+.ndc-chart-tip-row { display: flex; gap: 12px; color: var(--nd-text); }
+.ndc-chart-tip-rows { display: flex; flex-direction: column; gap: 1px; color: var(--nd-text); }
+.ndc-chart-tip-value { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.ndc-chart-tip-mark { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ndc-chart-tip-label { color: var(--nd-text-muted); margin-right: auto; padding-right: 10px; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; }
+
+.ndc-ring { position: relative; flex-shrink: 0; }
+.ndc-ring svg { display: block; }
+.ndc-ring-track { fill: none; stroke: color-mix(in srgb, var(--nd-text) 9%, transparent); }
+.ndc-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ndc-ring-value { font-weight: 500; line-height: 1; letter-spacing: -0.02em; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+.ndc-ring-unit { font-size: 0.5em; color: var(--nd-text-muted); margin-left: 1px; }
+.ndc-ring-label { margin-top: 3px; font-size: 0.64rem; letter-spacing: 0.06em; color: var(--nd-text-muted); }
+
+.ndc-spark { display: block; width: 100%; overflow: visible; }
+.ndc-spark-line { fill: none; stroke-width: 1.4; stroke-linejoin: round; }
+.ndc-spark-fill { opacity: 0.13; }
+
+.ndc-usage { position: relative; display: block; width: 100%; border-radius: 2px; overflow: hidden; background: color-mix(in srgb, var(--nd-text) 8%, transparent); }
+.ndc-usage-fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; transition: width 0.5s ease; }
+
+.ndc-title-note { font-size: 0.7rem; color: var(--nd-text-dimmed); white-space: nowrap; }
+
+.ndc-range { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; background: var(--nd-subcard-bg); }
+.ndc-range button { height: 20px; padding: 0 8px; border: none; border-radius: 4px; background: transparent; color: var(--nd-text-dimmed); font: inherit; font-size: 0.68rem; cursor: pointer; white-space: nowrap; }
+.ndc-range button.is-on { background: color-mix(in srgb, var(--nd-text) 10%, transparent); color: var(--nd-text); }
+.ndc-range button:hover:not(.is-on) { color: var(--nd-text); }
+
+.ndc-menu--scroll { overflow-y: auto; }
+.ndc-menu-item-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ndc-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 0.68rem; color: var(--nd-text-muted); }
+.ndc-legend-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.ndc-legend-mark { width: 10px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.ndc-legend-mark.is-square { width: 8px; height: 8px; border-radius: 2px; }
+.ndc-legend-note { margin-left: auto; color: var(--nd-text-dimmed); }
+
+/* Device */
+.ndc-dev { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ndc-dev.is-offline > :not(.ndc-dev-head):not(.ndc-dev-error) { opacity: 0.45; }
+.ndc-dev-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ndc-dev-head.is-compact { gap: 10px; }
+.ndc-dev-icon { width: 34px; height: 34px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--nd-subcard-bg); font-size: 1rem; }
+.ndc-dev-id { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ndc-dev-name { font-size: 0.92rem; font-weight: 500; color: var(--nd-text); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-dev-sub { font-size: 0.7rem; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-dev-status { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; font-size: 0.7rem; white-space: nowrap; }
+.ndc-dev-state--online.ndc-dev-status { color: var(--nd-green); }
+.ndc-dev-state--offline.ndc-dev-status { color: var(--nd-text-dimmed); }
+.ndc-dev-state--waiting.ndc-dev-status { color: var(--nd-text-dimmed); }
+.ndc-dev-state--online .ndc-dot, .ndc-dot.ndc-dev-state--online { background: var(--nd-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--nd-green) 16%, transparent); }
+.ndc-dev-state--offline .ndc-dot, .ndc-dot.ndc-dev-state--offline { background: color-mix(in srgb, var(--nd-text) 30%, transparent); }
+.ndc-dev-state--waiting .ndc-dot, .ndc-dot.ndc-dev-state--waiting { background: color-mix(in srgb, var(--nd-text) 20%, transparent); }
+.ndc-dot.ndc-dev-state--alert { background: var(--ndc-kind-alert); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ndc-kind-alert) 18%, transparent); }
+.ndc-dev-error { font-size: 0.72rem; color: var(--nd-text-muted); }
+
+.ndc-dev-top { display: flex; align-items: center; gap: 22px; min-width: 0; }
+.ndc-dev-rings { display: flex; gap: 14px; flex-shrink: 0; }
+.ndc-vitals { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px 16px; }
+.ndc-vital { display: flex; flex-direction: column; min-width: 0; }
+.ndc-vital-label { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-vital-value { font-size: 0.92rem; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ndc-vital-unit { font-size: 0.72rem; color: var(--nd-text-dimmed); }
+.ndc-dev-chart { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.ndc-dev-lines { display: flex; flex-direction: column; gap: 11px; }
+.ndc-dev-line-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ndc-dev-line-label { width: 32px; flex-shrink: 0; font-size: 0.64rem; letter-spacing: 0.06em; color: var(--nd-text-dimmed); }
+.ndc-dev-line-value { font-size: 0.98rem; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+.ndc-dev-line-note { margin-left: auto; font-size: 0.68rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ndc-dev-line .ndc-spark { margin-top: 3px; }
+.ndc-dev-footnote { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.7rem; color: var(--nd-text-muted); font-variant-numeric: tabular-nums; }
+.is-alert { color: var(--ndc-kind-alert) !important; }
+
+/* Disks (Device and Storage) */
+.ndc-disks { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ndc-dev .ndc-disks { padding-top: 14px; border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+.ndc-disk-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 0.74rem; min-width: 0; margin-bottom: 5px; }
+.ndc-disk-name { color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ndc-disk-host { color: var(--nd-text-dimmed); }
+.ndc-disk-free { color: var(--nd-text); white-space: nowrap; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.ndc-disk-used { color: var(--nd-text-dimmed); }
+.ndc-disk .ndc-usage { height: 4px; }
+
+/* Fleet */
+.ndc-fleet { display: flex; flex-direction: column; padding: 2px 16px; }
+.ndc-fleet-edit { display: block; width: 100%; padding: 0; border: none; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 6px; }
+.ndc-fleet-edit:hover .ndc-fleet-name { color: var(--nd-accent); }
+.ndc-fleet-row { display: grid; align-items: center; gap: 14px; padding: 9px 0; min-width: 0; border-bottom: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+.ndc-fleet > :last-child .ndc-fleet-row, .ndc-fleet > .ndc-fleet-row:last-child { border-bottom: none; }
+.ndc-fleet-row.is-offline { opacity: 0.5; }
+.ndc-fleet-row.is-stacked { gap: 6px 12px; }
+.ndc-fleet-row.is-stacked .ndc-fleet-id { grid-column: 1 / -1; }
+.ndc-fleet-id { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.ndc-fleet-id .ndc-dot { flex-shrink: 0; }
+.ndc-fleet-text { display: flex; flex-direction: column; min-width: 0; }
+.ndc-fleet-name { font-size: 0.8rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-fleet-sub { font-size: 0.68rem; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-fleet-bar { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ndc-fleet-bar-head { display: flex; justify-content: space-between; gap: 6px; font-size: 0.64rem; color: var(--nd-text-dimmed); }
+.ndc-fleet-bar-value { color: var(--nd-text); font-variant-numeric: tabular-nums; }
+.ndc-fleet-trend { min-width: 0; }
+.ndc-fleet-temp { font-size: 0.76rem; text-align: right; color: var(--nd-text-muted); font-variant-numeric: tabular-nums; }
+
+/* Devices: mini layout, figures and bars instead of rings, options */
+.ndc-dev--mini { gap: 12px; }
+.ndc-dev-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.ndc-dev-tile { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ndc-dev-tile-label { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-dev-tile-value { font-size: 1.15rem; font-weight: 500; line-height: 1.1; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ndc-dev-tile .ndc-usage { margin-top: 3px; }
+.ndc-dev-figures { display: flex; gap: 22px; flex-shrink: 0; }
+.ndc-dev-figures.with-bars { min-width: 150px; flex-direction: column; gap: 10px; }
+.ndc-dev-figure { display: flex; flex-direction: column; gap: 3px; min-width: 64px; }
+.ndc-dev-figure-label { font-size: 0.64rem; letter-spacing: 0.06em; color: var(--nd-text-muted); }
+.ndc-dev-figure-value { font-size: 1.7rem; font-weight: 500; line-height: 1; letter-spacing: -0.02em; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+.ndc-dev-figures.with-bars .ndc-dev-figure-value { font-size: 1.25rem; }
+.ndc-dev-line .ndc-usage { margin-top: 4px; }
+.ndc-chart-bar { opacity: 0.85; }
+.ndc-menu-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 3px; vertical-align: -1px; }
+.ndc-fleet.is-dense .ndc-fleet-row { padding: 5px 0; gap: 10px; }
+.ndc-fleet.is-dense .ndc-fleet-sub { display: none; }
+
+/* A narrow detailed layout: the gauges above the figures. */
+@container (max-width: 520px) {
+  .ndc-dev--wide .ndc-dev-top { flex-wrap: wrap; gap: 16px; }
+}
+
+/* ======================================================================
+   Device widgets, second pass: every measure in its display (figure, bar,
+   ring, chart), settings dialogs and the colour picker.
+   ====================================================================== */
+body {
+  --ndc-kind-temp: hsl(18 78% 64%);
+  --ndc-kind-load: hsl(200 62% 66%);
+  --ndc-kind-net: hsl(210 70% 68%);
+}
+body.light {
+  --ndc-kind-temp: hsl(16 72% 46%);
+  --ndc-kind-load: hsl(200 60% 40%);
+  --ndc-kind-net: hsl(210 62% 45%);
+}
+
+.ndc-chart-threshold { stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; fill: none; }
+
+/* One measure */
+.ndc-m { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ndc-m-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ndc-m-label { font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ndc-m-value { font-size: 0.86rem; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ndc-m-head .ndc-m-value { margin-left: auto; }
+.ndc-m-detail { font-size: 0.68rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ndc-m-head .ndc-m-detail { flex-shrink: 1; }
+.ndc-m-big { font-size: 1.15rem; font-weight: 500; line-height: 1.15; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ndc-dev--large .ndc-m-big { font-size: 1.3rem; }
+.ndc-m--ring { align-items: center; text-align: center; gap: 4px; }
+.ndc-m--ring .ndc-m-label, .ndc-m--ring .ndc-m-detail { max-width: 100%; }
+.ndc-m--chart .ndc-chart { margin-top: 2px; }
+.ndc-m--inline-ring { flex-direction: row; align-items: center; gap: 8px; }
+.ndc-m--inline-ring .ndc-m-head, .ndc-m--inline-chart .ndc-m-head, .ndc-m--inline-value .ndc-m-head { flex-direction: row; font-size: 0.8rem; }
+.ndc-m--inline-ring .ndc-m-head { flex-direction: column; gap: 0; align-items: flex-start; }
+.ndc-m--inline-ring .ndc-m-head .ndc-m-value { margin-left: 0; }
+.ndc-m--inline-value .ndc-m-head, .ndc-m--inline-chart .ndc-m-head { justify-content: space-between; }
+.ndc-m--empty { min-height: 1px; }
+.is-danger { font-weight: 500; }
+
+/* Device: groups of measures */
+.ndc-dev-top { display: flex; align-items: center; gap: 20px; min-width: 0; flex-wrap: wrap; }
+.ndc-dev-top.has-both > .ndc-dev-group--value { flex: 1; min-width: 160px; }
+.ndc-dev-group { min-width: 0; }
+.ndc-dev-group--ring { display: flex; flex-wrap: wrap; gap: 12px 16px; }
+.ndc-dev--small .ndc-dev-group--ring { gap: 10px; }
+.ndc-dev-group--value { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px 16px; flex: 1; }
+.ndc-dev--small .ndc-dev-group--value { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ndc-dev-group--bar { display: flex; flex-direction: column; gap: 11px; padding-top: 2px; }
+.ndc-dev-group--chart { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 14px 18px; }
+.ndc-dev-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 0.68rem; color: var(--nd-text-muted); }
+
+/* One-measure widgets */
+.ndc-metric-list { min-width: 0; }
+.ndc-metric-list--bar { display: flex; flex-direction: column; gap: 11px; }
+.ndc-metric-list--value { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px 16px; }
+.ndc-metric-list--ring { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px 10px; justify-items: center; }
+.ndc-metric-list .ndc-m--value .ndc-m-label { text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); }
+.ndc-metric-list .ndc-m--bar .ndc-m-label { text-transform: none; letter-spacing: 0; font-size: 0.76rem; color: var(--nd-text); }
+
+/* Fleet rows */
+.ndc-fleet-row { display: flex; align-items: center; gap: 14px; }
+.ndc-fleet-row > .ndc-fleet-id { flex: 0 1 120px; min-width: 96px; }
+.ndc-fleet-metrics { flex: 1; display: grid; align-items: center; gap: 12px; min-width: 0; }
+.ndc-fleet.is-stacked .ndc-fleet-row { flex-direction: column; align-items: stretch; gap: 8px; }
+.ndc-fleet.is-stacked .ndc-fleet-row > .ndc-fleet-id { flex-basis: auto; }
+.ndc-fleet .ndc-m-label { font-size: 0.6rem; }
+.ndc-fleet .ndc-m-value { font-size: 0.74rem; }
+
+/* Settings dialog of the device widgets */
+.ndc-dlg-list { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto; }
+.ndc-dlg-name { color: var(--nd-text); font-size: 0.8rem; }
+.ndc-dlg-note { color: var(--nd-text-dimmed); font-size: 0.72rem; margin-left: 8px; }
+.ndc-dlg-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.ndc-dlg-metrics { display: flex; flex-direction: column; gap: 4px; }
+.ndc-dlg-metric { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(120px, 150px) 32px minmax(150px, 170px); align-items: center; gap: 10px; min-height: 38px; }
+.ndc-dlg-metric.is-off > :not(:first-child) { opacity: 0.4; }
+.ndc-dlg-metric > .ndc-check-row { padding-left: 0; }
+.ndc-dlg-select { min-width: 0; }
+.ndc-dlg-select .nd-input { height: 32px; font-size: 0.74rem; }
+.ndc-dlg-danger { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--nd-text-muted); }
+.ndc-dlg-danger-label { white-space: nowrap; }
+.ndc-dlg-danger .nd-input { width: 64px; height: 32px; padding: 0 8px; font-size: 0.76rem; }
+.ndc-dlg-unit { color: var(--nd-text-dimmed); min-width: 26px; }
+@media (max-width: 640px) {
+  .ndc-dlg-metric { grid-template-columns: minmax(0, 1fr) 32px; grid-auto-rows: auto; padding: 6px 0; border-bottom: 1px solid var(--nd-card-border); }
+  .ndc-dlg-select, .ndc-dlg-danger { grid-column: 1 / -1; }
+}
+
+/* Colour swatches and picker */
+.ndc-swatch-button { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--nd-card-border); border-radius: 8px; background: transparent; cursor: pointer; }
+.ndc-swatch-button:hover { border-color: var(--nd-card-hover-border); }
+.ndc-swatch { display: inline-block; width: 16px; height: 16px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.ndc-swatch.is-large { width: 34px; height: 34px; border-radius: 9px; }
+.ndc-color-preview { display: flex; align-items: center; gap: 12px; }
+.ndc-color-preview-text { flex: 1; font-size: 0.8rem; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+.ndc-color-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.ndc-color-choice { position: relative; }
+.ndc-color-dot { width: 26px; height: 26px; padding: 0; border: 2px solid transparent; border-radius: 8px; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.ndc-color-dot.is-on { border-color: var(--nd-text); }
+.ndc-color-remove { position: absolute; top: -5px; right: -5px; width: 15px; height: 15px; display: none; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 50%; background: var(--nd-bg-surface); color: var(--nd-text); box-shadow: 0 0 0 1px var(--nd-card-border); cursor: pointer; }
+.ndc-color-choice:hover .ndc-color-remove, .ndc-color-remove:focus-visible { display: inline-flex; }
+.ndc-color-empty { font-size: 0.74rem; color: var(--nd-text-dimmed); }
+.ndc-color-custom { display: flex; gap: 10px; align-items: center; }
+.ndc-color-custom input[type="color"] { width: 40px; height: 34px; padding: 2px; border: 1px solid var(--nd-card-border); border-radius: 8px; background: transparent; cursor: pointer; }
+.ndc-color-custom .nd-input { flex: 1; }
+/* Throughputs are longer than a percentage: a smaller figure, never cut. */
+.ndc-m--value.ndc-m--network .ndc-m-big { font-size: 0.98rem; white-space: normal; }
+/* Very narrow blocks: nothing forces a minimum width. */
+.ndc-fleet.is-stacked .ndc-fleet-row > .ndc-fleet-id { min-width: 0; }
+.ndc-action-text, .ndc-ctr-text { min-width: 0; overflow: hidden; }
+.ndc-action-name, .ndc-ctr-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Rings: centred in their cell, the name of a machine or disk under the ring. */
+.ndc-m--ring { justify-content: flex-start; width: 100%; }
+.ndc-m--ring .ndc-ring { margin: 0 auto; }
+.ndc-ring-center { padding: 0 14%; text-align: center; }
+.ndc-ring-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-m-ring-name { display: block; max-width: 100%; text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); text-align: center; }
+.ndc-m--ring .ndc-m-detail { display: block; max-width: 100%; text-align: center; }
+.ndc-dev-group--ring > .ndc-m--ring { width: auto; min-width: 64px; }
+
+/* Settings dialog: chart options under a measure, colour per machine. */
+.ndc-dlg-stack { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.ndc-dlg-chart { display: flex; flex-wrap: wrap; gap: 8px; }
+.ndc-dlg-chart .ndc-seg { flex: 1 1 200px; }
+.ndc-dlg-metric-block { display: flex; flex-direction: column; gap: 6px; }
+.ndc-dlg-metric-block.is-off .ndc-dlg-metric > :not(:first-child) { opacity: 0.4; }
+.ndc-dlg-metric-block > .ndc-dlg-chart { padding: 0 0 8px 28px; }
+.ndc-dlg-device { display: flex; align-items: center; gap: 10px; }
+.ndc-dlg-device > .ndc-check-row { flex: 1; min-width: 0; }
+.ndc-dlg-metric { grid-template-columns: minmax(110px, 1fr) minmax(112px, 136px) 32px minmax(176px, 186px); }
+.ndc-dlg-danger .nd-input { width: 58px; }
+.ndc-dlg-unit { min-width: 32px; }
+.ndc-dlg-device-edit { flex-shrink: 0; color: var(--nd-text-dimmed); }
+.ndc-dlg-device-edit:hover { color: var(--nd-accent); }

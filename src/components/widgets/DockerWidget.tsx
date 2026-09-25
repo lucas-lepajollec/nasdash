@@ -9,6 +9,8 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useI18n } from '@/i18n/I18nProvider';
+import { WidgetHeaderActions } from './WidgetHeaderActions';
+import { CalmeWidget, useCalme } from '@/widgets/calme';
 
 const ICONS: Record<string, React.ReactNode> = {
   Power: <Power size={14} />,
@@ -17,10 +19,41 @@ const ICONS: Record<string, React.ReactNode> = {
   Layers: <Layers size={14} />,
 };
 
-function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: { action: DockerActionConfig, editMode: boolean, onEdit: () => void, onExecute: () => void, isLoading: boolean }) {
+function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading, calme }: { action: DockerActionConfig, editMode: boolean, onEdit: () => void, onExecute: () => void, isLoading: boolean, calme?: boolean }) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: action.id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 1 };
+
+  // Calme: a quiet row (icon, name, number of containers), styled in design-calme.css.
+  if (calme) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={{ ...style, opacity: isDragging ? 0.5 : 1 }}
+        className={`ndc-action ${editMode ? 'ndc-action--editing' : ''}`}
+        role={editMode ? undefined : 'button'}
+        tabIndex={editMode ? undefined : 0}
+        aria-busy={isLoading || undefined}
+        onClick={() => { if (!editMode && !isLoading) onExecute(); }}
+        onKeyDown={(e) => { if (!editMode && !isLoading && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onExecute(); } }}
+      >
+        {editMode ? (
+          <span {...attributes} {...listeners} className="ndc-action-icon ndc-action-grip"><GripVertical size={14} /></span>
+        ) : (
+          <span className="ndc-action-icon">{isLoading ? <Loader2 size={14} className="nd-spin" /> : ICONS[action.icon] || <Play size={14} />}</span>
+        )}
+        <span className="ndc-action-text">
+          <span className="ndc-action-name" title={t(action.name)}>{t(action.name)}</span>
+          <span className="ndc-action-sub">{action.targets.length === 1 ? t('docker.calme.target') : t('docker.calme.targets', { count: action.targets.length })}</span>
+        </span>
+        {editMode && (
+          <button type="button" className="ndc-icon-button" onClick={(e) => { e.stopPropagation(); onEdit(); }} aria-label={t('Modifier')}>
+            <Pencil size={12} />
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -66,6 +99,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
+  const calme = useCalme();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -175,7 +209,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     }
   };
 
-  let listStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+  let listStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, marginTop: hideTitles ? 0 : 8 };
   
   const actionsCount = actions.length;
   if (widgetSize === 'wide') {
@@ -185,10 +219,57 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
     else if (actionsCount === 3) gridTemplateColumns = 'repeat(3, 1fr)';
     else if (actionsCount === 4) gridTemplateColumns = 'repeat(4, 1fr)';
     
-    listStyle = { display: 'grid', gridTemplateColumns, gap: 10, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+    listStyle = { display: 'grid', gridTemplateColumns, gap: 10, marginTop: hideTitles ? 0 : 8 };
   } else if (widgetSize === 'medium') {
     const cols = actionsCount === 1 ? 1 : 2;
-    listStyle = { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginTop: (hideTitles && !editMode) ? 0 : 8 };
+    listStyle = { display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8, marginTop: hideTitles ? 0 : 8 };
+  }
+
+  const addButton = editMode && (
+    <WidgetHeaderActions>
+      <button
+        className="nd-action-icon success"
+        onClick={() => setDockerActionModal({ open: true })}
+        style={{ marginLeft: 'auto' }}
+        title={t("Ajouter une action")}
+      >
+        <Plus size={13} />
+      </button>
+    </WidgetHeaderActions>
+  );
+
+  const list = (
+    <>
+      {actions.length === 0 && (
+        <p className={calme ? 'ndc-empty' : undefined} style={calme ? undefined : { fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
+          {t("Aucune action rapide configurée.")}{!editMode && t("Activez le mode édition pour en ajouter.")}
+        </p>
+      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={actions.map(a => a.id)} strategy={rectSortingStrategy}>
+          {actions.map((action) => (
+            <SortableActionItem
+              key={action.id}
+              action={action}
+              editMode={!!editMode}
+              onEdit={() => setDockerActionModal({ open: true, action })}
+              onExecute={() => executeAction(action)}
+              isLoading={!!loadingActions[action.id]}
+              calme={calme}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
+    </>
+  );
+
+  if (calme) {
+    return (
+      <CalmeWidget title={t("Actions Docker")} editMode={editMode}>
+        {addButton}
+        <div className="ndc-actions">{list}</div>
+      </CalmeWidget>
+    );
   }
 
   return (
@@ -196,39 +277,12 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
       {(!hideTitles || editMode) && (
         <div className="nd-section-title">
           <Layers size={12} style={{ color: 'var(--nd-blue)' }} /> {t("Actions Docker")}
-          {editMode && (
-            <button 
-              className="nd-action-icon success" 
-              onClick={() => setDockerActionModal({ open: true })} 
-              style={{ marginLeft: 'auto' }} 
-              title={t("Ajouter une action")}
-            >
-              <Plus size={13} />
-            </button>
-          )}
+          {addButton}
         </div>
       )}
 
       <div style={listStyle}>
-        {actions.length === 0 && (
-          <p style={{ fontSize: '0.65rem', color: 'var(--nd-text-muted)', textAlign: 'left', padding: '8px 4px', margin: 0 }}>
-            {t("Aucune action rapide configurée.")}{!editMode && t("Activez le mode édition pour en ajouter.")}
-          </p>
-        )}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={actions.map(a => a.id)} strategy={rectSortingStrategy}>
-            {actions.map((action) => (
-              <SortableActionItem 
-                key={action.id} 
-                action={action} 
-                editMode={!!editMode} 
-                onEdit={() => setDockerActionModal({ open: true, action })}
-                onExecute={() => executeAction(action)}
-                isLoading={!!loadingActions[action.id]}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        {list}
       </div>
     </div>
   );

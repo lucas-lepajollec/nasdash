@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+import { Hash } from 'lucide-react';
 import { Category } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -9,9 +11,12 @@ interface FooterProps {
   showSecretSections: boolean;
   showSensitive: boolean;
   onToggleSecretSections: () => void;
+  /** Shown as a card on a page (the ports widget), with its title while editing. */
+  embedded?: boolean;
+  editMode?: boolean;
 }
 
-export default function Footer({ categories, showSecretSections, showSensitive, onToggleSecretSections }: FooterProps) {
+export default function Footer({ categories, showSecretSections, showSensitive, onToggleSecretSections, embedded = false, editMode = false }: FooterProps) {
   const { t } = useI18n();
   const { user } = useConfig();
   const isAdmin = user?.role === 'admin';
@@ -39,8 +44,17 @@ export default function Footer({ categories, showSecretSections, showSensitive, 
   // Place it roughly in the middle of the port list
   const triggerIndex = Math.floor(sortedPorts.length / 2);
 
+  const containerStyle: React.CSSProperties = embedded
+    ? { textAlign: 'center' }
+    : { borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 32, textAlign: 'center' };
+
   return (
-    <footer style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 32, textAlign: 'center' }}>
+    <footer className={embedded ? 'nd-sidebar-card' : undefined} style={containerStyle}>
+      {embedded && editMode && (
+        <div className="nd-section-title" style={{ textAlign: 'left' }}>
+          <Hash size={12} style={{ color: 'var(--nd-accent)' }} /> {t("Ports")}
+        </div>
+      )}
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 4, marginBottom: 12 }}>
         {sortedPorts.map((port, i) => (
           <span key={i} className="nd-port-pill">{!showSensitive ? '****' : port}</span>

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Monitor, Laptop, Smartphone, Server, Loader2, AlertCircle, Globe } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useTailscaleDevices } from '@/widgets/tailscale/useTailscaleDevices';
 
 const getOsIcon = (os: string, hostname: string) => {
   const lower = os?.toLowerCase() || '';
@@ -22,41 +23,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
   const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
-  const [devices, setDevices] = useState<any[] | null>(null);
-  const [error, setError] = useState(false);
-  const [unconfigured, setUnconfigured] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const fetchTS = async () => {
-    try {
-      const res = await fetch('/api/tailscale');
-      const data = await res.json();
-      
-      if (data.unconfigured) {
-        setUnconfigured(true);
-        setError(false);
-      } else if (data.error) {
-        setError(true);
-        setUnconfigured(false);
-      } else {
-        setDevices(data.devices || []);
-        setUnconfigured(false);
-        setError(false);
-      }
-    } catch (e) {
-      setError(true);
-      setUnconfigured(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!isVisible) return;
-    fetchTS();
-    const interval = setInterval(fetchTS, 60000);
-    return () => clearInterval(interval);
-  }, [isVisible]);
+  const { devices, error, unconfigured, loading } = useTailscaleDevices(isVisible);
 
   if (loading && !devices && !unconfigured && !error) {
     return (
@@ -69,7 +36,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
   if (unconfigured) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title">
             <Globe size={12} style={{ color: 'var(--nd-purple)' }} /> Tailscale
           </div>
@@ -84,7 +51,7 @@ export default function TailscaleWidget({ editMode, showSensitive = false, isVis
   if (error) {
     return (
       <div className="nd-sidebar-card nd-animate-in nd-stagger-1">
-        {!hideTitles && (
+        {(!hideTitles || editMode) && (
           <div className="nd-section-title" style={{ color: 'var(--nd-red)' }}>
             <AlertCircle size={12} /> {t("Tailscale Error")}
           </div>

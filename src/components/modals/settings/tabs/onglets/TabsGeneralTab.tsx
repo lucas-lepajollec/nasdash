@@ -2,15 +2,19 @@ import React, { useState } from 'react';
 import { ArrowUp, ArrowDown, Ban } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useTabs } from '@/hooks/useTabs';
+import { usePages } from '@/providers/PagesProvider';
 import { ToggleSwitch } from '../../shared/ToggleSwitch';
 import EmojiPickerModal from '../../../EmojiPickerModal';
 import { Emoji } from '../../../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useCalme } from '@/widgets/calme';
+import { CalmeHeading, CalmeOrderList, CalmeRow, CalmeSegmented, CalmeSwitch } from '../../shared/CalmeControls';
 
 export function TabsGeneralTab() {
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { tabs } = useTabs();
+  const { updatePageDetails } = usePages();
 
   const [iconPickerTabId, setIconPickerTabId] = useState<string | null>(null);
 
@@ -40,6 +44,71 @@ export function TabsGeneralTab() {
     }
     await updateConfig({ tabOrder: newOrder });
   };
+
+  const calme = useCalme();
+  if (calme) {
+    const ordered = (tabOrder.length > 0 ? tabOrder : tabs.map(tab => tab.id))
+      .map(id => tabs.find(candidate => candidate.id === id))
+      .filter((tab): tab is NonNullable<typeof tab> => !!tab);
+    const iconOf = (tab: typeof ordered[number]) => config?.settings?.tabIcons?.[tab.id] !== undefined ? config?.settings?.tabIcons?.[tab.id] : tab.icon;
+    return (
+      <div className="ndc-set-page">
+        <section className="ndc-set-block">
+          <CalmeHeading>{t('settings.calme.dock')}</CalmeHeading>
+          <CalmeRow label={t("Activer le Dock")} info={t("Affiche la barre de navigation principale (mode Dock).")}>
+            <CalmeSwitch label={t("Activer le Dock")} checked={!config?.settings?.hideDock} onChange={(val) => updateConfig({ hideDock: !val })} />
+          </CalmeRow>
+          <CalmeRow label={t("Position du Dock")}>
+            <CalmeSegmented
+              label={t("Position du Dock")}
+              value={config?.settings?.dockPosition === 'right' ? 'right' : 'left'}
+              options={[{ value: 'left', label: t("À gauche") }, { value: 'right', label: t("À droite") }]}
+              onChange={value => updateConfig({ dockPosition: value })}
+            />
+          </CalmeRow>
+        </section>
+        <section className="ndc-set-block">
+          <CalmeHeading info={t("Activez/désactivez les onglets, modifiez leurs icônes, et utilisez les flèches pour les réorganiser.")}>{t('settings.calme.tabs')}</CalmeHeading>
+          <CalmeOrderList
+            moveUpLabel={t("Monter")}
+            moveDownLabel={t("Descendre")}
+            onMove={(index, direction) => { void handleMoveTab(ordered[index].id, direction < 0 ? 'up' : 'down'); }}
+            items={ordered.map(tab => {
+              const icon = iconOf(tab);
+              return {
+                id: tab.id,
+                label: t(tab.name),
+                enabled: !hiddenTabs.includes(tab.id),
+                onToggle: () => { void handleToggleTabHidden(tab.id); },
+                extra: (
+                  <button type="button" className="ndc-icon-button ndc-order-icon" onClick={() => setIconPickerTabId(tab.id)} aria-label={t('tabs.chooseIcon', { name: t(tab.name) })} title={t('tabs.chooseIcon', { name: t(tab.name) })}>
+                    {icon ? <Emoji emoji={icon} /> : <Ban size={13} />}
+                  </button>
+                ),
+              };
+            })}
+          />
+        </section>
+      {/* Icon Picker Modal */}
+      {iconPickerTabId && (
+        <EmojiPickerModal
+          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] ?? tabs.find(tab => tab.id === iconPickerTabId)?.icon ?? ''}
+          onSelect={async (icon: string) => {
+            // The page carries its icon; a historical dock override is cleared.
+            await updatePageDetails(iconPickerTabId, { icon });
+            if (config?.settings?.tabIcons && iconPickerTabId in config.settings.tabIcons) {
+              const overrides = { ...config.settings.tabIcons };
+              delete overrides[iconPickerTabId];
+              await updateConfig({ tabIcons: overrides });
+            }
+          }}
+          onClose={() => setIconPickerTabId(null)}
+          title={t('tabs.chooseIcon', { name: t(tabs.find(tab => tab.id === iconPickerTabId)?.name || "l&apos;onglet") })}
+        />
+      )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -138,27 +207,14 @@ export function TabsGeneralTab() {
       {/* Icon Picker Modal */}
       {iconPickerTabId && (
         <EmojiPickerModal
-          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] || ''}
+          initialEmoji={config?.settings?.tabIcons?.[iconPickerTabId] ?? tabs.find(tab => tab.id === iconPickerTabId)?.icon ?? ''}
           onSelect={async (icon: string) => {
-            await updateConfig({ tabIcons: { ...config?.settings?.tabIcons, [iconPickerTabId]: icon } });
-            
-            // S'il s'agit d'un onglet personnalisé, on met aussi à jour la source de vérité
-            const isCustomTab = !['dashboard', 'widgets', 'docker'].includes(iconPickerTabId);
-            if (isCustomTab) {
-              try {
-                await fetch('/api/custom-tabs', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    type: 'updateTab',
-                    id: iconPickerTabId,
-                    tabUpdates: { icon }
-                  })
-                });
-                window.dispatchEvent(new Event('customTabsUpdated'));
-              } catch (e) {
-                console.error("Failed to sync custom tab icon", e);
-              }
+            // The page carries its icon; a historical dock override is cleared.
+            await updatePageDetails(iconPickerTabId, { icon });
+            if (config?.settings?.tabIcons && iconPickerTabId in config.settings.tabIcons) {
+              const overrides = { ...config.settings.tabIcons };
+              delete overrides[iconPickerTabId];
+              await updateConfig({ tabIcons: overrides });
             }
           }}
           onClose={() => setIconPickerTabId(null)}

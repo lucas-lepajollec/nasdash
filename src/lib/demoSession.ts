@@ -13,6 +13,7 @@ const MAX_SESSIONS = 64;
 interface DemoSessionState {
   config?: DashboardConfig;
   customTabs?: unknown;
+  pages?: unknown;
   containerStates: Map<string, string>;
   removedContainers: Set<string>;
   removedImages: Set<string>;
@@ -128,6 +129,18 @@ export function setDemoSessionCustomTabs<T>(data: T): boolean {
   const session = currentSession();
   if (!session) return false;
   session.customTabs = cloneJson(data);
+  return true;
+}
+
+export function getDemoSessionPages<T>(): T | null {
+  const data = currentSession()?.pages;
+  return data ? cloneJson(data as T) : null;
+}
+
+export function setDemoSessionPages<T>(data: T): boolean {
+  const session = currentSession();
+  if (!session) return false;
+  session.pages = cloneJson(data);
   return true;
 }
 

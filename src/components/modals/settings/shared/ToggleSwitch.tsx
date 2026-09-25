@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCalme } from '@/widgets/calme';
 
 export interface ToggleSwitchProps {
   checked: boolean;
@@ -8,6 +9,21 @@ export interface ToggleSwitchProps {
 }
 
 export function ToggleSwitch({ checked, onChange, label, sublabel }: ToggleSwitchProps) {
+  const calme = useCalme();
+  // Calme: the whole row is one switch, drawn in design-calme.css.
+  if (calme) {
+    return (
+      <button type="button" role="switch" aria-checked={checked} className="ndc-switch-row" onClick={() => onChange(!checked)}>
+        {(label || sublabel) && (
+          <span className="ndc-switch-text">
+            {label && <span className="ndc-switch-label">{label}</span>}
+            {sublabel && <span className="ndc-switch-sub">{sublabel}</span>}
+          </span>
+        )}
+        <span className={`ndc-switch ${checked ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
+      </button>
+    );
+  }
   return (
     <div 
       onClick={() => onChange(!checked)}

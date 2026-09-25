@@ -4,6 +4,8 @@ import { Check, Languages } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { UI_LANGUAGES } from '@/i18n/messages';
 import { useConfig } from '@/hooks/useConfig';
+import { useCalme } from '@/widgets/calme';
+import { CalmeRow, CalmeSegmented } from '../shared/CalmeControls';
 
 export function LanguageTab({ embedded = false }: { embedded?: boolean }) {
   const { language, setLanguage, t } = useI18n();
@@ -14,6 +16,20 @@ export function LanguageTab({ embedded = false }: { embedded?: boolean }) {
     setLanguage(nextLanguage);
     if (!await updateConfig({ uiLanguage: nextLanguage })) setLanguage(previousLanguage);
   };
+
+  const calme = useCalme();
+  if (calme && embedded) {
+    return (
+      <CalmeRow label={t('settings.languageTitle')} info={t(config?.demoMode ? 'settings.languageSavedDemo' : 'settings.languageSaved')}>
+        <CalmeSegmented
+          label={t('settings.languageTitle')}
+          value={language}
+          options={UI_LANGUAGES.map(option => ({ value: option.id, label: option.label }))}
+          onChange={next => void selectLanguage(next)}
+        />
+      </CalmeRow>
+    );
+  }
 
   return (
     <section aria-labelledby="nasdash-language-title" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

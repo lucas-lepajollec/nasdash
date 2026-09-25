@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ShieldAlert, CheckCircle, AlertTriangle, RefreshCw, HelpCircle, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useCalme } from '@/widgets/calme';
 
 interface ActivePortItem {
   port: number;
@@ -15,6 +16,7 @@ interface ActivePortItem {
 export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boolean }) {
   const { t } = useI18n();
   const { config, showSecretSections } = useConfig();
+  const calme = useCalme();
   const [dockerContainers, setDockerContainers] = useState<any[]>([]);
   const [loadingDocker, setLoadingDocker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -459,7 +461,8 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
         {/* Checker Results */}
         {checkResult && (
           <div 
-            style={{ 
+            className={calme ? `ndc-check ${checkResult.available ? 'ndc-check--free' : 'ndc-check--busy'}` : undefined}
+            style={calme ? undefined : { 
               padding: 8, 
               borderRadius: 'calc(var(--nd-card-radius) * 0.6)', 
               background: checkResult.available ? 'rgba(48, 209, 88, 0.06)' : 'rgba(255, 69, 58, 0.06)',
@@ -526,12 +529,12 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
               {suggestions.map((p, i) => (
                 <button
                   key={i}
-                  className="nd-btn"
+                  className={calme ? 'ndc-suggestion' : 'nd-btn'}
                   onClick={() => {
                     setCheckPortInput(String(p));
                     if (genIpInput) setCheckIpInput(genIpInput);
                   }}
-                  style={{ 
+                  style={calme ? undefined : { 
                     flex: 1, 
                     fontSize: '0.68rem', 
                     padding: '3px 0', 

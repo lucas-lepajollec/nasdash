@@ -7,9 +7,13 @@ import { Service } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 
+const actionLabel = (translatedAction: string, name: string) => `${translatedAction} ${name}`;
+
 interface ServiceItemProps {
   service: Service;
   categoryId?: string;
+  /** Distinguishes drag targets when one category is displayed by several widgets. */
+  dndScope?: string;
   editMode?: boolean;
   showSensitive?: boolean;
   layout?: 'standard' | 'compact' | 'bento' | 'grid' | 'bento-logo-large' | 'bento-logo-medium' | 'bento-logo-small';
@@ -17,7 +21,7 @@ interface ServiceItemProps {
   total?: number;
 }
 
-export default function ServiceItem({ service, categoryId, editMode, showSensitive = false, layout = 'standard', index, total }: ServiceItemProps) {
+export default function ServiceItem({ service, categoryId, dndScope, editMode, showSensitive = false, layout = 'standard', index, total }: ServiceItemProps) {
   const { t } = useI18n();
   const [imgError, setImgError] = useState(false);
   const { config, pingResults } = useConfig();
@@ -27,7 +31,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
   const showUrl = layout !== 'compact' && layout !== 'grid' && layout !== 'bento' && !layout?.startsWith('bento-logo');
   const showPingText = showUrl && config?.settings?.showPingDetails;
 
-  const [delayedStatus, setDelayedStatus] = useState<{ status: string; statusText: string; latency: number } | null>(null);
+  const [delayedStatus, setDelayedStatus] = useState<{ status: string; statusText: string; latency: number; selfSigned?: boolean } | null>(null);
 
   useEffect(() => {
     const rawStatus = service.localUrl ? pingResults[service.localUrl] : null;
@@ -52,13 +56,13 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
   }, [pingResults, service.id, service.localUrl]);
 
   const { attributes, listeners, setNodeRef: setDraggable, isDragging } = useDraggable({
-    id: `drag-srv-${service.id}`,
+    id: `drag-srv-${dndScope ? `${dndScope}-` : ''}${service.id}`,
     data: { type: 'service', service, categoryId },
     disabled: !editMode || !categoryId,
   });
 
   const { setNodeRef: setDroppable, isOver } = useDroppable({
-    id: `drop-srv-${service.id}`,
+    id: `drop-srv-${dndScope ? `${dndScope}-` : ''}${service.id}`,
     data: { type: 'service-drop', serviceId: service.id, categoryId },
     disabled: !editMode || !categoryId,
   });
@@ -132,7 +136,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
 
 
   return (
-    <div ref={setNodeRef} className={`nd-service nd-service--${activeLayout}`} style={{ 
+    <div ref={setNodeRef} data-service-id={service.id} className={`nd-service nd-service--${activeLayout}`} style={{
       position: 'relative', 
       opacity: isDragging ? 0.3 : 1,
       outline: isOver ? '2px solid var(--nd-accent)' : undefined,
@@ -160,7 +164,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
               <span className="nd-service-name">{service.name}</span>
               {showPingText && delayedStatus ? (
                 <span className="nd-service-url">
-                  {delayedStatus.status === 'online' ? 'OK' : t(delayedStatus.statusText)} - {delayedStatus.latency}ms
+                  {delayedStatus.status === 'online' ? (delayedStatus.selfSigned ? t('ping.selfSigned') : 'OK') : t(delayedStatus.statusText)} - {delayedStatus.latency}ms
                 </span>
               ) : (
                 <span className="nd-service-url">
@@ -199,7 +203,7 @@ export default function ServiceItem({ service, categoryId, editMode, showSensiti
       )}
 
       {editMode && (
-        <div className="nd-service-drag-handle" {...attributes} {...listeners} style={{ cursor: 'grab', marginLeft: 'auto', paddingLeft: 8 }}>
+        <div className="nd-service-drag-handle" {...attributes} {...listeners} aria-label={actionLabel(t('Déplacer'), service.name)} style={{ cursor: 'grab', marginLeft: 'auto', paddingLeft: 8 }}>
           <GripVertical size={12} />
         </div>
       )}

@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Device, DeviceApiConfig } from '@/lib/types';
+import { getDeviceIntegration, selectableDeviceIntegrations } from '@/integrations/registry';
+import type { ConnectionField, ConnectionFieldId } from '@/integrations/types';
 import { Loader2 } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -78,26 +81,85 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const [icon, setIcon] = useState(device?.icon || '🖥️');
   const [apiType, setApiType] = useState<DeviceApiConfig['type']>(device?.api?.type || 'glances');
 
-  const [ip, setIp] = useState(device?.api?.ip || '');
-  const [port, setPort] = useState(device?.api?.port || '');
-  const [username, setUsername] = useState(device?.api?.username || '');
-  const [password, setPassword] = useState(''); // Always keep secret empty 
-
-  const [nodeName, setNodeName] = useState(device?.api?.nodeName || 'pve');
-  const [vmid, setVmid] = useState(device?.api?.vmid || '');
-  const [vmType, setVmType] = useState(device?.api?.vmType || 'qemu');
+  // Connection fields come from the integration's manifest; secrets always start empty.
+  const [values, setValues] = useState<Partial<Record<ConnectionFieldId, string>>>({
+    ip: device?.api?.ip || '',
+    port: device?.api?.port || '',
+    username: device?.api?.username || '',
+    password: '',
+    nodeName: device?.api?.nodeName || '',
+    vmid: device?.api?.vmid || '',
+    vmType: device?.api?.vmType || '',
+    allowSelfSigned: device?.api?.allowSelfSigned ? 'true' : '',
+    target: device?.api?.target || '',
+  });
+  const setValue = (id: ConnectionFieldId, value: string) => setValues(current => ({ ...current, [id]: value }));
+  // Form values are text; switches are sent as booleans.
+  const submitted = (field: ConnectionField) => field.kind === 'toggle' ? values[field.id] === 'true' : values[field.id] ?? '';
+  const integration = getDeviceIntegration(apiType);
+  const fields = integration?.fields ?? [];
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Auto-fill default port based on API type if empty
+  // Empty fields take the integration's defaults (port, node name…).
   useEffect(() => {
-    if (!port) {
-      if (apiType === 'glances') setPort('61208');
-      if (apiType === 'proxmox') setPort('8006');
-      if (apiType === 'lhm') setPort('9001');
+    const defaults = (getDeviceIntegration(apiType)?.fields ?? []).filter(field => field.defaultValue);
+    setValues(current => {
+      const missing = defaults.filter(field => !current[field.id]);
+      return missing.length ? { ...current, ...Object.fromEntries(missing.map(field => [field.id, field.defaultValue])) } : current;
+    });
+  }, [apiType, values.port]);
+
+  const isShown = (field: ConnectionField) => !field.showWhen || Boolean(values[field.showWhen]);
+  const isRequired = (field: ConnectionField) => field.required === true || (field.required === 'create' && !device);
+
+  // Fields side by side per row; consecutive panel rows share one framed box.
+  const connectionRows: { panel: boolean; rows: ConnectionField[][] }[] = [];
+  for (const field of fields) {
+    if (!isShown(field)) continue;
+    const panel = Boolean(field.panel);
+    let group = connectionRows[connectionRows.length - 1];
+    if (!group || group.panel !== panel) connectionRows.push(group = { panel, rows: [] });
+    const row = group.rows.find(candidate => candidate[0].row === field.row);
+    if (row) row.push(field);
+    else group.rows.push([field]);
+  }
+
+  const renderField = (field: ConnectionField) => {
+    const value = values[field.id] ?? '';
+    if (field.kind === 'toggle') {
+      return (
+        <ToggleSwitch
+          checked={value === 'true'}
+          onChange={checked => setValue(field.id, checked ? 'true' : '')}
+          label={t(field.label)}
+          sublabel={field.hint ? t(field.hint) : undefined}
+        />
+      );
     }
-  }, [apiType, port]);
+    if (field.kind === 'select') {
+      return (
+        <CustomSelect
+          value={value || field.defaultValue || ''}
+          onChange={next => setValue(field.id, next)}
+          options={(field.options ?? []).map(option => ({ value: option.value, label: t(option.label) }))}
+        />
+      );
+    }
+    const secret = field.kind === 'secret';
+    const placeholder = secret && device ? t("Laisser vide pour garder l'actuel") : field.placeholder ? t(field.placeholder) : undefined;
+    return (
+      <input
+        type={secret || (field.kind === 'address' && !showSensitive) ? 'password' : 'text'}
+        className="nd-input"
+        value={value}
+        onChange={e => setValue(field.id, e.target.value)}
+        placeholder={placeholder}
+        required={isRequired(field)}
+      />
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,13 +174,10 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
         icon,
         api: {
           type: apiType,
-          ip,
-          port,
-          username,
-          password,
-          nodeName: apiType === 'proxmox' ? nodeName : undefined,
-          vmid: apiType === 'proxmox' ? vmid : undefined,
-          vmType: apiType === 'proxmox' && vmid ? vmType : undefined,
+          ...Object.fromEntries(fields.filter(field => isShown(field)).map(field => [field.id, submitted(field)])),
+          // Always sent, as before: an empty password keeps the stored one.
+          username: values.username ?? '',
+          password: values.password ?? '',
         }
       });
     } catch (err) {
@@ -131,191 +190,61 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={device ? t("Modifier l'appareil") : t("Ajouter un appareil")} tabIndex={-1} className="nd-modal" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-        <h2 className="nd-section-title" style={{ marginBottom: 20 }}>
-          {device ? t("Éditer l'appareil") : t("Ajouter un appareil")}
-        </h2>
-
-        {demoMode && (
-          <div style={{ padding: '10px 12px', marginBottom: 16, border: '1px solid color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border))', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-text-muted)', fontSize: '0.68rem', lineHeight: 1.5 }}>
-            {t("Appareil entièrement simulé : les statistiques ne proviendront jamais de cette adresse. Utilisez une IP de documentation comme 192.0.2.60 et ne saisissez aucun identifiant réel.")}
-          </div>
+      <CalmeDialog
+        dialogRef={dialogRef}
+        label={device ? t("Modifier l'appareil") : t("Ajouter un appareil")}
+        title={device ? t("Éditer l'appareil") : t("Ajouter un appareil")}
+        subtitle={demoMode ? t("Appareil entièrement simulé : les statistiques ne proviendront jamais de cette adresse. Utilisez une IP de documentation comme 192.0.2.60 et ne saisissez aucun identifiant réel.") : undefined}
+        width={500}
+        onClose={onClose}
+        danger={device && onDelete && (
+          <button type="button" className="nd-btn ndc-danger-ghost" onClick={() => setShowDeleteConfirm(true)}>{t("Supprimer")}</button>
         )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ width: 60 }}>
-              <label className="nd-label">{t("Icône")}</label>
-              <input
-                type="text"
-                className="nd-input"
-                style={{ textAlign: 'center' }}
-                value={icon}
-                onChange={e => setIcon(e.target.value)}
-                maxLength={2}
-                required
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label className="nd-label">{t("Nom de l'appareil")}</label>
-              <input
-                type="text"
-                className="nd-input"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder={t("Ex: PC Fixe")}
-                required
-              />
-            </div>
+        footer={<>
+          <button type="button" onClick={onClose} className="nd-btn">{t("Annuler")}</button>
+          <button type="submit" form="nd-device-form" className="nd-btn nd-btn-accent" disabled={isSaving}>
+            {isSaving ? <Loader2 size={14} className="nd-spin" /> : t("Enregistrer")}
+          </button>
+        </>}
+      >
+        <form id="nd-device-form" onSubmit={handleSubmit} className="ndc-form">
+          <div className="ndc-field-inline">
+            <CalmeField label={t("Icône")}>
+              <input type="text" className="nd-input ndc-emoji-input" value={icon} onChange={e => setIcon(e.target.value)} maxLength={2} required aria-label={t("Icône")} />
+            </CalmeField>
+            <CalmeField label={t("Nom de l'appareil")} htmlFor="device-name">
+              <input id="device-name" type="text" className="nd-input" value={name} onChange={e => setName(e.target.value)} placeholder={t("Ex: PC Fixe")} required />
+            </CalmeField>
           </div>
-
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 16 }}>
-          <div style={{ flex: 1 }}>
-              <label className="nd-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t("Label OS/Description")} <span style={{ opacity: 0.5, fontSize: '0.8em', fontWeight: 'normal' }}>{t("(Optionnel)")}</span></label>
-              <input
-                type="text"
-                className="nd-input"
-                value={host}
-                onChange={e => setHost(e.target.value)}
-                placeholder={t("Ex: Windows 11")}
-              />
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid var(--nd-card-border)', paddingTop: 16, marginTop: 4 }}>
-            <label className="nd-label">{t("API de surveillance")}</label>
+          <CalmeField label={t('device.calme.description')} info={t("(Optionnel)")} htmlFor="device-host">
+            <input id="device-host" type="text" className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder={t("Ex: Windows 11")} />
+          </CalmeField>
+          <CalmeField label={t("API de surveillance")}>
             <CustomSelect
               value={apiType}
               onChange={val => {
-                setApiType(val as any);
-                setPort(''); // reset port to trigger auto-fill
+                setApiType(val as DeviceApiConfig['type']);
+                setValue('port', ''); // the new integration's default port is filled in
               }}
-              options={[
-                { value: 'glances', label: 'Glances' },
-                { value: 'proxmox', label: t("Proxmox VE") },
-                { value: 'lhm', label: t("Libre Hardware Monitor") }
-              ]}
+              options={selectableDeviceIntegrations().map(option => ({ value: option.id, label: t(option.name) }))}
             />
-          </div>
-
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 3 }}>
-              <label className="nd-label">{t("IP (Hôte)")}</label>
-              <input
-                type={!showSensitive ? "password" : "text"}
-                className="nd-input"
-                value={ip}
-                onChange={e => setIp(e.target.value)}
-                placeholder={t("ex: 192.168.1.10")}
-                required
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label className="nd-label">{t("Port")}</label>
-              <input
-                type="text"
-                className="nd-input"
-                value={port}
-                onChange={e => setPort(e.target.value)}
-                placeholder={t("ex: 61208")}
-                required
-              />
-            </div>
-          </div>
-
-          {apiType === 'proxmox' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, background: 'rgba(0,0,0,0.1)', padding: 12, borderRadius: 'var(--nd-card-radius)', border: '1px solid var(--nd-card-border)' }}>
-              <div>
-                <label className="nd-label">{t("Nom du Nœud (Datacenter)")}</label>
-                <input
-                  type="text"
-                  className="nd-input"
-                  value={nodeName}
-                  onChange={e => setNodeName(e.target.value)}
-                  placeholder={t("ex: pve")}
-                  required
-                />
-              </div>
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <label className="nd-label">{t("ID VM/LXC (Optionnel)")}</label>
-                  <input
-                    type="text"
-                    className="nd-input"
-                    value={vmid}
-                    onChange={e => setVmid(e.target.value)}
-                    placeholder={t("ex: 104")}
-                  />
+          </CalmeField>
+          {connectionRows.map(({ panel, rows }, index) => (
+            <div key={index} className={panel ? 'ndc-form-panel' : 'ndc-form'}>
+              {rows.map(row => (
+                <div key={row[0].id} className="ndc-form-row">
+                  {row.map(field => (
+                    <div key={field.id} style={{ flex: field.flex ?? 1, minWidth: 0 }}>
+                      {field.kind === 'toggle' ? renderField(field) : <CalmeField label={t(field.label)}>{renderField(field)}</CalmeField>}
+                    </div>
+                  ))}
                 </div>
-                {vmid && (
-                  <div style={{ flex: 1 }}>
-                    <label className="nd-label">{t("Type")}</label>
-                    <CustomSelect
-                      value={vmType}
-                      onChange={val => setVmType(val as any)}
-                      options={[
-                        { value: 'qemu', label: t("VM (QEMU)") },
-                        { value: 'lxc', label: t("Conteneur (LXC)") }
-                      ]}
-                    />
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label className="nd-label">
-                {apiType === 'proxmox' ? t("Token ID (ex: root@pam!token_name)") : t("Utilisateur (Si requis)")}
-              </label>
-              <input
-                type="text"
-                className="nd-input"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder={apiType === 'proxmox' ? t("root@pam!token") : apiType === 'lhm' ? t("Non requis") : t("Optionnel")}
-                required={apiType === 'proxmox'}
-                disabled={apiType === 'lhm'}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label className="nd-label">
-                {apiType === 'proxmox' ? t("Token Secret (UUID)") : t("Mot de passe / Jeton")}
-              </label>
-              <input
-                type="password"
-                className="nd-input"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder={device ? t("Laisser vide pour garder l'actuel") : apiType === 'lhm' ? t("Non requis") : t("Optionnel (Masqué)")}
-                required={!device && apiType === 'proxmox'}
-                disabled={apiType === 'lhm'}
-              />
-            </div>
-          </div>
-
-          {saveError && <div style={{ color: 'var(--nd-red)', fontSize: '0.7rem' }}>{saveError}</div>}
-          <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
-            {device && onDelete && (
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="nd-btn nd-btn-danger"
-                style={{ flex: 1, borderColor: 'var(--nd-red)', color: 'var(--nd-red)' }}
-              >
-                {t("Supprimer")}
-              </button>
-            )}
-            <div style={{ flex: device ? 1 : 2, display: 'flex', gap: 12 }}>
-              <button type="button" onClick={onClose} className="nd-btn" style={{ flex: 1 }}>{t("Annuler")}</button>
-              <button type="submit" className="nd-btn nd-btn-accent" style={{ flex: 1 }} disabled={isSaving}>
-                {isSaving ? <Loader2 size={14} className="nd-spin" /> : t("Enregistrer")}
-              </button>
-            </div>
-          </div>
+          ))}
+          {saveError && <p className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{saveError}</p>}
         </form>
-      </div>
+      </CalmeDialog>
 
       <ConfirmModal
         isOpen={showDeleteConfirm}

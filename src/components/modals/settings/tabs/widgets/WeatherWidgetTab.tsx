@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
-import { ToggleSwitch } from '../../shared/ToggleSwitch';
-import { WidgetLayoutConfig } from '../../shared/WidgetLayoutConfig';
-import { WidgetDockerLayoutConfig } from '../../shared/WidgetDockerLayoutConfig';
-import { WidgetNetworksLayoutConfig } from '../../shared/WidgetNetworksLayoutConfig';
 import { CheckCircle2, Trash2 } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
+import { useCalme } from '@/widgets/calme';
+import { CalmeHeading, CalmeRow, CalmeSegmented } from '../../shared/CalmeControls';
+import { X } from 'lucide-react';
 
 interface WeatherSearchResult {
   latitude: number;
@@ -19,16 +19,10 @@ export function WeatherWidgetTab() {
   const { t, language, locale } = useI18n();
   const { config, updateConfig } = useConfig();
   const demoMode = config?.demoMode === true;
-
-  const hideWeather = !!config?.settings?.hideWeather;
   
   const [weatherSearchQuery, setWeatherSearchQuery] = useState('');
   const [weatherSearchResults, setWeatherSearchResults] = useState<WeatherSearchResult[]>([]);
   const [isSearchingWeather, setIsSearchingWeather] = useState(false);
-
-  const handleToggleWidget = async (key: string, value: boolean) => {
-    await updateConfig({ [key]: value });
-  };
 
   const searchWeatherCity = async () => {
     if (!weatherSearchQuery.trim()) return;
@@ -100,135 +94,196 @@ export function WeatherWidgetTab() {
     await updateConfig({ activeWeatherLocationId: id });
   };
 
+  const calme = useCalme();
+  if (calme) {
+    const locations = config?.settings?.weatherLocations || [];
+    const style = config?.settings?.weatherWidgetStyle || 'default';
+    return (
+      <div className="ndc-set-page">
+        <WidgetPlacementNote type="weather" />
+        <section className="ndc-set-block">
+          <CalmeHeading info={t("Recherchez votre ville pour afficher la météo correspondante.")}>{t('settings.calme.places')}</CalmeHeading>
+          <div className="ndc-field">
+            <input
+              type="text"
+              aria-label={t("Rechercher une ville")}
+              className="nd-input"
+              placeholder={t("Ex: Paris, Tokyo...")}
+              value={weatherSearchQuery}
+              onChange={(e) => setWeatherSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && searchWeatherCity()}
+            />
+            <button type="button" className="nd-btn" onClick={searchWeatherCity} disabled={isSearchingWeather || !weatherSearchQuery.trim()}>
+              {isSearchingWeather ? '…' : t("Chercher")}
+            </button>
+          </div>
+          {weatherSearchResults.length > 0 && (
+            <div className="ndc-set-list" style={{ marginTop: 6 }}>
+              {weatherSearchResults.map((city, idx) => (
+                <button key={idx} type="button" className="ndc-set-list-item" onClick={() => selectWeatherCity(city)}>
+                  <span>{city.name}</span>
+                  <span className="ndc-set-list-sub">{[city.admin1, city.country].filter(Boolean).join(', ')}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="ndc-set-list" style={{ marginTop: 14 }} role="radiogroup" aria-label={t("Villes enregistrées")}>
+            {locations.map(loc => {
+              const isActive = config?.settings?.activeWeatherLocationId === loc.id || locations.length === 1;
+              return (
+                <div key={loc.id} className="ndc-set-list-row">
+                  <button type="button" role="radio" aria-checked={isActive} className="ndc-radio-label" onClick={() => setActiveWeatherCity(loc.id)}>
+                    <span className={`ndc-radio ${isActive ? 'is-on' : ''}`} aria-hidden="true" />
+                    {loc.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="ndc-icon-button"
+                    aria-label={t("Supprimer")}
+                    title={t("Supprimer")}
+                    onClick={() => { if (window.confirm(t('weather.confirmDeleteCity', { city: loc.name }))) removeWeatherCity(loc.id); }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+        <section className="ndc-set-block">
+          <CalmeHeading>{t('settings.calme.display')}</CalmeHeading>
+          <CalmeRow label={t("Style du Widget Météo")} info={t('settings.calme.weatherStyles')}>
+            <CalmeSegmented
+              label={t("Style du Widget Météo")}
+              value={style}
+              options={[
+                { value: 'minimal', label: t('settings.calme.weatherMinimal') },
+                { value: 'currentOnly', label: t('settings.calme.weatherNow') },
+                { value: 'default', label: t('settings.calme.weather3') },
+                { value: 'extended', label: t('settings.calme.weather5') },
+              ]}
+              onChange={async (value) => { await updateConfig({ weatherWidgetStyle: value }); }}
+            />
+          </CalmeRow>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-        <ToggleSwitch
-          checked={!hideWeather}
-          onChange={(val) => handleToggleWidget('hideWeather', !val)}
-          label={t("Activer le widget Météo")}
-          sublabel={t("Affiche la météo locale sur votre tableau de bord.")}
-        />
-      </div>
+      <WidgetPlacementNote type="weather" />
 
-      {!hideWeather && (
-        <>
-          <WidgetLayoutConfig widgetId="weather" />
-          <WidgetDockerLayoutConfig widgetId="weather" />
-          <WidgetNetworksLayoutConfig widgetId="weather" />
+      {/* Weather Location Search */}
+      <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
+        <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Localisation (OpenMeteo)")}</h4>
+        <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
+          {t("Recherchez votre ville pour afficher la météo correspondante.")}
+        </p>
+        
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          <input
+            type="text"
+            aria-label={t("Rechercher une ville")}
+            className="nd-input"
+            placeholder={t("Ex: Paris, Tokyo...")}
+            value={weatherSearchQuery}
+            onChange={(e) => setWeatherSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && searchWeatherCity()}
+            style={{ flex: 1, fontSize: '0.75rem', padding: '10px 14px' }}
+          />
+          <button 
+            className="nd-btn nd-btn-accent" 
+            onClick={searchWeatherCity}
+            disabled={isSearchingWeather || !weatherSearchQuery.trim()}
+            style={{ padding: '10px 16px', fontSize: '0.75rem' }}
+          >
+            {isSearchingWeather ? '...' : t("Chercher")}
+          </button>
+        </div>
 
-          {/* Weather Location Search */}
-          <div className="nd-settings-card" style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)' }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '0.8rem', fontWeight: 600 }}>{t("Localisation (OpenMeteo)")}</h4>
-            <p style={{ margin: '0 0 12px 0', fontSize: '0.68rem', color: 'var(--nd-text-muted)' }}>
-              {t("Recherchez votre ville pour afficher la météo correspondante.")}
-            </p>
-            
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                aria-label={t("Rechercher une ville")}
-                className="nd-input"
-                placeholder={t("Ex: Paris, Tokyo...")}
-                value={weatherSearchQuery}
-                onChange={(e) => setWeatherSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && searchWeatherCity()}
-                style={{ flex: 1, fontSize: '0.75rem', padding: '10px 14px' }}
-              />
-              <button 
-                className="nd-btn nd-btn-accent" 
-                onClick={searchWeatherCity}
-                disabled={isSearchingWeather || !weatherSearchQuery.trim()}
-                style={{ padding: '10px 16px', fontSize: '0.75rem' }}
+        {weatherSearchResults.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: 8 }}>
+            {weatherSearchResults.map((city, idx) => (
+              <div 
+                key={idx}
+                onClick={() => selectWeatherCity(city)}
+                style={{ padding: '8px 12px', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '4px', background: 'rgba(255,255,255,0.02)' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
               >
-                {isSearchingWeather ? '...' : t("Chercher")}
-              </button>
-            </div>
+                <span style={{ fontWeight: 600 }}>{city.name}</span>
+                {city.admin1 && <span style={{ color: 'var(--nd-text-muted)' }}>, {city.admin1}</span>}
+                {city.country && <span style={{ color: 'var(--nd-text-muted)' }}> ({city.country})</span>}
+              </div>
+            ))}
+          </div>
+        )}
 
-            {weatherSearchResults.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, background: 'rgba(0,0,0,0.2)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', padding: 8 }}>
-                {weatherSearchResults.map((city, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => selectWeatherCity(city)}
-                    style={{ padding: '8px 12px', fontSize: '0.75rem', cursor: 'pointer', borderRadius: '4px', background: 'rgba(255,255,255,0.02)' }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                  >
-                    <span style={{ fontWeight: 600 }}>{city.name}</span>
-                    {city.admin1 && <span style={{ color: 'var(--nd-text-muted)' }}>, {city.admin1}</span>}
-                    {city.country && <span style={{ color: 'var(--nd-text-muted)' }}> ({city.country})</span>}
+        {config?.settings?.weatherLocations && config.settings.weatherLocations.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <h5 style={{ margin: '0 0 8px 0', fontSize: '0.75rem', fontWeight: 600 }}>{t("Villes enregistrées")}</h5>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {config.settings.weatherLocations.map((loc) => {
+                const isActive = config.settings?.activeWeatherLocationId === loc.id || (config.settings?.weatherLocations?.length === 1);
+                return (
+                  <div key={loc.id} style={{ padding: '8px 12px', background: isActive ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)', border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.2)' : 'var(--nd-card-border)'}`, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }} onClick={() => setActiveWeatherCity(loc.id)}>
+                      {isActive ? <CheckCircle2 size={16} color="var(--nd-green)" /> : <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid var(--nd-card-border)' }} />}
+                      <span style={{ fontSize: '0.75rem', fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--nd-green)' : 'var(--nd-text)' }}>{loc.name}</span>
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // We can use native confirm to keep it self-contained instead of a custom modal for now
+                        if (window.confirm(t('weather.confirmDeleteCity', { city: loc.name }))) {
+                            removeWeatherCity(loc.id);
+                        }
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--nd-red)', cursor: 'pointer', padding: 4, opacity: 0.6, transition: 'opacity 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                      title={t("Supprimer")}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {config?.settings?.weatherLocations && config.settings.weatherLocations.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <h5 style={{ margin: '0 0 8px 0', fontSize: '0.75rem', fontWeight: 600 }}>{t("Villes enregistrées")}</h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {config.settings.weatherLocations.map((loc) => {
-                    const isActive = config.settings?.activeWeatherLocationId === loc.id || (config.settings?.weatherLocations?.length === 1);
-                    return (
-                      <div key={loc.id} style={{ padding: '8px 12px', background: isActive ? 'rgba(16, 185, 129, 0.05)' : 'rgba(255,255,255,0.02)', border: `1px solid ${isActive ? 'rgba(16, 185, 129, 0.2)' : 'var(--nd-card-border)'}`, borderRadius: 'var(--nd-card-radius)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1 }} onClick={() => setActiveWeatherCity(loc.id)}>
-                          {isActive ? <CheckCircle2 size={16} color="var(--nd-green)" /> : <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid var(--nd-card-border)' }} />}
-                          <span style={{ fontSize: '0.75rem', fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--nd-green)' : 'var(--nd-text)' }}>{loc.name}</span>
-                        </div>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // We can use native confirm to keep it self-contained instead of a custom modal for now
-                            if (window.confirm(t('weather.confirmDeleteCity', { city: loc.name }))) {
-                                removeWeatherCity(loc.id);
-                            }
-                          }}
-                          style={{ background: 'none', border: 'none', color: 'var(--nd-red)', cursor: 'pointer', padding: 4, opacity: 0.6, transition: 'opacity 0.2s' }}
-                          onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
-                          title={t("Supprimer")}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Style selector */}
-            <div style={{ marginTop: 24 }}>
-              <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', marginBottom: 12 }}>{t("Style du Widget Météo")}</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                {[
-                  { id: 'default', name: 'Standard', desc: t("Météo actuelle + 3 prochains jours") },
-                  { id: 'extended', name: t("Étendu"), desc: t("Météo actuelle + 5 prochains jours") },
-                  { id: 'currentOnly', name: 'Actuelle', desc: t("Uniquement la météo actuelle avec détails") },
-                  { id: 'minimal', name: 'Minimaliste', desc: t("Juste la température et l'icône") }
-                ].map(design => (
-                  <div 
-                    key={design.id}
-                    onClick={async () => {
-                      await updateConfig({ weatherWidgetStyle: design.id });
-                    }}
-                    style={{ 
-                      padding: '12px', borderRadius: 'var(--nd-card-radius)', cursor: 'pointer', transition: 'var(--nd-transition)',
-                      border: `1px solid ${config?.settings?.weatherWidgetStyle === design.id ? 'var(--nd-accent)' : 'var(--nd-card-border)'}`,
-                      background: config?.settings?.weatherWidgetStyle === design.id ? 'var(--nd-accent-glow)' : 'rgba(0,0,0,0.2)',
-                      color: config?.settings?.weatherWidgetStyle === design.id ? 'var(--nd-accent)' : 'var(--nd-text)',
-                      boxShadow: config?.settings?.weatherWidgetStyle === design.id ? '0 0 8px var(--nd-accent-glow)' : 'none'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>{design.name}</div>
-                    <div style={{ fontSize: '0.62rem', color: config?.settings?.weatherWidgetStyle === design.id ? 'inherit' : 'var(--nd-text-muted)', opacity: 0.8 }}>{design.desc}</div>
-                  </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
-        </>
-      )}
+        )}
+
+        {/* Style selector */}
+        <div style={{ marginTop: 24 }}>
+          <h4 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--nd-text)', marginBottom: 12 }}>{t("Style du Widget Météo")}</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {[
+              { id: 'default', name: 'Standard', desc: t("Météo actuelle + 3 prochains jours") },
+              { id: 'extended', name: t("Étendu"), desc: t("Météo actuelle + 5 prochains jours") },
+              { id: 'currentOnly', name: 'Actuelle', desc: t("Uniquement la météo actuelle avec détails") },
+              { id: 'minimal', name: 'Minimaliste', desc: t("Juste la température et l'icône") }
+            ].map(design => (
+              <div 
+                key={design.id}
+                onClick={async () => {
+                  await updateConfig({ weatherWidgetStyle: design.id });
+                }}
+                style={{ 
+                  padding: '12px', borderRadius: 'var(--nd-card-radius)', cursor: 'pointer', transition: 'var(--nd-transition)',
+                  border: `1px solid ${config?.settings?.weatherWidgetStyle === design.id ? 'var(--nd-accent)' : 'var(--nd-card-border)'}`,
+                  background: config?.settings?.weatherWidgetStyle === design.id ? 'var(--nd-accent-glow)' : 'rgba(0,0,0,0.2)',
+                  color: config?.settings?.weatherWidgetStyle === design.id ? 'var(--nd-accent)' : 'var(--nd-text)',
+                  boxShadow: config?.settings?.weatherWidgetStyle === design.id ? '0 0 8px var(--nd-accent-glow)' : 'none'
+                }}
+              >
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, marginBottom: 4 }}>{design.name}</div>
+                <div style={{ fontSize: '0.62rem', color: config?.settings?.weatherWidgetStyle === design.id ? 'inherit' : 'var(--nd-text-muted)', opacity: 0.8 }}>{design.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

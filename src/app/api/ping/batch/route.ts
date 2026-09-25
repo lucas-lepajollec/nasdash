@@ -4,15 +4,12 @@ import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, readJsonObject, readStringArray } from '@/lib/requestValidation';
 import { isDemoMode } from '@/lib/demoMode';
 import { collectConfiguredPingTargets, resolveConfiguredPingTarget } from '@/lib/pingTargets';
+import { pingUrl, type PingResult } from '@/lib/ping';
 
 export const dynamic = 'force-dynamic';
 const MAX_PING_BODY_BYTES = 128 * 1024;
 
-interface PingStatus {
-  status: string;
-  statusText: string;
-  latency: number;
-}
+type PingStatus = Omit<PingResult, 'status'> & { status: string };
 
 async function pingOne(url: string, allowedTargets: Set<string>) {
   const configuredUrl = resolveConfiguredPingTarget(url, allowedTargets);
@@ -20,44 +17,7 @@ async function pingOne(url: string, allowedTargets: Set<string>) {
     return { url, status: 'offline', statusText: 'Accès interdit', latency: 0 };
   }
 
-  try {
-    const start = Date.now();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    const response = await fetch(configuredUrl, {
-      method: 'GET',
-      signal: controller.signal,
-      cache: 'no-store',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Connection': 'close',
-      }
-    });
-
-    clearTimeout(timeoutId);
-    const latency = Date.now() - start;
-
-    if (response.ok || response.status < 400 || response.status === 401 || response.status === 403) {
-      return { url, status: 'online', statusText: 'OK', latency };
-    } else {
-      return { url, status: 'offline', statusText: `Error ${response.status}`, latency };
-    }
-  } catch (error: unknown) {
-    let statusText = 'Offline';
-    const errorName = error instanceof Error ? error.name : '';
-    const errorCode = typeof error === 'object' && error !== null && 'code' in error
-      ? String(error.code)
-      : '';
-    if (errorName === 'AbortError') {
-      statusText = 'Timeout';
-    } else if (errorCode === 'ECONNREFUSED') {
-      statusText = 'Refusé';
-    } else if (errorCode === 'ECONNRESET') {
-      statusText = 'Offline';
-    }
-    return { url, status: 'offline', statusText, latency: 0 };
-  }
+  return { url, ...(await pingUrl(configuredUrl)) };
 }
 
 export async function POST(request: Request) {
@@ -100,7 +60,8 @@ export async function POST(request: Request) {
 
     // Format as a map: { [url]: { status, statusText, latency } }
     const resultMap = results.reduce((acc, r) => {
-      acc[r.url] = { status: r.status, statusText: r.statusText, latency: r.latency };
+      const { url: key, ...result } = r;
+      acc[key] = result;
       return acc;
     }, {} as Record<string, PingStatus>);
 

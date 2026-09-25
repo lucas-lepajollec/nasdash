@@ -44,9 +44,7 @@
     "customCss": "",
     "enablePerfMonitor": false,
     "backgroundImage": "",
-    "borderRadius": 10,
     "cardOpacity": 0.8,
-    "globalFont": "JetBrains Mono",
     "titleFont": "outfit",
     "titleAnimation": "spotlight-silver",
     "clockDesign": "default",
@@ -140,7 +138,7 @@
           "colsDesktop": 2,
           "colsMobile": 2,
           "hideValues": false,
-          "visibleStats": ["CPU", "RAM", "Stockage", "GPU"],
+          "visibleStats": ["CPU", "RAM", "Disque (Stockage)", "GPU"],
           "enableAlerts": false,
           "coloredGraphs": true
         }
@@ -162,7 +160,7 @@
           "colsDesktop": 2,
           "colsMobile": 2,
           "hideValues": false,
-          "visibleStats": ["CPU", "RAM", "Stockage", "GPU"],
+          "visibleStats": ["CPU", "RAM", "Disque (Stockage)", "GPU"],
           "enableAlerts": false,
           "coloredGraphs": true
         }
@@ -188,7 +186,7 @@
             "props": {
               "deviceConfigs": {
                 "demo-device-1": { "statStyle": "vertical", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Disque (Données)", "Disque (Système)"], "enableAlerts": false, "coloredGraphs": true },
-                "demo-device-2": { "statStyle": "graph", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Stockage", "GPU"], "enableAlerts": false, "coloredGraphs": true }
+                "demo-device-2": { "statStyle": "graph", "colsDesktop": 2, "colsMobile": 2, "hideValues": false, "visibleStats": ["CPU", "RAM", "Disque (Stockage)", "GPU"], "enableAlerts": false, "coloredGraphs": true }
               }
             }
           }

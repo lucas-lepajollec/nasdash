@@ -300,17 +300,15 @@ export const THEME_PRESETS: Record<string, {
 };
 
 import { SettingsSidebar } from './settings/SettingsSidebar';
+import { CalmeSettingsSidebar, useCalmeSettingsSections } from './settings/CalmeSettingsSidebar';
+import { useCalme } from '@/widgets/calme';
 import { AppearanceTab } from './settings/tabs/AppearanceTab';
 import { HeaderTab } from './settings/tabs/HeaderTab';
 import { MobileTab } from './settings/tabs/MobileTab';
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
 import { SecurityTab } from './settings/tabs/SecurityTab';
 import { LibraryTab } from './settings/tabs/LibraryTab';
-import { TabsHomeTab } from './settings/tabs/onglets/TabsHomeTab';
-import { TabsWidgetsTab } from './settings/tabs/onglets/TabsWidgetsTab';
 import { TabsGeneralTab } from './settings/tabs/onglets/TabsGeneralTab';
-import { TabsDockerTab } from './settings/tabs/onglets/TabsDockerTab';
-import { TabsNetworksTab } from './settings/tabs/onglets/TabsNetworksTab';
 import { DevicesWidgetTab } from './settings/tabs/widgets/DevicesWidgetTab';
 import { QuickStatsWidgetTab } from './settings/tabs/widgets/QuickStatsWidgetTab';
 import { TailscaleWidgetTab } from './settings/tabs/widgets/TailscaleWidgetTab';
@@ -320,8 +318,22 @@ import { CalendarWidgetTab } from './settings/tabs/widgets/CalendarWidgetTab';
 import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
 import { NetworkGraphWidgetTab } from './settings/tabs/widgets/NetworkGraphWidgetTab';
 import { DockerContainersWidgetTab } from './settings/tabs/widgets/DockerContainersWidgetTab';
-import { CustomTabsListTab } from './settings/tabs/custom/CustomTabsListTab';
-import { CustomTabBuilderTab } from './settings/tabs/custom/CustomTabBuilderTab';
+import { ServicesWidgetTab } from './settings/tabs/widgets/ServicesWidgetTab';
+import { TopologyWidgetTab } from './settings/tabs/widgets/TopologyWidgetTab';
+import { PagesSettingsTab } from './settings/tabs/PagesSettingsTab';
+import { usePages } from '@/providers/PagesProvider';
+
+/** Former settings sections now live elsewhere; old links keep working. */
+const SETTINGS_TAB_ALIASES: Record<string, string> = {
+  language: 'apparence',
+  'tabs-home': 'widget-services',
+  'tabs-networks': 'widget-topology',
+  'tabs-docker': 'pages',
+  'tabs-widgets': 'pages',
+  'custom-tabs': 'pages',
+  'custom-tab-builder': 'pages',
+};
+const resolveSettingsTab = (tab: string) => SETTINGS_TAB_ALIASES[tab] ?? tab;
 
 import ThemeGalleryView from './ThemeGalleryView';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -330,6 +342,8 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
   const dialogRef = useDialogAccessibility(onClose, true, restoreFocus);
   const { config, updateConfig, settingsModal } = useConfig();
   const { t } = useI18n();
+  const calme = useCalme();
+  const calmeSections = useCalmeSettingsSections();
   const [isThemeGalleryOpen, setIsThemeGalleryOpen] = useState(false);
   const [galleryInitialTab, setGalleryInitialTab] = useState<'themes' | 'emojis'>('themes');
 
@@ -356,12 +370,12 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
     await updateConfig({ theme: newTheme, mode: isLight ? 'light' : 'dark' });
   };
   
-  const [editingTabId, setEditingTabId] = useState<string | undefined>(settingsModal.targetCustomTabId || undefined);
+  const { setActivePageId, startEditing, editing } = usePages();
   const [activeTab, setActiveTab] = useState<string | null>(() => {
-    if (settingsModal.targetTab) return settingsModal.targetTab === 'language' ? 'apparence' : settingsModal.targetTab;
+    if (settingsModal.targetTab) return resolveSettingsTab(settingsModal.targetTab);
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('nd_settings_last_tab');
-      if (saved) return saved === 'language' ? 'apparence' : saved;
+      if (saved) return resolveSettingsTab(saved);
       if (window.innerWidth > 580) return 'apparence';
     }
     return null;
@@ -382,16 +396,24 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
         aria-modal="true"
         aria-label={t("Paramètres NasDash")}
         tabIndex={-1}
-        className={`nd-modal nd-settings-modal nd-animate-in ${activeTab ? 'nd-settings-modal--detail' : 'nd-settings-modal--menu'}`}
+        className={`nd-modal nd-settings-modal nd-animate-in ${activeTab ? 'nd-settings-modal--detail' : 'nd-settings-modal--menu'} ${calme ? 'ndc-settings' : ''}`}
         onClick={(e) => e.stopPropagation()} 
-        style={{ 
+        style={calme ? undefined : { 
           background: 'var(--nd-card-bg)',
         }}
       >
         {/* ==========================================
            LEFT SIDEBAR (Hidden when gallery is open)
            ========================================== */}
-        {!isThemeGalleryOpen && (
+        {calme && (
+          <CalmeSettingsSidebar
+            sections={calmeSections}
+            currentTab={currentTab}
+            setActiveTab={tab => { setIsThemeGalleryOpen(false); setActiveTab(tab); }}
+            onClose={onClose}
+          />
+        )}
+        {!isThemeGalleryOpen && !calme && (
           <SettingsSidebar 
             currentTab={currentTab}
             setActiveTab={(tab) => {
@@ -405,9 +427,53 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
         {/* ==========================================
            RIGHT CONTENT WRAPPER
            ========================================== */}
-        <div className="nd-settings-content" style={isThemeGalleryOpen ? { width: '100%', flex: 1, padding: '24px 28px' } : undefined}>
+        <div className="nd-settings-content" style={isThemeGalleryOpen && !calme ? { width: '100%', flex: 1, padding: '24px 28px' } : undefined}>
           
+          {/* Calme header: where you are, a large title and what the section is for. */}
+          {calme && (() => {
+            const section = calmeSections.find(item => item.id === currentTab);
+            if (isThemeGalleryOpen) {
+              const appearance = calmeSections.find(item => item.id === 'apparence');
+              return (
+                <div className="ndc-settings-head">
+                  <button type="button" className="nd-settings-back-btn ndc-settings-back" onClick={() => setIsThemeGalleryOpen(false)}>← {t('settings.calme.back')}</button>
+                  <div className="ndc-settings-crumb">{appearance?.group} / <button type="button" className="ndc-crumb-link" onClick={() => setIsThemeGalleryOpen(false)}>{appearance?.label}</button></div>
+                  <h2 className="ndc-settings-title">{t('settings.calme.galleryTitle')}</h2>
+                  <button type="button" className="ndc-icon-button ndc-settings-close" onClick={onClose} aria-label={t('settings.calme.close')}><X size={16} /></button>
+                </div>
+              );
+            }
+            return (
+              <div className="ndc-settings-head">
+                <button type="button" className="nd-settings-back-btn ndc-settings-back" onClick={() => setActiveTab(null)}>
+                  ← {t('settings.calme.back')}
+                </button>
+                {section && (
+                  <div className="ndc-settings-crumb">
+                    {section.group} /{' '}
+                    {section.parent && (() => {
+                      const parent = calmeSections.find(item => item.id === section.parent);
+                      return parent ? <><button type="button" className="ndc-crumb-link" onClick={() => setActiveTab(parent.id)}>{parent.label}</button> / </> : null;
+                    })()}
+                    {section.label}
+                    {config?.demoMode === true && (
+                      <span className="ndc-tag ndc-demo-tag" tabIndex={0} title={t("Vos modifications restent isolées à cette session de démonstration et expirent automatiquement. Les comptes, fichiers et connexions à des services réels sont désactivés : ne saisissez aucun secret personnel.")}>
+                        {t('settings.calme.demoTag')}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <h2 className="ndc-settings-title">{section?.label}</h2>
+                {section?.description && <p className="ndc-settings-desc">{section.description}</p>}
+                <button type="button" className="ndc-icon-button ndc-settings-close" onClick={onClose} aria-label={t('settings.calme.close')}>
+                  <X size={16} />
+                </button>
+              </div>
+            );
+          })()}
+
           {/* Header */}
+          {!calme && (
           <div className="nd-settings-header" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexShrink: 0, gap: '12px 16px' }}>
             <button 
               className="nd-settings-back-btn" 
@@ -451,12 +517,11 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                   {currentTab === 'mobile' && <><Emoji emoji="📱" /> {t("Mobile")}</>}
                   {currentTab === 'developer' && <><Emoji emoji="⚙️" /> {t("Menu Développeur")}</>}
                   {currentTab === 'security' && <><Emoji emoji="🔑" /> {t("Sécurité & Utilisateurs")}</>}
-                  {currentTab === 'library' && <><Emoji emoji="🎛️" /> {t("Bibliothèque Globale des Widgets")}</>}
+                  {currentTab === 'library' && <><Emoji emoji="🎛️" /> {t('settings.library.title')}</>}
                   {currentTab === 'tabs-general' && <><Emoji emoji="🌐" /> {t("Général (Dock & Onglets)")}</>}
-                  {currentTab === 'tabs-home' && <><Emoji emoji="🏠" /> {t("Paramètres — Onglet Home")}</>}
-                  {currentTab === 'tabs-widgets' && <><Emoji emoji="🧩" /> {t("Paramètres — Onglet Widgets")}</>}
-                  {currentTab === 'tabs-docker' && <><Emoji emoji="🐳" /> {t("Paramètres — Onglet Docker")}</>}
-                  {currentTab === 'tabs-networks' && <><Emoji emoji="📶" /> {t("Paramètres — Onglet Réseaux")}</>}
+                  {currentTab === 'pages' && <><Emoji emoji="🗂️" /> {t('pages.settings.title')}</>}
+                  {currentTab === 'widget-services' && <><Emoji emoji="🗂️" /> {t('settings.services.title')}</>}
+                  {currentTab === 'widget-topology' && <><Emoji emoji="🗺️" /> {t('settings.topology.title')}</>}
                   {currentTab === 'widget-devices' && <><Emoji emoji="🖥️" /> {t("Configuration — Appareils")}</>}
                   {currentTab === 'widget-quickstats' && <><Emoji emoji="📊" /> {t("Configuration — Vue d&apos;ensemble")}</>}
                   {currentTab === 'widget-tailscale' && <><Emoji emoji="🛡️" /> {t("Configuration — VPN Tailscale")}</>}
@@ -466,8 +531,6 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                   {currentTab === 'widget-weather' && <><Emoji emoji="☁️" /> {t("Configuration — Météo")}</>}
                   {currentTab === 'widget-networkgraph' && <><Emoji emoji="📶" /> {t("Configuration — Graphe Réseau")}</>}
                   {currentTab === 'widget-dockercontainers' && <><Emoji emoji="🐳" /> {t("Configuration — Conteneurs Docker")}</>}
-                  {currentTab === 'custom-tabs' && <><Emoji emoji="🎨" /> {t("Onglets Personnalisés")}</>}
-                  {currentTab === 'custom-tab-builder' && <><Emoji emoji="🛠️" /> {t("Éditeur d&apos;Onglet")}</>}
                 </>
               )}
             </h3>
@@ -476,9 +539,10 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
               <X size={18} />
             </button>
           </div>
+          )}
 
-          {config?.demoMode === true && !isThemeGalleryOpen && currentTab && (
-            <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '10px 12px', margin: '-6px 0 16px', borderRadius: 'var(--nd-card-radius, 8px)', background: 'color-mix(in srgb, var(--nd-accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 25%, var(--nd-card-border))', color: 'var(--nd-text-muted)', fontSize: '0.67rem', lineHeight: 1.5 }}>
+          {config?.demoMode === true && !calme && !isThemeGalleryOpen && currentTab && (
+            <div className={calme ? 'ndc-demo-note' : undefined} style={calme ? undefined : { display: 'flex', gap: 9, alignItems: 'flex-start', padding: '10px 12px', margin: '-6px 0 16px', borderRadius: 'var(--nd-card-radius, 8px)', background: 'color-mix(in srgb, var(--nd-accent) 7%, transparent)', border: '1px solid color-mix(in srgb, var(--nd-accent) 25%, var(--nd-card-border))', color: 'var(--nd-text-muted)', fontSize: '0.67rem', lineHeight: 1.5 }}>
               <Info size={15} style={{ color: 'var(--nd-accent)', flexShrink: 0, marginTop: 1 }} />
               <span><strong style={{ color: 'var(--nd-text)' }}>{t("Réglages temporaires.")}</strong> {t("Vos modifications restent isolées à cette session de démonstration et expirent automatiquement. Les comptes, fichiers et connexions à des services réels sont désactivés : ne saisissez aucun secret personnel.")}</span>
             </div>
@@ -488,7 +552,7 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
              THEME GALLERY FULL-WIDTH EMBEDDED VIEW
              ========================================== */}
           {isThemeGalleryOpen ? (
-            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <div style={calme ? undefined : { flex: 1, minHeight: 0, overflow: 'hidden' }}>
               <ThemeGalleryView 
                 currentTheme={activeTheme}
                 onSelectTheme={handleGalleryThemeChange}
@@ -505,6 +569,9 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
                     setIsThemeGalleryOpen(true);
                   }} 
                 />
+              )}
+              {currentTab === 'wallpaper' && (
+                <AppearanceTab part="wallpaper" onOpenThemeGallery={(tab) => { setGalleryInitialTab(tab); setIsThemeGalleryOpen(true); }} />
               )}
               {currentTab === 'header' && <HeaderTab />}
               {currentTab === 'mobile' && <MobileTab />}
@@ -531,13 +598,19 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
           {/* ==========================================
              TAB 3: WIDGET-DEVICES PAGE
              ========================================== */}
-          {(currentTab as string) === 'tabs-home' && <TabsHomeTab />}
+          {currentTab === 'pages' && (
+            <PagesSettingsTab
+              onEditPage={pageId => {
+                setActivePageId(pageId);
+                if (!editing) startEditing();
+                onClose();
+              }}
+            />
+          )}
 
-          {(currentTab as string) === 'tabs-widgets' && <TabsWidgetsTab />}
+          {currentTab === 'widget-services' && <ServicesWidgetTab />}
 
-          {(currentTab as string) === 'tabs-docker' && <TabsDockerTab />}
-
-          {(currentTab as string) === 'tabs-networks' && <TabsNetworksTab />}
+          {currentTab === 'widget-topology' && <TopologyWidgetTab />}
 
           {(currentTab as string) === 'tabs-general' && <TabsGeneralTab />}
 
@@ -573,11 +646,6 @@ export default function SettingsModal({ onClose, restoreFocus }: SettingsModalPr
              ========================================== */}
           {currentTab === 'widget-weather' && <WeatherWidgetTab />}
 
-          {/* ==========================================
-             CUSTOM TABS
-             ========================================== */}
-          {currentTab === 'custom-tabs' && <CustomTabsListTab onEditTab={(id) => { setEditingTabId(id); setActiveTab('custom-tab-builder'); }} />}
-          {currentTab === 'custom-tab-builder' && <CustomTabBuilderTab tabId={editingTabId} onBack={() => { setEditingTabId(undefined); setActiveTab('custom-tabs'); }} onSuccess={() => { setEditingTabId(undefined); setActiveTab('custom-tabs'); }} />}
             </>
           )}
         </div>

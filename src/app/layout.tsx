@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
-import { Outfit, Space_Grotesk, Syne, Righteous, Montserrat } from 'next/font/google';
+import { Outfit, Space_Grotesk, Syne, Righteous, Montserrat, Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import './themes.css';
+import './design-calme.css';
 import { ConfigProvider } from '@/providers/ConfigProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { messages } from '@/i18n/messages';
@@ -11,6 +12,8 @@ const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '500', '600',
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-space' });
 const syne = Syne({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-syne' });
 const righteous = Righteous({ subsets: ['latin'], weight: '400', variable: '--font-righteous' });
+const geist = Geist({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-geist' });
+const geistMono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-geist-mono' });
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800'], variable: '--font-montserrat' });
 
 export function generateMetadata(): Metadata {
@@ -42,12 +45,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${outfit.variable} ${spaceGrotesk.variable} ${syne.variable} ${righteous.variable} ${montserrat.variable} ${outfit.className}`} data-theme="dark" suppressHydrationWarning>
+      <body className={`${outfit.variable} ${spaceGrotesk.variable} ${syne.variable} ${righteous.variable} ${montserrat.variable} ${geist.variable} ${geistMono.variable} ${outfit.className}`} data-theme="dark" data-design="calme" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
+                  // Interface style chosen in Appearance (Calme by default).
+                  if (localStorage.getItem('nd-design') === 'classic') document.body.removeAttribute('data-design');
                   var theme = localStorage.getItem('nd-theme-preset');
                   if (theme && theme !== 'nasdash') {
                     document.body.classList.add('theme-' + theme);

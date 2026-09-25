@@ -5,7 +5,7 @@ import { resolveAccessPrincipal } from '@/lib/access';
 import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { v4 as uuidv4 } from 'uuid';
-import { Category, Service, Device, type DeviceApiConfig } from '@/lib/types';
+import { Category, Service, Device, type DeviceApiConfig, type DockerHost } from '@/lib/types';
 import { validateConfigMutationBody } from '@/lib/configEntityValidation';
 import {
   RequestValidationError,
@@ -14,10 +14,13 @@ import {
   readJsonObject,
 } from '@/lib/requestValidation';
 import { withDemoSession } from '@/lib/demoSession';
+import { getDeviceIntegration } from '@/integrations/registry';
+import { maskInstanceSecrets, upsertInstance } from '@/integrations/instances';
 
 const MAX_CONFIG_BODY_BYTES = 2 * 1024 * 1024;
 const CONFIG_POST_TYPES = ['category', 'service', 'device', 'dockerHost', 'dockerAction', 'localEvent'] as const;
 const CONFIG_PUT_TYPES = [
+  'integration',
   'reorder',
   'reorderDevices',
   'category',
@@ -145,48 +148,15 @@ async function handlePOST(req: NextRequest) {
         username: body.api.username,
         nodeName: body.api.nodeName,
         vmid: body.api.vmid,
-        vmType: body.api.vmType
+        vmType: body.api.vmType,
+        ...(body.api.allowSelfSigned === true ? { allowSelfSigned: true } : {}),
+        ...(body.api.target ? { target: body.api.target } : {}),
       };
 
-      if (body.api.type === 'glances') {
-        let baseUrl = body.api.ip;
-        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-          baseUrl = `http://${baseUrl}`;
-        }
-        try {
-          const urlObj = new URL(baseUrl);
-          if (body.api.port) urlObj.port = body.api.port;
-          newDevice.api.url = urlObj.toString().replace(/\/$/, '');
-        } catch {
-          newDevice.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
-        }
-
-        if (body.api.username || body.api.password) {
-          const authStr = `${body.api.username || ''}:${body.api.password || ''}`;
-          newDevice.api.token = authStr;
-        }
-      } else if (body.api.type === 'homeassistant') {
-        newDevice.api.url = `http://${body.api.ip}:${body.api.port || 8123}/api/states`;
-        if (body.api.password) {
-          newDevice.api.token = body.api.password;
-        }
-      } else if (body.api.type === 'proxmox') {
-        const baseUrl = `https://${body.api.ip}:${body.api.port || 8006}/api2/json/nodes/${body.api.nodeName || 'pve'}`;
-        if (body.api.vmid) {
-          newDevice.api.url = `${baseUrl}/${body.api.vmType || 'qemu'}/${body.api.vmid}/status/current`;
-        } else {
-          newDevice.api.url = `${baseUrl}/status`;
-        }
-        if (body.api.password) {
-          const fullToken = `${body.api.username}=${body.api.password}`;
-          newDevice.api.token = fullToken;
-        }
-      } else if (body.api.type === 'lhm') {
-        let baseUrl = body.api.ip;
-        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-          baseUrl = `http://${baseUrl}`;
-        }
-        newDevice.api.url = `${baseUrl}:${body.api.port || 9001}/data.json`;
+      const connection = getDeviceIntegration(body.api.type)?.connect(body.api);
+      if (connection) {
+        newDevice.api.url = connection.url;
+        if (connection.token) newDevice.api.token = connection.token;
       }
     }
 
@@ -201,16 +171,22 @@ async function handlePOST(req: NextRequest) {
 
   if (type === 'dockerHost') {
     if (!config.dockerHosts) config.dockerHosts = [];
-    const newHost = {
+    const connection: DockerHost['type'] = ['socket', 'portainer', 'dockhand'].includes(body.connection) ? body.connection : 'tcp';
+    const socket = connection === 'socket';
+    const relay = connection === 'portainer' || connection === 'dockhand';
+    const newHost: DockerHost = {
       id: uuidv4(),
       name: body.name || 'Docker Host',
       icon: body.icon || '🐳',
-      type: 'tcp' as const,
-      url: body.url || '',
+      type: connection,
+      url: socket ? '' : body.url || '',
+      ...(socket ? { socketPath: body.socketPath } : {}),
+      ...(relay ? { target: body.target, token: body.token } : {}),
+      ...(!socket && body.allowSelfSigned === true ? { allowSelfSigned: true } : {}),
     };
     config.dockerHosts.push(newHost);
     if (!writeConfig(config)) return persistenceError();
-    return NextResponse.json(newHost, { status: 201 });
+    return NextResponse.json({ ...newHost, ...(newHost.token ? { token: '********' } : {}) }, { status: 201 });
   }
   if (type === 'dockerAction') {
     if (!config.dockerActions) config.dockerActions = [];
@@ -255,6 +231,15 @@ async function handlePUT(req: NextRequest) {
   const body = parsed.body;
   const config = readConfig();
   const type = parsed.type;
+
+  if (type === 'integration') {
+    // One saved service connection; secrets sent masked or empty are kept.
+    const instance = upsertInstance(config, body.integration);
+    if (!writeConfig(config)) return persistenceError();
+    const safe = JSON.parse(JSON.stringify(instance)) as typeof instance;
+    maskInstanceSecrets({ integrations: [safe] });
+    return NextResponse.json(safe);
+  }
 
   if (type === 'reorder') {
     config.categories = body.categories;
@@ -319,14 +304,6 @@ async function handlePUT(req: NextRequest) {
     if (body.titleAnimation !== undefined) config.settings.titleAnimation = body.titleAnimation;
     if (body.showMonitor !== undefined) config.settings.showMonitor = body.showMonitor;
     if (body.totalSlots !== undefined) config.settings.totalSlots = body.totalSlots;
-    if (body.tailscaleTailnet !== undefined) config.settings.tailscaleTailnet = body.tailscaleTailnet;
-    if (body.tailscaleClientId !== undefined) config.settings.tailscaleClientId = body.tailscaleClientId;
-    
-    // Prevent overwriting secrets with masked values
-    if (body.tailscaleClientSecret !== undefined && body.tailscaleClientSecret !== '********') {
-      config.settings.tailscaleClientSecret = body.tailscaleClientSecret;
-    }
-    
     if (body.dockPosition !== undefined) config.settings.dockPosition = body.dockPosition;
     if (body.hideDock !== undefined) config.settings.hideDock = body.hideDock;
 
@@ -341,6 +318,9 @@ async function handlePUT(req: NextRequest) {
     if (body.tabIcons !== undefined) config.settings.tabIcons = body.tabIcons;
     if (body.theme !== undefined) config.settings.theme = body.theme;
     if (body.mode !== undefined) config.settings.mode = body.mode;
+    if (body.designStyle !== undefined) config.settings.designStyle = body.designStyle;
+    if (body.accentColor !== undefined) config.settings.accentColor = body.accentColor || undefined;
+    if (body.favoriteColors !== undefined) config.settings.favoriteColors = body.favoriteColors;
     if (body.tabs !== undefined) config.settings.tabs = body.tabs;
     if (body.homeWidgets !== undefined) config.settings.homeWidgets = body.homeWidgets;
     if (body.panels !== undefined) config.settings.panels = body.panels;
@@ -419,6 +399,9 @@ async function handlePUT(req: NextRequest) {
     if (body.globalFont !== undefined) config.settings.globalFont = body.globalFont;
     if (body.borderRadius !== undefined) config.settings.borderRadius = body.borderRadius;
     if (body.cardOpacity !== undefined) config.settings.cardOpacity = body.cardOpacity;
+    if (body.surfaceBlur !== undefined) config.settings.surfaceBlur = body.surfaceBlur;
+    if (body.softEdges !== undefined) config.settings.softEdges = body.softEdges;
+    if (body.hideOutlines !== undefined) config.settings.hideOutlines = body.hideOutlines;
     if (body.emojiTheme !== undefined) config.settings.emojiTheme = body.emojiTheme;
     
     // Header & Mobile Customizations
@@ -429,6 +412,7 @@ async function handlePUT(req: NextRequest) {
     if (body.hideHeaderMenu !== undefined) config.settings.hideHeaderMenu = body.hideHeaderMenu;
     if (body.showHeaderMenuIcons !== undefined) config.settings.showHeaderMenuIcons = body.showHeaderMenuIcons;
     if (body.showPingDetails !== undefined) config.settings.showPingDetails = body.showPingDetails;
+    if (body.networkGraphStats !== undefined) config.settings.networkGraphStats = body.networkGraphStats;
     if (body.pingIndicatorMode !== undefined) config.settings.pingIndicatorMode = body.pingIndicatorMode;
     if (body.mobileTheme !== undefined) config.settings.mobileTheme = body.mobileTheme;
     if (body.mobileGlobalFont !== undefined) config.settings.mobileGlobalFont = body.mobileGlobalFont;
@@ -470,67 +454,17 @@ async function handlePUT(req: NextRequest) {
         nodeName: body.api.nodeName,
         vmid: body.api.vmid,
         vmType: body.api.vmType,
-        token: (isChangingPlatform || updatingCredentials) ? undefined : oldApiObj.token
+        token: (isChangingPlatform || updatingCredentials) ? undefined : oldApiObj.token,
+        ...(body.api.allowSelfSigned === true ? { allowSelfSigned: true } : {}),
+        ...(body.api.target ? { target: body.api.target } : {}),
       };
 
-      if (body.api.type === 'glances') {
-        let baseUrl = body.api.ip;
-        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-          baseUrl = `http://${baseUrl}`;
-        }
-        try {
-          const urlObj = new URL(baseUrl);
-          if (body.api.port) urlObj.port = body.api.port;
-          device.api.url = urlObj.toString().replace(/\/$/, '');
-        } catch {
-          device.api.url = body.api.port ? `${baseUrl}:${body.api.port}` : baseUrl;
-        }
-
-        if (updatingCredentials) {
-          const oldToken = !isChangingPlatform ? (oldApiObj.token || '') : '';
-          const colonIdx = oldToken.indexOf(':');
-          const oldPassword = colonIdx !== -1 ? oldToken.substring(colonIdx + 1) : '';
-          const newPassword = body.api.password || oldPassword;
-
-          if (body.api.username || newPassword) {
-            const authStr = `${body.api.username || ''}:${newPassword}`;
-            device.api.token = authStr;
-          } else {
-            device.api.token = undefined; // Cleared
-          }
-        }
-      } else if (body.api.type === 'homeassistant') {
-        device.api.url = `http://${body.api.ip}:${body.api.port || 8123}/api/states`;
-        if (updatingCredentials) {
-          const newPassword = body.api.password || (!isChangingPlatform ? oldApiObj.token : '');
-          device.api.token = newPassword || undefined;
-        }
-      } else if (body.api.type === 'proxmox') {
-        const baseUrl = `https://${body.api.ip}:${body.api.port || 8006}/api2/json/nodes/${body.api.nodeName || 'pve'}`;
-        if (body.api.vmid) {
-          device.api.url = `${baseUrl}/${body.api.vmType || 'qemu'}/${body.api.vmid}/status/current`;
-        } else {
-          device.api.url = `${baseUrl}/status`;
-        }
-        if (updatingCredentials) {
-          const oldToken = !isChangingPlatform ? (oldApiObj.token || '') : '';
-          const eqIdx = oldToken.indexOf('=');
-          const oldPassword = eqIdx !== -1 ? oldToken.substring(eqIdx + 1) : '';
-          const newPassword = body.api.password || oldPassword;
-
-          if (body.api.username && newPassword) {
-            const fullToken = `${body.api.username}=${newPassword}`;
-            device.api.token = fullToken;
-          } else {
-            device.api.token = undefined; // Cleared
-          }
-        }
-      } else if (body.api.type === 'lhm') {
-        let baseUrl = body.api.ip;
-        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-          baseUrl = `http://${baseUrl}`;
-        }
-        device.api.url = `${baseUrl}:${body.api.port || 9001}/data.json`;
+      // The integration builds the endpoint; credentials are rebuilt only when
+      // sent, an empty secret keeping the stored one.
+      const connection = getDeviceIntegration(body.api.type)?.connect(body.api, isChangingPlatform ? undefined : oldApiObj.token);
+      if (connection) {
+        device.api.url = connection.url;
+        if (updatingCredentials) device.api.token = connection.token;
       }
     }
 

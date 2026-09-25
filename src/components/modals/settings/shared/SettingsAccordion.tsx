@@ -1,5 +1,6 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useCalme } from '@/widgets/calme';
 
 export interface SettingsAccordionProps {
   title: string;
@@ -11,6 +12,24 @@ export interface SettingsAccordionProps {
 }
 
 export function SettingsAccordion({ title, description, icon, isOpen, onToggle, children }: SettingsAccordionProps) {
+  const calme = useCalme();
+  if (calme) {
+    return (
+      <section className={`ndc-set-section ${isOpen ? 'is-open' : ''}`}>
+        <button type="button" className="ndc-set-section-head" aria-expanded={isOpen} onClick={onToggle}>
+          <span className="ndc-set-section-lead">
+            {icon && <span className="ndc-set-section-icon" aria-hidden="true">{icon}</span>}
+            <span>
+              <span className="ndc-set-section-title">{title}</span>
+              {description && <span className="ndc-set-section-desc">{description}</span>}
+            </span>
+          </span>
+          <ChevronDown size={15} className="ndc-set-chevron" aria-hidden="true" />
+        </button>
+        {isOpen && <div className="ndc-set-section-body">{children}</div>}
+      </section>
+    );
+  }
   return (
     <div className="nd-settings-card" style={{ padding: 0, background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', display: 'flex', flexDirection: 'column' }}>
       <button 

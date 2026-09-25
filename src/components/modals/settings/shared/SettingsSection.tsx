@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useCalme } from '@/widgets/calme';
 
 export function SettingsSection({ 
   title, 
@@ -14,6 +15,21 @@ export function SettingsSection({
   onToggle: (open: boolean) => void, 
   children: React.ReactNode 
 }) {
+  const calme = useCalme();
+  if (calme) {
+    return (
+      <section className={`ndc-set-section ${isOpen ? 'is-open' : ''}`}>
+        <button type="button" className="ndc-set-section-head" aria-expanded={isOpen} onClick={() => onToggle(!isOpen)}>
+          <span>
+            <span className="ndc-set-section-title">{title}</span>
+            {description && <span className="ndc-set-section-desc">{description}</span>}
+          </span>
+          <ChevronDown size={15} className="ndc-set-chevron" aria-hidden="true" />
+        </button>
+        {isOpen && <div className="ndc-set-section-body">{children}</div>}
+      </section>
+    );
+  }
   return (
     <details 
       className="nd-settings-details group"

@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Search, Check, Trash2, Server, Power, Play, RefreshCw, Layers } from 'lucide-react';
+import { Search, Trash2, Power, Play, RefreshCw, Layers } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
-import CustomSelect from '@/components/shared/CustomSelect';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
+import { CalmeCheckRow, CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
+import { CalmeSegmented } from './settings/shared/CalmeControls';
 
 interface DockerActionFormModalProps {
   action?: DockerActionConfig;
@@ -95,138 +96,66 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={action ? t("Modifier une action Docker") : t("Ajouter une action Docker")} tabIndex={-1} className="nd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 450, maxWidth: '90vw' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontSize: '0.85rem', fontWeight: 700 }}>{t(action ? "Modifier une action Docker" : "Ajouter une action Docker")}</h3>
-          <button aria-label={t("Fermer")} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--nd-text-muted)' }}>
-            <X size={16} />
-          </button>
+      <CalmeDialog
+        dialogRef={dialogRef}
+        label={action ? t("Modifier une action Docker") : t("Ajouter une action Docker")}
+        title={t(action ? "Modifier une action Docker" : "Ajouter une action Docker")}
+        width={480}
+        onClose={onClose}
+        danger={action && onDelete && (
+          <button type="button" className="nd-btn ndc-danger-ghost" onClick={() => onDelete(action.id)}><Trash2 size={12} /> {t("Supprimer")}</button>
+        )}
+        footer={<>
+          <button type="button" className="nd-btn" onClick={onClose}>{t("Annuler")}</button>
+          <button type="button" className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={!name.trim() || targets.length === 0}>{action ? t("Enregistrer") : t("Ajouter")}</button>
+        </>}
+      >
+        <div className="ndc-field-inline">
+          <CalmeField label={t("Nom du bouton")} htmlFor="docker-action-name">
+            <input id="docker-action-name" className="nd-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ex: Redémarrer Supabase")} />
+          </CalmeField>
         </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <label className="nd-label">{t("Nom du bouton")}</label>
-            <input className="nd-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ex: Redémarrer Supabase")} />
+        <CalmeField label={t("Icône")}>
+          <div className="ndc-icon-choices" role="radiogroup" aria-label={t("Icône")}>
+            {ACTION_ICONS.map(i => (
+              <button key={i.name} type="button" role="radio" aria-checked={icon === i.name} className="ndc-icon-pick" onClick={() => setIcon(i.name)}>{i.icon}</button>
+            ))}
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label className="nd-label">{t("Icône")}</label>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {ACTION_ICONS.map(i => (
-                  <button
-                    key={i.name}
-                    onClick={() => setIcon(i.name)}
-                    style={{
-                      padding: 8,
-                      borderRadius: 'var(--nd-card-radius)',
-                      background: icon === i.name ? 'var(--nd-accent)' : 'var(--nd-icon-bg)',
-                      border: 'none',
-                      color: icon === i.name ? 'white' : 'var(--nd-text)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {i.icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="nd-label">{t("Action (au clic)")}</label>
-              <CustomSelect
-                value={actionType}
-                onChange={(val) => setActionType(val as any)}
-                options={[
-                  { value: 'switch', label: t("Basculer (Stop/Start)") },
-                  { value: 'start', label: t("Démarrer (Start)") },
-                  { value: 'stop', label: t("Arrêter (Stop)") }
-                ]}
-              />
-            </div>
+        </CalmeField>
+        <CalmeField label={t("Action (au clic)")} info={t('docker.calme.switchInfo')}>
+          <CalmeSegmented
+            label={t("Action (au clic)")}
+            value={actionType}
+            onChange={(val) => setActionType(val)}
+            options={[
+              { value: 'switch', label: t('docker.calme.switch') },
+              { value: 'start', label: t('Start') },
+              { value: 'stop', label: t('Stop') },
+            ]}
+          />
+        </CalmeField>
+        <CalmeField label={<>{t('docker.calme.targetsLabel')}<span className="ndc-field-count">{targets.length}</span>{loading && <span className="nd-spinner" style={{ width: 10, height: 10, marginLeft: 8 }} />}</>}>
+          <label className="ndc-settings-search">
+            <Search size={14} aria-hidden="true" />
+            <input type="search" placeholder={t("Rechercher un conteneur...")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} aria-label={t("Rechercher un conteneur...")} />
+          </label>
+          <div className="ndc-check-list">
+            {filteredContainers.length === 0 && !loading && <div className="ndc-set-empty">{t("Aucun conteneur trouvé")}</div>}
+            {filteredContainers.map(({ hostId, hostName, container }) => {
+              const cname = container.names[0].replace(/^\//, '');
+              return (
+                <CalmeCheckRow key={`${hostId}-${container.id}`} checked={isSelected(hostId, cname)} onChange={() => toggleTarget(hostId, cname)}>
+                  <span className="ndc-check-text">
+                    <span>{cname}</span>
+                    <span className="ndc-set-list-sub">{hostName}</span>
+                  </span>
+                  <span className={`ndc-dot ${container.state === 'running' ? 'ndc-dot--running' : ''}`} />
+                </CalmeCheckRow>
+              );
+            })}
           </div>
-
-          <div>
-            <label className="nd-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{t("Conteneurs cibles (")}{targets.length} {t("sélectionnés)")}</span>
-              {loading && <span style={{ fontSize: '0.65rem', color: 'var(--nd-accent)' }}>{t("Chargement…")}</span>}
-            </label>
-            <div className="nd-search" style={{ marginBottom: 12, maxWidth: 'none' }}>
-              <Search size={14} className="nd-search-icon" />
-              <input
-                placeholder={t("Rechercher un conteneur...")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div style={{
-              maxHeight: 200,
-              overflowY: 'auto',
-              background: 'var(--nd-icon-bg)',
-              borderRadius: 'var(--nd-card-radius)',
-              border: '1px solid var(--nd-border)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              {filteredContainers.length === 0 && !loading && (
-                <div style={{ padding: 16, textAlign: 'center', fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>
-                  {t("Aucun conteneur trouvé")}
-                </div>
-              )}
-              {filteredContainers.map(({ hostId, hostName, container }) => {
-                const cname = container.names[0].replace(/^\//, '');
-                const selected = isSelected(hostId, cname);
-
-                return (
-                  <div
-                    key={`${hostId}-${container.id}`}
-                    onClick={() => toggleTarget(hostId, cname)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid rgba(255,255,255,0.02)',
-                      background: selected ? 'rgba(var(--nd-accent-rgb), 0.1)' : 'transparent',
-                      gap: 12
-                    }}
-                  >
-                    <div style={{
-                      width: 16, height: 16, borderRadius: 'calc(var(--nd-card-radius) * 0.4)',
-                      border: `1px solid ${selected ? 'var(--nd-accent)' : 'var(--nd-border)'}`,
-                      background: selected ? 'var(--nd-accent)' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      {selected && <Check size={12} color="white" />}
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cname}</span>
-                      <span style={{ fontSize: '0.6rem', color: 'var(--nd-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Server size={8} /> {hostName}
-                      </span>
-                    </div>
-
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: container.state === 'running' ? 'var(--nd-green)' : 'var(--nd-text-muted)' }} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
-          {action && onDelete ? (
-            <button className="nd-btn" onClick={() => onDelete(action.id)} style={{ color: 'var(--nd-red)' }}>
-              <Trash2 size={12} /> {t("Supprimer")}
-            </button>
-          ) : <div />}
-          <button className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={!name.trim() || targets.length === 0}>
-            {action ? t("Enregistrer") : t("Ajouter")}
-          </button>
-        </div>
-      </div>
+        </CalmeField>
+      </CalmeDialog>
     </div>
   );
 }

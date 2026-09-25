@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 
@@ -23,7 +24,9 @@ interface CustomSelectProps {
 export default function CustomSelect({ value, options, onChange, className, style, disabled, ariaLabel }: CustomSelectProps) {
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
+  const [place, setPlace] = useState<{ left: number; width: number; top?: number; bottom?: number; maxHeight: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
   const id = useId();
@@ -31,7 +34,8 @@ export default function CustomSelect({ value, options, onChange, className, styl
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (containerRef.current && !containerRef.current.contains(target) && !listRef.current?.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -55,6 +59,38 @@ export default function CustomSelect({ value, options, onChange, className, styl
     };
   }, [isOpen, id]);
 
+  // The list is drawn above the page (portal, fixed position) so no dialog
+  // or scroll area can clip it. It opens downward, or upward when there is
+  // more room above, and never taller than the room it has.
+  const measure = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const box = trigger.getBoundingClientRect();
+    const margin = 8;
+    const below = window.innerHeight - box.bottom - margin;
+    const above = box.top - margin;
+    const wanted = Math.min(280, 12 + options.length * 36);
+    const up = below < wanted && above > below;
+    const maxHeight = Math.max(120, Math.min(280, (up ? above : below) - 4));
+    setPlace({
+      left: box.left,
+      width: box.width,
+      maxHeight,
+      ...(up ? { bottom: window.innerHeight - box.top + 4 } : { top: box.bottom + 4 }),
+    });
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const follow = () => measure();
+    window.addEventListener('resize', follow);
+    window.addEventListener('scroll', follow, true);
+    return () => {
+      window.removeEventListener('resize', follow);
+      window.removeEventListener('scroll', follow, true);
+    };
+  });
+
   const selectedOption = options.find(o => o.value === value) || options.find(o => !o.isHeader) || options[0];
   const selectableOptions = options.filter(option => !option.isHeader);
   const selectedIndex = Math.max(0, selectableOptions.findIndex(option => option.value === selectedOption?.value));
@@ -68,6 +104,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
 
   const openMenu = (focusSelectedOption = false) => {
     if (disabled) return;
+    measure();
     setIsOpen(true);
     window.dispatchEvent(new CustomEvent('customSelectOpen', { detail: id }));
     if (focusSelectedOption) {
@@ -149,24 +186,28 @@ export default function CustomSelect({ value, options, onChange, className, styl
         {!disabled && <ChevronDown size={14} style={{ opacity: 0.5, transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />}
       </button>
 
-      {isOpen && (
+      {isOpen && place && typeof document !== 'undefined' && createPortal(
         <div
+          ref={listRef}
           id={listboxId}
           role="listbox"
           aria-label={ariaLabel || t("Options")}
           data-dialog-escape-boundary="true"
           style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          right: 0,
-          background: 'var(--nd-card-bg)',
+          position: 'fixed',
+          ...(place.top !== undefined ? { top: place.top } : { bottom: place.bottom }),
+          left: place.left,
+          width: place.width,
+          boxSizing: 'border-box',
+          // Opaque, whatever the card opacity chosen in Appearance.
+          background: 'var(--nd-bg-surface, var(--nd-bg))',
           border: '1px solid var(--nd-card-border)',
           borderRadius: 'var(--nd-card-radius)',
           boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-          zIndex: 100,
+          // Above the dialogs' overlay (z-index 99999).
+          zIndex: 100001,
           overflowY: 'auto',
-          maxHeight: '280px',
+          maxHeight: place.maxHeight,
           padding: '6px',
           display: 'flex',
           flexDirection: 'column',
@@ -236,7 +277,8 @@ export default function CustomSelect({ value, options, onChange, className, styl
               </div>
             );
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

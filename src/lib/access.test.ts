@@ -69,9 +69,6 @@ describe('configuration filtering', () => {
     settings: {
       title: 'NasDash',
       showMonitor: true,
-      tailscaleTailnet: 'example.ts.net',
-      tailscaleClientId: 'client-id',
-      tailscaleClientSecret: 'secret',
       networkTopology: { nodes: [], groups: [], connections: [] },
     },
     categories: [
@@ -88,6 +85,7 @@ describe('configuration filtering', () => {
     dockerHosts: [{ id: 'docker-1', name: 'Docker', icon: 'D', type: 'tcp', url: 'http://192.168.1.20' }],
     dockerActions: [{ id: 'action-1', name: 'Restart', icon: 'R', actionType: 'start', targets: [] }],
     localEvents: [{ id: 'event-1', title: 'Private event', start: '2026-08-09' }],
+    integrations: [{ id: 'tailscale-main', type: 'tailscale', name: 'Tailscale', settings: { tailnet: 'example.ts.net', clientId: 'client-id' }, secrets: { clientSecret: 'secret' } }],
     slots: [
       { id: 'slot-public', type: 'category', category: { id: 'public', isSecret: false } },
       { id: 'slot-secret', type: 'category', category: { id: 'secret', isSecret: true } },
@@ -99,7 +97,7 @@ describe('configuration filtering', () => {
 
     expect(result.categories).toHaveLength(2);
     expect(result.devices?.[0].api?.token).toBe('********');
-    expect(result.settings.tailscaleClientSecret).toBe('********');
+    expect(result.integrations?.[0].secrets?.clientSecret).toBe('********');
   });
 
   it('removes secret categories and resources outside a restricted viewer allowlist', () => {
@@ -111,7 +109,7 @@ describe('configuration filtering', () => {
     expect(result.dockerActions).toEqual([]);
     expect(result.localEvents).toHaveLength(1);
     expect(result.settings.networkTopology).toBeUndefined();
-    expect(result.settings.tailscaleClientId).toBeUndefined();
+    expect(result.integrations).toEqual([]);
   });
 
   it('never sends backend-only Docker URLs or credential markers to a viewer', () => {
@@ -119,6 +117,6 @@ describe('configuration filtering', () => {
 
     expect(result.dockerHosts?.[0].url).toBe('');
     expect(result.devices?.[0].api?.token).toBeUndefined();
-    expect(result.settings.tailscaleClientSecret).toBeUndefined();
+    expect(result.integrations?.[0]?.secrets).toBeUndefined();
   });
 });

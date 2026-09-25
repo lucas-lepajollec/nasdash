@@ -3,13 +3,12 @@ import { ESLint } from 'eslint';
 // Temporary debt ceiling. Each count may only decrease; any new error rule or
 // increase fails CI. Remove entries as the corresponding legacy code is fixed.
 const baseline = new Map([
-  ['@typescript-eslint/no-explicit-any', 123],
-  ['react-hooks/set-state-in-effect', 16],
-  ['prefer-const', 8],
+  ['@typescript-eslint/no-explicit-any', 84],
+  ['react-hooks/set-state-in-effect', 15],
+  ['prefer-const', 6],
   ['react/no-unescaped-entities', 3],
   ['@typescript-eslint/no-require-imports', 2],
-  ['react-hooks/preserve-manual-memoization', 2],
-  ['@typescript-eslint/ban-ts-comment', 1],
+  ['react-hooks/preserve-manual-memoization', 1],
 ]);
 
 const eslint = new ESLint();

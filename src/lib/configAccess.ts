@@ -1,5 +1,6 @@
 import { AccessPrincipal, canAccessTab, canAccessWidget } from './access';
 import { DashboardConfig } from './types';
+import { maskInstanceSecrets, stripInstanceSecrets } from '@/integrations/instances';
 
 type SerializableConfig = DashboardConfig & {
   slots?: Array<Record<string, unknown>>;
@@ -13,10 +14,11 @@ function maskSecrets(config: SerializableConfig): void {
   for (const device of config.devices || []) {
     if (device.api?.token) device.api.token = '********';
   }
-
-  if (config.settings?.tailscaleClientSecret) {
-    config.settings.tailscaleClientSecret = '********';
+  for (const host of config.dockerHosts || []) {
+    if (host.token) host.token = '********';
   }
+
+  maskInstanceSecrets(config);
 }
 
 function filterSecretCategories(config: SerializableConfig): void {
@@ -55,13 +57,16 @@ export function buildConfigForPrincipal(
   filterSecretCategories(safeConfig);
 
   for (const host of safeConfig.dockerHosts) {
-    // The browser only needs the stable host id/name. The daemon URL stays server-side.
+    // The browser only needs the stable host id/name. The daemon address stays server-side.
     host.url = '';
+    delete host.socketPath;
+    delete host.target;
+    delete host.token;
   }
   for (const device of safeConfig.devices) {
     if (device.api) delete device.api.token;
   }
-  delete safeConfig.settings.tailscaleClientSecret;
+  stripInstanceSecrets(safeConfig);
 
   const canReadDocker =
     canAccessTab(principal, 'docker') ||
@@ -92,9 +97,7 @@ export function buildConfigForPrincipal(
     canAccessTab(principal, 'networks') ||
     canAccessWidget(principal, 'tailscale');
   if (!canReadTailscale) {
-    delete safeConfig.settings.tailscaleTailnet;
-    delete safeConfig.settings.tailscaleClientId;
-    delete safeConfig.settings.tailscaleClientSecret;
+    safeConfig.integrations = (safeConfig.integrations ?? []).filter(instance => instance.type !== 'tailscale' && instance.type !== 'headscale');
   }
 
   return safeConfig;

@@ -5,6 +5,7 @@ import { Category } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
 import { useI18n } from '@/i18n/I18nProvider';
+import { quickStats } from '@/widgets/quickstats/stats';
 
 export default function QuickStatsWidget({ categories, editMode }: { categories: Category[], editMode?: boolean }) {
   const { t } = useI18n();
@@ -12,49 +13,33 @@ export default function QuickStatsWidget({ categories, editMode }: { categories:
   const { size: widgetSize, width } = useWidgetSize();
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
 
-  // Compute stats
-  const serviceCount = categories.reduce((acc, c) => acc + c.services.length, 0);
-  const categoryCount = categories.length;
-  const ports = new Set<string>();
-  let linkCount = 0;
-  categories.forEach(cat => {
-    cat.services.forEach(svc => {
-      if (svc.localUrl) {
-        linkCount++;
-        try { const p = new URL(svc.localUrl).port; if (p) ports.add(p); } catch { /* */ }
-      }
-      if (svc.tailscaleUrl) {
-        linkCount++;
-        try { const p = new URL(svc.tailscaleUrl).port; if (p) ports.add(p); } catch { /* */ }
-      }
-    });
-  });
+  const { services: serviceCount, categories: categoryCount, links: linkCount, ports } = quickStats(categories);
 
-  const quickStats = [
+  const cards = [
     { label: t("Services"), value: serviceCount, icon: <Server size={11} /> },
     { label: t("Catégories"), value: categoryCount, icon: <FolderOpen size={11} /> },
     { label: t("Liens"), value: linkCount, icon: <Link2 size={11} /> },
-    { label: t("Ports"), value: ports.size, icon: <Hash size={11} /> },
+    { label: t("Ports"), value: ports, icon: <Hash size={11} /> },
   ];
 
   // Grid layout columns based on container size
   let gridCols = '1fr 1fr';
   if (widgetSize === 'wide') {
     gridCols = 'repeat(4, 1fr)';
-  } else if (widgetSize === 'narrow' && width < 220) {
+  } else if (widgetSize === 'narrow' && width < 160) {
     gridCols = '1fr';
   }
 
   return (
     <div className="nd-sidebar-card nd-animate-in">
-      {!hideTitles && (
+      {(!hideTitles || editMode) && (
         <div className="nd-section-title">
           <Server size={12} style={{ color: 'var(--nd-accent)' }} />
           {t("Vue d&apos;ensemble")}
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8, marginTop: (hideTitles && !editMode) ? 0 : 8 }}>
-        {quickStats.map((s) => (
+      <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8, marginTop: hideTitles ? 0 : 8 }}>
+        {cards.map((s) => (
           <div key={s.label} style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             padding: '10px 4px', borderRadius: 'var(--nd-card-radius)',

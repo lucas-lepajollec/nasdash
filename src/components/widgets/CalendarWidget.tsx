@@ -4,19 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw, Plus, Clock } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from './WidgetContainer';
-import { CalendarDisplayEvent } from '@/lib/types';
+import { useCalendarEvents } from '@/widgets/calendar/useCalendarEvents';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export default function CalendarWidget({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { t, locale } = useI18n();
   const { config, setCalendarEventModal, setViewEventModal } = useConfig();
   const { size: widgetSize } = useWidgetSize();
-  const calendarUrl = config?.settings?.calendarUrl;
-  const localEvents = React.useMemo(() => config?.localEvents || [], [config?.localEvents]);
+  const { events, loading: loadingEvents } = useCalendarEvents(isVisible);
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<CalendarDisplayEvent[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(false);
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   
   // Wait for client-side hydration to show actual date, to avoid SSR mismatch
@@ -24,37 +21,6 @@ export default function CalendarWidget({ editMode, isVisible = true }: { editMod
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (!isVisible) return;
-    const fetchEvents = async () => {
-      let combinedEvents: CalendarDisplayEvent[] = localEvents.map(e => ({
-        ...e,
-        start: e.start || null,
-        end: e.end || null
-      }));
-      
-      if (!calendarUrl) {
-        setEvents(combinedEvents);
-        return;
-      }
-      setLoadingEvents(true);
-      try {
-        const res = await fetch(`/api/calendar?url=${encodeURIComponent(calendarUrl)}`);
-        const data = await res.json();
-        if (data && data.events) {
-          combinedEvents = [...combinedEvents, ...data.events];
-        }
-      } catch (e) {
-        console.error('Failed to fetch calendar events:', e);
-      } finally {
-        setEvents(combinedEvents);
-        setLoadingEvents(false);
-      }
-    };
-
-    fetchEvents();
-  }, [calendarUrl, isVisible, localEvents]);
 
   const daysOfWeek = Array.from({ length: 7 }, (_, index) =>
     new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(new Date(2024, 0, index + 1)).replace('.', ''),

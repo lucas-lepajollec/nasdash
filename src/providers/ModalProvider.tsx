@@ -4,10 +4,11 @@ import React, { createContext, useContext, useState } from 'react';
 import { Service, Category, Device, DockerActionConfig, CalendarDisplayEvent } from '@/lib/types';
 
 export interface ServiceModalState { open: boolean; service?: Service; categoryId?: string }
-export interface CategoryModalState { open: boolean; category?: Category }
+/** `placement`: where to show a newly created category on a page. */
+export interface CategoryModalState { open: boolean; category?: Category; placement?: { pageId: string } }
 export interface DeviceModalState { open: boolean; device?: Device }
 export interface DockerActionModalState { open: boolean; action?: DockerActionConfig }
-export interface SettingsModalState { open: boolean; targetTab?: string; targetCustomTabId?: string }
+export interface SettingsModalState { open: boolean; targetTab?: string }
 export interface CalendarEventModalState { open: boolean; date?: string; events?: CalendarDisplayEvent[] }
 export interface ViewEventModalState { open: boolean; event?: CalendarDisplayEvent }
 

@@ -54,7 +54,7 @@ async function handleGET(
       return NextResponse.json(DEMO_DOCKER_IMAGES.filter(image => !isDemoImageRemoved(image.id)));
     }
 
-    const response = await fetchDockerApi(host.url, '/images/json');
+    const response = await fetchDockerApi(host, '/images/json');
     const raw = await readDockerJson(response) as DockerApiImage[];
 
     const images = raw.map(img => ({
@@ -99,7 +99,7 @@ async function handleDELETE(
     }
 
     const res = await fetchDockerApi(
-      host.url,
+      host,
       `/images/${encodeURIComponent(imageId)}`,
       { method: 'DELETE' },
       5_000,

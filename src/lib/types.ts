@@ -34,7 +34,7 @@ export interface DeviceApiMapping {
 }
 
 export interface DeviceApiConfig {
-  type: 'homeassistant' | 'proxmox' | 'custom' | 'glances' | 'lhm';
+  type: 'homeassistant' | 'proxmox' | 'custom' | 'glances' | 'lhm' | 'netdata' | 'beszel' | 'prometheus';
   url: string;
   token?: string;
   ip?: string;
@@ -43,6 +43,10 @@ export interface DeviceApiConfig {
   nodeName?: string; // For Proxmox
   vmid?: string; // For Proxmox VMs
   vmType?: 'qemu' | 'lxc'; // For Proxmox VMs
+  /** HTTPS endpoint with a self-signed certificate: skip the certificate check for this device only. */
+  allowSelfSigned?: boolean;
+  /** Machine to read on a multi-machine server (Beszel system name, Prometheus `instance`). */
+  target?: string;
   mapping?: DeviceApiMapping;
 }
 
@@ -62,12 +66,29 @@ export interface Device {
 }
 
 // ==================== DOCKER ====================
+/**
+ * A Docker (or Podman) engine and how NasDash reaches it:
+ * - `tcp`: HTTP(S) API, directly or through a socket proxy (`http://docker-proxy:2375`);
+ * - `socket`: the engine's Unix socket mounted into the NasDash container
+ *   (`/var/run/docker.sock`, or Podman's `/run/podman/podman.sock`);
+ * - `portainer`: an environment of a Portainer server, which relays the Docker API;
+ * - `dockhand`: an environment of a Dockhand server (its own API, translated).
+ */
 export interface DockerHost {
   id: string;
   name: string;
   icon: string;
-  type: 'tcp';        // TCP API (http://ip:port)
-  url: string;        // e.g. "http://192.168.0.200:2375"
+  type: 'tcp' | 'socket' | 'portainer' | 'dockhand';
+  /** `tcp`: e.g. "http://192.168.0.200:2375"; Portainer/Dockhand: the server address. Empty for `socket`. */
+  url: string;
+  /** Portainer environment (endpoint) id, or Dockhand environment id. */
+  target?: string;
+  /** Portainer API key or Dockhand API token: encrypted on disk, masked for admins, never sent to others. */
+  token?: string;
+  /** `socket`: path of the mounted socket. */
+  socketPath?: string;
+  /** `tcp` over HTTPS with a self-signed certificate: skip the check for this host only. */
+  allowSelfSigned?: boolean;
 }
 
 export interface DockerContainerPort {
@@ -184,6 +205,20 @@ export interface PanelConfig {
   widgets: PanelWidgetConfig[];
 }
 
+/** One saved connection to an external service (a tailnet, later a Docker engine…). */
+export interface IntegrationInstance {
+  id: string;
+  /** Service integration id (`tailscale`…). */
+  type: string;
+  name: string;
+  /** Non-secret values (tailnet name, client id…). */
+  settings: Record<string, string>;
+  /** Encrypted on disk, masked for admins, never sent to other users. */
+  secrets?: Record<string, string>;
+  /** Last save (ISO date): when two connections can serve one widget, the latest wins. */
+  updatedAt?: string;
+}
+
 export interface DashboardConfig {
   version: number;
   /** Runtime-only flag exposed by the API; never persisted in config.json. */
@@ -194,6 +229,8 @@ export interface DashboardConfig {
   dockerActions?: DockerActionConfig[];
   appearanceProfiles?: AppearanceProfile[];
   localEvents?: LocalCalendarEvent[];
+  /** Saved connections to external services (see `src/integrations/instances.ts`). */
+  integrations?: IntegrationInstance[];
   settings: {
     uiLanguage?: 'en' | 'fr' | 'es' | 'de';
     panels?: Record<string, PanelConfig>;
@@ -210,16 +247,21 @@ export interface DashboardConfig {
     headerLayoutMobile?: HeaderLayoutMobile;
     showHeaderMenuIcons?: boolean;
     showPingDetails?: boolean;
+    /** Latency graph: show average, range, jitter and quality (off by default). */
+    networkGraphStats?: boolean;
     pingIndicatorMode?: 'none' | 'standard_only' | 'all';
 
     showMonitor: boolean;
     totalSlots?: number;
     dockPosition?: 'left' | 'right';
-    tailscaleTailnet?: string;
-    tailscaleClientId?: string;
-    tailscaleClientSecret?: string;
 
     theme?: string;
+    /** Interface style: "calme" (default) or the historical "classic" look. */
+    designStyle?: 'calme' | 'classic';
+    /** Accent colour (#rrggbb) replacing the theme's; empty = the theme's own. */
+    accentColor?: string;
+    /** Colours kept in the colour picker of the widgets (#rrggbb). */
+    favoriteColors?: string[];
     mode?: 'light' | 'dark';
     // Tab customization
     tabOrder?: string[];
@@ -349,6 +391,12 @@ export interface DashboardConfig {
     globalFont?: string;
     borderRadius?: number;
     cardOpacity?: number;
+    /** Calme: hide the outline of widgets, cards and dialogs. */
+    hideOutlines?: boolean;
+    /** Background blur (px) behind widgets, dialogs and settings. */
+    surfaceBlur?: number;
+    /** Soft edges (px): surfaces fade into the page instead of ending on a hard line. */
+    softEdges?: number;
     emojiTheme?: string;
   };
 }

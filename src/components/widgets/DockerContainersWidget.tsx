@@ -1,48 +1,26 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import useSWR from 'swr';
+import React, { useState, useEffect, useRef } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Check, CheckCircle2, XCircle, AlertCircle, Play, Square, RefreshCw, Pencil } from 'lucide-react';
 import { useWidgetSize } from './WidgetContainer';
 import { Emoji } from '../shared/Emoji';
-import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
+import { getDockerErrorPresentation } from '@/lib/dockerErrorContract';
+import { getPaddedList, useDockerContainers } from '@/widgets/dockercontainers/useDockerContainers';
 import { useI18n } from '@/i18n/I18nProvider';
-
-function getPaddedList(list: any[], targetMultiple: number) {
-  if (list.length === 0) return [];
-  let k = 1;
-  while ((list.length * k) % targetMultiple !== 0 && k < 12) k++;
-  const result = [];
-  for (let i = 0; i < k; i++) {
-    result.push(...list);
-  }
-  return result;
-}
+import { WidgetHeaderActions } from './WidgetHeaderActions';
 
 export default function DockerContainersWidget({ editMode, widgetInstanceId, widgetProps, onUpdateProps, isVisible = true }: { editMode?: boolean, widgetInstanceId?: string, widgetProps?: any, onUpdateProps?: (p: any) => void, isVisible?: boolean }) {
   const { t } = useI18n();
-  const { config, showSecretSections } = useConfig();
+  const { config } = useConfig();
   const { size: widgetSize } = useWidgetSize();
-  const hosts = config?.dockerHosts || [];
-
-  const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
+  const { hosts, selectedHostId, setSelectedHostId, containerList, error, isLoading, allowActions, actionRunning, toggleContainer: handleToggleContainer } = useDockerContainers({ editMode, isVisible });
   const [currentPage, setCurrentPage] = useState(1);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isEditDropdownOpen, setIsEditDropdownOpen] = useState(false);
   const editDropdownRef = useRef<HTMLDivElement>(null);
-  const [actionRunning, setActionRunning] = useState<Record<string, boolean>>({});
   const [isHovered, setIsHovered] = useState(false);
-
-  const allowActions = config?.settings?.allowDockerActions ?? true;
-
-  // Set default host ID when hosts load
-  useEffect(() => {
-    if (hosts.length > 0 && !selectedHostId) {
-      setSelectedHostId(hosts[0].id);
-    }
-  }, [hosts, selectedHostId]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -58,63 +36,9 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch containers list for the selected host
-  const { data: containers, error, isLoading, mutate } = useSWR(
-    isVisible && selectedHostId ? `/api/docker/${selectedHostId}/containers?all=true` : null,
-    dockerJsonFetcher,
-    { refreshInterval: 5000 }
-  );
-
   const currentHost = hosts.find(h => h.id === selectedHostId);
   const hideTitles = (config?.settings?.hideWidgetTitles ?? false) && !editMode;
   const errorPresentation = getDockerErrorPresentation(error);
-
-  // Handle toggling container start/stop
-  const handleToggleContainer = async (containerId: string, currentState: string) => {
-    if (editMode) return;
-    setActionRunning(prev => ({ ...prev, [containerId]: true }));
-    try {
-      const action = currentState === 'running' ? 'stop' : 'start';
-      const res = await fetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          alert(t("Action refusée. Session administrateur requise (veuillez vous connecter via le bouton Connexion en haut)."));
-          return;
-        }
-        const data = await res.json();
-        throw new Error(data.error || 'Action échouée');
-      }
-      await mutate();
-    } catch (e) {
-      console.error('Failed to change container state:', e);
-    } finally {
-      setActionRunning(prev => ({ ...prev, [containerId]: false }));
-    }
-  };
-
-  // Pagination calculation
-  const containerList = useMemo(() => {
-    const rawList = Array.isArray(containers) ? containers : [];
-    if (showSecretSections || !config?.categories) return rawList;
-
-    const secretServiceNames = new Set<string>();
-    config.categories.forEach(cat => {
-      if (cat.isSecret) {
-        cat.services.forEach(svc => {
-          secretServiceNames.add(svc.name.toLowerCase().trim());
-        });
-      }
-    });
-
-    return rawList.filter((c: any) => {
-      const isSecretContainer = (c.names || []).some((n: string) => {
-        const name = n.replace(/^\//, '').toLowerCase().trim();
-        return secretServiceNames.has(name);
-      }) || secretServiceNames.has((c.names?.[0] || '').replace(/^\//, '').toLowerCase().trim());
-
-      return !isSecretContainer;
-    });
-  }, [containers, config?.categories, showSecretSections]);
 
   if (hosts.length === 0) {
     return (
@@ -476,7 +400,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
       )}
 
       {/* Header */}
-      {!hideTitles && (
+      {(!hideTitles || editMode) && (
         <div className="nd-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '1rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}><Emoji emoji="🐳" /></span>
@@ -484,6 +408,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
           </div>
           
           {editMode && widgetInstanceId && onUpdateProps && (
+            <WidgetHeaderActions>
             <div ref={editDropdownRef} style={{ position: 'relative' }}>
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsEditDropdownOpen(!isEditDropdownOpen); }}
@@ -576,6 +501,7 @@ export default function DockerContainersWidget({ editMode, widgetInstanceId, wid
                 </div>
               )}
             </div>
+            </WidgetHeaderActions>
           )}
         </div>
       )}

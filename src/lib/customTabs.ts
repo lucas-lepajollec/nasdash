@@ -7,6 +7,10 @@ import { getDataDirectory } from './dataDirectory';
 import { isDemoMode } from './demoMode';
 import { getDemoSessionCustomTabs, setDemoSessionCustomTabs } from './demoSession';
 
+/**
+ * Historical custom tabs (custom_tabs.json). Read only, as the source of the
+ * one-time migration to universal pages; the file itself is never modified.
+ */
 export interface CustomTabsData {
   tabs: TabDef[];
   layouts: Record<string, CustomTabLayout>;
@@ -70,24 +74,4 @@ export function readCustomTabs(): CustomTabsData {
     console.error('Error reading custom tabs:', error);
   }
   return DEFAULT_DATA;
-}
-
-export function writeCustomTabs(data: CustomTabsData): boolean {
-  try {
-    if (isDemoMode()) {
-      if (setDemoSessionCustomTabs(data)) return true;
-      globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
-      return true;
-    }
-    const dir = path.dirname(CUSTOM_TABS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    safeWriteFileSync(CUSTOM_TABS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    globalCache.__cachedCustomTabs = JSON.parse(JSON.stringify(data));
-    return true;
-  } catch (error) {
-    console.error('Error writing custom tabs:', error);
-    return false;
-  }
 }
