@@ -136,6 +136,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Appearance → no outlines now also removes the borders of the header buttons and search (a more specific header rule kept them).
+
 - While a widget is dragged, the slot shows exactly where it will land, even after a quick move across other widgets, and the other widgets stay where the drop will leave them. A widget can also be dragged by its title again.
 - Fields, the chosen Docker host and the network map cards use the same recessed background as the Docker logs and stats instead of near-black.
 - Multi-platform Docker images build the app once on the machine's own platform instead of under arm64 emulation (the image publish goes from about 11 to about 5 minutes); the release check also builds and starts the arm64 image.

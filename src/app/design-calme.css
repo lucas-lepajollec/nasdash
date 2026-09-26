@@ -3368,3 +3368,10 @@ body[data-design="calme"] .ndc-map-node {
 }
 body[data-design="calme"] .nd-modal .nd-input,
 .ndc-dialog .nd-input { background: var(--nd-bg); }
+
+/* No outlines, header too: as specific as the header surface rule above
+   (its :not() chain otherwise wins and keeps the border). */
+body[data-outlines="off"][data-design="calme"] .nd-header :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-btn, .nd-search input),
+body[data-outlines="off"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
+  border-color: transparent !important;
+}
