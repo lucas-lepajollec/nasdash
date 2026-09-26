@@ -4,6 +4,7 @@ import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { RequestValidationError, readJsonObject, readStringArray } from '@/lib/requestValidation';
 import { isDemoMode } from '@/lib/demoMode';
 import { collectConfiguredPingTargets, resolveConfiguredPingTarget } from '@/lib/pingTargets';
+import { recordTaskRun } from '@/lib/tasks';
 import { pingUrl, type PingResult } from '@/lib/ping';
 
 export const dynamic = 'force-dynamic';
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
     }
 
     const allowedTargets = collectConfiguredPingTargets(config);
+    const started = Date.now();
 
     // Ping all hosts concurrently on the server
     const pingPromises = urls.map(url => pingOne(url, allowedTargets));
@@ -64,6 +66,8 @@ export async function POST(request: Request) {
       acc[key] = result;
       return acc;
     }, {} as Record<string, PingStatus>);
+    const online = results.filter(result => result.status === 'online').length;
+    recordTaskRun('service-pings', { ok: online === results.length, note: `${online}/${results.length}`, durationMs: Date.now() - started });
 
     return NextResponse.json(resultMap);
   } catch (err: unknown) {

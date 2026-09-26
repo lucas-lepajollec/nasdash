@@ -3,7 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 
 import { useI18n } from '@/i18n/I18nProvider';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
-import { CalmeHeading, CalmeRow, CalmeSegmented, CalmeSwitch } from '../../shared/CalmeControls';
+import { CalmeHeading, CalmeRow, CalmeSegmented } from '../../shared/CalmeControls';
 
 /** Shared options of the service categories, wherever they are placed. */
 export function ServicesWidgetTab() {
@@ -15,8 +15,16 @@ export function ServicesWidgetTab() {
       <WidgetPlacementNote type="service-category" />
       <section className="ndc-set-block">
         <CalmeHeading>{t('settings.calme.pings')}</CalmeHeading>
-        <CalmeRow label={t("Détails du ping des services")} info={t("Affiche le statut (OK/Erreur) et la latence (ms) sous le nom des services (Layout Standard).")}>
-          <CalmeSwitch label={t("Détails du ping des services")} checked={!!config?.settings?.showPingDetails} onChange={(val) => updateConfig({ showPingDetails: val })} />
+        <CalmeRow label={t('settings.services.underName')} info={t('settings.services.underNameHint')}>
+          <CalmeSegmented
+            label={t('settings.services.underName')}
+            value={config?.settings?.showPingDetails ? 'ping' : 'address'}
+            options={[
+              { value: 'address', label: t('settings.services.underAddress') },
+              { value: 'ping', label: t('settings.services.underPing') },
+            ]}
+            onChange={value => updateConfig({ showPingDetails: value === 'ping' })}
+          />
         </CalmeRow>
         <CalmeRow label={t('settings.calme.pingDots')} info={t("Choisissez sur quelles layouts afficher les icônes de statut réseau.")}>
           <CalmeSegmented

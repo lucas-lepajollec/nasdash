@@ -5,7 +5,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { TimeChart } from '@/components/charts/TimeChart';
 import { RingGauge, Sparkline, UsageBar } from '@/components/charts/Gauges';
 import { timeText } from './format';
-import { CHART_HEIGHT, colorOf, fillOf, isDanger, type ChartLook, type Display, type WidgetLook } from './look';
+import { CHART_HEIGHT, colorOf, fillOf, isDanger, thresholdOf, type ChartLook, type Display, type WidgetLook } from './look';
 import { metricText, type Reading } from './readings';
 
 /** Chart window of a reading. */
@@ -36,7 +36,7 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
   const color = colorOf(look, reading.metric, reading.value, reading.cores, base);
   const chartLook = chart ?? look.metrics[reading.metric].chart;
   const fill = fillOf(reading.metric, reading.value, reading.cores);
-  const threshold = look.metrics[reading.metric].danger;
+  const threshold = thresholdOf(look, reading.metric);
 
   if (inline && display === 'ring') {
     return (

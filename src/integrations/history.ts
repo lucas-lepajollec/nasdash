@@ -159,10 +159,11 @@ function load() {
 }
 
 /** Saves the 24 h series when the last save is old enough (or when forced). */
-export function saveHistory(force = false) {
-  if (!file) return;
+/** Returns true when the file was written this time. */
+export function saveHistory(force = false): boolean {
+  if (!file) return false;
   const now = Date.now();
-  if (!force && now - (store.__deviceHistorySavedAt ?? 0) < SAVE_EVERY_MS) return;
+  if (!force && now - (store.__deviceHistorySavedAt ?? 0) < SAVE_EVERY_MS) return false;
   store.__deviceHistorySavedAt = now;
   const snapshot: Record<string, Record<string, number[]>> = {};
   for (const [deviceId, history] of Object.entries(histories)) {
@@ -175,8 +176,10 @@ export function saveHistory(force = false) {
     const temporary = `${file}.tmp`;
     fs.writeFileSync(temporary, JSON.stringify(snapshot));
     fs.renameSync(temporary, file);
+    return true;
   } catch (error) {
     console.warn('Device history could not be saved:', error instanceof Error ? error.message : error);
+    return false;
   }
 }
 

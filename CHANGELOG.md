@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Settings → **Media** replaces Wallpaper and keeps it, and adds the logo and icon library: import, where each file is used (services, secondary links, header), copy its address, delete (with a warning when still in use), filter the unused ones.
+- Settings → **Tasks and backups**: the background tasks (machine readings, service pings, 24 h history save, backups) with their state, last run and rhythm. Machine readings (dashboard open / nobody watching) and pings can be slowed down or sped up. Backups of the whole data folder as a `.tar.gz` (same layout as `npm run data:backup`, restorable with `npm run data:restore`): back up now, automatic daily or weekly backups keeping the last 3 to 30 (manual ones are never removed), download and delete. Admins only; off in the public demo.
+- Settings → **Help**: the documentation by topic in the interface language, and where to report a problem.
+- Device and metric widgets: a **Danger alerts** switch turns every threshold off (they are kept for when it is turned back on).
+- Docker container list: in edit mode, choose how many containers show before it scrolls (default 7, 4 to 16, or all).
+- Service categories get a settings button in edit mode (pings shown on all layouts, list layouts only or none; address or ping and latency under the name).
+
 - In edit mode, a widget title is renamed by clicking it (Enter or leaving the field saves, Escape cancels, empty brings the default name back); the title is kept with the page.
 - The Docker hosts widget has a button, in edit mode, that opens the Docker section of the Integrations page to set up its hosts.
 
@@ -135,6 +142,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Settings → Pages creates a page, either blank or as a copy of an official page.
 
 ### Changed
+
+- Themes no longer tint the secondary text (some made it teal, purple, cyan or green): it is always the theme's text colour blended into its background; accent and hover states keep the theme.
+- The Docker hosts widget uses the Calme widget shell: its title follows "hide titles" and can be renamed, and hosts are neutral chips (only the chosen one takes the accent).
+- The secondary link of a service shows as a small opaque pill: its icon, what it is, where it goes (hidden in privacy mode) and an exit arrow.
+- The public demo no longer polls its fictional machines on the server.
 
 - Appearance → no outlines now also removes the borders of the header buttons and search (a more specific header rule kept them).
 

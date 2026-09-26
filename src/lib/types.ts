@@ -409,6 +409,14 @@ export interface DashboardConfig {
     /** Soft edges (px): surfaces fade into the page instead of ending on a hard line. */
     softEdges?: number;
     emojiTheme?: string;
+    /** Rhythms of the background tasks and the backup schedule (Settings → Tasks). */
+    tasks?: {
+      monitoringSeconds?: number;
+      idleMonitoringSeconds?: number;
+      pingSeconds?: number;
+      backupSchedule?: 'off' | 'daily' | 'weekly';
+      backupKeep?: number;
+    };
   };
 }
 

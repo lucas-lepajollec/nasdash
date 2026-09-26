@@ -12,7 +12,7 @@ import { formatBytes } from '@/components/widgets/deviceReadings';
 import { CalmeWidget } from '../calme';
 import { latestTime, useDevicesData } from './deviceData';
 import { timeText } from './format';
-import { readLook, type ChartSize, type Display, type LookDefaults, type MetricId } from './look';
+import { readLook, type ChartSize, type Display, type LookDefaults, type MetricId, thresholdOf } from './look';
 import { MetricView } from './MetricView';
 import { metricText, readingsOf, withFacets, type Reading } from './readings';
 import { metricName } from './DeviceWidgetDialog';
@@ -78,7 +78,7 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
 
   const end = Math.max(0, ...shown.map(device => latestTime(data[device.id]?.data)));
   const span = range === '1h' ? 3_600_000 : 86_400_000;
-  const threshold = look.metrics[metric].danger;
+  const threshold = thresholdOf(look, metric);
   const series: ChartSeries[] = entries.map((entry, index) => ({
     id: [entry.device.id, entry.reading.key].join('|'),
     label: labelled(entry).label,

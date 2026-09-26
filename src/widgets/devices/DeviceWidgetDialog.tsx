@@ -7,7 +7,7 @@ import { SlidersHorizontal } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useConfig } from '@/hooks/useConfig';
 import { CalmeDialog, CalmeCheckRow, CalmeField } from '@/components/shared/CalmeDialog';
-import { CalmeSegmented } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { ColorDialog, ColorSwatch, DialogPortal } from './ColorDialog';
 import {
@@ -232,6 +232,10 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
             </CalmeField>
           )}
 
+          <CalmeRow label={t('devices.look.dangerAlerts')} info={t('devices.look.dangerAlertsHint')}>
+            <CalmeSwitch label={t('devices.look.dangerAlerts')} checked={!look.dangerOff} onChange={on => setLook(current => ({ ...current, dangerOff: !on }))} />
+          </CalmeRow>
+
           <CalmeField label={single ? t('devices.look.dangerThreshold') : t('devices.look.measures')} info={single ? t('devices.look.dangerHint') : t('devices.look.measuresHint')}>
             <div className="ndc-dlg-metrics">
               {options.defaults.offered.map(id => {
@@ -255,7 +259,7 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
                         </div>
                       ) : <span />}
                       {!options.deviceColors ? <ColorSwatch color={metric.color} label={[t('devices.look.color'), metricName(id, t)].join(' · ')} onClick={() => setPicking({ kind: 'metric', id })} /> : <span />}
-                      {info.dangerRange ? (
+                      {info.dangerRange && !look.dangerOff ? (
                         <label className="ndc-dlg-danger" title={t('devices.look.dangerHint')}>
                           <span className="ndc-dlg-danger-label">{t('devices.look.dangerAt')}</span>
                           <input
@@ -286,12 +290,14 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
             </div>
           </CalmeField>
 
-          <CalmeField label={t('devices.look.dangerColor')} info={t('devices.look.dangerColorHint')}>
-            <div className="ndc-dlg-inline">
-              <ColorSwatch color={look.dangerColor} label={t('devices.look.dangerColor')} onClick={() => setPicking({ kind: 'danger' })} />
-              <span className="ndc-dlg-note">{look.customDangerColor ?? t('devices.look.defaultColor')}</span>
-            </div>
-          </CalmeField>
+          {!look.dangerOff && (
+            <CalmeField label={t('devices.look.dangerColor')} info={t('devices.look.dangerColorHint')}>
+              <div className="ndc-dlg-inline">
+                <ColorSwatch color={look.dangerColor} label={t('devices.look.dangerColor')} onClick={() => setPicking({ kind: 'danger' })} />
+                <span className="ndc-dlg-note">{look.customDangerColor ?? t('devices.look.defaultColor')}</span>
+              </div>
+            </CalmeField>
+          )}
 
           {options.range && usesCharts && (
             <CalmeField label={t('devices.calme.defaultRange')}>

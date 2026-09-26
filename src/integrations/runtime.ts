@@ -9,11 +9,14 @@ import { getDeviceIntegration } from './registry';
 import { getDataPath } from '@/lib/dataDirectory';
 import { pruneHistory, recordSamples, samplesOf, saveHistory, setHistoryFile } from './history';
 import { CollectError, type CollectContext, type DeviceVitals, type Metric } from './types';
+import { recordTaskRun, taskSettings } from '@/lib/tasks';
+import { createBackup, isBackupDue, pruneAutomaticBackups } from '@/lib/backups';
 
 /**
  * Background polling of device integrations: every 10 s while at least one
  * browser follows the system stream, every minute otherwise (so the 24 h
- * history stays complete). Results are cached for the device routes and
+ * history stays complete); both rhythms are set in Settings → Tasks. The
+ * same loop runs the scheduled backups. Results are cached for the device routes and
  * added to the history (`history.ts`). State lives on `globalThis` to
  * survive hot reloads.
  */
@@ -38,6 +41,7 @@ interface RuntimeGlobal {
   activeClients?: number;
   __monitoringInterval?: ReturnType<typeof setInterval> | null;
   __lastPollAt?: number;
+  __backupRunning?: boolean;
 }
 
 const runtime = globalThis as typeof globalThis & RuntimeGlobal;
@@ -50,9 +54,8 @@ export const devicesStatusCache: Record<string, DeviceStatus> = runtime.__device
 const memory = runtime.__integrationMemory;
 const errorLog = runtime.__errorLogCache;
 
-const POLL_INTERVAL_MS = 10_000;
-/** Nobody watching: a point a minute is enough for the history. */
-const IDLE_INTERVAL_MS = 60_000;
+/** The loop wakes up this often and runs what is due. */
+const TICK_MS = 5_000;
 
 setHistoryFile(isDemoMode() || process.env.VITEST ? null : getDataPath('metrics-history.json'));
 
@@ -112,41 +115,74 @@ export async function pollDevice(device: Device, config: Pick<DashboardConfig, '
 }
 
 async function pollAll() {
-  runtime.__lastPollAt = Date.now();
+  const started = Date.now();
+  runtime.__lastPollAt = started;
   try {
     const config = readConfig();
     const devices = config.devices ?? [];
+    let offline = 0;
     await Promise.all(devices.map(async device => {
       const status = await pollDevice(device, config);
       devicesStatusCache[device.id] = status;
       if (status.online) recordSamples(device.id, samplesOf(status.metrics, status.vitals), status.updatedAt);
+      else offline++;
     }));
     pruneHistory(devices.map(device => device.id));
-    saveHistory();
+    recordTaskRun('device-monitoring', { ok: offline === 0, note: `${devices.length - offline}/${devices.length}`, durationMs: Date.now() - started });
+    if (saveHistory()) recordTaskRun('history-save', { ok: true });
   } catch (error) {
+    recordTaskRun('device-monitoring', { ok: false, note: error instanceof Error ? error.message : String(error), durationMs: Date.now() - started });
     console.error('Background Polling Loop Error:', error);
   }
 }
 
-/** Ticks every 10 s; polls on each tick while watched, once a minute otherwise. */
+/** Runs the scheduled backup when due, then drops the oldest automatic ones. */
+function backupIfDue(config: DashboardConfig) {
+  const { backupSchedule, backupKeep } = taskSettings(config);
+  if (runtime.__backupRunning || !isBackupDue(backupSchedule)) return;
+  runtime.__backupRunning = true;
+  const started = Date.now();
+  try {
+    const backup = createBackup({ automatic: true, appVersion: process.env.npm_package_version });
+    pruneAutomaticBackups(backupKeep);
+    recordTaskRun('backups', { ok: true, note: backup.name, durationMs: Date.now() - started });
+  } catch (error) {
+    recordTaskRun('backups', { ok: false, note: error instanceof Error ? error.message : String(error), durationMs: Date.now() - started });
+    console.error('Scheduled backup failed:', error);
+  } finally {
+    runtime.__backupRunning = false;
+  }
+}
+
+/** Wakes up every 5 s: polls at the watched or idle rhythm, backs up when due. */
 function tick() {
-  const interval = (runtime.activeClients ?? 0) > 0 ? POLL_INTERVAL_MS : IDLE_INTERVAL_MS;
+  let config: DashboardConfig;
+  try {
+    config = readConfig();
+  } catch {
+    return;
+  }
+  const { monitoringSeconds, idleMonitoringSeconds } = taskSettings(config);
+  const interval = ((runtime.activeClients ?? 0) > 0 ? monitoringSeconds : idleMonitoringSeconds) * 1000;
   if (Date.now() - (runtime.__lastPollAt ?? 0) >= interval - 500) void pollAll();
+  backupIfDue(config);
 }
 
 /** Starts the polling loop once (server start or first browser). */
 export function startBackgroundMonitoring() {
   if (isDemoMode() || runtime.__monitoringInterval) return;
-  console.log('🚀 Device monitoring started (every 10 s while watched, every minute otherwise).');
+  console.log('🚀 Background tasks started (device monitoring, history, scheduled backups; rhythms in Settings → Tasks).');
   void pollAll();
-  runtime.__monitoringInterval = setInterval(tick, POLL_INTERVAL_MS);
+  runtime.__monitoringInterval = setInterval(tick, TICK_MS);
 }
 
 export function incrementActiveClients() {
   runtime.activeClients = (runtime.activeClients ?? 0) + 1;
+  // The public demo serves fictional readings: nothing to poll.
+  if (isDemoMode()) return;
   startBackgroundMonitoring();
   // Back to a fresh value right away when someone opens the dashboard.
-  if (runtime.activeClients === 1 && Date.now() - (runtime.__lastPollAt ?? 0) > POLL_INTERVAL_MS) void pollAll();
+  if (runtime.activeClients === 1 && Date.now() - (runtime.__lastPollAt ?? 0) > taskSettings(readConfig()).monitoringSeconds * 1000) void pollAll();
 }
 
 export function decrementActiveClients() {

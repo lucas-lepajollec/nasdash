@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { colorOf, fillOf, fitDisplay, isDanger, lookSettings, readLook, safeColor, type LookDefaults } from './look';
+import { colorOf, fillOf, fitDisplay, isDanger, lookSettings, readLook, safeColor, thresholdOf, type LookDefaults } from './look';
 
 const defaults: LookDefaults = { offered: ['cpu', 'memory', 'temperature', 'network', 'load'], shown: ['cpu', 'temperature'], display: 'bar', perMetricDisplay: true, displays: { temperature: 'value' } };
 
@@ -42,6 +42,17 @@ describe('device widget look', () => {
     expect(readLook({ metrics: { cpu: { danger: null } } }, defaults).metrics.cpu.danger).toBeNull();
     expect(fillOf('load', 4, 8)).toBe(50);
     expect(fillOf('temperature', 130)).toBe(100);
+  });
+
+  it('turns danger alerts off without losing the thresholds', () => {
+    const look = readLook({ metrics: { cpu: { shown: true, danger: 50 } }, dangerOff: true }, defaults);
+    expect(isDanger(look, 'cpu', 99)).toBe(false);
+    expect(thresholdOf(look, 'cpu')).toBeNull();
+    const saved = lookSettings(look);
+    expect(saved.dangerOff).toBe(true);
+    const back = readLook({ ...saved, dangerOff: null }, defaults);
+    expect(back.metrics.cpu.danger).toBe(50);
+    expect(isDanger(back, 'cpu', 99)).toBe(true);
   });
 
   it('keeps each measure its own display while all share one, and gives it back', () => {

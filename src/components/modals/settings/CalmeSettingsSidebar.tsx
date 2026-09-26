@@ -39,7 +39,7 @@ export function useCalmeSettingsSections(): CalmeSettingsSection[] {
       }));
     return [
       { id: 'apparence', group: personal, label: t('settings.calme.appearance'), description: t('settings.calme.descAppearance') },
-      { id: 'wallpaper', group: personal, label: t('settings.calme.wallpaperNav'), description: t('settings.calme.descWallpaper') },
+      { id: 'media', group: personal, label: t('settings.calme.media'), description: t('settings.calme.descMedia') },
       { id: 'header', group: personal, label: t('settings.calme.header'), description: t('settings.calme.descHeader') },
       { id: 'mobile', group: personal, label: t('settings.calme.mobile'), description: t('settings.calme.descMobile') },
       { id: 'tabs-general', group: personal, label: t('settings.calme.navigation'), description: t('settings.calme.descNavigation') },
@@ -48,7 +48,9 @@ export function useCalmeSettingsSections(): CalmeSettingsSection[] {
       ...widgetSections,
       { id: 'integrations', group: system, label: t('integrations.title'), description: t('integrations.navDescription') },
       { id: 'security', group: system, label: t('settings.calme.security'), description: t('settings.calme.descSecurity') },
+      { id: 'tasks', group: system, label: t('settings.calme.tasks'), description: t('settings.calme.descTasks') },
       { id: 'developer', group: system, label: t('settings.calme.developer'), description: t('settings.calme.descDeveloper') },
+      { id: 'help', group: system, label: t('settings.calme.help'), description: t('settings.calme.descHelp') },
     ];
   }, [t]);
 }
