@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
-import { Box, Container, Database, Layers, Loader2, Play, Plus, RefreshCw, RotateCcw, Search, Square, Trash2, X } from 'lucide-react';
+import { useOpenSettings } from '@/components/integrations/useOpenSettings';
+import { Box, Container, Database, Layers, Loader2, Play, Plus, RefreshCw, RotateCcw, Search, SlidersHorizontal, Square, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Emoji } from '../../shared/Emoji';
 import { ContainerDetailView, DockerErrorNotice, ImagesTab, VolumesTab } from './DockerViews';
 import { useDockerWorkspace } from './DockerWorkspace';
 import { WidgetHeaderActions } from '../WidgetHeaderActions';
-import { CalmeWidget } from '@/widgets/calme';
+import { CalmeWidget, WidgetTitleText } from '@/widgets/calme';
 
 /**
  * The historical Docker page, split into linked widgets. Their markup and
@@ -31,14 +32,19 @@ function NoHostCallToAction() {
 export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
   const { t } = useI18n();
   const { hosts, activeHostId, setActiveHostId, setSelectedContainerId, openHostForm, requestHostRemoval } = useDockerWorkspace();
+  const { openIntegrations } = useOpenSettings();
   if (hosts.length === 0) return <NoHostCallToAction />;
   return (
     <div className="nd-sidebar-card">
       <div className="nd-section-title" style={{ marginBottom: 8 }}>
         <Box size={12} style={{ color: 'var(--nd-accent)' }} />
-        {t('Hôtes Docker')}
+        <WidgetTitleText title={t('Hôtes Docker')} editMode={editMode} />
         {editMode && (
           <WidgetHeaderActions>
+            {/* Hosts are edited on the Integrations page, Docker section. */}
+            <button type="button" className="nd-action-icon" onClick={() => openIntegrations('docker')} title={t('docker.hosts.manage')} aria-label={t('docker.hosts.manage')}>
+              <SlidersHorizontal size={13} />
+            </button>
             <button className="nd-action-icon success" onClick={openHostForm} style={{ marginLeft: 'auto' }} title={t('Ajouter un hôte Docker')} aria-label={t('Ajouter un hôte Docker')}>
               <Plus size={13} />
             </button>

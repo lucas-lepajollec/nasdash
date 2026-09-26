@@ -87,6 +87,10 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
   const statusIconSize = activeLayout === 'compact' ? 16 : 20;
   const statusColor = delayedStatus?.status === 'online' ? 'var(--nd-green)' : (delayedStatus?.status === 'offline' ? 'var(--nd-red)' : 'var(--nd-text-dimmed)');
 
+  // Opaque: with background blur the card colour is translucent, and a
+  // translucent mark would show the blurred wallpaper through it.
+  const markColor = 'rgb(var(--nd-card-bg-rgb, 22, 27, 34))';
+
   const renderStatusIndicator = () => {
     if (!service.localUrl || editMode) return null;
     if (pingIndicatorMode === 'none') return null;
@@ -123,9 +127,9 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
         transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
       }}>
         {delayedStatus?.status === 'online' ? (
-          <CheckCircle2 size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%', opacity: 0.45 }} />
+          <CheckCircle2 size={statusIconSize} color={markColor} fill={statusColor} style={{ borderRadius: '50%', opacity: 0.45 }} />
         ) : delayedStatus?.status === 'offline' ? (
-          <XCircle size={statusIconSize} color="var(--nd-card-bg)" fill={statusColor} style={{ borderRadius: '50%', opacity: 0.6 }} />
+          <XCircle size={statusIconSize} color={markColor} fill={statusColor} style={{ borderRadius: '50%', opacity: 0.6 }} />
         ) : (
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--nd-text-dimmed)', opacity: 0.3 }} />
         )}

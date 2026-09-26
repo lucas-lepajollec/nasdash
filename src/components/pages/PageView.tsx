@@ -19,6 +19,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { Plus, Settings2, X } from 'lucide-react';
+import { WidgetTitleContext } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widgetsInReadingOrder, widthFormats } from '@/lib/pages/operations';
@@ -582,6 +583,11 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
   const [actionsWidth, setActionsWidth] = useState(0);
   const entry = getWidgetCatalogEntry(widget.type);
   const name = widgetName(widget);
+  const customTitle = typeof widget.settings.customTitle === 'string' ? widget.settings.customTitle : undefined;
+  const titleContext = useMemo(() => ({
+    custom: customTitle,
+    rename: (title: string) => updateWidgetSettings(page.id, widget.id, { customTitle: title }),
+  }), [customTitle, page.id, updateWidgetSettings, widget.id]);
 
   useEffect(() => {
     const node = ref.current;
@@ -620,6 +626,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
         </div>
       )}
       <WidgetActionsSlotContext.Provider value={editMode ? slot : null}>
+        <WidgetTitleContext.Provider value={titleContext}>
         <PageWidgetContent
           pageId={page.id}
           instance={widget}
@@ -632,6 +639,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
           onUpdateSettings={settings => updateWidgetSettings(page.id, widget.id, settings)}
           onRemoveView={() => edit(current => removeWidget(current, widget.id))}
         />
+        </WidgetTitleContext.Provider>
       </WidgetActionsSlotContext.Provider>
       {editMode && onResizeStart && canResizeWidth && (
         <>
