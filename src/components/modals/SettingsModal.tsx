@@ -331,11 +331,16 @@ const SETTINGS_TAB_ALIASES: Record<string, string> = {
   'tabs-widgets': 'pages',
   'custom-tabs': 'pages',
   'custom-tab-builder': 'pages',
+  // The wallpaper section became part of Media.
+  wallpaper: 'media',
 };
 const resolveSettingsTab = (tab: string) => SETTINGS_TAB_ALIASES[tab] ?? tab;
 
 import ThemeGalleryView from './ThemeGalleryView';
 import { IntegrationsTab } from './settings/tabs/IntegrationsTab';
+import { MediaTab } from './settings/tabs/MediaTab';
+import { TasksTab } from './settings/tabs/TasksTab';
+import { HelpTab } from './settings/tabs/HelpTab';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export default function SettingsModal({ onClose, restoreFocus, showSensitive = false }: SettingsModalProps) {
@@ -484,9 +489,11 @@ export default function SettingsModal({ onClose, restoreFocus, showSensitive = f
                   }} 
                 />
               )}
-              {currentTab === 'wallpaper' && (
-                <AppearanceTab part="wallpaper" onOpenThemeGallery={(tab) => { setGalleryInitialTab(tab); setIsThemeGalleryOpen(true); }} />
+              {currentTab === 'media' && (
+                <MediaTab onOpenThemeGallery={(tab) => { setGalleryInitialTab(tab); setIsThemeGalleryOpen(true); }} />
               )}
+              {currentTab === 'tasks' && <TasksTab />}
+              {currentTab === 'help' && <HelpTab />}
               {currentTab === 'header' && <HeaderTab />}
               {currentTab === 'mobile' && <MobileTab />}
 

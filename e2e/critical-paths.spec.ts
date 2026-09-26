@@ -198,6 +198,40 @@ test.describe.serial('critical self-hosted paths', () => {
     await admin.dispose();
   });
 
+  test('admins back up the data folder; others cannot reach the backups', async () => {
+    const admin = await isolatedRequest(29);
+    await login(admin, 'admin', ADMIN_PASSWORD);
+
+    const created = await admin.post('/api/backups');
+    expect(created.status()).toBe(201);
+    const backup = await created.json();
+    expect(backup.name).toMatch(/^nasdash-backup-.*\.tar\.gz$/);
+
+    const listed = await (await admin.get('/api/backups')).json();
+    expect(listed.backups.map((item: { name: string }) => item.name)).toContain(backup.name);
+
+    const download = await admin.get(`/api/backups/${backup.name}`);
+    expect(download.status()).toBe(200);
+    expect(download.headers()['content-disposition']).toContain(backup.name);
+    const body = await download.body();
+    // gzip magic number, then a tar archive inside.
+    expect([body[0], body[1]]).toEqual([0x1f, 0x8b]);
+
+    const tasks = await (await admin.get('/api/tasks')).json();
+    expect(tasks.tasks.find((task: { id: string }) => task.id === 'backups').last.ok).toBe(true);
+
+    const viewer = await isolatedRequest(30);
+    await login(viewer, 'viewer', VIEWER_PASSWORD);
+    expect((await viewer.get('/api/backups')).status()).toBe(401);
+    expect((await viewer.get(`/api/backups/${backup.name}`)).status()).toBe(401);
+    expect((await viewer.get('/api/tasks')).status()).toBe(401);
+    await viewer.dispose();
+
+    expect((await admin.get('/api/backups/..%2Fconfig.json')).status()).toBe(404);
+    expect((await admin.delete(`/api/backups/${backup.name}`)).status()).toBe(200);
+    await admin.dispose();
+  });
+
   test('Docker tab actions remain independent from widget button visibility', async () => {
     const admin = await isolatedRequest(27);
     await login(admin, 'admin', ADMIN_PASSWORD);

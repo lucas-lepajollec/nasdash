@@ -665,8 +665,9 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
     return () => observer.disconnect();
   }, [editMode]);
 
-  // Categories are configured from their own edit button (in the group).
-  const configure = widget.type !== 'service-category' && entry?.settingsTab
+  // A category itself is edited from its own button (in the group); this one
+  // opens the options shared by every category (pings, address or latency).
+  const configure = entry?.settingsTab
     ? () => setSettingsModal({ open: true, targetTab: entry.settingsTab })
     : undefined;
   return (

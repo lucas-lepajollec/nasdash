@@ -104,6 +104,8 @@ export interface WidgetLook {
   chart: ChartLook;
   dangerColor: string;
   customDangerColor: string | null;
+  /** Danger alerts turned off for this widget (the thresholds are kept). */
+  dangerOff: boolean;
   /** One-measure widgets: a colour per machine (hex), by device id. */
   deviceColors: Record<string, string>;
   facets: Facet[];
@@ -179,7 +181,7 @@ export function readLook(settings: WidgetSettings, defaults: LookDefaults): Widg
   // Settings written before the multiple choice kept one format.
   const legacy = settings.valueFormat === 'used' || settings.valueFormat === 'free' ? [settings.valueFormat, 'total'] as ValuePart[] : [];
   const valueParts = storedParts.length ? storedParts : legacy.length ? legacy : [...(defaults.valueParts ?? DEFAULT_VALUE_PARTS)];
-  return { metrics, perMetricDisplay, display, chart, dangerColor: customDangerColor ?? DEFAULT_DANGER_COLOR, customDangerColor, deviceColors, facets, valueParts };
+  return { metrics, perMetricDisplay, display, chart, dangerColor: customDangerColor ?? DEFAULT_DANGER_COLOR, customDangerColor, dangerOff: settings.dangerOff === true, deviceColors, facets, valueParts };
 }
 
 /** The settings that store a look. Each measure keeps its own display and chart options. */
@@ -189,14 +191,19 @@ export function lookSettings(look: WidgetLook): WidgetSettings {
     metrics[id] = { shown: metric.shown, display: metric.ownDisplay, color: metric.customColor, danger: metric.danger, chartStyle: metric.ownChart?.style ?? null, chartSize: metric.ownChart?.size ?? null };
   }
   return {
-    metrics, display: look.display, perMetricDisplay: look.perMetricDisplay, dangerColor: look.customDangerColor,
+    metrics, display: look.display, perMetricDisplay: look.perMetricDisplay, dangerColor: look.customDangerColor, dangerOff: look.dangerOff ? true : null,
     chartStyle: look.chart.style, chartSize: look.chart.size, deviceColors: look.deviceColors, facets: look.facets, valueParts: look.valueParts, valueFormat: null,
   };
 }
 
+/** The danger threshold in effect: none while the widget's alerts are off. */
+export function thresholdOf(look: WidgetLook, metric: MetricId): number | null {
+  return look.dangerOff ? null : look.metrics[metric].danger;
+}
+
 /** Is a value past its danger threshold? `load` is compared per core. */
 export function isDanger(look: WidgetLook, metric: MetricId, value: number | undefined, cores?: number): boolean {
-  const threshold = look.metrics[metric].danger;
+  const threshold = thresholdOf(look, metric);
   if (threshold === null || value === undefined || !Number.isFinite(value)) return false;
   if (metric === 'load') return value / Math.max(1, cores ?? 1) >= threshold;
   if (metric === 'network') return value / (1024 * 1024) >= threshold;

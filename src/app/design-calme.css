@@ -3330,10 +3330,12 @@ body[data-design="calme"] .nd-header :is(.nd-btn, .nd-search input) {
    lists cap themselves: the Docker container list shows about seven rows and
    scrolls inside. Guarded by e2e/critical-paths.spec.ts. */
 .nd-docker-container-list-scroll {
-  max-height: 560px;
+  /* One row is about 80 px (73.6 px + 6 px gap): 7 rows = 560 px. */
+  max-height: calc(var(--nd-list-rows, 7) * 80px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+.nd-docker-container-list-scroll.is-unbounded { max-height: none; }
 
 /* Edit mode: a widget title is renamed in place. */
 .ndc-title-edit {
@@ -3375,3 +3377,95 @@ body[data-outlines="off"][data-design="calme"] .nd-header :is(.nd-btn:not(.nd-bt
 body[data-outlines="off"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
   border-color: transparent !important;
 }
+
+/* Docker hosts widget: host chips. */
+.ndc-hosts { display: flex; flex-wrap: wrap; gap: 6px; }
+.ndc-hosts .ndc-chip { font-size: 0.74rem; }
+.ndc-chip-remove { display: inline-flex; margin-left: 2px; opacity: 0.5; cursor: pointer; }
+.ndc-chip-remove:hover { opacity: 1; color: var(--nd-red); }
+
+/* Themes tint the accent, surfaces and hover states, not the secondary text:
+   it is always the theme's own text colour blended into its background
+   (some themes set a coloured "muted" tone: teal, purple, cyan, green). */
+body[data-design="calme"][class*="theme-"] {
+  --nd-text-muted: color-mix(in srgb, var(--nd-text) 62%, var(--nd-bg));
+  --nd-text-dimmed: color-mix(in srgb, var(--nd-text) 40%, var(--nd-bg));
+}
+
+/* Secondary link of a service: a small opaque pill above it (legible over
+   blur), the link's icon, what it is and where it goes, and an exit arrow. */
+body[data-design="calme"] .nd-service-tooltip {
+  display: flex;
+  visibility: hidden;
+  opacity: 0;
+  gap: 8px;
+  padding: 5px 9px 5px 6px;
+  border-radius: var(--nd-card-radius);
+  border: 1px solid var(--nd-card-border);
+  background: rgb(var(--nd-card-bg-rgb, 22, 27, 34));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: var(--nd-text);
+  transform: translateX(-50%) translateY(4px);
+  transition: opacity 0.14s ease 0.12s, transform 0.14s ease 0.12s, visibility 0s linear 0.26s, border-color 0.14s ease;
+}
+body[data-design="calme"] .nd-service:hover .nd-service-tooltip,
+body[data-design="calme"] .nd-service:focus-within .nd-service-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  transition: opacity 0.14s ease 0.12s, transform 0.14s ease 0.12s, visibility 0s, border-color 0.14s ease;
+}
+body[data-design="calme"] .nd-service-tooltip::after {
+  background: rgb(var(--nd-card-bg-rgb, 22, 27, 34));
+}
+body[data-design="calme"] .nd-service-tooltip:hover { border-color: color-mix(in srgb, var(--nd-accent) 55%, var(--nd-card-border)); }
+body[data-design="calme"] .nd-service-tooltip:hover .nd-service-tooltip-arrow { color: var(--nd-accent); }
+body[data-design="calme"] .nd-service-tooltip-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: calc(var(--nd-card-radius) * 0.7);
+  background: var(--nd-icon-bg);
+  color: var(--nd-text-muted);
+}
+body[data-design="calme"] .nd-service-tooltip-icon img { width: 16px; height: 16px; }
+body[data-design="calme"] .nd-service-tooltip-text { display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
+body[data-design="calme"] .nd-service-tooltip-label { font-size: 0.68rem; color: var(--nd-text); }
+body[data-design="calme"] .nd-service-tooltip-host { font-size: 0.6rem; color: var(--nd-text-dimmed); max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimmed); flex-shrink: 0; transition: color 0.14s ease; }
+
+/* Settings → Media: the logo library. */
+.ndc-media-bar { margin-bottom: 10px; }
+.ndc-media-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 8px; }
+.ndc-media-item { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 8px 8px 8px; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
+.ndc-media-thumb { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); overflow: hidden; }
+.ndc-media-thumb img { max-width: 26px; max-height: 26px; object-fit: contain; }
+.ndc-media-text { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 2px; }
+.ndc-media-name { font-size: 0.74rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-media-use { font-size: 0.64rem; color: var(--nd-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-media-use.is-unused { color: var(--nd-text-dimmed); font-style: italic; }
+.ndc-media-actions { display: inline-flex; gap: 2px; flex-shrink: 0; }
+.ndc-icon-button.ndc-danger:hover { color: var(--nd-red); }
+
+/* Settings → Tasks. */
+.ndc-task-label { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ndc-task-rhythms { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.ndc-task-rhythm { display: inline-flex; align-items: center; gap: 8px; font-size: 0.72rem; color: var(--nd-text-muted); }
+.ndc-task-rhythm > :last-child { width: 130px; }
+.ndc-backups { margin-top: 8px; }
+.ndc-backup { display: flex; align-items: center; gap: 6px; }
+.ndc-backup-text { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; font-size: 0.76rem; color: var(--nd-text); }
+.ndc-set-note-muted { margin: 12px 0 0; font-size: 0.7rem; line-height: 1.5; color: var(--nd-text-muted); }
+
+/* Settings → Help. */
+.ndc-help-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 8px; }
+.ndc-help-card { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); color: var(--nd-text); text-decoration: none; transition: border-color 0.14s ease, background 0.14s ease; }
+.ndc-help-card:hover { border-color: color-mix(in srgb, var(--nd-accent) 50%, var(--nd-card-border)); background: color-mix(in srgb, var(--nd-text) 3%, transparent); }
+.ndc-help-card:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndc-help-icon { width: 30px; height: 30px; flex-shrink: 0; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); color: var(--nd-text-muted); }
+.ndc-help-card:hover .ndc-help-icon, .ndc-help-card:hover .ndc-help-arrow { color: var(--nd-accent); }
+.ndc-help-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.ndc-help-title { font-size: 0.78rem; }
+.ndc-help-desc { font-size: 0.66rem; color: var(--nd-text-muted); line-height: 1.4; }
+.ndc-help-arrow { color: var(--nd-text-dimmed); flex-shrink: 0; }
+.ndc-media-logos { margin-top: 26px; }
+.ndc-task-rhythm > span:first-child { white-space: nowrap; }

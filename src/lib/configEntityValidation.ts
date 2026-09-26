@@ -12,6 +12,7 @@ import {
 import { DEVICE_INTEGRATION_IDS, getDeviceIntegration, getServiceIntegration } from '@/integrations/registry';
 import { connectionFields, isMonitoringType } from '@/integrations/sources';
 import { validateDockerHostUrl, validateDockerSocketPath } from './dockerClient';
+import { BACKUP_SCHEDULES, TASK_LIMITS } from './tasks';
 
 const CATEGORY_LAYOUTS = [
   'standard',
@@ -338,6 +339,21 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   readNumber(body, 'cardOpacity', { min: 0, max: 1 });
   readNumber(body, 'surfaceBlur', { min: 0, max: 40 });
   readNumber(body, 'softEdges', { min: 0, max: 32 });
+  if (body.tasks !== undefined) {
+    const tasks = readObject(body, 'tasks');
+    if (tasks) {
+      for (const key of Object.keys(tasks)) {
+        if (!['monitoringSeconds', 'idleMonitoringSeconds', 'pingSeconds', 'backupSchedule', 'backupKeep'].includes(key)) {
+          throw new RequestValidationError(`Réglage de tâche inconnu : « ${key} ».`);
+        }
+      }
+      readNumber(tasks, 'monitoringSeconds', { min: TASK_LIMITS.monitoringSeconds.min, max: TASK_LIMITS.monitoringSeconds.max, integer: true });
+      readNumber(tasks, 'idleMonitoringSeconds', { min: TASK_LIMITS.idleMonitoringSeconds.min, max: TASK_LIMITS.idleMonitoringSeconds.max, integer: true });
+      readNumber(tasks, 'pingSeconds', { min: TASK_LIMITS.pingSeconds.min, max: TASK_LIMITS.pingSeconds.max, integer: true });
+      readNumber(tasks, 'backupKeep', { min: TASK_LIMITS.backupKeep.min, max: TASK_LIMITS.backupKeep.max, integer: true });
+      readEnum(tasks, 'backupSchedule', BACKUP_SCHEDULES);
+    }
+  }
   readBoolean(body, 'hideOutlines');
   if (body.favoriteColors !== undefined) {
     const colors = readArray(body, 'favoriteColors', 24);

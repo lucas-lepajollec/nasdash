@@ -6,6 +6,7 @@ import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCa
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
+import { taskSettings } from '@/lib/tasks';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export interface DashboardContextType {
@@ -294,8 +295,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     return Array.from(urls).join('\n');
   }, [config?.categories]);
 
-  // Grouped ping of every service every 30 seconds (saves browser sockets),
-  // paused while the tab is in the background.
+  // Grouped ping of every service at the rhythm of Settings → Tasks (30 s by
+  // default; saves browser sockets), paused while the tab is in the background.
+  const pingEveryMs = taskSettings(config).pingSeconds * 1000;
   useEffect(() => {
     if (!pingKey) return;
     // Private mode without a session: nothing to ping.
@@ -314,7 +316,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('Failed to run batch ping:', err);
       } finally {
-        if (!cancelled) nextRun = setTimeout(runBatchPing, 30000);
+        if (!cancelled) nextRun = setTimeout(runBatchPing, pingEveryMs);
       }
     };
     const onVisible = () => {
@@ -328,7 +330,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       document.removeEventListener('visibilitychange', onVisible);
       if (nextRun) clearTimeout(nextRun);
     };
-  }, [pingKey, securityMode, user]);
+  }, [pingKey, securityMode, user, pingEveryMs]);
 
   // API operations
   const assertApiOk = async (response: Response, fallback: string) => {

@@ -3,13 +3,15 @@
 import React, { useEffect, useState } from 'react';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { useOpenSettings } from '@/components/integrations/useOpenSettings';
-import { Box, Container, Database, Layers, Loader2, Play, Plus, RefreshCw, RotateCcw, Search, SlidersHorizontal, Square, Trash2, X } from 'lucide-react';
+import type { WidgetSettings } from '@/lib/pages/types';
+import { ContainerListOptions, visibleRowsOf } from './ContainerListOptions';
+import { Container, Database, Layers, Loader2, Play, Plus, RefreshCw, RotateCcw, Search, SlidersHorizontal, Square, Trash2, X } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Emoji } from '../../shared/Emoji';
 import { ContainerDetailView, DockerErrorNotice, ImagesTab, VolumesTab } from './DockerViews';
 import { useDockerWorkspace } from './DockerWorkspace';
 import { WidgetHeaderActions } from '../WidgetHeaderActions';
-import { CalmeWidget, WidgetTitleText } from '@/widgets/calme';
+import { CalmeWidget } from '@/widgets/calme';
 
 /**
  * The historical Docker page, split into linked widgets. Their markup and
@@ -34,36 +36,36 @@ export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
   const { hosts, activeHostId, setActiveHostId, setSelectedContainerId, openHostForm, requestHostRemoval } = useDockerWorkspace();
   const { openIntegrations } = useOpenSettings();
   if (hosts.length === 0) return <NoHostCallToAction />;
+  // Calme shell: the title follows "hide titles" and can be renamed; hosts are
+  // neutral chips, only the chosen one takes the accent.
   return (
-    <div className="nd-sidebar-card">
-      <div className="nd-section-title" style={{ marginBottom: 8 }}>
-        <Box size={12} style={{ color: 'var(--nd-accent)' }} />
-        <WidgetTitleText title={t('Hôtes Docker')} editMode={editMode} />
-        {editMode && (
-          <WidgetHeaderActions>
-            {/* Hosts are edited on the Integrations page, Docker section. */}
-            <button type="button" className="nd-action-icon" onClick={() => openIntegrations('docker')} title={t('docker.hosts.manage')} aria-label={t('docker.hosts.manage')}>
-              <SlidersHorizontal size={13} />
-            </button>
-            <button className="nd-action-icon success" onClick={openHostForm} style={{ marginLeft: 'auto' }} title={t('Ajouter un hôte Docker')} aria-label={t('Ajouter un hôte Docker')}>
-              <Plus size={13} />
-            </button>
-          </WidgetHeaderActions>
-        )}
-      </div>
-      <div className="nd-host-selector">
+    <CalmeWidget title={t('Hôtes Docker')} editMode={editMode}>
+      {editMode && (
+        <WidgetHeaderActions>
+          {/* Hosts are edited on the Integrations page, Docker section. */}
+          <button type="button" className="nd-action-icon" onClick={() => openIntegrations('docker')} title={t('docker.hosts.manage')} aria-label={t('docker.hosts.manage')}>
+            <SlidersHorizontal size={13} />
+          </button>
+          <button type="button" className="nd-action-icon success" onClick={openHostForm} title={t('Ajouter un hôte Docker')} aria-label={t('Ajouter un hôte Docker')}>
+            <Plus size={13} />
+          </button>
+        </WidgetHeaderActions>
+      )}
+      <div className="ndc-hosts">
         {hosts.map(host => (
           <button
             key={host.id}
-            className={`nd-host-btn ${activeHostId === host.id ? 'nd-host-btn--active' : ''}`}
+            type="button"
+            className="ndc-chip"
+            aria-pressed={activeHostId === host.id}
             onClick={() => { setActiveHostId(host.id); setSelectedContainerId(null); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji={host.icon} /></span> {host.name}
+            <Emoji emoji={host.icon} /> {host.name}
             {editMode && (
               <span
                 role="button"
                 tabIndex={0}
+                className="ndc-chip-remove"
                 aria-label={t("Supprimer l'hôte Docker")}
                 onClick={event => { event.stopPropagation(); requestHostRemoval({ id: host.id, name: host.name }); }}
                 onKeyDown={event => {
@@ -73,7 +75,6 @@ export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
                     requestHostRemoval({ id: host.id, name: host.name });
                   }
                 }}
-                style={{ marginLeft: 4, cursor: 'pointer', opacity: 0.5 }}
               >
                 <X size={10} />
               </span>
@@ -81,7 +82,7 @@ export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
           </button>
         ))}
       </div>
-    </div>
+    </CalmeWidget>
   );
 }
 
@@ -101,7 +102,7 @@ export function DockerSummaryWidget({ editMode }: Partial<DockerWidgetProps>) {
   );
 }
 
-export function DockerContainerListWidget({ searchQuery = '' }: DockerWidgetProps) {
+export function DockerContainerListWidget({ editMode, searchQuery = '', settings = {}, onUpdateSettings }: DockerWidgetProps & { settings?: WidgetSettings; onUpdateSettings?: (settings: WidgetSettings) => void }) {
   const { t } = useI18n();
   const {
     hosts, visibleContainers, containersError, containersLoading,
@@ -115,8 +116,12 @@ export function DockerContainerListWidget({ searchQuery = '' }: DockerWidgetProp
     || container.image?.toLowerCase().includes(search)
     || container.id?.toLowerCase().includes(search));
 
+  const rows = visibleRowsOf(settings);
   return (
     <div className="nd-docker-container-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {editMode && onUpdateSettings && (
+        <WidgetHeaderActions><ContainerListOptions settings={settings} onUpdate={onUpdateSettings} /></WidgetHeaderActions>
+      )}
       <div style={{ position: 'relative' }}>
         <Search size={12} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--nd-text-dimmed)', pointerEvents: 'none' }} />
         <input
@@ -128,7 +133,10 @@ export function DockerContainerListWidget({ searchQuery = '' }: DockerWidgetProp
           style={{ paddingLeft: 30, fontSize: '0.72rem' }}
         />
       </div>
-      <div className="nd-mobile-scroll nd-docker-container-list-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 4 }}>
+      <div
+        className={`nd-mobile-scroll nd-docker-container-list-scroll ${rows === 'all' ? 'is-unbounded' : ''}`}
+        style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 4, ...(rows !== 'all' ? { '--nd-list-rows': rows } : {}) } as React.CSSProperties}
+      >
         {containersLoading && visibleContainers.length === 0 && (
           <div style={{ textAlign: 'center', padding: 20 }}>
             <Loader2 size={16} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} />

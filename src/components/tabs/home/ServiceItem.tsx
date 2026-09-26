@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Globe, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowUpRight, Globe, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Service } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
@@ -21,9 +21,22 @@ interface ServiceItemProps {
   total?: number;
 }
 
+/** The host of an address, or the address itself when it cannot be parsed. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
 export default function ServiceItem({ service, categoryId, dndScope, editMode, showSensitive = false, layout = 'standard', index, total }: ServiceItemProps) {
   const { t } = useI18n();
   const [imgError, setImgError] = useState(false);
+  const [secondaryIconFailed, setSecondaryIconFailed] = useState(false);
+  // The second way in (another address or a Tailscale link), offered on hover.
+  const secondaryUrl = service.secondaryUrl || service.tailscaleUrl;
+  const secondaryIcon = service.secondaryLogo || (service.tailscaleUrl && !service.secondaryUrl ? '/api/logos/logo-tailscale.png' : service.logo);
   const { config, pingResults } = useConfig();
   const demoMode = config?.demoMode === true;
 
@@ -171,13 +184,7 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
                 </span>
               ) : (
                 <span className="nd-service-url">
-                  {!showSensitive ? '•••' : (() => {
-                    try {
-                      return new URL(service.localUrl).host;
-                    } catch (e) {
-                      return service.localUrl;
-                    }
-                  })()}
+                  {showSensitive ? hostOf(service.localUrl) : '•••'}
                 </span>
               )}
             </div>
@@ -189,18 +196,19 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
 
       {renderStatusIndicator()}
 
-      {(service.secondaryUrl || service.tailscaleUrl) && !editMode && !demoMode && (
+      {secondaryUrl && !editMode && !demoMode && (
         <div className="nd-service-tooltip-wrapper">
-          <a href={service.secondaryUrl || service.tailscaleUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip" title={t("Lien Secondaire")}>
-            <div className="nd-service-tooltip-icon">
-              {service.secondaryLogo ? (
-                <img src={service.secondaryLogo} alt={t("Lien secondaire")} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
-              ) : (
-                <img src={service.logo || "/api/logos/logo-tailscale.png"} alt={t("Lien alternatif")} onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling && ((e.currentTarget.nextElementSibling as HTMLElement).style.display = 'block'); }} />
-              )}
-              <Globe size={14} style={{ display: 'none' }} />
-            </div>
-            <span className="nd-service-tooltip-text">{t("Ouvrir le lien secondaire")}</span>
+          <a href={secondaryUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip">
+            <span className="nd-service-tooltip-icon">
+              {secondaryIcon && !secondaryIconFailed
+                ? <img src={secondaryIcon} alt="" onError={() => setSecondaryIconFailed(true)} />
+                : <Globe size={13} />}
+            </span>
+            <span className="nd-service-tooltip-text">
+              <span className="nd-service-tooltip-label">{t('services.secondary.open')}</span>
+              <span className="nd-service-tooltip-host">{showSensitive ? hostOf(secondaryUrl) : '•••'}</span>
+            </span>
+            <ArrowUpRight size={12} className="nd-service-tooltip-arrow" aria-hidden="true" />
           </a>
         </div>
       )}

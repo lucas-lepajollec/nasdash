@@ -419,6 +419,7 @@ async function handlePUT(req: NextRequest) {
     if (body.cardOpacity !== undefined) config.settings.cardOpacity = body.cardOpacity;
     if (body.surfaceBlur !== undefined) config.settings.surfaceBlur = body.surfaceBlur;
     if (body.softEdges !== undefined) config.settings.softEdges = body.softEdges;
+    if (body.tasks !== undefined) config.settings.tasks = { ...(config.settings.tasks ?? {}), ...body.tasks };
     if (body.hideOutlines !== undefined) config.settings.hideOutlines = body.hideOutlines;
     if (body.emojiTheme !== undefined) config.settings.emojiTheme = body.emojiTheme;
     
