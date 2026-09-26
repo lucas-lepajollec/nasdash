@@ -3357,3 +3357,14 @@ body[data-design="calme"] .nd-header :is(.nd-btn, .nd-search input) {
   width: min(22ch, 100%);
   outline: none;
 }
+
+/* Fields, the chosen Docker host and network map cards use the same recessed
+   well as the Docker logs and stats instead of the theme's near-black base
+   (dialogs keep their own field background). */
+body[data-design="calme"] .nd-input,
+body[data-design="calme"] .nd-host-btn--active,
+body[data-design="calme"] .ndc-map-node {
+  background: var(--ndc-well);
+}
+body[data-design="calme"] .nd-modal .nd-input,
+.ndc-dialog .nd-input { background: var(--nd-bg); }

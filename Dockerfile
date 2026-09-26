@@ -1,5 +1,10 @@
 # ---- Stage 1: Build ----
-FROM node:22-alpine AS builder
+# Always runs on the machine's own platform, never emulated: the standalone
+# output is plain JavaScript (the only native module traced into it is sharp,
+# which NasDash never loads since it does not use next/image). Multi-platform
+# images then only assemble the runner stage per platform, instead of
+# building the whole app under QEMU (about 8 minutes for arm64).
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci

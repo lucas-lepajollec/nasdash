@@ -23,7 +23,7 @@ import { WidgetTitleContext } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widgetsInReadingOrder, widthFormats } from '@/lib/pages/operations';
-import { GRID_COLUMNS, GRID_ROW_PX, type Page, type WidgetInstance } from '@/lib/pages/types';
+import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
 import { canViewWidget, getWidgetCatalogEntry } from '@/lib/widgets/catalog';
@@ -208,6 +208,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   const [heightsAt, setHeightsAt] = useState(0);
   // Measured content heights, in rows.
   const [heights, setHeights] = useState<Record<string, number>>({});
+  // Where the dragged widget will land, drawn instead of GridStack's own
+  // placeholder (which refuses big jumps across widgets and lags behind).
+  const [dropPreview, setDropPreview] = useState<GridPlacement | null>(null);
   const heightsRef = useRef(heights);
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
@@ -251,8 +254,50 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         document.removeEventListener('touchmove', follow);
         follow = null;
       };
+      // The landing cell of the dragged widget, exactly as the drop decides it:
+      // the other widgets where they were at the start, the dragged one at the
+      // pointer, settled below a widget it mostly sits under.
+      const landing = (release: { id: string; left: number; top: number }) => {
+        const gridBox = root.current?.getBoundingClientRect();
+        if (!gridBox?.width) return null;
+        const placements = instance.engine.nodes.map((node: GridStackNode) => {
+          const id = String(node.id);
+          const start = id !== release.id ? before.get(id) : undefined;
+          return { id, x: start?.x ?? node.x ?? 0, y: start?.y ?? node.y ?? 0, w: node.w ?? 1, h: heightsRef.current[id] ?? node.h ?? 1 };
+        });
+        const moved = placements.find(placement => placement.id === release.id);
+        if (!moved) return null;
+        const column = gridBox.width / GRID_COLUMNS;
+        const x = Math.min(GRID_COLUMNS - moved.w, Math.max(0, Math.round(release.left / column)));
+        const y = Math.max(0, Math.round(release.top / GRID_ROW_PX));
+        return settleBelow(placements.map(placement => placement.id === moved.id ? { ...placement, x, y } : placement), moved.id);
+      };
+      let previewFrame = 0;
+      // GridStack pushes the other widgets around while dragging, but the drop
+      // keeps them where they were (pushed down only when overlapped): they are
+      // held at those final places meanwhile, so what is shown is what you get.
+      const unhold = () => {
+        root.current?.querySelectorAll<HTMLElement>(':scope > .nd-page-item--held').forEach(item => {
+          item.classList.remove('nd-page-item--held');
+          item.style.removeProperty('--nd-hold-x');
+          item.style.removeProperty('--nd-hold-y');
+        });
+      };
+      const hold = (layout: ({ id: string } & GridPlacement)[], draggedId: string) => {
+        for (const placement of layout) {
+          if (placement.id === draggedId) continue;
+          const item = root.current?.querySelector<HTMLElement>(`:scope > .grid-stack-item[gs-id="${CSS.escape(placement.id)}"]`);
+          if (!item) continue;
+          item.style.setProperty('--nd-hold-x', String(placement.x));
+          item.style.setProperty('--nd-hold-y', String(placement.y));
+          item.classList.add('nd-page-item--held');
+        }
+      };
       const commit = () => {
         stopFollowing();
+        cancelAnimationFrame(previewFrame);
+        setDropPreview(null);
+        unhold();
         const release = dropped;
         dropped = null;
         // GridStack finishes moving the other widgets after the stop callback.
@@ -263,18 +308,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
             const id = String(node.id);
             return { id, x: node.x ?? 0, y: node.y ?? 0, w: node.w ?? 1, h: heightsRef.current[id] ?? node.h ?? 1 };
           });
-          const gridBox = root.current?.getBoundingClientRect();
-          const moved = release && placements.find(placement => placement.id === release.id);
-          if (moved && gridBox?.width) {
-            placements = placements.map(placement => {
-              const start = placement.id !== moved.id ? before.get(placement.id) : undefined;
-              return start ? { ...placement, ...start } : placement;
-            });
-            const column = gridBox.width / GRID_COLUMNS;
-            const x = Math.min(GRID_COLUMNS - moved.w, Math.max(0, Math.round(release.left / column)));
-            const y = Math.max(0, Math.round(release.top / GRID_ROW_PX));
-            placements = pushOverlaps(settleBelow(placements.map(placement => placement.id === moved.id ? { ...placement, x, y } : placement), moved.id), moved.id);
-          }
+          const settled = release && landing(release);
+          if (release && settled) placements = pushOverlaps(settled, release.id);
           editRef.current(current => applyPlacements(current, placements));
         });
       };
@@ -301,6 +336,15 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
           const point = 'touches' in event ? event.touches[0] : event;
           if (!gridBox || !start || !point) return;
           dropped = { id, left: start.left + (point.clientX - start.x) - gridBox.left, top: start.top + (point.clientY - start.y) - gridBox.top };
+          cancelAnimationFrame(previewFrame);
+          previewFrame = requestAnimationFrame(() => {
+            const settled = dropped && landing(dropped);
+            // As the page will show it: stored gaps kept around the measured heights.
+            const layout = settled ? reflowHeights(pushOverlaps(settled, id), heightsRef.current) : null;
+            const target = layout?.find(placement => placement.id === id);
+            setDropPreview(target ? { x: target.x, y: target.y, w: target.w, h: target.h } : null);
+            if (layout) hold(layout, id);
+          });
         };
         follow = read;
         document.addEventListener('mousemove', read);
@@ -528,6 +572,18 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
             </div>
           </div>
         ))}
+        {dropPreview && (
+          <div
+            className="nd-page-drop-preview"
+            aria-hidden="true"
+            style={{
+              left: `${(dropPreview.x / GRID_COLUMNS) * 100}%`,
+              width: `${(dropPreview.w / GRID_COLUMNS) * 100}%`,
+              top: dropPreview.y * GRID_ROW_PX,
+              height: dropPreview.h * GRID_ROW_PX,
+            }}
+          />
+        )}
       </div>
     </>
   );

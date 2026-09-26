@@ -37,7 +37,8 @@ function startContainer(name) {
 }
 
 async function waitForHealthy(name) {
-  const deadline = Date.now() + 90_000;
+  // An emulated platform (arm64 under QEMU in CI) starts more slowly.
+  const deadline = Date.now() + (Number(process.env.NASDASH_SMOKE_TIMEOUT_MS) || 90_000);
   while (Date.now() < deadline) {
     const state = docker(['inspect', '--format', '{{.State.Status}} {{if .State.Health}}{{.State.Health.Status}}{{end}}', name]);
     if (state === 'running healthy') return;

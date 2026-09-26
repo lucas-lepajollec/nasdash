@@ -136,6 +136,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- While a widget is dragged, the slot shows exactly where it will land, even after a quick move across other widgets, and the other widgets stay where the drop will leave them. A widget can also be dragged by its title again.
+- Fields, the chosen Docker host and the network map cards use the same recessed background as the Docker logs and stats instead of near-black.
+- Multi-platform Docker images build the app once on the machine's own platform instead of under arm64 emulation (the image publish goes from about 11 to about 5 minutes); the release check also builds and starts the arm64 image.
+
 - The interface fonts (Outfit, Space Grotesk, Syne, Righteous, Montserrat, Geist, Geist Mono) ship with the source in `src/app/fonts` (OFL, see `LICENSES.txt`): builds no longer download them from Google Fonts, which made Docker and Vercel builds fail intermittently.
 
 - The Docker container list scrolls inside again after about seven containers, instead of stretching the page (guarded by an end-to-end check).
