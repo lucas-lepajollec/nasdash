@@ -3280,3 +3280,26 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
     justify-content: flex-end;
   }
 }
+
+/* While dragging, the landing slot is drawn by the page (the drop is decided
+   from the pointer, which GridStack's own placeholder does not always follow). */
+.nd-page-grid > .grid-stack-placeholder { visibility: hidden; }
+.nd-page-drop-preview {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  padding: 8px;
+  pointer-events: none;
+}
+.nd-page-drop-preview::before {
+  content: '';
+  display: block;
+  height: 100%;
+  border: 1px solid color-mix(in srgb, var(--nd-accent) 45%, transparent);
+  border-radius: var(--nd-card-radius);
+  background: color-mix(in srgb, var(--nd-accent) 8%, transparent);
+}
+.nd-page-grid > .grid-stack-item.nd-page-item--held {
+  left: calc(var(--nd-hold-x) * var(--gs-column-width)) !important;
+  top: calc(var(--nd-hold-y) * var(--gs-cell-height)) !important;
+}

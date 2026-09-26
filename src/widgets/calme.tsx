@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useRef, useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 
@@ -21,6 +21,7 @@ export function WidgetTitleText({ title, editMode }: { title: string; editMode?:
   const { t } = useI18n();
   const context = useContext(WidgetTitleContext);
   const [draft, setDraft] = useState<string | null>(null);
+  const pressAt = useRef<{ x: number; y: number } | null>(null);
   const shown = context?.custom?.trim() || title;
   if (!editMode || !context) return <span>{shown}</span>;
   const commit = () => {
@@ -48,10 +49,26 @@ export function WidgetTitleText({ title, editMode }: { title: string; editMode?:
       />
     );
   }
+  // Not a <button>: the title stays a place to grab the widget and drag it.
+  // A press that moved was a drag, not a click to rename.
+  const start = (event: React.PointerEvent) => { pressAt.current = { x: event.clientX, y: event.clientY }; };
+  const open = (event: React.MouseEvent) => {
+    const from = pressAt.current;
+    if (from && Math.hypot(event.clientX - from.x, event.clientY - from.y) > 4) return;
+    setDraft(shown);
+  };
   return (
-    <button type="button" className="ndc-title-edit" title={t('pages.widget.renameHint')} onClick={() => setDraft(shown)}>
+    <span
+      role="button"
+      tabIndex={0}
+      className="ndc-title-edit"
+      title={t('pages.widget.renameHint')}
+      onPointerDown={start}
+      onClick={open}
+      onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setDraft(shown); } }}
+    >
       {shown}
-    </button>
+    </span>
   );
 }
 
