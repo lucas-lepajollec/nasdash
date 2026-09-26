@@ -136,6 +136,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- The interface fonts (Outfit, Space Grotesk, Syne, Righteous, Montserrat, Geist, Geist Mono) ship with the source in `src/app/fonts` (OFL, see `LICENSES.txt`): builds no longer download them from Google Fonts, which made Docker and Vercel builds fail intermittently.
+
 - The Docker container list scrolls inside again after about seven containers, instead of stretching the page (guarded by an end-to-end check).
 - With background blur, the ping marks of services in list layouts stay sharp.
 - In the Docker explorer, container stats and logs sit on a darker background so they stand out.
