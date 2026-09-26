@@ -63,6 +63,12 @@ test.describe.serial('critical self-hosted paths', () => {
     await page.evaluate(() => localStorage.setItem('nasdash-active-tab', 'docker'));
     await page.reload();
     await visibleDockerRequest;
+
+    // Widgets grow with their content: the container list must keep its own
+    // inner scroll, or dozens of containers stretch the page.
+    const containerList = page.locator('.nd-docker-container-list-scroll').first();
+    await expect(containerList).toBeVisible();
+    expect(await containerList.evaluate(el => [getComputedStyle(el).overflowY, getComputedStyle(el).maxHeight])).toEqual(['auto', '560px']);
   });
 
   test('admin login through the UI persists a normal settings update', async ({ page }) => {

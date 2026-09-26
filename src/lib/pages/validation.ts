@@ -104,6 +104,7 @@ function validateWidgetSettings(type: string, settings: WidgetSettings, path: st
   }
   // Height chosen with the resize handles (px); the content can still grow past it.
   if (settings.minHeight !== undefined) integer(settings.minHeight, `${path}.minHeight`, 0, 4000);
+  if (settings.customTitle !== undefined && (typeof settings.customTitle !== 'string' || settings.customTitle.length > 80)) fail(`${path}.customTitle`, 'titre invalide (80 caractères au plus)');
   if (type === 'spacer' && settings.height !== undefined) {
     integer(settings.height, `${path}.height`, SPACER_HEIGHT.min, SPACER_HEIGHT.max);
   }

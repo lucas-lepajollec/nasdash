@@ -16,6 +16,9 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "pages.widget.rename": "Widget title",
+  "pages.widget.renameHint": "Click to rename; leave empty for the default name",
+  "docker.hosts.manage": "Manage Docker hosts",
   'calendar.calme.upcoming': 'Upcoming',
   'calendar.calme.today': 'Today',
   'network.calme.average': "avg",
@@ -768,6 +771,9 @@ const en: Dictionary = {
 };
 
 const fr: Dictionary = {
+  "pages.widget.rename": "Titre du widget",
+  "pages.widget.renameHint": "Cliquer pour renommer ; laisser vide pour le nom par défaut",
+  "docker.hosts.manage": "Gérer les hôtes Docker",
   'calendar.calme.upcoming': 'À venir',
   'calendar.calme.today': 'Aujourd’hui',
   'network.calme.average': "moy.",
@@ -1520,6 +1526,9 @@ const fr: Dictionary = {
 };
 
 const es: Dictionary = {
+  "pages.widget.rename": "Título del widget",
+  "pages.widget.renameHint": "Haz clic para cambiar el nombre; déjalo vacío para el nombre por defecto",
+  "docker.hosts.manage": "Gestionar los hosts Docker",
   'calendar.calme.upcoming': 'Próximos',
   'calendar.calme.today': 'Hoy',
   'network.calme.average': "media",
@@ -2272,6 +2281,9 @@ const es: Dictionary = {
 };
 
 const de: Dictionary = {
+  "pages.widget.rename": "Widget-Titel",
+  "pages.widget.renameHint": "Klicken zum Umbenennen; leer lassen für den Standardnamen",
+  "docker.hosts.manage": "Docker-Hosts verwalten",
   'calendar.calme.upcoming': 'Demnächst',
   'calendar.calme.today': 'Heute',
   'network.calme.average': "Ø",

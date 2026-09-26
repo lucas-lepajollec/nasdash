@@ -3304,3 +3304,56 @@ body.light {
 .ndc-int-tile-desc { font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @media (max-width: 520px) { .ndc-int-state { display: none; } }
 .ndc-dlg-missing { margin-left: 8px; padding: 1px 6px; border-radius: 999px; font-size: 0.64rem; color: var(--nd-text-dimmed); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+
+/* Docker explorer: stats and logs sit in a recessed well, darker than the
+   card, so these key readings stand out (lighter touch on light themes). */
+body[data-design="calme"] {
+  --ndc-well: color-mix(in srgb, #000 28%, var(--ndc-surface));
+}
+body[data-design="calme"].light {
+  --ndc-well: color-mix(in srgb, #000 5%, var(--ndc-surface));
+}
+body[data-design="calme"] .nd-terminal,
+body[data-design="calme"][class*="theme-"] .nd-terminal,
+body[data-design="calme"] :is(.nd-docker-detail, .ndc-box) .nd-docker-stat-card {
+  background: var(--ndc-well) !important;
+}
+body[data-design="calme"] .nd-terminal { color: var(--nd-text); }
+body[data-design="calme"] .nd-docker-stat-label { color: var(--nd-text-muted); }
+
+/* Header controls follow the corner setting like the cards (6 px by default). */
+body[data-design="calme"] .nd-header :is(.nd-btn, .nd-search input) {
+  border-radius: var(--nd-card-radius) !important;
+}
+
+/* Widgets grow with their content (no page-level inner scroll), so long
+   lists cap themselves: the Docker container list shows about seven rows and
+   scrolls inside. Guarded by e2e/critical-paths.spec.ts. */
+.nd-docker-container-list-scroll {
+  max-height: 560px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Edit mode: a widget title is renamed in place. */
+.ndc-title-edit {
+  all: unset;
+  cursor: text;
+  border-radius: 3px;
+  text-decoration: underline dashed color-mix(in srgb, var(--nd-text) 30%, transparent);
+  text-underline-offset: 3px;
+}
+.ndc-title-edit:hover { color: var(--nd-text); text-decoration-color: var(--nd-accent); }
+.ndc-title-edit:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndc-title-input {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--nd-text);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--nd-accent);
+  padding: 0 2px;
+  width: min(22ch, 100%);
+  outline: none;
+}

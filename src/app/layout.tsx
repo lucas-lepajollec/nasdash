@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Outfit, Space_Grotesk, Syne, Righteous, Montserrat, Geist, Geist_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import './themes.css';
 import './design-calme.css';
@@ -8,13 +8,15 @@ import { I18nProvider } from '@/i18n/I18nProvider';
 import { messages } from '@/i18n/messages';
 import { isDemoMode } from '@/lib/demoMode';
 
-const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-outfit' });
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-space' });
-const syne = Syne({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-syne' });
-const righteous = Righteous({ subsets: ['latin'], weight: '400', variable: '--font-righteous' });
-const geist = Geist({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-geist' });
-const geistMono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-geist-mono' });
-const montserrat = Montserrat({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800'], variable: '--font-montserrat' });
+// Fonts ship with the source (src/app/fonts, OFL, see LICENSES.txt): a build
+// never downloads them, so it cannot fail on Google Fonts being unreachable.
+const outfit = localFont({ src: './fonts/outfit.woff2', weight: '300 700', variable: '--font-outfit', display: 'swap' });
+const spaceGrotesk = localFont({ src: './fonts/space-grotesk.woff2', weight: '300 700', variable: '--font-space', display: 'swap' });
+const syne = localFont({ src: './fonts/syne.woff2', weight: '400 800', variable: '--font-syne', display: 'swap' });
+const righteous = localFont({ src: './fonts/righteous.woff2', weight: '400', variable: '--font-righteous', display: 'swap' });
+const geist = localFont({ src: './fonts/geist.woff2', weight: '400 700', variable: '--font-geist', display: 'swap' });
+const geistMono = localFont({ src: './fonts/geist-mono.woff2', weight: '400 600', variable: '--font-geist-mono', display: 'swap' });
+const montserrat = localFont({ src: './fonts/montserrat.woff2', weight: '300 800', variable: '--font-montserrat', display: 'swap' });
 
 export function generateMetadata(): Metadata {
   const demoMode = isDemoMode();
