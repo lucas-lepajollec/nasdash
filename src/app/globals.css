@@ -121,7 +121,7 @@
 }
 
 .light .nd-settings-modal,
-.light dialog {
+.light dialog:not(.lh-demo-dialog) {
   background: var(--nd-card-bg) !important;
   border-color: var(--nd-card-border, rgba(0, 0, 0, 0.15)) !important;
   box-shadow: none !important;

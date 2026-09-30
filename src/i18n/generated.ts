@@ -4,6 +4,8 @@
  */
 export const generatedMessages = {
   "en": {
+    "Surfaces de verre translucides et floues sur un fond coloré, à la manière d’Apple.": "Translucent, blurred glass surfaces over a colourful background, in Apple's style.",
+    "La version claire du verre : translucide, lumineuse et douce.": "The light version of the glass: translucent, bright and soft.",
     "-- Aucun --": "-- None --",
     "-- Aucun groupe --": "-- No group --",
     "-- Sélectionner --": "-- Select --",
@@ -958,6 +960,8 @@ export const generatedMessages = {
     "Widgets Spécifiques": "Specific Widgets"
   },
   "fr": {
+    "Surfaces de verre translucides et floues sur un fond coloré, à la manière d’Apple.": "Surfaces de verre translucides et floues sur un fond coloré, à la manière d’Apple.",
+    "La version claire du verre : translucide, lumineuse et douce.": "La version claire du verre : translucide, lumineuse et douce.",
     "-- Aucun --": "-- Aucun --",
     "-- Aucun groupe --": "-- Aucun groupe --",
     "-- Sélectionner --": "-- Sélectionner --",
@@ -1912,6 +1916,8 @@ export const generatedMessages = {
     "Widget not found": "Widget not found"
   },
   "es": {
+    "Surfaces de verre translucides et floues sur un fond coloré, à la manière d’Apple.": "Superficies de vidrio translúcidas y difuminadas sobre un fondo de color, al estilo de Apple.",
+    "La version claire du verre : translucide, lumineuse et douce.": "La versión clara del vidrio: translúcida, luminosa y suave.",
     "-- Aucun --": "-- Ninguno --",
     "-- Aucun groupe --": "-- Ningún grupo --",
     "-- Sélectionner --": "-- Seleccionar --",
@@ -2866,6 +2872,8 @@ export const generatedMessages = {
     "Widgets Spécifiques": "Widgets específicos"
   },
   "de": {
+    "Surfaces de verre translucides et floues sur un fond coloré, à la manière d’Apple.": "Durchscheinende, weichgezeichnete Glasflächen auf farbigem Hintergrund, im Stil von Apple.",
+    "La version claire du verre : translucide, lumineuse et douce.": "Die helle Glasversion: durchscheinend, hell und sanft.",
     "-- Aucun --": "-- Keine --",
     "-- Aucun groupe --": "-- Keine Gruppe --",
     "-- Sélectionner --": "-- Auswählen --",

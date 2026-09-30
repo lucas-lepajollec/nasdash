@@ -175,6 +175,30 @@ export const THEME_GALLERY: ThemeDefinition[] = [
     tags: ['atom', 'one dark', 'pro', 'vscode', 'dark', 'popular']
   },
   {
+    key: 'liquid-glass',
+    name: 'Liquid Glass 🫧',
+    category: 'dark',
+    bg: '#1b1640',
+    cardBg: 'rgba(255, 255, 255, 0.14)',
+    subcardBg: 'rgba(255, 255, 255, 0.22)',
+    text: '#f4f6fb',
+    accent: '#7cc4ff',
+    description: 'Surfaces de verre translucides et floues sur un fond coloré, à la manière d’Apple.',
+    tags: ['liquid', 'glass', 'apple', 'ios', 'translucent', 'blur', 'dark']
+  },
+  {
+    key: 'liquid-glass-light',
+    name: 'Liquid Glass Light 🫧',
+    category: 'light',
+    bg: '#dfe6fb',
+    cardBg: 'rgba(255, 255, 255, 0.6)',
+    subcardBg: 'rgba(255, 255, 255, 0.8)',
+    text: '#1c1c1e',
+    accent: '#0a84ff',
+    description: 'La version claire du verre : translucide, lumineuse et douce.',
+    tags: ['liquid', 'glass', 'apple', 'ios', 'translucent', 'blur', 'light']
+  },
+  {
     key: 'tokyo-night',
     name: 'Tokyo Night 🏙️',
     category: 'dark',

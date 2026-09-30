@@ -3,6 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { AppearanceProfile } from '@/lib/types';
 import ConfirmModal from '../../ConfirmModal';
 import { useI18n } from '@/i18n/I18nProvider';
+import { LIGHT_THEMES } from '@/lib/themes';
 import { CalmeAppearance } from './CalmeAppearance';
 
 interface AppearanceTabProps {
@@ -69,7 +70,6 @@ export function AppearanceTab({ onOpenThemeGallery, part = 'appearance' }: Appea
 
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
-    const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
     const isLight = LIGHT_THEMES.includes(newTheme) || (newTheme === 'nasdash' && mode === 'light');
 
     const classesToRemove = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));
