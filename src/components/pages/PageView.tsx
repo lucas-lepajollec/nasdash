@@ -18,11 +18,11 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { ArrowDown, ArrowUp, Eye, EyeOff, List, Plus, Settings2, SquareStack, X } from 'lucide-react';
+import { List, Plus, Settings2, SquareStack, X } from 'lucide-react';
 import { WidgetTitleContext } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
-import { applyPlacements, isHiddenOnMobile, mobileOrder, moveOnMobile, pushOverlaps, setHiddenOnMobile, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
+import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
 import { GettingStarted } from './GettingStarted';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
@@ -577,17 +577,6 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   const [listView, setListView] = useState(false);
   const compactEdit = editMode && narrow;
   const nameOf = useWidgetName();
-  const mobileMoveOf = (widget: WidgetInstance) => {
-    const index = compactOrder.findIndex(item => item.id === widget.id);
-    return {
-      first: index <= 0,
-      last: index === compactOrder.length - 1,
-      hidden: isHiddenOnMobile(page, widget.id),
-      onUp: () => edit(current => moveOnMobile(current, widget.id, index - 1)),
-      onDown: () => edit(current => moveOnMobile(current, widget.id, index + 1)),
-      onToggleHidden: () => edit(current => setHiddenOnMobile(current, widget.id, !isHiddenOnMobile(current, widget.id))),
-    };
-  };
   const titleOf = useCallback((widget: WidgetInstance) => (typeof widget.settings.customTitle === 'string' && widget.settings.customTitle.trim()) || nameOf(widget), [nameOf]);
 
   return (
@@ -632,7 +621,6 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
                 onMeasure={measure}
                 onResizeStart={editable ? (edge, event) => startResize(widget, edge, event) : undefined}
                 canResizeWidth={editable && formatsOf(widget).length > 1}
-                mobileMove={compactEdit ? mobileMoveOf(widget) : undefined}
               />
             </div>
           </div>
@@ -686,8 +674,6 @@ interface WidgetFrameProps extends PageViewProps {
   onResizeStart?: (edge: ResizeEdge, event: React.PointerEvent<HTMLElement>) => void;
   /** More than one width format at this screen width. */
   canResizeWidth?: boolean;
-  /** Phones and tablets in edit mode: moves in the phone order (the desktop layout stays). */
-  mobileMove?: { first: boolean; last: boolean; hidden: boolean; onUp: () => void; onDown: () => void; onToggleHidden: () => void };
 }
 
 /**
@@ -695,7 +681,7 @@ interface WidgetFrameProps extends PageViewProps {
  * mode its controls sit in its top-right corner, together with the header
  * buttons of the widget (`WidgetHeaderActions`).
  */
-function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, canResizeWidth, mobileMove, ...props }: WidgetFrameProps) {
+function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, canResizeWidth, ...props }: WidgetFrameProps) {
   const { t } = useI18n();
   const { updateWidgetSettings } = usePages();
   const { setSettingsModal } = useConfig();
@@ -783,15 +769,6 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
       {editMode && (
         <div ref={actions} className="nd-page-widget-actions" data-no-widget-drag>
           <span ref={setSlot} className="nd-page-widget-actions-slot" />
-          {mobileMove && (
-            <span className="nd-page-mobile-moves">
-              <button type="button" className="nd-action-icon" onClick={mobileMove.onUp} disabled={mobileMove.first} title={t('pages.mobile.up')} aria-label={[t('pages.mobile.up'), name].join(' · ')}><ArrowUp size={13} /></button>
-              <button type="button" className="nd-action-icon" onClick={mobileMove.onDown} disabled={mobileMove.last} title={t('pages.mobile.down')} aria-label={[t('pages.mobile.down'), name].join(' · ')}><ArrowDown size={13} /></button>
-              <button type="button" className="nd-action-icon" onClick={mobileMove.onToggleHidden} aria-pressed={mobileMove.hidden} title={t(mobileMove.hidden ? 'pages.mobile.show' : 'pages.mobile.hide')} aria-label={[t(mobileMove.hidden ? 'pages.mobile.show' : 'pages.mobile.hide'), name].join(' · ')}>
-                {mobileMove.hidden ? <EyeOff size={13} /> : <Eye size={13} />}
-              </button>
-            </span>
-          )}
           {configure && (
             <button type="button" className="nd-action-icon accent" onClick={configure} title={t('pages.widget.configureNamed', { name })} aria-label={t('pages.widget.configureNamed', { name })}>
               <Settings2 size={13} />
