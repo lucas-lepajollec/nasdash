@@ -355,6 +355,7 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
     }
   }
   readBoolean(body, 'hideOutlines');
+  readBoolean(body, 'onboardingDismissed');
   if (body.favoriteColors !== undefined) {
     const colors = readArray(body, 'favoriteColors', 24);
     if (colors && !colors.every(color => typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color))) {

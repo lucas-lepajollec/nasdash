@@ -24,6 +24,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, moveOnMobile, pushOverlaps, setHiddenOnMobile, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
+import { GettingStarted } from './GettingStarted';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
@@ -164,6 +165,7 @@ export function PageView(props: PageViewProps) {
     <DockerWorkspaceProvider enabled={isVisible && hasDocker}>
       <DndContext sensors={sensors} collisionDetection={innerCollision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setInnerDrag(null)}>
         <div className={`nd-page ${editMode ? 'nd-page--editing' : ''}`} data-page-id={page.id}>
+          {page.id === 'dashboard' && !editMode && <GettingStarted />}
           {shown.length === 0 && (
             <div className="nd-page-empty">
               <p>{t('pages.empty.title')}</p>
