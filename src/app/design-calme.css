@@ -3508,3 +3508,71 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .ndc-task-rhythm > span:first-child { white-space: nowrap; }
 .ndc-tasks { container-type: inline-size; }
 @media (max-width: 520px) { .ndc-int-state.ndc-task-state { display: inline-flex; } }
+
+/* Phone and tablet order (edit mode below the grid width). */
+.nd-mobile-order { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding-bottom: 120px; }
+.nd-mobile-order-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nd-mobile-order-title { display: inline-flex; align-items: center; gap: 2px; min-width: 0; white-space: nowrap; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-muted); }
+.nd-mobile-order-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ndc-surface-line, var(--nd-card-border)); border-radius: var(--nd-card-radius); background: var(--ndc-surface, var(--nd-card-bg)); overflow: hidden; }
+.nd-mobile-order-row { display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 4px 4px 4px 0; background: var(--ndc-surface, var(--nd-card-bg)); touch-action: manipulation; }
+.nd-mobile-order-row + .nd-mobile-order-row { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+.nd-mobile-order-row.is-dragging { position: relative; z-index: 2; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); border-radius: var(--nd-card-radius); }
+.nd-mobile-order-row.is-hidden .nd-mobile-order-icon, .nd-mobile-order-row.is-hidden .nd-mobile-order-name > span:first-child { opacity: 0.45; }
+.nd-mobile-order-handle { all: unset; display: grid; place-items: center; width: 32px; height: 44px; color: var(--nd-text-dimmed); cursor: grab; touch-action: none; flex-shrink: 0; }
+.nd-mobile-order-handle:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: -2px; border-radius: 6px; }
+.nd-mobile-order-pos { width: 18px; font-size: 0.66rem; color: var(--nd-text-dimmed); text-align: right; flex-shrink: 0; }
+.nd-mobile-order-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); flex-shrink: 0; font-size: 0.9rem; }
+.nd-mobile-order-name { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; font-size: 0.8rem; color: var(--nd-text); }
+.nd-mobile-order-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nd-mobile-order-state { font-size: 0.62rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nd-mobile-order-actions { display: inline-flex; gap: 0; flex-shrink: 0; }
+.nd-mobile-order-actions .ndc-icon-button { width: 34px; height: 36px; }
+.nd-mobile-order-actions .ndc-icon-button:disabled { opacity: 0.25; }
+
+/* ======================================================================
+   Phones: settings take the whole screen, dialogs rise from the bottom as
+   sheets (like native apps), touch targets stay at least 40 px.
+   ====================================================================== */
+@media (max-width: 600px) {
+  body[data-design="calme"] .nd-modal-overlay:has(> .nd-settings-modal) { padding: 0 !important; align-items: stretch; }
+  body[data-design="calme"] .nd-settings-modal.ndc-settings {
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  body[data-design="calme"] .nd-modal-overlay:has(> .ndc-dialog, > .ndc-confirm) { align-items: flex-end !important; justify-content: stretch; padding: 0 !important; }
+  body[data-design="calme"] .nd-modal.ndc-dialog,
+  body[data-design="calme"] .nd-modal.ndc-confirm {
+    width: 100vw !important;
+    max-width: none !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+    border-bottom: 0 !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    animation: ndc-sheet-in 0.22s ease-out;
+  }
+  body[data-design="calme"] .nd-modal.ndc-dialog::before,
+  body[data-design="calme"] .nd-modal.ndc-confirm::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 8px auto 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--nd-text) 22%, transparent);
+  }
+  body[data-design="calme"] .ndc-dialog .nd-btn,
+  body[data-design="calme"] .ndc-confirm .nd-btn { min-height: 40px; }
+  body[data-design="calme"] .ndc-icon-button { min-width: 36px; min-height: 36px; }
+}
+@keyframes ndc-sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  body[data-design="calme"] .nd-modal.ndc-dialog, body[data-design="calme"] .nd-modal.ndc-confirm { animation: none; }
+}

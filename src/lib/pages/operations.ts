@@ -161,6 +161,81 @@ export function widgetsInReadingOrder(page: Pick<Page, 'widgets'>): WidgetInstan
   return [...page.widgets].sort((a, b) => a.y - b.y || a.x - b.x);
 }
 
+/** A band is at least half the page wide… */
+const BAND_MIN_WIDTH = 12;
+/** …and nothing sits beside it (no other widget shares its rows). */
+function isBand<T extends GridPlacement & { id: string }>(widget: T, widgets: T[]): boolean {
+  if (widget.w < BAND_MIN_WIDTH) return false;
+  return !widgets.some(other => other.id !== widget.id && other.y < widget.y + widget.h && widget.y < other.y + other.h);
+}
+
+/** Column by column: the columns of a band side by side, each read top to bottom. */
+function columnMajor<T extends GridPlacement & { id: string }>(items: T[]): T[] {
+  const columns: { left: number; right: number; items: T[] }[] = [];
+  for (const item of [...items].sort((a, b) => a.x - b.x || a.y - b.y)) {
+    const right = item.x + item.w;
+    const column = columns.find(candidate => Math.min(right, candidate.right) - Math.max(item.x, candidate.left) >= Math.min(item.w, candidate.right - candidate.left) / 2);
+    if (column) {
+      column.items.push(item);
+      column.left = Math.min(column.left, item.x);
+      column.right = Math.max(column.right, right);
+    } else columns.push({ left: item.x, right, items: [item] });
+  }
+  return columns.sort((a, b) => a.left - b.left).flatMap(column => column.items.sort((a, b) => a.y - b.y));
+}
+
+/**
+ * The automatic phone order: the page read column by column, as it is built
+ * on desktop. A wide widget with nothing beside it (a band) ends the columns
+ * above it; the columns below start again after it.
+ */
+export function autoMobileOrder<T extends GridPlacement & { id: string }>(widgets: T[]): T[] {
+  const byY = [...widgets].sort((a, b) => a.y - b.y || a.x - b.x);
+  const bands = byY.filter(widget => isBand(widget, widgets));
+  const result: T[] = [];
+  let pending = byY.filter(widget => !bands.includes(widget));
+  for (const band of bands) {
+    const above = pending.filter(widget => widget.y < band.y);
+    pending = pending.filter(widget => widget.y >= band.y);
+    result.push(...columnMajor(above), band);
+  }
+  return [...result, ...columnMajor(pending)];
+}
+
+/** The widgets of a page in their phone and tablet order: the chosen one, then the automatic one. */
+export function mobileOrder<T extends WidgetInstance>(page: Pick<Page, 'mobile'> & { widgets: T[] }): T[] {
+  const byId = new Map(page.widgets.map(widget => [widget.id, widget]));
+  const chosen = [...new Set(page.mobile?.order ?? [])].map(id => byId.get(id)).filter((widget): widget is T => !!widget);
+  const placed = new Set(chosen.map(widget => widget.id));
+  return [...chosen, ...autoMobileOrder(page.widgets).filter(widget => !placed.has(widget.id))];
+}
+
+export function isHiddenOnMobile(page: Pick<Page, 'mobile'>, widgetId: string): boolean {
+  return !!page.mobile?.hidden?.includes(widgetId);
+}
+
+/** Moves a widget to `index` in the phone order (the whole order is written from then on). */
+export function moveOnMobile(page: Page, widgetId: string, index: number): Page {
+  const order = mobileOrder(page).map(widget => widget.id).filter(id => id !== widgetId);
+  if (!page.widgets.some(widget => widget.id === widgetId)) return page;
+  order.splice(Math.max(0, Math.min(order.length, index)), 0, widgetId);
+  return { ...page, mobile: { ...page.mobile, order } };
+}
+
+export function setHiddenOnMobile(page: Page, widgetId: string, hidden: boolean): Page {
+  const current = new Set(page.mobile?.hidden ?? []);
+  if (hidden) current.add(widgetId);
+  else current.delete(widgetId);
+  return { ...page, mobile: { ...page.mobile, hidden: [...current] } };
+}
+
+/** Back to the automatic order, everything shown. */
+export function resetMobileLayout(page: Page): Page {
+  const next = { ...page };
+  delete next.mobile;
+  return next;
+}
+
 /**
  * Widths a widget can be resized to, in columns: the formats of its type that
  * are at least its smallest usable width at the current column width (in

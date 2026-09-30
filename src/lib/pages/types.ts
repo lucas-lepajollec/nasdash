@@ -55,6 +55,18 @@ export interface Page {
   /** Incremented on every write; used to detect concurrent edits. */
   revision: number;
   widgets: WidgetInstance[];
+  /** Phones and tablets: their own order and hidden widgets (desktop positions untouched). */
+  mobile?: MobileLayout;
+}
+
+/**
+ * How a page reads on phones (one column) and tablets (two columns). `order`
+ * lists widget ids; widgets missing from it follow in the automatic order.
+ * `hidden` widgets are not shown on phones and tablets.
+ */
+export interface MobileLayout {
+  order?: string[];
+  hidden?: string[];
 }
 
 export interface PagesDocument {

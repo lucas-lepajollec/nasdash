@@ -16,6 +16,17 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "pages.mobile.position": "{position}. {name}",
+  "pages.mobile.title": "Mobile order",
+  "pages.mobile.hint": "Phones show one column and tablets two, in this order. The desktop layout does not change. Hidden widgets stay on desktop.",
+  "pages.mobile.reset": "Automatic order",
+  "pages.mobile.drag": "Drag to move",
+  "pages.mobile.top": "Move to the top",
+  "pages.mobile.up": "Move up",
+  "pages.mobile.down": "Move down",
+  "pages.mobile.hide": "Hide on phones and tablets",
+  "pages.mobile.show": "Show on phones and tablets",
+  "pages.mobile.hidden": "Hidden on mobile",
   "tasks.partial": "Partial",
   "tasks.name.device-monitoring": "Machine readings",
   "tasks.name.service-pings": "Service pings",
@@ -874,10 +885,20 @@ const en: Dictionary = {
   'docker.stopNamed': 'Stop {name}',
   'docker.startNamed': 'Start {name}',
   'docker.removeNamed': 'Delete {name}',
-  'pages.editor.narrow': 'Widen the window to rearrange this page.',
 };
 
 const fr: Dictionary = {
+  "pages.mobile.position": "{position}. {name}",
+  "pages.mobile.title": "Ordre mobile",
+  "pages.mobile.hint": "Le téléphone affiche une colonne et la tablette deux, dans cet ordre. La disposition desktop ne change pas. Les widgets masqués restent sur desktop.",
+  "pages.mobile.reset": "Ordre automatique",
+  "pages.mobile.drag": "Glisser pour déplacer",
+  "pages.mobile.top": "Tout en haut",
+  "pages.mobile.up": "Monter",
+  "pages.mobile.down": "Descendre",
+  "pages.mobile.hide": "Masquer sur téléphone et tablette",
+  "pages.mobile.show": "Afficher sur téléphone et tablette",
+  "pages.mobile.hidden": "Masqué sur mobile",
   "tasks.partial": "Partiel",
   "tasks.name.device-monitoring": "Relevés des machines",
   "tasks.name.service-pings": "Pings des services",
@@ -1736,10 +1757,20 @@ const fr: Dictionary = {
   'docker.stopNamed': 'Arrêter {name}',
   'docker.startNamed': 'Démarrer {name}',
   'docker.removeNamed': 'Supprimer {name}',
-  'pages.editor.narrow': 'Élargissez la fenêtre pour réorganiser cette page.',
 };
 
 const es: Dictionary = {
+  "pages.mobile.position": "{position}. {name}",
+  "pages.mobile.title": "Orden móvil",
+  "pages.mobile.hint": "El móvil muestra una columna y la tableta dos, en este orden. El diseño de escritorio no cambia. Los widgets ocultos siguen en escritorio.",
+  "pages.mobile.reset": "Orden automático",
+  "pages.mobile.drag": "Arrastrar para mover",
+  "pages.mobile.top": "Mover arriba del todo",
+  "pages.mobile.up": "Subir",
+  "pages.mobile.down": "Bajar",
+  "pages.mobile.hide": "Ocultar en móvil y tableta",
+  "pages.mobile.show": "Mostrar en móvil y tableta",
+  "pages.mobile.hidden": "Oculto en móvil",
   "tasks.partial": "Parcial",
   "tasks.name.device-monitoring": "Lecturas de las máquinas",
   "tasks.name.service-pings": "Pings de los servicios",
@@ -2598,10 +2629,20 @@ const es: Dictionary = {
   'docker.stopNamed': 'Detener {name}',
   'docker.startNamed': 'Iniciar {name}',
   'docker.removeNamed': 'Eliminar {name}',
-  'pages.editor.narrow': 'Amplía la ventana para reorganizar esta página.',
 };
 
 const de: Dictionary = {
+  "pages.mobile.position": "{position}. {name}",
+  "pages.mobile.title": "Mobile Reihenfolge",
+  "pages.mobile.hint": "Das Handy zeigt eine Spalte, das Tablet zwei, in dieser Reihenfolge. Das Desktop-Layout bleibt unverändert. Ausgeblendete Widgets bleiben auf dem Desktop.",
+  "pages.mobile.reset": "Automatische Reihenfolge",
+  "pages.mobile.drag": "Zum Verschieben ziehen",
+  "pages.mobile.top": "Ganz nach oben",
+  "pages.mobile.up": "Nach oben",
+  "pages.mobile.down": "Nach unten",
+  "pages.mobile.hide": "Auf Handy und Tablet ausblenden",
+  "pages.mobile.show": "Auf Handy und Tablet anzeigen",
+  "pages.mobile.hidden": "Mobil ausgeblendet",
   "tasks.partial": "Teilweise",
   "tasks.name.device-monitoring": "Messwerte der Rechner",
   "tasks.name.service-pings": "Dienst-Pings",
@@ -3460,7 +3501,6 @@ const de: Dictionary = {
   'docker.stopNamed': '{name} stoppen',
   'docker.startNamed': '{name} starten',
   'docker.removeNamed': '{name} löschen',
-  'pages.editor.narrow': 'Vergrößere das Fenster, um diese Seite neu anzuordnen.',
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

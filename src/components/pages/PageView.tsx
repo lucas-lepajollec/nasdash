@@ -22,7 +22,8 @@ import { Plus, Settings2, X } from 'lucide-react';
 import { WidgetTitleContext } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
-import { applyPlacements, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widgetsInReadingOrder, widthFormats } from '@/lib/pages/operations';
+import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
+import { MobileOrderEditor } from './MobileOrderEditor';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
@@ -62,6 +63,10 @@ interface PageViewProps {
 
 /** Grid width below which the page stacks in one column and cannot be edited. */
 const EDITABLE_MIN_WIDTH = 700;
+/** Grid width below which the page reads in two columns (tablets). */
+const TABLET_MAX_WIDTH = 1000;
+/** Gap between the two tablet columns and between widgets (px). */
+const COMPACT_GAP = 16;
 /** Grid gutter: half on each side of every widget, 16 px between widgets. */
 const GRID_MARGIN = 8;
 
@@ -192,12 +197,17 @@ interface PageGridProps extends PageViewProps {
 }
 
 function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
-  const { t } = useI18n();
   const root = useRef<HTMLDivElement>(null);
   const grid = useRef<GridStack | null>(null);
   const [ready, setReady] = useState(false);
-  const [narrow, setNarrow] = useState(false);
+  // Below the grid: phones read one column, tablets two, both in the page's
+  // phone order (`page.mobile`), edited as a list.
+  const [mode, setMode] = useState<'grid' | 'tablet' | 'phone'>('grid');
+  const narrow = mode !== 'grid';
   const narrowRef = useRef(false);
+  const [gridWidth, setGridWidth] = useState(0);
+  // Rendered heights (px), for the two tablet columns.
+  const [pxHeights, setPxHeights] = useState<Record<string, number>>({});
   const [columnPx, setColumnPx] = useState(0);
   // The grid is shown once the page is visible and its widgets are measured
   // and placed: no flash of unplaced widgets, no animation for that placement.
@@ -363,7 +373,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
 
   const measure = useCallback((id: string, px: number) => {
     // A hidden page measures 0; narrow screens have other widths: keep the desktop heights.
-    if (px < 1 || narrowRef.current) return;
+    if (px < 1) return;
+    setPxHeights(current => current[id] === Math.round(px) ? current : { ...current, [id]: Math.round(px) });
+    if (narrowRef.current) return;
     const rows = Math.max(MIN_ROWS, Math.ceil((px + GRID_MARGIN * 2) / GRID_ROW_PX));
     setHeights(current => {
       if (current[id] === rows) return current;
@@ -495,8 +507,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
       const width = entries[0]?.contentRect.width ?? 0;
       // A hidden page (display: none) keeps its layout.
       if (width < 1) return;
-      narrowRef.current = width < EDITABLE_MIN_WIDTH;
-      setNarrow(narrowRef.current);
+      narrowRef.current = width < TABLET_MAX_WIDTH;
+      setMode(width < EDITABLE_MIN_WIDTH ? 'phone' : width < TABLET_MAX_WIDTH ? 'tablet' : 'grid');
+      setGridWidth(width);
       setColumnPx(Math.round(width / GRID_COLUMNS));
     });
     observer.observe(el);
@@ -539,24 +552,47 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     return () => window.clearTimeout(timer);
   }, [editMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // One column on narrow screens: reading order, heights follow the content.
-  const readingOrder = useMemo(() => new Map(widgetsInReadingOrder({ widgets }).map((widget, index) => [widget.id, index])), [widgets]);
+  // Phones and tablets: the page's phone order, without the widgets hidden there.
+  const compactOrder = useMemo(() => mobileOrder({ widgets, mobile: page.mobile }), [page.mobile, widgets]);
+  const readingOrder = useMemo(() => new Map(compactOrder.map((widget, index) => [widget.id, index])), [compactOrder]);
+  // Tablets: two columns, each widget going into the shorter one, in order.
+  const tablet = useMemo(() => {
+    if (mode !== 'tablet' || !gridWidth) return null;
+    const bottoms = [0, 0];
+    const places = new Map<string, { column: number; top: number }>();
+    for (const widget of compactOrder) {
+      if (isHiddenOnMobile(page, widget.id)) continue;
+      const column = bottoms[1] < bottoms[0] ? 1 : 0;
+      places.set(widget.id, { column, top: bottoms[column] });
+      bottoms[column] += (pxHeights[widget.id] ?? 0) + COMPACT_GAP;
+    }
+    return { places, height: Math.max(0, ...bottoms) };
+  }, [compactOrder, gridWidth, mode, page, pxHeights]);
+  const nameOf = useWidgetName();
+  const titleOf = useCallback((widget: WidgetInstance) => (typeof widget.settings.customTitle === 'string' && widget.settings.customTitle.trim()) || nameOf(widget), [nameOf]);
 
   return (
     <>
-      {editMode && narrow && <p className="nd-page-narrow-note">{t('pages.editor.narrow')}</p>}
-      <div ref={root} className={`grid-stack nd-page-grid ${editable ? 'nd-page-grid--editing' : ''} ${narrow ? 'nd-page-grid--narrow' : ''} ${revealed ? 'nd-animate-in' : 'nd-page-grid--placing'} ${resize ? 'nd-page-grid--resizing' : ''}`}>
+      {editMode && narrow && <MobileOrderEditor page={page} edit={edit} nameOf={titleOf} />}
+      <div
+        ref={root}
+        className={`grid-stack nd-page-grid ${editable ? 'nd-page-grid--editing' : ''} ${narrow ? 'nd-page-grid--narrow' : ''} ${mode === 'tablet' ? 'nd-page-grid--tablet' : ''} ${editMode && narrow ? 'nd-page-grid--reordering' : ''} ${revealed ? 'nd-animate-in' : 'nd-page-grid--placing'} ${resize ? 'nd-page-grid--resizing' : ''}`}
+        style={tablet ? { '--nd-tablet-height': `${tablet.height}px` } as React.CSSProperties : undefined}
+      >
         {widgets.map(widget => (
           <div
             key={widget.id}
-            className={`grid-stack-item ${resize?.id === widget.id ? 'nd-page-item--resizing' : ''}`}
+            className={`grid-stack-item ${resize?.id === widget.id ? 'nd-page-item--resizing' : ''} ${narrow && isHiddenOnMobile(page, widget.id) ? 'nd-page-item--mobile-hidden' : ''}`}
             gs-id={widget.id}
             gs-x={widget.x}
             gs-y={widget.y}
             gs-w={widget.w}
             gs-h={widget.h}
             data-widget-type={widget.type}
-            style={{ order: readingOrder.get(widget.id) }}
+            style={{
+              order: readingOrder.get(widget.id),
+              ...(tablet?.places.has(widget.id) ? { '--nd-tablet-column': tablet.places.get(widget.id)!.column, '--nd-tablet-top': `${tablet.places.get(widget.id)!.top}px` } : {}),
+            } as React.CSSProperties}
           >
             <div className="grid-stack-item-content">
               <WidgetFrame

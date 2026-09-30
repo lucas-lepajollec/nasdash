@@ -8,6 +8,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Phone and tablet order.** Each page has its own order for phones and tablets (`page.mobile`), separate from the desktop layout, which never changes. In edit mode on a phone or tablet, the page shows as a list: each widget moves with its handle (dragged within the list) or its arrows, can go to the top, and can be hidden on phones and tablets; "Automatic order" goes back to the default. Until an order is chosen, pages read column by column, as they are built on desktop (a wide widget with nothing beside it ends the columns above it).
+- **Tablets** (700 to 1,000 px of page width) show two columns in that order, each widget going into the shorter one.
+
 - Settings → **Media** replaces Wallpaper and keeps it, and adds the logo and icon library: import, where each file is used (services, secondary links, header), copy its address, delete (with a warning when still in use), filter the unused ones.
 - Settings → **Tasks and backups**: the background tasks (machine readings, service pings, 24 h history save, backups) with their state, last run and rhythm. Machine readings (dashboard open / nobody watching) and pings can be slowed down or sped up. Backups of the whole data folder as a `.tar.gz` (same layout as `npm run data:backup`, restorable with `npm run data:restore`): back up now, automatic daily or weekly backups keeping the last 3 to 30 (manual ones are never removed), download and delete. Admins only; off in the public demo.
 - Settings → **Help**: the documentation by topic in the interface language, and where to report a problem.
@@ -142,6 +145,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Settings → Pages creates a page, either blank or as a copy of an official page.
 
 ### Changed
+
+- On phones, settings take the whole screen and dialogs rise from the bottom as sheets; buttons in dialogs keep a 40 px touch height. The mobile menu's Edit button now closes the menu.
 
 - Settings → Tasks and backups is laid out like the Integrations page: one row per task (name with ⓘ, state, last run and result, rhythm), a backup plan card (automatic schedule, number kept, next backup), the saved backups, and a restore box in three steps. A task where some machines or services did not answer shows "Partial" (orange) instead of "Problem", which is kept for a task that failed.
 

@@ -585,7 +585,7 @@ export default function Header(props: HeaderProps) {
               </button>
               {user?.role === 'admin' && (
                 <>
-                  <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={props.onToggleEdit} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
+                  <button className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`} onClick={() => { props.onToggleEdit(); setMobileMenuOpen(false); }} style={{ flexDirection: 'column', height: 'auto', padding: '12px 4px', gap: 6 }}>
                     <Pencil size={18} />
                     <span style={{ fontSize: '0.75rem' }}>{t("Éditer")}</span>
                   </button>
