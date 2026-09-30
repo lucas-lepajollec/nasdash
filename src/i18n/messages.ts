@@ -16,6 +16,9 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "pages.mobile.editNote": "Arrows and the eye only change phones and tablets; the desktop layout stays.",
+  "pages.mobile.widgets": "Widgets",
+  "pages.mobile.list": "List",
   "pages.mobile.position": "{position}. {name}",
   "pages.mobile.title": "Mobile order",
   "pages.mobile.hint": "Phones show one column and tablets two, in this order. The desktop layout does not change. Hidden widgets stay on desktop.",
@@ -888,6 +891,9 @@ const en: Dictionary = {
 };
 
 const fr: Dictionary = {
+  "pages.mobile.editNote": "Les flèches et l’œil ne changent que le téléphone et la tablette ; la disposition desktop ne bouge pas.",
+  "pages.mobile.widgets": "Widgets",
+  "pages.mobile.list": "Liste",
   "pages.mobile.position": "{position}. {name}",
   "pages.mobile.title": "Ordre mobile",
   "pages.mobile.hint": "Le téléphone affiche une colonne et la tablette deux, dans cet ordre. La disposition desktop ne change pas. Les widgets masqués restent sur desktop.",
@@ -1760,6 +1766,9 @@ const fr: Dictionary = {
 };
 
 const es: Dictionary = {
+  "pages.mobile.editNote": "Las flechas y el ojo solo cambian el móvil y la tableta; el diseño de escritorio no cambia.",
+  "pages.mobile.widgets": "Widgets",
+  "pages.mobile.list": "Lista",
   "pages.mobile.position": "{position}. {name}",
   "pages.mobile.title": "Orden móvil",
   "pages.mobile.hint": "El móvil muestra una columna y la tableta dos, en este orden. El diseño de escritorio no cambia. Los widgets ocultos siguen en escritorio.",
@@ -2632,6 +2641,9 @@ const es: Dictionary = {
 };
 
 const de: Dictionary = {
+  "pages.mobile.editNote": "Pfeile und Auge ändern nur Handy und Tablet; das Desktop-Layout bleibt.",
+  "pages.mobile.widgets": "Widgets",
+  "pages.mobile.list": "Liste",
   "pages.mobile.position": "{position}. {name}",
   "pages.mobile.title": "Mobile Reihenfolge",
   "pages.mobile.hint": "Das Handy zeigt eine Spalte, das Tablet zwei, in dieser Reihenfolge. Das Desktop-Layout bleibt unverändert. Ausgeblendete Widgets bleiben auf dem Desktop.",
