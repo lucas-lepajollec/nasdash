@@ -3600,3 +3600,30 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
   .ndc-set-row-control:has(> .ndc-slider) > .ndc-slider { flex: 1; width: 100%; }
   .ndc-set-row-control .ndc-slider input[type="range"] { flex: 1; width: auto; min-width: 0; }
 }
+
+/* Home: first steps (admins) or a welcome card (visitors, dashboard not set up). */
+.nd-start { margin: 0 0 20px; padding: 18px 20px; border: 1px solid var(--ndc-surface-line, var(--nd-card-border)); border-radius: var(--nd-card-radius); background: var(--ndc-surface, var(--nd-card-bg)); }
+.nd-start-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.nd-start-title { margin: 0; font-size: 1rem; font-weight: 500; color: var(--nd-text); }
+.nd-start-text { margin: 4px 0 0; font-size: 0.74rem; color: var(--nd-text-muted); line-height: 1.5; }
+.nd-start-bar { height: 3px; margin: 14px 0 6px; border-radius: 2px; background: var(--nd-progress-bg); overflow: hidden; }
+.nd-start-bar > span { display: block; height: 100%; background: var(--nd-accent); transition: width 0.3s ease; }
+.nd-start-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(380px, 100%), 1fr)); gap: 0 28px; }
+.nd-start-step { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--nd-card-border); min-width: 0; }
+.nd-start-mark { width: 26px; height: 26px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--nd-card-border); font-size: 0.72rem; color: var(--nd-text-muted); }
+.nd-start-step.is-next .nd-start-mark { border-color: var(--nd-accent); color: var(--nd-accent); }
+.nd-start-step.is-done .nd-start-mark { border-color: transparent; background: color-mix(in srgb, var(--nd-green) 16%, transparent); color: var(--nd-green); }
+.nd-start-step-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.nd-start-step-title { display: inline-flex; align-items: center; gap: 2px; flex: 1; min-width: 0; font-size: 0.82rem; color: var(--nd-text); }
+.nd-start-step.is-done .nd-start-step-title { color: var(--nd-text-muted); }
+.nd-start-step-desc { font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.4; }
+.nd-start-action { flex-shrink: 0; height: 30px; gap: 6px; font-size: 0.72rem; }
+.nd-start-step.is-done .nd-start-action { opacity: 0.7; }
+.nd-start--visitor { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.nd-start-login { gap: 6px; text-decoration: none; }
+button.ndc-help-card { font: inherit; text-align: left; background: transparent; cursor: pointer; width: 100%; }
+@media (max-width: 600px) {
+  .nd-start { padding: 16px; }
+  .nd-start-action { width: 36px; padding: 0; justify-content: center; }
+  .nd-start-action-label { display: none; }
+}

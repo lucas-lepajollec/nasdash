@@ -409,6 +409,8 @@ export interface DashboardConfig {
     /** Soft edges (px): surfaces fade into the page instead of ending on a hard line. */
     softEdges?: number;
     emojiTheme?: string;
+    /** The Home page's first steps were closed by an admin. */
+    onboardingDismissed?: boolean;
     /** Rhythms of the background tasks and the backup schedule (Settings → Tasks). */
     tasks?: {
       monitoringSeconds?: number;
