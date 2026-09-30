@@ -3303,3 +3303,20 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   left: calc(var(--nd-hold-x) * var(--gs-column-width)) !important;
   top: calc(var(--nd-hold-y) * var(--gs-cell-height)) !important;
 }
+
+/* Phones and tablets read the page in its phone order (page.mobile). */
+.nd-page-grid.nd-page-grid--narrow > .grid-stack-item.nd-page-item--mobile-hidden { display: none !important; }
+/* Tablets: two columns, places computed by the page (shorter column first). */
+.nd-page-grid.nd-page-grid--narrow.nd-page-grid--tablet {
+  display: block;
+  position: relative;
+  height: var(--nd-tablet-height, auto) !important;
+}
+.nd-page-grid.nd-page-grid--narrow.nd-page-grid--tablet > .grid-stack-item {
+  position: absolute !important;
+  top: var(--nd-tablet-top, 0) !important;
+  left: calc(var(--nd-tablet-column, 0) * (50% + 8px)) !important;
+  width: calc(50% - 8px) !important;
+}
+/* Editing on a phone or tablet: the order list replaces the widgets. */
+.nd-page-grid.nd-page-grid--reordering { display: none !important; }

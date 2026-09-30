@@ -129,7 +129,7 @@ function validateWidget(value: unknown, path: string): WidgetInstance {
 export function validatePage(value: unknown, path = 'page'): Page {
   const page = plainObject(value, path);
   // `fitPending` was written by a short-lived development version; it is ignored.
-  onlyKeys(page, ['id', 'name', 'icon', 'description', 'preset', 'revision', 'fitPending', 'widgets'], path);
+  onlyKeys(page, ['id', 'name', 'icon', 'description', 'preset', 'revision', 'fitPending', 'widgets', 'mobile'], path);
   const id = identifier(page.id, `${path}.id`);
   const name = text(page.name, `${path}.name`, PAGE_LIMITS.nameLength, true)!;
   const icon = text(page.icon, `${path}.icon`, PAGE_LIMITS.iconLength, false) ?? '';
@@ -146,13 +146,32 @@ export function validatePage(value: unknown, path = 'page'): Page {
     if (ids.has(widget.id)) fail(path, `widget dupliqué « ${widget.id} »`);
     ids.add(widget.id);
   }
+  const mobile = page.mobile === undefined ? undefined : validateMobileLayout(page.mobile, `${path}.mobile`, ids);
   return {
     id, name, icon,
     ...(description ? { description } : {}),
     ...(page.preset ? { preset: page.preset as Page['preset'] } : {}),
     revision,
     widgets,
+    ...(mobile ? { mobile } : {}),
   };
+}
+
+/** Phone order and hidden widgets: ids of this page only (others are dropped), no duplicates. */
+function validateMobileLayout(value: unknown, path: string, widgetIds: Set<string>): Page['mobile'] {
+  const layout = plainObject(value, path);
+  onlyKeys(layout, ['order', 'hidden'], path);
+  const list = (items: unknown, key: string) => {
+    if (items === undefined) return undefined;
+    if (!Array.isArray(items)) fail(`${path}.${key}`, 'liste attendue');
+    if (items.length > PAGE_LIMITS.widgetsPerPage * 2) fail(`${path}.${key}`, 'trop d’éléments', 413);
+    const ids = items.map((item, index) => identifier(item, `${path}.${key}[${index}]`));
+    return [...new Set(ids)].filter(id => widgetIds.has(id));
+  };
+  const order = list(layout.order, 'order');
+  const hidden = list(layout.hidden, 'hidden');
+  if (!order?.length && !hidden?.length) return undefined;
+  return { ...(order?.length ? { order } : {}), ...(hidden?.length ? { hidden } : {}) };
 }
 
 export function validatePagesDocument(value: unknown): PagesDocument {
