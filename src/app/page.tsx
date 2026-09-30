@@ -19,6 +19,7 @@ import { PageView, type LibraryTarget } from '@/components/pages/PageView';
 import { PageEditorBar } from '@/components/pages/PageEditorBar';
 import { WidgetLibraryModal } from '@/components/pages/WidgetLibraryModal';
 import { usePages } from '@/providers/PagesProvider';
+import { PageFooter } from '@/components/layout/PageFooter';
 import { insertWidget, newWidgetInstance, removeWidget } from '@/lib/pages/operations';
 
 export default function Shell() {
@@ -181,6 +182,7 @@ export default function Shell() {
             </div>
           ))}
         </div>
+        <PageFooter showSecretSections={showSecretSections} onToggleSecretSections={() => setShowSecretSections(prev => !prev)} />
       </div>
 
       {settingsModal.open && user?.role === 'admin' && (

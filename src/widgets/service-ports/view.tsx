@@ -1,8 +1,8 @@
-import { useConfig } from '@/hooks/useConfig';
+import { useVisibleCategories } from '@/hooks/useVisibleCategories';
 import type { WidgetViewProps } from '../types';
 import CalmeServicePorts from './CalmeServicePorts';
 
-export default function ServicePortsView({ editMode, showSensitive, onToggleSecretSections }: WidgetViewProps) {
-  const { config } = useConfig();
-  return <CalmeServicePorts categories={config?.categories || []} showSensitive={showSensitive} onToggleSecretSections={onToggleSecretSections} editMode={editMode} />;
+export default function ServicePortsView({ editMode, showSensitive }: WidgetViewProps) {
+  const categories = useVisibleCategories();
+  return <CalmeServicePorts categories={categories} showSensitive={showSensitive} editMode={editMode} />;
 }

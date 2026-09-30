@@ -1,0 +1,515 @@
+{
+  "schemaVersion": 5,
+  "pages": [
+    {
+      "id": "dashboard",
+      "name": "Home",
+      "icon": "🏠",
+      "description": "Services & monitoring",
+      "preset": "dashboard",
+      "revision": 1,
+      "widgets": [
+        {
+          "id": "clock-demo",
+          "type": "clock",
+          "settings": {},
+          "x": 0,
+          "y": 0,
+          "w": 3,
+          "h": 47
+        },
+        {
+          "id": "devices-demo",
+          "type": "devices",
+          "settings": {
+            "deviceConfigs": {
+              "demo-device-1": {
+                "statStyle": "vertical",
+                "colsDesktop": 2,
+                "colsMobile": 2,
+                "hideValues": false,
+                "visibleStats": [
+                  "CPU",
+                  "RAM",
+                  "Disque (Données)",
+                  "Disque (Système)"
+                ],
+                "enableAlerts": false,
+                "coloredGraphs": true
+              },
+              "demo-device-2": {
+                "statStyle": "graph",
+                "colsDesktop": 2,
+                "colsMobile": 2,
+                "hideValues": false,
+                "visibleStats": [
+                  "CPU",
+                  "RAM",
+                  "Disque (Stockage)",
+                  "GPU"
+                ],
+                "enableAlerts": false,
+                "coloredGraphs": true
+              }
+            },
+            "selectedDeviceIds": [
+              "demo-device-1",
+              "demo-device-2",
+              "demo-device-4"
+            ]
+          },
+          "x": 0,
+          "y": 47,
+          "w": 3,
+          "h": 332
+        },
+        {
+          "id": "home-cat-category-media",
+          "type": "service-category",
+          "settings": {
+            "categoryId": "category-media"
+          },
+          "x": 3,
+          "y": 0,
+          "w": 5,
+          "h": 91
+        },
+        {
+          "id": "home-cat-category-infrastructure",
+          "type": "service-category",
+          "settings": {
+            "categoryId": "category-infrastructure"
+          },
+          "x": 8,
+          "y": 0,
+          "w": 5,
+          "h": 95
+        },
+        {
+          "id": "home-cat-category-automation",
+          "type": "service-category",
+          "settings": {
+            "categoryId": "category-automation"
+          },
+          "x": 13,
+          "y": 0,
+          "w": 4,
+          "h": 91
+        },
+        {
+          "id": "home-cat-category-library-automation",
+          "type": "service-category",
+          "settings": {
+            "categoryId": "category-library-automation"
+          },
+          "x": 17,
+          "y": 0,
+          "w": 4,
+          "h": 108
+        },
+        {
+          "id": "home-cat-category-network",
+          "type": "service-category",
+          "settings": {
+            "categoryId": "category-network"
+          },
+          "x": 3,
+          "y": 91,
+          "w": 5,
+          "h": 83
+        },
+        {
+          "id": "quickstats-demo",
+          "type": "quickstats",
+          "settings": {},
+          "x": 21,
+          "y": 0,
+          "w": 3,
+          "h": 52
+        },
+        {
+          "id": "calendar-demo",
+          "type": "calendar",
+          "settings": {},
+          "x": 21,
+          "y": 52,
+          "w": 3,
+          "h": 87
+        },
+        {
+          "id": "weather-demo",
+          "type": "weather",
+          "settings": {},
+          "x": 21,
+          "y": 139,
+          "w": 3,
+          "h": 79
+        },
+        {
+          "id": "network-demo",
+          "type": "networkgraph",
+          "settings": {},
+          "x": 0,
+          "y": 379,
+          "w": 24,
+          "h": 59
+        },
+        {
+          "id": "home-service-ports",
+          "type": "service-ports",
+          "settings": {},
+          "x": 0,
+          "y": 438,
+          "w": 24,
+          "h": 27
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "icon": "🐳",
+      "description": "Conteneurs & images",
+      "preset": "docker",
+      "revision": 1,
+      "widgets": [
+        {
+          "id": "docker-hosts",
+          "type": "docker-hosts",
+          "settings": {},
+          "x": 0,
+          "y": 0,
+          "w": 5,
+          "h": 32
+        },
+        {
+          "id": "docker-summary",
+          "type": "docker-summary",
+          "settings": {},
+          "x": 0,
+          "y": 32,
+          "w": 5,
+          "h": 24
+        },
+        {
+          "id": "docker-container-list",
+          "type": "docker-container-list",
+          "settings": {},
+          "x": 0,
+          "y": 56,
+          "w": 5,
+          "h": 144
+        },
+        {
+          "id": "docker-explorer",
+          "type": "docker-explorer",
+          "settings": {},
+          "x": 5,
+          "y": 0,
+          "w": 16,
+          "h": 164
+        },
+        {
+          "id": "docker-containers-demo",
+          "type": "dockercontainers",
+          "settings": {
+            "autoScroll": true,
+            "itemsPerPage": 4
+          },
+          "x": 21,
+          "y": 0,
+          "w": 3,
+          "h": 84
+        },
+        {
+          "id": "docker-actions-demo",
+          "type": "dockeractions",
+          "settings": {},
+          "x": 21,
+          "y": 84,
+          "w": 3,
+          "h": 54
+        }
+      ]
+    },
+    {
+      "id": "networks",
+      "name": "Réseaux",
+      "icon": "📶",
+      "description": "Cartographie & outils réseau",
+      "preset": "networks",
+      "revision": 1,
+      "widgets": [
+        {
+          "id": "networks-tools",
+          "type": "network-tools",
+          "settings": {},
+          "x": 0,
+          "y": 0,
+          "w": 5,
+          "h": 159
+        },
+        {
+          "id": "networks-topology",
+          "type": "network-topology",
+          "settings": {},
+          "x": 5,
+          "y": 0,
+          "w": 16,
+          "h": 194
+        },
+        {
+          "id": "networkgraph-networks-demo",
+          "type": "networkgraph",
+          "settings": {},
+          "x": 21,
+          "y": 0,
+          "w": 3,
+          "h": 59
+        }
+      ]
+    },
+    {
+      "id": "widgets",
+      "name": "Widgets",
+      "icon": "lucide:LayoutGrid",
+      "description": "Grille de widgets fluide",
+      "preset": "widgets",
+      "revision": 1,
+      "widgets": [
+        {
+          "id": "widgets-devices",
+          "type": "devices",
+          "settings": {
+            "deviceConfigs": {
+              "demo-device-1": {
+                "statStyle": "vertical",
+                "colsDesktop": 2,
+                "colsMobile": 2,
+                "hideValues": false,
+                "visibleStats": [
+                  "CPU",
+                  "RAM",
+                  "Disque (Données)",
+                  "Disque (Système)"
+                ],
+                "enableAlerts": false,
+                "coloredGraphs": true
+              },
+              "demo-device-2": {
+                "statStyle": "graph",
+                "colsDesktop": 2,
+                "colsMobile": 2,
+                "hideValues": false,
+                "visibleStats": [
+                  "CPU",
+                  "RAM",
+                  "Disque (Stockage)",
+                  "GPU"
+                ],
+                "enableAlerts": false,
+                "coloredGraphs": true
+              }
+            }
+          },
+          "x": 0,
+          "y": 0,
+          "w": 5,
+          "h": 332
+        },
+        {
+          "id": "widgets-quickstats",
+          "type": "quickstats",
+          "settings": {},
+          "x": 5,
+          "y": 0,
+          "w": 5,
+          "h": 52
+        },
+        {
+          "id": "widgets-tailscale",
+          "type": "tailscale",
+          "hidden": true,
+          "settings": {},
+          "x": 10,
+          "y": 0,
+          "w": 5,
+          "h": 79
+        },
+        {
+          "id": "widgets-dockeractions",
+          "type": "dockeractions",
+          "settings": {},
+          "x": 15,
+          "y": 0,
+          "w": 5,
+          "h": 54
+        },
+        {
+          "id": "widgets-clock",
+          "type": "clock",
+          "settings": {},
+          "x": 20,
+          "y": 0,
+          "w": 4,
+          "h": 47
+        },
+        {
+          "id": "widgets-calendar",
+          "type": "calendar",
+          "settings": {},
+          "x": 0,
+          "y": 332,
+          "w": 5,
+          "h": 87
+        },
+        {
+          "id": "widgets-weather",
+          "type": "weather",
+          "settings": {},
+          "x": 5,
+          "y": 52,
+          "w": 5,
+          "h": 79
+        },
+        {
+          "id": "widgets-networkgraph",
+          "type": "networkgraph",
+          "settings": {},
+          "x": 10,
+          "y": 79,
+          "w": 5,
+          "h": 59
+        },
+        {
+          "id": "widgets-dockercontainers",
+          "type": "dockercontainers",
+          "settings": {},
+          "x": 15,
+          "y": 54,
+          "w": 5,
+          "h": 84
+        }
+      ]
+    },
+    {
+      "id": "custom_demo-machines",
+      "name": "Machines",
+      "icon": "🖥️",
+      "description": "Every machine, its measures and its history",
+      "revision": 1,
+      "widgets": [
+        {
+          "id": "machines-fleet",
+          "type": "devices",
+          "settings": {},
+          "x": 0,
+          "y": 0,
+          "w": 8,
+          "h": 90
+        },
+        {
+          "id": "machines-orion",
+          "type": "device",
+          "settings": {
+            "deviceId": "demo-device-2"
+          },
+          "x": 8,
+          "y": 0,
+          "w": 8,
+          "h": 120
+        },
+        {
+          "id": "machines-nova",
+          "type": "device",
+          "settings": {
+            "deviceId": "demo-device-4"
+          },
+          "x": 16,
+          "y": 0,
+          "w": 8,
+          "h": 120
+        },
+        {
+          "id": "machines-cpu",
+          "type": "metric-cpu",
+          "settings": {
+            "display": "chart",
+            "chartStyle": "area",
+            "range": "1h"
+          },
+          "x": 0,
+          "y": 120,
+          "w": 12,
+          "h": 60
+        },
+        {
+          "id": "machines-temperature",
+          "type": "metric-temperature",
+          "settings": {},
+          "x": 12,
+          "y": 120,
+          "w": 6,
+          "h": 60
+        },
+        {
+          "id": "machines-gpu",
+          "type": "metric-gpu",
+          "settings": {},
+          "x": 18,
+          "y": 120,
+          "w": 6,
+          "h": 60
+        },
+        {
+          "id": "machines-storage",
+          "type": "storage",
+          "settings": {},
+          "x": 0,
+          "y": 180,
+          "w": 12,
+          "h": 70
+        },
+        {
+          "id": "machines-network",
+          "type": "metric-network",
+          "settings": {
+            "display": "chart",
+            "chartStyle": "line"
+          },
+          "x": 12,
+          "y": 180,
+          "w": 12,
+          "h": 60
+        }
+      ]
+    },
+    {
+      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
+      "name": "Calendrier",
+      "icon": "lucide:Calendar",
+      "description": "Agenda fictif du laboratoire de démonstration",
+      "revision": 1,
+      "widgets": [
+        {
+          "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2-w1",
+          "type": "clock",
+          "settings": {},
+          "x": 0,
+          "y": 0,
+          "w": 24,
+          "h": 47
+        },
+        {
+          "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2-w2",
+          "type": "calendar",
+          "settings": {},
+          "x": 0,
+          "y": 47,
+          "w": 24,
+          "h": 87
+        }
+      ]
+    }
+  ]
+}

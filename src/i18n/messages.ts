@@ -16,6 +16,8 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "demo.themes": "Try a theme",
+  "pages.library.secret": "secret",
   "start.title": "Getting started",
   "start.progress": "{done} of {total} steps done",
   "start.dismiss": "Hide the first steps (Settings → Help brings them back)",
@@ -330,7 +332,7 @@ const en: Dictionary = {
   'category.calme.logosMedium': "Medium logos",
   'category.calme.logosSmall': "Small logos",
   'category.calme.secret': "Secret section",
-  'category.calme.secretInfo': "Only shown when hidden categories are revealed (signature of the ports widget).",
+  'category.calme.secretInfo': "Only shown when hidden categories are revealed (the signature at the bottom of the page).",
   'device.calme.description': "System or description",
   'docker.calme.switch': "Toggle",
   'docker.calme.switchInfo': "Toggle: stops the containers if most of them run, starts them otherwise.",
@@ -875,8 +877,8 @@ const en: Dictionary = {
   'settings.services.nav': 'Services',
   'widget.serviceCategory.name': 'Service category',
   'widget.serviceCategory.description': 'A category of services with its links and status.',
-  'widget.servicePorts.name': 'Ports & signature',
-  'widget.servicePorts.description': 'Ports used by your services, with the dashboard signature.',
+  'widget.servicePorts.name': 'Ports',
+  'widget.servicePorts.description': 'Ports used by your services.',
   'widget.quickstats.name': 'Overview',
   'widget.quickstats.description': 'Quick summary: services, categories, open ports and status.',
   'widget.devices.name': 'Devices',
@@ -917,6 +919,8 @@ const en: Dictionary = {
 };
 
 const fr: Dictionary = {
+  "demo.themes": "Essayez un thème",
+  "pages.library.secret": "secrète",
   "start.title": "Premiers pas",
   "start.progress": "{done} étapes sur {total} faites",
   "start.dismiss": "Masquer les premiers pas (Réglages → Aide les réaffiche)",
@@ -1231,7 +1235,7 @@ const fr: Dictionary = {
   'category.calme.logosMedium': "Logos moyens",
   'category.calme.logosSmall': "Petits logos",
   'category.calme.secret': "Section secrète",
-  'category.calme.secretInfo': "Visible seulement quand les catégories cachées sont révélées (signature du widget des ports).",
+  'category.calme.secretInfo': "Visible seulement quand les catégories cachées sont révélées (la signature en bas de page).",
   'device.calme.description': "Système ou description",
   'docker.calme.switch': "Basculer",
   'docker.calme.switchInfo': "Basculer : arrête les conteneurs si la plupart tournent, sinon les démarre.",
@@ -1776,8 +1780,8 @@ const fr: Dictionary = {
   'settings.services.nav': 'Services',
   'widget.serviceCategory.name': 'Catégorie de services',
   'widget.serviceCategory.description': 'Une catégorie de services avec ses liens et leur état.',
-  'widget.servicePorts.name': 'Ports & signature',
-  'widget.servicePorts.description': 'Ports utilisés par vos services, avec la signature du dashboard.',
+  'widget.servicePorts.name': 'Ports',
+  'widget.servicePorts.description': 'Ports utilisés par vos services.',
   'widget.quickstats.name': 'Vue d’ensemble',
   'widget.quickstats.description': 'Résumé rapide : services, catégories, ports ouverts et statuts.',
   'widget.devices.name': 'Appareils',
@@ -1818,6 +1822,8 @@ const fr: Dictionary = {
 };
 
 const es: Dictionary = {
+  "demo.themes": "Prueba un tema",
+  "pages.library.secret": "secreta",
   "start.title": "Primeros pasos",
   "start.progress": "{done} de {total} pasos hechos",
   "start.dismiss": "Ocultar los primeros pasos (Ajustes → Ayuda los vuelve a mostrar)",
@@ -2677,8 +2683,8 @@ const es: Dictionary = {
   'settings.services.nav': 'Servicios',
   'widget.serviceCategory.name': 'Categoría de servicios',
   'widget.serviceCategory.description': 'Una categoría de servicios con sus enlaces y estado.',
-  'widget.servicePorts.name': 'Puertos y firma',
-  'widget.servicePorts.description': 'Puertos usados por tus servicios, con la firma del panel.',
+  'widget.servicePorts.name': 'Puertos',
+  'widget.servicePorts.description': 'Puertos usados por tus servicios.',
   'widget.quickstats.name': 'Resumen',
   'widget.quickstats.description': 'Resumen rápido: servicios, categorías, puertos abiertos y estados.',
   'widget.devices.name': 'Dispositivos',
@@ -2719,6 +2725,8 @@ const es: Dictionary = {
 };
 
 const de: Dictionary = {
+  "demo.themes": "Probiere ein Thema",
+  "pages.library.secret": "geheim",
   "start.title": "Erste Schritte",
   "start.progress": "{done} von {total} Schritten erledigt",
   "start.dismiss": "Erste Schritte ausblenden (Einstellungen → Hilfe zeigt sie wieder)",
@@ -3578,8 +3586,8 @@ const de: Dictionary = {
   'settings.services.nav': 'Dienste',
   'widget.serviceCategory.name': 'Dienstkategorie',
   'widget.serviceCategory.description': 'Eine Dienstkategorie mit Links und Status.',
-  'widget.servicePorts.name': 'Ports & Signatur',
-  'widget.servicePorts.description': 'Von deinen Diensten genutzte Ports mit der Dashboard-Signatur.',
+  'widget.servicePorts.name': 'Ports',
+  'widget.servicePorts.description': 'Von deinen Diensten genutzte Ports.',
   'widget.quickstats.name': 'Übersicht',
   'widget.quickstats.description': 'Kurzübersicht: Dienste, Kategorien, offene Ports und Status.',
   'widget.devices.name': 'Geräte',

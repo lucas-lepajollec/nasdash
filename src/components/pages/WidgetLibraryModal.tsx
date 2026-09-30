@@ -10,6 +10,7 @@ import { firstFreePlacement, insertWidget, newWidgetInstance, placementProblem, 
 import { WIDGET_CATALOG, WIDGET_GROUP_ORDER, type WidgetCatalogEntry } from '@/lib/widgets/catalog';
 import { usePages } from '@/providers/PagesProvider';
 import { Emoji } from '../shared/Emoji';
+import { useVisibleCategories } from '@/hooks/useVisibleCategories';
 import { useWidgetName, type LibraryTarget } from './PageView';
 
 /**
@@ -36,6 +37,7 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
   const page = getPage(target.pageId);
   const [query, setQuery] = useState('');
   const widgetName = useWidgetName();
+  const visibleCategories = useVisibleCategories();
   const pagesDocument = useMemo(() => ({ pages: pages.map(candidate => getPage(candidate.id) ?? candidate) }), [getPage, pages]);
 
   if (!page) return null;
@@ -68,9 +70,11 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
     placementProblem(pagesDocument, page, entry.type) ? t('pages.library.alreadyPlaced') : null
   );
 
+
   const categoryEntry = WIDGET_CATALOG.find(entry => entry.type === 'service-category')!;
   const onThisPage = new Set(page.widgets.filter(widget => widget.type === 'service-category').map(widget => widget.settings.categoryId));
-  const categories = (config?.categories ?? [])
+  // Secret categories are only offered while secret sections are revealed.
+  const categories = visibleCategories
     .filter(category => matches(t(category.title)))
     .sort((a, b) => a.order - b.order);
   const groups = WIDGET_GROUP_ORDER.map(group => ({
@@ -119,7 +123,7 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
                   <button key={category.id} type="button" className="nd-page-library-card" disabled={!!unavailable(categoryEntry)} onClick={() => add(categoryEntry, { categoryId: category.id })}>
                     <span className="nd-page-library-card-icon"><Emoji emoji={category.emoji} /></span>
                     <span className="nd-page-library-card-text">
-                      <strong>{t(category.title)}</strong>
+                      <strong>{t(category.title)}{category.isSecret && <span className="ndc-tag" style={{ marginLeft: 6 }}>{t('pages.library.secret')}</span>}</strong>
                       <span>{onThisPage.has(category.id) ? t('pages.library.onThisPage') : t('pages.library.serviceCount', { count: category.services.length })}</span>
                     </span>
                   </button>

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRollingDemoCalendar } from './demoCalendar';
+import { validatePagesDocument } from './pages/validation';
 import { DEMO_DOCKER_SERVICES } from './demoDockerFixtures';
 
 const fixturesDirectory = path.join(process.cwd(), 'demo', 'fixtures');
@@ -12,6 +13,7 @@ const fixtureNames = [
   'calendar.json',
   'custom_tabs.json',
   'users.json',
+  'pages.json',
 ];
 
 describe('public demo fixtures', () => {
@@ -58,7 +60,7 @@ describe('public demo fixtures', () => {
       .find((widget: { type: string }) => widget.type === 'devices')
       .props.deviceConfigs;
 
-    expect(devices).toHaveLength(2);
+    expect(devices).toHaveLength(5);
     expect(devices.every(device => Boolean(device.system))).toBe(true);
     expect(widgetConfigs['demo-device-1']).toMatchObject({
       statStyle: 'vertical',
@@ -88,11 +90,13 @@ describe('public demo fixtures', () => {
     ]);
   });
 
-  it('generates one calendar event in the future for every demo session', () => {
+  it('generates a month of future calendar events for every demo session', () => {
     const now = new Date('2026-08-11T12:00:00.000Z');
     const events = createRollingDemoCalendar(now);
 
-    expect(events).toHaveLength(1);
+    expect(events.length).toBeGreaterThanOrEqual(5);
+    expect(new Set(events.map(event => event.id)).size).toBe(events.length);
+    expect(events.every(event => new Date(event.start).getTime() > now.getTime())).toBe(true);
     expect(new Date(events[0].start).getTime()).toBeGreaterThan(now.getTime());
     expect(new Date(events[0].end!).getTime()).toBeGreaterThan(new Date(events[0].start).getTime());
   });
@@ -104,13 +108,26 @@ describe('public demo fixtures', () => {
     expect(createRollingDemoCalendar()).toEqual(createRollingDemoCalendar(new Date(reference)));
   });
 
+  it('ships valid demo pages, with a Machines page on the real demo devices', () => {
+    const document = validatePagesDocument(JSON.parse(fs.readFileSync(path.join(fixturesDirectory, 'pages.json'), 'utf8')));
+    const config = JSON.parse(fs.readFileSync(path.join(fixturesDirectory, 'config.json'), 'utf8')) as { devices: Array<{ id: string }>; settings: { tabOrder: string[] } };
+    const deviceIds = new Set(config.devices.map(device => device.id));
+    const machines = document.pages.find(page => page.id === 'custom_demo-machines');
+    expect(machines?.widgets.length).toBeGreaterThanOrEqual(6);
+    for (const widget of machines!.widgets) {
+      if (typeof widget.settings.deviceId === 'string') expect(deviceIds.has(widget.settings.deviceId)).toBe(true);
+    }
+    expect(config.settings.tabOrder).toContain('custom_demo-machines');
+    expect(document.pages.map(page => page.id)).toEqual(expect.arrayContaining(['dashboard', 'docker', 'networks', 'widgets']));
+  });
+
   it('ships a representative service catalogue with safe links and logos', () => {
     const categories = JSON.parse(
       fs.readFileSync(path.join(fixturesDirectory, 'services.json'), 'utf8'),
     ) as Array<{ services?: Array<{ id: string; localUrl: string; logo: string }> }>;
     const services = categories.flatMap(category => category.services || []);
 
-    expect(services).toHaveLength(20);
+    expect(services).toHaveLength(32);
     expect(new Set(services.map(service => service.id)).size).toBe(services.length);
     for (const service of services) {
       expect(new URL(service.localUrl).hostname).toMatch(/\.demo\.invalid$/);
@@ -163,8 +180,8 @@ describe('public demo fixtures', () => {
     const networkServiceIds = topology.nodes.flatMap(node => node.linkedServiceId ? [node.linkedServiceId] : []).sort();
     const dockerIds = new Set(DEMO_DOCKER_SERVICES.map(service => service.id));
 
-    expect(DEMO_DOCKER_SERVICES).toHaveLength(20);
-    expect(new Set(dockerServiceIds).size).toBe(20);
+    expect(DEMO_DOCKER_SERVICES).toHaveLength(32);
+    expect(new Set(dockerServiceIds).size).toBe(32);
     expect(DEMO_DOCKER_SERVICES.every(service => service.id.length === 12)).toBe(true);
     expect(dockerServiceIds).toEqual(homeServiceIds);
     expect(networkServiceIds).toEqual(homeServiceIds);

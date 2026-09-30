@@ -36,6 +36,18 @@
         "name": "MeTube",
         "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/metube.svg",
         "localUrl": "https://metube.demo.invalid"
+      },
+      {
+        "id": "service-audiobookshelf",
+        "name": "Audiobookshelf",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/audiobookshelf.svg",
+        "localUrl": "https://audiobooks.demo.invalid"
+      },
+      {
+        "id": "service-jellyseerr",
+        "name": "Jellyseerr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/jellyseerr.svg",
+        "localUrl": "https://requests.demo.invalid"
       }
     ]
   },
@@ -76,6 +88,12 @@
         "name": "Pi-hole",
         "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/pi-hole.svg",
         "localUrl": "https://pihole.demo.invalid"
+      },
+      {
+        "id": "service-grafana",
+        "name": "Grafana",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/grafana.svg",
+        "localUrl": "https://grafana.demo.invalid"
       }
     ]
   },
@@ -116,6 +134,18 @@
         "name": "IT-Tools",
         "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/it-tools.svg",
         "localUrl": "https://tools.demo.invalid"
+      },
+      {
+        "id": "service-paperless",
+        "name": "Paperless-ngx",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/paperless-ngx.svg",
+        "localUrl": "https://paperless.demo.invalid"
+      },
+      {
+        "id": "service-nextcloud",
+        "name": "Nextcloud",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/nextcloud.svg",
+        "localUrl": "https://cloud.demo.invalid"
       }
     ]
   },
@@ -156,6 +186,58 @@
         "name": "qBittorrent",
         "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/qbittorrent.svg",
         "localUrl": "https://qbittorrent.demo.invalid"
+      },
+      {
+        "id": "service-bazarr",
+        "name": "Bazarr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/bazarr.svg",
+        "localUrl": "https://bazarr.demo.invalid"
+      },
+      {
+        "id": "service-readarr",
+        "name": "Readarr",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/readarr.svg",
+        "localUrl": "https://readarr-offline.demo.invalid"
+      }
+    ]
+  },
+  {
+    "id": "category-network",
+    "title": "Réseau & sécurité",
+    "emoji": "🛡️",
+    "order": 4,
+    "layout": "standard",
+    "isSecret": false,
+    "services": [
+      {
+        "id": "service-adguard",
+        "name": "AdGuard Home",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/adguard-home.svg",
+        "localUrl": "https://adguard.demo.invalid"
+      },
+      {
+        "id": "service-npm",
+        "name": "Nginx Proxy Manager",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/nginx-proxy-manager.svg",
+        "localUrl": "https://proxy.demo.invalid"
+      },
+      {
+        "id": "service-wireguard",
+        "name": "WireGuard",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/wireguard.svg",
+        "localUrl": "https://wireguard.demo.invalid"
+      },
+      {
+        "id": "service-vaultwarden",
+        "name": "Vaultwarden",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/vaultwarden.svg",
+        "localUrl": "https://vault.demo.invalid"
+      },
+      {
+        "id": "service-authentik",
+        "name": "Authentik",
+        "logo": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/authentik.svg",
+        "localUrl": "https://auth.demo.invalid"
       }
     ]
   }

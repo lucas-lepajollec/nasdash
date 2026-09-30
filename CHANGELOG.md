@@ -150,6 +150,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- **Secret mode is respected everywhere:** the widget library only offers secret categories while they are revealed (tagged "secret"), and the Overview counts and the Ports list leave secret services out when hidden.
+- **The dashboard signature is the page footer:** "NasDash — Private dashboard" sits centred under the last widgets (at the bottom of the screen on short pages) on every page, and toggles the secret categories for admins. The Ports widget no longer carries it, and it hides itself when there is no port to list.
+- **A richer public demo:**
+  - five machines on four sources (NAS, Proxmox host, Raspberry Pi, gaming PC whose GPU crosses its danger threshold, cloud VPS);
+  - 32 services in five categories, one of them offline, each with its container and its node on the network map;
+  - a month of calendar events;
+  - a Machines page showing the device and metric widgets;
+  - "Try a theme" in the introduction (including Liquid Glass).
+
+  The first steps card is not shown in the demo, and narrow calendars keep their event titles readable.
+
 - Edit mode on phones and tablets shows the widgets with all their controls (rename, settings, remove, their own buttons) plus arrows and an eye that only change the phone order and visibility; a Widgets / List switch keeps the compact list for quick reordering. The controls sit on their own row above each widget so titles stay whole.
 - The header lines up with the widgets on phones too (it was 8 px narrower on each side).
 - Phone settings: a lone switch stays on its label's line and sliders take the full width.

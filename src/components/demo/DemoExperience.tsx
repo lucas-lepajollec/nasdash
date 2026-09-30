@@ -4,8 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CircleHelp, RotateCcw, ShieldCheck } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useConfig } from '@/hooks/useConfig';
+import { LIGHT_THEMES } from '@/lib/themes';
 
 const INTRO_KEY = 'lh-demo-intro-seen';
+/** Themes offered in the demo introduction, each with its preview colours. */
+const DEMO_THEMES = [
+  { key: 'nasdash', name: 'NasDash', swatch: 'linear-gradient(135deg, #15171c, #5fd3e6)' },
+  { key: 'liquid-glass', name: 'Liquid Glass', swatch: 'radial-gradient(circle at 25% 25%, #6d5cff, transparent 60%), radial-gradient(circle at 80% 30%, #1aa0c8, transparent 55%), radial-gradient(circle at 60% 90%, #c0408f, transparent 60%), #0b0d18' },
+  { key: 'nord', name: 'Nord', swatch: 'linear-gradient(135deg, #2e3440, #88c0d0)' },
+  { key: 'liquid-glass-light', name: 'Liquid Glass Light', swatch: 'radial-gradient(circle at 25% 25%, #c9d8ff, transparent 60%), radial-gradient(circle at 80% 30%, #ffd6ea, transparent 55%), #eef1f7' },
+];
 const LINKS = {
   site: 'https://nasdash.lucas-homelab.fr',
   docs: 'https://docs.nasdash.lucas-homelab.fr',
@@ -22,6 +31,9 @@ function readIntroSeen() {
 
 export default function DemoExperience() {
   const { t } = useI18n();
+  const { config, updateConfig } = useConfig();
+  const currentTheme = config?.settings?.theme || 'nasdash';
+  const tryTheme = (theme: string) => { void updateConfig({ theme, mode: LIGHT_THEMES.includes(theme) ? 'light' : 'dark' }); };
   const [mounted, setMounted] = useState(false);
   const [isGuideOpen, setGuideOpen] = useState(false);
   const [announcement, setAnnouncement] = useState('');
@@ -129,6 +141,18 @@ export default function DemoExperience() {
                 <p>{card.text}</p>
               </div>
             ))}
+          </div>
+
+          <div className="lh-demo-themes">
+            <h3>{t('demo.themes')}</h3>
+            <div className="lh-demo-theme-list" role="radiogroup" aria-label={t('demo.themes')}>
+              {DEMO_THEMES.map(theme => (
+                <button key={theme.key} type="button" role="radio" aria-checked={currentTheme === theme.key} className="lh-demo-theme" onClick={() => tryTheme(theme.key)}>
+                  <span className="lh-demo-theme-swatch" style={{ background: theme.swatch }} aria-hidden="true" />
+                  {theme.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           <p className="lh-demo-limits">{t('demo.limits')}</p>

@@ -39,7 +39,8 @@ export function GettingStarted() {
   const { t } = useI18n();
   const { config, user, updateConfig, setCategoryModal, setSettingsModal } = useConfig();
   const { openIntegrations, openMachines } = useOpenSettings();
-  if (!config) return null;
+  // The public demo is already set up: its visitors explore, they do not install.
+  if (!config || config.demoMode) return null;
 
   if (user?.role !== 'admin') {
     if (!isUnconfigured(config) || user) return null;
