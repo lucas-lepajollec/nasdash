@@ -52,6 +52,8 @@ export function taskSettings(config: Pick<DashboardConfig, 'settings'> | null | 
 export interface TaskRun {
   at: number;
   ok: boolean;
+  /** It ran, but some machines or services did not answer. */
+  partial?: boolean;
   /** A short note: what was done, or why it failed (never a secret). */
   note?: string;
   durationMs?: number;

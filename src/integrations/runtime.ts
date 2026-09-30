@@ -128,7 +128,7 @@ async function pollAll() {
       else offline++;
     }));
     pruneHistory(devices.map(device => device.id));
-    recordTaskRun('device-monitoring', { ok: offline === 0, note: `${devices.length - offline}/${devices.length}`, durationMs: Date.now() - started });
+    recordTaskRun('device-monitoring', { ok: true, partial: offline > 0, note: `${devices.length - offline}/${devices.length}`, durationMs: Date.now() - started });
     if (saveHistory()) recordTaskRun('history-save', { ok: true });
   } catch (error) {
     recordTaskRun('device-monitoring', { ok: false, note: error instanceof Error ? error.message : String(error), durationMs: Date.now() - started });

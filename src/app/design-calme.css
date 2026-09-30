@@ -3446,15 +3446,52 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .ndc-media-actions { display: inline-flex; gap: 2px; flex-shrink: 0; }
 .ndc-icon-button.ndc-danger:hover { color: var(--nd-red); }
 
-/* Settings → Tasks. */
-.ndc-task-label { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.ndc-task-rhythms { display: flex; flex-wrap: wrap; gap: 10px 16px; }
-.ndc-task-rhythm { display: inline-flex; align-items: center; gap: 8px; font-size: 0.72rem; color: var(--nd-text-muted); }
-.ndc-task-rhythm > :last-child { width: 130px; }
-.ndc-backups { margin-top: 8px; }
-.ndc-backup { display: flex; align-items: center; gap: 6px; }
-.ndc-backup-text { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 2px; font-size: 0.76rem; color: var(--nd-text); }
-.ndc-set-note-muted { margin: 12px 0 0; font-size: 0.7rem; line-height: 1.5; color: var(--nd-text-muted); }
+/* Settings → Tasks and backups. */
+.ndc-tasks, .ndc-backups { list-style: none; margin: 0; padding: 0; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
+.ndc-task {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-areas: "icon name state" "icon meta rhythm";
+  align-items: center;
+  gap: 6px 12px;
+  padding: 12px 14px;
+}
+.ndc-task + .ndc-task, .ndc-backup + .ndc-backup { border-top: 1px solid var(--nd-card-border); }
+.ndc-task-icon { grid-area: icon; align-self: start; width: 32px; height: 32px; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); color: var(--nd-text-muted); flex-shrink: 0; }
+.ndc-task-name { grid-area: name; display: inline-flex; align-items: center; gap: 2px; font-size: 0.82rem; color: var(--nd-text); min-width: 0; }
+.ndc-task-state { grid-area: state; justify-self: end; }
+.ndc-task-meta { grid-area: meta; display: flex; flex-direction: column; gap: 2px; font-size: 0.7rem; color: var(--nd-text-muted); min-width: 0; }
+.ndc-task-note { color: var(--nd-text-dimmed); }
+.ndc-int-state.is-partial { color: var(--nd-orange); background: color-mix(in srgb, var(--nd-orange) 12%, transparent); }
+.ndc-task-rhythm { grid-area: rhythm; justify-self: end; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; }
+.ndc-task-select { display: inline-flex; align-items: center; gap: 8px; font-size: 0.7rem; color: var(--nd-text-muted); }
+.ndc-task-select > span { white-space: nowrap; }
+.ndc-task-select > :last-child { width: 112px; }
+.ndc-task-fixed { font-size: 0.7rem; color: var(--nd-text-dimmed); }
+@container (max-width: 560px) {
+  .ndc-task { grid-template-areas: "icon name state" "icon meta meta" "icon rhythm rhythm"; }
+  .ndc-task-rhythm { justify-self: start; justify-content: flex-start; }
+}
+
+.ndc-backup-now { height: 30px; gap: 6px; }
+.ndc-backup-plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px 20px; padding: 14px; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
+.ndc-backup-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ndc-backup-field.is-off { opacity: 0.45; pointer-events: none; }
+.ndc-backup-label { display: inline-flex; align-items: center; gap: 2px; font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.ndc-backup-keep { max-width: 170px; }
+.ndc-backup-value { font-size: 0.8rem; color: var(--nd-text); line-height: 32px; }
+.ndc-backup-list-head { margin: 20px 0 8px; font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.ndc-backup { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 14px; }
+.ndc-backup .ndc-task-icon { align-self: center; }
+.ndc-backup-text { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
+.ndc-backup-date { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--nd-text); }
+.ndc-backup-sub { font-size: 0.68rem; color: var(--nd-text-dimmed); }
+.ndc-restore { margin-top: 20px; padding: 14px 16px; border-radius: var(--nd-card-radius); background: var(--ndc-well); }
+.ndc-restore-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.ndc-restore-title { font-size: 0.8rem; color: var(--nd-text); }
+.ndc-restore-head .ndc-link { font-size: 0.72rem; }
+.ndc-restore-steps { margin: 0; padding-left: 18px; list-style: decimal; display: flex; flex-direction: column; gap: 6px; font-size: 0.72rem; line-height: 1.5; color: var(--nd-text-muted); }
+.ndc-restore-steps code { display: inline-block; margin-top: 4px; padding: 3px 7px; border-radius: 5px; background: color-mix(in srgb, var(--nd-text) 7%, transparent); color: var(--nd-text); font-size: 0.68rem; word-break: break-all; }
 
 /* Settings → Help. */
 .ndc-help-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 8px; }
@@ -3469,3 +3506,5 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .ndc-help-arrow { color: var(--nd-text-dimmed); flex-shrink: 0; }
 .ndc-media-logos { margin-top: 26px; }
 .ndc-task-rhythm > span:first-child { white-space: nowrap; }
+.ndc-tasks { container-type: inline-size; }
+@media (max-width: 520px) { .ndc-int-state.ndc-task-state { display: inline-flex; } }
