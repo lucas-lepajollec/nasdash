@@ -143,6 +143,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Settings → Tasks and backups is laid out like the Integrations page: one row per task (name with ⓘ, state, last run and result, rhythm), a backup plan card (automatic schedule, number kept, next backup), the saved backups, and a restore box in three steps. A task where some machines or services did not answer shows "Partial" (orange) instead of "Problem", which is kept for a task that failed.
+
 - Themes no longer tint the secondary text (some made it teal, purple, cyan or green): it is always the theme's text colour blended into its background; accent and hover states keep the theme.
 - The Docker hosts widget uses the Calme widget shell: its title follows "hide titles" and can be renamed, and hosts are neutral chips (only the chosen one takes the accent).
 - The secondary link of a service shows as a small opaque pill: its icon, what it is, where it goes (hidden in privacy mode) and an exit arrow.

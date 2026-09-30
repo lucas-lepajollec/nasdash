@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       return acc;
     }, {} as Record<string, PingStatus>);
     const online = results.filter(result => result.status === 'online').length;
-    recordTaskRun('service-pings', { ok: online === results.length, note: `${online}/${results.length}`, durationMs: Date.now() - started });
+    recordTaskRun('service-pings', { ok: true, partial: online < results.length, note: `${online}/${results.length}`, durationMs: Date.now() - started });
 
     return NextResponse.json(resultMap);
   } catch (err: unknown) {
