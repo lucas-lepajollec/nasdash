@@ -188,6 +188,28 @@ export const THEME_PRESETS: Record<string, {
     bgGradient: 'linear-gradient(135deg, #21252b 0%, #282c34 100%)',
     borderRadius: '12px',
   },
+  'liquid-glass': {
+    name: 'Liquid Glass',
+    primaryColor: '#7cc4ff',
+    accentColor: '#7cc4ff',
+    cardBg: 'rgba(255, 255, 255, 0.08)',
+    cardBorder: 'rgba(255, 255, 255, 0.16)',
+    text: '#f4f6fb',
+    textMuted: '#b7bfd1',
+    bgGradient: 'radial-gradient(circle at 15% 20%, #3b2c85 0%, transparent 45%), radial-gradient(circle at 85% 15%, #0f5c7a 0%, transparent 45%), radial-gradient(circle at 70% 90%, #7a2a63 0%, transparent 50%)',
+    borderRadius: '18px',
+  },
+  'liquid-glass-light': {
+    name: 'Liquid Glass Light',
+    primaryColor: '#0a84ff',
+    accentColor: '#0a84ff',
+    cardBg: 'rgba(255, 255, 255, 0.5)',
+    cardBorder: 'rgba(255, 255, 255, 0.7)',
+    text: '#1c1c1e',
+    textMuted: '#5b5e66',
+    bgGradient: 'radial-gradient(circle at 15% 20%, #c9d8ff 0%, transparent 45%), radial-gradient(circle at 85% 15%, #ffd6ea 0%, transparent 45%), radial-gradient(circle at 70% 90%, #c8f1e6 0%, transparent 50%)',
+    borderRadius: '18px',
+  },
   'tokyo-night': {
     name: 'Tokyo Night',
     primaryColor: '#7aa2f7',
@@ -341,6 +363,7 @@ import { IntegrationsTab } from './settings/tabs/IntegrationsTab';
 import { MediaTab } from './settings/tabs/MediaTab';
 import { TasksTab } from './settings/tabs/TasksTab';
 import { HelpTab } from './settings/tabs/HelpTab';
+import { LIGHT_THEMES } from '@/lib/themes';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export default function SettingsModal({ onClose, restoreFocus, showSensitive = false }: SettingsModalProps) {
@@ -355,7 +378,6 @@ export default function SettingsModal({ onClose, restoreFocus, showSensitive = f
   const activeMode = config?.settings?.mode || 'dark';
 
   const handleGalleryThemeChange = async (newTheme: string) => {
-    const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
     const isLight = LIGHT_THEMES.includes(newTheme) || (newTheme === 'nasdash' && activeMode === 'light');
 
     const classesToRemove = Array.from(document.body.classList).filter(cls => cls.startsWith('theme-'));

@@ -703,3 +703,54 @@
   --nd-icon-bg: rgba(0, 0, 0, 0.4);
   --nd-icon-border: rgba(0, 229, 255, 0.15);
 }
+
+/* Liquid Glass: translucent, blurred surfaces over a colourful background
+   (the glass itself is drawn in design-calme.css). */
+.theme-liquid-glass {
+  --nd-bg: #0b0d18;
+  --nd-bg-surface: #1a1c2e;
+  --nd-bg-gradient: radial-gradient(circle at 15% 20%, #3b2c85 0%, transparent 45%), radial-gradient(circle at 85% 15%, #0f5c7a 0%, transparent 45%), radial-gradient(circle at 70% 90%, #7a2a63 0%, transparent 50%);
+  --nd-card-bg-rgb: 30, 32, 50;
+  --nd-card-bg-opacity: 0.35;
+  --nd-card-border: rgba(255, 255, 255, 0.16);
+  --nd-subcard-bg: rgba(255, 255, 255, 0.06);
+  --nd-card-hover-border: rgba(255, 255, 255, 0.32);
+  --nd-card-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  --nd-card-radius: 18px;
+  --nd-text: #f4f6fb;
+  --nd-text-muted: #b7bfd1;
+  --nd-text-dimmed: #7f879b;
+  --nd-accent: #7cc4ff;
+  --nd-accent-glow: rgba(124, 196, 255, 0.18);
+  --nd-accent-dim: rgba(124, 196, 255, 0.5);
+  --nd-purple: #c4a7ff;
+  --nd-blue: #7cc4ff;
+  --nd-orange: #ffb35c;
+  --nd-green: #6ee7a8;
+  --nd-red: #ff7a8a;
+  --nd-yellow: #ffd66b;
+}
+.theme-liquid-glass-light {
+  --nd-bg: #eef1f7;
+  --nd-bg-surface: #f7f8fc;
+  --nd-bg-gradient: radial-gradient(circle at 15% 20%, #c9d8ff 0%, transparent 45%), radial-gradient(circle at 85% 15%, #ffd6ea 0%, transparent 45%), radial-gradient(circle at 70% 90%, #c8f1e6 0%, transparent 50%);
+  --nd-card-bg-rgb: 255, 255, 255;
+  --nd-card-bg-opacity: 0.5;
+  --nd-card-border: rgba(255, 255, 255, 0.7);
+  --nd-subcard-bg: rgba(255, 255, 255, 0.45);
+  --nd-card-hover-border: rgba(10, 132, 255, 0.35);
+  --nd-card-shadow: 0 10px 30px rgba(40, 50, 90, 0.12);
+  --nd-card-radius: 18px;
+  --nd-text: #1c1c1e;
+  --nd-text-muted: #5b5e66;
+  --nd-text-dimmed: #8a8d96;
+  --nd-accent: #0a84ff;
+  --nd-accent-glow: rgba(10, 132, 255, 0.14);
+  --nd-accent-dim: rgba(10, 132, 255, 0.45);
+  --nd-purple: #8e5cf6;
+  --nd-blue: #0a84ff;
+  --nd-orange: #f08a24;
+  --nd-green: #25a55f;
+  --nd-red: #e5484d;
+  --nd-yellow: #c99a06;
+}

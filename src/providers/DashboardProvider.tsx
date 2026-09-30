@@ -7,6 +7,7 @@ import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
 import { taskSettings } from '@/lib/tasks';
+import { LIGHT_THEMES } from '@/lib/themes';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export interface DashboardContextType {
@@ -184,7 +185,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     document.body.style.backgroundPosition = '';
     document.body.style.backgroundRepeat = '';
 
-    const LIGHT_THEMES = ['apple-light', 'github-light', 'rose-pine-dawn', 'solarized-light', 'catppuccin-latte', 'everforest-light', 'tokyo-night-day', 'gruvbox-light', 'nord-light', 'light'];
     const activeMode = config?.settings?.mode || (typeof window !== 'undefined' ? localStorage.getItem('nd-theme') : 'dark');
     const isLightTheme = LIGHT_THEMES.includes(activeTheme) || (activeTheme === 'nasdash' && activeMode === 'light');
 

@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- **Liquid Glass** themes (dark and light), in Apple's style: every surface is frosted glass (translucent fill, strong blur that lifts the colours behind, a light edge on top, soft depth) over a colourful background or your wallpaper, with capsule controls in the header. Dialogs use a denser glass to stay legible; "reduce transparency" in the system turns the glass solid.
+
 - **First steps** on the Home page for admins: add services, connect a monitoring source, add machines, connect Docker, choose the weather, make it yours. Each step ticks itself from the configuration and opens the right place; the card can be closed (Settings → Help shows it again) and disappears once everything is done. Visitors of a dashboard not set up yet get one welcome card with a log-in button.
 
 - **Phone and tablet order.** Each page has its own order for phones and tablets (`page.mobile`), separate from the desktop layout, which never changes. In edit mode on a phone or tablet, the page shows as a list: each widget moves with its handle (dragged within the list) or its arrows, can go to the top, and can be hidden on phones and tablets; "Automatic order" goes back to the default. Until an order is chosen, pages read column by column, as they are built on desktop (a wide widget with nothing beside it ends the columns above it).
