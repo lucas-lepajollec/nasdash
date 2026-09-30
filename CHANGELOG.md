@@ -146,6 +146,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Edit mode on phones and tablets shows the widgets with all their controls (rename, settings, remove, their own buttons) plus arrows and an eye that only change the phone order and visibility; a Widgets / List switch keeps the compact list for quick reordering. The controls sit on their own row above each widget so titles stay whole.
+- The header lines up with the widgets on phones too (it was 8 px narrower on each side).
+- Phone settings: a lone switch stays on its label's line and sliders take the full width.
+
 - On phones, settings take the whole screen and dialogs rise from the bottom as sheets; buttons in dialogs keep a 40 px touch height. The mobile menu's Edit button now closes the menu.
 
 - Settings → Tasks and backups is laid out like the Integrations page: one row per task (name with ⓘ, state, last run and result, rhythm), a backup plan card (automatic schedule, number kept, next backup), the saved backups, and a restore box in three steps. A task where some machines or services did not answer shows "Partial" (orange) instead of "Problem", which is kept for a task that failed.

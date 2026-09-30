@@ -2689,9 +2689,7 @@ body[data-outlines="off"][data-design="calme"] .nd-input:not(:focus) { border-co
 /* ---------- Alignment on the grid ----------
    The header uses the page side padding plus the grid margin, so its search
    field and its buttons line up exactly with the outer edges of the widgets. */
-@media (min-width: 769px) {
-  body[data-design="calme"] .nd-header { padding-left: 32px; padding-right: 32px; }
-}
+body[data-design="calme"] .nd-header { padding-left: 32px; padding-right: 32px; }
 
 /* Edit controls sit in the widget's top-right corner, flush with its edge and
    centred on its title row (32 px in edit mode). */
@@ -3575,4 +3573,30 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 @keyframes ndc-sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   body[data-design="calme"] .nd-modal.ndc-dialog, body[data-design="calme"] .nd-modal.ndc-confirm { animation: none; }
+}
+
+/* Phones and tablets in edit mode: the widgets keep their controls; moves
+   (arrows) and hiding only change the phone order. */
+.nd-page-mobile-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.nd-page-mobile-bar-note { font-size: 0.7rem; color: var(--nd-text-muted); line-height: 1.4; flex: 1; min-width: 160px; }
+.nd-page-mobile-switch button { display: inline-flex; align-items: center; gap: 6px; }
+.nd-page-mobile-moves { display: inline-flex; gap: 2px; padding-right: 4px; margin-right: 2px; border-right: 1px solid var(--nd-card-border); }
+.nd-page-mobile-moves .nd-action-icon:disabled { opacity: 0.3; cursor: default; }
+.nd-page-grid > .grid-stack-item.nd-page-item--mobile-dimmed .nd-page-widget > :not(.nd-page-widget-actions) { opacity: 0.4; }
+.nd-page-grid--compact-editing .nd-page-widget-actions { opacity: 1 !important; visibility: visible !important; }
+.nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { width: 32px; height: 32px; }
+/* Phones and tablets: the controls get their own row above the widget, so
+   the title stays whole. */
+.nd-page-grid--compact-editing .nd-page-widget { display: flex; flex-direction: column; }
+.nd-page-grid--compact-editing .nd-page-widget-actions { position: static !important; order: -1; align-self: flex-end; margin: 0 0 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
+.nd-page-grid--compact-editing .nd-page-widget--editing .ndc-title,
+.nd-page-grid--compact-editing .nd-page-widget--editing .nd-page-widget-edit-title { padding-right: 0 !important; }
+
+/* Phones: a lone switch stays on its label's line (other controls go below). */
+@media (max-width: 700px) {
+  .ndc-set-row:has(> .ndc-set-row-control > .ndc-switch-button:only-child) { grid-template-columns: minmax(0, 1fr) auto; gap: 16px; }
+}
+@media (max-width: 700px) {
+  .ndc-set-row-control:has(> .ndc-slider) > .ndc-slider { flex: 1; width: 100%; }
+  .ndc-set-row-control .ndc-slider input[type="range"] { flex: 1; width: auto; min-width: 0; }
 }
