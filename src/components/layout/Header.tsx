@@ -513,7 +513,7 @@ export default function Header(props: HeaderProps) {
             background: 'rgba(0,0,0,0.4)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 100,
+            zIndex: 20000,
             animation: 'nd-fade-in 0.2s',
           }}
         >

@@ -11,9 +11,10 @@ const INTRO_KEY = 'lh-demo-intro-seen';
 /** Themes offered in the demo introduction, each with its preview colours. */
 const DEMO_THEMES = [
   { key: 'nasdash', name: 'NasDash', swatch: 'linear-gradient(135deg, #15171c, #5fd3e6)' },
-  { key: 'liquid-glass', name: 'Liquid Glass', swatch: 'radial-gradient(circle at 25% 25%, #6d5cff, transparent 60%), radial-gradient(circle at 80% 30%, #1aa0c8, transparent 55%), radial-gradient(circle at 60% 90%, #c0408f, transparent 60%), #0b0d18' },
   { key: 'nord', name: 'Nord', swatch: 'linear-gradient(135deg, #2e3440, #88c0d0)' },
-  { key: 'liquid-glass-light', name: 'Liquid Glass Light', swatch: 'radial-gradient(circle at 25% 25%, #c9d8ff, transparent 60%), radial-gradient(circle at 80% 30%, #ffd6ea, transparent 55%), #eef1f7' },
+  { key: 'tokyo-night', name: 'Tokyo Night', swatch: 'linear-gradient(135deg, #1a1b26, #7aa2f7)' },
+  { key: 'rose-pine-dark', name: 'Rosé Pine', swatch: 'linear-gradient(135deg, #191724, #eb6f92)' },
+  { key: 'apple-light', name: 'Apple Light', swatch: 'linear-gradient(135deg, #f5f5f7, #0071e3)' },
 ];
 const LINKS = {
   site: 'https://nasdash.lucas-homelab.fr',

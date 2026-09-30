@@ -6,9 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
-### Added
+## [0.2.0] - 2026-09-30
 
-- **Liquid Glass** themes (dark and light), in Apple's style: every surface is frosted glass (translucent fill, strong blur that lifts the colours behind, a light edge on top, soft depth) over a colourful background or your wallpaper, with capsule controls in the header. Dialogs use a denser glass to stay legible; "reduce transparency" in the system turns the glass solid.
+The first release of the new NasDash: every page is a free grid of widgets, the whole interface is redesigned (Calme), integrations have their own page, machines get detailed metrics, and phones get their own layout.
+
+### Upgrading from 0.1.x
+
+- **Your data is migrated on first start, automatically.** Services, devices, Docker hosts, Tailscale and your pages are kept. The earlier files stay next to the new ones: `config.pre-integrations.json`, `config.pre-sources.json` and `pages.v*.json` / `pages.previous.json`.
+- **Back up before upgrading:** `npm run data:backup` (or a copy of the `data` folder); from this version, Settings → Tasks and backups can also do it.
+- **Rolling back:** stop NasDash, restore the backup with `npm run data:restore -- --from <folder> --force`, then start the `0.1.4` image again (0.1.x does not read the migrated configuration, so the restore is needed).
+- The Classic interface is gone; the old `designStyle` setting is ignored.
+- A Proxmox connection with a self-signed certificate needs "Accept a self-signed certificate" on its connection (Settings → Integrations).
+
+### Added
 
 - **First steps** on the Home page for admins: add services, connect a monitoring source, add machines, connect Docker, choose the weather, make it yours. Each step ticks itself from the configuration and opens the right place; the card can be closed (Settings → Help shows it again) and disappears once everything is done. Visitors of a dashboard not set up yet get one welcome card with a log-in button.
 
@@ -157,11 +167,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   - 32 services in five categories, one of them offline, each with its container and its node on the network map;
   - a month of calendar events;
   - a Machines page showing the device and metric widgets;
-  - "Try a theme" in the introduction (including Liquid Glass).
+  - "Try a theme" in the introduction.
 
   The first steps card is not shown in the demo, and narrow calendars keep their event titles readable.
 
-- Edit mode on phones and tablets shows the widgets with all their controls (rename, settings, remove, their own buttons) plus arrows and an eye that only change the phone order and visibility; a Widgets / List switch keeps the compact list for quick reordering. The controls sit on their own row above each widget so titles stay whole.
+- Edit mode on phones and tablets has two views: **Widgets** (the widgets with their usual controls: rename, settings, remove, their own buttons) and **Order** (the list that sets the phone order and what is hidden on phones and tablets, without touching the desktop layout). Controls sit on their own row above each widget so titles stay whole. The mobile menu stays above the widget controls in edit mode.
 - The header lines up with the widgets on phones too (it was 8 px narrower on each side).
 - Phone settings: a lone switch stays on its label's line and sliders take the full width.
 
@@ -191,19 +201,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Widget settings no longer contain on/off switches or panel positions: a widget appears where it is placed, and each settings screen shows the pages that use it. Home-only options moved to Settings → Services, network map options to Settings → Network topology.
 - The custom tab row/column builder and its `/api/custom-tabs` endpoint are replaced by pages and `/api/pages`.
 
+- Treat `.env` as an optional advanced override while preserving generated first-start credentials when it is absent.
+- Let Docker Compose derive stack and container names, avoiding fixed global names and allowing multiple installations to coexist.
+- Keep every copy-ready Compose example on `./data`. A named volume is an optional new-install alternative, not the default: switching an existing folder install to `nasdash-data` leaves the real files unused.
+- Refresh README product screenshots from the isolated English public demo, with the intro dialog closed and additional views of Docker, networks, widgets, settings, theme variants, layout options, and mobile.
+
 ### Security
 
 - Moving a saved connection (monitoring source, Headscale) to another address now asks for its password or key again, so a stored secret is never sent to an address it was not given for; the connection test follows the same rule, and a device still using its own connection drops its stored token when its address changes.
 - Proxmox node names are encoded in API paths, and VM ids and types are checked, so a machine can only read its own node or guest.
 - Users other than admins no longer receive the address and account of devices that still use their own connection (only its type).
 - Update Next.js to `16.3.4` and pin patched Vitest/js-yaml so the protected dependency audit can pass.
-
-### Changed
-
-- Treat `.env` as an optional advanced override while preserving generated first-start credentials when it is absent.
-- Let Docker Compose derive stack and container names, avoiding fixed global names and allowing multiple installations to coexist.
-- Keep every copy-ready Compose example on `./data`. A named volume is an optional new-install alternative, not the default: switching an existing folder install to `nasdash-data` leaves the real files unused.
-- Refresh README product screenshots from the isolated English public demo, with the intro dialog closed and additional views of Docker, networks, widgets, settings, theme variants, layout options, and mobile.
 
 ## [0.1.4] - 2026-09-08
 
@@ -250,7 +258,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.1...v0.1.2
