@@ -2,7 +2,6 @@
 
 import React from 'react';
 import type { Category } from '@/lib/types';
-import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeWidget } from '../calme';
 
@@ -25,31 +24,22 @@ export function servicePorts(categories: Category[]): string[] {
 
 /**
  * Calme ports: the ports in use as quiet chips, hidden until sensitive data
- * is shown. The signature line below still toggles the hidden categories
- * for admins, as in the Classic version.
+ * is shown. (The dashboard signature, which toggles secret categories, is
+ * now the page footer.)
  */
-export default function CalmeServicePorts({ categories, showSensitive, onToggleSecretSections, editMode }: {
+export default function CalmeServicePorts({ categories, showSensitive, editMode }: {
   categories: Category[];
   showSensitive: boolean;
-  onToggleSecretSections: () => void;
   editMode?: boolean;
 }) {
   const { t } = useI18n();
-  const { user } = useConfig();
-  const isAdmin = user?.role === 'admin';
   const ports = servicePorts(categories);
+  // Nothing to list: no empty block on the page (still placeable in edit mode).
+  if (ports.length === 0 && !editMode) return null;
   return (
     <CalmeWidget title={t('Ports')} editMode={editMode} aside={ports.length ? String(ports.length) : undefined}>
       <div className="ndc-ports">
         {ports.map(port => <span key={port} className="ndc-port">{showSensitive ? port : '••••'}</span>)}
-      </div>
-      <div
-        className="ndc-signature"
-        onClick={isAdmin ? onToggleSecretSections : undefined}
-        style={{ cursor: isAdmin ? 'pointer' : 'default' }}
-        title={isAdmin ? t('Activez ou désactivez les sections secrètes') : undefined}
-      >
-        {t('NASDASH — Dashboard Privé')}
       </div>
     </CalmeWidget>
   );

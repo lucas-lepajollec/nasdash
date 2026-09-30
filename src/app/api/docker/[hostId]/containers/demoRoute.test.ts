@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DEMO_DOCKER_SERVICES } from '@/lib/demoDockerFixtures';
 
 const previousDemoMode = process.env.NASDASH_DEMO_MODE;
 
@@ -25,7 +26,7 @@ describe('interactive Docker demo routes', () => {
 
     expect(listResponse.status, JSON.stringify(containers)).toBe(200);
     expect(Array.isArray(containers), JSON.stringify(containers)).toBe(true);
-    expect(containers).toHaveLength(20);
+    expect(containers).toHaveLength(DEMO_DOCKER_SERVICES.length);
     const jellyfin = containers.find((container: { names: string[] }) => container.names.includes('jellyfin'));
 
     expect(jellyfin.fullId).toHaveLength(64);
