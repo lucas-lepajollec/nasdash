@@ -18,19 +18,19 @@ function timestamp() {
 function assertSafeDirectory(directory, label) {
   const resolved = path.resolve(directory);
   if (resolved === path.parse(resolved).root) {
-    throw new Error(`${label} ne peut pas être la racine du disque.`);
+    throw new Error(`${label} cannot be the filesystem root.`);
   }
   return resolved;
 }
 
 export function createDataBackup({ source, output, appVersion = 'unknown' }) {
-  const sourceDirectory = assertSafeDirectory(source, 'La source');
-  const outputDirectory = assertSafeDirectory(output, 'La destination');
+  const sourceDirectory = assertSafeDirectory(source, 'Source');
+  const outputDirectory = assertSafeDirectory(output, 'Destination');
   if (!fs.existsSync(sourceDirectory) || !fs.statSync(sourceDirectory).isDirectory()) {
-    throw new Error(`Dossier de données introuvable : ${sourceDirectory}`);
+    throw new Error(`Data directory not found: ${sourceDirectory}`);
   }
   if (fs.existsSync(outputDirectory)) {
-    throw new Error(`La destination existe déjà : ${outputDirectory}`);
+    throw new Error(`Destination already exists: ${outputDirectory}`);
   }
 
   fs.mkdirSync(outputDirectory, { recursive: true });
@@ -49,18 +49,18 @@ export function createDataBackup({ source, output, appVersion = 'unknown' }) {
 }
 
 export function restoreDataBackup({ backup, target, force = false }) {
-  if (!force) throw new Error('La restauration exige l’option --force.');
+  if (!force) throw new Error('Restoring requires --force.');
 
-  const backupDirectory = assertSafeDirectory(backup, 'La sauvegarde');
-  const targetDirectory = assertSafeDirectory(target, 'La destination');
+  const backupDirectory = assertSafeDirectory(backup, 'Backup');
+  const targetDirectory = assertSafeDirectory(target, 'Destination');
   const manifestPath = path.join(backupDirectory, 'nasdash-backup.json');
   const backupDataPath = path.join(backupDirectory, 'data');
   if (!fs.existsSync(manifestPath) || !fs.existsSync(backupDataPath)) {
-    throw new Error('Sauvegarde NasDash invalide ou incomplète.');
+    throw new Error('Invalid or incomplete NasDash backup.');
   }
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   if (manifest.formatVersion !== FORMAT_VERSION) {
-    throw new Error(`Version de sauvegarde non prise en charge : ${manifest.formatVersion}`);
+    throw new Error(`Unsupported backup version: ${manifest.formatVersion}`);
   }
 
   const parent = path.dirname(targetDirectory);
@@ -116,21 +116,21 @@ function runCli() {
       output,
       appVersion: readAppVersion(),
     });
-    console.log(`[NASDASH] Sauvegarde créée : ${result}`);
+    console.log(`[NASDASH] Backup created: ${result}`);
     return;
   }
   if (command === 'restore') {
-    if (!args.from) throw new Error('Usage : data:restore -- --from <dossier> --force');
+    if (!args.from) throw new Error('Usage: data:restore -- --from <directory> --force');
     const result = restoreDataBackup({
       backup: args.from,
       target: args.target || getDefaultDataDirectory(),
       force: args.force,
     });
-    console.log(`[NASDASH] Données restaurées : ${result.target}`);
-    if (result.recovery) console.log(`[NASDASH] Anciennes données conservées : ${result.recovery}`);
+    console.log(`[NASDASH] Data restored: ${result.target}`);
+    if (result.recovery) console.log(`[NASDASH] Previous data preserved: ${result.recovery}`);
     return;
   }
-  throw new Error('Usage : data-snapshot.mjs <backup|restore> [options]');
+  throw new Error('Usage: data-snapshot.mjs <backup|restore> [options]');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

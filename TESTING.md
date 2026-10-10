@@ -3,7 +3,8 @@
 NasDash uses complementary static, unit, browser, and container validation layers:
 
 - `npm test` runs the fast unit and API contract suite with Vitest.
-- `npm run check:i18n` validates EN/FR/ES/DE/IT key parity, placeholders and untranslated TSX copy.
+- `npm run check:i18n` validates EN/FR/ES/DE/IT key parity, placeholders, untranslated TSX copy and the installation-language guard.
+- `npm run check:installation-language` checks operational console/diagnostic copy, Docker startup messages and only the public `data/*.example.json` defaults for French leftovers. It never scans persisted user data. This targeted detector complements the runtime installation tests; it is not a general language recognizer.
 - `npm run test:e2e` starts an isolated NasDash instance and runs the critical browser paths with Playwright Chromium.
 - `npm run test:container -- <image>` verifies a built image, initial login, the non-root UID/GID and reuse of its persistent volume.
 
@@ -92,7 +93,7 @@ docker build --tag nasdash:smoke .
 npm run test:container -- nasdash:smoke
 ```
 
-The script creates uniquely named temporary containers and a temporary Docker volume. It verifies a fresh start, healthcheck, admin login, runtime UID/GID `1001:1001`, required data files and persistence after the container is replaced. Its own containers and volume are removed in a `finally` cleanup; existing NasDash containers and volumes are never targeted.
+The script creates uniquely named temporary containers and a temporary Docker volume. It verifies a fresh start, English startup logs and resource/page defaults through authenticated APIs, healthcheck, admin login, runtime UID/GID `1001:1001`, required data files and persistence after the container is replaced. It customizes names in French, then verifies that the configuration/resource/layout files retain identical hashes after restart. Its own containers and volume are removed in a `finally` cleanup; existing NasDash containers and volumes are never targeted.
 
 ## Isolated data directory
 

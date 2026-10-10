@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (e) {
-    console.error('Erreur API switch-to-viewer:', e);
+    console.error("Switch-to-viewer API error:", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

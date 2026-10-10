@@ -74,7 +74,7 @@ function tarHeader(name: string, size: number, mtime: number): Buffer {
   let base = name;
   if (Buffer.byteLength(name) > 100) {
     const cut = name.lastIndexOf('/', 155);
-    if (cut <= 0 || Buffer.byteLength(name.slice(cut + 1)) > 100) throw new Error(`Nom trop long pour l’archive : ${name}`);
+    if (cut <= 0 || Buffer.byteLength(name.slice(cut + 1)) > 100) throw new Error(`Name too long for the archive: ${name}`);
     prefix = name.slice(0, cut);
     base = name.slice(cut + 1);
   }

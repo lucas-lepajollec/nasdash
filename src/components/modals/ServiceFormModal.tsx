@@ -49,7 +49,7 @@ export default function ServiceFormModal({ service, categoryId, onClose, onSave,
     try {
       await fetch(`/api/logos/${url.replace('/api/logos/', '')}`, { method: 'DELETE' });
     } catch (e) {
-      console.error("Erreur de suppression du logo:", e);
+      console.error("Logo deletion failed:", e);
     }
     clear();
   };

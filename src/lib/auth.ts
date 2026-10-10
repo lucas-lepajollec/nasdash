@@ -103,8 +103,8 @@ function getInitialPassword(username: 'admin' | 'viewer'): string {
   if (configuredPassword) return configuredPassword;
 
   const generatedPassword = crypto.randomBytes(18).toString('base64url');
-  console.warn(`[NASDASH] Mot de passe initial généré pour ${username}: ${generatedPassword}`);
-  console.warn(`[NASDASH] Connectez-vous puis remplacez immédiatement ce mot de passe (${envName}).`);
+  console.warn(`[NASDASH] Initial password generated for ${username}: ${generatedPassword}`);
+  console.warn(`[NASDASH] Log in and change this password immediately (${envName}).`);
   return generatedPassword;
 }
 
@@ -397,7 +397,7 @@ export function readUsers(): User[] {
           fs.copyFileSync(examplePath, USERS_PATH);
           fileExists = true;
         } catch (e) {
-          console.error('Erreur copie users.example.json', e);
+          console.error("Cannot copy users.example.json", e);
         }
       }
     }
@@ -450,10 +450,10 @@ export function readUsers(): User[] {
     if (!authGlobal.__warnedAboutDefaultPasswords) {
       const defaultPasswordUsernames = getDefaultPasswordUsernames(users);
       if (defaultPasswordUsernames.includes('admin')) {
-        console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte admin utilise encore le mot de passe par défaut « admin ».');
+        console.warn("[NASDASH] SECURITY WARNING: The admin account still uses the default password \"admin\".");
       }
       if (defaultPasswordUsernames.includes('viewer')) {
-        console.warn('[NASDASH] ALERTE SÉCURITÉ : le compte viewer utilise encore le mot de passe par défaut « viewer ».');
+        console.warn("[NASDASH] SECURITY WARNING: The viewer account still uses the default password \"viewer\".");
       }
       authGlobal.__warnedAboutDefaultPasswords = true;
     }
@@ -465,7 +465,7 @@ export function readUsers(): User[] {
     authGlobal.__cachedUsers = JSON.parse(JSON.stringify(users));
     return users;
   } catch (e) {
-    console.error('Erreur de lecture du fichier users.json', e);
+    console.error("Cannot read users.json", e);
     return [];
   }
 }
@@ -480,7 +480,7 @@ export function writeUsers(users: User[]): boolean {
     authGlobal.__cachedUsers = JSON.parse(JSON.stringify(users));
     return true;
   } catch (e) {
-    console.error('Erreur d\'écriture du fichier users.json', e);
+    console.error("Cannot write users.json", e);
     return false;
   }
 }

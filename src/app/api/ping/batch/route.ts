@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     if (err instanceof RequestValidationError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
-    console.error('Erreur Batch Ping:', err);
+    console.error("Batch ping failed:", err);
     return NextResponse.json({ error: 'Une erreur est survenue.' }, { status: 500 });
   }
 }

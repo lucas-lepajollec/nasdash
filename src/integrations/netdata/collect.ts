@@ -75,7 +75,7 @@ export function netdataVitals(charts: Record<string, NetdataChart>): DeviceVital
 }
 
 export const collectNetdata: DeviceCollector = async connection => {
-  if (!connection.url) throw new CollectError('URL Netdata manquante.', new MonitoringConfigurationError('URL Netdata manquante.'));
+  if (!connection.url) throw new CollectError('URL Netdata manquante.', new MonitoringConfigurationError('Missing Netdata URL.'));
   const url = `${connection.url.replace(/\/$/, '')}/api/v1/allmetrics?format=json&help=no&types=no&timestamps=no&names=yes&data=average`;
   let answer;
   try {
@@ -88,7 +88,7 @@ export const collectNetdata: DeviceCollector = async connection => {
   try {
     charts = JSON.parse(await answer.text()) as Record<string, NetdataChart>;
   } catch {
-    throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError(`Réponse non JSON sur ${url}.`));
+    throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError(`Non-JSON response from ${url}.`));
   }
   return { metrics: netdataMetrics(charts), vitals: netdataVitals(charts) };
 };

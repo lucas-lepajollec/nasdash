@@ -9,14 +9,14 @@
     "services": [
       {
         "id": "service-1",
-        "name": "Service Exemple 1",
+        "name": "Example Service 1",
         "logo": "/api/logos/logo.png",
         "localUrl": "http://192.168.1.10:3000",
         "secondaryUrl": "http://100.100.100.100:3000"
       },
       {
         "id": "service-2",
-        "name": "Service Exemple 2",
+        "name": "Example Service 2",
         "logo": "/api/logos/logo.png",
         "localUrl": "http://192.168.1.10:8080",
         "secondaryUrl": "http://100.100.100.100:8080"
@@ -25,7 +25,7 @@
   },
   {
     "id": "category-2",
-    "title": "Outils",
+    "title": "Tools",
     "emoji": "🛠️",
     "order": 1,
     "layout": "standard",

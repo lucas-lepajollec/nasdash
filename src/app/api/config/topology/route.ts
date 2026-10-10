@@ -57,7 +57,7 @@ async function handlePUT(req: Request) {
     if (e instanceof RequestValidationError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error('Erreur API Topology PUT:', e);
+    console.error("Topology API error (PUT):", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

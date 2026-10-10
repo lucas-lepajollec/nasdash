@@ -10,9 +10,9 @@ import type { Page, PagesDocument, PresetId, WidgetSettings } from './types';
 
 export const OFFICIAL_PAGE_META: Record<PresetId, { name: string; icon: string; description: string }> = {
   dashboard: { name: 'Home', icon: '🏠', description: 'Services & monitoring' },
-  docker: { name: 'Docker', icon: '🐳', description: 'Conteneurs & images' },
-  networks: { name: 'Réseaux', icon: '📶', description: 'Cartographie & outils réseau' },
-  widgets: { name: 'Widgets', icon: '🎛️', description: 'Grille de widgets fluide' },
+  docker: { name: 'Docker', icon: '🐳', description: 'Containers & Images' },
+  networks: { name: 'Networks', icon: '📶', description: 'Mapping & network tools' },
+  widgets: { name: 'Widgets', icon: '🎛️', description: 'Fluid widget grid' },
 };
 
 export type PageTemplateId = 'blank' | PresetId;
@@ -85,7 +85,7 @@ function buildSections(template: PageTemplateId, pageId: string, context: Preset
               column(id('right'), 'sidebar', 'stack', right, { sticky: true }),
             ],
           },
-          { id: id('bottom'), title: 'Activité réseau', columns: [column(id('bottom-grid'), 'fill', 'masonry', bottom, { maxColumns: 3 })] },
+          { id: id('bottom'), title: 'Network Activity', columns: [column(id('bottom-grid'), 'fill', 'masonry', bottom, { maxColumns: 3 })] },
           { id: id('footer'), columns: [column(id('footer-column'), 'fill', 'stack', footer)] },
         ],
       };

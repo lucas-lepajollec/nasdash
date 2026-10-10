@@ -1,5 +1,6 @@
 node_modules
 .next
+.next-*
 .next-e2e
 .e2e
 coverage

@@ -121,7 +121,7 @@ export function glancesVitals(data: GlancesResponse): DeviceVitals {
 }
 
 export const collectGlances: DeviceCollector = async (connection, context) => {
-  if (!connection.url) throw new CollectError('URL Glances manquante.', new MonitoringConfigurationError('URL Glances manquante.'));
+  if (!connection.url) throw new CollectError('URL Glances manquante.', new MonitoringConfigurationError('Missing Glances URL.'));
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -150,7 +150,7 @@ export const collectGlances: DeviceCollector = async (connection, context) => {
   try {
     data = JSON.parse(await response.text()) as GlancesResponse;
   } catch {
-    throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError(`Réponse HTML reçue au lieu de JSON sur ${usedUrl}.`));
+    throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError(`Received HTML instead of JSON from ${usedUrl}.`));
   }
   const result: CollectResult = { metrics: glancesMetrics(data), vitals: glancesVitals(data) };
   return result;

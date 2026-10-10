@@ -131,6 +131,8 @@ docker compose logs nasdash
 
 No `.env` is required. The first startup prints strong generated passwords once in the logs and stores the account data plus cryptographic keys in `./data`. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
+Operational logs use English regardless of the interface language. New installations start in English with English example resource names. Names and content you customize remain yours: changing the interface language or upgrading does not rename existing machines, services or pages.
+
 The repository's default Compose file pulls the published image and stores data in `./data`. Do not replace that folder with a named volume on an existing installation: the app would start empty while the real files stay on disk. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is only an optional alternative for a brand-new install. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
 
 ```bash

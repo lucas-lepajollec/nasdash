@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json() as { user: AuthUser | null };
       setUser(data.user);
     } catch (e) {
-      console.error('Erreur vérification session:', e);
+      console.error("Session check failed:", e);
     } finally {
       setAuthLoading(false);
     }
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
     } catch (e) {
-      console.error('Erreur déconnexion:', e);
+      console.error("Logout failed:", e);
     } finally {
       // A full reload intentionally clears every in-memory auth and SSE state.
       window.location.assign(destination);
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return res;
     } catch (err) {
-      console.error('Erreur Fetch sécurisé:', err);
+      console.error("Authenticated request failed:", err);
       throw err;
     }
   }, [t]);

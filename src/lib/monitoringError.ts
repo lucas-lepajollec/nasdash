@@ -68,7 +68,7 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'error',
       'invalid_configuration',
       error.message,
-      'Vérifiez les champs URL, port, identifiant et jeton configurés pour cet appareil.',
+      'Check the URL, port, username and token configured for this device.',
       false,
     );
   }
@@ -78,8 +78,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'remote',
       'error',
       'invalid_response',
-      error.message || 'La réponse reçue est invalide.',
-      'Vérifiez que l’URL cible bien l’API attendue et non une page HTML ou un autre service.',
+      error.message || 'The received response is invalid.',
+      'Check that the URL points to the expected API, not an HTML page or another service.',
       false,
     );
   }
@@ -90,8 +90,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
         'permission',
         'error',
         'access_denied',
-        `${error.service} refuse l’accès (HTTP ${error.status}).`,
-        'Vérifiez le jeton, l’utilisateur et les permissions accordées par le service distant.',
+        `${error.service} denied access (HTTP ${error.status}).`,
+        'Check the token, user and permissions granted by the remote service.',
         false,
       );
     }
@@ -101,8 +101,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
         'configuration',
         'error',
         'endpoint_not_found',
-        `L’endpoint ${error.service} configuré est introuvable (HTTP 404).`,
-        'Vérifiez l’URL, la version de l’API et le type d’appareil sélectionné.',
+        `The configured ${error.service} endpoint was not found (HTTP 404).`,
+        'Check the URL, API version and selected device type.',
         false,
       );
     }
@@ -112,8 +112,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
         'unavailable',
         'warning',
         'temporarily_rejected',
-        `${error.service} est temporairement indisponible (HTTP ${error.status}).`,
-        'Le service est joignable mais demande de réessayer plus tard. NasDash continuera automatiquement.',
+        `${error.service} is temporarily unavailable (HTTP ${error.status}).`,
+        'The service is reachable but asks to retry later. NasDash will retry automatically.',
         true,
       );
     }
@@ -122,8 +122,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'remote',
       'error',
       'remote_http_error',
-      `${error.service} répond avec une erreur HTTP ${error.status}.`,
-      'Consultez les journaux du service distant ; la connexion fonctionne mais son API signale une erreur.',
+      `${error.service} returned HTTP ${error.status}.`,
+      'Check the remote service logs; the connection works but its API reports an error.',
       error.status >= 500,
     );
   }
@@ -135,8 +135,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'unavailable',
       'warning',
       'timeout',
-      'L’appareil ne répond pas dans le délai prévu.',
-      'Il peut être arrêté, surchargé ou temporairement inaccessible. NasDash réessaiera automatiquement.',
+      'The device did not respond before the timeout.',
+      'It may be stopped, overloaded or temporarily unreachable. NasDash will retry automatically.',
       true,
     );
   }
@@ -146,8 +146,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'unavailable',
       'warning',
       'name_resolution',
-      'Le nom de l’appareil ne peut pas être résolu pour le moment.',
-      'Si l’état persiste, vérifiez le nom d’hôte et le DNS accessibles depuis le conteneur NasDash.',
+      'The device hostname cannot currently be resolved.',
+      'If this persists, check the hostname and DNS available inside the NasDash container.',
       true,
     );
   }
@@ -157,8 +157,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'configuration',
       'error',
       'tls_error',
-      'La connexion TLS avec l’appareil a échoué.',
-      'Vérifiez le certificat, le nom d’hôte et la configuration HTTPS du service distant.',
+      'The TLS connection to the device failed.',
+      'Check the certificate, hostname and HTTPS configuration of the remote service.',
       false,
     );
   }
@@ -168,8 +168,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'configuration',
       'error',
       'invalid_url',
-      'L’URL de supervision configurée est invalide.',
-      'Renseignez une URL complète avec le protocole, l’adresse et le port attendus.',
+      'The configured monitoring URL is invalid.',
+      'Enter a complete URL with the expected protocol, address and port.',
       false,
     );
   }
@@ -180,8 +180,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
       'unavailable',
       'warning',
       'host_unreachable',
-      'L’appareil est actuellement inaccessible.',
-      'Il peut être arrêté ou le port peut être fermé. Si l’état persiste, vérifiez l’adresse et le port configurés.',
+      'The device is currently unreachable.',
+      'It may be stopped or its port may be closed. If this persists, check the configured address and port.',
       true,
     );
   }
@@ -190,8 +190,8 @@ export function classifyMonitoringError(error: unknown): MonitoringFailure {
     'remote',
     'error',
     'unexpected_error',
-    message || 'Une erreur de supervision inattendue est survenue.',
-    'Consultez le détail technique et les journaux du service distant.',
+    message || 'An unexpected monitoring error occurred.',
+    'Check the technical details and the remote service logs.',
     false,
   );
 }

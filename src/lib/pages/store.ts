@@ -107,7 +107,7 @@ function readFromDisk(): PagesDocument {
       if (from !== null) {
         safeWriteFileSync(path.join(getDataDirectory(), `pages.v${from}.json`), text, 'utf-8');
         writeToDisk(document);
-        console.info(`[NASDASH] Pages placées sur la grille libre ; ancienne version conservée dans pages.v${from}.json.`);
+        console.info(`[NASDASH] Pages migrated to the free grid; previous version preserved in pages.v${from}.json.`);
         return clone(document);
       }
       globalCache.__nasdashPages = clone(document);
@@ -116,13 +116,14 @@ function readFromDisk(): PagesDocument {
     } catch (error) {
       // Never replace an unreadable file without keeping a copy of it.
       const recovery = preserveCorruptFile(filePath);
-      console.error(`[NASDASH] pages.json invalide conservé dans ${recovery} ; pages reconstruites depuis la configuration.`, error);
+      console.error(`[NASDASH] Invalid pages.json preserved in ${recovery}; pages rebuilt from the configuration.`, error);
     }
   }
 
   const migrated = buildFromLegacy();
   if (migrated.migration?.notes.length) {
-    console.info(`[NASDASH] Pages créées depuis la configuration existante :\n- ${migrated.migration.notes.join('\n- ')}`);
+    console.info(`[NASDASH] Pages created from the existing configuration:
+- ${migrated.migration.notes.join('\n- ')}`);
   }
   writeToDisk(migrated);
   return migrated;

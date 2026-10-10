@@ -2,7 +2,7 @@
   "version": 1,
   "settings": {
     "uiLanguage": "en",
-    "title": "MON HOME LAB",
+    "title": "MY HOME LAB",
     "showMonitor": true,
     "totalSlots": 10,
     "hiddenTabs": [],
@@ -168,7 +168,7 @@
   "devices": [
     {
       "id": "demo-device-1",
-      "name": "Serveur Principal",
+      "name": "Main Server",
       "host": "192.168.1.20",
       "icon": "🏠",
       "statStyle": "vertical",
@@ -181,7 +181,7 @@
     },
     {
       "id": "demo-device-2",
-      "name": "Hyperviseur",
+      "name": "Hypervisor",
       "host": "proxmox",
       "icon": "🖥️",
       "statStyle": "circle",
@@ -220,14 +220,14 @@
       "services": [
         {
           "id": "service-1",
-          "name": "Service Exemple 1",
+          "name": "Example Service 1",
           "logo": "/api/logos/logo.png",
           "localUrl": "http://192.168.1.10:3000",
           "secondaryUrl": "http://100.100.100.100:3000"
         },
         {
           "id": "service-2",
-          "name": "Service Exemple 2",
+          "name": "Example Service 2",
           "logo": "/api/logos/logo.png",
           "localUrl": "http://192.168.1.10:8080",
           "secondaryUrl": "http://100.100.100.100:8080"
@@ -250,14 +250,14 @@
         "services": [
           {
             "id": "service-1",
-            "name": "Service Exemple 1",
+            "name": "Example Service 1",
             "logo": "/api/logos/logo.png",
             "localUrl": "http://192.168.1.10:3000",
             "secondaryUrl": "http://100.100.100.100:3000"
           },
           {
             "id": "service-2",
-            "name": "Service Exemple 2",
+            "name": "Example Service 2",
             "logo": "/api/logos/logo.png",
             "localUrl": "http://192.168.1.10:8080",
             "secondaryUrl": "http://100.100.100.100:8080"

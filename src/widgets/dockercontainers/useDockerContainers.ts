@@ -55,7 +55,7 @@ export function useDockerContainers({ editMode, isVisible }: { editMode?: boolea
           return;
         }
         const data = await res.json();
-        throw new Error(data.error || 'Action échouée');
+        throw new Error(data.error || 'Action failed');
       }
       await mutate();
     } catch (e) {

@@ -2,14 +2,14 @@
   "nodes": [
     {
       "id": "node-router",
-      "name": "Routeur",
+      "name": "Router",
       "type": "infra",
       "icon": "🌐",
       "ip": "192.168.1.1"
     },
     {
       "id": "node-server",
-      "name": "Serveur Principal",
+      "name": "Main Server",
       "type": "device",
       "icon": "🖥️",
       "ip": "192.168.1.20"

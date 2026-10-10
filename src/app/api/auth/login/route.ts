@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof RequestValidationError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error('Erreur API Login:', e);
+    console.error("Login API error:", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

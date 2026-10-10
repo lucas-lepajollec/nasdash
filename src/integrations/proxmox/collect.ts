@@ -51,7 +51,7 @@ function request<T>(urlText: string, token: string, allowSelfSigned: boolean): P
           // Proxmox nests every answer under `data`.
           resolve((JSON.parse(body) as { data: T }).data);
         } catch {
-          reject(new MonitoringInvalidResponseError('Réponse JSON Proxmox invalide.'));
+          reject(new MonitoringInvalidResponseError('Invalid Proxmox JSON response.'));
         }
       });
     });
@@ -107,7 +107,7 @@ export function proxmoxVitals(data: ProxmoxResponse, memory: CollectContext['mem
 
 export const collectProxmox: DeviceCollector = async (connection, context) => {
   if (!connection.url || !connection.token) {
-    throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('URL ou jeton Proxmox manquant.'));
+    throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('Missing Proxmox URL or token.'));
   }
   let data: ProxmoxResponse;
   try {
@@ -138,7 +138,7 @@ export const collectProxmox: DeviceCollector = async (connection, context) => {
 
 /** The nodes of the cluster and their VMs / containers, to pick one per device. */
 export const listProxmoxTargets: TargetLister = async connection => {
-  if (!connection.url || !connection.token) throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('URL ou jeton Proxmox manquant.'));
+  if (!connection.url || !connection.token) throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('Missing Proxmox URL or token.'));
   const base = connection.url.slice(0, connection.url.indexOf('/api2/json') + '/api2/json'.length);
   const self = connection.allowSelfSigned === true;
   try {

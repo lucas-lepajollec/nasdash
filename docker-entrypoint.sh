@@ -10,7 +10,7 @@ if [ "${NASDASH_DEMO_MODE:-false}" = "true" ]; then
   exec "$@"
 fi
 
-echo "[NASDASH] Mise à jour des modèles de configuration..."
+echo "[NASDASH] Updating configuration templates..."
 
 # Toujours mettre à jour les fichiers d'exemples dans le volume monté pour qu'ils soient de la dernière version
 for file in config.example.json services.example.json topology.example.json calendar.example.json custom_tabs.example.json users.example.json; do
@@ -26,12 +26,12 @@ init_file() {
   if [ ! -f "$TARGET" ]; then
     if [ -f "$EXAMPLE" ]; then
       cp "$EXAMPLE" "$TARGET"
-      echo "[NASDASH] ✅ Créé : $1 (depuis $2)"
+      echo "[NASDASH] ✅ Created: $1 (from $2)"
     else
-      echo "[NASDASH] ⚠️  Exemple manquant pour $1"
+      echo "[NASDASH] ⚠️  Missing example for $1"
     fi
   else
-    echo "[NASDASH] ✓  $1 existe déjà"
+    echo "[NASDASH] ✓  $1 already exists"
   fi
 }
 
@@ -46,5 +46,5 @@ init_file "calendar.json"    "calendar.example.json"
 init_file "custom_tabs.json" "custom_tabs.example.json"
 init_file "users.json"       "users.example.json"
 
-echo "[NASDASH] Démarrage de l'application..."
+echo "[NASDASH] Starting the application..."
 exec "$@"

@@ -30,6 +30,10 @@ test.describe.serial('critical self-hosted paths', () => {
     expect(configResponse.status()).toBe(200);
     const config = await configResponse.json();
     expect(config.settings.securityMode).toBe('public');
+    expect(config.settings.uiLanguage).toBe('en');
+    expect(config.devices.map((device: { name: string }) => device.name)).toEqual(['Main Server', 'Hypervisor']);
+    expect(config.categories.flatMap((category: { services: { name: string }[] }) => category.services.map(service => service.name)))
+      .toEqual(['Example Service 1', 'Example Service 2']);
     expect(config.devices[0]?.api?.token).toBeUndefined();
     // Monitoring connections reach visitors without their address or secrets.
     const monitoring = (config.integrations ?? []).filter((instance: { type: string }) => ['glances', 'netdata', 'beszel', 'prometheus', 'proxmox', 'lhm'].includes(instance.type));
@@ -54,6 +58,11 @@ test.describe.serial('critical self-hosted paths', () => {
     await page.goto('/');
     await expect(page.locator('.nd-shell')).toBeVisible({ timeout: 30_000 });
     await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.getByText('Example Service 1', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Main Server', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Serveur Principal', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Service Exemple 1', { exact: true })).toHaveCount(0);
     await page.waitForTimeout(750);
     expect(dockerRequests).toEqual([]);
 

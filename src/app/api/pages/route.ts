@@ -23,7 +23,7 @@ function errorResponse(error: unknown, context: string) {
   if (error instanceof RequestValidationError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
-  console.error(`Erreur API Pages ${context}:`, error);
+  console.error(`Pages API error ${context}:`, error);
   return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
 }
 

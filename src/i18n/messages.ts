@@ -17,6 +17,15 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "Network Activity": "Network Activity",
+  "Networks": "Networks",
+  "Containers & Images": "Containers & Images",
+  "Mapping & network tools": "Mapping & network tools",
+  "Fluid widget grid": "Fluid widget grid",
+  "MY HOME LAB": "MY HOME LAB",
+  "Tools": "Tools",
+  "Calendar": "Calendar",
+  "Custom tab": "Custom tab",
   "demo.themes": "Try a theme",
   "pages.library.secret": "secret",
   "start.title": "Getting started",
@@ -920,6 +929,15 @@ const en: Dictionary = {
 };
 
 const fr: Dictionary = {
+  "Network Activity": "Activité réseau",
+  "Networks": "Réseaux",
+  "Containers & Images": "Conteneurs & images",
+  "Mapping & network tools": "Cartographie & outils réseau",
+  "Fluid widget grid": "Grille de widgets fluide",
+  "MY HOME LAB": "MON HOME LAB",
+  "Tools": "Outils",
+  "Calendar": "Calendrier",
+  "Custom tab": "Onglet personnalisé",
   "demo.themes": "Essayez un thème",
   "pages.library.secret": "secrète",
   "start.title": "Premiers pas",
@@ -1823,6 +1841,15 @@ const fr: Dictionary = {
 };
 
 const es: Dictionary = {
+  "Network Activity": "Actividad de red",
+  "Networks": "Redes",
+  "Containers & Images": "Contenedores e imágenes",
+  "Mapping & network tools": "Cartografía y herramientas de red",
+  "Fluid widget grid": "Cuadrícula de widgets fluida",
+  "MY HOME LAB": "MI HOME LAB",
+  "Tools": "Herramientas",
+  "Calendar": "Calendario",
+  "Custom tab": "Pestaña personalizada",
   "demo.themes": "Prueba un tema",
   "pages.library.secret": "secreta",
   "start.title": "Primeros pasos",
@@ -2726,6 +2753,15 @@ const es: Dictionary = {
 };
 
 const de: Dictionary = {
+  "Network Activity": "Netzwerkaktivität",
+  "Networks": "Netzwerke",
+  "Containers & Images": "Container & Images",
+  "Mapping & network tools": "Netzwerk-Kartierung & -Werkzeuge",
+  "Fluid widget grid": "Flüssiges Widget-Raster",
+  "MY HOME LAB": "MEIN HEIMLABOR",
+  "Tools": "Werkzeuge",
+  "Calendar": "Kalender",
+  "Custom tab": "Benutzerdefinierter Tab",
   "demo.themes": "Probiere ein Thema",
   "pages.library.secret": "geheim",
   "start.title": "Erste Schritte",
@@ -3629,6 +3665,15 @@ const de: Dictionary = {
 };
 
 const it: Dictionary = {
+  "Network Activity": "Attività di rete",
+  "Networks": "Reti",
+  "Containers & Images": "Container & immagini",
+  "Mapping & network tools": "Cartografia & strumenti di rete",
+  "Fluid widget grid": "Griglia di widget fluida",
+  "MY HOME LAB": "IL MIO HOME LAB",
+  "Tools": "Strumenti",
+  "Calendar": "Calendario",
+  "Custom tab": "Scheda personalizzata",
   "demo.themes": "Prova un tema",
   "pages.library.secret": "segreto",
   "start.title": "Per iniziare",

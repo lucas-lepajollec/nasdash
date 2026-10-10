@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof RequestValidationError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error('Erreur API Users (POST):', e);
+    console.error("Users API error (POST):", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }
@@ -175,7 +175,7 @@ export async function DELETE(req: NextRequest) {
     if (e instanceof RequestValidationError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
-    console.error('Erreur API Users (DELETE):', e);
+    console.error("Users API error (DELETE):", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

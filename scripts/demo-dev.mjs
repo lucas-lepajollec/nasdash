@@ -8,7 +8,7 @@ const lan = process.argv.includes('--lan');
 const host = lan ? '0.0.0.0' : '127.0.0.1';
 
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
-  console.error(`[NASDASH] Port de démonstration invalide : ${rawPort}`);
+  console.error(`[NASDASH] Invalid demo port: ${rawPort}`);
   process.exit(1);
 }
 
@@ -29,17 +29,17 @@ function isPortAvailable(targetPort) {
 }
 
 if (!(await isPortAvailable(port))) {
-  console.error(`[NASDASH] Le port ${port} est déjà utilisé.`);
-  console.error('[NASDASH] Si la démo Docker tourne, arrête-la avec : npm run demo:docker:down');
-  console.error('[NASDASH] Sinon, choisis un autre port avec : $env:NASDASH_DEMO_PORT="2506"');
+  console.error(`[NASDASH] Port ${port} is already in use.`);
+  console.error("[NASDASH] If the Docker demo is running, stop it with: npm run demo:docker:down");
+  console.error("[NASDASH] Otherwise, choose another port with NASDASH_DEMO_PORT (for example 2506).");
   process.exit(1);
 }
 
 const nextEntryPoint = path.join(process.cwd(), 'node_modules', 'next', 'dist', 'bin', 'next');
 const extraArguments = process.argv.slice(2).filter(argument => argument !== '--lan');
 
-console.log(`[NASDASH] Démo isolée ${lan ? 'sur le réseau local' : 'locale uniquement'} : http://${lan ? '<IP-DE-LA-MACHINE>' : '127.0.0.1'}:${port}`);
-console.log('[NASDASH] Rechargement à chaud actif. Arrêt : Ctrl+C');
+console.log(`[NASDASH] Isolated demo ${lan ? "on the local network" : "local only"} : http://${lan ? "<MACHINE-IP>" : '127.0.0.1'}:${port}`);
+console.log("[NASDASH] Hot reload enabled. Stop with Ctrl+C.");
 
 const child = spawn(
   process.execPath,
@@ -56,7 +56,7 @@ const child = spawn(
 );
 
 child.once('error', (error) => {
-  console.error(`[NASDASH] Impossible de lancer la démo : ${error.message}`);
+  console.error(`[NASDASH] Cannot start the demo: ${error.message}`);
   process.exit(1);
 });
 

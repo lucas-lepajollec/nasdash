@@ -68,7 +68,7 @@ async function handlePOST(req: Request) {
   } catch (e: unknown) {
     const response = validationResponse(e);
     if (response) return response;
-    console.error('Erreur API Calendar POST:', e);
+    console.error("Calendar API error (POST):", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }
@@ -106,7 +106,7 @@ async function handlePUT(req: Request) {
   } catch (e: unknown) {
     const response = validationResponse(e);
     if (response) return response;
-    console.error('Erreur API Calendar PUT:', e);
+    console.error("Calendar API error (PUT):", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }
@@ -135,7 +135,7 @@ async function handleDELETE(req: Request) {
   } catch (e: unknown) {
     const response = validationResponse(e);
     if (response) return response;
-    console.error('Erreur API Calendar DELETE:', e);
+    console.error("Calendar API error (DELETE):", e);
     return NextResponse.json({ error: 'Une erreur interne est survenue.' }, { status: 500 });
   }
 }

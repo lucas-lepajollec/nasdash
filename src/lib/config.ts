@@ -54,7 +54,7 @@ export function ensureDataDir() {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     if (!fs.existsSync(LOGOS_DIR)) fs.mkdirSync(LOGOS_DIR, { recursive: true });
   } catch (e) {
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans /app/data. Vérifiez les droits (chmod 777) sur l\'hôte.', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write to the data directory. Check its ownership and write permissions for the NasDash runtime user.", e);
   }
 }
 
@@ -123,11 +123,11 @@ export function readConfig(): DashboardConfig {
       if (configFileInvalid) {
         try {
           const recoveryPath = preserveCorruptFile(CONFIG_PATH);
-          console.error(`[NASDASH] Configuration invalide conservée avant récupération : ${recoveryPath}`);
+          console.error(`[NASDASH] Invalid configuration preserved before recovery: ${recoveryPath}`);
         } catch (error) {
           canPersistRecoveredConfig = false;
           console.error(
-            '[NASDASH] Impossible de préserver config.json invalide ; le fichier original ne sera pas remplacé.',
+            "[NASDASH] Cannot preserve invalid config.json; the original file will not be replaced.",
             error,
           );
         }
@@ -145,7 +145,7 @@ export function readConfig(): DashboardConfig {
             } catch {}
           }
         } catch (e) {
-          console.error('⚠️ ERREUR DE PERMISSION ou de lecture lors de la copie de config.example.json :', e);
+          console.error("⚠️ Cannot read or copy config.example.json:", e);
         }
       }
 
@@ -158,7 +158,7 @@ export function readConfig(): DashboardConfig {
               globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
             } catch {}
           } catch (e) {
-            console.error('⚠️ ERREUR DE PERMISSION : Impossible de créer data/config.json. Configuration utilisée en mémoire.', e);
+            console.error("⚠️ PERMISSION ERROR: Cannot create data/config.json. Using the configuration in memory.", e);
           }
         }
       }
@@ -195,7 +195,7 @@ export function readConfig(): DashboardConfig {
       try {
         if (!fs.existsSync(backup) && fs.existsSync(CONFIG_PATH)) fs.copyFileSync(CONFIG_PATH, backup);
       } catch (e) {
-        console.error('⚠️ Impossible de sauvegarder config.json avant la migration des intégrations.', e);
+        console.error("⚠️ Cannot back up config.json before migrating integrations.", e);
       }
     }
     if (migrateLegacyIntegrations(configData)) {
@@ -214,7 +214,7 @@ export function readConfig(): DashboardConfig {
           try {
             if (!fs.existsSync(backup)) safeWriteFileSync(backup, JSON.stringify(JSON.parse(before), null, 2));
           } catch (e) {
-            console.error('⚠️ Impossible de sauvegarder config.json avant la migration des connexions de surveillance.', e);
+            console.error("⚠️ Cannot back up config.json before migrating monitoring connections.", e);
           }
         }
         migrated = true;
@@ -228,7 +228,7 @@ export function readConfig(): DashboardConfig {
           globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
         } catch {}
       } catch (e) {
-        console.error('⚠️ ERREUR : Impossible d\'enregistrer la configuration migrée.', e);
+        console.error("⚠️ Cannot save the migrated configuration.", e);
       }
     }
 
@@ -330,7 +330,7 @@ export function readConfig(): DashboardConfig {
         try {
           fs.copyFileSync(examplePath, SERVICES_PATH);
         } catch (e) {
-          console.error('Erreur copie services.example.json', e);
+          console.error("Cannot copy services.example.json", e);
         }
       }
     }
@@ -338,7 +338,7 @@ export function readConfig(): DashboardConfig {
       try {
         categories = JSON.parse(fs.readFileSync(SERVICES_PATH, 'utf-8'));
       } catch (e) {
-        console.error('Erreur lecture services.json', e);
+        console.error("Cannot read services.json", e);
       }
     } else {
       categories = [];
@@ -366,7 +366,7 @@ export function readConfig(): DashboardConfig {
         try {
           fs.copyFileSync(examplePath, TOPOLOGY_PATH);
         } catch (e) {
-          console.error('Erreur copie topology.example.json', e);
+          console.error("Cannot copy topology.example.json", e);
         }
       }
     }
@@ -374,7 +374,7 @@ export function readConfig(): DashboardConfig {
       try {
         topology = JSON.parse(fs.readFileSync(TOPOLOGY_PATH, 'utf-8'));
       } catch (e) {
-        console.error('Erreur lecture topology.json', e);
+        console.error("Cannot read topology.json", e);
       }
     }
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
@@ -400,7 +400,7 @@ export function readConfig(): DashboardConfig {
         try {
           fs.copyFileSync(examplePath, CALENDAR_PATH);
         } catch (e) {
-          console.error('Erreur copie calendar.example.json', e);
+          console.error("Cannot copy calendar.example.json", e);
         }
       }
     }
@@ -408,7 +408,7 @@ export function readConfig(): DashboardConfig {
       try {
         localEvents = JSON.parse(fs.readFileSync(CALENDAR_PATH, 'utf-8'));
       } catch (e) {
-        console.error('Erreur lecture calendar.json', e);
+        console.error("Cannot read calendar.json", e);
       }
     } else {
       localEvents = [];
@@ -508,7 +508,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     globalAny.__cachedConfig = cacheConfig;
   } catch (e) {
     success = false;
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/config.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/config.json", e);
   }
 
   try {
@@ -516,7 +516,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
   } catch (e) {
     success = false;
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/services.json", e);
   }
 
   try {
@@ -524,7 +524,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
   } catch (e) {
     success = false;
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/topology.json", e);
   }
 
   try {
@@ -532,7 +532,7 @@ export function writeConfig(config: DashboardConfig): boolean {
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
   } catch (e) {
     success = false;
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/calendar.json", e);
   }
 
   return success;
@@ -554,7 +554,7 @@ export function writeServices(categories: Category[]): boolean {
     globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
     return true;
   } catch (e) {
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/services.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/services.json", e);
     return false;
   }
 }
@@ -575,7 +575,7 @@ export function writeTopology(topology: NetworkTopology): boolean {
     globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
     return true;
   } catch (e) {
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/topology.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/topology.json", e);
     return false;
   }
 }
@@ -596,7 +596,7 @@ export function writeCalendar(calendar: LocalCalendarEvent[]): boolean {
     globalAny.__cachedCalendar = JSON.parse(JSON.stringify(calendar));
     return true;
   } catch (e) {
-    console.error('⚠️ ERREUR DE PERMISSION : Impossible d\'écrire dans data/calendar.json', e);
+    console.error("⚠️ PERMISSION ERROR: Cannot write data/calendar.json", e);
     return false;
   }
 }
@@ -616,7 +616,7 @@ function getDefaultConfig(): DashboardConfig {
       if (parsed.settings) delete parsed.settings.networkTopology;
       return parsed;
     } catch (e) {
-      console.error('Erreur lecture config.example.json', e);
+      console.error("Cannot read config.example.json", e);
     }
   }
 

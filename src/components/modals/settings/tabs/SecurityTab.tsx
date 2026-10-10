@@ -74,7 +74,7 @@ export function SecurityTab() {
         setUsers(data);
       }
     } catch (e) {
-      console.error('Erreur chargement utilisateurs:', e);
+      console.error("User loading failed:", e);
     } finally {
       setLoadingUsers(false);
     }

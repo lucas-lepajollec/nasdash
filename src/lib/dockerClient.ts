@@ -2,6 +2,7 @@ import http from 'http';
 import https from 'https';
 import type { DockerHost } from './types';
 import { dockhandCall } from './dockhand';
+import { dockerFailureLogText } from './dockerLog';
 import type {
   DockerFailureCode,
   DockerFailurePayload,
@@ -280,7 +281,7 @@ export function reportDockerFailure(hostId: string, failurePayload: DockerFailur
   const signature = `${failurePayload.code}:${failurePayload.error}`;
   if (loggedFailures.get(hostId) === signature) return;
 
-  const line = `[Docker:${hostId}] ${failurePayload.error} ${failurePayload.hint}`;
+  const line = `[Docker:${hostId}] ${dockerFailureLogText(failurePayload)}`;
   if (failurePayload.category === 'unavailable') console.warn(`🟠 ${line}`);
   else console.error(`🔴 ${line}`);
   loggedFailures.set(hostId, signature);
@@ -289,5 +290,5 @@ export function reportDockerFailure(hostId: string, failurePayload: DockerFailur
 export function reportDockerSuccess(hostId: string): void {
   if (!loggedFailures.has(hostId)) return;
   loggedFailures.delete(hostId);
-  console.info(`🟢 [Docker:${hostId}] Hôte de nouveau accessible.`);
+  console.info(`🟢 [Docker:${hostId}] Host is reachable again.`);
 }

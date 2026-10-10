@@ -81,7 +81,7 @@ async function listSystems(connection: ResolvedConnection, context: Parameters<D
 
 /** The systems of the hub, to pick one per device. */
 export const listBeszelSystems: TargetLister = async (connection, context) => {
-  if (!connection.url || !connection.token) throw new CollectError('Adresse ou identifiants Beszel manquants.', new MonitoringConfigurationError('Adresse ou identifiants Beszel manquants.'));
+  if (!connection.url || !connection.token) throw new CollectError('Adresse ou identifiants Beszel manquants.', new MonitoringConfigurationError('Missing Beszel address or credentials.'));
   try {
     return (await listSystems(connection, context)).filter(system => system.name).map(system => ({ values: { target: system.name! }, label: system.name!, ...(system.status ? { detail: system.status } : {}) }));
   } catch (error) {
@@ -91,8 +91,8 @@ export const listBeszelSystems: TargetLister = async (connection, context) => {
 };
 
 export const collectBeszel: DeviceCollector = async (connection, context) => {
-  if (!connection.url || !connection.token) throw new CollectError('Adresse ou identifiants Beszel manquants.', new MonitoringConfigurationError('Adresse ou identifiants Beszel manquants.'));
-  if (!connection.target) throw new CollectError('Système Beszel non choisi.', new MonitoringConfigurationError('Système Beszel non choisi.'));
+  if (!connection.url || !connection.token) throw new CollectError('Adresse ou identifiants Beszel manquants.', new MonitoringConfigurationError('Missing Beszel address or credentials.'));
+  if (!connection.target) throw new CollectError('Système Beszel non choisi.', new MonitoringConfigurationError('No Beszel system selected.'));
   try {
     const systems = await listSystems(connection, context);
     const wanted = connection.target.trim().toLowerCase();

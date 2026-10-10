@@ -2,9 +2,9 @@
   "tabs": [
     {
       "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
-      "name": "Calendrier",
+      "name": "Calendar",
       "icon": "lucide:Calendar",
-      "description": "Onglet personnalisé",
+      "description": "Custom tab",
       "isCustom": true
     }
   ],

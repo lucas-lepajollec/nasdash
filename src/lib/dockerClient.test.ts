@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DockerApiHttpError,
+  DockerHostConfigurationError,
+  DockerInvalidResponseError,
   classifyDockerError,
   dockerFailureStatus,
   fetchDockerApi,
@@ -88,6 +90,32 @@ describe('Docker failure classification', () => {
 
     reportDockerSuccess(hostId);
     expect(info).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0][0]).toContain('Docker host is currently unreachable.');
+    expect(info.mock.calls[0][0]).toContain('Host is reachable again');
+  });
+
+  it.each([
+    new DockerHostConfigurationError('invalid_url'),
+    new DockerApiHttpError(403),
+    new DockerApiHttpError(404),
+    new DockerApiHttpError(500),
+    new DockerInvalidResponseError(),
+    new DOMException('timeout', 'TimeoutError'),
+    Object.assign(new Error('fetch failed'), { code: 'ENOTFOUND' }),
+    Object.assign(new Error('certificate expired'), { code: 'CERT_HAS_EXPIRED' }),
+    new Error('fetch failed'),
+  ])('uses English operational logs without changing the translated API failure contract (%s)', error => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const logError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const payload = classifyDockerError(error);
+    const before = { ...payload };
+    reportDockerFailure(`language-${payload.code}`, payload);
+    const line = String((payload.category === 'unavailable' ? warn : logError).mock.calls[0][0]);
+    expect(line).toContain(`[${payload.code}]`);
+    expect(line).not.toContain(payload.error);
+    expect(line).not.toContain(payload.hint);
+    if (error instanceof DockerApiHttpError && error.status === 500) expect(line).toContain('HTTP 500');
+    expect(payload).toEqual(before);
   });
 });
 

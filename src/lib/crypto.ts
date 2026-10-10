@@ -25,10 +25,10 @@ function getEncryptionKey(): Buffer {
     try {
       secret = readOrCreatePersistentSecret(KEY_FILE);
     } catch (e) {
-      console.error('⚠️ ERREUR CRITIQUE : Impossible de lire ou d\'écrire la clé de chiffrement persistée.', e);
+      console.error("⚠️ CRITICAL ERROR: Cannot read or write the persistent encryption key.", e);
       throw new Error(
-        "Sécurité compromise : Impossible d'accéder au fichier de clé de chiffrement (encryption.key) " +
-        "et aucun secret NASDASH_JWT_SECRET n'est configuré dans l'environnement."
+        "Cannot access the persistent encryption key file (encryption.key) " +
+        "and NASDASH_JWT_SECRET is not configured."
       );
     }
   }
@@ -57,9 +57,9 @@ export function encrypt(text: string): string {
     // Format : enc:aes256:iv:tag:encrypted_text
     return `enc:aes256:${iv.toString('hex')}:${tag}:${encrypted}`;
   } catch (e) {
-    console.error('Erreur de chiffrement :', e);
+    console.error("Encryption failed:", e);
     // Ne jamais enregistrer silencieusement un secret en clair.
-    throw e instanceof Error ? e : new Error('Impossible de chiffrer la valeur sensible.');
+    throw e instanceof Error ? e : new Error('Cannot encrypt the sensitive value.');
   }
 }
 
@@ -88,7 +88,7 @@ export function decrypt(text: string): string {
     
     return decrypted;
   } catch (e) {
-    console.error('Échec du déchiffrement (la clé a peut-être changé) :', e);
+    console.error("Decryption failed (the encryption key may have changed):", e);
     return ''; // Retourne vide pour masquer ou éviter l'affichage de valeurs corrompues
   }
 }

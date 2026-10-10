@@ -93,7 +93,7 @@ function authOf(connection: ResolvedConnection): Record<string, string> {
 
 /** The node_exporter instances Prometheus knows (with their host name when reported). */
 export const listPrometheusInstances: TargetLister = async connection => {
-  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('URL Prometheus manquante.'));
+  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('Missing Prometheus URL.'));
   const base = connection.url.replace(/\/$/, '');
   const query = async (promql: string) => {
     let answer;
@@ -107,7 +107,7 @@ export const listPrometheusInstances: TargetLister = async connection => {
       const body = JSON.parse(await answer.text()) as { status?: string; data?: { result?: Sample[] } };
       return body.status === 'success' ? body.data?.result ?? [] : [];
     } catch {
-      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Réponse Prometheus non JSON.'));
+      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Prometheus returned a non-JSON response.'));
     }
   };
   const named = await query('node_uname_info');
@@ -118,8 +118,8 @@ export const listPrometheusInstances: TargetLister = async connection => {
 };
 
 export const collectPrometheus: DeviceCollector = async connection => {
-  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('URL Prometheus manquante.'));
-  if (!connection.target) throw new CollectError('Instance Prometheus non choisie.', new MonitoringConfigurationError('Instance Prometheus non choisie.'));
+  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('Missing Prometheus URL.'));
+  if (!connection.target) throw new CollectError('Instance Prometheus non choisie.', new MonitoringConfigurationError('No Prometheus instance selected.'));
   const auth = authOf(connection);
   const queries = prometheusQueries(connection.target);
   const results = {} as Results;
@@ -136,7 +136,7 @@ export const collectPrometheus: DeviceCollector = async connection => {
       const body = JSON.parse(await answer.text()) as { status?: string; data?: { result?: Sample[] } };
       results[name] = body.status === 'success' ? body.data?.result ?? [] : [];
     } catch {
-      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Réponse Prometheus non JSON.'));
+      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Prometheus returned a non-JSON response.'));
     }
   }));
   const metrics = prometheusMetrics(results);
