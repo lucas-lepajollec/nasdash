@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
 import net from 'node:net';
+import os from 'node:os';
+import crypto from 'node:crypto';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { chromium } from '@playwright/test';
 
 const projectDirectory = process.cwd();
@@ -9,7 +11,7 @@ const outputDirectory = path.join(projectDirectory, 'docs', 'assets', 'screensho
 const port = Number.parseInt(process.env.NASDASH_CAPTURE_PORT || '2511', 10);
 const baseURL = `http://127.0.0.1:${port}`;
 const captureURL = `${baseURL}/?lang=en`;
-const fixedTime = '2026-08-12T10:00:00.000Z';
+const fixedTime = '2026-10-10T10:00:00.000Z';
 const nextEntryPoint = path.join(projectDirectory, 'node_modules', 'next', 'dist', 'bin', 'next');
 const LIGHT_THEMES = new Set([
   'apple-light',
@@ -48,7 +50,8 @@ if (!(await isPortAvailable())) {
   throw new Error(`Refusing to capture: ${baseURL} is already in use.`);
 }
 
-await fs.mkdir(outputDirectory, { recursive: true });
+const stagingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'nasdash-captures-'));
+const shots = [];
 
 const server = spawn(process.execPath, [nextEntryPoint, 'dev', '-H', '127.0.0.1', '-p', String(port)], {
   cwd: projectDirectory,
@@ -131,7 +134,10 @@ async function settle(page) {
       caret-color: transparent !important;
     }
   ` });
-  await page.waitForTimeout(400);
+  await page.locator('.nd-page-grid--placing').filter({ visible: true }).waitFor({ state: 'hidden', timeout: 30_000 });
+  await page.waitForFunction(() => [...document.images].every(img => img.complete && img.naturalWidth > 0));
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(600);
 }
 
 async function dismissDemoChrome(page) {
@@ -148,6 +154,8 @@ async function assertReadyForCapture(page) {
   if (await page.locator('dialog.lh-demo-dialog[open]').count()) {
     throw new Error('Demo intro dialog is still open.');
   }
+  const demo = await page.evaluate(async () => (await (await fetch('/api/config')).json()).demoMode);
+  if (demo !== true) throw new Error('Refusing to capture a non-demo configuration.');
   const lang = await page.locator('html').getAttribute('lang');
   if (lang && !lang.toLowerCase().startsWith('en')) {
     throw new Error(`Expected English UI, got html lang=${lang}`);
@@ -155,22 +163,31 @@ async function assertReadyForCapture(page) {
 }
 
 async function waitForHomeData(page) {
-  await page.getByText('25%', { exact: true }).first().waitFor({ timeout: 20_000 });
+  await page.locator('[data-page-id="dashboard"] .nd-page-grid:not(.nd-page-grid--placing)').waitFor({ timeout: 30_000 });
+  await page.getByText('Atlas NAS', { exact: true }).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
+  await page.waitForFunction(() => /CPU\s+\d+%/.test(document.body.innerText));
   await page.getByText(/Excellent/).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
 }
 
 async function waitForDockerDetail(page) {
-  await page.locator('.nd-docker-detail').getByText('Volumes', { exact: true }).waitFor({ timeout: 20_000 });
+  const detail = page.locator('.nd-docker-detail').filter({ visible: true });
+  if (!(await detail.getByText('jellyfin', { exact: true }).count())) {
+    await page.getByText('jellyfin', { exact: true }).filter({ visible: true }).first().click();
+  }
+  await detail.getByText('Volumes', { exact: true }).waitFor({ timeout: 20_000 });
   await page.getByText(/jellyfin container starting/).waitFor({ timeout: 20_000 });
 }
 
-async function capture(page, name, fullPage = false) {
+async function capture(page, name, fullPage = name.startsWith('nasdash-demo-home')) {
   await settle(page);
   await dismissDemoChrome(page);
   await assertReadyForCapture(page);
-  const destination = path.join(outputDirectory, `${name}.jpg`);
+  const destination = path.join(stagingDirectory, `${name}.jpg`);
   await page.screenshot({ path: destination, type: 'jpeg', quality: 88, fullPage });
-  console.log(`[NASDASH] Captured ${path.relative(projectDirectory, destination)}`);
+  const png = await page.screenshot({ type: 'png', fullPage });
+  if (name === 'nasdash-demo-home') await fs.writeFile(path.join(stagingDirectory, 'legacy-home.png'), png);
+  shots.push({ file: `${name}.jpg`, width: png.readUInt32BE(16), height: png.readUInt32BE(20), viewport: page.viewportSize(), fullPage, sha256: crypto.createHash('sha256').update(await fs.readFile(destination)).digest('hex') });
+  console.log(`[NASDASH] Captured ${name}.jpg`);
 }
 
 async function selectDesktopTab(page, name) {
@@ -240,13 +257,29 @@ try {
   await selectDesktopTab(desktopPage, 'Widgets');
   await capture(desktopPage, 'nasdash-demo-widgets');
 
+  await selectDesktopTab(desktopPage, 'Machines');
+  await desktopPage.getByText('Atlas NAS', { exact: true }).filter({ visible: true }).first().waitFor();
+  await capture(desktopPage, 'nasdash-demo-machines');
+
+  await selectDesktopTab(desktopPage, 'Calendar');
+  await capture(desktopPage, 'nasdash-demo-calendar');
+  await selectDesktopTab(desktopPage, 'Home');
+
   await openSettings(desktopPage);
   await capture(desktopPage, 'nasdash-demo-settings');
-  await desktopPage.getByRole('button', { name: /Profiles, Themes & Emojis/ }).click();
-  await desktopPage.getByText('NasDash (Défaut)', { exact: true }).click();
-  await desktopPage.getByRole('button', { name: /Visual Themes/ }).waitFor({ timeout: 15_000 });
+  await desktopPage.getByRole('button', { name: /All themes/ }).click();
+  await desktopPage.getByRole('heading', { name: 'Themes and icons', exact: true }).waitFor({ timeout: 15_000 });
   await capture(desktopPage, 'nasdash-demo-themes');
   await closeSettings(desktopPage);
+
+  await selectDesktopTab(desktopPage, 'Home');
+  await desktopPage.locator('.nd-header-desktop').getByTitle('Edit Mode').click();
+  await capture(desktopPage, 'nasdash-demo-editor');
+  await desktopPage.getByRole('button', { name: 'Add a widget', exact: true }).click();
+  await desktopPage.getByRole('dialog', { name: 'Add a widget' }).waitFor();
+  await capture(desktopPage, 'nasdash-demo-library');
+  await desktopPage.keyboard.press('Escape');
+  await desktopPage.getByRole('button', { name: 'Done', exact: true }).click();
 
   const themeShots = [
     ['github-light', 'nasdash-demo-home-github-light'],
@@ -292,7 +325,22 @@ try {
   await waitForDockerDetail(mobilePage);
   await capture(mobilePage, 'nasdash-demo-mobile-docker');
   await mobile.close();
+
+  const manifest = {
+    productVersion: JSON.parse(await fs.readFile(path.join(projectDirectory, 'package.json'), 'utf8')).version,
+    sourceRevision: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: projectDirectory, encoding: 'utf8' }).trim(),
+    capturedAt: new Date().toISOString(),
+    demoReferenceTime: fixedTime,
+    language: 'en',
+    shots,
+  };
+  await fs.mkdir(outputDirectory, { recursive: true });
+  for (const shot of shots) await fs.copyFile(path.join(stagingDirectory, shot.file), path.join(outputDirectory, shot.file));
+  await fs.copyFile(path.join(stagingDirectory, 'legacy-home.png'), path.join(projectDirectory, 'public', 'nasdash.png'));
+  await fs.writeFile(path.join(outputDirectory, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  console.log(`[NASDASH] Published complete set of ${shots.length} captures.`);
 } finally {
   await browser?.close();
   await stopServer();
+  await fs.rm(stagingDirectory, { recursive: true, force: true });
 }

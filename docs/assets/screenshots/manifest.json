@@ -1,0 +1,207 @@
+{
+  "productVersion": "0.2.0",
+  "sourceRevision": "6ff8a152b4080e23508dfbeaf40d8971f52a0093",
+  "capturedAt": "2026-10-10T09:10:07.220Z",
+  "demoReferenceTime": "2026-10-10T10:00:00.000Z",
+  "language": "en",
+  "shots": [
+    {
+      "file": "nasdash-demo-home.jpg",
+      "width": 1920,
+      "height": 1480,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "c7945b91c113caad1cfe8ecec9e1097cdb0dc6be2e3e7c56d59fd8c7e98262db"
+    },
+    {
+      "file": "nasdash-demo-docker.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "ce3b9a0a59d988d321e96ef45fc1b5627de679e1303d056fe569e045169f4baf"
+    },
+    {
+      "file": "nasdash-demo-networks.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "fdd3d822a564ee0e62b6dff6eb31246a9d38b698f1d0407ee46a6336cef23876"
+    },
+    {
+      "file": "nasdash-demo-widgets.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "f4f0716ba68f5b128df1572b2908136427570325441ac62bee26d1db971be29a"
+    },
+    {
+      "file": "nasdash-demo-machines.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "62779e282ac26e606506bd81e367492135608420f6f44fda76e2141e60a92bc9"
+    },
+    {
+      "file": "nasdash-demo-calendar.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "9cbd3a099e27c53b73ae3590c6093189a65224b9a004397823c55d2137b6e9d1"
+    },
+    {
+      "file": "nasdash-demo-settings.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "b8bc3ade0eb3af5ccf94276bd5c96ef8d947132c7e125532f78da914e58467f1"
+    },
+    {
+      "file": "nasdash-demo-themes.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "3336f00081121acd56c5151986063feb3913e947661c49cf852dbfd48ae7b3a0"
+    },
+    {
+      "file": "nasdash-demo-editor.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "4b79cd71c99cf51f26053a84725940d572210b01229392f4dd4f5e77e311aa79"
+    },
+    {
+      "file": "nasdash-demo-library.jpg",
+      "width": 1920,
+      "height": 1080,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": false,
+      "sha256": "cbaa2c5a7c5d91e3f2011c33959052f84484b93c0b5af4dc70c9651de47036d1"
+    },
+    {
+      "file": "nasdash-demo-home-github-light.jpg",
+      "width": 1920,
+      "height": 1480,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "9de3d62bd791f3a3f0299973a1ea7efb7e88e6e07dd907826363a074d5a97722"
+    },
+    {
+      "file": "nasdash-demo-home-apple-dark.jpg",
+      "width": 1920,
+      "height": 1480,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "1cb0751baf26bee2e81ecd393cda203ff8934ac89a028c421b1b3f46c56d4d79"
+    },
+    {
+      "file": "nasdash-demo-home-dracula.jpg",
+      "width": 1920,
+      "height": 1480,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "2db1ac6ef41da20dd03aecf446a5edd64fa4ac46dbdd81a0b445b1261f16c68f"
+    },
+    {
+      "file": "nasdash-demo-home-nord.jpg",
+      "width": 1920,
+      "height": 1480,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "6e6a1e81d4608874799aef94b36222215301bdb624edf9a25dad483a92f55bf7"
+    },
+    {
+      "file": "nasdash-demo-home-cyberpunk.jpg",
+      "width": 1920,
+      "height": 1480,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "95648cca6b4ab83cd5f7a8ae01d8497048bd15c81f92d7b83a30b02daf94041e"
+    },
+    {
+      "file": "nasdash-demo-home-layout.jpg",
+      "width": 1920,
+      "height": 1596,
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "fullPage": true,
+      "sha256": "d56df3bd1cda7702b63362121f95fbc5cdd4825a051e97d8493cf07c08ca4565"
+    },
+    {
+      "file": "nasdash-demo-mobile-home.jpg",
+      "width": 390,
+      "height": 844,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "sha256": "3d1cd8f71ae07a368183b0eb5d56a12e3fd19d5a479706b6f830d66f7dd6238b"
+    },
+    {
+      "file": "nasdash-demo-mobile-docker.jpg",
+      "width": 390,
+      "height": 844,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "sha256": "80d08715b9e343f99e97604059772e11a6c7d3a0d036a2da4477bede26edce1f"
+    }
+  ]
+}

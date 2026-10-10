@@ -26,21 +26,25 @@ Configuration stays on your own server in a persistent Docker volume or bind-mou
 
 ## Product preview
 
-Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile. No personal installation or real infrastructure is connected during capture. Screenshots use the English interface with the demo intro dialog closed.
+Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile. No personal installation or real infrastructure is connected during capture. Screenshots show NasDash **v0.2.0**, captured on **10 October 2026**, with the English interface and the demo intro dialog closed. [Capture provenance](docs/assets/screenshots/manifest.json) records the source revision, dimensions, and image hashes.
 
 | Docker management and simulated logs | Network topology |
 | --- | --- |
 | <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker details with fictional metrics, volumes, and logs" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network topology with documentation-only addresses" width="640" /> |
 
-| Configurable widgets | Appearance settings |
+| Widgets page | Appearance settings |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash widget catalog and customizable dashboard tiles" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings with English selected" width="640" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash composable widgets page" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash current appearance settings with English selected" width="640" /> |
+
+| Page editor | Widget library |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-editor.jpg" alt="NasDash free-grid page editor with widget controls" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-library.jpg" alt="NasDash searchable widget library" width="640" /> |
 
 Theme, layout, and visual profiles are first-class product surfaces, not a single default look:
 
 | Visual Themes gallery | GitHub Light |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-themes.jpg" alt="NasDash Visual Themes gallery with 26 bundled themes" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-github-light.jpg" alt="NasDash home dashboard in the GitHub Light theme" width="640" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-themes.jpg" alt="NasDash current themes and icons gallery" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-github-light.jpg" alt="NasDash home dashboard in the GitHub Light theme" width="640" /> |
 
 | Apple Dark | Cyberpunk |
 | --- | --- |
@@ -48,6 +52,10 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 
 <details>
 <summary>More themes, layout options, and mobile</summary>
+
+| Machine telemetry | Calendar |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-machines.jpg" alt="NasDash machine telemetry from fictional demo integrations" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-calendar.jpg" alt="NasDash calendar with fictional homelab events" width="640" /> |
 
 | Dracula | Nord |
 | --- | --- |
