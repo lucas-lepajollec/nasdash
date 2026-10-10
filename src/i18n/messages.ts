@@ -4301,7 +4301,7 @@ const it: Dictionary = {
   "autres": "altri",
   "jours": "giorni",
   "l'image": "immagine",
-  "supprimer": "elimina",
+  "supprimer": "eliminare",
   "sur": "su",
   "settings.language": "Lingua",
   "settings.languageTitle": "Lingua dell'interfaccia",
