@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Refresh README, website and documentation previews from the current isolated demo, with reproducible capture and synchronization scripts.
+- Patch Next.js and image/source-map dependencies to pass the production security audit. The full CI audit has one explicitly approved, development-only `braces` exception expiring on 24 October 2026; see `docs/DEPENDENCY_AUDIT.md`.
+
 ## [0.2.0] - 2026-09-30
 
 The first release of the new NasDash: every page is a free grid of widgets, the whole interface is redesigned (Calme), integrations have their own page, machines get detailed metrics, and phones get their own layout.

@@ -41,7 +41,9 @@ jobs:
         run: npm run check:i18n
 
       - name: Audit all dependencies
-        run: npm audit --audit-level=moderate
+        run: |
+          npm run check:audit-policy
+          npm run audit:dependencies
 
       - name: Build application
         run: npm run build
