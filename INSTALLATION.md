@@ -60,7 +60,7 @@ docker compose up -d nasdash
 
 The terminal asks for a new password and confirmation with input hidden. Use at least 12 characters. The command preserves the other accounts, permissions, settings, signing key and encrypted integrations, and invalidates old sessions for the selected account. It fails without changing accounts if input or storage is invalid. If recovery fails, correct the cause before starting again. The command needs the same volume and runtime UID/GID as NasDash; use an SSH terminal on Synology when its UI cannot attach an interactive terminal. Password arguments are rejected; automated use accepts one line on stdin rather than a password in shell history.
 
-The recovery helper and startup fixes are available in images built after release 0.2.1; the immutable `0.2.1` image retains its original behavior. Use the updated `latest` image or the corresponding commit image. Do not mix a newer source checkout with an older pinned container when following these commands.
+The recovery helper and startup fixes are available in version `0.2.2` or later; the immutable `0.2.1` image retains its original first-login initialization and has no recovery helper. Use `ghcr.io/lucas-lepajollec/nasdash:0.2.2`, a newer release or its recorded digest. Do not mix a newer source checkout with an older pinned container when following these commands.
 
 ## Share feedback
 

@@ -161,7 +161,7 @@ Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only whe
 - Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by changing the `image:` line to the previous version or `sha-<full-commit>` tag and recreating without removing the data directory.
 - Make `./data` writable by UID/GID `1001:1001`. Use [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) only when you deliberately want a named volume instead of a host folder.
 
-See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures, and [INSTALLATION.md](INSTALLATION.md) for permission diagnostics and offline password recovery without deleting data. Startup/recovery fixes require an image built after immutable release 0.2.1.
+See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures, and [INSTALLATION.md](INSTALLATION.md) for permission diagnostics and offline password recovery without deleting data. Startup initialization, permission checks and offline recovery are available in version 0.2.2 or later.
 
 Share installation experiences and constructive feedback through [GitHub Issues](https://github.com/lucas-lepajollec/nasdash/issues/new/choose), using **User feedback**, **Bug report**, or **Feature request**. Remove initial passwords and other secrets from logs before posting.
 

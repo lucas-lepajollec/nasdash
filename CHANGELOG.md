@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-10
+
+### Upgrading from 0.2.1
+
+- No new storage migration is introduced. Existing accounts, passwords, keys, integrations, configuration and customized names are preserved. Back up the complete data directory, then pull and recreate the container without deleting data or volumes.
+- Startup now stops immediately when the configured runtime UID/GID cannot access the data directory, logos or existing files. On Synology, check the dedicated DSM account and shared-folder ACLs; a Compose `user: "UID:GID"` override must match the permitted identity. See [INSTALLATION.md](INSTALLATION.md).
+- Generated initial passwords are logged once after their hashes are saved. Restarting or rebuilding never resets an existing account. If its password is lost, stop NasDash and use the offline recovery helper from 0.2.2 or later; recovery revokes that account's existing sessions and preserves the rest of the data.
+- To roll back, stop NasDash and recreate the previous `0.2.1` image or recorded digest with the same data. That image retains the old first-login password initialization and has no offline recovery helper. Keep your backup for an exact pre-update restoration; upgrades from 0.1.x still follow the [0.2.0 migration guidance](#020---2026-09-30).
+
 ### Fixed
 
 - Initialize local accounts and persist their password hashes at server startup, so generated initial passwords appear before readiness or the first browser connection. Never announce a generated password after a failed account write; preserve existing passwords across restart.
@@ -288,7 +297,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.3...v0.1.4
