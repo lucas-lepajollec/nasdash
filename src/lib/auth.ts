@@ -97,14 +97,13 @@ if (!authGlobal.__cachedUsers) {
   authGlobal.__cachedUsers = null;
 }
 
-function getInitialPassword(username: 'admin' | 'viewer'): string {
+function getInitialPassword(username: 'admin' | 'viewer', generated: Array<{ username: string; password: string; envName: string }>): string {
   const envName = username === 'admin' ? 'NASDASH_ADMIN_PASSWORD' : 'NASDASH_VIEWER_PASSWORD';
   const configuredPassword = process.env[envName];
   if (configuredPassword) return configuredPassword;
 
   const generatedPassword = crypto.randomBytes(18).toString('base64url');
-  console.warn(`[NASDASH] Initial password generated for ${username}: ${generatedPassword}`);
-  console.warn(`[NASDASH] Log in and change this password immediately (${envName}).`);
+  generated.push({ username, password: generatedPassword, envName });
   return generatedPassword;
 }
 
@@ -378,7 +377,7 @@ export function checkAdmin(req: AuthRequestLike): NextResponse | null {
 
 // --- GESTION DES UTILISATEURS LOCAUX ---
 
-export function readUsers(): User[] {
+export function readUsers(options: { failOnError?: boolean } = {}): User[] {
   if (authGlobal.__cachedUsers) {
     return JSON.parse(JSON.stringify(authGlobal.__cachedUsers));
   }
@@ -408,6 +407,7 @@ export function readUsers(): User[] {
       users = JSON.parse(raw);
     }
 
+    const generated: Array<{ username: string; password: string; envName: string }> = [];
     let modified = false;
     for (const user of users) {
       if (!Number.isInteger(user.sessionVersion) || user.sessionVersion < 0) {
@@ -420,14 +420,14 @@ export function readUsers(): User[] {
       users.push({
         username: 'admin',
         role: 'admin',
-        passwordHash: hashPassword(getInitialPassword('admin')),
+        passwordHash: hashPassword(getInitialPassword('admin', generated)),
         allowedTabs: [],
         allowedWidgets: [],
         sessionVersion: 0
       });
       modified = true;
     } else if (adminUser.passwordHash === '__GENERATED_AT_STARTUP__') {
-      adminUser.passwordHash = hashPassword(getInitialPassword('admin'));
+      adminUser.passwordHash = hashPassword(getInitialPassword('admin', generated));
       modified = true;
     }
 
@@ -436,14 +436,14 @@ export function readUsers(): User[] {
       users.push({
         username: 'viewer',
         role: 'viewer',
-        passwordHash: hashPassword(getInitialPassword('viewer')),
+        passwordHash: hashPassword(getInitialPassword('viewer', generated)),
         allowedTabs: [],
         allowedWidgets: [],
         sessionVersion: 0
       });
       modified = true;
     } else if (viewerUser.passwordHash === '__GENERATED_AT_STARTUP__') {
-      viewerUser.passwordHash = hashPassword(getInitialPassword('viewer'));
+      viewerUser.passwordHash = hashPassword(getInitialPassword('viewer', generated));
       modified = true;
     }
 
@@ -459,15 +459,27 @@ export function readUsers(): User[] {
     }
 
     if (modified || !fileExists) {
-      safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2));
+      safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2), { mode: 0o600 });
     }
 
+    // Announce only credentials whose hashes have actually been persisted.
+    for (const { username, password, envName } of generated) {
+      console.warn(`[NASDASH] Initial password generated for ${username}: ${password}`);
+      console.warn(`[NASDASH] Log in and change this password immediately (${envName}).`);
+    }
     authGlobal.__cachedUsers = JSON.parse(JSON.stringify(users));
     return users;
   } catch (e) {
     console.error("Cannot read users.json", e);
+    if (options.failOnError) throw e;
     return [];
   }
+}
+
+export function initializeAuthentication(): void {
+  if (isDemoMode()) return;
+  readUsers({ failOnError: true });
+  console.info('[NASDASH] Accounts ready. Initial passwords are printed only when accounts are created; restarting or rebuilding does not reset them.');
 }
 
 export function writeUsers(users: User[]): boolean {
@@ -476,7 +488,7 @@ export function writeUsers(users: User[]): boolean {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2));
+    safeWriteFileSync(USERS_PATH, JSON.stringify(users, null, 2), { mode: 0o600 });
     authGlobal.__cachedUsers = JSON.parse(JSON.stringify(users));
     return true;
   } catch (e) {

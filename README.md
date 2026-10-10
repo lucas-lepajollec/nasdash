@@ -123,13 +123,15 @@ services:
     restart: unless-stopped
 ```
 
+Prepare the host data folder for the runtime user before starting. See [first-install and Synology guidance](INSTALLATION.md) for `1001:1001`, a custom Compose `user`, and DSM folder permissions.
+
 ```bash
 docker compose up -d
 docker compose ps
 docker compose logs nasdash
 ```
 
-No `.env` is required. The first startup prints strong generated passwords once in the logs and stores the account data plus cryptographic keys in `./data`. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
+No `.env` is required. New accounts are initialized at server startup; generated passwords are printed once after their hashes are saved. Existing accounts are preserved across restart. Store account data and cryptographic keys in `./data`. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
 Operational logs use English regardless of the interface language. New installations start in English with English example resource names. Names and content you customize remain yours: changing the interface language or upgrading does not rename existing machines, services or pages.
 
@@ -159,7 +161,9 @@ Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only whe
 - Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by changing the `image:` line to the previous version or `sha-<full-commit>` tag and recreating without removing the data directory.
 - Make `./data` writable by UID/GID `1001:1001`. Use [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) only when you deliberately want a named volume instead of a host folder.
 
-See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures.
+See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures, and [INSTALLATION.md](INSTALLATION.md) for permission diagnostics and offline password recovery without deleting data. Startup/recovery fixes require an image built after immutable release 0.2.1.
+
+Share installation experiences and constructive feedback through [GitHub Issues](https://github.com/lucas-lepajollec/nasdash/issues/new/choose), using **User feedback**, **Bug report**, or **Feature request**. Remove initial passwords and other secrets from logs before posting.
 
 ## Security, privacy, and limitations
 

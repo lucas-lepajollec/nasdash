@@ -46,6 +46,8 @@ COPY --from=builder /app/demo/fixtures/ /app/demo/fixtures/
 
 # Copy entrypoint script
 COPY --from=builder /app/docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY --from=builder /app/scripts/container-bootstrap.mjs /app/scripts/container-bootstrap.mjs
+COPY --from=builder /app/scripts/reset-password.mjs /app/scripts/reset-password.mjs
 RUN sed -i 's/\r$//' /app/docker-entrypoint.sh && chmod +x /app/docker-entrypoint.sh
 
 # Create directories with proper permissions

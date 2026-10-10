@@ -93,8 +93,10 @@ docker build --tag nasdash:smoke .
 npm run test:container -- nasdash:smoke
 ```
 
-The script creates uniquely named temporary containers and a temporary Docker volume. It verifies a fresh start, English startup logs and resource/page defaults through authenticated APIs, healthcheck, admin login, runtime UID/GID `1001:1001`, required data files and persistence after the container is replaced. It customizes names in French, then verifies that the configuration/resource/layout files retain identical hashes after restart. Its own containers and volume are removed in a `finally` cleanup; existing NasDash containers and volumes are never targeted.
+The script creates uniquely named temporary containers and a temporary Docker volume. The first suite verifies a fresh start, English startup logs and resource/page defaults through authenticated APIs, healthcheck, admin login, runtime UID/GID `1001:1001`, required data files and persistence after the container is replaced. It customizes names in French, then verifies that the configuration/resource/layout files retain identical hashes after restart. Its own containers and volume are removed in a `finally` cleanup; existing NasDash containers and volumes are never targeted.
 
 ## Isolated data directory
 
 The server uses `<project>/data` by default. `NASDASH_DATA_DIR` can point it to another persistent directory; this is primarily intended for automated tests and advanced deployments. A relative value is resolved from the NasDash working directory.
+
+The required first-start suite also verifies generated passwords before any HTTP request, valid login, byte-identical accounts/signing key after replacement, ignored initial-password environment overrides for existing accounts, offline recovery, custom `1026:100` runtime identity, and fail-fast rejection of inaccessible data directories, logos, secrets and read-only mounts. It captures both log streams internally and withholds generated credentials from assertion output. Recovery helper unit tests cover invalid input/storage and preservation of unrelated accounts and keys. All fixtures are synthetic. Root helper containers only prepare the suite's own temporary volumes; NasDash itself always runs as the tested non-root identity.

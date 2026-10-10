@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Initialize local accounts and persist their password hashes at server startup, so generated initial passwords appear before readiness or the first browser connection. Never announce a generated password after a failed account write; preserve existing passwords across restart.
+- Abort Docker startup with an actionable runtime UID/GID diagnostic when the data directory, logos directory or existing files are inaccessible. Respect `NASDASH_DATA_DIR`, initialize files atomically, and retain non-root operation with supported Compose `user` overrides.
+
+### Added
+
+- Offline password recovery with hidden input and session revocation, preserving other accounts, access rules, keys, integrations and configuration.
+- Synology/Container Manager installation, ACL, UID/GID and log guidance; a dedicated GitHub user-feedback template; required container regression checks for first-start credentials, recovery, custom UID/GID and denied mounts.
+
 ## [0.2.1] - 2026-10-10
 
 ### Upgrading from 0.2.0

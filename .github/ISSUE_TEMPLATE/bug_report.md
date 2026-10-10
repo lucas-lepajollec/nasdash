@@ -27,3 +27,5 @@ If applicable, add screenshots or sanitized browser/server logs. Remove tokens, 
  - Browser: [e.g. Chrome, Firefox, Safari]
  - NasDash version or commit:
  - Running via: [e.g. Docker Compose or local Node.js]
+ - For Synology: DSM and Container Manager versions, numeric Compose `user`, sanitized volume mapping and read/write/ACL setup (no account names, private paths or secrets).
+ - Installation errors: omit initial-password log lines and credential-file contents.
