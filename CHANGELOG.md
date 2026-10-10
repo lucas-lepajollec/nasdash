@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-10
+
+### Upgrading from 0.2.0
+
+- No new storage migration is introduced by this release. Existing pages, settings, integrations, credentials and customized names are preserved. English example names apply to fresh installations; saved French example names remain yours to rename.
+- Back up the complete `data` directory before updating, then pull and recreate the container. Do not delete the data directory or run `docker compose down -v`.
+- To roll back, stop NasDash, select the previous `0.2.0` image or its recorded digest and recreate the container using the same data. Italian is unavailable in 0.2.0; select another supported interface language before rolling back. Keep the backup if you need to restore the exact pre-update configuration.
+- Upgrades from 0.1.x still follow the migration and rollback guidance under [0.2.0](#020---2026-09-30).
+
 ### Added
 
 - A complete Italian interface, including the public demo, widgets, dialogs, settings and locale-aware formatting. Italian is saved as the instance language and accepted by the demo's `?lang=it` handoff; the website and all 54 documentation pages also maintain Italian versions.
@@ -269,7 +278,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.1.2...v0.1.3
