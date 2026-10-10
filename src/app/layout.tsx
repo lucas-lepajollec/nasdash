@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import './themes.css';
 import './design-calme.css';
@@ -74,6 +75,7 @@ export default function RootLayout({
             {children}
           </ConfigProvider>
         </I18nProvider>
+        {process.env.VERCEL === '1' && isDemoMode() && <Analytics />}
       </body>
     </html>
   );

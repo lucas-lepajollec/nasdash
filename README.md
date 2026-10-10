@@ -217,6 +217,8 @@ See [TESTING.md](TESTING.md) and [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for 
 
 The [public demo](https://demo.nasdash.lucas-homelab.fr) uses deterministic fictional services, addresses, metrics, logs, and actions. Modifications are temporary and no private Docker host, Tailscale account, or personal infrastructure is reachable. See [DEMO.md](DEMO.md).
 
+The public demo uses Vercel Web Analytics for visitor and page-view counts only when hosted on Vercel with `NASDASH_DEMO_MODE=true`. Analytics is disabled in normal self-hosted installations and local demo runs.
+
 ## Documentation and community
 
 - [Documentation](https://docs.nasdash.lucas-homelab.fr)
