@@ -15,7 +15,7 @@ const languageListeners = new Set<() => void>();
 let currentLanguage: UiLanguage = 'en';
 
 function isUiLanguage(value: string | null | undefined): value is UiLanguage {
-  return value === 'en' || value === 'fr' || value === 'es' || value === 'de';
+  return value === 'en' || value === 'fr' || value === 'es' || value === 'de' || value === 'it';
 }
 
 export function readRequestedLanguage() {

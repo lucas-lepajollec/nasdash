@@ -78,7 +78,7 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 - Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
-- A complete English, French, Spanish, and German interface with an instance-wide server preference.
+- A complete English, French, Spanish, German, and Italian interface with an instance-wide server preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.
 - Encrypted integration credentials, atomic configuration writes, and backup/restore tooling.
 
@@ -195,9 +195,9 @@ scripts/          # Demo, tests, backup, restore, and smoke tooling
 
 ## Interface languages
 
-English is the default interface. French, Spanish, and German are maintained alongside it, and the selected language is stored in the server configuration for the whole NasDash instance. The isolated public demo keeps changes temporary and can also receive an explicit `?lang=en`, `?lang=fr`, `?lang=es`, or `?lang=de` handoff.
+English is the default interface. French, Spanish, German, and Italian are maintained alongside it, and the selected language is stored in the server configuration for the whole NasDash instance. The isolated public demo keeps changes temporary and can also receive an explicit `?lang=en`, `?lang=fr`, `?lang=es`, `?lang=de`, or `?lang=it` handoff.
 
-New interface copy should use a semantic key in `src/i18n/messages.ts`. `src/i18n/generated.ts` is the reviewed migration dictionary for legacy French source phrases; keep its existing keys stable and update all four values together when correcting one of those messages. Use the locale exposed by `useI18n()` for dates, times, numbers, weather lookup, and other regional formatting. User-created names and content remain untouched when no maintained translation exists.
+New interface copy should use a semantic key in `src/i18n/messages.ts`. `src/i18n/generated.ts` is the reviewed migration dictionary for legacy French source phrases; keep its existing keys stable and update all five values together when correcting one of those messages. Use the locale exposed by `useI18n()` for dates, times, numbers, weather lookup, and other regional formatting. User-created names and content remain untouched when no maintained translation exists.
 
 ## Development and quality
 

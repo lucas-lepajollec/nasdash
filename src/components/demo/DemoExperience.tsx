@@ -31,7 +31,7 @@ function readIntroSeen() {
 }
 
 export default function DemoExperience() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { config, updateConfig } = useConfig();
   const currentTheme = config?.settings?.theme || 'nasdash';
   const tryTheme = (theme: string) => { void updateConfig({ theme, mode: LIGHT_THEMES.includes(theme) ? 'light' : 'dark' }); };
@@ -159,8 +159,8 @@ export default function DemoExperience() {
           <p className="lh-demo-limits">{t('demo.limits')}</p>
 
           <nav className="lh-demo-links" aria-label={t('demo.public')}>
-            <a href={LINKS.site} target="_blank" rel="noreferrer">{t('demo.site')}</a>
-            <a href={LINKS.docs} target="_blank" rel="noreferrer">{t('demo.docs')}</a>
+            <a href={`${LINKS.site}${language === 'en' ? '' : `/${language}`}`} target="_blank" rel="noreferrer">{t('demo.site')}</a>
+            <a href={`${LINKS.docs}/${language}/docs`} target="_blank" rel="noreferrer">{t('demo.docs')}</a>
             <a href={LINKS.source} target="_blank" rel="noreferrer">{t('demo.source')}</a>
           </nav>
 

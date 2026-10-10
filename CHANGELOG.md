@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- A complete Italian interface, including the public demo, widgets, dialogs, settings and locale-aware formatting. Italian is saved as the instance language and accepted by the demo's `?lang=it` handoff; the website and all 54 documentation pages also maintain Italian versions.
+
 ### Changed
 
 - Enable Vercel Web Analytics on the public Vercel-hosted demo; normal self-hosted installations and local demos keep analytics disabled.

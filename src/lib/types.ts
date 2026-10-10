@@ -245,7 +245,7 @@ export interface DashboardConfig {
   /** Saved connections to external services (see `src/integrations/instances.ts`). */
   integrations?: IntegrationInstance[];
   settings: {
-    uiLanguage?: 'en' | 'fr' | 'es' | 'de';
+    uiLanguage?: 'en' | 'fr' | 'es' | 'de' | 'it';
     panels?: Record<string, PanelConfig>;
     title: string;
     titleMobile?: string;

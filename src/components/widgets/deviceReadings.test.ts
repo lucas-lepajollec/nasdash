@@ -11,6 +11,8 @@ describe('device readings', () => {
     expect(formatBytes(5.6 * GIB, 'de')).toBe('5.6 GB');
     expect(formatBytes(1800 * GIB, 'fr')).toBe('1,8 To');
     expect(formatBytes(1800 * GIB, 'en')).toBe('1.8 TB');
+    expect(formatBytes(5.6 * GIB, 'it')).toBe('5,6 GB');
+    expect(formatBytes(1800 * GIB, 'it')).toBe('1,8 TB');
   });
 
   it('reads metrics with used and total space', () => {

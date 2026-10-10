@@ -37,14 +37,14 @@ export function metricLabel(metric: Metric): string {
   }
 }
 
-/** `16 Go`, `5,6 Go`, `1,8 To` in French; `16 GB`, `5.6 GB`, `1.8 TB` otherwise (one decimal below 10 GB). */
+/** `16 Go`, `5,6 Go`, `1,8 To` in French; `16 GB`, `5.6 GB`, `1.8 TB` in English, Spanish and German; Italian uses `5,6 GB` and `1,8 TB` (one decimal below 10 GB). */
 export function formatBytes(bytes: number, language: UiLanguage): string {
   const gb = bytes / GIB;
   const french = language === 'fr';
   const [amount, unit] = gb >= 1000
     ? [(gb / 1000).toFixed(1), french ? 'To' : 'TB']
     : [gb < 10 && !Number.isInteger(Math.round(gb * 10) / 10) ? gb.toFixed(1) : gb.toFixed(0), french ? 'Go' : 'GB'];
-  return `${french ? amount.replace('.', ',') : amount} ${unit}`;
+  return `${french || language === 'it' ? amount.replace('.', ',') : amount} ${unit}`;
 }
 
 export function readingFromMetric(metric: Metric, language: UiLanguage): DeviceReading {

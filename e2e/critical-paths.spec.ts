@@ -106,6 +106,29 @@ test.describe.serial('critical self-hosted paths', () => {
     });
   });
 
+  test('Italian is persisted as the instance language and survives a page reload', async ({ page }) => {
+    const admin = await isolatedRequest(19);
+    await login(admin, 'admin', ADMIN_PASSWORD);
+    try {
+      const update = await admin.put('/api/config', { data: { type: 'settings', uiLanguage: 'it' } });
+      expect(update.status()).toBe(200);
+      const stored = await admin.get('/api/config');
+      expect((await stored.json()).settings.uiLanguage).toBe('it');
+
+      await page.context().addCookies((await admin.storageState()).cookies);
+      await page.goto('/');
+      await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+      await expect(page.locator('[data-settings-trigger]')).toHaveAttribute('title', 'Impostazioni globali');
+      await page.reload();
+      await expect(page.locator('html')).toHaveAttribute('lang', 'it');
+      await expect(page.locator('[data-settings-trigger]')).toHaveAttribute('title', 'Impostazioni globali');
+    } finally {
+      const restore = await admin.put('/api/config', { data: { type: 'settings', uiLanguage: 'en' } });
+      expect(restore.status()).toBe(200);
+      await admin.dispose();
+    }
+  });
+
   test('admin can create, edit and persist a page through its real API contract', async () => {
     const admin = await isolatedRequest(20);
     await login(admin, 'admin', ADMIN_PASSWORD);

@@ -6,7 +6,7 @@ const projectRoot = process.cwd();
 const sourceRoot = join(projectRoot, 'src');
 const generatedPath = join(sourceRoot, 'i18n/generated.ts');
 const supplementalPath = join(sourceRoot, 'i18n/messages.ts');
-const locales = ['en', 'fr', 'es', 'de'];
+const locales = ['en', 'fr', 'es', 'de', 'it'];
 const userAttrs = new Set(['title', 'aria-label', 'placeholder', 'alt', 'label', 'sublabel', 'description', 'message', 'text', 'hint', 'emptyMessage', 'error', 'statusText']);
 const userProps = new Set([
   'title',
@@ -166,7 +166,7 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`${canonicalKeys.length} interface strings are complete in EN/FR/ES/DE.`);
+console.log(`${canonicalKeys.length} interface strings are complete in EN/FR/ES/DE/IT.`);
 console.log('No supported hard-coded user-facing strings remain in TSX sources.');
 
 function insideTranslationCall(node) {

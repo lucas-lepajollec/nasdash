@@ -168,12 +168,12 @@ describe('configuration entity payloads', () => {
   it('accepts only maintained interface languages', () => {
     expect(() => validateConfigMutationBody({
       type: 'settings',
-      uiLanguage: 'fr',
+      uiLanguage: 'it',
     }, 'settings', 'PUT')).not.toThrow();
 
     expect(() => validateConfigMutationBody({
       type: 'settings',
-      uiLanguage: 'it',
+      uiLanguage: 'ja',
     }, 'settings', 'PUT')).toThrow();
   });
 
