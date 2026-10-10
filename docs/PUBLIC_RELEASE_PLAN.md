@@ -1,5 +1,7 @@
 # NasDash public release plan
 
+> **Historical evidence — 2026-08-12.** This records the release candidate or plan at that time, not the current product state or an active checklist. For current behavior, use the [dedicated documentation](https://docs.nasdash.lucas-homelab.fr/en/docs/); for current release and validation policy, see [CONTRIBUTING.md](../CONTRIBUTING.md), [TESTING.md](../TESTING.md) and [CHANGELOG.md](../CHANGELOG.md).
+
 This document tracks the work required to present NasDash publicly as a polished, trustworthy self-hosted project. It complements the technical roadmap: the focus here is release readiness, demonstration, documentation and maintainable customization.
 
 ## Stable baseline

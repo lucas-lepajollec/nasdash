@@ -74,7 +74,7 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 ## Highlights
 
 - Service categories with local and secondary URLs, live availability, and drag-and-drop ordering.
-- Hardware metrics from Glances, Home Assistant, Proxmox VE, and Libre Hardware Monitor.
+- Hardware metrics from Glances, Netdata, Beszel, Prometheus/node_exporter, Proxmox VE, and Libre Hardware Monitor.
 - Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
@@ -123,7 +123,7 @@ services:
     restart: unless-stopped
 ```
 
-Prepare the host data folder for the runtime user before starting. See [first-install and Synology guidance](INSTALLATION.md) for `1001:1001`, a custom Compose `user`, and DSM folder permissions.
+Prepare the host data folder for the runtime user before starting. See [first-install and Synology guidance](https://docs.nasdash.lucas-homelab.fr/en/docs/getting-started/docker-installation) for `1001:1001`, a custom Compose `user`, and DSM folder permissions.
 
 ```bash
 docker compose up -d
@@ -156,12 +156,12 @@ Development binds to `127.0.0.1:2499` by default. Use `npm run dev:lan` only whe
 ## Configuration and persistence
 
 - The default `./data` folder contains configuration, users, password hashes, encryption material, and uploaded logos.
-- Keep `NASDASH_JWT_SECRET` stable. Changing it invalidates sessions and prevents existing encrypted integration credentials from being decrypted.
+- Keep persisted keys and any existing `NASDASH_JWT_SECRET` configuration stable. Adding or changing an override can invalidate sessions and make saved integration credentials unreadable.
 - Back up the entire data store before upgrades; never run `docker compose down -v` unless deleting all NasDash state is intentional.
 - Before updating, record the current NasDash image digest and run the documented backup. Pull and recreate the stack, then verify `docker compose ps` and `/api/health`. Roll back by changing the `image:` line to the previous version or `sha-<full-commit>` tag and recreating without removing the data directory.
-- Make `./data` writable by UID/GID `1001:1001`. Use [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) only when you deliberately want a named volume instead of a host folder.
+- Make `./data` writable by the actual runtime UID:GID (default `1001:1001`). Use [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) only when you deliberately want a named volume instead of a host folder.
 
-See [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md) for named-volume and bind-mount procedures, and [INSTALLATION.md](INSTALLATION.md) for permission diagnostics and offline password recovery without deleting data. Startup initialization, permission checks and offline recovery are available in version 0.2.2 or later.
+See [backup procedures](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/backup) for named-volume and bind-mount procedures, and [installation and permissions](https://docs.nasdash.lucas-homelab.fr/en/docs/getting-started/docker-installation) for permission diagnostics, and [first-start recovery](https://docs.nasdash.lucas-homelab.fr/en/docs/getting-started/first-start) for a lost password without deleting data. Startup initialization, permission checks and offline recovery are available in version 0.2.2 or later.
 
 Share installation experiences and constructive feedback through [GitHub Issues](https://github.com/lucas-lepajollec/nasdash/issues/new/choose), using **User feedback**, **Bug report**, or **Feature request**. Remove initial passwords and other secrets from logs before posting.
 
@@ -180,7 +180,7 @@ Share installation experiences and constructive feedback through [GitHub Issues]
 - Never commit `.env` or a real runtime `data/` directory.
 - Public demo controls and infrastructure data are fictional and isolated.
 
-Read [ACCESS_CONTROL.md](ACCESS_CONTROL.md), [SECURITY.md](SECURITY.md), and the [integration troubleshooting guide](docs/INTEGRATIONS_TROUBLESHOOTING.md) before exposing integrations.
+Read [access rules](https://docs.nasdash.lucas-homelab.fr/en/docs/guide/authentication-roles), [SECURITY.md](SECURITY.md), and the [integration troubleshooting guide](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/troubleshooting) before exposing integrations.
 
 ## Architecture
 
@@ -188,13 +188,16 @@ Read [ACCESS_CONTROL.md](ACCESS_CONTROL.md), [SECURITY.md](SECURITY.md), and the
 | --- | --- |
 | Application | Next.js, React, TypeScript |
 | Persistence and auth | Local server-side data, encrypted credentials, JWT sessions |
-| Integrations | Docker proxy, Glances, Proxmox, Tailscale, Home Assistant |
+| Integrations | Docker-compatible hosts, six monitoring sources, Tailscale/Headscale, ICS and weather |
 | Deployment | Non-root Docker image and Docker Compose |
 
 ```text
 src/app/          # Next.js pages and API routes
 src/components/   # Dashboard, widgets, settings, and editors
-src/lib/          # Persistence, auth, integrations, and contracts
+src/lib/          # Persistence, auth, access, and page contracts
+src/integrations/ # Shared connection manifests and monitoring adapters
+src/widgets/      # Widget definitions and views
+src/i18n/         # Five maintained interface languages
 e2e/              # Isolated browser paths
 scripts/          # Demo, tests, backup, restore, and smoke tooling
 ```
@@ -221,11 +224,15 @@ See [TESTING.md](TESTING.md) and [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for 
 
 ## Public demo
 
-The [public demo](https://demo.nasdash.lucas-homelab.fr) uses deterministic fictional services, addresses, metrics, logs, and actions. Modifications are temporary and no private Docker host, Tailscale account, or personal infrastructure is reachable. See [DEMO.md](DEMO.md).
+The [public demo](https://demo.nasdash.lucas-homelab.fr) uses deterministic fictional services, addresses, metrics, logs, and actions. Modifications are temporary and no private Docker host, Tailscale account, or personal infrastructure is reachable. See [demo mode](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/demo-mode).
 
 The public demo uses Vercel Web Analytics for visitor and page-view counts only when hosted on Vercel with `NASDASH_DEMO_MODE=true`. Analytics is disabled in normal self-hosted installations and local demo runs.
 
 ## Documentation and community
+
+The dedicated documentation is the canonical home for installation, operation,
+access control, demo mode and customization. This repository keeps the quick
+start and contributor/maintainer contracts.
 
 - [Documentation](https://docs.nasdash.lucas-homelab.fr)
 - [Contributing guide](CONTRIBUTING.md)

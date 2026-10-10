@@ -17,7 +17,7 @@ A test checks that every definition has its folder, its view and a line in
 1. Create `src/widgets/<type>/definition.ts` with `defineWidget({ … })`.
 2. Create `src/widgets/<type>/view.tsx` exporting the component.
 3. Add one line in `definitions.ts` and one in `views.ts`.
-4. Add the name and description in `src/i18n/messages.ts` (4 languages).
+4. Add the name and description in `src/i18n/messages.ts` (English, French, Spanish, German and Italian).
 
 It then appears in the widget library, can be placed, moved and resized in
 its formats on every page, and follows the access rules of its definition.

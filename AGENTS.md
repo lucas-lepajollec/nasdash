@@ -18,7 +18,9 @@ NasDash is a self-hosted cockpit for homelab services, infrastructure telemetry 
 
 ## Repository expectations
 
-- Update tests, `README.md`, focused documentation and `CHANGELOG.md` when behavior or user-facing compatibility changes.
+- Update tests, the README quick start, canonical documentation and `CHANGELOG.md` when behavior or user-facing compatibility changes.
+- User/operator guides are canonical at https://docs.nasdash.lucas-homelab.fr in English, French, Spanish, German and Italian. Maintain all five versions in the dedicated documentation repository; link there instead of recreating installation, access, backup/restore, demo, CSS or troubleshooting Markdown here. Publish and verify destinations before retiring links.
+- Keep community policies, test/release rules, screenshot/fixture maintenance and source-local contracts in the product. Dated historical audits are evidence, not current certification.
 - Never commit `.env` values, real `data/`, backups, private addresses, tokens or infrastructure inventories.
 - Follow `CONTRIBUTING.md` for pull requests and `SECURITY.md` for vulnerabilities.
 - GitHub is the public review surface; maintainers integrate the exact accepted result into authoritative Forgejo history.

@@ -6,7 +6,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeHeading, CalmeRow, CalmeSwitch } from '../shared/CalmeControls';
 
 export function DeveloperTab() {
-  const { t, locale } = useI18n();
+  const { t, locale, language } = useI18n();
   const { config, updateConfig } = useConfig();
   
   const [customCss, setCustomCss] = useState(() => config?.settings?.customCss ?? '');
@@ -39,7 +39,7 @@ export function DeveloperTab() {
       <section className="ndc-set-block">
         <CalmeHeading
           info={t("Personnalisez l&apos;interface avec les variables publiques NasDash. Les scripts, imports distants et URL dangereuses sont neutralisés.")}
-          action={<a className="ndc-text-button" href="https://github.com/lucas-lepajollec/nasdash/blob/main/CUSTOM_CSS.md" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>{t("Guide et exemples")} <ExternalLink size={11} style={{ verticalAlign: -1 }} /></a>}
+          action={<a className="ndc-text-button" href={`https://docs.nasdash.lucas-homelab.fr/${language}/docs/developers/custom-css`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>{t("Guide et exemples")} <ExternalLink size={11} style={{ verticalAlign: -1 }} /></a>}
         >{t("Custom CSS")}</CalmeHeading>
         {customCssSafeMode && (
           <div role="status" className="ndc-set-row-hint" style={{ marginBottom: 8 }}>

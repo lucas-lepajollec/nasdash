@@ -30,11 +30,11 @@ You should receive an acknowledgement within seven days and an initial assessmen
 
 Configuration mistakes, inaccessible integrations and general support requests are not vulnerabilities. Use a normal GitHub issue for those cases after removing passwords, API tokens, cookies, private addresses and the contents of the persistent `data/` directory.
 
-For deployment guidance, see [README.md](README.md), [ACCESS_CONTROL.md](ACCESS_CONTROL.md) and [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md).
+For deployment guidance, see [README.md](README.md), [access rules](https://docs.nasdash.lucas-homelab.fr/en/docs/guide/authentication-roles) and [backup procedures](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/backup).
 
 ## Trust boundaries
 
 - NasDash may contact only service and device endpoints explicitly saved by an administrator. Viewer-supplied ping URLs are matched against that exact configured set.
-- TLS certificates are verified for Proxmox and other HTTPS integrations. For a private certificate authority, mount its CA certificate and configure Node.js with `NODE_EXTRA_CA_CERTS`; do not disable certificate verification.
+- TLS certificates are verified for credential-bearing HTTPS integrations unless an administrator explicitly enables self-signed acceptance for that connection. Prefer a private CA with `NODE_EXTRA_CA_CERTS`; never disable verification globally. Service pings carry no credentials and accept self-signed certificates for their configured targets.
 - Docker socket or TCP access is equivalent to privileged infrastructure access. Keep it on a trusted network, use the least-privileged proxy available, and never expose an unauthenticated Docker API.
 - Uploaded logos, custom CSS and the persistent `data/` directory are administrator-controlled data. Backups therefore need the same confidentiality as the live deployment.

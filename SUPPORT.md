@@ -1,6 +1,6 @@
 # Support
 
-Start with the [README](README.md) and the [documentation](https://docs.nasdash.lucas-homelab.fr). Deployment-specific help is available in [access control](ACCESS_CONTROL.md), [backup and restore](BACKUP_AND_RESTORE.md), and [integration troubleshooting](docs/INTEGRATIONS_TROUBLESHOOTING.md).
+Start with the [README](README.md) and the [documentation](https://docs.nasdash.lucas-homelab.fr). Deployment-specific help is available in [access control](https://docs.nasdash.lucas-homelab.fr/en/docs/guide/authentication-roles), [backup and restore](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/backup), and [integration troubleshooting](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/troubleshooting).
 
 ## Ask for help
 

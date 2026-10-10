@@ -28,7 +28,7 @@ try {
   }
 } catch (error) {
   console.error(`[NASDASH] Data permission check failed: ${directory}; runtime UID:GID ${identity}; ${error.code || 'UNKNOWN'}.`);
-  console.error('[NASDASH] Grant this user read/write access to the mounted data folder and existing files. On Synology, check the shared-folder ACL and Compose user: "UID:GID". PUID/PGID environment variables are not supported. See INSTALLATION.md.');
+  console.error('[NASDASH] Grant this user read/write access to the mounted data folder and existing files. On Synology, check the shared-folder ACL and Compose user: "UID:GID". PUID/PGID environment variables are not supported. See https://docs.nasdash.lucas-homelab.fr/en/docs/getting-started/docker-installation.');
   process.exit(1);
 }
 

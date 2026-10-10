@@ -1,5 +1,7 @@
 # NasDash pre-release audit
 
+> **Historical evidence — 2026-08-12.** This records the release candidate or plan at that time, not the current product state or an active checklist. For current behavior, use the [dedicated documentation](https://docs.nasdash.lucas-homelab.fr/en/docs/); for current release and validation policy, see [CONTRIBUTING.md](../CONTRIBUTING.md), [TESTING.md](../TESTING.md) and [CHANGELOG.md](../CHANGELOG.md).
+
 Audit date: 2026-08-12
 
 This audit covers the combined release candidate made from the post-demo stabilization, reproducible screenshots, Custom CSS recovery and final security-cleanup branches. It records evidence rather than treating a successful build as proof of every behavior.

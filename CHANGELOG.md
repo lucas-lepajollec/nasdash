@@ -6,12 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Documentation
+
+- Centralize user/operator guides on the dedicated documentation site, align all five languages with current integrations, composable pages, backups and first-install behavior, and replace duplicate repository guides with canonical links.
+- Open the Custom CSS guide in the selected interface language and link startup permission diagnostics to the published installation procedure.
+
 ## [0.2.2] - 2026-10-10
 
 ### Upgrading from 0.2.1
 
 - No new storage migration is introduced. Existing accounts, passwords, keys, integrations, configuration and customized names are preserved. Back up the complete data directory, then pull and recreate the container without deleting data or volumes.
-- Startup now stops immediately when the configured runtime UID/GID cannot access the data directory, logos or existing files. On Synology, check the dedicated DSM account and shared-folder ACLs; a Compose `user: "UID:GID"` override must match the permitted identity. See [INSTALLATION.md](INSTALLATION.md).
+- Startup now stops immediately when the configured runtime UID/GID cannot access the data directory, logos or existing files. On Synology, check the dedicated DSM account and shared-folder ACLs; a Compose `user: "UID:GID"` override must match the permitted identity. See [installation and permissions](https://docs.nasdash.lucas-homelab.fr/en/docs/getting-started/docker-installation).
 - Generated initial passwords are logged once after their hashes are saved. Restarting or rebuilding never resets an existing account. If its password is lost, stop NasDash and use the offline recovery helper from 0.2.2 or later; recovery revokes that account's existing sessions and preserves the rest of the data.
 - To roll back, stop NasDash and recreate the previous `0.2.1` image or recorded digest with the same data. That image retains the old first-login password initialization and has no offline recovery helper. Keep your backup for an exact pre-update restoration; upgrades from 0.1.x still follow the [0.2.0 migration guidance](#020---2026-09-30).
 

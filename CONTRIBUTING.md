@@ -30,6 +30,11 @@ For Docker integration work, use a constrained `docker-socket-proxy` as describe
 Run the checks relevant to your change before opening a pull request. The complete pre-merge path is:
 
 ```bash
+npm run check:version
+npm run check:i18n
+npm run lint
+npm run check:audit-policy
+npm run audit:dependencies
 npm test
 npm run build
 npx playwright install chromium
@@ -38,7 +43,7 @@ docker build --tag nasdash:smoke .
 npm run test:container -- nasdash:smoke
 ```
 
-`npm run lint` is useful while editing touched files, but the repository still has pre-existing lint debt and does not yet use the full-project lint result as a merge gate. Do not expand that debt in changed code.
+`npm run lint` enforces the accepted lint baseline and is a required merge gate. Do not add new lint debt; `npm run lint:strict` exposes the full remaining backlog.
 
 See [TESTING.md](TESTING.md) for isolated fixtures, production-mode browser tests, and container smoke-test details.
 
@@ -51,7 +56,7 @@ See [TESTING.md](TESTING.md) for isolated fixtures, production-mode browser test
 5. Add or update tests and documentation when behavior changes.
 6. Respond to review feedback with new commits; do not rewrite a branch while it is actively being reviewed unless coordinated with the maintainer.
 
-GitHub is NasDash's public review and contribution surface. Forgejo is the maintainer's authoritative Git forge. Accepted contributions are integrated into the authoritative history without rewriting their reviewed commits, then mirrored back to GitHub. GitHub marks the original pull request as merged when those commits reach `main`.
+GitHub is NasDash's public review and contribution surface. Forgejo is the maintainer's authoritative Git forge. Maintainer branches are pushed through Forgejo and mirrored to GitHub for the public PR/check gate. Merge once on GitHub after the required checks pass, then fast-forward that exact accepted merge result into Forgejo and verify live parity. Never create separate merges on the two forges.
 
 ## Review expectations
 
@@ -71,6 +76,12 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Releases are deliberate milestones, not snapshots of every merge. Prepare a release pull request that updates the declared version, moves completed entries out of `Unreleased` in [CHANGELOG.md](CHANGELOG.md), and documents compatibility, migrations, and rollback when relevant. After all required checks pass, tag the exact accepted `main` commit with an annotated `vMAJOR.MINOR.PATCH` tag and push it through the authoritative Forgejo remote. Verify that the identical tag reaches GitHub and that the versioned container finishes successfully before publishing a draft GitHub release. Never move or reuse a published version tag.
 
+## Documentation ownership
+
+User and operator procedures live on the [dedicated documentation site](https://docs.nasdash.lucas-homelab.fr/en/docs/). Update English, French, Spanish, German and Italian together when behavior changes. Link to the canonical page instead of duplicating installation, backup/restore, access, demo, CSS or troubleshooting guides here. Publish and verify destination pages before retiring links.
+
+Keep the README quick start, community/security/contribution policy, changelog, testing, screenshot/fixture maintenance and source-local module contracts in this repository. Historical audits are dated evidence, not current release certification.
+
 ## User experience feedback
 
-Positive and constructive experience reports are welcome through the **User feedback** template in [GitHub Issues](https://github.com/lucas-lepajollec/nasdash/issues/new/choose). Use **Bug report** for reproducible faults and **Feature request** for proposals. Include platform/application versions and sanitized installation settings. Never post generated initial-password lines, credential files, tokens or private infrastructure details. See [INSTALLATION.md](INSTALLATION.md) for first-start troubleshooting.
+Positive and constructive experience reports are welcome through the **User feedback** template in [GitHub Issues](https://github.com/lucas-lepajollec/nasdash/issues/new/choose). Use **Bug report** for reproducible faults and **Feature request** for proposals. Include platform/application versions and sanitized installation settings. Never post generated initial-password lines, credential files, tokens or private infrastructure details. See [first-start troubleshooting](https://docs.nasdash.lucas-homelab.fr/en/docs/getting-started/first-start).
