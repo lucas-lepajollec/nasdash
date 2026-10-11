@@ -1,11 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { mergeSeries, latestTime } from './deviceData';
 import { loadText, percentText, rateText, temperatureText, uptimeText } from './format';
-import { withFacets } from './readings';
+import { readingsOf, withFacets } from './readings';
+import { glancesMetrics } from '@/integrations/glances/collect';
 
 const t = (key: string, variables?: Record<string, string | number>) => `${key}:${JSON.stringify(variables ?? {})}`;
 
 describe('device widgets data', () => {
+  it('displays a Synology Glances temperature with its CPU history', () => {
+    const snapshot = {
+      online: true, updatedAt: 5000, vitals: {},
+      metrics: glancesMetrics({ cpu: { total: 5 }, sensors: [{ label: 'k10temp 0', value: 50, type: 'temperature_core', unit: 'C' }] }),
+      series: { 'cpu.usage@temp': [[4000, 49], [5000, 50]] as [number, number][] },
+    };
+    expect(readingsOf(snapshot, 'temperature', t, 'en')).toMatchObject([
+      { value: 50, text: '50 °C', detail: 'CPU', points: [[4000, 49], [5000, 50]] },
+    ]);
+  });
+
   it('adds newer points, replaces the minute still averaged and drops what left the window', () => {
     const merged = mergeSeries(
       { cpu: [[1000, 10], [2000, 20], [3000, 30]], old: [[500, 1]] },

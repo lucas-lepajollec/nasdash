@@ -24,6 +24,12 @@ The rest of the app only uses the registry, the collectors and the types.
 
 ## Monitoring sources
 
+The Glances collector recognizes CPU package/core labels and the unnamed
+`k10temp` chip labels used by Synology DSM. Sensor values must be finite;
+when type/unit metadata is present, fan speeds, battery percentages and
+non-Celsius values are excluded from temperature selection. No temperature
+is invented when a source supplies none.
+
 A monitoring connection is saved once, on **Settings → Integrations**, in
 `config.integrations` (like Tailscale): address, port, credentials (the
 password in `secrets`, encrypted on disk) and the certificate choice. A device

@@ -75,6 +75,7 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 
 - Service categories with local and secondary URLs, live availability, and drag-and-drop ordering.
 - Hardware metrics from Glances, Netdata, Beszel, Prometheus/node_exporter, Proxmox VE, and Libre Hardware Monitor.
+- Storage volumes grouped by host by default, with an optional fullest-first order in widget settings.
 - Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.

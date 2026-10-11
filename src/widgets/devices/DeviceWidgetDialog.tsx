@@ -17,6 +17,7 @@ import {
 import { SERIES_COLORS } from './parts';
 import { useDevicesData } from './deviceData';
 import { readingsOf } from './readings';
+import { storageOrder } from '../storage/order';
 
 type Translate = (key: string, variables?: Record<string, string | number>) => string;
 
@@ -180,6 +181,20 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
                   </div>
                 ))}
               </div>
+            </CalmeField>
+          )}
+
+          {single === 'disk' && (
+            <CalmeField label={t('devices.look.storageOrder')} info={t('devices.look.storageOrderHint')}>
+              <CalmeSegmented
+                label={t('devices.look.storageOrder')}
+                value={storageOrder(draft.storageOrder)}
+                options={[
+                  { value: 'host', label: t('devices.look.storageByHost') },
+                  { value: 'usage', label: t('devices.look.storageByUsage') },
+                ]}
+                onChange={value => change({ storageOrder: value })}
+              />
             </CalmeField>
           )}
 

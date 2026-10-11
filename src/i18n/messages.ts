@@ -17,6 +17,10 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "devices.look.storageOrder": "Volume order",
+  "devices.look.storageByHost": "By host",
+  "devices.look.storageByUsage": "By usage",
+  "devices.look.storageOrderHint": "Group volumes by machine and name, or show the fullest volumes first.",
   "calendar.editEvent": "Edit event",
   "calendar.date": "Date",
   "calendar.saveError": "Could not save the event. Please try again.",
@@ -406,7 +410,7 @@ const en: Dictionary = {
   'widget.deviceChart.name': "Machines chart",
   'widget.deviceChart.description': "One measurement over 1 h or 24 h for several machines: CPU, RAM, GPU, temperature or network.",
   'widget.storage.name': "Storage",
-  'widget.storage.description': "Every disk of every machine, the fullest first, with its free space.",
+  'widget.storage.description': "Every disk of every machine, grouped by host or sorted by usage, with its free space.",
   'devices.calme.chartStyle': "Curve",
   'devices.calme.chartArea': "Filled area",
   'devices.calme.chartLine': "Line",
@@ -933,6 +937,10 @@ const en: Dictionary = {
 };
 
 const fr: Dictionary = {
+  "devices.look.storageOrder": "Ordre des volumes",
+  "devices.look.storageByHost": "Par hôte",
+  "devices.look.storageByUsage": "Par remplissage",
+  "devices.look.storageOrderHint": "Regroupez les volumes par machine et par nom, ou affichez les plus pleins en premier.",
   "calendar.editEvent": "Modifier l’événement",
   "calendar.date": "Date",
   "calendar.saveError": "Impossible d’enregistrer l’événement. Réessayez.",
@@ -1322,7 +1330,7 @@ const fr: Dictionary = {
   'widget.deviceChart.name': "Graphique des machines",
   'widget.deviceChart.description': "Une mesure sur 1 h ou 24 h pour plusieurs machines : CPU, RAM, GPU, température ou réseau.",
   'widget.storage.name': "Stockage",
-  'widget.storage.description': "Tous les disques de toutes les machines, les plus pleins d’abord, avec l’espace libre.",
+  'widget.storage.description': "Tous les disques de toutes les machines, regroupés par hôte ou triés par remplissage, avec l’espace libre.",
   'devices.calme.chartStyle': "Courbe",
   'devices.calme.chartArea': "Zone remplie",
   'devices.calme.chartLine': "Ligne",
@@ -1849,6 +1857,10 @@ const fr: Dictionary = {
 };
 
 const es: Dictionary = {
+  "devices.look.storageOrder": "Orden de los volúmenes",
+  "devices.look.storageByHost": "Por host",
+  "devices.look.storageByUsage": "Por uso",
+  "devices.look.storageOrderHint": "Agrupa los volúmenes por máquina y nombre, o muestra primero los más llenos.",
   "calendar.editEvent": "Editar evento",
   "calendar.date": "Fecha",
   "calendar.saveError": "No se pudo guardar el evento. Inténtalo de nuevo.",
@@ -2238,7 +2250,7 @@ const es: Dictionary = {
   'widget.deviceChart.name': "Gráfico de máquinas",
   'widget.deviceChart.description': "Una medida en 1 h o 24 h para varias máquinas: CPU, RAM, GPU, temperatura o red.",
   'widget.storage.name': "Almacenamiento",
-  'widget.storage.description': "Todos los discos de todas las máquinas, los más llenos primero, con su espacio libre.",
+  'widget.storage.description': "Todos los discos de todas las máquinas, agrupados por host u ordenados por uso, con su espacio libre.",
   'devices.calme.chartStyle': "Curva",
   'devices.calme.chartArea': "Área rellena",
   'devices.calme.chartLine': "Línea",
@@ -2765,6 +2777,10 @@ const es: Dictionary = {
 };
 
 const de: Dictionary = {
+  "devices.look.storageOrder": "Reihenfolge der Volumes",
+  "devices.look.storageByHost": "Nach Host",
+  "devices.look.storageByUsage": "Nach Belegung",
+  "devices.look.storageOrderHint": "Volumes nach Rechner und Name gruppieren oder die vollsten zuerst anzeigen.",
   "calendar.editEvent": "Termin bearbeiten",
   "calendar.date": "Datum",
   "calendar.saveError": "Der Termin konnte nicht gespeichert werden. Bitte erneut versuchen.",
@@ -3154,7 +3170,7 @@ const de: Dictionary = {
   'widget.deviceChart.name': "Rechner-Diagramm",
   'widget.deviceChart.description': "Ein Messwert über 1 Std. oder 24 Std. für mehrere Rechner: CPU, RAM, GPU, Temperatur oder Netzwerk.",
   'widget.storage.name': "Speicher",
-  'widget.storage.description': "Alle Laufwerke aller Rechner, die vollsten zuerst, mit freiem Platz.",
+  'widget.storage.description': "Alle Laufwerke aller Rechner, nach Host gruppiert oder nach Belegung sortiert, mit freiem Platz.",
   'devices.calme.chartStyle': "Kurve",
   'devices.calme.chartArea': "Gefüllte Fläche",
   'devices.calme.chartLine': "Linie",
@@ -3681,6 +3697,10 @@ const de: Dictionary = {
 };
 
 const it: Dictionary = {
+  "devices.look.storageOrder": "Ordine dei volumi",
+  "devices.look.storageByHost": "Per host",
+  "devices.look.storageByUsage": "Per utilizzo",
+  "devices.look.storageOrderHint": "Raggruppa i volumi per macchina e nome, oppure mostra prima quelli più pieni.",
   "calendar.editEvent": "Modifica evento",
   "calendar.date": "Data",
   "calendar.saveError": "Impossibile salvare l’evento. Riprova.",
@@ -4070,7 +4090,7 @@ const it: Dictionary = {
   "widget.deviceChart.name": "Grafico delle macchine",
   "widget.deviceChart.description": "Una misurazione nell'arco di 1 h o 24 h per diverse macchine: CPU, RAM, GPU, temperatura o rete.",
   "widget.storage.name": "Archiviazione",
-  "widget.storage.description": "Tutti i dischi di ogni macchina, dal più pieno al più vuoto, con lo spazio libero.",
+  "widget.storage.description": "Tutti i dischi di ogni macchina, raggruppati per host o ordinati per utilizzo, con lo spazio libero.",
   "devices.calme.chartStyle": "Curva",
   "devices.calme.chartArea": "Area piena",
   "devices.calme.chartLine": "Linea",

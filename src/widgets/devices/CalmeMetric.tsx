@@ -18,6 +18,7 @@ import { metricText, readingsOf, withFacets, type Reading } from './readings';
 import { metricName } from './DeviceWidgetDialog';
 import { RangeSwitch, rangeSetting, SERIES_COLORS } from './parts';
 import { SettingsButton } from './SettingsButton';
+import { orderStorageEntries, storageOrder } from '../storage/order';
 
 /** Measures that have their own widget, and how each starts. */
 export const METRIC_WIDGET_DISPLAY: Partial<Record<MetricId, Display>> = {
@@ -35,7 +36,7 @@ const MULTI_CHART_HEIGHT: Record<ChartSize, number> = { small: 96, medium: 150, 
 /**
  * One measure for several machines (CPU, RAM, GPU, temperature, load,
  * network, disks for Storage): a figure, a bar or a ring per machine (per
- * disk for Storage, the fullest first), or one chart with a line per machine
+ * disk for Storage, grouped by host or fullest first), or one chart with a line per machine
  * and the danger threshold dashed. Each machine can have its own colour; the
  * extra figures (temperature, load, video memory, sizes…) are widget options.
  */
@@ -60,16 +61,15 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
   const title = customTitle ?? (metric === 'disk' ? t('devices.calme.storage') : metricName(metric, t));
   const size = width < 300 ? 'small' : width < 520 ? 'medium' : 'large';
 
-  // One entry per machine (per disk for Storage, the fullest first).
-  const entries = shown.flatMap((device, deviceIndex) => readingsOf(data[device.id]?.data, metric, t, language).map(reading => ({ device, deviceIndex, reading })));
-  if (metric === 'disk') entries.sort((a, b) => (b.reading.value ?? 0) - (a.reading.value ?? 0));
+  const readings = shown.flatMap((device, deviceIndex) => readingsOf(data[device.id]?.data, metric, t, language).map(reading => ({ device, deviceIndex, reading })));
+  const entries = metric === 'disk' ? orderStorageEntries(readings, storageOrder(settings.storageOrder), locale) : readings;
   const labelled = (entry: typeof entries[number]): Reading => withFacets({
     ...entry.reading,
     label: metric === 'disk' || (metric === 'gpu' && entry.reading.label !== 'GPU') ? [entry.reading.label, entry.device.name].join(' · ') : entry.device.name,
   }, data[entry.device.id]?.data, look.facets, look.valueParts, t, language, display);
   // A machine's colour: its own, else the measure's (a chart gives each machine a distinct one).
   const colorFor = (entry: typeof entries[number], index: number) => look.deviceColors[entry.device.id]
-    ?? (display === 'chart' ? SERIES_COLORS[index % SERIES_COLORS.length] : look.metrics[metric].color);
+    ?? (display === 'chart' ? SERIES_COLORS[(metric === 'disk' ? entry.deviceIndex : index) % SERIES_COLORS.length] : look.metrics[metric].color);
 
   const totalFree = metric === 'disk' ? shown.reduce((sum, device) => sum + (data[device.id]?.data?.metrics ?? []).filter(item => item.kind === 'disk').reduce((inner, disk) => {
     const used = disk.usedBytes ?? (disk.totalBytes ? (disk.totalBytes * disk.percent) / 100 : 0);

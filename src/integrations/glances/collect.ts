@@ -5,7 +5,7 @@ import { CollectError, type CollectResult, type DeviceCollector, type DeviceVita
 /** Glances REST API (`/api/<version>/all`), optionally behind basic auth. */
 
 interface GlancesResponse {
-  sensors?: { label?: string; value?: number }[];
+  sensors?: { label?: string; value?: number; type?: string; unit?: string }[];
   cpu?: { total?: number };
   mem?: { percent?: number; total?: number };
   fs?: { mnt_point: string; size: number; percent: number }[];
@@ -41,9 +41,13 @@ function basicAuth(token: string | undefined): string | undefined {
 
 export function glancesMetrics(data: GlancesResponse): Metric[] {
   const metrics: Metric[] = [];
-  const sensors = Array.isArray(data.sensors) ? data.sensors : [];
+  const sensors = (Array.isArray(data.sensors) ? data.sensors : []).filter(candidate =>
+    typeof candidate.value === 'number' && Number.isFinite(candidate.value)
+    && (!candidate.type || candidate.type.startsWith('temperature_'))
+    && (!candidate.unit || candidate.unit === 'C'));
   const sensor = (keywords: string[]) => sensors.find(candidate => keywords.some(keyword => candidate.label?.toLowerCase().includes(keyword)));
-  const cpuSensor = sensor(['package', 'tctl', 'tdie']) || sensor(['core']) || sensor(['cpu']) || sensor(['acpitz']);
+  // Glances uses the chip name and index when the CPU sensor has no label (DSM: "k10temp 0").
+  const cpuSensor = sensor(['package', 'tctl', 'tdie']) || sensor(['core']) || sensor(['cpu']) || sensor(['k10temp']) || sensor(['acpitz']);
   const diskSensor = sensors.find(candidate => {
     const label = candidate.label?.toLowerCase() ?? '';
     return ['nvme', 'sda', 'disk', 'hdd', 'temp1'].some(keyword => label.includes(keyword)) && !['cpu', 'core'].some(keyword => label.includes(keyword));

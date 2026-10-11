@@ -36,3 +36,9 @@ Storage) live in `devices/` and read `/api/devices/<id>/history` through one
 shared store (`devices/deviceData.ts`); they draw with the chart kit in
 `src/components/charts/`. Most views still delegate to the historical components in
 `src/components/widgets/`; they move into their folder when redesigned.
+
+Storage uses `storage/order.ts`: `settings.storageOrder` is `host` (default,
+including widgets without this setting) or `usage` (global fullest first).
+Host grouping follows configuration device order, then natural volume-name
+order with a stable metric-key tie-breaker. Chart colours follow the device,
+not the sorted volume position. Other metric widgets retain their own order.
