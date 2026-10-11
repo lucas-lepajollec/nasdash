@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Keep demo calendar trials in the current browser tab, so adding, editing and deleting fictional events work across stateless hosting instances. Reloading or resetting restores demo events; installed calendars retain server persistence. Exercise all five demo locales in required production browser CI without a calendar API.
+
 - Edit or delete local events from calendar details on any page, including the upcoming-event list, and choose the date when adding or editing. Preserve event duration, reset each form, refresh the widgets after successful changes and keep failed changes open with a localized error. ICS events and viewer access remain read-only.
 - Translate wallpaper and appearance-profile delete confirmations in all five languages; extend the interface-copy gate to confirmation labels with regression fixtures.
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { applySoftEdges } from '@/lib/appearance';
 import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
@@ -68,6 +68,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const authLoading = auth?.authLoading ?? true;
 
   const [config, setConfig] = useState<DashboardConfig | null>(null);
+  // A hosted demo can send successive requests to different runtime instances.
+  // Keep its calendar trial in this tab; installed calendars still use the API.
+  const demoCalendarEvents = useRef<LocalCalendarEvent[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [pingResults, setPingResults] = useState<Record<string, { status: string; statusText: string; latency: number; selfSigned?: boolean }>>({});
   const [showSecretSections, setShowSecretSections] = useState(false);
@@ -120,6 +123,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       }
       const data = await res.json();
       if (!data.devices) data.devices = [];
+      if (data.demoMode && demoCalendarEvents.current) data.localEvents = demoCalendarEvents.current;
       setConfig(data);
       setLoading(false);
     } catch (err) {
@@ -550,7 +554,16 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
+  const changeDemoCalendar = (change: (events: LocalCalendarEvent[]) => LocalCalendarEvent[]) => {
+    if (!config?.demoMode) return false;
+    const events = change(demoCalendarEvents.current ?? config.localEvents ?? []);
+    demoCalendarEvents.current = events;
+    setConfig(previous => previous ? { ...previous, localEvents: events } : previous);
+    return true;
+  };
+
   const addLocalEvent = async (event: Omit<LocalCalendarEvent, 'id'>) => {
+    if (changeDemoCalendar(events => [...events, { ...event, id: crypto.randomUUID() }])) return;
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -561,6 +574,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateLocalEvent = async (id: string, updates: Partial<LocalCalendarEvent>) => {
+    if (changeDemoCalendar(events => events.map(event => event.id === id ? { ...event, ...updates, id } : event))) return;
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -571,6 +585,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteLocalEvent = async (id: string) => {
+    if (changeDemoCalendar(events => events.filter(event => event.id !== id))) return;
     const res = await fetchWithAuth(`/api/config/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Calendar request failed');
     await fetchConfig();

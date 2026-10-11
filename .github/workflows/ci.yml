@@ -56,6 +56,12 @@ jobs:
         env:
           NASDASH_E2E_SERVER_MODE: production
 
+      - name: Run isolated demo calendar browser tests
+        run: npm run test:e2e -- --grep '@demo'
+        env:
+          NASDASH_E2E_SERVER_MODE: production
+          NASDASH_DEMO_MODE: 'true'
+
       - name: Upload Playwright diagnostics
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
