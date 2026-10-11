@@ -6,6 +6,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { CalendarDisplayEvent } from '@/lib/types';
 import { CalmeWidget } from '../calme';
+import { eventStartDate } from './eventDates';
 import { isoDay, useCalendarEvents } from './useCalendarEvents';
 
 /**
@@ -38,18 +39,18 @@ export default function CalmeCalendar({ editMode, isVisible = true }: { editMode
   );
   const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(year, month, 1));
   const time = (event: CalendarDisplayEvent) => event.start && !event.isAllDay
-    ? new Date(event.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })
+    ? eventStartDate(event)!.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })
     : '';
 
   const eventsOn = (day: number) => {
     const from = new Date(year, month, day, 0, 0, 0);
     const to = new Date(year, month, day, 23, 59, 59);
-    return events.filter(event => event.start && new Date(event.start) >= from && new Date(event.start) <= to);
+    return events.filter(event => event.start && eventStartDate(event)! >= from && eventStartDate(event)! <= to);
   };
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const upcoming = events
-    .filter(event => event.start && new Date(event.start) >= startOfToday)
-    .sort((a, b) => new Date(a.start!).getTime() - new Date(b.start!).getTime())
+    .filter(event => event.start && eventStartDate(event)! >= startOfToday)
+    .sort((a, b) => eventStartDate(a)!.getTime() - eventStartDate(b)!.getTime())
     .slice(0, 6);
 
   const openDay = (day: number, dayEvents: CalendarDisplayEvent[]) =>
@@ -122,7 +123,7 @@ export default function CalmeCalendar({ editMode, isVisible = true }: { editMode
             </div>
             <ul className="ndc-cal-list">
               {upcoming.map(event => {
-                const start = new Date(event.start!);
+                const start = eventStartDate(event)!;
                 const isToday = start.toDateString() === now.toDateString();
                 return (
                   <li key={event.id}>

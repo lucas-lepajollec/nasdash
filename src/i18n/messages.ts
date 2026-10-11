@@ -17,6 +17,10 @@ export const BCP47: Record<UiLanguage, string> = Object.fromEntries(
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
+  "calendar.editEvent": "Edit event",
+  "calendar.date": "Date",
+  "calendar.saveError": "Could not save the event. Please try again.",
+  "calendar.deleteError": "Could not delete the event. Please try again.",
   "Network Activity": "Network Activity",
   "Networks": "Networks",
   "Containers & Images": "Containers & Images",
@@ -929,6 +933,10 @@ const en: Dictionary = {
 };
 
 const fr: Dictionary = {
+  "calendar.editEvent": "Modifier l’événement",
+  "calendar.date": "Date",
+  "calendar.saveError": "Impossible d’enregistrer l’événement. Réessayez.",
+  "calendar.deleteError": "Impossible de supprimer l’événement. Réessayez.",
   "Network Activity": "Activité réseau",
   "Networks": "Réseaux",
   "Containers & Images": "Conteneurs & images",
@@ -1841,6 +1849,10 @@ const fr: Dictionary = {
 };
 
 const es: Dictionary = {
+  "calendar.editEvent": "Editar evento",
+  "calendar.date": "Fecha",
+  "calendar.saveError": "No se pudo guardar el evento. Inténtalo de nuevo.",
+  "calendar.deleteError": "No se pudo eliminar el evento. Inténtalo de nuevo.",
   "Network Activity": "Actividad de red",
   "Networks": "Redes",
   "Containers & Images": "Contenedores e imágenes",
@@ -2753,6 +2765,10 @@ const es: Dictionary = {
 };
 
 const de: Dictionary = {
+  "calendar.editEvent": "Termin bearbeiten",
+  "calendar.date": "Datum",
+  "calendar.saveError": "Der Termin konnte nicht gespeichert werden. Bitte erneut versuchen.",
+  "calendar.deleteError": "Der Termin konnte nicht gelöscht werden. Bitte erneut versuchen.",
   "Network Activity": "Netzwerkaktivität",
   "Networks": "Netzwerke",
   "Containers & Images": "Container & Images",
@@ -3665,6 +3681,10 @@ const de: Dictionary = {
 };
 
 const it: Dictionary = {
+  "calendar.editEvent": "Modifica evento",
+  "calendar.date": "Data",
+  "calendar.saveError": "Impossibile salvare l’evento. Riprova.",
+  "calendar.deleteError": "Impossibile eliminare l’evento. Riprova.",
   "Network Activity": "Attività di rete",
   "Networks": "Reti",
   "Containers & Images": "Container & immagini",

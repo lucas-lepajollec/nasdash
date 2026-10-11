@@ -7,7 +7,7 @@ const sourceRoot = join(projectRoot, 'src');
 const generatedPath = join(sourceRoot, 'i18n/generated.ts');
 const supplementalPath = join(sourceRoot, 'i18n/messages.ts');
 const locales = ['en', 'fr', 'es', 'de', 'it'];
-const userAttrs = new Set(['title', 'aria-label', 'placeholder', 'alt', 'label', 'sublabel', 'description', 'message', 'text', 'hint', 'emptyMessage', 'error', 'statusText']);
+const userAttrs = new Set(['title', 'aria-label', 'placeholder', 'alt', 'label', 'sublabel', 'description', 'message', 'text', 'hint', 'emptyMessage', 'error', 'statusText', 'confirmLabel', 'cancelLabel']);
 const userProps = new Set([
   'title',
   'label',
@@ -20,6 +20,8 @@ const userProps = new Set([
   'emptyMessage',
   'error',
   'statusText',
+  'confirmLabel',
+  'cancelLabel',
 ]);
 const userCalls = new Set(['alert', 'confirm', 'setError', 'setSaveError', 'setMessage', 'setToastMessage', 'showToast']);
 

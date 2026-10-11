@@ -556,7 +556,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(event),
     });
-    if (res.ok) await fetchConfig();
+    if (!res.ok) throw new Error('Calendar request failed');
+    await fetchConfig();
   };
 
   const updateLocalEvent = async (id: string, updates: Partial<LocalCalendarEvent>) => {
@@ -565,12 +566,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, ...updates }),
     });
-    if (res.ok) await fetchConfig();
+    if (!res.ok) throw new Error('Calendar request failed');
+    await fetchConfig();
   };
 
   const deleteLocalEvent = async (id: string) => {
-    const res = await fetchWithAuth(`/api/config/calendar?id=${id}`, { method: 'DELETE' });
-    if (res.ok) await fetchConfig();
+    const res = await fetchWithAuth(`/api/config/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Calendar request failed');
+    await fetchConfig();
   };
 
   return (

@@ -217,7 +217,6 @@ export function AppearanceTab({ onOpenThemeGallery, part = 'appearance' }: Appea
         }}
         title={t("Supprimer le profil")}
         description={t("Êtes-vous sûr de vouloir supprimer ce profil d'apparence ? Cette action est irréversible.")}
-        confirmLabel="Supprimer"
       />
 
       <ConfirmModal
@@ -226,7 +225,6 @@ export function AppearanceTab({ onOpenThemeGallery, part = 'appearance' }: Appea
         onConfirm={handleConfirmBgDelete}
         title={t("Supprimer l'image de fond")}
         description={t("Êtes-vous sûr de vouloir supprimer cette image ? Elle sera supprimée du serveur.")}
-        confirmLabel="Supprimer"
       />
     </>
   );

@@ -1,85 +1,96 @@
 import React, { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import ConfirmModal from './ConfirmModal';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
+import { eventFormDate, eventSchedule } from '@/widgets/calendar/eventDates';
+import type { CalendarEventModalState } from '@/providers/ModalProvider';
 import { CalmeRow, CalmeSwitch } from './settings/shared/CalmeControls';
 
 export default function CalendarEventModal() {
-  const { t, locale } = useI18n();
-  const { config, calendarEventModal, setCalendarEventModal, addLocalEvent, deleteLocalEvent, user } = useConfig();
-  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [time, setTime] = useState('12:00');
-  const [isAllDay, setIsAllDay] = useState(false);
-  const closeModal = () => setCalendarEventModal({ open: false });
-  const dialogRef = useDialogAccessibility(
-    closeModal,
-    Boolean(calendarEventModal.open && calendarEventModal.date && user?.role === 'admin'),
-  );
-
+  const { calendarEventModal, user } = useConfig();
   if (!calendarEventModal.open || !calendarEventModal.date || user?.role !== 'admin') return null;
+  return <CalendarEventForm key={`${calendarEventModal.event?.id ?? 'new'}-${calendarEventModal.date}`} modal={calendarEventModal} />;
+}
 
-  const dateParts = calendarEventModal.date.split('-');
-  const displayDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-  const formattedDate = displayDate.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+function CalendarEventForm({ modal }: { modal: CalendarEventModalState }) {
+  const { t, locale } = useI18n();
+  const { config, setCalendarEventModal, addLocalEvent, updateLocalEvent, deleteLocalEvent } = useConfig();
+  const event = modal.event;
+  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<string | null>(null);
+  const [title, setTitle] = useState(event ? (config?.demoMode ? t(event.title) : event.title) : '');
+  const [description, setDescription] = useState(event?.description ? (config?.demoMode ? t(event.description) : event.description) : '');
+  const [date, setDate] = useState(event ? eventFormDate(event) : modal.date!);
+  const [time, setTime] = useState(event ? new Date(event.start).toTimeString().slice(0, 5) : '12:00');
+  const [isAllDay, setIsAllDay] = useState(Boolean(event?.isAllDay));
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  const closeModal = () => { if (!pending) setCalendarEventModal({ open: false }); };
+  const dialogRef = useDialogAccessibility(closeModal);
+  const formattedDate = new Date(`${date}T00:00:00`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   const handleSave = async () => {
-    if (!title.trim()) return;
-
-    let startIso = '';
-    if (isAllDay) {
-      // YYYYMMDD string format for all day, handled by parser or ISO format
-      // Just save standard ISO for local
-      startIso = new Date(calendarEventModal.date + 'T00:00:00Z').toISOString();
-    } else {
-      startIso = new Date(`${calendarEventModal.date}T${time}:00`).toISOString();
+    if (!title.trim() || !date || (!isAllDay && !time) || pending) return;
+    setPending(true);
+    setError('');
+    try {
+      const updates = { title: title.trim(), description: description.trim(), ...eventSchedule(date, time, isAllDay, event) };
+      if (event) await updateLocalEvent(event.id, updates);
+      else await addLocalEvent(updates);
+      setCalendarEventModal({ open: false });
+    } catch {
+      setError(t('calendar.saveError'));
+    } finally {
+      setPending(false);
     }
-
-    await addLocalEvent({
-      title: title.trim(),
-      description: description.trim(),
-      start: startIso,
-      isAllDay
-    });
-
-    setCalendarEventModal({ open: false });
   };
 
   const handleDeleteEvent = async (id: string) => {
-    await deleteLocalEvent(id);
-    setConfirmDeleteEvent(null);
-    setCalendarEventModal({ open: false }); // close to refresh state cleanly
+    setPending(true);
+    setError('');
+    try {
+      await deleteLocalEvent(id);
+      setCalendarEventModal({ open: false });
+    } catch {
+      setError(t('calendar.deleteError'));
+    } finally {
+      setPending(false);
+      setConfirmDeleteEvent(null);
+    }
   };
 
   return (
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
       <CalmeDialog
         dialogRef={dialogRef}
-        label={t("Ajouter un événement")}
-        title={t("Ajouter un événement")}
+        label={event ? t("calendar.editEvent") : t("Ajouter un événement")}
+        title={event ? t("calendar.editEvent") : t("Ajouter un événement")}
         subtitle={<span style={{ textTransform: 'capitalize' }}>{formattedDate}</span>}
         width={420}
         onClose={closeModal}
         footer={<>
           <button type="button" className="nd-btn" onClick={closeModal}>{t("Annuler")}</button>
-          <button type="button" className="nd-btn nd-btn-accent" onClick={handleSave} disabled={!title.trim()}>{t("Enregistrer")}</button>
+          <button type="button" className="nd-btn nd-btn-accent" onClick={handleSave} disabled={pending || !title.trim() || !date || (!isAllDay && !time)}>{t("Enregistrer")}</button>
         </>}
       >
-        {calendarEventModal.events && calendarEventModal.events.length > 0 && (
+        {error && <p role="alert" className="ndc-dialog-hint">{error}</p>}
+        {!event && modal.events && modal.events.length > 0 && (
           <CalmeField label={t("Événements existants")}>
             <div className="ndc-check-list">
-              {calendarEventModal.events.map(ev => {
+              {modal.events.map(ev => {
                 const isLocal = config?.localEvents?.some(le => le.id === ev.id);
                 return (
                   <div key={ev.id} className="ndc-event-row">
                     <span className="ndc-set-list-sub" style={{ minWidth: 42 }}>{!ev.isAllDay && ev.start ? new Date(ev.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false }) : '—'}</span>
                     <span className="ndc-sub-name">{t(ev.title)}</span>
+                    {isLocal && <button type="button" className="ndc-icon-button" disabled={pending} title={t('calendar.editEvent')} aria-label={t('calendar.editEvent')} onClick={() => {
+                      const local = config?.localEvents?.find(item => item.id === ev.id);
+                      if (local) setCalendarEventModal({ open: true, date: eventFormDate(local), event: local });
+                    }}><Pencil size={13} /></button>}
                     {isLocal && (
-                      <button type="button" className="ndc-icon-button ndc-icon-danger" onClick={(e) => { e.stopPropagation(); setConfirmDeleteEvent(ev.id); }} title={t("Supprimer cet événement")} aria-label={t("Supprimer cet événement")}>
+                      <button type="button" className="ndc-icon-button ndc-icon-danger" disabled={pending} onClick={(e) => { e.stopPropagation(); setConfirmDeleteEvent(ev.id); }} title={t("Supprimer cet événement")} aria-label={t("Supprimer cet événement")}>
                         <Trash2 size={13} />
                       </button>
                     )}
@@ -90,14 +101,17 @@ export default function CalendarEventModal() {
           </CalmeField>
         )}
         <CalmeField label={t("Titre de l'événement")} htmlFor="event-title">
-          <input id="event-title" type="text" className="nd-input" value={title} onChange={e => setTitle(e.target.value)} placeholder={t("Ex: Réunion d'équipe")} autoFocus />
+          <input id="event-title" type="text" className="nd-input" value={title} disabled={pending} onChange={e => setTitle(e.target.value)} placeholder={t("Ex: Réunion d'équipe")} autoFocus />
+        </CalmeField>
+        <CalmeField label={t('calendar.date')} htmlFor="event-date">
+          <input id="event-date" type="date" className="nd-input" value={date} onChange={e => setDate(e.target.value)} disabled={pending} />
         </CalmeField>
         <CalmeRow label={t("Toute la journée")}>
-          {!isAllDay && <input type="time" className="nd-input" style={{ width: 120 }} value={time} onChange={e => setTime(e.target.value)} aria-label={t('calendar.calme.time')} />}
+          {!isAllDay && <input type="time" className="nd-input" style={{ width: 120 }} value={time} disabled={pending} onChange={e => setTime(e.target.value)} aria-label={t('calendar.calme.time')} />}
           <CalmeSwitch label={t("Toute la journée")} checked={isAllDay} onChange={setIsAllDay} />
         </CalmeRow>
         <CalmeField label={t("Description (Optionnel)")} htmlFor="event-description">
-          <textarea id="event-description" className="nd-input" value={description} onChange={e => setDescription(e.target.value)} placeholder={t("Détails de l'événement...")} rows={3} style={{ resize: 'vertical' }} />
+          <textarea id="event-description" className="nd-input" value={description} disabled={pending} onChange={e => setDescription(e.target.value)} placeholder={t("Détails de l'événement...")} rows={3} style={{ resize: 'vertical' }} />
         </CalmeField>
       </CalmeDialog>
 

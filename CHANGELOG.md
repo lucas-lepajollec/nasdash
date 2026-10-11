@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Edit or delete local events from calendar details on any page, including the upcoming-event list, and choose the date when adding or editing. Preserve event duration, reset each form, refresh the widgets after successful changes and keep failed changes open with a localized error. ICS events and viewer access remain read-only.
+- Translate wallpaper and appearance-profile delete confirmations in all five languages; extend the interface-copy gate to confirmation labels with regression fixtures.
+
 ### Documentation
 
 - Centralize user/operator guides on the dedicated documentation site, align all five languages with current integrations, composable pages, backups and first-install behavior, and replace duplicate repository guides with canonical links.

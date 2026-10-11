@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
-import { Service, Category, Device, DockerActionConfig, CalendarDisplayEvent } from '@/lib/types';
+import { Service, Category, Device, DockerActionConfig, CalendarDisplayEvent, LocalCalendarEvent } from '@/lib/types';
 
 export interface ServiceModalState { open: boolean; service?: Service; categoryId?: string }
 /** `placement`: where to show a newly created category on a page. */
@@ -10,7 +10,7 @@ export interface DeviceModalState { open: boolean; device?: Device }
 export interface DockerActionModalState { open: boolean; action?: DockerActionConfig }
 /** `targetSection`: a section of the tab to scroll to (e.g. `monitoring` on the Integrations page). */
 export interface SettingsModalState { open: boolean; targetTab?: string; targetSection?: string }
-export interface CalendarEventModalState { open: boolean; date?: string; events?: CalendarDisplayEvent[] }
+export interface CalendarEventModalState { open: boolean; date?: string; events?: CalendarDisplayEvent[]; event?: LocalCalendarEvent }
 export interface ViewEventModalState { open: boolean; event?: CalendarDisplayEvent }
 
 export interface ModalContextType {
