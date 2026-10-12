@@ -4,7 +4,7 @@
 # which NasDash never loads since it does not use next/image). Multi-platform
 # images then only assemble the runner stage per platform, instead of
 # building the whole app under QEMU (about 8 minutes for arm64).
-FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
@@ -14,7 +14,7 @@ RUN mkdir -p data/logos
 RUN npm run build
 
 # ---- Stage 2: Production runner ----
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
