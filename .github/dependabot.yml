@@ -1,5 +1,6 @@
+# Weekly grouped minor/patch maintenance; major migrations are planned manually.
+# Security updates remain eligible: allow.update-types only filters version updates.
 version: 2
-
 updates:
   - package-ecosystem: npm
     directory: /
@@ -8,7 +9,7 @@ updates:
       day: monday
       time: "06:00"
       timezone: Europe/Paris
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 2
     groups:
       npm-minor-and-patch:
         patterns:
@@ -16,9 +17,19 @@ updates:
         update-types:
           - minor
           - patch
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
     commit-message:
-      prefix: "chore(deps)"
-
+      prefix: chore(deps)
+    cooldown:
+      default-days: 7
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -26,14 +37,23 @@ updates:
       day: monday
       time: "06:15"
       timezone: Europe/Paris
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     groups:
       github-actions:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
     commit-message:
-      prefix: "chore(actions)"
-
+      prefix: chore(actions)
+    cooldown:
+      default-days: 7
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -41,10 +61,20 @@ updates:
       day: monday
       time: "06:30"
       timezone: Europe/Paris
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 1
     groups:
       docker-images:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
     commit-message:
-      prefix: "chore(docker)"
+      prefix: chore(docker)
+    cooldown:
+      default-days: 7
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-patch
