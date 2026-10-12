@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+- Refresh compatible React, service telemetry, UUID and browser-test dependencies; retain the Node 22 baseline.
+
 ## [0.2.3] - 2026-10-12
 
 ### Upgrading from 0.2.2
