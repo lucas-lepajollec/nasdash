@@ -1,5 +1,5 @@
 # Weekly grouped minor/patch maintenance; major migrations are planned manually.
-# Security updates remain eligible: allow.update-types only filters version updates.
+# Update-type-only ignores do not filter security updates; no versions are suppressed.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -25,11 +25,10 @@ updates:
       prefix: chore(deps)
     cooldown:
       default-days: 7
-    allow:
+    ignore:
       - dependency-name: "*"
         update-types:
-          - version-update:semver-minor
-          - version-update:semver-patch
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -49,11 +48,10 @@ updates:
       prefix: chore(actions)
     cooldown:
       default-days: 7
-    allow:
+    ignore:
       - dependency-name: "*"
         update-types:
-          - version-update:semver-minor
-          - version-update:semver-patch
+          - version-update:semver-major
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -73,8 +71,7 @@ updates:
       prefix: chore(docker)
     cooldown:
       default-days: 7
-    allow:
+    ignore:
       - dependency-name: "*"
         update-types:
-          - version-update:semver-minor
-          - version-update:semver-patch
+          - version-update:semver-major
