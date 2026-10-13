@@ -23,9 +23,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Keep Device and Metrics bar/chart captions and supporting information on one line when they fit, wrapping within the available width while preserving the full reading value.
+- Keep Device and Metrics bar/chart names on the left and all statistics on the right, on one line when they fit. Wrap within the available width while preserving readable captions and full values.
 
-- Unify dashboard dropdowns with the existing NasDash selector, improve popup positioning and keyboard focus (including Tab immediately after opening), and label every selector. Place Docker page selection in the responsive table header and usage counts beside Refresh, use red for unused resources, and default to five rows on mobile while retaining explicit page-size choices. Remove duplicate CPU/GPU metric captions; keep the GPU-model option where it adds information.
+- Unify dashboard dropdowns with the existing NasDash selector, improve popup positioning and keyboard focus (including Tab immediately after opening), and label every selector. Place Docker page selection in the responsive table header and usage counts beside Refresh, replace the repeated footer explanation with the existing information bubble beside the image/volume title and remove its decorative icon, use red for unused resources, and default to five rows on mobile while retaining explicit page-size choices. Remove duplicate CPU/GPU metric captions; keep the GPU-model option where it adds information.
 
 - Rework Docker image/volume lists with search, usage filters, sorting, 5/10/25/50-item pagination, expandable metadata and page-scoped selection. Keep deletion confirmations readable, preserve only failed targets for retry, and adapt to narrow widgets and mobile widths using the existing appearance tokens. Include fictional unused resources in the isolated demo.
 

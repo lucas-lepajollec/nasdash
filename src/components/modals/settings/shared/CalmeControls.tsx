@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronUp, Info } from 'lucide-react';
 
@@ -26,24 +26,44 @@ export function CalmeHeading({ children, action, info }: { children: React.React
  */
 export function CalmeInfo({ text }: { text: string }) {
   const anchor = useRef<HTMLSpanElement>(null);
+  const bubble = useRef<HTMLSpanElement>(null);
   const [place, setPlace] = useState<{ left: number; top: number; below: boolean } | null>(null);
-  const show = () => {
+  const show = useCallback(() => {
     const box = anchor.current?.getBoundingClientRect();
     if (!box) return;
     const width = Math.min(260, window.innerWidth - 16);
     const left = Math.min(Math.max(8, box.left + box.width / 2 - width / 2), window.innerWidth - width - 8);
-    const below = box.top < 90;
-    setPlace({ left, top: below ? box.bottom + 8 : box.top - 8, below });
-  };
+    const height = bubble.current?.getBoundingClientRect().height ?? 90;
+    const above = box.top - 8;
+    const below = above < height && window.innerHeight - box.bottom - 8 > above;
+    const top = below
+      ? Math.max(8, Math.min(box.bottom + 8, window.innerHeight - height - 8))
+      : Math.max(height + 8, Math.min(box.top - 8, window.innerHeight - 8));
+    setPlace({ left, top, below });
+  }, []);
+  const open = place !== null;
+  useEffect(() => {
+    if (!open) return;
+    // Focus can scroll the anchor after its event, especially on WebKit.
+    const frame = window.requestAnimationFrame(show);
+    window.addEventListener('scroll', show, true);
+    window.addEventListener('resize', show);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', show, true);
+      window.removeEventListener('resize', show);
+    };
+  }, [open, show]);
   const hide = () => setPlace(null);
   return (
     <span ref={anchor} className="ndc-info" tabIndex={0} role="img" aria-label={text} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
       <Info size={13} aria-hidden="true" />
       {place && typeof document !== 'undefined' && createPortal(
         <span
+          ref={bubble}
           className={`ndc-info-bubble ${place.below ? 'is-below' : ''}`}
           aria-hidden="true"
-          style={{ left: place.left, top: place.top, maxWidth: Math.min(260, window.innerWidth - 16) }}
+          style={{ left: place.left, top: place.top, maxWidth: Math.min(260, window.innerWidth - 16), maxHeight: 'calc(100dvh - 16px)', overflowY: 'auto' }}
         >
           {text}
         </span>,

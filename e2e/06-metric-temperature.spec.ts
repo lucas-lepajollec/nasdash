@@ -207,17 +207,22 @@ test('device and storage bar details use available space and wrap only when need
           const detail = element.querySelector('.ndc-m-detail')!.getBoundingClientRect();
           const value = element.querySelector('.ndc-m-value')!.getBoundingClientRect();
           const bounds = element.getBoundingClientRect();
+          const stats = element.querySelector('.ndc-m-stats')!.getBoundingClientRect();
           return { sameLine: detail.top < label.bottom && label.top < detail.bottom,
             fits: value.right <= bounds.right + 1 && detail.right <= bounds.right + 1 && label.right <= bounds.right + 1,
-            height: label.height, detailBelow: detail.top >= label.bottom };
+            statsRight: Math.abs(stats.right - bounds.right) < 1,
+            detailBelow: detail.top >= label.bottom };
         });
         await expect.poll(async () => (await measure()).sameLine).toBe(true);
+        expect((await measure()).statsRight).toBe(true);
         await scope.evaluate(element => { element.style.width = '160px'; });
         await expect.poll(async () => (await measure()).detailBelow).toBe(true);
         expect((await measure()).fits).toBe(true);
+        expect((await measure()).statsRight).toBe(true);
         await scope.evaluate(element => { element.style.width = '600px'; });
         await expect.poll(async () => (await measure()).sameLine).toBe(true);
         expect((await measure()).fits).toBe(true);
+        expect((await measure()).statsRight).toBe(true);
       }
     }
   } finally { expect((await page.request.delete(`/api/pages?id=${fixture.id}`)).status()).toBe(200); }

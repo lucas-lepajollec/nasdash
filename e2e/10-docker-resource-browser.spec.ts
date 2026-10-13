@@ -226,9 +226,23 @@ test('header selection works for images and volumes, including mobile and protec
     for (const kind of ['Images', 'Volumes']) {
       await explorer.getByRole('tab', { name: new RegExp(`^${kind}`) }).click();
       const all = explorer.locator('thead').getByRole('checkbox', { name: 'Select unused resources on this page', exact: true });
+      const title = explorer.locator('.nd-docker-resource-title');
+      await expect(title.locator(':scope > svg')).toHaveCount(0);
+      await expect(explorer.locator('.nd-docker-resource-hint')).toHaveCount(0);
+      const info = title.getByRole('img');
+      await info.focus();
+      await expect(page.locator('.ndc-info-bubble')).toContainText('Resources linked to running or stopped containers cannot be deleted here.');
+      await page.keyboard.press('Tab');
+      await expect(page.locator('.ndc-info-bubble')).toHaveCount(0);
       for (const width of [1440, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(all).toBeVisible();
+        await info.focus();
+        await expect.poll(() => page.locator('.ndc-info-bubble').evaluate(element => {
+          const box = element.getBoundingClientRect();
+          return box.left >= 0 && box.right <= innerWidth + 1 && box.top >= 0 && box.bottom <= innerHeight + 1;
+        })).toBe(true);
+        await page.keyboard.press('Tab');
         const rows = explorer.locator('.nd-docker-resource-row');
         const count = width < 768 ? 5 : 10;
         await expect(rows).toHaveCount(count);

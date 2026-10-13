@@ -3104,10 +3104,11 @@ body.light {
 .ndc-m-head .ndc-m-label { flex: 1 1 auto; }
 .ndc-m-caption { display: flex; flex: 1 1 min-content; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; max-width: 100%; }
 .ndc-m-caption .ndc-m-label { flex: 0 1 auto; max-width: 100%; overflow-wrap: break-word; }
+.ndc-m-stats { display: flex; flex: 0 1 auto; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 8px; min-width: 0; max-width: 100%; margin-left: auto; text-align: right; }
 .ndc-m-value { font-size: 0.86rem; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ndc-m-head .ndc-m-value { margin-left: auto; flex-shrink: 0; }
 .ndc-m-detail { font-size: 0.68rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ndc-m-caption .ndc-m-detail { max-width: 100%; white-space: normal; overflow: visible; overflow-wrap: break-word; }
+.ndc-m-stats .ndc-m-detail { min-width: 0; max-width: 100%; white-space: normal; overflow: visible; overflow-wrap: break-word; }
 .ndc-m-big { font-size: 1.15rem; font-weight: 500; line-height: 1.15; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ndc-dev--large .ndc-m-big { font-size: 1.3rem; }
 .ndc-m--ring { align-items: center; text-align: center; gap: 4px; }
@@ -3662,7 +3663,6 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-heading { justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 12px; }
 .nd-docker-resource-heading-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 16px; min-width: 0; max-width: 100%; margin-left: auto; }
 .nd-docker-resource-heading-actions > button { flex-shrink: 0; }
-.nd-docker-resource-title > svg { color: var(--nd-accent); flex-shrink: 0; }
 .nd-docker-resource-title h3 { margin: 0; font: inherit; font-size: 0.88rem; font-weight: 600; }
 .nd-docker-resource-title > span { color: var(--nd-text-muted); font-size: 0.76rem; font-variant-numeric: tabular-nums; }
 .nd-docker-resource-summary { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 0; font-size: 0.74rem; color: var(--nd-text-muted); }
@@ -3725,7 +3725,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-details dt { color: var(--nd-text-dimmed); font-size: 0.7rem; }
 .nd-docker-resource-details dd { margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; color: var(--nd-text-muted); font-size: 0.74rem; overflow-wrap: anywhere; }
 .nd-docker-resource-details code { font: inherit; font-family: ui-monospace, monospace; white-space: normal; overflow-wrap: anywhere; }
-.nd-docker-resource-details p, .nd-docker-resource-hint { font-size: 0.7rem; color: var(--nd-text-dimmed); line-height: 1.65; margin: 16px 0 0; }
+.nd-docker-resource-details p { font-size: 0.7rem; color: var(--nd-text-dimmed); line-height: 1.65; margin: 16px 0 0; }
 .nd-docker-resource-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px 16px; font-size: 0.78rem; color: var(--nd-text-muted); text-align: center; }
 .nd-docker-resource-empty > svg { color: var(--nd-text-dimmed); }
 .nd-docker-resource-empty strong { font-weight: 500; }

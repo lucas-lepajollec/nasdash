@@ -8,6 +8,7 @@ import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeDialog } from '@/components/shared/CalmeDialog';
 import CustomSelect from '@/components/shared/CustomSelect';
+import { CalmeInfo } from '@/components/modals/settings/shared/CalmeControls';
 import { demoFetch } from '@/lib/demoTransport';
 import { dockerActionError, readDockerResponse } from '@/lib/dockerErrorContract';
 import { deletableSelection, resourceList, resourcePage, type DockerResourceRow, type ResourceFilter, type ResourceSort } from '@/lib/dockerResourceList';
@@ -94,7 +95,7 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
 
   return <section className="nd-docker-resources" aria-label={t(imageMode ? 'Images' : 'Volumes')} aria-busy={loading}>
     <div className="nd-docker-resource-heading">
-      <div className="nd-docker-resource-title"><Icon size={18} aria-hidden="true" /><h3>{t(imageMode ? 'Images' : 'Volumes')}</h3><span>{rows.length}</span></div>
+      <div className="nd-docker-resource-title"><h3>{t(imageMode ? 'Images' : 'Volumes')}</h3><span>{rows.length}</span><CalmeInfo text={t('docker.resources.usedHint')} /></div>
       <div className="nd-docker-resource-heading-actions">
         <p className="nd-docker-resource-summary">
           <span>{t('docker.resources.usedCount', { count: rows.filter(row => row.used).length })}</span>
@@ -167,7 +168,6 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
         <div className="nd-docker-resource-page-size"><span>{t('docker.resources.perPage')}</span><CustomSelect ariaLabel={t('docker.resources.perPage')} value={String(pageSize)} onChange={value => { setPageSize(Number(value)); setPage(1); }} options={[5, 10, 25, 50].map(size => ({ value: String(size), label: String(size) }))} /></div>
         <nav aria-label={t('docker.resources.pagination')}><button type="button" className="nd-btn" aria-label={t('docker.resources.previous')} disabled={current.page === 1} onClick={() => setPage(current.page - 1)}><ChevronLeft size={16} /></button><span>{t('docker.resources.page', { page: current.page, total: current.pageCount })}</span><button type="button" className="nd-btn" aria-label={t('docker.resources.next')} disabled={current.page === current.pageCount} onClick={() => setPage(current.page + 1)}><ChevronRight size={16} /></button></nav>
       </div>
-      <p className="nd-docker-resource-hint">{t('docker.resources.usedHint')}</p>
     </>}
     {targets && typeof document !== 'undefined' && createPortal(<div className="nd-modal-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !deleting) setTargets(null); }}>
       <CalmeDialog dialogRef={dialogRef} label={t(imageMode ? targets.length > 1 ? 'docker.deleteImagesTitle' : 'docker.deleteImageTitle' : targets.length > 1 ? 'docker.deleteVolumesTitle' : 'docker.deleteVolumeTitle')} title={t(imageMode ? targets.length > 1 ? 'docker.deleteImagesTitle' : 'docker.deleteImageTitle' : targets.length > 1 ? 'docker.deleteVolumesTitle' : 'docker.deleteVolumeTitle')} onClose={() => { if (!deleting) setTargets(null); }} className="nd-docker-resource-confirm" footer={<>
