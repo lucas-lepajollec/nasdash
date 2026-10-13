@@ -7,6 +7,10 @@ import {
   dockerFailureStatus,
   fetchDockerApi,
   readDockerJson,
+  requireDockerArray,
+  requireDockerFields,
+  DockerInvalidResponseError,
+  canonicalDockerImageId,
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
@@ -18,6 +22,8 @@ export const dynamic = 'force-dynamic';
 
 interface DockerApiImage {
   Id?: string;
+  RepoDigests?: string[];
+  Labels?: Record<string, string>;
   RepoTags?: string[] | null;
   Size?: number;
   Created?: number;
@@ -50,16 +56,22 @@ async function handleGET(
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
     // Mock images
-    if (isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host')) {
+    if (isDemoMode()) {
       return NextResponse.json(DEMO_DOCKER_IMAGES.filter(image => !isDemoImageRemoved(image.id)));
     }
 
     const response = await fetchDockerApi(host, '/images/json');
-    const raw = await readDockerJson(response) as DockerApiImage[];
+    const raw = requireDockerArray<DockerApiImage>(await readDockerJson(response), 'Id');
 
+    for (const image of raw) {
+      requireDockerFields(image as unknown as Record<string, unknown>, ['RepoTags', 'RepoDigests'], ['Labels']);
+      if (image.RepoTags?.some(tag => typeof tag !== 'string') || image.RepoDigests?.some(digest => typeof digest !== 'string')) throw new DockerInvalidResponseError();
+    }
     const images = raw.map(img => ({
-      id: img.Id?.replace('sha256:', '').substring(0, 12) || img.Id,
-      repoTags: img.RepoTags || ['<none>:<none>'],
+      id: canonicalDockerImageId(img.Id!),
+      repoTags: Array.isArray(img.RepoTags) ? img.RepoTags.filter(tag => tag !== '<none>:<none>') : [],
+      repoDigests: img.RepoDigests || [],
+      labels: img.Labels || {},
       size: img.Size || 0,
       created: img.Created || 0,
       containers: img.Containers || 0,
@@ -107,10 +119,10 @@ async function handleDELETE(
     );
 
     if (res.status === 404) {
-      return NextResponse.json({ error: 'Image Docker introuvable.' }, { status: 404 });
+      return NextResponse.json({ error: 'Docker image not found.' }, { status: 404 });
     }
     if (res.status === 409) {
-      return NextResponse.json({ error: 'L\'image est en cours d\'utilisation par un conteneur et ne peut pas être supprimée.' }, { status: 409 });
+      return NextResponse.json({ error: 'Docker image is in use and cannot be deleted.' }, { status: 409 });
     }
 
     reportDockerSuccess(hostId);

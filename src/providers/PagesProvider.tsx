@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
+import { demoFetch } from '@/lib/demoTransport';
 import type { PageTemplateId } from '@/lib/pages/presets';
 import type { Page, WidgetSettings } from '@/lib/pages/types';
 import { mergeWidgetSettings } from '@/lib/pages/operations';
@@ -80,8 +81,9 @@ async function readError(response: Response): Promise<string> {
 }
 
 export function PagesProvider({ children }: { children: React.ReactNode }) {
-  const { user, authLoading } = useConfig();
+  const { user, authLoading, config } = useConfig();
   const isAdmin = user?.role === 'admin';
+  const configReady = Boolean(config);
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -106,7 +108,7 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const response = await fetch('/api/pages');
+      const response = await demoFetch('/api/pages');
       if (!response.ok) throw new Error(await readError(response));
       const data = await response.json() as { pages: Page[] };
       setPages(data.pages);
@@ -125,9 +127,9 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !configReady) return;
     void refreshPages();
-  }, [authLoading, user?.username, refreshPages]);
+  }, [authLoading, user?.username, configReady, config?.demoMode, refreshPages]);
 
   useEffect(() => {
     // Restore the last visited page once, before the first fetch completes.
@@ -215,7 +217,7 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   }, [resetEditState]);
 
   const putPage = useCallback(async (page: Page): Promise<{ ok: true; page: Page } | { ok: false; conflict?: Page; error: string }> => {
-    const response = await fetch('/api/pages', {
+    const response = await demoFetch('/api/pages', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ page }),
@@ -316,7 +318,7 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   }, [adoptSavedPage, applyToPage, editing, isAdmin, putPage, refreshPages]);
 
   const postAction = useCallback(async (body: Record<string, unknown>): Promise<Page> => {
-    const response = await fetch('/api/pages', {
+    const response = await demoFetch('/api/pages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -354,7 +356,7 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   }, [adoptSavedPage, postAction]);
 
   const deletePage = useCallback(async (pageId: string) => {
-    const response = await fetch(`/api/pages?id=${encodeURIComponent(pageId)}`, { method: 'DELETE' });
+    const response = await demoFetch(`/api/pages?id=${encodeURIComponent(pageId)}`, { method: 'DELETE' });
     if (!response.ok) throw new Error(await readError(response));
     const remaining = pagesRef.current.filter(page => page.id !== pageId);
     setPages(remaining);

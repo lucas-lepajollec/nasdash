@@ -62,7 +62,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
     const result = await testConnection({ type: source.type, id: source.id });
     setLoadingTargets(false);
     if (result.ok && result.targets) setTargets(result.targets);
-    else { setTargets(null); setTargetsError(t(result.message, { count: 0 })); }
+    else { setTargets(null); setTargetsError(t(result.message, { count: 0, ...result.messageParameters })); }
   };
   useEffect(() => {
     setTargets(null);

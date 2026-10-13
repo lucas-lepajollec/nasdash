@@ -1,5 +1,7 @@
 'use client';
 
+import { demoFetch } from '@/lib/demoTransport';
+
 import React, { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import type { IntegrationInstance } from '@/lib/types';
@@ -51,10 +53,10 @@ function Connection({ logo, name, details, status, onTest, onEdit, onRemove }: {
       <span className="ndc-int-row-text">
         <span className="ndc-int-row-name">{name}</span>
         <span className="ndc-int-row-details">{details}</span>
-        {status && status !== 'running' && !status.ok && <span className="ndc-int-row-error">{t(status.message, { count: 0 })}</span>}
+        {status && status !== 'running' && !status.ok && <span className="ndc-int-row-error">{t(status.message, { count: 0, ...status.messageParameters })}</span>}
       </span>
       {onTest && (
-        <span className={`ndc-int-state is-${state}`} title={status && status !== 'running' ? t(status.message, { count: status.count ?? 0 }) : undefined}>
+        <span className={`ndc-int-state is-${state}`} title={status && status !== 'running' ? t(status.message, { count: status.count ?? 0, ...status.messageParameters }) : undefined}>
           {state === 'running' ? <Loader2 size={12} className="nd-spin" /> : <span className="ndc-int-state-dot" aria-hidden="true" />}
           {state === 'ok' ? t('integrations.state.ok') : state === 'error' ? t('integrations.state.error') : state === 'running' ? t('integrations.state.testing') : t('integrations.state.unknown')}
         </span>
@@ -124,7 +126,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   };
 
   const addHost = async (draft: DockerHostDraft) => {
-    const response = await fetch('/api/config', {
+    const response = await demoFetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...draft, type: 'dockerHost', connection: draft.type }),
@@ -138,7 +140,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   };
 
   const removeHost = async (id: string) => {
-    await fetch(`/api/config?type=dockerHost&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await demoFetch(`/api/config?type=dockerHost&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     await refresh();
   };
 

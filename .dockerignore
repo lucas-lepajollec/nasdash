@@ -17,3 +17,6 @@ data_test*
 .codex
 *.md
 .env*
+
+# Private agent worktrees, test runtimes and local evidence must never enter the build context.
+.project-local

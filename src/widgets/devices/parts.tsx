@@ -28,7 +28,8 @@ export const SERIES_COLORS = ['var(--ndc-kind-cpu)', 'var(--ndc-kind-memory)', '
 export type DeviceState = 'online' | 'offline' | 'waiting';
 
 export function stateOf(entry: { data?: DeviceSnapshot; failed?: boolean }): DeviceState {
-  if (!entry.data) return entry.failed ? 'offline' : 'waiting';
+  if (entry.failed) return 'offline';
+  if (!entry.data) return 'waiting';
   return entry.data.online ? 'online' : 'offline';
 }
 

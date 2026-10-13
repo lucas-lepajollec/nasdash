@@ -13,7 +13,7 @@ for (const [language, proceed, edit, editTitle, save, remove] of languages) {
     test.skip(process.env.NASDASH_DEMO_MODE !== 'true', 'Run with the isolated demo server.');
     const calendarRequests: string[] = [];
     // Separate stateless runtime instances cannot share an in-memory calendar.
-    // Reject every calendar API request to exercise that hosted boundary.
+    // Reject legacy direct calendar requests: portable browser workspaces use the stateless transport instead.
     await page.route('**/api/config/calendar**', route => {
       calendarRequests.push(route.request().method());
       return route.fulfill({ status: 503, json: { error: 'Synthetic stateless demo' } });
@@ -46,6 +46,7 @@ for (const [language, proceed, edit, editTitle, save, remove] of languages) {
     await expect(calendar.getByText(`Demo created then edited ${language}`, { exact: true })).toHaveCount(0);
     expect(calendarRequests).toEqual([]);
     await page.reload();
-    await expect(calendar.locator('.ndc-cal-event-title').filter({ hasText: originalTitle }).first()).toBeVisible();
+    // Reload retains this visitor's edits; only the explicit Reset action restores fixtures.
+    await expect(calendar.locator('.ndc-cal-event-title').filter({ hasText: originalTitle })).toHaveCount(0);
   });
 }

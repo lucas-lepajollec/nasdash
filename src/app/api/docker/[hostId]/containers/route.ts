@@ -6,6 +6,10 @@ import {
   dockerFailureStatus,
   fetchDockerApi,
   readDockerJson,
+  requireDockerArray,
+  requireDockerFields,
+  DockerInvalidResponseError,
+  canonicalDockerImageId,
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
@@ -72,7 +76,7 @@ async function handleGET(
     }
 
     // Return mock data for demo/mock hosts
-    const isMockMode = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host');
+    const isMockMode = isDemoMode();
     if (isMockMode) {
       const mockContainers = DEMO_DOCKER_SERVICES.map((service, index) => {
         const state = getDemoContainerState(service.id, service.defaultState);
@@ -102,14 +106,18 @@ async function handleGET(
     const all = url.searchParams.get('all') !== 'false'; // default true
     
     const response = await fetchDockerApi(host, `/containers/json?all=${all}&size=false`);
-    const rawContainers = await readDockerJson(response) as DockerApiContainerSummary[];
+    const rawContainers = requireDockerArray<DockerApiContainerSummary>(await readDockerJson(response), 'Id');
     
+    for (const container of rawContainers) {
+      requireDockerFields(container as unknown as Record<string, unknown>, ['Names', 'Ports', 'Mounts'], ['Labels']);
+      if (container.Names?.some(name => typeof name !== 'string') || container.Ports?.some(port => !port || typeof port !== 'object') || container.Mounts?.some(mount => !mount || typeof mount !== 'object')) throw new DockerInvalidResponseError();
+    }
     const containers = rawContainers.map(c => ({
       id: c.Id?.substring(0, 12) || c.Id,
       fullId: c.Id,
       names: (c.Names || []).map((n: string) => n.replace(/^\//, '')),
       image: c.Image,
-      imageId: c.ImageID?.substring(0, 19) || '',
+      imageId: canonicalDockerImageId(c.ImageID || ''),
       state: c.State?.toLowerCase() || 'unknown',
       status: c.Status || '',
       created: c.Created || 0,

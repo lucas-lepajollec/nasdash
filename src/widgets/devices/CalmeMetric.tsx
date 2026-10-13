@@ -24,7 +24,7 @@ import { SortableMetrics } from './SortableMetrics';
 
 /** Measures that have their own widget, and how each starts. */
 export const METRIC_WIDGET_DISPLAY: Partial<Record<MetricId, Display>> = {
-  cpu: 'bar', memory: 'bar', gpu: 'bar', temperature: 'value', load: 'value', network: 'chart', disk: 'bar',
+  cpu: 'bar', memory: 'bar', gpu: 'bar', temperature: 'value', gpuTemperature: 'value', load: 'value', network: 'chart', disk: 'bar',
 };
 
 export function metricDefaults(metric: MetricId): LookDefaults {
@@ -42,7 +42,7 @@ const MULTI_CHART_HEIGHT: Record<ChartSize, number> = { small: 96, medium: 150, 
  * and the danger threshold dashed. Each machine can have its own colour; the
  * extra figures (temperature, load, video memory, sizes…) are widget options.
  */
-export default function CalmeMetric({ metric, devices, settings, editMode, isVisible, onUpdateSettings, title: customTitle }: {
+export default function CalmeMetric({ metric: requestedMetric, devices, settings, editMode, isVisible, onUpdateSettings, title: customTitle }: {
   metric: MetricId;
   devices: Device[];
   settings: WidgetSettings;
@@ -52,6 +52,7 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
   title?: string;
 }) {
   const { t, language, locale } = useI18n();
+  const metric = requestedMetric === 'temperature' && settings.temperaturePart === 'gpu' ? 'gpuTemperature' : requestedMetric;
   const { width } = useWidgetSize();
   const defaults = metricDefaults(metric);
   const look = readLook(settings, defaults);
@@ -72,7 +73,7 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
   const entries = manual && display !== 'chart' ? orderMetricEntries(baseEntries, settings.metricOrder, entryId) : baseEntries;
   const labelled = (entry: typeof entries[number]): Reading => withFacets({
     ...entry.reading,
-    label: metric === 'disk' || (metric === 'gpu' && entry.reading.label !== 'GPU') ? [entry.reading.label, entry.device.name].join(' · ') : entry.device.name,
+    label: metric === 'disk' || ((metric === 'gpu' || metric === 'gpuTemperature') && entry.reading.label !== 'GPU') ? [entry.reading.label, entry.device.name].join(' · ') : entry.device.name,
   }, data[entry.device.id]?.data, look.facets, look.valueParts, t, language, display);
   // A machine's colour: its own, else the measure's (a chart gives each machine a distinct one).
   const colorFor = (entry: typeof entries[number], index: number) => look.deviceColors[entry.device.id]
@@ -103,11 +104,12 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
     >
       {editMode && (
         <SettingsButton
-          options={{ title: t('devices.look.settingsOf', { name: title }), devices, deviceMode: 'multi', deviceKey: 'deviceIds', defaults, single: true, range: true, deviceColors: true }}
+          options={{ title: t('devices.look.settingsOf', { name: title }), devices, deviceMode: 'multi', deviceKey: 'deviceIds', defaults, single: true, range: true, deviceColors: true, temperatureSource: requestedMetric === 'temperature' }}
           settings={settings}
           onSave={next => { onUpdateSettings(next); setRange(rangeSetting(next.range)); }}
         />
       )}
+      {shown.some(device => data[device.id]?.failed) && <div className="ndc-dev-error" role="status">{shown.filter(device => data[device.id]?.failed).map(device => device.name).join(', ')} · {t('devices.calme.offline')}</div>}
       {entries.length === 0 ? (
         devices.length === 0 ? <SetupGuide kind="devices" /> : <div className="ndc-empty">{shown.length === 0 ? t('devices.calme.noDevice') : metric === 'disk' ? t('devices.calme.noDisk') : t('devices.calme.noData')}</div>
       ) : display === 'chart' ? (
@@ -121,7 +123,7 @@ export default function CalmeMetric({ metric, devices, settings, editMode, isVis
             start={end - span}
             end={end}
             height={MULTI_CHART_HEIGHT[look.chart.size]}
-            max={percentScale ? (metric === 'temperature' ? Math.max(100, (threshold ?? 0) + 10) : 100) : undefined}
+            max={percentScale ? ((metric === 'temperature' || metric === 'gpuTemperature') ? Math.max(100, (threshold ?? 0) + 10) : 100) : undefined}
             threshold={threshold !== null && percentScale ? { value: threshold, color: look.dangerColor } : undefined}
             formatValue={value => metricText(metric, value, language)}
             formatTime={time => timeText(time, locale, range === '1h')}

@@ -74,20 +74,20 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 ## Highlights
 
 - Service categories with local and secondary URLs, live availability for each address, and drag-and-drop ordering. Secondary-link bubbles follow the ping-details setting and close after navigation.
-- Hardware metrics from Glances, Netdata, Beszel, Prometheus/node_exporter, Proxmox VE, and Libre Hardware Monitor.
+- Hardware metrics from Glances, Netdata, Beszel, Prometheus/node_exporter, Proxmox VE, and Libre Hardware Monitor. Separate CPU and GPU temperature readings when the source reports them, with independent widget presentation and alerts.
 - Storage volumes grouped by host by default, with optional fullest-first or manual order. Reorder metric readings with handles in page edit mode, then save the page.
-- Docker containers, logs, images, volumes, and guarded actions through a socket proxy.
+- Docker containers, logs, images, volumes, and guarded actions through Portainer, Dockhand, an optional socket proxy, or a Docker-compatible API/socket.
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
 - A complete English, French, Spanish, German, and Italian interface with an instance-wide server preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.
-- Encrypted integration credentials, atomic configuration writes, and backup/restore tooling.
+- Encrypted integration credentials, coordinated configuration writes with rollback on reported failures, and backup/restore tooling.
 
 ## Quick start
 
 ### Docker Compose
 
-Requirements: Docker Engine with Compose `2.24.0` or newer, a Linux host for the bundled socket proxy, and host port `2504`.
+Requirements: Docker Engine with Compose `2.24.0` or newer and host port `2504`. Docker management is optional; choose an existing Portainer or Dockhand server, a restricted socket proxy, or a Docker-compatible API/socket. The optional local proxy requires a Linux Docker socket.
 
 Create `docker-compose.yml`:
 
@@ -103,13 +103,13 @@ services:
     volumes:
       - ./data:/app/data
     pid: host
-    depends_on:
-      - docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+  # Optional local engine connection: docker compose --profile docker-proxy up -d
   docker-proxy:
+    profiles: ["docker-proxy"]
     image: tecnativa/docker-socket-proxy:v0.5.0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -132,9 +132,11 @@ docker compose ps
 docker compose logs nasdash
 ```
 
-No `.env` is required. New accounts are initialized at server startup; generated passwords are printed once after their hashes are saved. Existing accounts are preserved across restart. Store account data and cryptographic keys in `./data`. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure the local Docker host as `docker-proxy:2375`. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
+No `.env` is required. New accounts are initialized at server startup; generated passwords are printed once after their hashes are saved. Existing accounts are preserved across restart. Store account data and cryptographic keys in `./data`. An optional untracked `.env` can provide advanced overrides. Sign in, change the passwords, then open `http://<server-ip>:2504` from the LAN, or `http://localhost:2504` on the Docker host, and configure only the integrations you need. Portainer and Dockhand use their server URL, environment ID and dedicated API key/token; they need no socket proxy. To use the optional local proxy, run `docker compose --profile docker-proxy up -d` and add `http://docker-proxy:2375` as an HTTP API connection. The matching `2504:2504` ports are the Docker host port and container port. Prefer an authenticated HTTPS reverse proxy before leaving a trusted network.
 
 Operational logs use English regardless of the interface language. New installations start in English with English example resource names. Names and content you customize remain yours: changing the interface language or upgrading does not rename existing machines, services or pages.
+
+The `docker-proxy` profile is opt-in. On an existing installation using that service, keep its custom Compose configuration or enable the profile on every recreate; for example `docker compose --profile docker-proxy up -d`. Keep the existing data mount. `pid: host` shares host process visibility and can be removed when not needed; remote monitoring integrations do not require it.
 
 The repository's default Compose file pulls the published image and stores data in `./data`. Do not replace that folder with a named volume on an existing installation: the app would start empty while the real files stay on disk. [`docker-compose.named-volume.yml`](docker-compose.named-volume.yml) is only an optional alternative for a brand-new install. To build the current checkout instead, add [`docker-compose.build.yml`](docker-compose.build.yml):
 
@@ -170,9 +172,9 @@ Share installation experiences and constructive feedback through [GitHub Issues]
 
 - Put NasDash behind HTTPS before access leaves a trusted network.
 - Never expose an unauthenticated Docker socket or socket proxy to the internet.
-- Treat `pid: host`, `CONTAINERS=1`, and Docker socket access as explicit high-risk integration exceptions. The `:ro` socket mount prevents replacing the socket file; it does not make Docker API access read-only. The proxy is not published, destructive deletion is disabled, and only the endpoints required by NasDash are enabled.
+- Treat `pid: host`, `CONTAINERS=1`, and Docker socket access as explicit high-risk integration exceptions. The optional proxy is not published and destructive deletion is disabled by default. Its `:ro` socket mount prevents replacing the socket file; it does not make Docker API access read-only.
 - Keep destructive Docker capabilities disabled unless explicitly needed.
-- A Docker host can also use a Unix socket mounted directly into the NasDash container (Docker `/var/run/docker.sock`, Podman `/run/podman/podman.sock`). That gives NasDash full control of the engine; the bundled socket proxy remains the recommended setup because it limits the endpoints.
+- A Docker host can also use a Unix socket mounted directly into the NasDash container (Docker `/var/run/docker.sock`, Podman `/run/podman/podman.sock`). That gives NasDash full control of the engine; a restricted socket proxy is one optional way to limit available endpoints. No direct socket mount is needed when using Portainer or Dockhand.
 - Portainer and Dockhand Docker hosts use an API key or token: create a dedicated one, it is stored encrypted and never shown again.
 - Service pings accept self-signed HTTPS certificates automatically (they carry no credentials and only check that the service answers).
 - "Accept a self-signed certificate" (devices and Docker hosts) skips the HTTPS certificate check for that address only. Enable it only for your own servers, such as Proxmox's default certificate.

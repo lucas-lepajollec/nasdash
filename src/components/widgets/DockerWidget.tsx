@@ -1,5 +1,7 @@
 'use client';
 
+import { demoFetch } from '@/lib/demoTransport';
+
 import React, { useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { DockerActionConfig, DockerContainer } from '@/lib/types';
@@ -9,6 +11,8 @@ import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useS
 import { CSS } from '@dnd-kit/utilities';
 import { useI18n } from '@/i18n/I18nProvider';
 import { WidgetHeaderActions } from './WidgetHeaderActions';
+import { dockerJsonFetcher, readDockerResponse, dockerActionError } from '@/lib/dockerErrorContract';
+import { resolveDockerTarget } from '@/lib/dockerTargets';
 import { CalmeWidget } from '@/widgets/calme';
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -58,6 +62,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
 
+  const [actionResults, setActionResults] = useState<Record<string, string>>({});
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -81,58 +86,23 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
 
   const executeAction = async (action: DockerActionConfig) => {
     setLoadingActions(prev => ({ ...prev, [action.id]: true }));
+    setActionResults(prev => ({ ...prev, [action.id]: '' }));
     try {
-      const containerStates: { hostId: string, containerId: string, running: boolean }[] = [];
+      const containerStates: { hostId: string, containerId: string, running: boolean, name: string }[] = [];
       
       // 1. Group targets by hostId to fetch container lists only once per host
       const uniqueHostIds = Array.from(new Set(action.targets.map(t => t.hostId)));
       const hostContainersMap: Record<string, DockerContainer[]> = {};
 
-      await Promise.all(uniqueHostIds.map(async (hostId) => {
-        try {
-          const res = await fetch(`/api/docker/${hostId}/containers?all=true`, { credentials: 'include' });
-          if (res.ok) {
-            hostContainersMap[hostId] = await res.json() as DockerContainer[];
-          } else {
-            console.error(`[DockerActions] Failed to fetch containers for host ${hostId}: ${res.status}`);
-          }
-        } catch (e) {
-          console.error(`[DockerActions] Error fetching containers for host ${hostId}`, e);
-        }
+      await Promise.all(uniqueHostIds.map(async hostId => {
+        hostContainersMap[hostId] = await dockerJsonFetcher(`/api/docker/${encodeURIComponent(hostId)}/containers?all=true`);
       }));
-
-      // 2. Map targets to their container IDs
-      action.targets.forEach((target) => {
-        const containers = hostContainersMap[target.hostId];
-        if (!containers) return;
-
-        const normalize = (s: string) => s.replace(/^\//, '').toLowerCase().trim();
-        const targetNorm = normalize(target.containerName);
-
-        // Find match: try exact first, then partial/ends-with for Docker Compose project patterns
-        let c = containers.find(c => c.names.some(n => normalize(n) === targetNorm));
-        if (!c) {
-          c = containers.find(c => c.names.some(n => {
-            const nn = normalize(n);
-            return nn.endsWith(`-${targetNorm}`) || nn.endsWith(`-${targetNorm}-1`) || nn.includes(targetNorm);
-          }));
-        }
-
-        if (c) {
-          containerStates.push({ 
-            hostId: target.hostId, 
-            containerId: c.fullId || c.id, 
-            running: c.state === 'running' 
-          });
-        } else {
-          console.warn(`[DockerActions] Container not found: "${target.containerName}" on host ${target.hostId}`);
-        }
-      });
-
-      if (containerStates.length === 0) {
-        console.warn('[DockerActions] No containers matched — action aborted');
-        return;
+      // Validate every configured target before sending any operation.
+      for (const target of action.targets) {
+        const container = resolveDockerTarget(hostContainersMap[target.hostId], target.containerName);
+        containerStates.push({ hostId: target.hostId, containerId: container.fullId || container.id, running: container.state === 'running', name: target.containerName });
       }
+      if (!containerStates.length) throw new Error('docker.failure.missing_target');
 
       let targetOperation: 'start' | 'stop' = 'start';
       if (action.actionType === 'start') targetOperation = 'start';
@@ -142,25 +112,21 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
         targetOperation = runningCount > (containerStates.length / 2) ? 'stop' : 'start';
       }
 
-      // 3. Execute actions sequentially to avoid flooding the network and hitting rate limits
-      for (const c of containerStates) {
-        if (targetOperation === 'start' && c.running) continue;
-        if (targetOperation === 'stop' && !c.running) continue;
-
-        try {
-          const res = await fetch(`/api/docker/${c.hostId}/containers/${c.containerId}?action=${targetOperation}`, { 
-            method: 'POST', 
-            credentials: 'include' 
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            console.error(`[DockerActions] Failed to ${targetOperation} container ${c.containerId}:`, data.error || res.status);
-          }
-        } catch (e) {
-          console.error(`[DockerActions] Network error on ${targetOperation} for ${c.containerId}:`, e);
+      const results: string[] = [];
+      for (const container of containerStates) {
+        const label = container.name;
+        if (targetOperation === 'start' && container.running || targetOperation === 'stop' && !container.running) {
+          results.push(`${label}: ${t('docker.action.unchanged')}`); continue;
         }
+        try {
+          await readDockerResponse(await demoFetch(`/api/docker/${encodeURIComponent(container.hostId)}/containers/${encodeURIComponent(container.containerId)}?action=${targetOperation}`, { method: 'POST', credentials: 'include' }));
+          results.push(`${label}: ${t('docker.action.success')}`);
+        } catch (error) { results.push(`${label}: ${dockerActionError(error, t)}`); }
       }
-
+      setActionResults(prev => ({ ...prev, [action.id]: results.join(' · ') }));
+    } catch (error) {
+      const message = error instanceof Error && error.message.startsWith('docker.failure.') ? t(error.message) : dockerActionError(error, t);
+      setActionResults(prev => ({ ...prev, [action.id]: message }));
     } finally {
       setLoadingActions(prev => ({ ...prev, [action.id]: false }));
     }
@@ -189,14 +155,16 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={actions.map(a => a.id)} strategy={rectSortingStrategy}>
           {actions.map((action) => (
+            <React.Fragment key={action.id}>
             <SortableActionItem
-              key={action.id}
               action={action}
               editMode={!!editMode}
               onEdit={() => setDockerActionModal({ open: true, action })}
               onExecute={() => executeAction(action)}
               isLoading={!!loadingActions[action.id]}
             />
+            {actionResults[action.id] && <p role="status" className="ndc-dialog-hint">{actionResults[action.id]}</p>}
+            </React.Fragment>
           ))}
         </SortableContext>
       </DndContext>

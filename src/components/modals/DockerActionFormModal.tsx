@@ -1,5 +1,7 @@
 'use client';
 
+import { dockerJsonFetcher, dockerActionError } from '@/lib/dockerErrorContract';
+
 import React, { useState, useEffect } from 'react';
 import { Search, Trash2, Power, Play, RefreshCw, Layers } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
@@ -12,8 +14,8 @@ import { CalmeSegmented } from './settings/shared/CalmeControls';
 interface DockerActionFormModalProps {
   action?: DockerActionConfig;
   onClose: () => void;
-  onSave: (data: any) => void;
-  onDelete?: (id: string) => void;
+  onSave: (data: any) => void | Promise<void>;
+  onDelete?: (id: string) => void | Promise<void>;
 }
 
 const ACTION_ICONS = [
@@ -35,6 +37,9 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
   const [searchQuery, setSearchQuery] = useState('');
   const [availableContainers, setAvailableContainers] = useState<{ hostId: string; hostName: string; container: DockerContainer }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     // Fetch all containers from all hosts
@@ -43,34 +48,34 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
       setLoading(true);
 
       try {
+        const failures: string[] = [];
         const allContainers: { hostId: string; hostName: string; container: DockerContainer }[] = [];
 
         await Promise.all(config.dockerHosts.map(async (host) => {
           try {
-            const res = await fetch(`/api/docker/${host.id}/containers?all=true`);
-            if (res.ok) {
-              const data = await res.json();
-              data.forEach((c: DockerContainer) => {
-                allContainers.push({ hostId: host.id, hostName: host.name, container: c });
-              });
-            }
+            const data = await dockerJsonFetcher(`/api/docker/${host.id}/containers?all=true`) as DockerContainer[];
+            data.forEach(container => { allContainers.push({ hostId: host.id, hostName: host.name, container }); });
           } catch (e) {
-            console.error(`Failed to fetch containers for host ${host.name}`, e);
+            failures.push(`${host.name}: ${dockerActionError(e, t)}`);
           }
         }));
 
         setAvailableContainers(allContainers);
+        setLoadError(failures.join(' · '));
       } finally {
         setLoading(false);
       }
     };
 
     fetchContainers();
-  }, [config?.dockerHosts]);
+  }, [config?.dockerHosts, t]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim() || targets.length === 0) return;
-    onSave({ name, icon, actionType, targets });
+    setSaving(true); setSaveError('');
+    try { await onSave({ name, icon, actionType, targets }); onClose(); }
+    catch { setSaveError(t('docker.failure.save_action')); }
+    finally { setSaving(false); }
   };
 
   const toggleTarget = (hostId: string, containerName: string) => {
@@ -90,7 +95,7 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
 
   const filteredContainers = availableContainers.filter(c => {
     if (!searchQuery) return true;
-    const nameStr = c.container.names[0].replace(/^\//, '').toLowerCase();
+    const nameStr = (c.container.names?.[0] || c.container.id).replace(/^\//, '').toLowerCase();
     return nameStr.includes(searchQuery.toLowerCase());
   });
 
@@ -103,13 +108,15 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
         width={480}
         onClose={onClose}
         danger={action && onDelete && (
-          <button type="button" className="nd-btn ndc-danger-ghost" onClick={() => onDelete(action.id)}><Trash2 size={12} /> {t("Supprimer")}</button>
+          <button type="button" className="nd-btn ndc-danger-ghost" disabled={saving} onClick={async () => { setSaving(true); setSaveError(''); try { await onDelete(action.id); onClose(); } catch { setSaveError(t('docker.failure.save_action')); } finally { setSaving(false); } }}><Trash2 size={12} /> {t("Supprimer")}</button>
         )}
         footer={<>
-          <button type="button" className="nd-btn" onClick={onClose}>{t("Annuler")}</button>
-          <button type="button" className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={!name.trim() || targets.length === 0}>{action ? t("Enregistrer") : t("Ajouter")}</button>
+          <button type="button" className="nd-btn" disabled={saving} onClick={onClose}>{t("Annuler")}</button>
+          <button type="button" className="nd-btn nd-btn-accent" onClick={handleSubmit} disabled={saving || !name.trim() || targets.length === 0}>{action ? t("Enregistrer") : t("Ajouter")}</button>
         </>}
       >
+        {loadError && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{loadError}</p>}
+        {saveError && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{saveError}</p>}
         <div className="ndc-field-inline">
           <CalmeField label={t("Nom du bouton")} htmlFor="docker-action-name">
             <input id="docker-action-name" className="nd-input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ex: Redémarrer Supabase")} />
@@ -142,7 +149,7 @@ export default function DockerActionFormModal({ action, onClose, onSave, onDelet
           <div className="ndc-check-list">
             {filteredContainers.length === 0 && !loading && <div className="ndc-set-empty">{t("Aucun conteneur trouvé")}</div>}
             {filteredContainers.map(({ hostId, hostName, container }) => {
-              const cname = container.names[0].replace(/^\//, '');
+              const cname = (container.names?.[0] || container.id).replace(/^\//, '');
               return (
                 <CalmeCheckRow key={`${hostId}-${container.id}`} checked={isSelected(hostId, cname)} onChange={() => toggleTarget(hostId, cname)}>
                   <span className="ndc-check-text">

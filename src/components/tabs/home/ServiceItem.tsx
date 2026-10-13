@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowUpRight, Globe, GripVertical, CheckCircle2, XCircle } from 'lucide-react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Service } from '@/lib/types';
@@ -35,6 +35,7 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
   const [imgError, setImgError] = useState(false);
   const [secondaryIconFailed, setSecondaryIconFailed] = useState(false);
   const [secondaryOpen, setSecondaryOpen] = useState(false);
+  const tooltipRef = useRef<HTMLAnchorElement>(null);
   // The second way in (another address or a Tailscale link), offered on hover.
   const secondaryUrl = service.secondaryUrl || service.tailscaleUrl;
   const secondaryIcon = service.secondaryLogo || (service.tailscaleUrl && !service.secondaryUrl ? '/api/logos/logo-tailscale.png' : service.logo);
@@ -63,6 +64,22 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
       window.removeEventListener('pagehide', close);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
+  }, [secondaryOpen]);
+
+  useEffect(() => {
+    if (!secondaryOpen) return;
+    const align = () => {
+      const tooltip = tooltipRef.current;
+      if (!tooltip) return;
+      tooltip.style.left = '50%';
+      const rect = tooltip.getBoundingClientRect();
+      const width = document.documentElement.clientWidth;
+      const shift = rect.left < 8 ? 8 - rect.left : rect.right > width - 8 ? width - 8 - rect.right : 0;
+      tooltip.style.left = `calc(50% + ${shift}px)`;
+    };
+    align();
+    window.addEventListener('resize', align);
+    return () => window.removeEventListener('resize', align);
   }, [secondaryOpen]);
 
   const pingText = (status: typeof secondaryStatus) => status
@@ -231,7 +248,7 @@ export default function ServiceItem({ service, categoryId, dndScope, editMode, s
 
       {secondaryUrl && !editMode && !demoMode && (
         <div className="nd-service-tooltip-wrapper">
-          <a href={secondaryUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip" onClick={() => setSecondaryOpen(false)}>
+          <a ref={tooltipRef} href={secondaryUrl} target="_blank" rel="noopener noreferrer" className="nd-service-tooltip" onClick={() => setSecondaryOpen(false)}>
             <span className="nd-service-tooltip-icon">
               {secondaryIcon && !secondaryIconFailed
                 ? <img src={secondaryIcon} alt="" onError={() => setSecondaryIconFailed(true)} />

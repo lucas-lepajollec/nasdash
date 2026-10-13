@@ -1,9 +1,11 @@
 'use client';
 
+import { demoFetch } from '@/lib/demoTransport';
+
 import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { useConfig } from '@/hooks/useConfig';
-import { dockerJsonFetcher } from '@/lib/dockerErrorContract';
+import { dockerJsonFetcher, readDockerResponse, dockerActionError } from '@/lib/dockerErrorContract';
 import { useI18n } from '@/i18n/I18nProvider';
 
 /**
@@ -17,10 +19,11 @@ export function useDockerContainers({ editMode, isVisible }: { editMode?: boolea
   const hosts = useMemo(() => config?.dockerHosts || [], [config?.dockerHosts]);
   const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
   const [actionRunning, setActionRunning] = useState<Record<string, boolean>>({});
+  const [actionError, setActionError] = useState<string | null>(null);
   const allowActions = config?.settings?.allowDockerActions ?? true;
 
   useEffect(() => {
-    if (hosts.length > 0 && !selectedHostId) setSelectedHostId(hosts[0].id);
+    if (!hosts.some(host => host.id === selectedHostId)) { setSelectedHostId(hosts[0]?.id ?? null); setActionError(null); setActionRunning({}); }
   }, [hosts, selectedHostId]);
 
   const { data: containers, error, isLoading, mutate } = useSWR(
@@ -45,27 +48,21 @@ export function useDockerContainers({ editMode, isVisible }: { editMode?: boolea
 
   const toggleContainer = async (containerId: string, currentState: string) => {
     if (editMode) return;
+    setActionError(null);
     setActionRunning(prev => ({ ...prev, [containerId]: true }));
     try {
       const action = currentState === 'running' ? 'stop' : 'start';
-      const res = await fetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          alert(t("Action refusée. Session administrateur requise (veuillez vous connecter via le bouton Connexion en haut)."));
-          return;
-        }
-        const data = await res.json();
-        throw new Error(data.error || 'Action failed');
-      }
+      const res = await demoFetch(`/api/docker/${selectedHostId}/containers/${containerId}?action=${action}`, { method: 'POST' });
+      await readDockerResponse(res);
       await mutate();
     } catch (e) {
-      console.error('Failed to change container state:', e);
+      setActionError(dockerActionError(e, t));
     } finally {
       setActionRunning(prev => ({ ...prev, [containerId]: false }));
     }
   };
 
-  return { hosts, selectedHostId, setSelectedHostId, containerList, error, isLoading, allowActions, actionRunning, toggleContainer };
+  return { hosts, selectedHostId, setSelectedHostId, containerList, error, isLoading, allowActions, actionRunning, actionError, toggleContainer };
 }
 
 /** Repeats the list until its length is a multiple of `targetMultiple`, so an endless scroll loops cleanly. */

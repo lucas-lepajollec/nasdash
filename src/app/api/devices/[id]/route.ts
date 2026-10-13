@@ -19,7 +19,8 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
 
     const { id } = await segmentData.params;
 
-    if (isDemoMode() || id.includes('demo') || id.includes('mock')) {
+    if (!(config.devices ?? []).some(device => device.id === id)) return NextResponse.json({ error: 'Unknown device' }, { status: 404 });
+    if (isDemoMode()) {
       const metrics = demoDeviceMetrics(id);
       return NextResponse.json(metrics);
     }
@@ -29,7 +30,7 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
     
     if (cached) {
       if (!cached.online) {
-        return NextResponse.json({ error: cached.error, isOffline: true }, { status: 200 });
+        return NextResponse.json({ error: cached.error, errorParameters: cached.errorParameters, isOffline: true }, { status: 200 });
       }
       // Metrics for integrations, hand-written stats for the other devices.
       return NextResponse.json(cached.metrics ?? cached.stats ?? []);

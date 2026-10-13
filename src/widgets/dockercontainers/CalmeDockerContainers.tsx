@@ -30,7 +30,7 @@ type Props = {
 export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateProps, isVisible = true }: Props) {
   const { t } = useI18n();
   const { size } = useWidgetSize();
-  const { hosts, selectedHostId, setSelectedHostId, containerList, error, isLoading, allowActions, actionRunning, toggleContainer } = useDockerContainers({ editMode, isVisible });
+  const { hosts, selectedHostId, setSelectedHostId, containerList, error, isLoading, allowActions, actionRunning, actionError, toggleContainer } = useDockerContainers({ editMode, isVisible });
   const [page, setPage] = useState(1);
   const title = t('Conteneurs Docker');
 
@@ -81,7 +81,7 @@ export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateP
     <CalmeWidget
       title={title}
       editMode={editMode}
-      aside={containerList.length > 0 ? `${running}/${containerList.length}` : undefined}
+      aside={!error && containerList.length > 0 ? `${running}/${containerList.length}` : undefined}
     >
       {editMode && onUpdateProps && (
         <WidgetHeaderActions>
@@ -111,11 +111,12 @@ export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateP
           </div>
         )}
 
+        {actionError && <p role="alert" className="ndc-empty ndc-empty--error">{actionError}</p>}
         {isLoading && containerList.length === 0 && <div className="ndc-empty"><Loader2 size={16} className="nd-spin" /></div>}
         {error && (
           <div className={`ndc-empty ${errorPresentation.tone === 'warning' ? '' : 'ndc-empty--error'}`}>
-            <span>{errorPresentation.title}</span>
-            <span className="ndc-sub">{errorPresentation.hint}</span>
+            <span>{t(errorPresentation.title)}</span>
+            <span className="ndc-sub">{t(errorPresentation.hint)}</span>
           </div>
         )}
         {!isLoading && !error && containerList.length === 0 && <div className="ndc-empty">{t('Aucun conteneur trouvé sur cet hôte.')}</div>}

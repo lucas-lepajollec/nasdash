@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { User, Plus, Trash2, Eye, EyeOff, Pencil, X } from 'lucide-react';
 import { WIDGET_CATALOG } from '@/lib/widgets/catalog';
+import { permissionSelection, savedPermissions } from '@/lib/permissions';
 
 /** Widgets a viewer can be allowed individually: those whose definition names a permission. */
-const PERMISSION_WIDGETS = WIDGET_CATALOG.flatMap(entry => entry.access && 'permission' in entry.access
-  ? [{ id: entry.access.permission, icon: entry.icon, nameKey: entry.nameKey }]
-  : []);
+const PERMISSION_WIDGETS = [...new Map(WIDGET_CATALOG.flatMap(entry => entry.access && 'permission' in entry.access
+  ? [{ id: entry.access.permission, icon: entry.icon, nameKey: entry.access.permission === 'devices' ? 'Appareils' : entry.nameKey }]
+  : []).map(entry => [entry.id, entry])).values()];
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { CalmeHeading, CalmeRow, CalmeSegmented } from '../shared/CalmeControls';
 import { Emoji } from '../../../shared/Emoji';
@@ -91,7 +92,7 @@ export function SecurityTab() {
     try {
       setActionSuccess(null);
       setActionError(null);
-      await updateConfig({ securityMode: mode });
+      if (!await updateConfig({ securityMode: mode })) throw new Error(t('Impossible d’enregistrer la configuration.'));
       setActionSuccess(`Mode de sécurité mis à jour : ${mode === 'private' ? 'Privé strict' : 'Public'}`);
     } catch (error: unknown) {
       setActionError(getErrorMessage(error, 'Erreur lors du changement de mode.'));
@@ -140,8 +141,8 @@ export function SecurityTab() {
           username, 
           password: password || undefined, 
           role,
-          allowedTabs: selectedTabs,
-          allowedWidgets: selectedWidgets
+          allowedTabs: savedPermissions(selectedTabs),
+          allowedWidgets: savedPermissions(selectedWidgets)
         })
       });
 
@@ -291,7 +292,7 @@ export function SecurityTab() {
                   className="ndc-icon-button"
                   title={t('security.editUserPermissions', { name: u.username })}
                   aria-label={t('security.editUserPermissions', { name: u.username })}
-                  onClick={() => { setUsername(u.username); setRole(u.role); setPassword(''); setSelectedTabs(u.allowedTabs || []); setSelectedWidgets(u.allowedWidgets || []); setActionError(null); setActionSuccess(null); setEditorOpen(true); }}
+                  onClick={() => { setUsername(u.username); setRole(u.role); setPassword(''); setSelectedTabs(permissionSelection(u.allowedTabs, allSelectableTabs.map(tab => tab.id))); setSelectedWidgets(permissionSelection(u.allowedWidgets, PERMISSION_WIDGETS.map(widget => widget.id))); setActionError(null); setActionSuccess(null); setEditorOpen(true); }}
                 ><Pencil size={13} /></button>
                 <button type="button" className="ndc-icon-button" disabled={isCurrent || isSystemUser} onClick={() => handleDeleteUser(u.username)} title={t("Supprimer l'utilisateur")} aria-label={t("Supprimer l'utilisateur")}><Trash2 size={13} /></button>
               </span>

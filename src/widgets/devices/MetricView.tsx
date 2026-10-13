@@ -65,7 +65,7 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
   if (display === 'ring') {
     const ringSize = size === 'small' ? 56 : size === 'medium' ? 76 : 92;
     const [number, ...unit] = reading.text.split(' ');
-    const custom = reading.metric === 'temperature' || reading.metric === 'load';
+    const custom = (reading.metric === 'temperature' || reading.metric === 'gpuTemperature') || reading.metric === 'load';
     // Short names (CPU, RAM) sit in the ring; a machine or disk name goes under it.
     const inside = reading.label.length <= 5 && ringSize >= 64;
     return (
@@ -108,7 +108,7 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
           end={window.end}
           height={CHART_HEIGHT[chartLook.size]}
           variant={chartLook.style}
-          max={percentScale ? (reading.metric === 'temperature' ? Math.max(100, (threshold ?? 0) + 10) : 100) : undefined}
+          max={percentScale ? ((reading.metric === 'temperature' || reading.metric === 'gpuTemperature') ? Math.max(100, (threshold ?? 0) + 10) : 100) : undefined}
           threshold={threshold !== null && reading.metric !== 'network' && reading.metric !== 'load' ? { value: threshold, color: look.dangerColor } : undefined}
           formatValue={value => metricText(reading.metric, value, language)}
           formatTime={time => timeText(time, locale, window.withSeconds)}

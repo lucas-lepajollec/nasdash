@@ -42,7 +42,7 @@ The initial suite covers:
 - admin logout after the initial dashboard requests settle, single-owner EventSource cleanup, session removal and full reload to the login page;
 - anonymous rejection and browser redirection in private mode, including protection of the logo listing and stored logo files.
 
-Suites that add login attempts use distinct fictional `x-forwarded-for` addresses so they do not consume another suite's one-minute login allowance. The production rate limits stay enabled; isolated API contexts use the project's configured browser base URL.
+The isolated test server explicitly sets `NASDASH_TRUST_PROXY=true` so suites can use distinct fictional `x-forwarded-for` addresses without consuming another suite's one-minute network allowance. Installed servers ignore forwarding identities by default unless the operator trusts an overwriting reverse proxy; account-failure limits apply independently of this setting. The production rate limits stay enabled; isolated API contexts use the project's configured browser base URL.
 
 After saving a page, browser tests wait for the editing toolbar to close before reloading. A button click alone does not wait for the asynchronous page write to finish.
 
@@ -60,12 +60,14 @@ Run this checklist on the real development instance before merging the hardening
 
 - [ ] Log in and out as an administrator; verify public/private mode and viewer read-only permissions.
 - [ ] On Home, create, edit, move and delete a temporary category and service; check links, search, layouts and the mobile view.
-- [ ] In Docker, test both a reachable host and an intentionally unreachable host; verify containers, details, logs, images and volumes. Run start/stop/restart only on a disposable container, and confirm that an offline host is distinguishable from invalid credentials or settings.
+- [ ] In Docker, test both a reachable host and an intentionally unreachable host; verify containers, details, logs, images and volumes. Run start/stop/restart only on a disposable container, and confirm that an offline host is distinguishable from invalid credentials or settings. Repeat with HTTP/socket, Portainer and Dockhand fixtures, including untagged images, referenced images, attached volumes, denied statistics and failed deletions. Verify default Compose starts without a proxy and the optional profile adds only its private service.
 - [ ] In Networks, generate or load the topology, then create, edit, move, link and delete temporary items on a backed-up configuration. Reload the page and verify persistence.
 - [ ] Enable, disable, reorder and resize widgets. Exercise Clock, Calendar, Weather, Tailscale, Devices and Docker settings, including custom selects with mouse and keyboard, then save and reload.
 - [ ] Check appearance settings, themes and backgrounds on desktop and mobile widths.
 - [ ] Restart NasDash (or its container) and verify that users, services, layouts, widgets and network topology are still present.
 - [ ] For any failure, record the exact reproduction steps, the page and account type, a screenshot, browser-console output and the corresponding server log lines.
+
+Check reader All/None/selected permissions with independent sessions, private asset requests after logout, corrupted configuration recovery, collector endpoint changes and overlapping requests. Exercise CPU/GPU temperature availability and narrow labels, failed calendar feeds, time zones, recurrence exceptions and bounded expansion.
 
 Do not perform destructive Docker actions on valuable containers, images or volumes. Use disposable resources for action tests.
 

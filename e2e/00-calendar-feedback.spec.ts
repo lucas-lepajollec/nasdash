@@ -84,7 +84,7 @@ test('calendar imports and anonymous viewers stay read-only', async ({ page, bro
     expect((await visitor.request.delete(`/api/config/calendar?id=${id}`)).status()).toBe(401);
   } finally { await context.close(); }
   await page.request.put('/api/config', { data: { type: 'settings', calendarUrl: 'https://calendar.example.invalid/events.ics' } });
-  await page.route('**/api/calendar?*', route => route.fulfill({ json: { events: [{ id: 'imported-feedback-event', title: 'Read-only ICS event', start: `${futureDate()}T13:00:00.000Z`, end: null }] } }));
+  await page.route('**/api/calendar', route => route.fulfill({ json: { events: [{ id: 'imported-feedback-event', title: 'Read-only ICS event', start: `${futureDate()}T13:00:00.000Z`, end: null }] } }));
   await page.goto('/');
   await page.locator('.ndc-cal-event').filter({ hasText: 'Read-only ICS event' }).first().click();
   const imported = page.getByRole('dialog', { name: 'Read-only ICS event', exact: true });

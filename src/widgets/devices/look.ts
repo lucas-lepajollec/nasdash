@@ -13,7 +13,7 @@ import type { WidgetSettings } from '@/lib/pages/types';
  * inject anything into a style.
  */
 
-export type MetricId = 'cpu' | 'memory' | 'gpu' | 'temperature' | 'load' | 'network' | 'disk' | 'history';
+export type MetricId = 'cpu' | 'memory' | 'gpu' | 'temperature' | 'gpuTemperature' | 'load' | 'network' | 'disk' | 'history';
 export type Display = 'value' | 'bar' | 'ring' | 'chart';
 
 export const DISPLAYS: readonly Display[] = ['value', 'bar', 'ring', 'chart'];
@@ -36,6 +36,7 @@ export const METRIC_INFO: Record<MetricId, MetricInfo> = {
   memory: { displays: DISPLAYS, color: 'var(--ndc-kind-memory)', danger: 90, unit: '%', dangerRange: { min: 1, max: 100, step: 1 } },
   gpu: { displays: DISPLAYS, color: 'var(--ndc-kind-gpu)', danger: 90, unit: '%', dangerRange: { min: 1, max: 100, step: 1 } },
   temperature: { displays: DISPLAYS, color: 'var(--ndc-kind-temp)', danger: 80, unit: '°C', dangerRange: { min: 30, max: 110, step: 1 } },
+  gpuTemperature: { displays: DISPLAYS, color: 'var(--ndc-kind-gpu)', danger: 80, unit: '°C', dangerRange: { min: 30, max: 110, step: 1 } },
   // Load per core: 1× means every core is busy.
   load: { displays: DISPLAYS, color: 'var(--ndc-kind-load)', danger: 1, unit: '×', dangerRange: { min: 0.1, max: 8, step: 0.1 } },
   network: { displays: ['value', 'chart'], color: 'var(--ndc-kind-net)', danger: null, unit: 'MB/s', dangerRange: { min: 1, max: 2000, step: 1 } },
@@ -73,10 +74,10 @@ export const FACETS: Partial<Record<MetricId, readonly Facet[]>> = {
   gpu: ['temperature', 'vram'],
   network: ['upload'],
   load: ['averages', 'cores'],
-  temperature: ['part'],
+  temperature: ['part'], gpuTemperature: ['part'],
 };
 export const DEFAULT_FACETS: Partial<Record<MetricId, readonly Facet[]>> = {
-  cpu: ['temperature'], gpu: ['temperature'], network: ['upload'], load: ['cores'], temperature: ['part'],
+  cpu: ['temperature'], gpu: ['temperature'], network: ['upload'], load: ['cores'], temperature: ['part'], gpuTemperature: ['part'],
 };
 /** Measures that have a size, so their shown values can be chosen. */
 export const SIZED: readonly MetricId[] = ['memory', 'disk'];
@@ -152,13 +153,13 @@ export function readLook(settings: WidgetSettings, defaults: LookDefaults): Widg
   const metrics = {} as Record<MetricId, MetricLook>;
   for (const id of Object.keys(METRIC_INFO) as MetricId[]) {
     const info = METRIC_INFO[id];
-    const own = stored[id] ?? {};
+    const own = stored[id] ?? (id === 'gpuTemperature' && defaults.offered.length === 1 ? stored.temperature : undefined) ?? {};
     const ownDisplay = fitDisplay(id, DISPLAYS.includes(own.display as Display) ? own.display as Display : defaults.displays?.[id] ?? defaults.display);
     const ownChart = chartOf(own.chartStyle, own.chartSize);
     const customColor = safeColor(own.color);
     const danger = own.danger === null ? null : typeof own.danger === 'number' && Number.isFinite(own.danger) ? own.danger : info.danger;
     metrics[id] = {
-      shown: typeof own.shown === 'boolean' ? own.shown && defaults.offered.includes(id) : defaults.shown.includes(id),
+      shown: defaults.offered.length === 1 && defaults.offered.includes(id) ? true : typeof own.shown === 'boolean' ? own.shown && defaults.offered.includes(id) : defaults.shown.includes(id),
       display: perMetricDisplay ? ownDisplay : fitDisplay(id, display),
       ownDisplay,
       color: customColor ?? info.color,
@@ -219,6 +220,6 @@ export function colorOf(look: WidgetLook, metric: MetricId, value: number | unde
 export function fillOf(metric: MetricId, value: number | undefined, cores?: number): number | undefined {
   if (value === undefined) return undefined;
   if (metric === 'load') return Math.min(100, (value / Math.max(1, cores ?? 1)) * 100);
-  if (metric === 'temperature') return Math.min(100, value);
+  if (metric === 'temperature' || metric === 'gpuTemperature') return Math.min(100, value);
   return value;
 }

@@ -1,3 +1,5 @@
+import { MonitoringHttpError } from '@/lib/monitoringError';
+import { collectorFailure } from '../errors';
 import { httpGet } from '../http';
 import { CollectError, type DeviceCollector, type DeviceVitals, type Metric } from '../types';
 
@@ -107,14 +109,14 @@ export function lhmVitals(data: LhmNode): DeviceVitals {
 }
 
 export const collectLhm: DeviceCollector = async connection => {
-  if (!connection.url) throw new CollectError('URL LHM manquante.', undefined, true);
+  if (!connection.url) throw new CollectError('integrations.error.missingUrl', undefined, true, { service: 'LHM' });
   let data: LhmNode;
   try {
     const response = await httpGet(connection.url, { allowSelfSigned: connection.allowSelfSigned });
-    if (!response.ok) throw new Error(`HTTP: ${response.status}`);
+    if (!response.ok) throw new MonitoringHttpError('LHM', response.status, response.statusText);
     data = JSON.parse(await response.text()) as LhmNode;
   } catch (error) {
-    throw new CollectError((error instanceof Error && error.message) || 'Impossible de joindre LHM', error);
+    throw collectorFailure('LHM', error);
   }
   return { metrics: lhmMetrics(data), vitals: lhmVitals(data) };
 };

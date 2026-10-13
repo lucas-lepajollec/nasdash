@@ -1,5 +1,7 @@
 'use client';
 
+import { copyText } from '@/lib/clipboard';
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Copy, Plus, Trash2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
@@ -81,7 +83,7 @@ function LogoLibrary() {
 
   const copy = async (file: MediaFile) => {
     try {
-      await navigator.clipboard.writeText(file.url);
+      await copyText(file.url);
       setCopied(file.url);
       setTimeout(() => setCopied(current => current === file.url ? null : current), 1500);
     } catch {

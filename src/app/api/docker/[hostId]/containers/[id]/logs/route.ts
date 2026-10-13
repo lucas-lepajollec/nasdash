@@ -39,7 +39,7 @@ async function handleGET(
   const tailNumber = Number(rawTail);
   if (!Number.isInteger(tailNumber) || tailNumber < 1 || tailNumber > MAX_LOG_LINES) {
     return NextResponse.json(
-      { error: `Le nombre de lignes doit être compris entre 1 et ${MAX_LOG_LINES}.` },
+      { error: `The line count must be between 1 and ${MAX_LOG_LINES}.` },
       { status: 400 },
     );
   }
@@ -53,7 +53,7 @@ async function handleGET(
     const host = getDockerHost(hostId);
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
-    const isMockMode = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    const isMockMode = isDemoMode();
     if (isMockMode) {
       const normalizedId = normalizeDemoContainerId(id);
       if (isDemoContainerRemoved(normalizedId)) {
@@ -110,7 +110,7 @@ async function handleGET(
   } catch (error: unknown) {
     if (error instanceof ResponseTooLargeError) {
       return NextResponse.json(
-        { error: 'Les logs Docker dépassent la taille autorisée (2 Mo).' },
+        { error: 'Docker logs exceed the allowed size (2 MiB).' },
         { status: 413 },
       );
     }

@@ -1,5 +1,7 @@
 'use client';
 
+import { demoFetch } from '@/lib/demoTransport';
+
 import { useEffect, useSyncExternalStore } from 'react';
 import type { HistoryPoint, HistoryRange } from '@/integrations/history';
 import type { DeviceVitals, Metric } from '@/integrations/types';
@@ -16,6 +18,7 @@ import type { DeviceStat } from '@/lib/types';
 export interface DeviceSnapshot {
   online: boolean;
   error?: string;
+  errorParameters?: Record<string, string | number>;
   updatedAt: number;
   metrics: Metric[];
   stats?: DeviceStat[];
@@ -52,7 +55,7 @@ export function mergeSeries(current: Record<string, HistoryPoint[]>, update: Rec
   return merged;
 }
 
-async function load(id: string, range: HistoryRange) {
+async function request(id: string, range: HistoryRange) {
   const key = keyOf(id, range);
   const entry = entries.get(key);
   if (!entry) return;
@@ -64,7 +67,7 @@ async function load(id: string, range: HistoryRange) {
     if (range === '24h' && since) since -= 60_000;
   }
   try {
-    const response = await fetch(`/api/devices/${encodeURIComponent(id)}/history?range=${range}${since ? `&since=${since}` : ''}`, { cache: 'no-store' });
+    const response = await demoFetch(`/api/devices/${encodeURIComponent(id)}/history?range=${range}${since ? `&since=${since}` : ''}`, { cache: 'no-store' });
     if (!response.ok) throw new Error(String(response.status));
     const answer = await response.json() as DeviceSnapshot;
     const windowStart = Date.now() - SPAN[range];
@@ -74,6 +77,15 @@ async function load(id: string, range: HistoryRange) {
     entry.failed = true;
   }
   notify();
+}
+
+/** Timer, initial load and tab visibility share one in-flight request. */
+function load(id: string, range: HistoryRange): Promise<void> {
+  const entry = entries.get(keyOf(id, range));
+  if (!entry) return Promise.resolve();
+  if (entry.loading) return entry.loading;
+  entry.loading = request(id, range).finally(() => { entry.loading = undefined; });
+  return entry.loading;
 }
 
 function schedule(id: string, range: HistoryRange) {
@@ -92,7 +104,7 @@ function start(id: string, range: HistoryRange) {
   entries.set(key, entry);
   entry.users += 1;
   if (entry.users === 1) {
-    entry.loading = load(id, range);
+    void load(id, range);
     schedule(id, range);
   }
   return () => {
@@ -128,7 +140,8 @@ export function useDevicesData(ids: readonly string[], range: HistoryRange, enab
   const result: Record<string, { data?: DeviceSnapshot; failed?: boolean }> = {};
   for (const id of ids) {
     const entry = entries.get(keyOf(id, range));
-    result[id] = { data: entry?.data, failed: entry?.failed };
+    // Keep history internally for incremental recovery, never present stale readings as live.
+    result[id] = { data: entry?.failed ? undefined : entry?.data, failed: entry?.failed };
   }
   return result;
 }

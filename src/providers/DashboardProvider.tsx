@@ -9,10 +9,12 @@ import { fetchPingBatches } from '@/lib/pingBatches';
 import { taskSettings } from '@/lib/tasks';
 import { LIGHT_THEMES } from '@/lib/themes';
 import { useI18n } from '@/i18n/I18nProvider';
+import { activateDemoTransport, demoFetch } from '@/lib/demoTransport';
 
 export interface DashboardContextType {
   config: DashboardConfig | null;
   loading: boolean;
+  configError: string | null;
   refresh: () => Promise<void>;
   showSecretSections: boolean;
   setShowSecretSections: React.Dispatch<React.SetStateAction<boolean>>;
@@ -68,10 +70,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const authLoading = auth?.authLoading ?? true;
 
   const [config, setConfig] = useState<DashboardConfig | null>(null);
-  // A hosted demo can send successive requests to different runtime instances.
-  // Keep its calendar trial in this tab; installed calendars still use the API.
-  const demoCalendarEvents = useRef<LocalCalendarEvent[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [configError, setConfigError] = useState<string | null>(null);
   const [pingResults, setPingResults] = useState<Record<string, { status: string; statusText: string; latency: number; selfSigned?: boolean }>>({});
   const [showSecretSections, setShowSecretSections] = useState(false);
   const [activeBgUrl, setActiveBgUrl] = useState('');
@@ -114,23 +114,26 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         }
         return;
       }
-      if (res.status === 429) {
-        setLoading(false);
-        return;
-      }
+
       if (!res.ok) {
         throw new Error(`Failed to fetch config: ${res.status}`);
       }
-      const data = await res.json();
+      let data = await res.json();
+      if (activateDemoTransport(data)) {
+        const local = await demoFetch('/api/config');
+        if (!local.ok) throw new Error('Demo workspace unavailable');
+        data = await local.json();
+      }
       if (!data.devices) data.devices = [];
-      if (data.demoMode && demoCalendarEvents.current) data.localEvents = demoCalendarEvents.current;
       setConfig(data);
+      setConfigError(null);
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch config:', err);
       if (retryCount < 3) {
         setTimeout(() => fetchConfig(retryCount + 1), 500);
       } else {
+        setConfigError('errors.configLoad');
         setLoading(false);
       }
     }
@@ -527,7 +530,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'dockerAction', ...action }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'errors.configSave');
+    await fetchConfig();
   };
 
   const updateDockerAction = async (id: string, updates: Partial<DockerActionConfig>) => {
@@ -536,12 +540,14 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'dockerAction', id, ...updates }),
     });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'errors.configSave');
+    await fetchConfig();
   };
 
   const deleteDockerAction = async (id: string) => {
     const res = await fetchWithAuth(`/api/config?type=dockerAction&id=${id}`, { method: 'DELETE' });
-    if (res.ok) await fetchConfig();
+    await assertApiOk(res, 'errors.configSave');
+    await fetchConfig();
   };
 
   const reorderDockerActions = async (newActions: DockerActionConfig[]) => {
@@ -555,16 +561,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
-  const changeDemoCalendar = (change: (events: LocalCalendarEvent[]) => LocalCalendarEvent[]) => {
-    if (!config?.demoMode) return false;
-    const events = change(demoCalendarEvents.current ?? config.localEvents ?? []);
-    demoCalendarEvents.current = events;
-    setConfig(previous => previous ? { ...previous, localEvents: events } : previous);
-    return true;
-  };
-
   const addLocalEvent = async (event: Omit<LocalCalendarEvent, 'id'>) => {
-    if (changeDemoCalendar(events => [...events, { ...event, id: crypto.randomUUID() }])) return;
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -575,7 +572,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateLocalEvent = async (id: string, updates: Partial<LocalCalendarEvent>) => {
-    if (changeDemoCalendar(events => events.map(event => event.id === id ? { ...event, ...updates, id } : event))) return;
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -586,7 +582,6 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteLocalEvent = async (id: string) => {
-    if (changeDemoCalendar(events => events.filter(event => event.id !== id))) return;
     const res = await fetchWithAuth(`/api/config/calendar?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Calendar request failed');
     await fetchConfig();
@@ -597,6 +592,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       value={{
         config,
         loading,
+        configError,
         refresh: fetchConfig,
         showSecretSections: user?.role === 'admin' ? showSecretSections : false,
         setShowSecretSections: user?.role === 'admin' ? setShowSecretSections : () => {},

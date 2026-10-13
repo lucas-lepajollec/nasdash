@@ -40,7 +40,8 @@ export async function GET(
   return new NextResponse(buffer, {
     headers: {
       'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=31536000',
+      'Cache-Control': 'private, no-store',
+      'Vary': 'Cookie',
       'X-Content-Type-Options': 'nosniff',
       ...(ext === '.svg' ? {
         'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",

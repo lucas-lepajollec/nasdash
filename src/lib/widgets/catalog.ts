@@ -1,3 +1,4 @@
+import { NO_ACCESS } from '../permissions';
 import type { WidgetGroup, WidgetDefinition } from '@/widgets/define';
 import { WIDGET_DEFINITIONS } from '@/widgets/definitions';
 
@@ -42,7 +43,7 @@ export interface WidgetViewer {
 
 function listAllows(values: string[] | undefined, id: string): boolean {
   // Historical convention: an empty or missing list means unrestricted.
-  return !values || values.length === 0 || values.includes(id);
+  return !values || (!values.includes(NO_ACCESS) && (values.length === 0 || values.includes(id)));
 }
 
 /**

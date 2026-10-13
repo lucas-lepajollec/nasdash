@@ -26,7 +26,7 @@ export default function Shell() {
   const { t } = useI18n();
   const { activeTab, switchTab, tabs, ready } = useTabs();
   const {
-    config, loading, refresh,
+    config, loading, configError, refresh,
     settingsModal, setSettingsModal, updateConfig,
     serviceModal, setServiceModal, addService, updateService, deleteService, uploadLogo,
     categoryModal, setCategoryModal, addCategory, updateCategory, deleteCategory,
@@ -52,7 +52,7 @@ export default function Shell() {
   useEffect(() => {
     if (!loading && ready && user && user.role !== 'admin' && user.allowedTabs && user.allowedTabs.length > 0) {
       if (!user.allowedTabs.includes(activeTab)) {
-        const firstAllowed = user.allowedTabs[0];
+        const firstAllowed = user.allowedTabs.find(id => tabs.some(tab => tab.id === id));
         if (firstAllowed) {
           switchTab(firstAllowed);
         }
@@ -85,6 +85,8 @@ export default function Shell() {
     
     return mapped;
   })();
+
+  if (configError && !config && !loading) return <main style={{ padding: 32 }}><p role="alert">{t(configError)}</p><button type="button" onClick={() => void refresh()}>{t('Réessayer')}</button></main>;
 
   if (loading || !ready || !config) {
     return (
@@ -266,9 +268,8 @@ export default function Shell() {
           onSave={async (data: any) => {
             if (dockerActionModal.action) await updateDockerAction(dockerActionModal.action.id, data);
             else await addDockerAction(data);
-            setDockerActionModal({ open: false });
           }}
-          onDelete={dockerActionModal.action ? async (id: string) => { await deleteDockerAction(id); setDockerActionModal({ open: false }); } : undefined}
+          onDelete={dockerActionModal.action ? async (id: string) => { await deleteDockerAction(id); } : undefined}
         />
       )}
 

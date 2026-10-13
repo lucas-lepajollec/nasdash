@@ -5,6 +5,7 @@ import { encrypt, decrypt } from './crypto';
 import { LegacyConfigData, migrateLegacySplitFiles } from './configMigration';
 import { getDataDirectory } from './dataDirectory';
 import { preserveCorruptFile } from './corruptFileRecovery';
+import { writeFileTransaction } from './fileTransaction';
 import { isDemoMode } from './demoMode';
 import { getDemoSessionConfig, setDemoSessionConfig } from './demoSession';
 import { createRollingDemoCalendar } from './demoCalendar';
@@ -138,8 +139,11 @@ export function readConfig(): DashboardConfig {
         try {
           const exampleData = fs.readFileSync(examplePath, 'utf-8');
           configData = JSON.parse(exampleData) as MutableDashboardConfig;
+          if (configFileInvalid || globalAny.__cachedConfig || fs.existsSync(SERVICES_PATH)) {
+            configData.settings = { ...configData.settings, securityMode: 'private' } as DashboardConfig['settings'];
+          }
           if (canPersistRecoveredConfig) {
-            safeWriteFileSync(CONFIG_PATH, exampleData, 'utf-8');
+            safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2), 'utf-8');
             try {
               globalAny.__cachedConfigMtime = fs.statSync(CONFIG_PATH).mtimeMs;
             } catch {}
@@ -151,6 +155,9 @@ export function readConfig(): DashboardConfig {
 
       if (!configData) {
         configData = getDefaultConfig();
+        if (configFileInvalid || globalAny.__cachedConfig || fs.existsSync(SERVICES_PATH)) {
+          configData.settings.securityMode = 'private';
+        }
         if (canPersistRecoveredConfig) {
           try {
             safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2));
@@ -492,50 +499,27 @@ export function writeConfig(config: DashboardConfig): boolean {
     if (host.token && host.token !== '********') host.token = encrypt(host.token);
   }
 
-  let success = true;
-
   try {
-    safeWriteFileSync(CONFIG_PATH, JSON.stringify(baseConfig, null, 2));
-    
-    // Mettre en cache la version déchiffrée en mémoire
+    writeFileTransaction([
+      [CONFIG_PATH, JSON.stringify(baseConfig, null, 2)],
+      [SERVICES_PATH, JSON.stringify(categories, null, 2)],
+      [TOPOLOGY_PATH, JSON.stringify(topology, null, 2)],
+      [CALENDAR_PATH, JSON.stringify(localEvents, null, 2)],
+    ]);
     const cacheConfig: MutableDashboardConfig = cloneJson(config);
     delete cacheConfig.demoMode;
     delete cacheConfig.categories;
     delete cacheConfig.localEvents;
-    if (cacheConfig.settings) {
-      delete cacheConfig.settings.networkTopology;
-    }
+    if (cacheConfig.settings) delete cacheConfig.settings.networkTopology;
     globalAny.__cachedConfig = cacheConfig;
-  } catch (e) {
-    success = false;
-    console.error("⚠️ PERMISSION ERROR: Cannot write data/config.json", e);
+    globalAny.__cachedServices = cloneJson(categories);
+    globalAny.__cachedTopology = cloneJson(topology);
+    globalAny.__cachedCalendar = cloneJson(localEvents);
+    return true;
+  } catch (error) {
+    console.error('[NASDASH] Configuration transaction failed; original files preserved where recovery was possible.', error);
+    return false;
   }
-
-  try {
-    safeWriteFileSync(SERVICES_PATH, JSON.stringify(categories, null, 2));
-    globalAny.__cachedServices = JSON.parse(JSON.stringify(categories));
-  } catch (e) {
-    success = false;
-    console.error("⚠️ PERMISSION ERROR: Cannot write data/services.json", e);
-  }
-
-  try {
-    safeWriteFileSync(TOPOLOGY_PATH, JSON.stringify(topology, null, 2));
-    globalAny.__cachedTopology = JSON.parse(JSON.stringify(topology));
-  } catch (e) {
-    success = false;
-    console.error("⚠️ PERMISSION ERROR: Cannot write data/topology.json", e);
-  }
-
-  try {
-    safeWriteFileSync(CALENDAR_PATH, JSON.stringify(localEvents, null, 2));
-    globalAny.__cachedCalendar = JSON.parse(JSON.stringify(localEvents));
-  } catch (e) {
-    success = false;
-    console.error("⚠️ PERMISSION ERROR: Cannot write data/calendar.json", e);
-  }
-
-  return success;
 }
 
 export function writeServices(categories: Category[]): boolean {

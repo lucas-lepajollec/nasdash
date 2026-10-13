@@ -1,3 +1,4 @@
+import { validateCalendarDates } from './calendarDates';
 import {
   JsonObject,
   RequestValidationError,
@@ -487,8 +488,11 @@ function validateDockerAction(value: unknown, requireId: boolean): void {
 function validateCalendarMutation(body: JsonObject, method: MutationMethod): void {
   if (method === 'PUT') readIdentifier(body);
   readString(body, 'title', { maxLength: 200 });
-  readString(body, 'start', { maxLength: 64 });
-  readString(body, 'end', { maxLength: 64 });
+  const start = readString(body, 'start', { required: method === 'POST', maxLength: 64 });
+  const end = readString(body, 'end', { maxLength: 64 });
+  validateCalendarDates(start, end);
+  if (start !== undefined) body.start = start;
+  if (end !== undefined) body.end = end;
   readString(body, 'description', { maxLength: 4_000, trim: false });
   readBoolean(body, 'isAllDay');
 }

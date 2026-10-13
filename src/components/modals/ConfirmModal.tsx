@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import React, { useId, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -6,7 +6,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   description?: string;
   confirmLabel?: string;
@@ -27,19 +27,31 @@ export default function ConfirmModal({
   const resolvedCancelLabel = cancelLabel ?? t('Annuler');
   const titleId = useId();
   const descriptionId = useId();
-  const dialogRef = useDialogAccessibility(onClose, isOpen);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => { if (!isOpen) setError(''); }, [isOpen]);
+  const close = () => { if (!pending) onClose(); };
+  const dialogRef = useDialogAccessibility(close, isOpen);
+  const confirm = async () => {
+    if (pending) return;
+    setPending(true); setError('');
+    try { await onConfirm(); onClose(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : t('errors.dockerAction')); }
+    finally { setPending(false); }
+  };
 
   if (!isOpen) return null;
 
   // Calme: a plain dialog, left aligned, the destructive action in red.
   return createPortal(
-    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ zIndex: 99999 }}>
+    <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }} style={{ zIndex: 99999 }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} tabIndex={-1} className="nd-modal ndc-confirm nd-animate-in" onClick={(e) => e.stopPropagation()}>
         <h2 id={titleId} style={{ margin: 0 }}>{title}</h2>
         {description && <p id={descriptionId} className="ndc-confirm-text">{description}</p>}
+        {error && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{error}</p>}
         <div className="ndc-confirm-actions">
-          <button type="button" className="nd-btn" onClick={onClose}>{resolvedCancelLabel}</button>
-          <button type="button" className="nd-btn ndc-btn-danger" onClick={() => { onConfirm(); onClose(); }}>{resolvedConfirmLabel}</button>
+          <button type="button" className="nd-btn" disabled={pending} onClick={close}>{resolvedCancelLabel}</button>
+          <button type="button" className="nd-btn ndc-btn-danger" disabled={pending} aria-busy={pending} onClick={() => { void confirm(); }}>{resolvedConfirmLabel}</button>
         </div>
       </div>
     </div>,

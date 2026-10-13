@@ -44,6 +44,8 @@ export default defineConfig({
     env: {
       ...inheritedEnvironment,
       NASDASH_DATA_DIR: dataDirectory,
+      // Fictional XFF identities isolate test quotas; this override belongs only to the test server.
+      NASDASH_TRUST_PROXY: 'true',
       NASDASH_ADMIN_PASSWORD: 'playwright-admin-password',
       NASDASH_VIEWER_PASSWORD: 'playwright-viewer-password',
       NASDASH_JWT_SECRET: 'playwright-only-secret-never-used-in-production',

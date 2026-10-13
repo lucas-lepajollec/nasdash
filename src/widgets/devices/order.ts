@@ -14,7 +14,7 @@ export const metricEntryId = (deviceId: string, readingKey: string) => JSON.stri
 
 /** One-card metrics keep their place when the underlying sensor changes. */
 export const readingOrderId = (deviceId: string, reading: Pick<Reading, 'metric' | 'key'>) => metricEntryId(deviceId,
-  reading.metric === 'disk' || reading.metric === 'gpu' ? reading.key : reading.metric);
+  reading.metric === 'disk' || reading.metric === 'gpu' || reading.metric === 'gpuTemperature' ? reading.key : reading.metric);
 
 export function savedMetricOrder(value: unknown): string[] {
   return Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === 'string'))] : [];

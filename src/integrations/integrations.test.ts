@@ -117,8 +117,8 @@ describe('polling', () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>', { status: 200 })));
-    expect(await pollDevice(device({ type: 'glances', url: 'http://192.0.2.10' }))).toMatchObject({ online: false, error: 'Réponse invalide (HTML)' });
-    expect(await pollDevice(device({ type: 'glances', url: '' }))).toMatchObject({ online: false, error: 'URL Glances manquante.' });
+    expect(await pollDevice(device({ type: 'glances', url: 'http://192.0.2.10' }))).toMatchObject({ online: false, error: 'integrations.invalidResponse' });
+    expect(await pollDevice(device({ type: 'glances', url: '' }))).toMatchObject({ online: false, error: 'integrations.error.missingUrl' });
   });
 
   it('shows static stats without an integration', async () => {
@@ -174,10 +174,17 @@ describe('catalogue integrations (samples from their documented APIs)', () => {
     ]);
   });
 
+  it('selects only recognized CPU temperature chips in Prometheus instead of the hottest hardware sensor', () => {
+    const query = prometheusQueries('fictional-node:9100').temperature;
+    expect(query).toContain('and on(instance, job, chip) node_hwmon_chip_names');
+    expect(query).toContain('chip_name=~"(?i)(coretemp|k10temp|k8temp|zenpower|cpu[_-]thermal|soc[_-]thermal)"');
+    expect(query).not.toBe('max(node_hwmon_temp_celsius{instance="fictional-node:9100"})');
+  });
+
   it('reads one Beszel system by name', () => {
     const nas = beszelSystems.items.find(system => system.name === 'nas')!;
     expect(shown(beszelMetrics(nas))).toEqual([
-      ['CPU', 'CPU', '17%', '48°C', ''],
+      ['CPU', 'CPU', '17%', '', ''],
       ['RAM', 'RAM', '41%', '', ''],
       ['Disque (system)', 'system', '63%', '', ''],
       ['Disque (data)', 'data', '72%', '', ''],

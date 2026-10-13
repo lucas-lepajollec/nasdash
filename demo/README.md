@@ -9,5 +9,7 @@ credential, token, password hash, uploaded logo, or personal calendar entry.
 `data/`. It remains loopback-only unless `npm run demo:lan` is used.
 `npm run demo:docker` performs the production-like container check.
 The Docker profile has no volume, host PID namespace, Docker socket, Docker
-proxy, or route to a real NasDash installation. Data is reset from these
-fixtures whenever the server starts.
+proxy, or route to a real NasDash installation. Each server starts from these
+fixtures. A visitor’s temporary workspace belongs to its browser tab and can
+survive reloads and worker changes; the explicit Reset action restores the
+fixtures. Legacy cookie-only API clients do not have distributed persistence.

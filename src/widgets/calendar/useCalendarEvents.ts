@@ -12,34 +12,40 @@ import type { CalendarDisplayEvent } from '@/lib/types';
 export function useCalendarEvents(isVisible: boolean) {
   const { config } = useConfig();
   const calendarUrl = config?.settings?.calendarUrl;
+  const configured = Boolean(calendarUrl || config?.settings?.calendarConfigured);
   const localEvents = useMemo(() => config?.localEvents || [], [config?.localEvents]);
   const [events, setEvents] = useState<CalendarDisplayEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isVisible) return;
+    const controller = new AbortController();
+    setError(null);
     const fetchEvents = async () => {
       let combined: CalendarDisplayEvent[] = localEvents.map(e => ({ ...e, start: e.start || null, end: e.end || null }));
-      if (!calendarUrl) {
+      if (!configured) {
         setEvents(combined);
         return;
       }
       setLoading(true);
       try {
-        const res = await fetch(`/api/calendar?url=${encodeURIComponent(calendarUrl)}`);
+        const res = await fetch('/api/calendar', { signal: controller.signal, cache: 'no-store' });
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'calendar.fetchFailed');
+        if (!Array.isArray(data.events)) throw new Error('calendar.invalidFeed');
         if (data && data.events) combined = [...combined, ...data.events];
       } catch (e) {
-        console.error('Failed to fetch calendar events:', e);
+        if (!controller.signal.aborted) setError(e instanceof Error ? e.message : 'calendar.fetchFailed');
       } finally {
-        setEvents(combined);
-        setLoading(false);
+        if (!controller.signal.aborted) { setEvents(combined); setLoading(false); }
       }
     };
-    fetchEvents();
-  }, [calendarUrl, isVisible, localEvents]);
+    void fetchEvents();
+    return () => controller.abort();
+  }, [calendarUrl, configured, isVisible, localEvents]);
 
-  return { events, loading };
+  return { events, loading, error };
 }
 
 export function isoDay(year: number, month: number, day: number): string {

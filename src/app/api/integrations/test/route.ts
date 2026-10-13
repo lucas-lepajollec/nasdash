@@ -6,7 +6,8 @@ import { DEVICE_COLLECTORS, TARGET_LISTERS } from '@/integrations/collectors';
 import { getDeviceIntegration } from '@/integrations/registry';
 import { MASKED_SECRET, reusesSecretElsewhere } from '@/integrations/instances';
 import { isMonitoringType, sourceInput } from '@/integrations/sources';
-import { CollectError, type CollectContext } from '@/integrations/types';
+import { collectorFailure } from '@/integrations/errors';
+import { type CollectContext } from '@/integrations/types';
 import { isCertificateError } from '@/integrations/http';
 import type { IntegrationInstance } from '@/lib/types';
 
@@ -29,13 +30,13 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json() as Record<string, unknown>;
   } catch {
-    return NextResponse.json({ ok: false, message: 'Requête invalide.' }, { status: 400 });
+    return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
   }
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
   const manifest = getDeviceIntegration(type);
-  if (!manifest || !isMonitoringType(type)) return NextResponse.json({ ok: false, message: 'Intégration inconnue.' }, { status: 400 });
+  if (!manifest || !isMonitoringType(type)) return NextResponse.json({ ok: false, message: 'integrations.error.unknown' }, { status: 400 });
 
   if (isDemoMode()) {
     // The public demo never reaches out: it offers fictional machines.
@@ -77,9 +78,9 @@ export async function POST(request: NextRequest) {
     const metrics = Array.isArray(result) ? result : result.metrics;
     return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: metrics.length });
   } catch (error) {
-    const message = isCertificateError(error)
-      ? 'integrations.certificateRejected'
-      : error instanceof CollectError ? error.message : (error instanceof Error && error.message) || 'integrations.test.failed';
-    return NextResponse.json({ ok: false, message });
+    const failure = collectorFailure(manifest.name, error);
+    const certificate = isCertificateError(error);
+    const message = certificate ? 'integrations.certificateRejected' : failure.message;
+    return NextResponse.json({ ok: false, message, ...(!certificate && failure.parameters ? { messageParameters: failure.parameters } : {}) });
   }
 }

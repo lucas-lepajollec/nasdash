@@ -29,7 +29,10 @@ function isRateLimited(key: string, limit: number, windowMs: number = 1000): boo
 }
 
 export function proxy(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
+  // Only accept forwarding identity when the operator trusts an overwriting proxy.
+  const ip = process.env.NASDASH_TRUST_PROXY === 'true'
+    ? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
+    : '127.0.0.1';
   const url = req.nextUrl;
   const pathName = url.pathname;
 

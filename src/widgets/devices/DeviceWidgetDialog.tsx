@@ -26,7 +26,8 @@ export function metricName(metric: MetricId, t: Translate): string {
     case 'cpu': return 'CPU';
     case 'memory': return 'RAM';
     case 'gpu': return 'GPU';
-    case 'temperature': return t('devices.calme.temperature');
+    case 'temperature': return t('devices.calme.cpuTemperature');
+    case 'gpuTemperature': return t('devices.calme.gpuTemperature');
     case 'load': return t('devices.calme.load');
     case 'network': return t('devices.calme.network');
     case 'disk': return t('devices.calme.sectionDisks');
@@ -54,6 +55,8 @@ export interface DeviceDialogOptions {
   displays?: boolean;
   /** One-measure widgets: a colour per machine instead of per measure. */
   deviceColors?: boolean;
+  /** Existing temperature widget: choose the CPU or detected GPUs. */
+  temperatureSource?: boolean;
 }
 
 function facetName(facet: Facet, t: Translate): string {
@@ -111,11 +114,12 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
   const [draft, setDraft] = useState<WidgetSettings>(settings);
   const [picking, setPicking] = useState<{ kind: 'metric'; id: MetricId } | { kind: 'device'; id: string; index: number } | { kind: 'danger' } | null>(null);
   const change = (patch: WidgetSettings) => setDraft(current => ({ ...current, ...patch }));
-  const look = readLook(draft, options.defaults);
+  const defaults = options.temperatureSource ? { ...options.defaults, offered: [draft.temperaturePart === 'gpu' ? 'gpuTemperature' as const : 'temperature' as const], shown: [draft.temperaturePart === 'gpu' ? 'gpuTemperature' as const : 'temperature' as const] } : options.defaults;
+  const look = readLook(draft, defaults);
   const setLook = (update: (look: WidgetLook) => WidgetLook) => change(lookSettings(update(look)));
   const setMetric = (id: MetricId, patch: Partial<WidgetLook['metrics'][MetricId]>) => setLook(current => ({ ...current, metrics: { ...current.metrics, [id]: { ...current.metrics[id], ...patch } } }));
   const { devices } = options;
-  const single = options.single ? options.defaults.offered[0] : null;
+  const single = options.single ? defaults.offered[0] : null;
   // One-measure widgets and "same for all" use the widget's display and chart options.
   const shared = !!single || !look.perMetricDisplay;
 
@@ -126,6 +130,7 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
   // What the chosen machines actually report: the other measures are flagged.
   const readings = useDevicesData(chosen, '1h');
   const loaded = chosen.some(id => readings[id]?.data);
+  const gpuDetected = chosen.some(id => readings[id]?.data?.metrics.some(metric => metric.kind === 'gpu'));
   const reported = (id: MetricId) => id === 'history'
     ? chosen.some(device => readingsOf(readings[device]?.data, 'cpu', t, language).length > 0)
     : chosen.some(device => readingsOf(readings[device]?.data, id, t, language).length > 0);
@@ -142,7 +147,7 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
   }));
   const sharedDisplay = single ? look.metrics[single].display : look.display;
   // The default period only matters when something is drawn as a chart.
-  const usesCharts = options.defaults.offered.some(id => look.metrics[id].shown && (look.metrics[id].display === 'chart' || id === 'history'));
+  const usesCharts = defaults.offered.some(id => look.metrics[id].shown && (look.metrics[id].display === 'chart' || id === 'history'));
   const { setDeviceModal } = useConfig();
   // A machine's own settings: the changes made here are kept, then its dialog opens.
   const openDevice = (device: Device) => {
@@ -182,6 +187,20 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
                   </div>
                 ))}
               </div>
+            </CalmeField>
+          )}
+
+          {options.temperatureSource && (
+            <CalmeField label={t('devices.calme.temperatureSource')}>
+              <CalmeSegmented
+                label={t('devices.calme.temperatureSource')}
+                value={draft.temperaturePart === 'gpu' ? 'gpu' : 'cpu'}
+                options={[
+                  { value: 'cpu', label: t('devices.calme.cpuTemperature') },
+                  ...(gpuDetected || draft.temperaturePart === 'gpu' ? [{ value: 'gpu', label: t('devices.calme.gpuTemperature') }] : []),
+                ]}
+                onChange={temperaturePart => change({ temperaturePart })}
+              />
             </CalmeField>
           )}
 
@@ -255,7 +274,7 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
 
           <CalmeField label={single ? t('devices.look.dangerThreshold') : t('devices.look.measures')} info={single ? t('devices.look.dangerHint') : t('devices.look.measuresHint')}>
             <div className="ndc-dlg-metrics">
-              {options.defaults.offered.map(id => {
+              {defaults.offered.filter(id => id !== 'gpuTemperature' || single || gpuDetected || look.metrics[id].shown && !!settings.metrics && Object.prototype.hasOwnProperty.call(settings.metrics, id)).map(id => {
                 const metric = look.metrics[id];
                 const info = METRIC_INFO[id];
                 const eachDisplay = !shared && info.displays.length > 1;

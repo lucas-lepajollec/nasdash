@@ -1,3 +1,4 @@
+import { collectorFailure } from '../errors';
 import { MonitoringConfigurationError, MonitoringHttpError, MonitoringInvalidResponseError } from '@/lib/monitoringError';
 import { splitUserPassword } from '../connect';
 import { basicAuthHeader, httpGet } from '../http';
@@ -22,7 +23,8 @@ export function prometheusQueries(instance: string) {
     memoryAvailable: `node_memory_MemAvailable_bytes{${i}}`,
     fsSize: `node_filesystem_size_bytes{${i},fstype!~"${IGNORED_FS}"}`,
     fsAvail: `node_filesystem_avail_bytes{${i},fstype!~"${IGNORED_FS}"}`,
-    temperature: `max(node_hwmon_temp_celsius{${i}})`,
+    // node_exporter annotates chips separately. Never call an arbitrary GPU/disk sensor CPU temperature.
+    temperature: `max(node_hwmon_temp_celsius{${i}} and on(instance, job, chip) node_hwmon_chip_names{${i},chip_name=~"(?i)(coretemp|k10temp|k8temp|zenpower|cpu[_-]thermal|soc[_-]thermal)"})`,
     cores: `count(node_cpu_seconds_total{${i},mode="idle"})`,
     netRx: `sum(rate(node_network_receive_bytes_total{${i},device!~"${VIRTUAL_DEVICES}"}[2m]))`,
     netTx: `sum(rate(node_network_transmit_bytes_total{${i},device!~"${VIRTUAL_DEVICES}"}[2m]))`,
@@ -93,21 +95,21 @@ function authOf(connection: ResolvedConnection): Record<string, string> {
 
 /** The node_exporter instances Prometheus knows (with their host name when reported). */
 export const listPrometheusInstances: TargetLister = async connection => {
-  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('Missing Prometheus URL.'));
+  if (!connection.url) throw new CollectError('integrations.error.missingUrl', new MonitoringConfigurationError('Missing Prometheus URL.'), false, { service: 'Prometheus' });
   const base = connection.url.replace(/\/$/, '');
   const query = async (promql: string) => {
     let answer;
     try {
       answer = await httpGet(`${base}/api/v1/query?query=${encodeURIComponent(promql)}`, { headers: { Accept: 'application/json', ...authOf(connection) }, allowSelfSigned: connection.allowSelfSigned });
     } catch (error) {
-      throw new CollectError('Impossible de joindre Prometheus', error);
+      throw collectorFailure('Prometheus', error);
     }
-    if (!answer.ok) throw new CollectError(`Erreur serveur (${answer.status})`, new MonitoringHttpError('Prometheus', answer.status, answer.statusText));
+    if (!answer.ok) throw collectorFailure('Prometheus', new MonitoringHttpError('Prometheus', answer.status, answer.statusText));
     try {
       const body = JSON.parse(await answer.text()) as { status?: string; data?: { result?: Sample[] } };
       return body.status === 'success' ? body.data?.result ?? [] : [];
     } catch {
-      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Prometheus returned a non-JSON response.'));
+      throw new CollectError('integrations.invalidResponse', new MonitoringInvalidResponseError('Prometheus returned a non-JSON response.'));
     }
   };
   const named = await query('node_uname_info');
@@ -118,8 +120,8 @@ export const listPrometheusInstances: TargetLister = async connection => {
 };
 
 export const collectPrometheus: DeviceCollector = async connection => {
-  if (!connection.url) throw new CollectError('URL Prometheus manquante.', new MonitoringConfigurationError('Missing Prometheus URL.'));
-  if (!connection.target) throw new CollectError('Instance Prometheus non choisie.', new MonitoringConfigurationError('No Prometheus instance selected.'));
+  if (!connection.url) throw new CollectError('integrations.error.missingUrl', new MonitoringConfigurationError('Missing Prometheus URL.'), false, { service: 'Prometheus' });
+  if (!connection.target) throw new CollectError('integrations.error.targetMissing', new MonitoringConfigurationError('No Prometheus instance selected.'));
   const auth = authOf(connection);
   const queries = prometheusQueries(connection.target);
   const results = {} as Results;
@@ -129,17 +131,17 @@ export const collectPrometheus: DeviceCollector = async connection => {
     try {
       answer = await httpGet(`${connection.url.replace(/\/$/, '')}/api/v1/query?query=${encodeURIComponent(query)}`, { headers: { Accept: 'application/json', ...auth }, allowSelfSigned: connection.allowSelfSigned });
     } catch (error) {
-      throw new CollectError('Impossible de joindre Prometheus', error);
+      throw collectorFailure('Prometheus', error);
     }
-    if (!answer.ok) throw new CollectError(`Erreur serveur (${answer.status})`, new MonitoringHttpError('Prometheus', answer.status, answer.statusText));
+    if (!answer.ok) throw collectorFailure('Prometheus', new MonitoringHttpError('Prometheus', answer.status, answer.statusText));
     try {
       const body = JSON.parse(await answer.text()) as { status?: string; data?: { result?: Sample[] } };
       results[name] = body.status === 'success' ? body.data?.result ?? [] : [];
     } catch {
-      throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError('Prometheus returned a non-JSON response.'));
+      throw new CollectError('integrations.invalidResponse', new MonitoringInvalidResponseError('Prometheus returned a non-JSON response.'));
     }
   }));
   const metrics = prometheusMetrics(results);
-  if (metrics.length === 0) throw new CollectError(`Aucune donnée pour l’instance « ${connection.target} ».`, undefined, true);
+  if (metrics.length === 0) throw new CollectError('integrations.error.targetNoData', undefined, true, { target: connection.target });
   return { metrics, vitals: prometheusVitals(results) };
 };

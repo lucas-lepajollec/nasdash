@@ -8,6 +8,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Refresh compatible React, service telemetry, UUID and browser-test dependencies; retain the Node 22 baseline.
 
+### Fixed
+
+- Require explicit trusted-proxy configuration for forwarded rate-limit identities and limit failed login attempts per account independently.
+- Tighten explicit reader allowlists and private configuration recovery; keep private assets and calendar connection details protected while preserving existing access-list compatibility.
+- Preserve related configuration files on reported save failures, validate local calendar dates and upload filenames, and record the application version in standalone backups.
+- Refresh monitoring connection contexts after endpoint or credential changes, recover Glances API-version changes, preserve independent storage volumes, reject invalid responses, and prevent older collections from overwriting newer readings.
+- Keep failed machine collections visibly unavailable with stale readings, and show calendar feed and initial configuration failures instead of indefinite loading or a silent empty view.
+- Parse iCalendar time zones, recurrence rules and exceptions with bounded expansion, including folded and escaped text.
+- Translate Docker diagnostics and operation errors across all five languages; distinguish denied socket access, invalid responses and unavailable sources. Preserve forms after failed saves or deletions and show inspect/action errors.
+- Resolve Docker actions to an exact container, restrict fictional engine/device data to demo mode, and compare normalized image identities before offering removal.
+- Normalize Docker resource responses across HTTP APIs, Unix sockets, Portainer and Dockhand; retain visible image tags, digests and identifiers, including untagged images, and refresh image/volume confirmations and presentation.
+- Keep integration form fields labelled for assistive technology, support media address copying on trusted HTTP LANs, and prevent secondary-link tooltip overflow on narrow screens.
+
+### Changed
+
+- Keep fictional demo edits in a temporary browser-tab workspace across reloads and server-worker changes, with serialized requests and an explicit Reset restoring fixtures. Browser session storage is required for reload retention; direct cookie-only demo API clients keep temporary process-local state.
+- Separate CPU and GPU temperature choices in device and metric widgets when the source supplies GPU temperature. Keep existing temperature selections as CPU temperature, with independent display options and thresholds; preserve readable labels in narrow layouts.
+- Make the local Docker socket proxy an optional Compose profile. Portainer, Dockhand and Docker-compatible API/socket connections remain alternatives; document their configuration, permissions and resource operations in all five guide languages. Existing proxy users must keep their Compose configuration or enable the profile when recreating the stack, without changing the data mount.
+
 ## [0.2.3] - 2026-10-12
 
 ### Upgrading from 0.2.2

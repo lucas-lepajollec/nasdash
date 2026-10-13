@@ -23,14 +23,13 @@ export class DockerInvalidResponseError extends Error {
 }
 
 export class DockerHostConfigurationError extends Error {
-  constructor(readonly code: 'invalid_url') {
+  constructor(readonly code: 'invalid_url' | 'invalid_socket') {
     super('Invalid Docker host URL');
     this.name = 'DockerHostConfigurationError';
   }
 }
 
 export function validateDockerHostUrl(value: string): void {
-  if (value === 'mock' || value.startsWith('mock-')) return;
 
   let parsed: URL;
   try {
@@ -47,7 +46,7 @@ export function validateDockerHostUrl(value: string): void {
 /** Socket paths accepted for `socket` hosts: absolute, ending in `.sock`, no `..`. */
 export function validateDockerSocketPath(value: string): void {
   if (!/^\/[A-Za-z0-9._\/-]+\.sock$/.test(value) || value.includes('..')) {
-    throw new DockerHostConfigurationError('invalid_url');
+    throw new DockerHostConfigurationError('invalid_socket');
   }
 }
 
@@ -67,7 +66,7 @@ function nodeRequest(request: { url: string; socketPath?: string; allowSelfSigne
     const target = new URL(request.url);
     const client = !request.socketPath && target.protocol === 'https:' ? https : http;
     const req = client.request({
-      ...(request.socketPath ? { socketPath: request.socketPath } : { hostname: target.hostname, port: target.port || undefined }),
+      ...(request.socketPath ? { socketPath: request.socketPath } : { hostname: target.hostname.replace(/^\[|\]$/g, ''), port: target.port || undefined }),
       path: `${target.pathname}${target.search}`,
       method: options.method ?? 'GET',
       headers: { Host: request.socketPath ? 'docker' : target.host, ...request.headers },
@@ -78,7 +77,7 @@ function nodeRequest(request: { url: string; socketPath?: string; allowSelfSigne
       let size = 0;
       res.on('data', (chunk: Buffer) => {
         size += chunk.length;
-        if (size > MAX_NODE_RESPONSE_BYTES) { req.destroy(new Error('Docker API response too large')); return; }
+        if (size > MAX_NODE_RESPONSE_BYTES) { req.destroy(new DockerInvalidResponseError()); return; }
         chunks.push(chunk);
       });
       res.on('end', () => {
@@ -97,15 +96,23 @@ function nodeRequest(request: { url: string; socketPath?: string; allowSelfSigne
 }
 
 /** One HTTP(S) call: `fetch`, or Node's client when a self-signed certificate is accepted. */
-async function send(url: string, options: RequestInit, timeoutMs: number, headers: Record<string, string> = {}, allowSelfSigned = false): Promise<Response> {
-  if (allowSelfSigned && url.startsWith('https:')) return nodeRequest({ url, headers, allowSelfSigned: true }, options, timeoutMs);
+async function send(url: string, options: RequestInit, timeoutMs: number, headers: Record<string, string> = {}, allowSelfSigned = false, redirects = 0): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { ...options, headers: { ...(options.headers as Record<string, string> | undefined), ...headers }, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
+    const response = allowSelfSigned
+      ? await nodeRequest({ url, headers: { ...(options.headers as Record<string, string> | undefined), ...headers }, allowSelfSigned: true }, options, timeoutMs)
+      : await fetch(url, { ...options, headers: { ...(options.headers as Record<string, string> | undefined), ...headers }, signal: controller.signal, redirect: 'manual' });
+    const location = response.headers.get('location');
+    if ([301, 302, 303, 307, 308].includes(response.status) && location) {
+      if (redirects >= 4) throw new DockerHostConfigurationError('invalid_url');
+      const previous = new URL(url), next = new URL(location, previous);
+      // Keep credentials and the self-signed opt-in bound to the configured host.
+      if (!['http:', 'https:'].includes(next.protocol) || next.hostname !== previous.hostname || previous.protocol === 'https:' && next.protocol !== 'https:') throw new DockerHostConfigurationError('invalid_url');
+      return await send(next.href, options, timeoutMs, headers, allowSelfSigned, redirects + 1);
+    }
+    return response;
+  } finally { clearTimeout(timeout); }
 }
 
 /** Dockhand: the Docker endpoint is translated, then its answer shaped like Docker's. */
@@ -163,6 +170,21 @@ export async function readDockerJson(response: Response): Promise<unknown> {
   }
 }
 
+/** Reject malformed upstream payloads before normalisation, including valid JSON web pages. */
+export function requireDockerArray<T>(value: unknown, identity: string): T[] {
+  if (!Array.isArray(value) || value.some(item => !item || typeof item !== 'object' || typeof item[identity] !== 'string' || !item[identity])) throw new DockerInvalidResponseError();
+  return value as T[];
+}
+export function requireDockerObject<T>(value: unknown, identity: string): T {
+  if (!value || typeof value !== 'object' || typeof (value as Record<string, unknown>)[identity] !== 'string') throw new DockerInvalidResponseError();
+  return value as T;
+}
+export function requireDockerFields(value: Record<string, unknown>, arrays: string[], objects: string[] = []): void {
+  for (const key of arrays) if (value[key] != null && !Array.isArray(value[key])) throw new DockerInvalidResponseError();
+  for (const key of objects) if (value[key] != null && (typeof value[key] !== 'object' || Array.isArray(value[key]))) throw new DockerInvalidResponseError();
+}
+export const canonicalDockerImageId = (id: string): string => id.replace(/^sha256:/, '');
+
 function failure(
   code: DockerFailureCode,
   category: DockerFailurePayload['category'],
@@ -175,13 +197,7 @@ function failure(
 
 export function classifyDockerError(error: unknown): DockerFailurePayload {
   if (error instanceof DockerHostConfigurationError) {
-    return failure(
-      'invalid_url',
-      'configuration',
-      'L’adresse de l’hôte Docker est invalide.',
-      'Renseignez une URL complète en http:// ou https:// avec le bon port Docker.',
-      false,
-    );
+    return failure(error.code, 'configuration', error.code === 'invalid_socket' ? 'Invalid Docker socket path.' : 'Invalid Docker host address.', `docker.failure.${error.code}`, false);
   }
 
   if (error instanceof DockerApiHttpError) {
@@ -189,8 +205,8 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
       return failure(
         'access_denied',
         'permission',
-        'L’API Docker refuse l’accès.',
-        'Vérifiez l’authentification, le proxy et les permissions de l’API Docker.',
+        'Docker API access denied.',
+        'docker.failure.access_denied',
         false,
       );
     }
@@ -198,16 +214,16 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
       return failure(
         'endpoint_not_found',
         'configuration',
-        'L’endpoint attendu de l’API Docker est introuvable.',
-        'Vérifiez l’adresse, le port et que la cible expose bien l’API Docker Engine.',
+        'Docker API endpoint not found.',
+        'docker.failure.endpoint_not_found',
         false,
       );
     }
     return failure(
       'api_error',
       'remote',
-      `L’API Docker répond avec une erreur HTTP ${error.status}.`,
-      'Consultez les journaux Docker ou du proxy sur l’hôte distant.',
+      `Docker API returned HTTP ${error.status}.`,
+      'docker.failure.api_error',
       error.status >= 500,
     );
   }
@@ -216,8 +232,8 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
     return failure(
       'invalid_response',
       'remote',
-      'La réponse reçue n’est pas une réponse Docker valide.',
-      'Vérifiez que l’adresse cible bien l’API Docker et non une page web ou un proxy incorrect.',
+      'Docker API returned an invalid response.',
+      'docker.failure.invalid_response',
       false,
     );
   }
@@ -226,12 +242,15 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
   const code = candidate?.cause?.code || candidate?.code || '';
   const message = candidate?.message || '';
 
+  if (['EACCES', 'EPERM'].includes(code)) return failure('access_denied', 'permission', 'Docker socket access denied.', 'docker.failure.access_denied', false);
+  if (code === 'ENOENT') return failure('socket_missing', 'configuration', 'Docker socket not found.', 'docker.failure.socket_missing', false);
+
   if (candidate?.name === 'AbortError' || candidate?.name === 'TimeoutError' || /aborted|timeout/i.test(message)) {
     return failure(
       'timeout',
       'unavailable',
-      'L’hôte Docker ne répond pas dans le délai prévu.',
-      'L’hôte peut être arrêté, surchargé ou temporairement inaccessible. NasDash réessaiera automatiquement.',
+      'Docker host did not respond before the timeout.',
+      'docker.failure.timeout',
       true,
     );
   }
@@ -240,8 +259,8 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
     return failure(
       'name_resolution',
       'unavailable',
-      'Le nom de l’hôte Docker ne peut pas être résolu pour le moment.',
-      'La résolution DNS peut être temporairement indisponible. Si l’état persiste, vérifiez le nom saisi et le DNS accessible depuis NasDash.',
+      'Docker hostname cannot currently be resolved.',
+      'docker.failure.name_resolution',
       true,
     );
   }
@@ -250,8 +269,8 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
     return failure(
       'tls_error',
       'configuration',
-      'La connexion TLS à l’hôte Docker a échoué.',
-      'Vérifiez le certificat, le nom d’hôte et la configuration HTTPS du proxy Docker.',
+      'Docker host TLS connection failed.',
+      'docker.failure.tls_error',
       false,
     );
   }
@@ -259,8 +278,8 @@ export function classifyDockerError(error: unknown): DockerFailurePayload {
   return failure(
     'host_unreachable',
     'unavailable',
-    'L’hôte Docker est actuellement inaccessible.',
-    'Il peut être arrêté ou le port peut être fermé. Si l’état persiste, vérifiez l’adresse et le port configurés.',
+    'Docker host is currently unreachable.',
+    'docker.failure.host_unreachable',
     true,
   );
 }

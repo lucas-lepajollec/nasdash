@@ -23,7 +23,7 @@ npm run dev
 
 NasDash listens on `http://127.0.0.1:2499` by default. Use `npm run dev:lan` only when another device on a trusted network must reach the development server.
 
-For Docker integration work, use a constrained `docker-socket-proxy` as described in the README. Never expose an unauthenticated Docker socket or proxy to the internet.
+For Docker integration work, use isolated fixtures or an owned test engine through the selected supported transport (Portainer, Dockhand, a constrained `docker-socket-proxy`, or a Docker-compatible API/socket). The proxy in the README is optional. Never expose an unauthenticated Docker socket or proxy to the internet.
 
 ## Validate your change
 

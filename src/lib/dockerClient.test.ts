@@ -22,7 +22,7 @@ describe('Docker failure classification', () => {
     expect(() => validateDockerHostUrl('')).toThrow();
     expect(() => validateDockerHostUrl('http://192.168.1.20:2375')).not.toThrow();
     expect(() => validateDockerHostUrl('https://docker.example.test')).not.toThrow();
-    expect(() => validateDockerHostUrl('mock-large')).not.toThrow();
+    expect(() => validateDockerHostUrl('mock-large')).toThrow();
   });
 
   it('distinguishes an offline host from invalid configuration and denied access', () => {
@@ -112,7 +112,7 @@ describe('Docker failure classification', () => {
     reportDockerFailure(`language-${payload.code}`, payload);
     const line = String((payload.category === 'unavailable' ? warn : logError).mock.calls[0][0]);
     expect(line).toContain(`[${payload.code}]`);
-    expect(line).not.toContain(payload.error);
+    expect(line).not.toMatch(/L’|Vérifiez|Renseignez|Consultez/);
     expect(line).not.toContain(payload.hint);
     if (error instanceof DockerApiHttpError && error.status === 500) expect(line).toContain('HTTP 500');
     expect(payload).toEqual(before);

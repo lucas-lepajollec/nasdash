@@ -36,5 +36,7 @@ For deployment guidance, see [README.md](README.md), [access rules](https://docs
 
 - NasDash may contact only service and device endpoints explicitly saved by an administrator. Viewer-supplied ping URLs are matched against that exact configured set.
 - TLS certificates are verified for credential-bearing HTTPS integrations unless an administrator explicitly enables self-signed acceptance for that connection. Prefer a private CA with `NODE_EXTRA_CA_CERTS`; never disable verification globally. Service pings carry no credentials and accept self-signed certificates for their configured targets.
-- Docker socket or TCP access is equivalent to privileged infrastructure access. Keep it on a trusted network, use the least-privileged proxy available, and never expose an unauthenticated Docker API.
+- Docker socket or TCP access is equivalent to privileged infrastructure access. Portainer and Dockhand relay credentials can also grant broad control over their selected environment. Use dedicated least-privilege credentials and a trusted network; a constrained socket proxy is an optional alternative, never a requirement. Never expose an unauthenticated Docker API.
 - Uploaded logos, custom CSS and the persistent `data/` directory are administrator-controlled data. Backups therefore need the same confidentiality as the live deployment.
+
+For request rate limits, forwarded client addresses are ignored by default. Set `NASDASH_TRUST_PROXY=true` only behind a trusted reverse proxy that overwrites forwarding headers and prevents direct access to NasDash. This setting changes quota identity only; it does not alter HTTPS detection or authentication cookie behaviour. Failed-login limits also apply per account, independently of the forwarding headers.

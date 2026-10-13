@@ -28,28 +28,74 @@ export async function httpRequest(url: string, options: HttpOptions = {}): Promi
   const method = options.method ?? 'GET';
   const body = options.json === undefined ? undefined : JSON.stringify(options.json);
   const headers = { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...options.headers };
-  if (!(options.allowSelfSigned && url.startsWith('https:'))) {
-    return fetch(url, { method, headers, body, cache: 'no-store', signal: AbortSignal.timeout(timeoutMs) });
-  }
-  return new Promise((resolve, reject) => {
-    const req = (url.startsWith('https:') ? https : http).request(url, {
-      method,
-      headers: body !== undefined ? { ...headers, 'Content-Length': String(Buffer.byteLength(body)) } : headers,
-      timeout: timeoutMs,
-      rejectUnauthorized: false,
-    }, response => {
-      let text = '';
-      response.setEncoding('utf8');
-      response.on('data', chunk => { text += chunk; });
-      response.on('end', () => {
-        const status = response.statusCode ?? 500;
-        resolve({ ok: status >= 200 && status < 300, status, statusText: response.statusMessage ?? '', text: async () => text });
+  const original = new URL(url);
+  const deadline = Date.now() + timeoutMs;
+  // The certificate exception belongs to this configured host only. Redirects
+  // must not export credentials or silently downgrade HTTPS to HTTP.
+  async function visit(current: URL, requestMethod: 'GET' | 'POST', requestBody: string | undefined, requestHeaders: Record<string, string>, redirects: number): Promise<HttpAnswer> {
+    if (!['http:', 'https:'].includes(current.protocol)) throw new Error('Unsupported redirect protocol');
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) throw new Error('Timeout');
+    let answer: { answer: HttpAnswer; location?: string };
+    if (!options.allowSelfSigned) {
+      const response = await fetch(current.toString(), { method: requestMethod, headers: requestHeaders, body: requestBody, redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(remaining) });
+      const reader = response.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let bytes = 0;
+      if (reader) {
+        try {
+          while (true) {
+            const next = await reader.read();
+            if (next.done) break;
+            bytes += next.value.byteLength;
+            if (bytes > 2 * 1024 * 1024) { await reader.cancel(); throw new Error('Monitoring response exceeds 2 MiB'); }
+            chunks.push(next.value);
+          }
+        } finally { reader.releaseLock(); }
+      }
+      const text = Buffer.concat(chunks).toString('utf8');
+      answer = { answer: { ok: response.ok, status: response.status, statusText: response.statusText, text: async () => text }, location: response.headers.get('location') ?? undefined };
+    } else answer = await new Promise<{ answer: HttpAnswer; location?: string }>((resolve, reject) => {
+      const req = (current.protocol === 'https:' ? https : http).request(current, {
+        method: requestMethod,
+        headers: requestBody !== undefined ? { ...requestHeaders, 'Content-Length': String(Buffer.byteLength(requestBody)) } : requestHeaders,
+        rejectUnauthorized: !options.allowSelfSigned || current.hostname !== original.hostname,
+      }, response => {
+        const timer = setTimeout(() => req.destroy(new Error('Timeout')), Math.max(1, deadline - Date.now()));
+        let text = '';
+        let bytes = 0;
+        response.setEncoding('utf8');
+        response.on('data', chunk => {
+          bytes += Buffer.byteLength(chunk);
+          if (bytes > 2 * 1024 * 1024) { req.destroy(new Error('Monitoring response exceeds 2 MiB')); return; }
+          text += chunk;
+        });
+        response.on('error', error => { clearTimeout(timer); reject(error); });
+        response.on('end', () => {
+          clearTimeout(timer);
+          const status = response.statusCode ?? 500;
+          resolve({ answer: { ok: status >= 200 && status < 300, status, statusText: response.statusMessage ?? '', text: async () => text }, location: response.headers.location });
+        });
       });
+      const timer = setTimeout(() => req.destroy(new Error('Timeout')), remaining);
+      req.on('close', () => clearTimeout(timer));
+      req.on('error', reject);
+      req.end(requestBody);
     });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
-    req.end(body);
-  });
+    if (![301, 302, 303, 307, 308].includes(answer.answer.status) || !answer.location) return answer.answer;
+    if (redirects >= 5) throw new Error('Too many redirects');
+    const next = new URL(answer.location, current);
+    if (current.protocol === 'https:' && next.protocol === 'http:') throw new Error('HTTPS redirect downgrade rejected');
+    const nextHeaders = { ...requestHeaders };
+    const toGet = answer.answer.status === 303 || requestMethod === 'POST' && [301, 302].includes(answer.answer.status);
+    if (next.origin !== current.origin) {
+      if (requestBody !== undefined && !toGet) throw new Error('Cross-origin request-body redirect rejected');
+      for (const key of Object.keys(nextHeaders)) if (/^(authorization|cookie|proxy-authorization)$/i.test(key)) delete nextHeaders[key];
+    }
+    if (toGet) for (const key of Object.keys(nextHeaders)) if (/^content-(type|length)$/i.test(key)) delete nextHeaders[key];
+    return visit(next, toGet ? 'GET' : requestMethod, toGet ? undefined : requestBody, nextHeaders, redirects + 1);
+  }
+  return visit(original, method, body, headers, 0);
 }
 
 export const httpGet = (url: string, options: Omit<HttpOptions, 'method' | 'json'> = {}) => httpRequest(url, options);

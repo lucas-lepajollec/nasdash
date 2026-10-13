@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionFromRequest, readUsers, type AuthRequestLike } from './auth';
 import { isDemoMode } from './demoMode';
+import { NO_ACCESS } from './permissions';
 
 export type SecurityMode = 'public' | 'private';
 
@@ -83,7 +84,7 @@ export function resolveAccessPrincipal(
 
 function permissionListAllows(values: string[], resource: string): boolean {
   // Backward compatibility: historically an empty list meant unrestricted access.
-  return values.length === 0 || values.includes(resource);
+  return !values.includes(NO_ACCESS) && (values.length === 0 || values.includes(resource));
 }
 
 export function canAccessTab(principal: AccessPrincipal, tabId: string): boolean {

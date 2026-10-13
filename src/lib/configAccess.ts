@@ -1,5 +1,6 @@
 import { AccessPrincipal, canAccessTab, canAccessWidget } from './access';
 import { DashboardConfig } from './types';
+import { NO_ACCESS } from './permissions';
 import { maskInstanceSecrets, stripInstanceSecrets } from '@/integrations/instances';
 import { isMonitoringType } from '@/integrations/sources';
 
@@ -56,6 +57,13 @@ export function buildConfigForPrincipal(
   if (principal.role === 'admin') return safeConfig;
 
   filterSecretCategories(safeConfig);
+  if (principal.allowedTabs.includes(NO_ACCESS)) {
+    // No page can expose a category; do not ship service addresses in bootstrap data.
+    safeConfig.categories = [];
+    if (Array.isArray(safeConfig.slots)) safeConfig.slots = [];
+  }
+  safeConfig.settings.calendarConfigured = Boolean(safeConfig.settings.calendarUrl);
+  delete safeConfig.settings.calendarUrl;
 
   for (const host of safeConfig.dockerHosts) {
     // The browser only needs the stable host id/name. The daemon address stays server-side.
@@ -92,6 +100,7 @@ export function buildConfigForPrincipal(
   if (!canAccessWidget(principal, 'calendar')) {
     safeConfig.localEvents = [];
     delete safeConfig.settings.calendarUrl;
+    safeConfig.settings.calendarConfigured = false;
   }
 
   const canReadNetwork =

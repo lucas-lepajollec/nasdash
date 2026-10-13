@@ -3109,12 +3109,13 @@ body.light {
 
 /* One measure */
 .ndc-m { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.ndc-m-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.ndc-m-label { font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ndc-m-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+.ndc-m-label { font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); white-space: normal; overflow-wrap: anywhere; min-width: 0; line-height: 1.4; }
+.ndc-m-head .ndc-m-label { flex: 1 1 10ch; }
 .ndc-m-value { font-size: 0.86rem; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ndc-m-head .ndc-m-value { margin-left: auto; }
+.ndc-m-head .ndc-m-value { margin-left: auto; flex-shrink: 0; }
 .ndc-m-detail { font-size: 0.68rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ndc-m-head .ndc-m-detail { flex-shrink: 1; }
+.ndc-m-head .ndc-m-detail { flex: 1 0 100%; white-space: normal; overflow-wrap: anywhere; }
 .ndc-m-big { font-size: 1.15rem; font-weight: 500; line-height: 1.15; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ndc-dev--large .ndc-m-big { font-size: 1.3rem; }
 .ndc-m--ring { align-items: center; text-align: center; gap: 4px; }
@@ -3135,7 +3136,7 @@ body.light {
 .ndc-dev-group--ring { display: flex; flex-wrap: wrap; gap: 12px 16px; }
 .ndc-dev--small .ndc-dev-group--ring { gap: 10px; }
 .ndc-dev-group--value { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px 16px; flex: 1; }
-.ndc-dev--small .ndc-dev-group--value { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ndc-dev--small .ndc-dev-group--value { grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr)); }
 .ndc-dev-group--bar { display: flex; flex-direction: column; gap: 11px; padding-top: 2px; }
 .ndc-dev-group--chart { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 14px 18px; }
 .ndc-dev-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 0.68rem; color: var(--nd-text-muted); }
@@ -3146,7 +3147,7 @@ body.light {
 .ndc-metric-list--value { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px 16px; }
 .ndc-metric-list--ring { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 14px 10px; justify-items: center; }
 .ndc-m-sortable { position: relative; min-width: 0; max-width: 100%; }
-.ndc-dev-group--ring > .ndc-m-sortable { min-width: 64px; }
+.ndc-dev-group--ring > .ndc-m-sortable { min-width: 80px; }
 .ndc-m-sortable.is-editable { padding-left: 20px; }
 .ndc-m-sortable.is-dragging { z-index: 10; opacity: 0.65; }
 .ndc-m-drag { position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center; width: 18px; height: 24px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--nd-text-dimmed); cursor: grab; touch-action: none; }
@@ -3223,7 +3224,7 @@ body.light {
 .ndc-m--ring .ndc-ring { margin: 0 auto; }
 .ndc-ring-center { padding: 0 14%; text-align: center; }
 .ndc-ring-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ndc-m-ring-name { display: block; max-width: 100%; text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); text-align: center; }
+.ndc-m-ring-name { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); text-align: center; }
 .ndc-m--ring .ndc-m-detail { display: block; max-width: 100%; text-align: center; }
 .ndc-dev-group--ring > .ndc-m--ring { width: auto; min-width: 64px; }
 
@@ -3401,7 +3402,7 @@ body[data-design="calme"][class*="theme-"] {
 /* Secondary link of a service: a small opaque pill above it (legible over
    blur), the link's icon, what it is and where it goes, and an exit arrow. */
 body[data-design="calme"] .nd-service-tooltip {
-  display: flex;
+  display: none;
   visibility: hidden;
   opacity: 0;
   gap: 8px;
@@ -3415,6 +3416,7 @@ body[data-design="calme"] .nd-service-tooltip {
   transition: opacity 0.14s ease 0.12s, transform 0.14s ease 0.12s, visibility 0s linear 0.26s, border-color 0.14s ease;
 }
 body[data-design="calme"] .nd-service[data-secondary-open="true"] .nd-service-tooltip {
+  display: flex;
   visibility: visible;
   opacity: 1;
   transform: translateX(-50%) translateY(0);
@@ -3435,7 +3437,7 @@ body[data-design="calme"] .nd-service-tooltip-icon {
 body[data-design="calme"] .nd-service-tooltip-icon img { width: 16px; height: 16px; }
 body[data-design="calme"] .nd-service-tooltip-text { display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
 body[data-design="calme"] .nd-service-tooltip-label { font-size: 0.68rem; color: var(--nd-text); }
-body[data-design="calme"] .nd-service-tooltip-host { font-size: 0.6rem; color: var(--nd-text-dimmed); max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+body[data-design="calme"] .nd-service-tooltip-host { font-size: 0.6rem; color: var(--nd-text-dimmed); max-width: min(190px, calc(100vw - 130px)); overflow: hidden; text-overflow: ellipsis; }
 body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimmed); flex-shrink: 0; transition: color 0.14s ease; }
 
 /* Settings → Media: the logo library. */

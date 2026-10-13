@@ -1,13 +1,17 @@
 'use client';
 
+import { demoFetch } from '@/lib/demoTransport';
+
 import { useState, useEffect, useRef } from 'react';
 import React from 'react';
+import { createPortal } from 'react-dom';
+import { isDockerImageUsed, dockerImageDisplayName, dockerImageMatchesContainer } from '@/lib/dockerResources';
 import { useConfig } from '@/hooks/useConfig';
 import { Play, Square, RotateCcw, Trash2, Loader2, AlertCircle, Terminal } from 'lucide-react';
 import EmojiPickerModal from '../../modals/EmojiPickerModal';
 import useSWR from 'swr';
 import { Emoji } from '../../shared/Emoji';
-import { dockerJsonFetcher, getDockerErrorPresentation } from '@/lib/dockerErrorContract';
+import { dockerJsonFetcher, getDockerErrorPresentation, readDockerResponse, dockerActionError, DockerRequestError } from '@/lib/dockerErrorContract';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
@@ -197,7 +201,7 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
                   const url = serverUrl.trim().replace(/\/$/, '');
                   await onSave({ name: name.trim(), icon, type: connection, url: /^https?:\/\//.test(url) ? url : `http://${url}`, target: environment.trim(), token: apiKey, ...(isHttps && allowSelfSigned ? { allowSelfSigned: true } : {}) });
                 } catch (error) {
-                  setSaveError(error instanceof Error ? error.message : 'Impossible d’ajouter cet hôte Docker.');
+                  setSaveError(error instanceof Error && /socket/i.test(error.message) ? t('docker.failure.invalid_socket') : t('docker.failure.save_host'));
                 } finally {
                   setIsSaving(false);
                 }
@@ -209,7 +213,7 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
                 try {
                   await onSave({ name: name.trim(), icon, type: 'socket', socketPath: socketPath.trim() });
                 } catch (error) {
-                  setSaveError(error instanceof Error ? error.message : 'Impossible d’ajouter cet hôte Docker.');
+                  setSaveError(error instanceof Error && /socket/i.test(error.message) ? t('docker.failure.invalid_socket') : t('docker.failure.save_host'));
                 } finally {
                   setIsSaving(false);
                 }
@@ -229,7 +233,7 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
                 const address = host.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
                 await onSave({ name: name.trim(), icon, type: 'tcp', url: `${scheme}://${address}:${portNumber}`, ...(isHttps && allowSelfSigned ? { allowSelfSigned: true } : {}) });
               } catch (error) {
-                setSaveError(error instanceof Error ? error.message : 'Impossible d’ajouter cet hôte Docker.');
+                setSaveError(error instanceof Error && /socket/i.test(error.message) ? t('docker.failure.invalid_socket') : t('docker.failure.save_host'));
               } finally {
                 setIsSaving(false);
               }
@@ -282,31 +286,31 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
         )}
         {relay ? (
           <>
-            <CalmeField label={t('docker.serverUrl')}>
-              <input className="nd-input" value={serverUrl} onChange={e => setServerUrl(e.target.value)} placeholder={connection === 'portainer' ? 'https://portainer.lan:9443' : 'http://dockhand.lan:3000'} />
+            <CalmeField label={t('docker.serverUrl')} htmlFor="docker-serverUrl">
+              <input id="docker-serverUrl" aria-label={t('docker.serverUrl')} className="nd-input" value={serverUrl} onChange={e => setServerUrl(e.target.value)} placeholder={connection === 'portainer' ? 'https://portainer.lan:9443' : 'http://dockhand.lan:3000'} />
             </CalmeField>
             <div className="ndc-field-grid">
-              <CalmeField label={t('docker.environmentId')}>
-                <input className="nd-input" value={environment} onChange={e => setEnvironment(e.target.value)} placeholder="1" />
+              <CalmeField label={t('docker.environmentId')} htmlFor="docker-environment">
+                <input id="docker-environment" aria-label={t('docker.environmentId')} className="nd-input" value={environment} onChange={e => setEnvironment(e.target.value)} placeholder="1" />
               </CalmeField>
-              <CalmeField label={t('docker.apiKey')}>
-                <input className="nd-input" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="••••••••" />
+              <CalmeField label={t('docker.apiKey')} htmlFor="docker-apiKey">
+                <input id="docker-apiKey" aria-label={t('docker.apiKey')} className="nd-input" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="••••••••" />
               </CalmeField>
             </div>
             {selfSigned}
           </>
         ) : connection === 'socket' ? (
-          <CalmeField label={t('docker.socketPath')}>
-            <input className="nd-input" value={socketPath} onChange={e => setSocketPath(e.target.value)} placeholder="/var/run/docker.sock" />
+          <CalmeField label={t('docker.socketPath')} htmlFor="docker-socketPath">
+            <input id="docker-socketPath" aria-label={t('docker.socketPath')} className="nd-input" value={socketPath} onChange={e => setSocketPath(e.target.value)} placeholder="/var/run/docker.sock" />
           </CalmeField>
         ) : (
           <>
             <div className="ndc-field-grid" style={{ gridTemplateColumns: '1fr 110px' }}>
               <CalmeField label={t("Adresse / Hôte Docker")} info={demoMode ? undefined : connectionHint}>
-                <input className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder={demoMode ? 'docker-demo.invalid' : t("docker-proxy ou 192.168.0.200")} />
+                <input id="docker-host" aria-label={t('Adresse / Hôte Docker')} className="nd-input" value={host} onChange={e => setHost(e.target.value)} placeholder={demoMode ? 'docker-demo.invalid' : t("docker-proxy ou 192.168.0.200")} />
               </CalmeField>
               <CalmeField label={t("Port API Docker")}>
-                <input className="nd-input" value={port} onChange={e => setPort(e.target.value)} placeholder="2375" />
+                <input id="docker-port" aria-label={t('Port API Docker')} className="nd-input" value={port} onChange={e => setPort(e.target.value)} placeholder="2375" />
               </CalmeField>
             </div>
             {selfSigned}
@@ -503,6 +507,7 @@ export function ContainerDetailView({ hostId, detail, onAction, actionLoading, s
         )}
       </div>
 
+      {detail.statsError && <DockerErrorNotice error={new DockerRequestError(502, detail.statsError)} compact />}
       {/* Logs */}
       {isRunning && (
         <ContainerLogs hostId={hostId} containerId={detail.fullId} showSensitive={showSensitive} enabled={isVisible} />
@@ -525,7 +530,7 @@ export function ImagesTab({ images, error, loading, containers, hostId, refreshI
     Boolean(deleteTargets),
   );
 
-  const availableImages = images.filter(img => !containers.some((c: any) => c.imageId === img.id || (img.repoTags && img.repoTags.includes(c.image))));
+  const availableImages = images.filter(img => !isDockerImageUsed(img, containers));
 
   if (error) return <DockerErrorNotice error={error} />;
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><Loader2 size={18} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} /></div>;
@@ -546,25 +551,26 @@ export function ImagesTab({ images, error, loading, containers, hostId, refreshI
     setDeleteError('');
     let hasError = false;
     let errMessage = '';
+    const failed: string[] = [];
 
     for (const target of deleteTargets) {
       try {
-        const res = await fetch(`/api/docker/${hostId}/images?id=${encodeURIComponent(target)}`, {
+        const res = await demoFetch(`/api/docker/${hostId}/images?id=${encodeURIComponent(target)}`, {
           method: 'DELETE',
         });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || `Erreur: ${target.substring(0, 12)}`);
-        }
+        await readDockerResponse(res);
       } catch (e: any) {
         hasError = true;
-        errMessage += e.message + '\n';
+        failed.push(target);
+        errMessage += `${target}: ${dockerActionError(e, t)}\n`;
       }
     }
 
     refreshImages();
     if (hasError) {
       setDeleteError(errMessage);
+      setDeleteTargets(failed);
+      setSelected(failed);
     } else {
       setDeleteTargets(null);
       setSelected([]);
@@ -579,8 +585,7 @@ export function ImagesTab({ images, error, loading, containers, hostId, refreshI
         <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{t('docker.imagesSelected', { count: selected.length })}</span>
           <button
-            className="nd-btn"
-            style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }}
+            className="nd-btn ndc-btn-danger"
             onClick={() => setDeleteTargets(selected)}
           >
             <Trash2 size={12} /> {t("Supprimer la sélection")}
@@ -604,8 +609,8 @@ export function ImagesTab({ images, error, loading, containers, hostId, refreshI
           </thead>
           <tbody>
             {images.map((img: any) => {
-              const isUsed = containers.some((c: any) => c.imageID === img.id || (img.repoTags && img.repoTags.includes(c.image)));
-              const isHighlighted = selectedContainer && (selectedContainer.imageID === img.id || (img.repoTags && img.repoTags.includes(selectedContainer.image)));
+              const isUsed = isDockerImageUsed(img, containers);
+              const isHighlighted = selectedContainer && dockerImageMatchesContainer(img, selectedContainer);
               return (
                 <tr key={img.id} style={{ borderBottom: '1px solid var(--nd-card-border)', background: isHighlighted ? 'rgba(63, 185, 80, 0.15)' : selected.includes(img.id) ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
                   <td style={{ padding: '8px 12px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '40px' }}>
@@ -616,8 +621,10 @@ export function ImagesTab({ images, error, loading, containers, hostId, refreshI
                   </td>
                   <td style={{ padding: '8px 12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, gap: 2 }}>
-                      <div style={{ fontWeight: 600, color: 'var(--nd-text)', wordBreak: 'break-all' }}>{img.repoTags[0]}</div>
-                      <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', fontFamily: 'monospace' }}>{img.id.substring(0, 12)}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--nd-text)', wordBreak: 'break-all' }}>{dockerImageDisplayName(img)}</div>
+                      {!img.repoTags?.length && <span className="ndc-dialog-hint">{t('docker.image.untagged')}</span>}
+                      {img.repoTags?.slice(1).map((tag: string) => <span key={tag} style={{ overflowWrap: 'anywhere', color: 'var(--nd-text-muted)' }}>{tag}</span>)}
+                      <div style={{ fontSize: '0.6rem', color: 'var(--nd-text-dimmed)', fontFamily: 'monospace' }}>{img.id.replace(/^sha256:/, '').substring(0, 12)}</div>
                     </div>
                   </td>
                   <td style={{ padding: '8px 12px' }}>
@@ -657,31 +664,19 @@ export function ImagesTab({ images, error, loading, containers, hostId, refreshI
         {images.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: '0.72rem', color: 'var(--nd-text-dimmed)' }}>{t("Aucune image")}</div>}
       </div>
 
-      {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
-        <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Confirmer la suppression des images Docker")} tabIndex={-1} className="nd-modal">
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>{t(deleteTargets.length > 1 ? 'docker.deleteImagesTitle' : 'docker.deleteImageTitle')}</h3>
-            <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
-              {demoMode ? (
-                <>{t("Cette action est simulée et temporaire.")} {deleteTargets.length > 1 ? t('docker.imagesWillHide', { count: deleteTargets.length }) : t('docker.imageWillHide', { id: deleteTargets[0].substring(0, 12) })} {t("jusqu’à la réinitialisation de votre démo.")}</>
-              ) : (
-                <>{t('docker.confirmImageDelete', { target: deleteTargets.length > 1 ? t('docker.imagesCount', { count: deleteTargets.length }) : t('docker.thisImage', { id: deleteTargets[0].substring(0, 12) }) })}</>
-              )}
-            </p>
-            {deleteError && (
-              <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
-                {deleteError}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>{t("Annuler")}</button>
-              <button className="nd-btn" style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }} onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? <Loader2 size={12} className="nd-spin" /> : <Trash2 size={12} />} {t("Supprimer")}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {deleteTargets && typeof document !== 'undefined' && createPortal(
+        <div className="nd-modal-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !isDeleting) setDeleteTargets(null); }}>
+          <CalmeDialog dialogRef={deleteDialogRef} label={t(deleteTargets.length > 1 ? 'docker.deleteImagesTitle' : 'docker.deleteImageTitle')} title={t(deleteTargets.length > 1 ? 'docker.deleteImagesTitle' : 'docker.deleteImageTitle')} onClose={() => { if (!isDeleting) setDeleteTargets(null); }} footer={<>
+            <button type="button" className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>{t('Annuler')}</button>
+            <button type="button" className="nd-btn ndc-btn-danger" onClick={() => { void handleDelete(); }} disabled={isDeleting} aria-busy={isDeleting}>
+              {isDeleting ? <Loader2 size={12} className="nd-spin" /> : <Trash2 size={12} />} {t('Supprimer')}
+            </button>
+          </>}>
+            <p className="ndc-dialog-hint">{demoMode ? t('Cette action est simulée et temporaire.') : t('docker.confirmImageDelete', { target: t('docker.imagesCount', { count: deleteTargets.length }) })}</p>
+            <ul style={{ paddingLeft: 16, overflowWrap: 'anywhere' }}>{deleteTargets.map(id => ({ id, name: dockerImageDisplayName(images.find(image => image.id === id) || { id }) })).map(target => <li key={target.id}>{target.name}</li>)}</ul>
+            {deleteError && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)', whiteSpace: 'pre-wrap' }}>{deleteError}</p>}
+          </CalmeDialog>
+        </div>, document.body
       )}
     </>
   );
@@ -701,7 +696,7 @@ export function VolumesTab({ volumes, error, loading, containers, hostId, refres
     Boolean(deleteTargets),
   );
 
-  const availableVolumes = volumes.filter(vol => !containers.some((c: any) => c.mounts?.some((m: any) => m.name === vol.name)));
+  const availableVolumes = volumes.filter(vol => !(vol.usageData?.refCount > 0) && !containers.some((c: any) => c.mounts?.some((m: any) => m.name === vol.name)));
 
   if (error) return <DockerErrorNotice error={error} />;
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><Loader2 size={18} className="nd-spin" style={{ color: 'var(--nd-text-dimmed)' }} /></div>;
@@ -722,25 +717,26 @@ export function VolumesTab({ volumes, error, loading, containers, hostId, refres
     setDeleteError('');
     let hasError = false;
     let errMessage = '';
+    const failed: string[] = [];
 
     for (const target of deleteTargets) {
       try {
-        const res = await fetch(`/api/docker/${hostId}/volumes?name=${encodeURIComponent(target)}`, {
+        const res = await demoFetch(`/api/docker/${hostId}/volumes?name=${encodeURIComponent(target)}`, {
           method: 'DELETE',
         });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || `Erreur: ${target}`);
-        }
+        await readDockerResponse(res);
       } catch (e: any) {
         hasError = true;
-        errMessage += e.message + '\n';
+        failed.push(target);
+        errMessage += `${target}: ${dockerActionError(e, t)}\n`;
       }
     }
 
     refreshVolumes();
     if (hasError) {
       setDeleteError(errMessage);
+      setDeleteTargets(failed);
+      setSelected(failed);
     } else {
       setDeleteTargets(null);
       setSelected([]);
@@ -755,8 +751,7 @@ export function VolumesTab({ volumes, error, loading, containers, hostId, refres
         <div style={{ padding: '8px 12px', background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)', borderRadius: 'var(--nd-card-radius)', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--nd-text)' }}>{selected.length} {t("volume(s) sélectionné(s)")}</span>
           <button
-            className="nd-btn"
-            style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }}
+            className="nd-btn ndc-btn-danger"
             onClick={() => setDeleteTargets(selected)}
           >
             <Trash2 size={12} /> {t("Supprimer la sélection")}
@@ -780,7 +775,7 @@ export function VolumesTab({ volumes, error, loading, containers, hostId, refres
           </thead>
           <tbody>
             {volumes.map((vol: any) => {
-              const isUsed = containers.some((c: any) => c.mounts?.some((m: any) => m.name === vol.name));
+              const isUsed = vol.usageData?.refCount > 0 || containers.some((c: any) => c.mounts?.some((m: any) => m.name === vol.name));
               const isHighlighted = selectedContainer && selectedContainer.mounts?.some((m: any) => m.name === vol.name);
               return (
                 <tr key={vol.name} style={{ borderBottom: '1px solid var(--nd-card-border)', background: isHighlighted ? 'rgba(63, 185, 80, 0.15)' : selected.includes(vol.name) ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
@@ -791,7 +786,7 @@ export function VolumesTab({ volumes, error, loading, containers, hostId, refres
                     </button>
                   </td>
                   <td style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--nd-text)', minWidth: 0, wordBreak: 'break-all' }}>
-                    {vol.name?.length > 40 ? vol.name.substring(0, 40) + '...' : vol.name}
+                    {vol.name}
                   </td>
                   <td style={{ padding: '8px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -830,31 +825,19 @@ export function VolumesTab({ volumes, error, loading, containers, hostId, refres
         {volumes.length === 0 && <div style={{ padding: 20, textAlign: 'center', fontSize: '0.72rem', color: 'var(--nd-text-dimmed)' }}>{t("Aucun volume")}</div>}
       </div>
 
-      {deleteTargets && typeof document !== 'undefined' && require('react-dom').createPortal(
-        <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !isDeleting) setDeleteTargets(null); }}>
-          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label={t("Confirmer la suppression des volumes Docker")} tabIndex={-1} className="nd-modal">
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 16 }}>{t(deleteTargets.length > 1 ? 'docker.deleteVolumesTitle' : 'docker.deleteVolumeTitle')}</h3>
-            <p style={{ fontSize: '0.72rem', color: 'var(--nd-text-muted)', lineHeight: 1.5, marginBottom: 16 }}>
-              {demoMode ? (
-                <>{t("Cette suppression est simulée et réversible en réinitialisant la démo. Aucun volume ni fichier réel ne sera touché.")}</>
-              ) : (
-                <>{t('docker.confirmVolumeDelete', { target: deleteTargets.length > 1 ? t('docker.volumesCount', { count: deleteTargets.length }) : (deleteTargets[0]?.length > 30 ? deleteTargets[0].substring(0, 30) + '…' : deleteTargets[0]) })}</>
-              )}
-            </p>
-            {deleteError && (
-              <div style={{ padding: 10, background: 'rgba(248, 81, 73, 0.1)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--nd-card-radius)', color: 'var(--nd-red)', fontSize: '0.65rem', marginBottom: 16, whiteSpace: 'pre-wrap' }}>
-                {deleteError}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>{t("Annuler")}</button>
-              <button className="nd-btn" style={{ background: 'rgba(248, 81, 73, 0.1)', color: 'var(--nd-red)', borderColor: 'rgba(248, 81, 73, 0.3)' }} onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? <Loader2 size={12} className="nd-spin" /> : <Trash2 size={12} />} {t("Supprimer")}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {deleteTargets && typeof document !== 'undefined' && createPortal(
+        <div className="nd-modal-overlay" onMouseDown={event => { if (event.target === event.currentTarget && !isDeleting) setDeleteTargets(null); }}>
+          <CalmeDialog dialogRef={deleteDialogRef} label={t(deleteTargets.length > 1 ? 'docker.deleteVolumesTitle' : 'docker.deleteVolumeTitle')} title={t(deleteTargets.length > 1 ? 'docker.deleteVolumesTitle' : 'docker.deleteVolumeTitle')} onClose={() => { if (!isDeleting) setDeleteTargets(null); }} footer={<>
+            <button type="button" className="nd-btn" onClick={() => { setDeleteTargets(null); setDeleteError(''); }} disabled={isDeleting}>{t('Annuler')}</button>
+            <button type="button" className="nd-btn ndc-btn-danger" onClick={() => { void handleDelete(); }} disabled={isDeleting} aria-busy={isDeleting}>
+              {isDeleting ? <Loader2 size={12} className="nd-spin" /> : <Trash2 size={12} />} {t('Supprimer')}
+            </button>
+          </>}>
+            <p className="ndc-dialog-hint">{demoMode ? t('Cette suppression est simulée et réversible en réinitialisant la démo. Aucun volume ni fichier réel ne sera touché.') : t('docker.confirmVolumeDelete', { target: t('docker.volumesCount', { count: deleteTargets.length }) })}</p>
+            <ul style={{ paddingLeft: 16, overflowWrap: 'anywhere' }}>{deleteTargets.map(name => ({ id: name, name })).map(target => <li key={target.id}>{target.name}</li>)}</ul>
+            {deleteError && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)', whiteSpace: 'pre-wrap' }}>{deleteError}</p>}
+          </CalmeDialog>
+        </div>, document.body
       )}
     </>
   );

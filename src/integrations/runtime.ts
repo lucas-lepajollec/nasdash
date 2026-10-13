@@ -1,3 +1,5 @@
+import { collectorFailure } from './errors';
+import { createHash } from 'node:crypto';
 import { readConfig } from '@/lib/config';
 import { isDemoMode } from '@/lib/demoMode';
 import { classifyMonitoringError } from '@/lib/monitoringError';
@@ -8,7 +10,7 @@ import { isCertificateError } from './http';
 import { getDeviceIntegration } from './registry';
 import { getDataPath } from '@/lib/dataDirectory';
 import { pruneHistory, recordSamples, samplesOf, saveHistory, setHistoryFile } from './history';
-import { CollectError, type CollectContext, type DeviceVitals, type Metric } from './types';
+import { type CollectContext, type DeviceVitals, type Metric } from './types';
 import { recordTaskRun, taskSettings } from '@/lib/tasks';
 import { createBackup, isBackupDue, pruneAutomaticBackups } from '@/lib/backups';
 
@@ -31,6 +33,7 @@ export interface DeviceStatus {
   stats?: DeviceStat[];
   updatedAt: number;
   error?: string;
+  errorParameters?: Record<string, string | number>;
   isOffline?: boolean;
 }
 
@@ -42,11 +45,14 @@ interface RuntimeGlobal {
   __monitoringInterval?: ReturnType<typeof setInterval> | null;
   __lastPollAt?: number;
   __backupRunning?: boolean;
+  __pollRunning?: boolean;
+  __integrationIdentity?: Record<string, string>;
 }
 
 const runtime = globalThis as typeof globalThis & RuntimeGlobal;
 runtime.__devicesStatusCache ??= {};
 runtime.__integrationMemory ??= {};
+runtime.__integrationIdentity ??= {};
 runtime.__errorLogCache ??= new Map<string, string>();
 runtime.activeClients ??= 0;
 
@@ -79,6 +85,12 @@ export { isCertificateError } from './http';
 
 const interpolateEnv = (text: string) => text.replace(/\${([^}]+)}/g, (_, name: string) => process.env[name] || '');
 
+function deviceConnectionIdentity(device: Device, config: Pick<DashboardConfig, 'integrations'>): string {
+  const resolved = resolveDeviceConnection(device, config);
+  const connection = resolved ? { ...resolved.connection, url: interpolateEnv(resolved.connection.url || ''), token: resolved.connection.token ? interpolateEnv(resolved.connection.token) : undefined } : null;
+  return createHash('sha256').update(JSON.stringify(resolved ? [resolved.type, connection] : [device.source, device.api, device.stats])).digest('hex');
+}
+
 /** Polls one device through its saved connection (or its legacy one). Never throws. */
 export async function pollDevice(device: Device, config: Pick<DashboardConfig, 'integrations'> = readConfig()): Promise<DeviceStatus> {
   const resolved = resolveDeviceConnection(device, config);
@@ -89,50 +101,77 @@ export async function pollDevice(device: Device, config: Pick<DashboardConfig, '
     if (device.source && !resolved) return { online: false, error: 'integrations.sourceMissing', isOffline: true, updatedAt: Date.now() };
     return { online: true, stats: device.stats || [], updatedAt: Date.now() };
   }
+  const connection = {
+    ...resolved.connection,
+    url: resolved.connection.url ? interpolateEnv(resolved.connection.url) : '',
+    token: resolved.connection.token ? interpolateEnv(resolved.connection.token) : undefined,
+  };
+  // Never retain endpoint discovery or a remote session across a connection change.
+  const identity = createHash('sha256').update(JSON.stringify([resolved.type, connection])).digest('hex');
+  if (runtime.__integrationIdentity![device.id] !== identity) {
+    memory[device.id] = {};
+    runtime.__integrationIdentity![device.id] = identity;
+  }
   const context: CollectContext = {
     memory: (memory[device.id] ??= {}),
     warn: (name, error) => logOnce(device.id, name, error),
     clearWarning: name => clearLog(device.id, name),
   };
   try {
-    const { connection } = resolved;
-    const result = await collect({
-      ...connection,
-      url: connection.url ? interpolateEnv(connection.url) : '',
-      token: connection.token ? interpolateEnv(connection.token) : undefined,
-    }, context);
+    const result = await collect(connection, context);
     clearLog(device.id, integration.name);
     const { metrics, vitals } = Array.isArray(result) ? { metrics: result, vitals: undefined } : result;
     return { online: true, metrics, ...(vitals && Object.keys(vitals).length ? { vitals } : {}), updatedAt: Date.now() };
   } catch (error) {
-    const known = error instanceof CollectError ? error : null;
+    const known = collectorFailure(integration.name, error);
     if (!known?.silent) logOnce(device.id, integration.name, known ? known.reason ?? known : error);
     const message = isCertificateError(error)
       ? 'integrations.certificateRejected'
-      : known?.message || (error instanceof Error && error.message) || `Impossible de joindre ${integration.name}`;
-    return { online: false, error: message, isOffline: true, updatedAt: Date.now() };
+      : known.message;
+    return { online: false, error: message, ...(known.parameters && !isCertificateError(error) ? { errorParameters: known.parameters } : {}), isOffline: true, updatedAt: Date.now() };
   }
 }
 
 async function pollAll() {
+  if (runtime.__pollRunning) return;
+  runtime.__pollRunning = true;
   const started = Date.now();
   runtime.__lastPollAt = started;
   try {
     const config = readConfig();
     const devices = config.devices ?? [];
     let offline = 0;
-    await Promise.all(devices.map(async device => {
+    const collected = await Promise.all(devices.map(async device => {
+      const identity = deviceConnectionIdentity(device, config);
       const status = await pollDevice(device, config);
-      devicesStatusCache[device.id] = status;
-      if (status.online) recordSamples(device.id, samplesOf(status.metrics, status.vitals), status.updatedAt);
-      else offline++;
+      return { id: device.id, identity, status };
     }));
-    pruneHistory(devices.map(device => device.id));
+    // A user may edit/delete a source while its previous request is pending.
+    // Publish only results belonging to the currently configured connection.
+    const currentConfig = readConfig();
+    const currentDevices = currentConfig.devices ?? [];
+    for (const { id, identity, status } of collected) {
+      const current = currentDevices.find(device => device.id === id);
+      if (!current || deviceConnectionIdentity(current, currentConfig) !== identity) {
+        delete devicesStatusCache[id];
+        offline++;
+        continue;
+      }
+      devicesStatusCache[id] = status;
+      if (status.online) recordSamples(id, samplesOf(status.metrics, status.vitals), status.updatedAt);
+      else offline++;
+    }
+    const ids = new Set(currentDevices.map(device => device.id));
+    for (const id of Object.keys(devicesStatusCache)) if (!ids.has(id)) delete devicesStatusCache[id];
+    for (const id of Object.keys(memory)) if (!ids.has(id)) { delete memory[id]; delete runtime.__integrationIdentity![id]; }
+    pruneHistory([...ids]);
     recordTaskRun('device-monitoring', { ok: true, partial: offline > 0, note: `${devices.length - offline}/${devices.length}`, durationMs: Date.now() - started });
     if (saveHistory()) recordTaskRun('history-save', { ok: true });
   } catch (error) {
     recordTaskRun('device-monitoring', { ok: false, note: error instanceof Error ? error.message : String(error), durationMs: Date.now() - started });
     console.error('Background Polling Loop Error:', error);
+  } finally {
+    runtime.__pollRunning = false;
   }
 }
 

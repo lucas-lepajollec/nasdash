@@ -27,11 +27,11 @@ const SMALL_BELOW_PX = 260;
 const MEDIUM_BELOW_PX = 440;
 
 export const DEVICE_DEFAULTS: LookDefaults = {
-  offered: ['cpu', 'memory', 'gpu', 'temperature', 'load', 'network', 'disk', 'history'],
-  shown: ['cpu', 'memory', 'gpu', 'temperature', 'load', 'network', 'disk', 'history'],
+  offered: ['cpu', 'memory', 'gpu', 'temperature', 'gpuTemperature', 'load', 'network', 'disk', 'history'],
+  shown: ['cpu', 'memory', 'gpu', 'temperature', 'gpuTemperature', 'load', 'network', 'disk', 'history'],
   display: 'ring',
   perMetricDisplay: true,
-  displays: { cpu: 'ring', memory: 'ring', gpu: 'ring', temperature: 'value', load: 'value', network: 'value', disk: 'bar', history: 'chart' },
+  displays: { cpu: 'ring', memory: 'ring', gpu: 'ring', temperature: 'value', gpuTemperature: 'value', load: 'value', network: 'value', disk: 'bar', history: 'chart' },
 };
 
 /**
@@ -76,7 +76,7 @@ export default function CalmeDevice({ devices, settings, editMode, isVisible, sh
       {settingsButton}
       <div className={`ndc-dev ndc-dev--${size} ${state === 'offline' ? 'is-offline' : ''}`}>
         <DeviceHeader device={device} snapshot={entry.data} state={state} showSensitive={showSensitive} compact={size !== 'large'} />
-        {state === 'offline' && entry.data?.error && <div className="ndc-dev-error">{t(entry.data.error)}</div>}
+        {state === 'offline' && entry.data?.error && <div className="ndc-dev-error">{t(entry.data.error, entry.data.errorParameters)}</div>}
         {entry.data && <DeviceBody snapshot={entry.data} look={look} size={size} range={range} onRange={setRange} deviceId={device.id} settings={settings} editMode={editMode} onUpdateSettings={onUpdateSettings} />}
       </div>
     </CalmeWidget>

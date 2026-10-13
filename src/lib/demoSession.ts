@@ -24,6 +24,7 @@ interface DemoSessionState {
 interface DemoSessionGlobal {
   __demoSessionStorage?: AsyncLocalStorage<string>;
   __demoSessions?: Map<string, DemoSessionState>;
+  __demoWorkspaceStorage?: AsyncLocalStorage<DemoSessionState>;
 }
 
 const demoGlobal = globalThis as typeof globalThis & DemoSessionGlobal;
@@ -32,6 +33,8 @@ demoGlobal.__demoSessions ||= new Map<string, DemoSessionState>();
 
 const storage = demoGlobal.__demoSessionStorage;
 const sessions = demoGlobal.__demoSessions;
+demoGlobal.__demoWorkspaceStorage ||= new AsyncLocalStorage<DemoSessionState>();
+const workspaceStorage = demoGlobal.__demoWorkspaceStorage;
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -80,6 +83,8 @@ function getOrCreateSession(id: string): DemoSessionState {
 }
 
 function currentSession(): DemoSessionState | null {
+  const workspace = workspaceStorage.getStore();
+  if (workspace) return workspace;
   const id = storage.getStore();
   return id ? getOrCreateSession(id) : null;
 }
@@ -88,7 +93,7 @@ export async function withDemoSession<T extends NextResponse>(
   request: Request,
   handler: () => Promise<T>,
 ): Promise<T> {
-  if (!isDemoMode()) return handler();
+  if (!isDemoMode() || workspaceStorage.getStore() || storage.getStore()) return handler();
 
   const existingId = readSessionId(request);
   const sessionId = existingId || crypto.randomUUID();
@@ -183,4 +188,34 @@ export function normalizeDemoContainerId(id: string): string {
 export function clearDemoSession(request: Request): void {
   const id = readSessionId(request);
   if (id) sessions.delete(id);
+}
+
+/** JSON-only workspace carried by the demo browser, independent of worker affinity. */
+export interface DemoWorkspace {
+  config?: DashboardConfig;
+  customTabs?: unknown;
+  pages?: unknown;
+  containerStates?: [string, string][];
+  removedContainers?: string[];
+  removedImages?: string[];
+  removedVolumes?: string[];
+}
+
+export async function runDemoWorkspace<T>(workspace: DemoWorkspace, handler: () => Promise<T>): Promise<{ result: T; workspace: DemoWorkspace }> {
+  if (!isDemoMode()) throw new Error('Demo workspace is unavailable in installed mode');
+  // Portable requests must not join the cookie-session LRU: active requests
+  // cannot be evicted by other visitors while their state is being mutated.
+  const state: DemoSessionState = {
+    config: workspace.config, customTabs: workspace.customTabs, pages: workspace.pages,
+    containerStates: new Map(workspace.containerStates ?? []),
+    removedContainers: new Set(workspace.removedContainers ?? []),
+    removedImages: new Set(workspace.removedImages ?? []),
+    removedVolumes: new Set(workspace.removedVolumes ?? []),
+    expiresAt: Date.now() + SESSION_TTL_SECONDS * 1000,
+  };
+  return workspaceStorage.run(state, async () => {
+    const result = await handler();
+    return { result, workspace: { config: state.config, customTabs: state.customTabs, pages: state.pages,
+      containerStates: [...state.containerStates], removedContainers: [...state.removedContainers], removedImages: [...state.removedImages], removedVolumes: [...state.removedVolumes] } };
+  });
 }

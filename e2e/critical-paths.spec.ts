@@ -1,3 +1,5 @@
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { expect, request as playwrightRequest, test, type APIRequestContext } from '@playwright/test';
 
 const ADMIN_PASSWORD = 'playwright-admin-password';
@@ -267,38 +269,41 @@ test.describe.serial('critical self-hosted paths', () => {
   test('Docker tab actions remain independent from widget button visibility', async () => {
     const admin = await isolatedRequest(27);
     await login(admin, 'admin', ADMIN_PASSWORD);
-
-    const configResponse = await admin.get('/api/config');
-    expect(configResponse.status()).toBe(200);
-    expect((await configResponse.json()).settings.allowDockerActions).toBe(false);
-
-    const createHost = await admin.post('/api/config', {
-      data: {
-        type: 'dockerHost',
-        name: 'E2E Mock Docker',
-        icon: '🐳',
-        url: 'mock',
-      },
+    const fakeId = 'd'.repeat(64);
+    let actions = 0;
+    const engine = http.createServer((req, res) => {
+      req.resume();
+      if (req.method === 'POST' && req.url === `/containers/${fakeId}/restart`) { actions++; res.writeHead(204).end(); }
+      else res.writeHead(404).end();
     });
-    expect(createHost.status()).toBe(201);
-    const host = await createHost.json();
-
-    const action = await admin.post(`/api/docker/${host.id}/containers/mock11111111?action=restart`);
-    expect(action.status()).toBe(200);
-    expect(await action.json()).toMatchObject({ ok: true, action: 'restart' });
-
-    const unboundedLogs = await admin.get(`/api/docker/${host.id}/containers/mock11111111/logs?tail=all`);
-    expect(unboundedLogs.status()).toBe(400);
-
-    const viewer = await isolatedRequest(28);
-    await login(viewer, 'viewer', VIEWER_PASSWORD);
-    const forbiddenAction = await viewer.post(`/api/docker/${host.id}/containers/mock11111111?action=restart`);
-    expect(forbiddenAction.status()).toBe(401);
-    await viewer.dispose();
-
-    const cleanup = await admin.delete(`/api/config?type=dockerHost&id=${encodeURIComponent(host.id)}`);
-    expect(cleanup.status()).toBe(200);
-    await admin.dispose();
+    await new Promise<void>(resolve => engine.listen(0, '127.0.0.1', resolve));
+    let hostId: string | undefined;
+    try {
+      const configResponse = await admin.get('/api/config');
+      expect(configResponse.status()).toBe(200);
+      expect((await configResponse.json()).settings.allowDockerActions).toBe(false);
+      const createHost = await admin.post('/api/config', { data: {
+        type: 'dockerHost', name: 'E2E fictional Docker API', icon: '🐳',
+        url: `http://127.0.0.1:${(engine.address() as AddressInfo).port}`,
+      } });
+      expect(createHost.status()).toBe(201);
+      hostId = (await createHost.json()).id;
+      const action = await admin.post(`/api/docker/${hostId}/containers/${fakeId}?action=restart`);
+      expect(action.status()).toBe(200);
+      expect(await action.json()).toMatchObject({ ok: true, action: 'restart' });
+      expect(actions).toBe(1);
+      expect((await admin.get(`/api/docker/${hostId}/containers/${fakeId}/logs?tail=all`)).status()).toBe(400);
+      const viewer = await isolatedRequest(28);
+      try {
+        await login(viewer, 'viewer', VIEWER_PASSWORD);
+        expect((await viewer.post(`/api/docker/${hostId}/containers/${fakeId}?action=restart`)).status()).toBe(401);
+        expect(actions).toBe(1);
+      } finally { await viewer.dispose(); }
+    } finally {
+      if (hostId) expect((await admin.delete(`/api/config?type=dockerHost&id=${encodeURIComponent(hostId)}`)).status()).toBe(200);
+      await admin.dispose();
+      await new Promise<void>((resolve, reject) => engine.close(error => error ? reject(error) : resolve()));
+    }
   });
 
   test('viewer can read but cannot mutate configuration', async () => {

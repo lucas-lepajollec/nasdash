@@ -1,3 +1,4 @@
+import { collectorFailure } from '../errors';
 import { MonitoringConfigurationError, MonitoringHttpError, MonitoringInvalidResponseError } from '@/lib/monitoringError';
 import { basicAuthHeader, httpGet } from '../http';
 import { CollectError, type DeviceCollector, type DeviceVitals, type Metric } from '../types';
@@ -75,20 +76,20 @@ export function netdataVitals(charts: Record<string, NetdataChart>): DeviceVital
 }
 
 export const collectNetdata: DeviceCollector = async connection => {
-  if (!connection.url) throw new CollectError('URL Netdata manquante.', new MonitoringConfigurationError('Missing Netdata URL.'));
+  if (!connection.url) throw new CollectError('integrations.error.missingUrl', new MonitoringConfigurationError('Missing Netdata URL.'), false, { service: 'Netdata' });
   const url = `${connection.url.replace(/\/$/, '')}/api/v1/allmetrics?format=json&help=no&types=no&timestamps=no&names=yes&data=average`;
   let answer;
   try {
     answer = await httpGet(url, { headers: { Accept: 'application/json', ...basicAuthHeader(connection.token) }, allowSelfSigned: connection.allowSelfSigned });
   } catch (error) {
-    throw new CollectError('Impossible de joindre Netdata', error);
+    throw collectorFailure('Netdata', error);
   }
-  if (!answer.ok) throw new CollectError(`Erreur serveur (${answer.status})`, new MonitoringHttpError('Netdata', answer.status, answer.statusText));
+  if (!answer.ok) throw collectorFailure('Netdata', new MonitoringHttpError('Netdata', answer.status, answer.statusText));
   let charts: Record<string, NetdataChart>;
   try {
     charts = JSON.parse(await answer.text()) as Record<string, NetdataChart>;
   } catch {
-    throw new CollectError('Réponse invalide (HTML)', new MonitoringInvalidResponseError(`Non-JSON response from ${url}.`));
+    throw new CollectError('integrations.invalidResponse', new MonitoringInvalidResponseError(`Non-JSON response from ${url}.`));
   }
   return { metrics: netdataMetrics(charts), vitals: netdataVitals(charts) };
 };

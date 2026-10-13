@@ -1,5 +1,7 @@
 'use client';
 
+import { demoFetch } from '@/lib/demoTransport';
+
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDocker } from '@/hooks/useDocker';
@@ -73,7 +75,7 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
   };
 
   const handleAddHost = async (data: DockerHostDraft) => {
-    const response = await fetch('/api/config', {
+    const response = await demoFetch('/api/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       // `type` names the update; the host's own kind travels as `connection`.
@@ -81,14 +83,15 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
     });
     if (!response.ok) {
       const payload = await response.json().catch(() => null);
-      throw new Error(payload?.error || 'Impossible d’enregistrer cet hôte Docker.');
+      throw new Error(t(payload?.error || 'docker.failure.save_host'));
     }
     await refresh();
     setShowHostForm(false);
   };
 
   const handleDeleteHost = async (id: string) => {
-    await fetch(`/api/config?type=dockerHost&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const response = await demoFetch(`/api/config?type=dockerHost&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(t('docker.failure.delete_host'));
     await refresh();
     if (activeHostId === id) setActiveHostId(hosts.find(host => host.id !== id)?.id || null);
   };
@@ -107,12 +110,13 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
 
   return (
     <DockerWorkspaceContext.Provider value={value}>
+      {docker.actionError && !pendingConfirm && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{docker.actionError}</p>}
       {children}
       {showHostForm && <DockerHostFormModal onClose={() => setShowHostForm(false)} onSave={handleAddHost} />}
       <ConfirmModal
         isOpen={!!pendingConfirm}
         onClose={() => setPendingConfirm(null)}
-        onConfirm={() => { if (pendingConfirm) containerAction(pendingConfirm.id, pendingConfirm.action).catch(() => undefined); }}
+        onConfirm={async () => { if (pendingConfirm) await containerAction(pendingConfirm.id, pendingConfirm.action); }}
         title={
           pendingConfirm?.action === 'stop' ? t('Arrêter le conteneur')
             : pendingConfirm?.action === 'restart' ? t('Redémarrer le conteneur')
@@ -131,7 +135,7 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
       <ConfirmModal
         isOpen={!!pendingDeleteHost}
         onClose={() => setPendingDeleteHost(null)}
-        onConfirm={() => { if (pendingDeleteHost) void handleDeleteHost(pendingDeleteHost.id); }}
+        onConfirm={async () => { if (pendingDeleteHost) await handleDeleteHost(pendingDeleteHost.id); }}
         title={t("Supprimer l'hôte Docker")}
         description={demoMode
           ? t('docker.demoHostRemove', { name: pendingDeleteHost?.name || '' })

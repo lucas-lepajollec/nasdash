@@ -1,5 +1,7 @@
 'use client';
 
+import { resetDemoTransport } from '@/lib/demoTransport';
+
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CircleHelp, RotateCcw, ShieldCheck } from 'lucide-react';
@@ -73,6 +75,7 @@ export default function DemoExperience() {
       /* ignore */
     }
     setAnnouncement(t('demo.resetting'));
+    await resetDemoTransport();
     await fetch('/api/demo/reset', { method: 'POST' });
     window.location.reload();
   };

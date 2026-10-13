@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { demoFetch } from '@/lib/demoTransport';
 
 export interface AuthContextType {
   user: AuthUser | null;
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchWithAuth = useCallback(async (url: string, options: RequestInit = {}) => {
     try {
-      const res = await fetch(url, options);
+      const res = await demoFetch(url, options);
       if (res.status === 401 || res.status === 403) {
         alert(t("Accès refusé. Session administrateur requise."));
         // A full reload prevents protected provider state surviving the redirect.

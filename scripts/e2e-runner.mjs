@@ -22,6 +22,8 @@ const baseURL = 'http://127.0.0.1:2510';
 const serverEnvironment = {
   ...process.env,
   NASDASH_DATA_DIR: path.join(projectDirectory, '.e2e', 'data'),
+  // Fictional XFF identities isolate test quotas; this override belongs only to the test server.
+  NASDASH_TRUST_PROXY: 'true',
   NASDASH_ADMIN_PASSWORD: 'playwright-admin-password',
   NASDASH_VIEWER_PASSWORD: 'playwright-viewer-password',
   NASDASH_JWT_SECRET: 'playwright-only-secret-never-used-in-production',

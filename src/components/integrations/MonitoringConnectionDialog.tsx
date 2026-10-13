@@ -16,7 +16,7 @@ import { ConnectionFields, fieldDefaults, type FieldValues } from './ConnectionF
 /** i18n key shown when the test request itself fails. */
 const TEST_FAILED = 'integrations.test.failed';
 
-export interface TestResult { ok: boolean; message: string; count?: number; targets?: SourceTarget[] }
+export interface TestResult { ok: boolean; message: string; count?: number; targets?: SourceTarget[]; messageParameters?: Record<string, string | number> }
 
 /** Tries a connection (saved, or as typed in a form). */
 export async function testConnection(body: { type: string; id?: string; settings?: Record<string, string>; password?: string; values?: Record<string, string> }): Promise<TestResult> {
@@ -141,7 +141,7 @@ export function MonitoringConnectionDialog({ type, instance, onClose, showSensit
             {test && (
               <div className={`ndc-test ${test.ok ? 'is-ok' : 'is-error'}`} role="status">
                 {test.ok ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
-                <span>{t(test.message, { count: test.count ?? 0 })}</span>
+                <span>{t(test.message, { count: test.count ?? 0, ...test.messageParameters })}</span>
               </div>
             )}
 

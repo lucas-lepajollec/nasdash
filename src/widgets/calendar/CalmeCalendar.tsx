@@ -19,7 +19,7 @@ import { isoDay, useCalendarEvents } from './useCalendarEvents';
 export default function CalmeCalendar({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { t, locale } = useI18n();
   const { setCalendarEventModal, setViewEventModal } = useConfig();
-  const { events, loading } = useCalendarEvents(isVisible);
+  const { events, loading, error } = useCalendarEvents(isVisible);
   const [current, setCurrent] = useState(() => new Date());
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -95,6 +95,7 @@ export default function CalmeCalendar({ editMode, isVisible = true }: { editMode
       editMode={editMode}
       aside={loading ? <span className="nd-spinner" style={{ width: 10, height: 10 }} /> : undefined}
     >
+      {error && <div role="alert" className="ndc-set-note is-error">{t(error)}</div>}
       <div className="ndc-calendar">
         <div className="ndc-cal-month">
           <div className="ndc-cal-head">

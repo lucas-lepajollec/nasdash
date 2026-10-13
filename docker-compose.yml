@@ -9,13 +9,13 @@ services:
     volumes:
       - ./data:/app/data
     pid: host
-    depends_on:
-      - docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+  # Optional local engine connection: docker compose --profile docker-proxy up -d
   docker-proxy:
+    profiles: ["docker-proxy"]
     image: tecnativa/docker-socket-proxy:v0.5.0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro

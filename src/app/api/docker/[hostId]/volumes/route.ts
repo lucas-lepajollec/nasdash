@@ -7,6 +7,8 @@ import {
   dockerFailureStatus,
   fetchDockerApi,
   readDockerJson,
+  requireDockerArray,
+  DockerInvalidResponseError,
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
@@ -51,14 +53,15 @@ async function handleGET(
     if (!host) return NextResponse.json({ error: 'Host not found' }, { status: 404 });
 
     // Mock volumes
-    if (isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host')) {
+    if (isDemoMode()) {
       return NextResponse.json(DEMO_DOCKER_VOLUMES.filter(volume => !isDemoVolumeRemoved(volume.name)));
     }
 
     const response = await fetchDockerApi(host, '/volumes');
     const raw = await readDockerJson(response) as { Volumes?: DockerApiVolume[] };
 
-    const volumes = (raw.Volumes || []).map(v => ({
+    if (!raw || !Object.prototype.hasOwnProperty.call(raw, 'Volumes')) throw new DockerInvalidResponseError();
+    const volumes = requireDockerArray<DockerApiVolume>(raw.Volumes === null ? [] : raw.Volumes, 'Name').map(v => ({
       name: v.Name,
       driver: v.Driver,
       mountpoint: v.Mountpoint,
@@ -109,10 +112,10 @@ async function handleDELETE(
     );
 
     if (res.status === 404) {
-      return NextResponse.json({ error: 'Volume Docker introuvable.' }, { status: 404 });
+      return NextResponse.json({ error: 'Docker volume not found.' }, { status: 404 });
     }
     if (res.status === 409) {
-      return NextResponse.json({ error: 'Le volume est en cours d\'utilisation et ne peut pas être supprimé.' }, { status: 409 });
+      return NextResponse.json({ error: 'Docker volume is in use and cannot be deleted.' }, { status: 409 });
     }
 
     reportDockerSuccess(hostId);

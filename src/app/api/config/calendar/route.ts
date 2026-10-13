@@ -11,6 +11,7 @@ import {
   readString,
 } from '@/lib/requestValidation';
 import { withDemoSession } from '@/lib/demoSession';
+import { validateCalendarDates } from '@/lib/calendarDates';
 
 export const dynamic = 'force-dynamic';
 const MAX_CALENDAR_BODY_BYTES = 64 * 1024;
@@ -47,6 +48,7 @@ async function handlePOST(req: Request) {
     const title = readString(body, 'title', { maxLength: 200 });
     const start = readString(body, 'start', { required: true, maxLength: 64 })!;
     const end = readString(body, 'end', { maxLength: 64 });
+    validateCalendarDates(start, end);
     const description = readString(body, 'description', { maxLength: 4000 });
     const isAllDay = readBoolean(body, 'isAllDay');
 
@@ -90,9 +92,11 @@ async function handlePUT(req: Request) {
     const title = readString(body, 'title', { maxLength: 200 });
     const start = readString(body, 'start', { maxLength: 64 });
     const end = readString(body, 'end', { maxLength: 64 });
+    validateCalendarDates(start, end);
     const description = readString(body, 'description', { maxLength: 4000 });
     const isAllDay = readBoolean(body, 'isAllDay');
 
+    validateCalendarDates(start ?? event.start, end ?? event.end);
     if (title !== undefined) event.title = title;
     if (start !== undefined) event.start = start;
     if (end !== undefined) event.end = end;

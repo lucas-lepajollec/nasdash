@@ -88,8 +88,9 @@ export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
 
 export function DockerSummaryWidget({ editMode }: Partial<DockerWidgetProps>) {
   const { t } = useI18n();
-  const { hosts, visibleContainers } = useDockerWorkspace();
+  const { hosts, visibleContainers, containersError } = useDockerWorkspace();
   if (hosts.length === 0) return null;
+  if (containersError) return <DockerErrorNotice error={containersError} compact />;
   const running = visibleContainers.filter(container => container.state === 'running').length;
   const stopped = visibleContainers.filter(container => container.state === 'exited').length;
   return (
@@ -212,7 +213,7 @@ export function DockerExplorerWidget({ showSensitive = false, isVisible = true }
   const { t } = useI18n();
   const {
     hosts, activeHostId, visibleContainers, selectedContainerId, setSelectedContainerId,
-    containerDetail, images, imagesError, imagesLoading, refreshImages,
+    containerDetail, detailError, images, imagesError, imagesLoading, refreshImages,
     volumes, volumesError, volumesLoading, refreshVolumes, refreshContainers,
     requestAction, actionLoading,
   } = useDockerWorkspace();
@@ -252,7 +253,7 @@ export function DockerExplorerWidget({ showSensitive = false, isVisible = true }
       </div>
 
       {tab === 'containers' && (
-        selectedContainerId && containerDetail ? (
+        detailError ? <DockerErrorNotice error={detailError} /> : selectedContainerId && containerDetail ? (
           <ContainerDetailView
             hostId={activeHostId!}
             detail={containerDetail}
@@ -273,10 +274,10 @@ export function DockerExplorerWidget({ showSensitive = false, isVisible = true }
         )
       )}
       {tab === 'images' && (
-        <ImagesTab images={images} error={imagesError} loading={imagesLoading} containers={visibleContainers} hostId={activeHostId!} refreshImages={() => refreshImages()} selectedContainer={selectedContainer} />
+        <ImagesTab key={activeHostId} images={images} error={imagesError} loading={imagesLoading} containers={visibleContainers} hostId={activeHostId!} refreshImages={() => refreshImages()} selectedContainer={selectedContainer} />
       )}
       {tab === 'volumes' && (
-        <VolumesTab volumes={volumes} error={volumesError} loading={volumesLoading} containers={visibleContainers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={selectedContainer} />
+        <VolumesTab key={activeHostId} volumes={volumes} error={volumesError} loading={volumesLoading} containers={visibleContainers} hostId={activeHostId!} refreshVolumes={() => refreshVolumes()} selectedContainer={selectedContainer} />
       )}
     </div>
   );

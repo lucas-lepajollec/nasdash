@@ -3,6 +3,7 @@ import { readConfig } from '@/lib/config';
 import { checkReadAccess, READ_ACCESS } from '@/lib/access';
 import { readBoundedResponseBytes, ResponseTooLargeError } from '@/lib/boundedResponse';
 import { isDemoMode } from '@/lib/demoMode';
+import { CalendarParseError, parseCalendarIcs } from '@/lib/calendarIcs';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,17 +24,13 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const url = searchParams.get('url');
-
-    if (!url) {
-      return NextResponse.json({ error: 'Missing calendar URL' }, { status: 400 });
-    }
-
-    // Prévention SSRF: Valider que l'URL demandée est bien celle configurée par l'admin
+    // Resolve the capability URL on the server. Optional legacy callers may only
+    // supply the exact configured address; readers never receive it in config.
     const configUrl = config.settings?.calendarUrl;
-    if (url !== configUrl) {
-      return NextResponse.json({ error: 'Accès non autorisé à cette URL.' }, { status: 403 });
-    }
+    const requestedUrl = searchParams.get('url');
+    if (requestedUrl && requestedUrl !== configUrl) return NextResponse.json({ error: 'calendar.accessDenied' }, { status: 403 });
+    if (!configUrl) return NextResponse.json({ events: [] });
+    const url = configUrl;
 
     let calendarUrl: URL;
     try {
@@ -60,64 +57,15 @@ export async function GET(request: NextRequest) {
     const calendarBuffer = await readBoundedResponseBytes(response, 2 * 1024 * 1024);
     const textData = new TextDecoder().decode(calendarBuffer);
 
-    // Simple native iCal parser to avoid Next.js node-ical crashes (BigInt errors)
-    const processedEvents = [];
-    const eventBlocks = textData.split('BEGIN:VEVENT');
-    
-    // Skip the first block as it's just the VCALENDAR header
-    for (let i = 1; i < eventBlocks.length; i++) {
-      const block = eventBlocks[i].split('END:VEVENT')[0];
-      
-      const extractField = (fieldName: string) => {
-        const regex = new RegExp(`^${fieldName}[^:]*:(.*)$`, 'm');
-        const match = block.match(regex);
-        return match ? match[1].trim() : null;
-      };
-
-      const uid = extractField('UID');
-      const summary = extractField('SUMMARY');
-      const start = extractField('DTSTART');
-      const end = extractField('DTEND');
-      const description = extractField('DESCRIPTION');
-      const location = extractField('LOCATION');
-
-      if (summary && start) {
-        // Format dates (handle basic iCal date strings like 20260524 or 20260524T120000Z)
-        const formatDate = (ds: string) => {
-          if (!ds) return null;
-          if (ds.length === 8) {
-            return new Date(`${ds.slice(0, 4)}-${ds.slice(4, 6)}-${ds.slice(6, 8)}T00:00:00Z`).toISOString();
-          }
-          if (ds.includes('T')) {
-            const datePart = ds.split('T')[0];
-            const timePart = ds.split('T')[1].replace('Z', '');
-            return new Date(`${datePart.slice(0, 4)}-${datePart.slice(4, 6)}-${datePart.slice(6, 8)}T${timePart.slice(0, 2)}:${timePart.slice(2, 4)}:${timePart.slice(4, 6)}Z`).toISOString();
-          }
-          return null;
-        };
-
-        const isAllDay = start.length === 8;
-        
-        processedEvents.push({
-          id: uid || Math.random().toString(),
-          title: summary,
-          start: formatDate(start),
-          end: end ? formatDate(end) : null,
-          description,
-          location,
-          isAllDay
-        });
-      }
-    }
-
-    return NextResponse.json({ events: processedEvents });
+    return NextResponse.json({ events: parseCalendarIcs(textData) }, { headers: { 'Cache-Control': 'private, no-store' } });
 
   } catch (error: unknown) {
+    if (error instanceof CalendarParseError) return NextResponse.json({ error: error.key }, { status: 422 });
     if (error instanceof ResponseTooLargeError) {
       return NextResponse.json({ error: 'Le calendrier dépasse la taille autorisée (2 Mo).' }, { status: 413 });
     }
-    console.error('Error fetching calendar:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to fetch calendar: ' + message }, { status: 500 });
+    // Provider addresses can contain bearer capabilities: never log the URL/error cause.
+    console.error('[NASDASH] Calendar download failed.');
+    return NextResponse.json({ error: 'calendar.fetchFailed' }, { status: 502 });
   }
 }

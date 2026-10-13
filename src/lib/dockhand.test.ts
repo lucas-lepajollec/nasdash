@@ -1,30 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import sample from '../integrations/docker/samples/dockhand-containers.json';
 import { dockhandCall } from './dockhand';
 
-describe('dockhand adapter', () => {
-  it('maps the Docker endpoints NasDash uses', () => {
-    expect(dockhandCall('/containers/json?all=true&size=false', 'GET', '2')?.path).toBe('/api/containers?env=2&all=true');
-    expect(dockhandCall('/containers/abc/json', 'GET', '2')?.path).toBe('/api/containers/abc/inspect?env=2');
-    expect(dockhandCall('/containers/abc/logs?stdout=true&tail=200', 'GET', '2')?.path).toBe('/api/containers/abc/logs?env=2&tail=200');
-    expect(dockhandCall('/containers/abc/restart', 'POST', '2')?.path).toBe('/api/containers/abc/restart?env=2');
-    expect(dockhandCall('/containers/abc?force=true', 'DELETE', '2')?.method).toBe('DELETE');
-    expect(dockhandCall('/images/sha256%3Aaa', 'DELETE', '2')?.path).toBe('/api/images/sha256%3Aaa?env=2');
-    expect(dockhandCall('/volumes/data', 'DELETE', '2')?.path).toBe('/api/volumes/data?env=2');
-    expect(dockhandCall('/containers/abc/exec', 'POST', '2')).toBeUndefined();
+describe('Dockhand Docker relay normalisation', () => {
+  it('keeps canonical container identity, image IDs, ports and volume references', () => {
+    const body = [{ id: 'a'.repeat(64), name: 'web', image: 'web:old', imageId: `sha256:${'b'.repeat(64)}`, ports: [{ PrivatePort: 80, Type: 'tcp' }], mounts: [{ type: 'volume', name: 'data', source: '/data', destination: '/app', rw: true }], labels: { 'com.docker.compose.service': 'web' }, state: 'running', status: 'Up 1 hour' }];
+    const result = dockhandCall('/containers/json?all=true', 'GET', '12')!;
+    expect(result.path).toBe('/api/containers?env=12&all=true');
+    expect(result.convert(body).json).toEqual([expect.objectContaining({ Id: body[0].id, ImageID: body[0].imageId, Labels: body[0].labels, Mounts: [{ Type: 'volume', Name: 'data', Source: '/data', Destination: '/app', RW: true }] })]);
   });
-
-  it('shapes answers like the Docker Engine API', () => {
-    const list = dockhandCall('/containers/json?all=true', 'GET', '1')!.convert(sample).json as { Names: string[]; State: string }[];
-    expect(list.map(container => [container.Names[0], container.State])).toEqual([['/jellyfin', 'running'], ['/forgejo', 'exited']]);
-    const stats = dockhandCall('/containers/abc/stats?stream=false', 'GET', '1')!.convert({ cpuPercent: 12.5, memoryRaw: 100, memoryLimit: 1000, networkRx: 5, networkTx: 7 }).json as {
-      cpu_stats: { cpu_usage: { total_usage: number }; system_cpu_usage: number; online_cpus: number };
-      precpu_stats: { cpu_usage: { total_usage: number }; system_cpu_usage: number };
-    };
-    // The route's formula (cpu delta / system delta × CPUs × 100) gives Dockhand's percentage back.
-    const cpu = (stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage) / (stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage) * stats.cpu_stats.online_cpus * 100;
-    expect(cpu).toBeCloseTo(12.5);
-    expect(dockhandCall('/containers/abc/logs', 'GET', '1')!.convert({ logs: 'a\nb' }).text).toBe('a\nb');
-    expect(dockhandCall('/volumes', 'GET', '1')!.convert([{ Name: 'v', Driver: 'local' }]).json).toEqual({ Volumes: [{ Name: 'v', Driver: 'local' }], Warnings: null });
+  it('normalises actual lowercase images including unused and untagged images', () => {
+    const image = { id: `sha256:${'c'.repeat(64)}`, repoTags: [], repoDigests: ['registry.test/web@sha256:abc'], size: 512, created: 100, containers: 2, labels: { 'org.opencontainers.image.title': 'Web' } };
+    expect(dockhandCall('/images/json', 'GET', '1')!.convert([image]).json).toEqual([{ Id: image.id, RepoTags: [], RepoDigests: image.repoDigests, Size: 512, Created: 100, Containers: 2, Labels: image.labels }]);
+  });
+  it('also accepts uppercase Engine image responses exposed by older relays', () => {
+    expect(dockhandCall('/images/json', 'GET', '1')!.convert([{ Id: 'image', RepoTags: ['web:1'] }]).json).toEqual([expect.objectContaining({ Id: 'image', RepoTags: ['web:1'] })]);
+  });
+  it('normalises lowercase volume names and stopped-container usage', () => {
+    expect(dockhandCall('/volumes', 'GET', '1')!.convert([{ name: 'data', driver: 'local', mountpoint: '/data', created: '2026-10-13', usedBy: [{ containerId: 'stopped' }] }]).json).toEqual({ Volumes: [{ Name: 'data', Driver: 'local', Mountpoint: '/data', CreatedAt: '2026-10-13', Labels: {}, UsageData: { RefCount: 1 } }], Warnings: null });
+  });
+  it.each(['/containers/json', '/images/json', '/volumes'])('rejects valid JSON web pages for %s instead of claiming an empty engine', endpoint => {
+    expect(() => dockhandCall(endpoint, 'GET', '1')!.convert({ page: 'login' })).toThrow();
+  });
+  it('routes image and volume removal with encoded identities and no force bypass', () => {
+    const image = dockhandCall('/images/sha256%3Aimage', 'DELETE', '2')!;
+    expect(image).toMatchObject({ method: 'DELETE', path: '/api/images/sha256%3Aimage?env=2' });
+    expect(dockhandCall('/volumes/data', 'DELETE', '2')).toMatchObject({ method: 'DELETE', path: '/api/volumes/data?env=2' });
+  });
+  it('represents computed CPU percentage without losing already adjusted memory usage', () => {
+    const converted = dockhandCall('/containers/id/stats?stream=false', 'GET', '1')!.convert({ cpuPercent: 42, memoryUsage: 100, memoryRaw: 200, memoryCache: 100, memoryLimit: 500 }).json;
+    expect(converted).toMatchObject({ cpu_stats: { cpu_usage: { total_usage: 42 } }, memory_stats: { usage: 100, limit: 500 } });
   });
 });

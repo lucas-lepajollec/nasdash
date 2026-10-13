@@ -1,3 +1,4 @@
+import { demoFetch } from '@/lib/demoTransport';
 export type DockerFailureCategory =
   | 'unavailable'
   | 'configuration'
@@ -13,7 +14,9 @@ export type DockerFailureCode =
   | 'access_denied'
   | 'endpoint_not_found'
   | 'api_error'
-  | 'invalid_response';
+  | 'invalid_response'
+  | 'invalid_socket'
+  | 'socket_missing';
 
 export interface DockerFailurePayload {
   error: string;
@@ -44,56 +47,69 @@ export class DockerRequestError extends Error {
   }
 }
 
-export async function dockerJsonFetcher(url: string) {
-  const response = await fetch(url);
+export async function readDockerResponse(response: Response) {
   const payload = await response.json().catch(() => null);
-
   if (!response.ok) {
-    const failure = payload && typeof payload === 'object'
-      && typeof payload.error === 'string'
-      && typeof payload.code === 'string'
-      && typeof payload.category === 'string'
-      && typeof payload.hint === 'string'
-      ? payload as DockerFailurePayload
-      : {
-          error: 'Impossible de contacter le service Docker.',
-          code: 'api_error' as const,
-          category: 'remote' as const,
-          hint: 'Consultez les journaux du serveur pour plus de détails.',
-          retryable: true,
-          isOffline: false,
-        };
-
-    throw new DockerRequestError(response.status, failure);
+    const structured = payload && typeof payload === 'object' && typeof payload.code === 'string' && typeof payload.hint === 'string';
+    throw new DockerRequestError(response.status, structured ? payload : {
+      error: payload?.error || 'Docker request failed.',
+      code: response.status === 401 || response.status === 403 ? 'access_denied' : 'api_error',
+      category: response.status === 401 || response.status === 403 ? 'permission' : 'remote',
+      hint: 'docker.failure.api_error', retryable: response.status >= 500, isOffline: false,
+    });
   }
-
+  if (payload === null || typeof payload !== 'object') throw new DockerRequestError(response.status, {
+    error: 'Docker API returned an invalid response.', code: 'invalid_response', category: 'remote',
+    hint: 'docker.failure.invalid_response', retryable: false, isOffline: false,
+  });
   return payload;
+}
+
+export async function dockerJsonFetcher(url: string) {
+  const payload = await readDockerResponse(await demoFetch(url));
+  // Lists are arrays, detail is an object. A valid JSON web/error page is not an empty list.
+  if (/\/(containers|images|volumes)(?:\?|$)/.test(url) && !Array.isArray(payload)) throw new DockerRequestError(200, {
+    error: 'Docker API returned an invalid response.', code: 'invalid_response', category: 'remote',
+    hint: 'docker.failure.invalid_response', retryable: false, isOffline: false,
+  });
+  return payload;
+}
+
+export function dockerActionError(error: unknown, t: (key: string) => string): string {
+  if (error instanceof DockerRequestError) {
+    if ((error.status === 401 || error.status === 403) && error.code === 'access_denied') return t('errors.adminSessionRequired');
+    if (error.status === 409) return t('docker.failure.resource_in_use');
+    if (error.status === 404) return t('docker.failure.resource_not_found');
+    const presentation = getDockerErrorPresentation(error);
+    return `${t(presentation.title)}: ${t(presentation.hint)}`;
+  }
+  return t('errors.dockerAction');
 }
 
 export function getDockerErrorPresentation(error: unknown) {
   if (!(error instanceof DockerRequestError)) {
     return {
       title: 'État Docker indisponible',
-      hint: 'La réponse du serveur n’a pas pu être interprétée.',
+      hint: 'docker.failure.invalid_response',
       tone: 'error' as const,
     };
   }
 
   if (error.category === 'configuration') {
-    return { title: 'Configuration Docker invalide', hint: error.hint, tone: 'error' as const };
+    return { title: 'Configuration Docker invalide', hint: `docker.failure.${error.code}`, tone: 'error' as const };
   }
   if (error.category === 'permission') {
-    return { title: 'Accès Docker refusé', hint: error.hint, tone: 'error' as const };
+    return { title: 'Accès Docker refusé', hint: `docker.failure.${error.code}`, tone: 'error' as const };
   }
   if (error.category === 'unavailable') {
     if (error.code === 'name_resolution') {
-      return { title: 'Nom d’hôte Docker introuvable', hint: error.hint, tone: 'warning' as const };
+      return { title: 'Nom d’hôte Docker introuvable', hint: `docker.failure.${error.code}`, tone: 'warning' as const };
     }
     if (error.code === 'timeout') {
-      return { title: 'Délai d’attente Docker dépassé', hint: error.hint, tone: 'warning' as const };
+      return { title: 'Délai d’attente Docker dépassé', hint: `docker.failure.${error.code}`, tone: 'warning' as const };
     }
-    return { title: 'Hôte Docker indisponible', hint: error.hint, tone: 'warning' as const };
+    return { title: 'Hôte Docker indisponible', hint: `docker.failure.${error.code}`, tone: 'warning' as const };
   }
 
-  return { title: 'Erreur de l’API Docker', hint: error.hint, tone: 'error' as const };
+  return { title: 'Erreur de l’API Docker', hint: `docker.failure.${error.code}`, tone: 'error' as const };
 }

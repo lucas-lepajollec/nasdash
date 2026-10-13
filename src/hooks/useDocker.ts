@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { demoFetch } from '@/lib/demoTransport';
+
+import { useState, useCallback, useEffect } from 'react';
 import useSWR from 'swr';
 import { DockerHost } from '@/lib/types';
-import { dockerJsonFetcher } from '@/lib/dockerErrorContract';
+import { dockerJsonFetcher, readDockerResponse, dockerActionError } from '@/lib/dockerErrorContract';
 import { useI18n } from '@/i18n/I18nProvider';
 
 export function getDockerRequestKeys(
@@ -26,6 +28,8 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
   const [activeHostId, setActiveHostId] = useState<string | null>(hosts[0]?.id || null);
   const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  useEffect(() => { setSelectedContainerId(null); setActionError(null); }, [activeHostId]);
   const requestKeys = getDockerRequestKeys(activeHostId, selectedContainerId, enabled);
 
   // Containers list
@@ -60,17 +64,12 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
   const containerAction = useCallback(async (containerId: string, action: 'start' | 'stop' | 'restart' | 'remove') => {
     if (!activeHostId) return;
     setActionLoading(`${containerId}-${action}`);
+    setActionError(null);
     try {
-      const res = await fetch(`/api/docker/${activeHostId}/containers/${containerId}?action=${action}`, {
+      const res = await demoFetch(`/api/docker/${activeHostId}/containers/${containerId}?action=${action}`, {
         method: 'POST',
       });
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          throw new Error(t('errors.adminSessionRequired'));
-        }
-        const data = await res.json();
-        throw new Error(data.error ? t(data.error) : t('errors.dockerAction'));
-      }
+      await readDockerResponse(res);
       // Wait a beat then refresh
       await new Promise(r => setTimeout(r, 500));
       await refreshContainers();
@@ -82,9 +81,10 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
         }
       }
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : String(e);
+      const message = dockerActionError(e, t);
+      setActionError(message);
       console.error(`Docker action ${action} failed:`, message);
-      throw e;
+      throw new Error(message);
     } finally {
       setActionLoading(null);
     }
@@ -123,5 +123,6 @@ export function useDocker(hosts: DockerHost[], enabled = true) {
     // Actions
     containerAction,
     actionLoading,
+    actionError,
   };
 }

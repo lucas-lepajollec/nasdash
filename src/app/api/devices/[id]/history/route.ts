@@ -25,7 +25,8 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
     const range: HistoryRange = url.searchParams.get('range') === '24h' ? '24h' : '1h';
     const since = Math.max(0, Number(url.searchParams.get('since')) || 0);
 
-    if (isDemoMode() || id.includes('demo') || id.includes('mock')) {
+    if (!(config.devices ?? []).some(device => device.id === id)) return NextResponse.json({ error: 'Unknown device' }, { status: 404 });
+    if (isDemoMode()) {
       const now = Date.now();
       return NextResponse.json({
         online: true, updatedAt: now,
@@ -37,8 +38,8 @@ export async function GET(request: Request, segmentData: { params: Promise<{ id:
     if (!(config.devices ?? []).some(device => device.id === id)) return NextResponse.json({ error: 'Unknown device' }, { status: 404 });
     const cached = devicesStatusCache[id];
     return NextResponse.json({
-      online: cached ? cached.online : true,
-      ...(cached?.error ? { error: cached.error } : {}),
+      online: cached ? cached.online : false,
+      ...(cached?.error ? { error: cached.error, errorParameters: cached.errorParameters } : {}),
       updatedAt: cached?.updatedAt ?? 0,
       metrics: cached?.metrics ?? [],
       ...(cached?.stats ? { stats: cached.stats } : {}),

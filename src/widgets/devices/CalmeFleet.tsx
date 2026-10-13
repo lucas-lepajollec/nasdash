@@ -19,11 +19,11 @@ import { stateOf, type DeviceState } from './parts';
 import { SettingsButton } from './SettingsButton';
 
 export const FLEET_DEFAULTS: LookDefaults = {
-  offered: ['cpu', 'memory', 'gpu', 'temperature', 'load', 'network', 'disk'],
+  offered: ['cpu', 'memory', 'gpu', 'temperature', 'gpuTemperature', 'load', 'network', 'disk'],
   shown: ['cpu', 'memory', 'temperature'],
   display: 'bar',
   perMetricDisplay: true,
-  displays: { cpu: 'bar', memory: 'bar', gpu: 'bar', temperature: 'value', load: 'value', network: 'value', disk: 'bar' },
+  displays: { cpu: 'bar', memory: 'bar', gpu: 'bar', temperature: 'value', gpuTemperature: 'value', load: 'value', network: 'value', disk: 'bar' },
 };
 
 /** Width a measure needs in a row, by display. */
@@ -54,7 +54,8 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
   const online = shown.filter(device => stateOf(data[device.id] ?? {}) === 'online').length;
   // A GPU is shown by default as soon as one of the machines reports one.
   const anyGpu = shown.some(device => (data[device.id]?.data?.metrics ?? []).some(metric => metric.kind === 'gpu'));
-  const defaults: LookDefaults = anyGpu ? { ...FLEET_DEFAULTS, shown: [...FLEET_DEFAULTS.shown, 'gpu'] } : FLEET_DEFAULTS;
+  const anyGpuTemperature = shown.some(device => (data[device.id]?.data?.metrics ?? []).some(metric => metric.kind === 'gpu' && Number.isFinite(metric.temperatureC)));
+  const defaults: LookDefaults = { ...FLEET_DEFAULTS, shown: [...FLEET_DEFAULTS.shown, ...(anyGpu ? ['gpu' as const] : []), ...(anyGpuTemperature ? ['gpuTemperature' as const] : [])] };
   const look = readLook(settings, defaults);
   const metrics = FLEET_DEFAULTS.offered.filter(id => look.metrics[id].shown);
   const needed = NAME_PX + metrics.reduce((sum, id) => sum + CELL_PX[look.metrics[id].display] + 12, 0) + 32;

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import zlib from 'zlib';
+import { version as productVersion } from '../../package.json';
 import { getDataDirectory } from './dataDirectory';
 
 /**
@@ -109,7 +110,7 @@ function tarOf(entries: { name: string; data: Buffer; mtime: number }[]): Buffer
 }
 
 /** Creates a backup now; returns its description. */
-export function createBackup({ automatic = false, appVersion = 'unknown', dataDirectory = getDataDirectory(), now = new Date() } = {}): BackupInfo {
+export function createBackup({ automatic = false, appVersion = productVersion, dataDirectory = getDataDirectory(), now = new Date() } = {}): BackupInfo {
   const directory = backupsDirectory(dataDirectory);
   fs.mkdirSync(directory, { recursive: true });
   const stamp = now.toISOString().replace(/[:.]/g, '-');

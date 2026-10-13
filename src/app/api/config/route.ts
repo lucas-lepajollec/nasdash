@@ -17,6 +17,7 @@ import { withDemoSession } from '@/lib/demoSession';
 import { getDeviceIntegration } from '@/integrations/registry';
 import { maskInstanceSecrets, SecretReuseError, upsertInstance } from '@/integrations/instances';
 import { isMonitoringType } from '@/integrations/sources';
+import { validateCalendarDates } from '@/lib/calendarDates';
 import type { DeviceSource } from '@/lib/types';
 
 /** A device's source as sent by the form (already validated). */
@@ -537,6 +538,8 @@ async function handlePUT(req: NextRequest) {
     const event = config.localEvents.find(e => e.id === body.id);
     if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+    try { validateCalendarDates(body.start ?? event.start, body.end ?? event.end); }
+    catch (error) { if (error instanceof RequestValidationError) return NextResponse.json({ error: error.message }, { status: error.status }); throw error; }
     if (body.title !== undefined) event.title = body.title;
     if (body.start !== undefined) event.start = body.start;
     if (body.end !== undefined) event.end = body.end;

@@ -7,6 +7,9 @@ import {
   dockerFailureStatus,
   fetchDockerApi,
   readDockerJson,
+  requireDockerObject,
+  requireDockerFields,
+  DockerInvalidResponseError,
   reportDockerFailure,
   reportDockerSuccess,
 } from '@/lib/dockerClient';
@@ -94,7 +97,7 @@ async function handleGET(
     const isAdminUser = isAdmin(request);
 
     // Mock details
-    const isMockMode = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    const isMockMode = isDemoMode();
     if (isMockMode) {
       const normalizedId = normalizeDemoContainerId(id);
       if (isDemoContainerRemoved(normalizedId)) {
@@ -127,7 +130,7 @@ async function handleGET(
           hostBindings: port.publicPort ? [`0.0.0.0:${port.publicPort}`] : [],
         })),
         mounts: found.mounts,
-        env: isAdminUser ? ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"] : ["<MASQUÉ - ADMINISTRATEUR UNIQUEMENT>"],
+        env: isAdminUser ? ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"] : ["<REDACTED - ADMINISTRATOR ONLY>"],
         labels: {
           'com.docker.compose.project': 'nasdash-demo',
           'com.docker.compose.service': found.name,
@@ -146,14 +149,20 @@ async function handleGET(
     }
 
     const detailResponse = await fetchDockerApi(host, `/containers/${encodeURIComponent(id)}/json`);
-    const detail = await readDockerJson(detailResponse) as DockerContainerInspect;
+    const detail = requireDockerObject<DockerContainerInspect>(await readDockerJson(detailResponse), 'Id');
 
+    requireDockerFields(detail as unknown as Record<string, unknown>, ['Mounts'], ['Config', 'State', 'HostConfig']);
+    if (detail.Mounts?.some(mount => !mount || typeof mount !== 'object')) throw new DockerInvalidResponseError();
+    requireDockerFields((detail.HostConfig || {}) as Record<string, unknown>, [], ['PortBindings']);
+    if (Object.values(detail.HostConfig?.PortBindings || {}).some(bindings => bindings !== null && (!Array.isArray(bindings) || bindings.some(binding => !binding || typeof binding !== 'object')))) throw new DockerInvalidResponseError();
     // Also get one-shot stats
     let stats: DockerContainerStats | null = null;
+    let statsError = null;
     try {
       const statsResponse = await fetchDockerApi(host, `/containers/${encodeURIComponent(id)}/stats?stream=false`);
       stats = await readDockerJson(statsResponse) as DockerContainerStats;
-    } catch { /* stats optional */ }
+      if (!stats || typeof stats.cpu_stats?.cpu_usage?.total_usage !== 'number' || typeof stats.memory_stats?.usage !== 'number' || typeof stats.memory_stats?.limit !== 'number') throw new DockerInvalidResponseError();
+    } catch (error) { stats = null; statsError = classifyDockerError(error); }
 
     const cpuDelta = (stats?.cpu_stats?.cpu_usage?.total_usage || 0) - (stats?.precpu_stats?.cpu_usage?.total_usage || 0);
     const systemDelta = (stats?.cpu_stats?.system_cpu_usage || 0) - (stats?.precpu_stats?.system_cpu_usage || 0);
@@ -195,16 +204,18 @@ async function handleGET(
         destination: m.Destination,
         rw: m.RW,
       })),
-      env: isAdminUser ? (detail.Config?.Env || []).slice(0, 50) : ["<MASQUÉ - ADMINISTRATEUR UNIQUEMENT>"], // Limit and protect for safety
+      env: isAdminUser ? (detail.Config?.Env || []).slice(0, 50) : ["<REDACTED - ADMINISTRATOR ONLY>"], // Limit and protect for safety
       labels: detail.Config?.Labels || {},
-      stats: {
+      statsAvailable: stats !== null,
+      statsError,
+      stats: stats ? {
         cpuPercent: Math.round(cpuPercent * 10) / 10,
         memUsage,
         memLimit,
         memPercent: Math.round(memPercent * 10) / 10,
         netInput,
         netOutput,
-      },
+      } : null,
     };
 
     reportDockerSuccess(resolvedHostId);
@@ -239,7 +250,7 @@ async function handlePOST(
     }
 
     // Mock action success
-    const isMockModePost = isDemoMode() || host.url.includes('mock') || host.id.includes('mock-host') || host.url === 'mock' || host.id === 'mock-host-id';
+    const isMockModePost = isDemoMode();
     if (isMockModePost) {
       if (action === 'remove') {
         removeDemoContainer(id);

@@ -1,3 +1,4 @@
+import { NO_ACCESS } from '../permissions';
 import fs from 'fs';
 import path from 'path';
 import { readConfig, safeWriteFileSync } from '../config';
@@ -176,7 +177,7 @@ export interface PageViewer extends WidgetViewer {
 }
 
 function canViewPage(viewer: PageViewer, pageId: string): boolean {
-  return viewer.role === 'admin' || viewer.allowedTabs.length === 0 || viewer.allowedTabs.includes(pageId);
+  return viewer.role === 'admin' || (!viewer.allowedTabs.includes(NO_ACCESS) && (viewer.allowedTabs.length === 0 || viewer.allowedTabs.includes(pageId)));
 }
 
 /** Removes what a non-admin user may not see: whole pages, then widget views. */

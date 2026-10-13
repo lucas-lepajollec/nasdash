@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLogosDir } from '@/lib/config';
 import { checkAdmin } from '@/lib/auth';
 import path from 'path';
+import { randomUUID } from 'node:crypto';
 import fs from 'fs';
 import { isDemoMode } from '@/lib/demoMode';
 
@@ -56,11 +57,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Le contenu du fichier ne correspond pas à un format d’image autorisé.' }, { status: 400 });
   }
 
-  const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9._-]/g, '_');
+  // Bound generated filenames for both the filesystem and portable backup headers.
+  const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 48) || 'image';
   const prefix = type === 'background' ? 'bg_' : '';
-  const safeName = `${prefix}${baseName}_${Date.now()}${ext}`;
+  const safeName = `${prefix}${baseName}_${randomUUID().replaceAll('-', '')}${ext}`;
   const filePath = path.join(getLogosDir(), safeName);
-  fs.writeFileSync(filePath, buffer);
+  fs.writeFileSync(filePath, buffer, { flag: 'wx', mode: 0o600 });
 
   return NextResponse.json({ filename: safeName, url: `/api/logos/${safeName}` });
 }

@@ -63,6 +63,34 @@ French source strings passed to the translator, like other interface text.
 Legacy types (`homeassistant`, `custom`) stay registered so existing devices
 remain valid; they are not selectable and show their static stats.
 
+## Monitoring state and temperature identity
+
+Collector discoveries and sessions belong to the resolved endpoint, credentials,
+machine target and certificate choice. Reconfiguring a connection clears them;
+Glances rediscovers supported API versions when its remembered endpoint disappears.
+Filesystems are identified by their reported device, or by their mount path when
+that identity is unavailable; equal capacities never identify a shared volume.
+
+The existing `temperature` widget setting now denotes CPU temperature only.
+`gpuTemperature` denotes separate reported GPU sensors, each with its own history
+and manual-order identity. Device widgets offer it when a GPU is detected; the
+existing temperature metrics widget can select CPU or GPU without changing its
+widget type. Missing GPU sensors stay unreported. Sensor selection never falls
+back to a hotter component of a different kind. Prometheus uses node_exporter's
+`node_hwmon_chip_names` metadata to select recognized CPU chips; unidentified
+chips stay unreported instead of substituting a GPU or disk temperature. Beszel
+reads named temperatures and per-GPU data from its latest `system_stats` record;
+its configurable dashboard temperature (`info.dt`) is never assumed to be CPU.
+Older hubs or tokens without access to sensor records keep their usage metrics,
+with temperatures unreported.
+
+Collectors return stable diagnostic keys and optional translation parameters in
+`CollectError`. The original `reason` remains available for canonical English
+operational diagnostics. UI consumers translate the key and parameters together.
+A failed refresh marks a device offline and suppresses stale readings while
+retaining its history internally for recovery. Server polling and shared browser
+readers serialize their requests so an older response cannot replace a newer one.
+
 ## Service integrations (Tailscale…)
 
 Some integrations are a connection used by widgets rather than a device to

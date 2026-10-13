@@ -143,6 +143,8 @@ export interface DockerContainer {
 }
 
 export interface DockerImage {
+  repoDigests?: string[];
+  labels?: Record<string, string>;
   id: string;
   repoTags: string[];
   size: number;
@@ -361,6 +363,8 @@ export interface DashboardConfig {
     activeWeatherLocationId?: string;
     hideDock?: boolean;
     calendarUrl?: string;
+    /** Read-only indication for viewers; the subscription capability stays server-side. */
+    calendarConfigured?: boolean;
     clockDesign?: 'default' | 'minimal' | 'glow' | 'split';
     dockerContainersStyle?: 'standard' | 'extended' | 'minimalist' | 'grid'; // grid: legacy demo/config compatibility
     dockerContainersAutoScroll?: boolean;

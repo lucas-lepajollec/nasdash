@@ -7,8 +7,10 @@ describe('widget-local metric order', () => {
     expect(deviceGroupOrder(['bar', 'invalid', 'bar', 5, 'ring'])).toEqual(['bar', 'ring', 'value', 'chart']);
     expect(moveMetricEntry(deviceGroupOrder(undefined), ['ring', 'bar', 'chart'], 'bar', 'ring')).toEqual(['bar', 'value', 'ring', 'chart']);
   });
-  it('keeps one-card readings stable when the hottest component or network source changes', () => {
+  it('keeps CPU readings stable and multiple GPU temperatures distinct', () => {
     expect(readingOrderId('nas', { metric: 'temperature', key: 'cpu@temp' })).toBe(readingOrderId('nas', { metric: 'temperature', key: 'gpu:0@temp' }));
+    expect(readingOrderId('nas', { metric: 'gpuTemperature', key: 'gpu:a@temp' })).not.toBe(readingOrderId('nas', { metric: 'gpuTemperature', key: 'gpu:b@temp' }));
+    expect(readingOrderId('nas', { metric: 'temperature', key: 'cpu@temp' })).not.toBe(readingOrderId('nas', { metric: 'gpuTemperature', key: 'gpu:a@temp' }));
     expect(readingOrderId('nas', { metric: 'network', key: 'net.rx' })).toBe(readingOrderId('nas', { metric: 'network', key: 'net.total' }));
     expect(readingOrderId('nas', { metric: 'gpu', key: 'gpu:0' })).not.toBe(readingOrderId('nas', { metric: 'gpu', key: 'gpu:1' }));
   });

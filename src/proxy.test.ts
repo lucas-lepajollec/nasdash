@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+const previousTrust = process.env.NASDASH_TRUST_PROXY;
+beforeEach(() => { process.env.NASDASH_TRUST_PROXY = 'true'; });
+afterEach(() => { if (previousTrust === undefined) delete process.env.NASDASH_TRUST_PROXY; else process.env.NASDASH_TRUST_PROXY = previousTrust; });
 import { proxy } from './proxy';
 
 function request(pathname: string, ip: string, method = 'GET') {
@@ -32,3 +35,11 @@ describe('proxy rate-limit buckets', () => {
     expect(proxy(request('/api/auth/login', ip, 'POST')).status).toBe(429);
   });
 });
+
+ it('ignores client-supplied forwarding identities unless proxy trust is explicit', async () => {
+  delete process.env.NASDASH_TRUST_PROXY;
+  vi.resetModules();
+  const { proxy: fresh } = await import('./proxy');
+  for (let index = 0; index < 10; index++) expect(fresh(request('/api/auth/login', `192.0.2.${index}`, 'POST')).status).not.toBe(429);
+  expect(fresh(request('/api/auth/login', '192.0.2.99', 'POST')).status).toBe(429);
+ });

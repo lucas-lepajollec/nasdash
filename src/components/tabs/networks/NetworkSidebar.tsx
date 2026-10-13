@@ -1,3 +1,4 @@
+import { demoFetch } from '@/lib/demoTransport';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ShieldAlert, CheckCircle, AlertTriangle, RefreshCw, HelpCircle, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
@@ -35,7 +36,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
     try {
       const promises = hosts.map(async (host) => {
         try {
-          const res = await fetch(`/api/docker/${host.id}/containers?all=true`);
+          const res = await demoFetch(`/api/docker/${host.id}/containers?all=true`);
           if (res.ok) {
             const data = await res.json();
             return (data || []).map((container: any) => ({

@@ -3,6 +3,8 @@ import type { DockerFailureCode, DockerFailurePayload } from './dockerErrorContr
 // API error strings remain translation keys. Operational logs use canonical
 // English copy, indexed by the same stable failure codes as the API contract.
 const COPY = {
+  invalid_socket: ['Invalid Docker socket path.', 'Use an absolute mounted .sock path without traversal.'],
+  socket_missing: ['Docker socket not found.', 'Check the socket path and container mount.'],
   invalid_url: ['Invalid Docker host address.', 'Enter a complete HTTP(S) URL with the correct Docker port.'],
   access_denied: ['Docker API access denied.', 'Check authentication, proxy configuration and Docker API permissions.'],
   endpoint_not_found: ['Docker API endpoint not found.', 'Check the address, port and whether the target exposes the Docker Engine API.'],

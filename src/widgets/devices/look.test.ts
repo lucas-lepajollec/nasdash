@@ -79,3 +79,21 @@ describe('device widget look', () => {
   });
 });
 
+
+
+it('preserves old CPU-temperature settings and independent GPU temperature options', () => {
+  const offered: LookDefaults = { offered: ['temperature', 'gpuTemperature'], shown: ['temperature', 'gpuTemperature'], display: 'value', perMetricDisplay: true };
+  const settings = { metrics: { temperature: { display: 'chart', danger: 77, color: '#123456', chartStyle: 'line' }, gpuTemperature: { display: 'ring', danger: 88, color: '#654321' } } };
+  const look = readLook(settings, offered);
+  expect(look.metrics.temperature).toMatchObject({ shown: true, display: 'chart', danger: 77, color: '#123456' });
+  expect(look.metrics.gpuTemperature).toMatchObject({ shown: true, display: 'ring', danger: 88, color: '#654321' });
+  expect(readLook(lookSettings(look), offered)).toEqual(look);
+  const old = readLook({ metrics: { temperature: { danger: 75, color: '#aabbcc' } } }, { offered: ['gpuTemperature'], shown: ['gpuTemperature'], display: 'bar' });
+  expect(old.metrics.gpuTemperature).toMatchObject({ danger: 75, color: '#aabbcc' });
+});
+
+
+it('keeps a single chosen temperature sensor visible after switching from the other sensor', () => {
+  const look = readLook({ metrics: { gpuTemperature: { shown: false, display: 'chart' } }, perMetricDisplay: true }, { offered: ['gpuTemperature'], shown: ['gpuTemperature'], display: 'value' });
+  expect(look.metrics.gpuTemperature).toMatchObject({ shown: true, display: 'chart' });
+});

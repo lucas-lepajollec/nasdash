@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readUsers, verifyPassword, generateToken, isSecureRequest } from '@/lib/auth';
 import { RequestValidationError, readJsonObject, readString } from '@/lib/requestValidation';
 import { isDemoMode } from '@/lib/demoMode';
+import { clearLoginFailures, loginBlocked, recordFailedLogin } from '@/lib/loginAttempts';
 
 const MAX_LOGIN_BODY_BYTES = 8 * 1024;
 
@@ -18,13 +19,17 @@ export async function POST(req: NextRequest) {
     const username = readString(body, 'username', { required: true, maxLength: 64 });
     const password = readString(body, 'password', { required: true, maxLength: 1024, trim: false });
 
+    if (loginBlocked(username!)) return NextResponse.json({ error: 'Trop de requêtes. Veuillez patienter.' }, { status: 429, headers: { 'Retry-After': '60' } });
     const users = readUsers();
     const user = users.find(u => u.username.toLowerCase() === username!.toLowerCase());
 
     if (!user || !verifyPassword(password!, user.passwordHash)) {
+      // Unknown identities must not fill the bounded quota table and crowd out real accounts.
+      if (user) recordFailedLogin(user.username);
       return NextResponse.json({ error: 'Nom d\'utilisateur ou mot de passe incorrect.' }, { status: 401 });
     }
 
+    clearLoginFailures(username!);
     const token = generateToken({ 
       username: user.username, 
       role: user.role,

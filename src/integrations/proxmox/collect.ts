@@ -1,3 +1,4 @@
+import { collectorFailure } from '../errors';
 import https from 'https';
 import { MonitoringConfigurationError, MonitoringHttpError, MonitoringInvalidResponseError } from '@/lib/monitoringError';
 import { CollectError, type CollectContext, type DeviceCollector, type DeviceVitals, type Metric, type SourceTarget, type TargetLister } from '../types';
@@ -107,13 +108,13 @@ export function proxmoxVitals(data: ProxmoxResponse, memory: CollectContext['mem
 
 export const collectProxmox: DeviceCollector = async (connection, context) => {
   if (!connection.url || !connection.token) {
-    throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('Missing Proxmox URL or token.'));
+    throw new CollectError('integrations.error.missingCredentials', new MonitoringConfigurationError('Missing Proxmox URL or token.'));
   }
   let data: ProxmoxResponse;
   try {
     data = await request<ProxmoxResponse>(connection.url, connection.token, connection.allowSelfSigned === true);
   } catch (error) {
-    throw new CollectError((error instanceof Error && error.message) || 'Impossible de joindre Proxmox', error);
+    throw collectorFailure('Proxmox', error);
   }
 
   // A whole node reports the sum of its storage pools.
@@ -132,13 +133,13 @@ export const collectProxmox: DeviceCollector = async (connection, context) => {
   }
 
   const metrics = proxmoxMetrics(data, storage);
-  if (metrics.length === 0) throw new CollectError('VM arrêtée ou aucune stat.', undefined, true);
+  if (metrics.length === 0) throw new CollectError('integrations.error.noData', undefined, true);
   return { metrics, vitals: proxmoxVitals(data, context.memory) };
 };
 
 /** The nodes of the cluster and their VMs / containers, to pick one per device. */
 export const listProxmoxTargets: TargetLister = async connection => {
-  if (!connection.url || !connection.token) throw new CollectError('URL ou Token manquant.', new MonitoringConfigurationError('Missing Proxmox URL or token.'));
+  if (!connection.url || !connection.token) throw new CollectError('integrations.error.missingCredentials', new MonitoringConfigurationError('Missing Proxmox URL or token.'));
   const base = connection.url.slice(0, connection.url.indexOf('/api2/json') + '/api2/json'.length);
   const self = connection.allowSelfSigned === true;
   try {
@@ -163,6 +164,6 @@ export const listProxmoxTargets: TargetLister = async connection => {
     }
     return targets;
   } catch (error) {
-    throw new CollectError((error instanceof Error && error.message) || 'Impossible de joindre Proxmox', error);
+    throw collectorFailure('Proxmox', error);
   }
 };

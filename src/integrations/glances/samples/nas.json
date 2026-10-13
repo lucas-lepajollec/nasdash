@@ -20,12 +20,14 @@
     {
       "mnt_point": "/mnt/data",
       "size": 2147483648000,
-      "percent": 55.55
+      "percent": 55.55,
+      "device_name": "/dev/fictional-data"
     },
     {
       "mnt_point": "/mnt/data/bind",
       "size": 2147483648000,
-      "percent": 55.55
+      "percent": 55.55,
+      "device_name": "/dev/fictional-data"
     }
   ],
   "sensors": [

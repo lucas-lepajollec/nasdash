@@ -156,7 +156,7 @@ export type DeviceCollector = (connection: ResolvedConnection, context: CollectC
  * `classifyMonitoringError`); `silent` skips the log for expected states.
  */
 export class CollectError extends Error {
-  constructor(message: string, readonly reason?: unknown, readonly silent = false) {
+  constructor(message: string, readonly reason?: unknown, readonly silent = false, readonly parameters?: Record<string, string | number>) {
     super(message);
     this.name = 'CollectError';
   }
