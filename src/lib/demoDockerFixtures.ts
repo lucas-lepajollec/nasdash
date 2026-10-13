@@ -76,13 +76,17 @@ export function demoStartedAt(index: number): string {
   return new Date(Date.UTC(2026, 7, 11, 12, index * 7)).toISOString();
 }
 
-export const DEMO_DOCKER_IMAGES = DEMO_DOCKER_SERVICES.map((service, index) => ({
+export const DEMO_DOCKER_IMAGES = [...DEMO_DOCKER_SERVICES.map((service, index) => ({
   id: `${service.id}-image`,
   repoTags: [service.image],
   size: service.imageSize,
   created: 1_780_517_682 - index * 86_400,
   containers: 1,
-}));
+})),
+  { id: 'demo-unused-media-image', repoTags: ['demo/media-server:previous', 'demo/media-server:archive'], size: 640_000_000, created: 1_775_517_682, containers: 0 },
+  { id: 'demo-unused-cache-image', repoTags: ['demo/cache:previous'], size: 84_000_000, created: 1_776_517_682, containers: 0 },
+  { id: 'demo-untagged-tools-image', repoTags: [], repoDigests: ['registry.example.test/demo/maintenance-tools@sha256:demo-fictional-digest'], size: 116_000_000, created: 1_777_517_682, containers: 0 },
+];
 
 const uniqueVolumes = new Map<string, DemoDockerMount>();
 for (const service of DEMO_DOCKER_SERVICES) {
@@ -91,13 +95,16 @@ for (const service of DEMO_DOCKER_SERVICES) {
   }
 }
 
-export const DEMO_DOCKER_VOLUMES = Array.from(uniqueVolumes.values()).map((mount, index) => ({
+export const DEMO_DOCKER_VOLUMES = [...Array.from(uniqueVolumes.values()).map((mount, index) => ({
   name: mount.name!,
   driver: 'local',
   mountpoint: `/var/lib/docker/volumes/${mount.name}/_data`,
   createdAt: demoStartedAt(index),
   usageData: { size: 8_000_000 + index * 11_500_000, refCount: 1 },
-}));
+})),
+  { name: 'demo-unused-media-server-configuration-previous-installation', driver: 'local', mountpoint: '/var/lib/docker/volumes/demo-unused-media-server-configuration-previous-installation/_data', createdAt: '2026-06-01T12:00:00Z', usageData: { size: 38_000_000, refCount: 0 } },
+  { name: 'demo-unused-test-cache', driver: 'local', mountpoint: '/var/lib/docker/volumes/demo-unused-test-cache/_data', createdAt: '2026-06-02T12:00:00Z', usageData: { size: 16_000_000, refCount: 0 } },
+];
 
 export function getDemoDockerService(id: string): DemoDockerService | undefined {
   return DEMO_DOCKER_SERVICES.find(service => service.id === id.slice(0, 12));

@@ -42,7 +42,7 @@ test('Docker relay resources render safe names, retain errors and reset across h
     const imageRow = explorer.getByRole('row').filter({ hasText: 'renamed-web:1' });
     await expect(imageRow.getByRole('checkbox')).toBeDisabled();
     await expect(explorer.getByText('registry.example.test/unused-web', { exact: true })).toBeVisible();
-    await expect(explorer.getByText('Untagged image', { exact: true })).toBeVisible();
+    await expect(explorer.getByRole('table', { name: 'Images', exact: true }).getByText('Untagged image', { exact: true })).toBeVisible();
     const unusedRow = explorer.getByRole('row').filter({ hasText: 'registry.example.test/unused-web' });
     await unusedRow.getByRole('button', { name: 'Delete', exact: true }).filter({ visible: true }).click();
     const confirmation = page.getByRole('dialog', { name: 'Delete image', exact: true });

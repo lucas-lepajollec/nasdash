@@ -23,6 +23,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Rework Docker image/volume lists with search, usage filters, sorting, 10/25/50-item pagination, expandable metadata and page-scoped selection. Keep deletion confirmations readable, preserve only failed targets for retry, and adapt to narrow widgets and mobile widths using the existing appearance tokens. Include fictional unused resources in the isolated demo.
+
 - Keep fictional demo edits in a temporary browser-tab workspace across reloads and server-worker changes, with serialized requests and an explicit Reset restoring fixtures. Browser session storage is required for reload retention; direct cookie-only demo API clients keep temporary process-local state.
 - Separate CPU and GPU temperature choices in device and metric widgets when the source supplies GPU temperature. Keep existing temperature selections as CPU temperature, with independent display options and thresholds; preserve readable labels in narrow layouts.
 - Make the local Docker socket proxy an optional Compose profile. Portainer, Dockhand and Docker-compatible API/socket connections remain alternatives; document their configuration, permissions and resource operations in all five guide languages. Existing proxy users must keep their Compose configuration or enable the profile when recreating the stack, without changing the data mount.
