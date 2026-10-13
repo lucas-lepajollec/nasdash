@@ -31,8 +31,21 @@ export default function CustomSelect({ value, options, onChange, className, styl
   const listRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const focusFrame = useRef<number | null>(null);
   const id = useId();
   const listboxId = `custom-select-${id}`;
+
+  useEffect(() => () => {
+    if (focusFrame.current !== null) window.cancelAnimationFrame(focusFrame.current);
+  }, []);
+
+  const focusNextFrame = (target: () => HTMLElement | null | undefined) => {
+    if (focusFrame.current !== null) window.cancelAnimationFrame(focusFrame.current);
+    focusFrame.current = window.requestAnimationFrame(() => {
+      focusFrame.current = null;
+      target()?.focus();
+    });
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
@@ -99,9 +112,11 @@ export default function CustomSelect({ value, options, onChange, className, styl
   const selectedIndex = Math.max(0, selectableOptions.findIndex(option => option.value === selectedOption?.value));
 
   const closeMenu = (restoreTriggerFocus = false) => {
+    if (focusFrame.current !== null) window.cancelAnimationFrame(focusFrame.current);
+    focusFrame.current = null;
     setIsOpen(false);
     if (restoreTriggerFocus) {
-      window.requestAnimationFrame(() => triggerRef.current?.focus());
+      focusNextFrame(() => triggerRef.current);
     }
   };
 
@@ -111,7 +126,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
     setIsOpen(true);
     window.dispatchEvent(new CustomEvent('customSelectOpen', { detail: id }));
     if (focusSelectedOption) {
-      window.requestAnimationFrame(() => optionRefs.current[selectedIndex]?.focus());
+      focusNextFrame(() => optionRefs.current[selectedIndex]);
     }
   };
 
@@ -120,19 +135,23 @@ export default function CustomSelect({ value, options, onChange, className, styl
     closeMenu(true);
   };
 
+  const movePastTrigger = (event: React.KeyboardEvent<HTMLElement>) => {
+    event.preventDefault();
+    const trigger = triggerRef.current;
+    const dialog = trigger?.closest('[role="dialog"]');
+    const scope = dialog ?? document;
+    const focusable = Array.from(scope.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
+      .filter(element => !listRef.current?.contains(element) && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+    const triggerIndex = trigger ? focusable.indexOf(trigger) : -1;
+    const nextIndex = triggerIndex + (event.shiftKey ? -1 : 1);
+    const next = focusable[nextIndex] ?? (dialog ? focusable[event.shiftKey ? focusable.length - 1 : 0] : trigger);
+    closeMenu();
+    focusNextFrame(() => next);
+  };
+
   const handleOptionKeyDown = (event: React.KeyboardEvent<HTMLDivElement>, option: Option, index: number) => {
     if (event.key === 'Tab') {
-      event.preventDefault();
-      const trigger = triggerRef.current;
-      const dialog = trigger?.closest('[role="dialog"]');
-      const scope = dialog ?? document;
-      const focusable = Array.from(scope.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
-        .filter(element => !listRef.current?.contains(element) && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
-      const triggerIndex = trigger ? focusable.indexOf(trigger) : -1;
-      const nextIndex = triggerIndex + (event.shiftKey ? -1 : 1);
-      const next = focusable[nextIndex] ?? (dialog ? focusable[event.shiftKey ? focusable.length - 1 : 0] : trigger);
-      closeMenu();
-      window.requestAnimationFrame(() => next?.focus());
+      movePastTrigger(event);
       return;
     }
     if (event.key === 'Enter' || event.key === ' ') {
@@ -179,6 +198,11 @@ export default function CustomSelect({ value, options, onChange, className, styl
           }
         }}
         onKeyDown={(event) => {
+          // Tab can arrive before the opening frame has focused the portalled option.
+          if (event.key === 'Tab' && isOpen) {
+            movePastTrigger(event);
+            return;
+          }
           if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault();
             if (isOpen) {

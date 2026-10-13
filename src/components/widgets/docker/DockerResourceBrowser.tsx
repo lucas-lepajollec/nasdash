@@ -95,18 +95,16 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
   return <section className="nd-docker-resources" aria-label={t(imageMode ? 'Images' : 'Volumes')} aria-busy={loading}>
     <div className="nd-docker-resource-heading">
       <div className="nd-docker-resource-title"><Icon size={18} aria-hidden="true" /><h3>{t(imageMode ? 'Images' : 'Volumes')}</h3><span>{rows.length}</span></div>
-      <button type="button" className="nd-btn" onClick={refresh} disabled={loading || deleting}><RotateCcw size={14} aria-hidden="true" />{t('docker.resources.refresh')}</button>
+      <div className="nd-docker-resource-heading-actions">
+        <p className="nd-docker-resource-summary">
+          <span>{t('docker.resources.usedCount', { count: rows.filter(row => row.used).length })}</span>
+          <span>{t('docker.resources.unusedCount', { count: rows.filter(row => !row.used).length })}</span>
+        </p>
+        <button type="button" className="nd-btn" onClick={refresh} disabled={loading || deleting}><RotateCcw size={14} aria-hidden="true" />{t('docker.resources.refresh')}</button>
+      </div>
     </div>
-    <p className="nd-docker-resource-summary">
-      <span>{t('docker.resources.usedCount', { count: rows.filter(row => row.used).length })}</span>
-      <span>{t('docker.resources.unusedCount', { count: rows.filter(row => !row.used).length })}</span>
-    </p>
     <div className="nd-docker-resource-tools">
       <div className="nd-docker-resource-query">
-        <label className="nd-docker-resource-checkbox" title={t('docker.resources.selectPage')}>
-          <input ref={allCheckbox} type="checkbox" checked={allSelected} disabled={!pageIds.length || unavailable || deleting} onChange={() => setSelected(allSelected ? selectedIds.filter(value => !pageIds.includes(value)) : [...new Set([...selectedIds, ...pageIds])])} />
-          <span className="nd-sr-only">{t('docker.resources.selectPage')}</span>
-        </label>
         <label className="nd-docker-resource-search"><span className="nd-sr-only">{t('docker.resources.search')}</span><Search size={15} aria-hidden="true" />
           <input className="nd-input" type="search" value={query} placeholder={t('docker.resources.search')} onChange={event => { setQuery(event.target.value); resetSelection(); }} onKeyDown={event => { if (event.key === 'Escape') { setQuery(''); resetSelection(); } }} />
           {query && <button type="button" className="ndc-icon-button" aria-label={t('docker.resources.clearSearch')} onClick={() => { setQuery(''); resetSelection(); }}><X size={14} /></button>}
@@ -130,7 +128,15 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
 
         <table className="nd-docker-resource-table" aria-label={t(imageMode ? 'Images' : 'Volumes')}>
           <colgroup><col className="nd-docker-resource-check-col" /><col /><col className="nd-docker-resource-status-col" /><col className="nd-docker-resource-meta-col" /><col className="nd-docker-resource-actions-col" /></colgroup>
-          <thead><tr><th><span className="nd-sr-only">{t('docker.resources.selected', { count: selectedIds.length })}</span></th><th scope="col">{t(imageMode ? 'Image' : 'Volume')}</th><th scope="col">{t('Statut')}</th><th scope="col">{t(imageMode ? 'Taille' : 'Driver')}</th><th scope="col"><span className="nd-sr-only">{t('Actions')}</span></th></tr></thead>
+          <thead><tr>
+            <th scope="col" className="nd-docker-resource-check">
+              <label className="nd-docker-resource-checkbox" title={t('docker.resources.selectPage')}>
+                <input ref={allCheckbox} type="checkbox" checked={allSelected} disabled={!pageIds.length || unavailable || deleting} onChange={() => setSelected(allSelected ? selectedIds.filter(value => !pageIds.includes(value)) : [...new Set([...selectedIds, ...pageIds])])} />
+                <span className="nd-sr-only">{t('docker.resources.selectPage')}</span>
+              </label>
+            </th>
+            <th scope="col">{t(imageMode ? 'Image' : 'Volume')}</th><th scope="col">{t('Statut')}</th><th scope="col">{t(imageMode ? 'Taille' : 'Driver')}</th><th scope="col"><span className="nd-sr-only">{t('Actions')}</span></th>
+          </tr></thead>
           <tbody>{current.rows.map((row, index) => {
             const isExpanded = expanded.includes(row.id);
             const detailsId = `${id}-details-${index}`;

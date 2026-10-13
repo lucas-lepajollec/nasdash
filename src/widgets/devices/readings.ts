@@ -16,7 +16,7 @@ export interface Reading {
   value?: number;
   /** Text of the value (`23 %`, `46 °C`, `↓ 2,4 Mo/s`). */
   text: string;
-  /** Second line (capacity, free space, core count, send rate). */
+  /** Supporting text (capacity, free space, core count, send rate). */
   detail?: string;
   points: [number, number][];
   /** Network: the send side, drawn as a second line. */

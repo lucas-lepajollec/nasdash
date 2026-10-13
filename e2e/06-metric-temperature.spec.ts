@@ -157,10 +157,68 @@ test('temperature labels remain readable in narrow figures and bars in five lang
           expect(measurement.scrollWidth).toBeLessThanOrEqual(measurement.width + 1);
           expect(measurement.right).toBeLessThanOrEqual(measurement.cardRight + 1);
         }
+        if (id === 'temperature-device-bars') {
+          const head = scope.locator('.ndc-m-head').first();
+          await head.evaluate(element => { element.style.width = '90px'; });
+          // Reserve a readable caption width before wrapping the value below it.
+          await expect.poll(() => head.evaluate(element => {
+            const label = element.querySelector('.ndc-m-label')!.getBoundingClientRect();
+            const value = element.querySelector('.ndc-m-value')!.getBoundingClientRect();
+            return label.width >= 89 && value.top >= label.bottom;
+          })).toBe(true);
+          await head.evaluate(element => { element.style.removeProperty('width'); });
+        }
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     }
   } finally {
     expect((await page.request.delete(`/api/pages?id=${fixture.id}`)).status()).toBe(200);
   }
+});
+
+
+test('device and storage bar details use available space and wrap only when needed', async ({ page }) => {
+  test.skip(process.env.NASDASH_DEMO_MODE === 'true', 'Uses installed-instance fixtures.');
+  const { fixture, gpuId } = await temperatureFixture(page);
+  const now = Date.now();
+  await page.route('**/api/devices/*/history?*', route => route.fulfill({ json: {
+    online: true, updatedAt: now, vitals: { cores: 16, load: [2.4, 2, 1] },
+    metrics: [{ key: 'disk:system', kind: 'disk', name: 'System', percent: 28, totalBytes: 128 * 1024 ** 3 }], series: {},
+  } }));
+  try {
+    const pages = await (await page.request.get('/api/pages')).json();
+    const current = pages.pages.find((saved: SavedPage) => saved.id === fixture.id) as SavedPage;
+    expect((await page.request.put('/api/pages', { data: { page: { ...current, widgets: [
+    { id: 'inline-device', type: 'device', x: 0, y: 0, w: 12, h: 90, settings: { deviceId: gpuId, display: 'bar', perMetricDisplay: false, metrics: {
+      cpu: { shown: false }, memory: { shown: false }, gpu: { shown: false }, temperature: { shown: false }, gpuTemperature: { shown: false },
+      network: { shown: false }, load: { shown: true }, disk: { shown: false }, history: { shown: false },
+    } } },
+    { id: 'inline-storage', type: 'storage', x: 12, y: 0, w: 12, h: 90, settings: { deviceIds: [gpuId], display: 'bar' } },
+  ] } } })).status()).toBe(200);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const language of ['en', 'fr', 'es', 'de', 'it']) {
+      await page.goto(`/?lang=${language}`);
+      for (const id of ['inline-device', 'inline-storage']) {
+        const scope = widget(page, id);
+        const head = scope.locator('.ndc-m-head').first();
+        await expect(head.locator('.ndc-m-detail')).toBeVisible();
+        const measure = () => head.evaluate(element => {
+          const label = element.querySelector('.ndc-m-label')!.getBoundingClientRect();
+          const detail = element.querySelector('.ndc-m-detail')!.getBoundingClientRect();
+          const value = element.querySelector('.ndc-m-value')!.getBoundingClientRect();
+          const bounds = element.getBoundingClientRect();
+          return { sameLine: detail.top < label.bottom && label.top < detail.bottom,
+            fits: value.right <= bounds.right + 1 && detail.right <= bounds.right + 1 && label.right <= bounds.right + 1,
+            height: label.height, detailBelow: detail.top >= label.bottom };
+        });
+        await expect.poll(async () => (await measure()).sameLine).toBe(true);
+        await scope.evaluate(element => { element.style.width = '160px'; });
+        await expect.poll(async () => (await measure()).detailBelow).toBe(true);
+        expect((await measure()).fits).toBe(true);
+        await scope.evaluate(element => { element.style.width = '600px'; });
+        await expect.poll(async () => (await measure()).sameLine).toBe(true);
+        expect((await measure()).fits).toBe(true);
+      }
+    }
+  } finally { expect((await page.request.delete(`/api/pages?id=${fixture.id}`)).status()).toBe(200); }
 });

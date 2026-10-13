@@ -181,12 +181,8 @@ test('mobile resources default to five rows and shared dropdowns keep explicit c
     await expect(statusMenu).not.toBeVisible();
     await expect(status).toBeFocused();
     expect(await explorer.locator('select').count()).toBe(0);
-    const query = explorer.locator('.nd-docker-resource-query');
-    expect(await query.evaluate(element => {
-      const input = element.querySelector('input[type="search"]')!.getBoundingClientRect();
-      const checkbox = element.querySelector('input[type="checkbox"]')!.getBoundingClientRect();
-      return Math.abs((checkbox.top + checkbox.height / 2) - (input.top + input.height / 2)) < 3;
-    })).toBe(true);
+    await expect(explorer.locator('thead').getByRole('checkbox', { name: 'Select unused resources on this page', exact: true })).toBeVisible();
+    await expect(explorer.locator('.nd-docker-resource-query').getByRole('checkbox')).toHaveCount(0);
   } finally { await cleanup(); }
 });
 
@@ -207,8 +203,63 @@ test('shared settings dropdowns keep Escape and Tab inside the correct dialog', 
     await page.keyboard.press('Tab');
     await expect(settings.getByRole('button', { name: 'Font', exact: true })).toBeFocused();
     await expect(page.getByRole('listbox')).toHaveCount(0);
+    // Opening and pressing Tab in the same frame must cancel the pending option focus.
+    await language.focus();
+    await language.evaluate(button => {
+      button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    });
+    await expect(language).toHaveAttribute('aria-expanded', 'true');
+    await language.evaluate(button => button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })));
+    await expect(settings.getByRole('button', { name: 'Font', exact: true })).toBeFocused();
+    await expect(page.getByRole('listbox')).toHaveCount(0);
     expect(await settings.locator('select').count()).toBe(0);
     await page.keyboard.press('Escape');
     await expect(settings).not.toBeVisible();
+  } finally { await cleanup(); }
+});
+
+
+test('header selection works for images and volumes, including mobile and protected resources', async ({ page }) => {
+  test.skip(process.env.NASDASH_DEMO_MODE === 'true', 'Uses isolated installed-instance fixtures.');
+  const { explorer, calls, cleanup } = await resourceFixture(page);
+  try {
+    for (const kind of ['Images', 'Volumes']) {
+      await explorer.getByRole('tab', { name: new RegExp(`^${kind}`) }).click();
+      const all = explorer.locator('thead').getByRole('checkbox', { name: 'Select unused resources on this page', exact: true });
+      for (const width of [1440, 390, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(all).toBeVisible();
+        const rows = explorer.locator('.nd-docker-resource-row');
+        const count = width < 768 ? 5 : 10;
+        await expect(rows).toHaveCount(count);
+        await rows.nth(1).getByRole('checkbox').check();
+        await expect.poll(() => all.evaluate(input => (input as HTMLInputElement).indeterminate)).toBe(true);
+        await all.check();
+        await expect(rows.locator('input:checked')).toHaveCount(count - 1);
+        await expect(rows.first().getByRole('checkbox')).toBeDisabled();
+        await expect(rows.first().getByRole('checkbox')).not.toBeChecked();
+        await all.uncheck();
+        await expect(rows.locator('input:checked')).toHaveCount(0);
+        const heading = explorer.locator('.nd-docker-resource-heading-actions');
+        await expect(heading.locator('.nd-docker-resource-summary')).toBeVisible();
+        await expect(heading.getByRole('button', { name: 'Refresh', exact: true })).toBeVisible();
+        expect(await heading.evaluate(element => {
+          const box = element.getBoundingClientRect();
+          return Array.from(element.children).every(child => {
+            const rect = child.getBoundingClientRect();
+            return rect.left >= box.left - 1 && rect.right <= box.right + 1;
+          });
+        })).toBe(true);
+      }
+      await explorer.getByRole('button', { name: 'Status', exact: true }).click();
+      await page.getByRole('option', { name: 'In use', exact: true }).click();
+      await expect(all).toBeDisabled();
+      await explorer.getByRole('button', { name: 'Status', exact: true }).click();
+      await page.getByRole('option', { name: 'Unused', exact: true }).click();
+      await all.check();
+      await expect(explorer.locator('.nd-docker-resource-row input:checked')).toHaveCount(5);
+      await all.uncheck();
+    }
+    expect(calls).toEqual([]);
   } finally { await cleanup(); }
 });

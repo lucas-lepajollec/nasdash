@@ -79,9 +79,11 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
 
   const head = (
     <span className="ndc-m-head">
-      {!hideLabel && <span className="ndc-m-label">{reading.label}</span>}
+      <span className="ndc-m-caption">
+        {!hideLabel && <span className="ndc-m-label">{reading.label}</span>}
+        {reading.detail && display !== 'value' && !inline && <span className="ndc-m-detail">{reading.detail}</span>}
+      </span>
       <span className={`ndc-m-value ${danger ? 'is-danger' : ''}`} style={danger ? { color } : undefined}>{reading.text}</span>
-      {reading.detail && display !== 'value' && !inline && <span className="ndc-m-detail">{reading.detail}</span>}
     </span>
   );
 

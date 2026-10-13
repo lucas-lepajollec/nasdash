@@ -23,9 +23,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
-- Unify dashboard dropdowns with the existing NasDash selector, improve popup positioning and keyboard focus, and label every selector. Place Docker page selection beside search, use red for unused resources, and default to five rows on mobile while retaining explicit page-size choices. Remove duplicate CPU/GPU metric captions; keep the GPU-model option where it adds information.
+- Keep Device and Metrics bar/chart captions and supporting information on one line when they fit, wrapping within the available width while preserving the full reading value.
 
-- Rework Docker image/volume lists with search, usage filters, sorting, 10/25/50-item pagination, expandable metadata and page-scoped selection. Keep deletion confirmations readable, preserve only failed targets for retry, and adapt to narrow widgets and mobile widths using the existing appearance tokens. Include fictional unused resources in the isolated demo.
+- Unify dashboard dropdowns with the existing NasDash selector, improve popup positioning and keyboard focus (including Tab immediately after opening), and label every selector. Place Docker page selection in the responsive table header and usage counts beside Refresh, use red for unused resources, and default to five rows on mobile while retaining explicit page-size choices. Remove duplicate CPU/GPU metric captions; keep the GPU-model option where it adds information.
+
+- Rework Docker image/volume lists with search, usage filters, sorting, 5/10/25/50-item pagination, expandable metadata and page-scoped selection. Keep deletion confirmations readable, preserve only failed targets for retry, and adapt to narrow widgets and mobile widths using the existing appearance tokens. Include fictional unused resources in the isolated demo.
 
 - Keep fictional demo edits in a temporary browser-tab workspace across reloads and server-worker changes, with serialized requests and an explicit Reset restoring fixtures. Browser session storage is required for reload retention; direct cookie-only demo API clients keep temporary process-local state.
 - Separate CPU and GPU temperature choices in device and metric widgets when the source supplies GPU temperature. Keep existing temperature selections as CPU temperature, with independent display options and thresholds; preserve readable labels in narrow layouts.
