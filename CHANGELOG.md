@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-10-13
+
+### Upgrading from 0.2.3
+
+- Back up the complete data directory, then pull and recreate NasDash without deleting data or volumes. Accounts, credentials, integrations and saved pages are preserved; no automatic data migration is introduced.
+- The supplied Compose examples now make the Docker proxy optional. Existing proxy installations must retain their current Compose service or use `--profile docker-proxy` when recreating the supplied stack. Portainer, Dockhand and Docker-compatible API/socket connections work without this proxy; keep the existing data mount.
+- Forwarded client addresses are trusted for rate limits only when `NASDASH_TRUST_PROXY=true` is explicitly set behind a trusted proxy. Direct installations need no override.
+- Existing temperature selections now refer to CPU temperature; GPU temperature has its own choices and alerts when available. Demo edits survive reloads: use Reset to restore the fictional workspace.
+- To roll back, recreate the recorded `0.2.3` image with the same data mount; restore the pre-upgrade backup if the exact earlier state is required. Rollback also restores the earlier behavior and omits this release's security and reliability fixes.
+
+### Maintenance
+
 - Refresh compatible React, service telemetry, UUID and browser-test dependencies; retain the Node 22 baseline.
 
 ### Fixed
@@ -357,7 +369,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.0...v0.2.1
