@@ -74,10 +74,10 @@ export const FACETS: Partial<Record<MetricId, readonly Facet[]>> = {
   gpu: ['temperature', 'vram'],
   network: ['upload'],
   load: ['averages', 'cores'],
-  temperature: ['part'], gpuTemperature: ['part'],
+  temperature: [], gpuTemperature: ['part'],
 };
 export const DEFAULT_FACETS: Partial<Record<MetricId, readonly Facet[]>> = {
-  cpu: ['temperature'], gpu: ['temperature'], network: ['upload'], load: ['cores'], temperature: ['part'], gpuTemperature: ['part'],
+  cpu: ['temperature'], gpu: ['temperature'], network: ['upload'], load: ['cores'], temperature: [], gpuTemperature: ['part'],
 };
 /** Measures that have a size, so their shown values can be chosen. */
 export const SIZED: readonly MetricId[] = ['memory', 'disk'];

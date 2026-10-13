@@ -242,6 +242,7 @@ export function MobileTab() {
         <CalmeRow label={t('settings.calme.theme')}>
           <div style={{ width: 220 }}>
             <CustomSelect
+              ariaLabel={t('settings.calme.theme')}
               value={mobileTheme}
               onChange={(val: string) => { setMobileTheme(val); updateConfig({ mobileTheme: val }); }}
               options={[{ value: '', label: inherit }, ...Object.keys(THEME_PRESETS).map(themeKey => ({ value: themeKey, label: t(THEME_PRESETS[themeKey].name) }))]}
@@ -251,6 +252,7 @@ export function MobileTab() {
         <CalmeRow label={t('settings.calme.font')}>
           <div style={{ width: 220 }}>
             <CustomSelect
+              ariaLabel={t('settings.calme.font')}
               value={mobileGlobalFont}
               onChange={(val: string) => { setMobileGlobalFont(val); updateConfig({ mobileGlobalFont: val }); }}
               options={[{ value: '', label: inherit }, ...['Outfit', 'Inter', 'Poppins', 'Rubik', 'Ubuntu', 'Lexend', 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Montserrat', 'Roboto'].map(font => ({ value: font, label: font }))]}

@@ -73,7 +73,9 @@ export default function CalmeMetric({ metric: requestedMetric, devices, settings
   const entries = manual && display !== 'chart' ? orderMetricEntries(baseEntries, settings.metricOrder, entryId) : baseEntries;
   const labelled = (entry: typeof entries[number]): Reading => withFacets({
     ...entry.reading,
-    label: metric === 'disk' || ((metric === 'gpu' || metric === 'gpuTemperature') && entry.reading.label !== 'GPU') ? [entry.reading.label, entry.device.name].join(' · ') : entry.device.name,
+    label: metric === 'disk' ? [entry.reading.label, entry.device.name].join(' · ')
+      : (metric === 'gpu' || metric === 'gpuTemperature') && (data[entry.device.id]?.data?.metrics.filter(item => item.kind === 'gpu').length ?? 0) > 1
+        ? [entry.reading.source?.name || entry.reading.key, entry.device.name].join(' · ') : entry.device.name,
   }, data[entry.device.id]?.data, look.facets, look.valueParts, t, language, display);
   // A machine's colour: its own, else the measure's (a chart gives each machine a distinct one).
   const colorFor = (entry: typeof entries[number], index: number) => look.deviceColors[entry.device.id]

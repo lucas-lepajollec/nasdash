@@ -1,15 +1,25 @@
 'use client';
 
-import { Fragment, useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, ArrowDownWideNarrow, ArrowUpWideNarrow, Box, ChevronDown, ChevronLeft, ChevronRight, HardDrive, Loader2, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeDialog } from '@/components/shared/CalmeDialog';
+import CustomSelect from '@/components/shared/CustomSelect';
 import { demoFetch } from '@/lib/demoTransport';
 import { dockerActionError, readDockerResponse } from '@/lib/dockerErrorContract';
 import { deletableSelection, resourceList, resourcePage, type DockerResourceRow, type ResourceFilter, type ResourceSort } from '@/lib/dockerResourceList';
+
+const mobileQuery = '(max-width: 767px)';
+const mobileSnapshot = () => window.matchMedia(mobileQuery).matches;
+const desktopSnapshot = () => false;
+function subscribeMobile(callback: () => void) {
+  const media = window.matchMedia(mobileQuery);
+  media.addEventListener('change', callback);
+  return () => media.removeEventListener('change', callback);
+}
 
 export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice, refresh, formatSize }: {
   kind: 'images' | 'volumes'; rows: DockerResourceRow[]; hostId: string; loading: boolean;
@@ -23,7 +33,9 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
   const [filter, setFilter] = useState<ResourceFilter>('all');
   const [sort, setSort] = useState<ResourceSort>('name');
   const [descending, setDescending] = useState(false);
-  const [pageSize, setPageSize] = useState(10);
+  const isMobile = useSyncExternalStore(subscribeMobile, mobileSnapshot, desktopSnapshot);
+  const [chosenPageSize, setPageSize] = useState<number | null>(null);
+  const pageSize = chosenPageSize ?? (isMobile ? 5 : 10);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string[]>([]);
@@ -90,17 +102,23 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
       <span>{t('docker.resources.unusedCount', { count: rows.filter(row => !row.used).length })}</span>
     </p>
     <div className="nd-docker-resource-tools">
-      <label className="nd-docker-resource-search"><span className="nd-sr-only">{t('docker.resources.search')}</span><Search size={15} aria-hidden="true" />
-        <input className="nd-input" type="search" value={query} placeholder={t('docker.resources.search')} onChange={event => { setQuery(event.target.value); resetSelection(); }} onKeyDown={event => { if (event.key === 'Escape') { setQuery(''); resetSelection(); } }} />
-        {query && <button type="button" className="ndc-icon-button" aria-label={t('docker.resources.clearSearch')} onClick={() => { setQuery(''); resetSelection(); }}><X size={14} /></button>}
-      </label>
-      <label className="nd-docker-resource-control"><span>{t('Statut')}</span><select className="nd-input" value={filter} onChange={event => { setFilter(event.target.value as ResourceFilter); resetSelection(); }}>
-        <option value="all">{t('docker.resources.all')}</option><option value="used">{t('docker.resources.used')}</option><option value="unused">{t('docker.resources.unused')}</option>
-        {imageMode && <option value="untagged">{t('docker.image.untagged')}</option>}
-      </select></label>
-      <div className="nd-docker-resource-sort"><label className="nd-docker-resource-control"><span>{t('docker.resources.sort')}</span><select className="nd-input" value={sort} onChange={event => { setSort(event.target.value as ResourceSort); setPage(1); }}>
-        <option value="name">{t('Nom')}</option><option value="created">{t('Créé')}</option><option value="size">{t('Taille')}</option>{!imageMode && <option value="driver">{t('Driver')}</option>}
-      </select></label><button type="button" className="nd-btn" aria-label={t(descending ? 'docker.resources.descending' : 'docker.resources.ascending')} title={t(descending ? 'docker.resources.descending' : 'docker.resources.ascending')} onClick={() => { setDescending(!descending); setPage(1); }}>{descending ? <ArrowDownWideNarrow size={16} /> : <ArrowUpWideNarrow size={16} />}</button></div>
+      <div className="nd-docker-resource-query">
+        <label className="nd-docker-resource-checkbox" title={t('docker.resources.selectPage')}>
+          <input ref={allCheckbox} type="checkbox" checked={allSelected} disabled={!pageIds.length || unavailable || deleting} onChange={() => setSelected(allSelected ? selectedIds.filter(value => !pageIds.includes(value)) : [...new Set([...selectedIds, ...pageIds])])} />
+          <span className="nd-sr-only">{t('docker.resources.selectPage')}</span>
+        </label>
+        <label className="nd-docker-resource-search"><span className="nd-sr-only">{t('docker.resources.search')}</span><Search size={15} aria-hidden="true" />
+          <input className="nd-input" type="search" value={query} placeholder={t('docker.resources.search')} onChange={event => { setQuery(event.target.value); resetSelection(); }} onKeyDown={event => { if (event.key === 'Escape') { setQuery(''); resetSelection(); } }} />
+          {query && <button type="button" className="ndc-icon-button" aria-label={t('docker.resources.clearSearch')} onClick={() => { setQuery(''); resetSelection(); }}><X size={14} /></button>}
+        </label>
+      </div>
+      <CustomSelect ariaLabel={t('Statut')} value={filter} onChange={value => { setFilter(value as ResourceFilter); resetSelection(); }} options={[
+        { value: 'all', label: t('docker.resources.all') }, { value: 'used', label: t('docker.resources.used') }, { value: 'unused', label: t('docker.resources.unused') },
+        ...(imageMode ? [{ value: 'untagged', label: t('docker.image.untagged') }] : []),
+      ]} />
+      <div className="nd-docker-resource-sort"><CustomSelect ariaLabel={t('docker.resources.sort')} value={sort} onChange={value => { setSort(value as ResourceSort); setPage(1); }} options={[
+        { value: 'name', label: t('Nom') }, { value: 'created', label: t('Créé') }, { value: 'size', label: t('Taille') }, ...(!imageMode ? [{ value: 'driver', label: t('Driver') }] : []),
+      ]} /><button type="button" className="nd-btn" aria-label={t(descending ? 'docker.resources.descending' : 'docker.resources.ascending')} title={t(descending ? 'docker.resources.descending' : 'docker.resources.ascending')} onClick={() => { setDescending(!descending); setPage(1); }}>{descending ? <ArrowDownWideNarrow size={16} /> : <ArrowUpWideNarrow size={16} />}</button></div>
     </div>
     {selectedIds.length > 0 && <div className="nd-docker-resource-selection">
       <span>{t('docker.resources.selected', { count: selectedIds.length })}</span>
@@ -109,7 +127,7 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
     </div>}
     {errorNotice ? <div>{errorNotice}<button type="button" className="nd-btn" onClick={refresh}>{t('Réessayer')}</button></div> : loading && rows.length === 0 ? <div className="nd-docker-resource-empty" role="status"><Loader2 className="nd-spin" size={22} /><span>{t('docker.resources.loading')}</span></div> : <>
       <div className="nd-docker-detail nd-docker-resource-list">
-        <div className="nd-docker-resource-page-select"><label><input ref={allCheckbox} type="checkbox" checked={allSelected} disabled={!pageIds.length || unavailable || deleting} onChange={() => setSelected(allSelected ? selectedIds.filter(value => !pageIds.includes(value)) : [...new Set([...selectedIds, ...pageIds])])} />{t('docker.resources.selectPage')}</label></div>
+
         <table className="nd-docker-resource-table" aria-label={t(imageMode ? 'Images' : 'Volumes')}>
           <colgroup><col className="nd-docker-resource-check-col" /><col /><col className="nd-docker-resource-status-col" /><col className="nd-docker-resource-meta-col" /><col className="nd-docker-resource-actions-col" /></colgroup>
           <thead><tr><th><span className="nd-sr-only">{t('docker.resources.selected', { count: selectedIds.length })}</span></th><th scope="col">{t(imageMode ? 'Image' : 'Volume')}</th><th scope="col">{t('Statut')}</th><th scope="col">{t(imageMode ? 'Taille' : 'Driver')}</th><th scope="col"><span className="nd-sr-only">{t('Actions')}</span></th></tr></thead>
@@ -140,7 +158,7 @@ export function DockerResourceBrowser({ kind, rows, hostId, loading, errorNotice
       </div>
       <div className="nd-docker-resource-pagination">
         <span role="status">{t('docker.resources.range', { start: current.start, end: current.end, total: filtered.length })}</span>
-        <label><span>{t('docker.resources.perPage')}</span><select className="nd-input" value={pageSize} onChange={event => { setPageSize(Number(event.target.value)); setPage(1); }}>{[10, 25, 50].map(size => <option key={size} value={size}>{size}</option>)}</select></label>
+        <div className="nd-docker-resource-page-size"><span>{t('docker.resources.perPage')}</span><CustomSelect ariaLabel={t('docker.resources.perPage')} value={String(pageSize)} onChange={value => { setPageSize(Number(value)); setPage(1); }} options={[5, 10, 25, 50].map(size => ({ value: String(size), label: String(size) }))} /></div>
         <nav aria-label={t('docker.resources.pagination')}><button type="button" className="nd-btn" aria-label={t('docker.resources.previous')} disabled={current.page === 1} onClick={() => setPage(current.page - 1)}><ChevronLeft size={16} /></button><span>{t('docker.resources.page', { page: current.page, total: current.pageCount })}</span><button type="button" className="nd-btn" aria-label={t('docker.resources.next')} disabled={current.page === current.pageCount} onClick={() => setPage(current.page + 1)}><ChevronRight size={16} /></button></nav>
       </div>
       <p className="nd-docker-resource-hint">{t('docker.resources.usedHint')}</p>

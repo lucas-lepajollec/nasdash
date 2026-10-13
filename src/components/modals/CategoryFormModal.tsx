@@ -132,6 +132,7 @@ export default function CategoryFormModal({ category, onClose, onSave, onDelete,
         </div>
         <CalmeField label={t('category.calme.layout')} info={t('category.calme.layoutInfo')}>
           <CustomSelect
+            ariaLabel={t('category.calme.layout')}
             value={layout || 'standard'}
             onChange={(val) => setLayout(val as Category['layout'])}
             options={[

@@ -23,6 +23,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- Unify dashboard dropdowns with the existing NasDash selector, improve popup positioning and keyboard focus, and label every selector. Place Docker page selection beside search, use red for unused resources, and default to five rows on mobile while retaining explicit page-size choices. Remove duplicate CPU/GPU metric captions; keep the GPU-model option where it adds information.
+
 - Rework Docker image/volume lists with search, usage filters, sorting, 10/25/50-item pagination, expandable metadata and page-scoped selection. Keep deletion confirmations readable, preserve only failed targets for retry, and adapt to narrow widgets and mobile widths using the existing appearance tokens. Include fictional unused resources in the isolated demo.
 
 - Keep fictional demo edits in a temporary browser-tab workspace across reloads and server-worker changes, with serialized requests and an explicit Reset restoring fixtures. Browser session storage is required for reload retention; direct cookie-only demo API clients keep temporary process-local state.

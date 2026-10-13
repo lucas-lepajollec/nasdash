@@ -757,6 +757,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             </div>
             <CalmeField label={t('topology.calme.group')} info={t("Associer à un groupe (sous-catégorie)")}>
               <CustomSelect
+                ariaLabel={t('topology.calme.group')}
                 value={nodeGroupId}
                 onChange={setNodeGroupId}
                 options={[
@@ -768,6 +769,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             <div className="ndc-field-grid">
               <CalmeField label={t('topology.calme.linkDevice')} info={t('topology.calme.linkInfo')}>
                 <CustomSelect
+                  ariaLabel={t('topology.calme.linkDevice')}
                   value={linkedDeviceId}
                   onChange={(val) => {
                     setLinkedDeviceId(val);
@@ -784,6 +786,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               </CalmeField>
               <CalmeField label={t('topology.calme.linkService')} info={t('topology.calme.linkInfo')}>
                 <CustomSelect
+                  ariaLabel={t('topology.calme.linkService')}
                   value={linkedServiceId}
                   onChange={(val) => {
                     setLinkedServiceId(val);
@@ -902,6 +905,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             <div className="ndc-field-grid">
               <CalmeField label={t("Source (Départ)")}>
                 <CustomSelect
+                  ariaLabel={t('Source (Départ)')}
                   value={linkFrom}
                   onChange={setLinkFrom}
                   disabled={!!editingConnection}
@@ -910,6 +914,7 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
               </CalmeField>
               <CalmeField label={t("Cible (Arrivée)")}>
                 <CustomSelect
+                  ariaLabel={t('Cible (Arrivée)')}
                   value={linkTo}
                   onChange={setLinkTo}
                   disabled={!!editingConnection}

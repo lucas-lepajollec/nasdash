@@ -15,7 +15,7 @@ describe('device widgets data', () => {
       series: { 'cpu.usage@temp': [[4000, 49], [5000, 50]] as [number, number][] },
     };
     expect(readingsOf(snapshot, 'temperature', t, 'en')).toMatchObject([
-      { value: 50, text: '50 °C', detail: 'CPU', points: [[4000, 49], [5000, 50]] },
+      { value: 50, text: '50 °C', points: [[4000, 49], [5000, 50]] },
     ]);
   });
 
@@ -96,5 +96,22 @@ describe('separate CPU and GPU temperature readings', () => {
   it('marks the device offline after a failed refresh despite an earlier successful snapshot', () => {
     expect(stateOf({ data: snapshot, failed: true })).toBe('offline');
     expect(stateOf({ data: snapshot, failed: false })).toBe('online');
+  });
+
+  it('omits redundant CPU/GPU secondary lines but preserves a real GPU model', () => {
+    expect(readingsOf(snapshot, 'temperature', t, 'en')[0].detail).toBeUndefined();
+    const generic = { ...snapshot, metrics: [{ key: 'gpu', kind: 'gpu' as const, name: 'GPU', percent: 10, temperatureC: 50 }] };
+    expect(readingsOf(generic, 'gpu', t, 'en')[0].detail).toBeUndefined();
+    expect(readingsOf(generic, 'gpuTemperature', t, 'en')[0].detail).toBeUndefined();
+    const named = { ...generic, metrics: [{ ...generic.metrics[0], name: 'RTX 4070' }] };
+    const temperature = readingsOf(named, 'gpuTemperature', t, 'en')[0];
+    expect(withFacets(temperature, named, ['part'], [], t, 'en').detail).toBe('RTX 4070');
+    expect(withFacets(temperature, named, [], [], t, 'en').detail).toBeUndefined();
+  });
+
+  it('keeps multiple GPU identities in the labels without duplicating their model below', () => {
+    const temperatures = readingsOf(snapshot, 'gpuTemperature', t, 'en');
+    expect(temperatures.map(reading => reading.label)).toEqual(expect.arrayContaining([expect.stringContaining('Graphics A'), expect.stringContaining('Graphics B')]));
+    expect(temperatures.every(reading => reading.detail === undefined)).toBe(true);
   });
 });

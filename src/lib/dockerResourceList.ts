@@ -80,7 +80,7 @@ export function resourceList(rows: DockerResourceRow[], query: string, filter: R
     });
 }
 export function resourcePage(rows: DockerResourceRow[], requestedPage: number, pageSize: number) {
-  const size = [10, 25, 50].includes(pageSize) ? pageSize : 10;
+  const size = [5, 10, 25, 50].includes(pageSize) ? pageSize : 10;
   const pageCount = Math.max(1, Math.ceil(rows.length / size));
   const page = Math.max(1, Math.min(pageCount, Math.floor(requestedPage) || 1));
   return { page, pageCount, start: rows.length ? (page - 1) * size + 1 : 0, end: Math.min(page * size, rows.length), rows: rows.slice((page - 1) * size, page * size) };

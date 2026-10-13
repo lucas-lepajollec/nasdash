@@ -224,7 +224,7 @@ export default function Header(props: HeaderProps) {
                       style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
                       onClick={() => setDesktopDropdownOpen(false)} 
                     />
-                    <div 
+                    <div className="nd-custom-select-menu nd-action-menu"
                       style={{ 
                         position: 'absolute', 
                         top: 'calc(100% + 6px)', 
@@ -232,11 +232,12 @@ export default function Header(props: HeaderProps) {
                         background: 'var(--nd-bg-surface, var(--nd-bg))', 
                         border: '1px solid var(--nd-card-border)', 
                         borderRadius: 'var(--nd-card-radius)', 
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                         zIndex: 1000, 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        padding: '4px',
+                        padding: '6px',
+                        gap: 2,
                         minWidth: '160px',
                         animation: 'nd-fade-in 0.15s ease-out'
                       }}
@@ -244,7 +245,7 @@ export default function Header(props: HeaderProps) {
                       {actions.map((act, idx) => (
                         <button
                           key={idx}
-                          className="nd-dropdown-item"
+                          className="nd-dropdown-item nd-custom-select-option"
                           onClick={() => {
                             act.onClick();
                             setDesktopDropdownOpen(false);
@@ -254,8 +255,9 @@ export default function Header(props: HeaderProps) {
                             background: 'transparent',
                             border: 'none',
                             color: 'var(--nd-text-muted)',
-                            fontSize: '0.72rem',
-                            fontWeight: 500,
+                            fontSize: '0.78rem',
+                            fontWeight: 400,
+                            fontFamily: 'inherit',
                             textAlign: 'left',
                             cursor: 'pointer',
                             borderRadius: 'calc(var(--nd-card-radius) * 0.8)',
@@ -448,7 +450,7 @@ export default function Header(props: HeaderProps) {
                         style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
                         onClick={() => setMobileDropdownOpen(false)} 
                       />
-                      <div 
+                      <div className="nd-custom-select-menu nd-action-menu"
                         style={{ 
                           position: 'absolute', 
                           top: 'calc(100% + 6px)', 
@@ -457,18 +459,19 @@ export default function Header(props: HeaderProps) {
                           background: 'var(--nd-bg-surface, var(--nd-bg))', 
                           border: '1px solid var(--nd-card-border)', 
                           borderRadius: 'var(--nd-card-radius)', 
-                          boxShadow: '0 10px 25px rgba(0,0,0,0.3)', 
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                           zIndex: 1000, 
                           display: 'flex', 
                           flexDirection: 'column', 
-                          padding: '4px',
+                          padding: '6px',
+                          gap: 2,
                           animation: 'nd-fade-in 0.15s ease-out'
                         }}
                       >
                         {actions.map((act, idx) => (
                           <button
                             key={idx}
-                            className="nd-dropdown-item"
+                            className="nd-dropdown-item nd-custom-select-option"
                             onClick={() => {
                               act.onClick();
                               setMobileDropdownOpen(false);

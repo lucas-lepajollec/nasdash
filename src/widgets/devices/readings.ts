@@ -55,16 +55,16 @@ export function readingsOf(snapshot: DeviceSnapshot | undefined, metric: MetricI
     case 'gpu':
       return metrics.filter(item => item.kind === 'gpu').map((gpu, index, all) => ({
         metric, key: gpu.key, label: all.length > 1 ? gpu.name || 'GPU' : 'GPU', value: gpu.percent, text: percentText(gpu.percent, language),
-        detail: all.length > 1 ? undefined : gpu.name, points: seriesPoints(snapshot, gpu.key), source: gpu,
+        detail: all.length > 1 || !gpu.name || gpu.name.trim().toUpperCase() === 'GPU' ? undefined : gpu.name, points: seriesPoints(snapshot, gpu.key), source: gpu,
       }));
     case 'temperature': {
       if (cpu?.temperatureC === undefined || !Number.isFinite(cpu.temperatureC)) return [];
-      return [{ metric, key: `${cpu.key}@temp`, label: t('devices.calme.cpuTemperature'), value: cpu.temperatureC, text: temperatureText(cpu.temperatureC), detail: 'CPU', points: seriesPoints(snapshot, `${cpu.key}@temp`), source: cpu }];
+      return [{ metric, key: `${cpu.key}@temp`, label: t('devices.calme.cpuTemperature'), value: cpu.temperatureC, text: temperatureText(cpu.temperatureC), points: seriesPoints(snapshot, `${cpu.key}@temp`), source: cpu }];
     }
     case 'gpuTemperature':
       return metrics.filter(item => item.kind === 'gpu' && item.temperatureC !== undefined && Number.isFinite(item.temperatureC)).map((gpu, _index, all) => ({
         metric, key: `${gpu.key}@temp`, label: all.length > 1 ? [t('devices.calme.gpuTemperature'), gpu.name || 'GPU'].join(' · ') : t('devices.calme.gpuTemperature'),
-        value: gpu.temperatureC, text: temperatureText(gpu.temperatureC), detail: gpu.name || 'GPU', points: seriesPoints(snapshot, `${gpu.key}@temp`), source: gpu,
+        value: gpu.temperatureC, text: temperatureText(gpu.temperatureC), detail: all.length > 1 || !gpu.name || gpu.name.trim().toUpperCase() === 'GPU' ? undefined : gpu.name, points: seriesPoints(snapshot, `${gpu.key}@temp`), source: gpu,
       }));
     case 'load':
       return vitals.load?.length ? [{

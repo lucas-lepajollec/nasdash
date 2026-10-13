@@ -87,7 +87,8 @@ test('resource search finds extra tags and details; filters clear hidden selecti
     await expect(explorer).toContainText('No matching resources');
     await expect(explorer.locator('.nd-docker-resource-selection')).toHaveCount(0);
     await explorer.getByRole('button', { name: 'Reset filters', exact: true }).click();
-    await explorer.getByRole('combobox', { name: 'Status', exact: true }).selectOption('untagged');
+    await explorer.getByRole('button', { name: 'Status', exact: true }).click();
+    await page.getByRole('option', { name: 'Untagged image', exact: true }).click();
     await expect(explorer).toContainText('registry.example.test/zz-maintenance-tools');
     await explorer.getByRole('tab', { name: /^Volumes/ }).click();
     await expect(explorer.locator('.nd-docker-resource-row')).toHaveCount(10);
@@ -147,5 +148,67 @@ test('resource API failures remain distinct from an empty list and can be retrie
     await expect(explorer).toContainText('No images');
     await expect(explorer.locator('.nd-docker-resource-pagination')).toContainText('0–0 of 0');
     await expect(explorer.getByRole('checkbox', { name: 'Select unused resources on this page', exact: true })).toBeDisabled();
+  } finally { await cleanup(); }
+});
+
+test('mobile resources default to five rows and shared dropdowns keep explicit choices across widths', async ({ page }) => {
+  test.skip(process.env.NASDASH_DEMO_MODE === 'true', 'Uses isolated installed-instance fixtures.');
+  const { explorer, cleanup } = await resourceFixture(page);
+  try {
+    await page.setViewportSize({ width: 390, height: 850 });
+    await expect(explorer.locator('.nd-docker-resource-row')).toHaveCount(5);
+    const size = explorer.getByRole('button', { name: 'Per page', exact: true });
+    await expect(size).toContainText('5');
+    await size.click();
+    const menu = page.getByRole('listbox', { name: 'Per page', exact: true });
+    await expect(menu.getByRole('option', { name: '5', exact: true })).toHaveAttribute('aria-selected', 'true');
+    await menu.getByRole('option', { name: '25', exact: true }).click();
+    await expect(explorer.locator('.nd-docker-resource-row')).toHaveCount(25);
+    await page.setViewportSize({ width: 1440, height: 850 });
+    await expect(explorer.locator('.nd-docker-resource-row')).toHaveCount(25);
+    const status = explorer.getByRole('button', { name: 'Status', exact: true });
+    await status.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect(explorer.locator('.nd-docker-resource-row')).toHaveCount(1);
+    await expect(explorer.locator('.nd-docker-resource-row')).toContainText('Untagged image');
+    await page.setViewportSize({ width: 320, height: 650 });
+    await status.click();
+    const statusMenu = page.getByRole('listbox', { name: 'Status', exact: true });
+    expect(await statusMenu.evaluate(element => { const rect = element.getBoundingClientRect(); return rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight + 1; })).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(statusMenu).not.toBeVisible();
+    await expect(status).toBeFocused();
+    expect(await explorer.locator('select').count()).toBe(0);
+    const query = explorer.locator('.nd-docker-resource-query');
+    expect(await query.evaluate(element => {
+      const input = element.querySelector('input[type="search"]')!.getBoundingClientRect();
+      const checkbox = element.querySelector('input[type="checkbox"]')!.getBoundingClientRect();
+      return Math.abs((checkbox.top + checkbox.height / 2) - (input.top + input.height / 2)) < 3;
+    })).toBe(true);
+  } finally { await cleanup(); }
+});
+
+test('shared settings dropdowns keep Escape and Tab inside the correct dialog', async ({ page }) => {
+  test.skip(process.env.NASDASH_DEMO_MODE === 'true', 'Uses isolated installed-instance fixtures.');
+  const { cleanup } = await resourceFixture(page);
+  try {
+    await page.getByTitle('Global Settings', { exact: true }).click();
+    const settings = page.locator('.nd-settings-modal');
+    const language = settings.getByRole('button', { name: 'Interface language', exact: true });
+    await language.click();
+    await expect(page.getByRole('listbox', { name: 'Interface language', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(settings).toBeVisible();
+    await expect(page.getByRole('listbox')).toHaveCount(0);
+    await expect(language).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Tab');
+    await expect(settings.getByRole('button', { name: 'Font', exact: true })).toBeFocused();
+    await expect(page.getByRole('listbox')).toHaveCount(0);
+    expect(await settings.locator('select').count()).toBe(0);
+    await page.keyboard.press('Escape');
+    await expect(settings).not.toBeVisible();
   } finally { await cleanup(); }
 });

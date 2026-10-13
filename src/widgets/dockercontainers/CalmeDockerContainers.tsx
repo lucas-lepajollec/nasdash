@@ -92,14 +92,13 @@ export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateP
         {(hosts.length > 1 || (!autoScroll && pages > 1)) && (
           <div className="ndc-ctrs-bar">
             {hosts.length > 1 ? (
-              <select
-                className="ndc-select"
+              <CustomSelect
+                className="ndc-host-select"
                 value={selectedHostId ?? ''}
-                onChange={event => { setSelectedHostId(event.target.value); setPage(1); }}
-                aria-label={t('calme.dockerHost')}
-              >
-                {hosts.map(host => <option key={host.id} value={host.id}>{host.name}</option>)}
-              </select>
+                onChange={value => { setSelectedHostId(value); setPage(1); }}
+                ariaLabel={t('calme.dockerHost')}
+                options={hosts.map(host => ({ value: host.id, label: host.name }))}
+              />
             ) : <span />}
             {!autoScroll && pages > 1 && (
               <span className="ndc-pager">

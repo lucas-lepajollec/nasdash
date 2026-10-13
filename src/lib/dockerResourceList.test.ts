@@ -31,6 +31,7 @@ describe('Docker resource browsing and safe page selections', () => {
     expect(resourcePage(many, 3, 10)).toMatchObject({ page: 3, pageCount: 3, start: 21, end: 21, rows: [many[20]] });
     expect(resourcePage(many.slice(0, 19), 3, 10)).toMatchObject({ page: 2, pageCount: 2, start: 11, end: 19 });
     expect(resourcePage([], 10, 50)).toMatchObject({ page: 1, pageCount: 1, start: 0, end: 0, rows: [] });
+    expect(resourcePage(many, 2, 5)).toMatchObject({ page: 2, pageCount: 5, start: 6, end: 10, rows: many.slice(5, 10) });
   });
   it('drops duplicate, missing and newly attached deletion selections', () => {
     expect(deletableSelection(['a', 'b', 'b', 'gone'], images)).toEqual(['b']);

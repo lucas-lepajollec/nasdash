@@ -66,6 +66,7 @@ test('CPU and each GPU temperature stay separate, configurable and independently
     await expect(bars.locator('.ndc-m-value')).toHaveText(['45 °C', '85 °C', '70 °C']);
     await expect(metric.locator('.ndc-m-big')).toHaveText(['45 °C']);
     await expect(bars.locator('.ndc-m-label')).toHaveText(['CPU temperature', 'GPU temperature · Graphics A', 'GPU temperature · Graphics B']);
+    await expect(bars.locator('.ndc-m-detail')).toHaveCount(0);
     await page.getByTitle('Edit mode', { exact: true }).click();
     await settings(bars).click();
     let dialog = page.getByRole('dialog', { name: 'Device settings', exact: true });
@@ -83,11 +84,13 @@ test('CPU and each GPU temperature stay separate, configurable and independently
 
     await settings(metric).click();
     dialog = page.getByRole('dialog', { name: 'CPU temperature settings', exact: true });
+    await expect(dialog.getByRole('checkbox', { name: 'GPU model', exact: true })).toHaveCount(0);
     const source = dialog.getByRole('radiogroup', { name: 'Temperature sensor', exact: true });
     await source.getByRole('radio', { name: 'GPU temperature', exact: true }).click();
+    await expect(dialog.getByRole('checkbox', { name: 'GPU model', exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(metric.locator('.ndc-m-big')).toHaveText(['85 °C', '70 °C']);
-    const labels = ['GPU temperature · Graphics A · GPU fixture', 'GPU temperature · Graphics B · GPU fixture'];
+    const labels = ['Graphics A · GPU fixture', 'Graphics B · GPU fixture'];
     await expect(metric.locator('.ndc-m-label')).toHaveText(labels);
     const handles = metric.locator('.ndc-m-drag');
     await expect(handles).toHaveCount(2);

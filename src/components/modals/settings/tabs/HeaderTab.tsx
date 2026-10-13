@@ -198,6 +198,7 @@ export function HeaderTab() {
         <CalmeRow label={t("Police du titre")}>
           <div style={{ width: 240 }}>
             <CustomSelect
+              ariaLabel={t('Police du titre')}
               value={titleFont}
               onChange={(val: string) => { setTitleFont(val); updateConfig({ titleFont: val as 'outfit' | 'space-grotesk' | 'syne' | 'righteous' | 'montserrat' }); }}
               options={[

@@ -139,12 +139,13 @@ function Appearance(props: CalmeAppearanceProps) {
         <CalmeHeading>{t('settings.calme.display')}</CalmeHeading>
         <CalmeRow label={t('settings.languageTitle')}>
           <div style={{ width: 200 }}>
-            <CustomSelect value={language} onChange={value => void selectLanguage(value as typeof language)} options={UI_LANGUAGES.map(option => ({ value: option.id, label: option.label }))} />
+            <CustomSelect ariaLabel={t('settings.languageTitle')} value={language} onChange={value => void selectLanguage(value as typeof language)} options={UI_LANGUAGES.map(option => ({ value: option.id, label: option.label }))} />
           </div>
         </CalmeRow>
         <CalmeRow label={t('settings.calme.font')}>
           <div style={{ width: 200 }}>
             <CustomSelect
+              ariaLabel={t('settings.calme.font')}
               value={props.globalFont || 'Outfit'}
               onChange={props.onFontChange}
               options={[

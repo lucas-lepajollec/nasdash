@@ -64,6 +64,9 @@ export function useDialogAccessibility(
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isTopMostDialog()) return;
 
+      // A portalled select owns Tab while open and moves focus relative to its trigger.
+      if (event.key === 'Tab' && event.target instanceof Element && event.target.closest('[data-dialog-escape-boundary="true"][role="listbox"]')) return;
+
       if (event.key === 'Escape') {
         if (
           event.target instanceof Element
