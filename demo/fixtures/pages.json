@@ -180,16 +180,7 @@
           "x": 0,
           "y": 0,
           "w": 5,
-          "h": 32
-        },
-        {
-          "id": "docker-summary",
-          "type": "docker-summary",
-          "settings": {},
-          "x": 0,
-          "y": 32,
-          "w": 5,
-          "h": 24
+          "h": 56
         },
         {
           "id": "docker-container-list",

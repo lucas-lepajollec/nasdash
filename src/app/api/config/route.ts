@@ -36,6 +36,8 @@ const CONFIG_PUT_TYPES = [
   'service',
   'settings',
   'device',
+  'dockerHost',
+  'reorderDockerHosts',
   'homeWidgetProps',
   'reorderDockerActions',
   'dockerAction',
@@ -45,6 +47,23 @@ const CONFIG_DELETE_TYPES = ['category', 'service', 'device', 'dockerHost', 'doc
 
 function persistenceError() {
   return NextResponse.json({ error: 'Impossible d’enregistrer la configuration.' }, { status: 500 });
+}
+
+/** Build both new and edited hosts from only the selected transport's fields. */
+function dockerHostOf(body: Partial<Omit<DockerHost, 'id' | 'type'>> & { connection?: DockerHost['type'] }, id: string): DockerHost {
+  const connection = body.connection ?? 'tcp';
+  const socket = connection === 'socket';
+  const relay = connection === 'portainer' || connection === 'dockhand';
+  return {
+    id,
+    name: body.name || 'Docker Host',
+    icon: body.icon || '🐳',
+    type: connection,
+    url: socket ? '' : body.url || '',
+    ...(socket ? { socketPath: body.socketPath } : {}),
+    ...(relay ? { target: body.target, token: body.token } : {}),
+    ...(!socket && body.allowSelfSigned === true ? { allowSelfSigned: true } : {}),
+  };
 }
 
 async function parseConfigBody<const T extends readonly string[]>(
@@ -182,19 +201,7 @@ async function handlePOST(req: NextRequest) {
 
   if (type === 'dockerHost') {
     if (!config.dockerHosts) config.dockerHosts = [];
-    const connection: DockerHost['type'] = ['socket', 'portainer', 'dockhand'].includes(body.connection) ? body.connection : 'tcp';
-    const socket = connection === 'socket';
-    const relay = connection === 'portainer' || connection === 'dockhand';
-    const newHost: DockerHost = {
-      id: uuidv4(),
-      name: body.name || 'Docker Host',
-      icon: body.icon || '🐳',
-      type: connection,
-      url: socket ? '' : body.url || '',
-      ...(socket ? { socketPath: body.socketPath } : {}),
-      ...(relay ? { target: body.target, token: body.token } : {}),
-      ...(!socket && body.allowSelfSigned === true ? { allowSelfSigned: true } : {}),
-    };
+    const newHost = dockerHostOf(body, uuidv4());
     config.dockerHosts.push(newHost);
     if (!writeConfig(config)) return persistenceError();
     return NextResponse.json({ ...newHost, ...(newHost.token ? { token: '********' } : {}) }, { status: 201 });
@@ -500,6 +507,45 @@ async function handlePUT(req: NextRequest) {
     const safeDevice = JSON.parse(JSON.stringify(device));
     if (safeDevice.api?.token) safeDevice.api.token = '********';
     return NextResponse.json(safeDevice);
+  }
+
+  if (type === 'dockerHost') {
+    const hostIndex = (config.dockerHosts ?? []).findIndex(host => host.id === body.id);
+    if (hostIndex === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const existingHost = config.dockerHosts![hostIndex];
+    const connection = body.connection ?? 'tcp';
+    const relay = connection === 'portainer' || connection === 'dockhand';
+    const keepToken = !body.token || body.token === '********';
+    const update = {
+      ...body,
+      token: relay && keepToken
+        ? (existingHost.type === connection ? existingHost.token : undefined)
+        : body.token,
+    };
+    try {
+      validateConfigMutationBody(update, 'dockerHost', 'POST');
+    } catch (error) {
+      if (error instanceof RequestValidationError) return NextResponse.json({ error: error.message }, { status: error.status });
+      throw error;
+    }
+    const host = dockerHostOf(update, existingHost.id);
+    config.dockerHosts![hostIndex] = host;
+    if (!writeConfig(config)) return persistenceError();
+    return NextResponse.json({ ...host, ...(host.token ? { token: '********' } : {}) });
+  }
+
+  if (type === 'reorderDockerHosts') {
+    const hosts = config.dockerHosts ?? [];
+    const hostsById = new Map(hosts.map(host => [host.id, host]));
+    const ids = body.ids as string[];
+    if (ids.some(id => !hostsById.has(id))) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const selectedIds = new Set(ids);
+    config.dockerHosts = [
+      ...ids.map(id => hostsById.get(id)!),
+      ...hosts.filter(host => !selectedIds.has(host.id)),
+    ];
+    if (!writeConfig(config)) return persistenceError();
+    return NextResponse.json({ ok: true });
   }
 
   if (type === 'homeWidgetProps') {

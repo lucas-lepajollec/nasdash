@@ -71,12 +71,19 @@ export default function CalmeMetric({ metric: requestedMetric, devices, settings
   const manual = metric !== 'disk' || volumeOrder === 'manual';
   // Charts retain their automatic series order; saved reading order is for cards.
   const entries = manual && display !== 'chart' ? orderMetricEntries(baseEntries, settings.metricOrder, entryId) : baseEntries;
-  const labelled = (entry: typeof entries[number]): Reading => withFacets({
-    ...entry.reading,
-    label: metric === 'disk' ? [entry.reading.label, entry.device.name].join(' · ')
-      : (metric === 'gpu' || metric === 'gpuTemperature') && (data[entry.device.id]?.data?.metrics.filter(item => item.kind === 'gpu').length ?? 0) > 1
-        ? [entry.reading.source?.name || entry.reading.key, entry.device.name].join(' · ') : entry.device.name,
-  }, data[entry.device.id]?.data, look.facets, look.valueParts, t, language, display);
+  // A machine's name, and the disk or GPU only when the machine has several
+  // (its machine then follows, unless the widget shows a single machine).
+  const partsOf = (deviceId: string) => (data[deviceId]?.data?.metrics ?? []).filter(item => item.kind === (metric === 'disk' ? 'disk' : 'gpu')).length;
+  const severalParts = metric === 'disk' || metric === 'gpu' || metric === 'gpuTemperature';
+  const labelled = (entry: typeof entries[number]): Reading => {
+    const named = severalParts && partsOf(entry.device.id) > 1;
+    return withFacets({
+      ...entry.reading,
+      label: named ? (metric === 'gpuTemperature' ? entry.reading.partLabel ?? entry.reading.label : entry.reading.label) : entry.device.name,
+      owner: named && shown.length > 1 ? entry.device.name : undefined,
+      partLabel: named ? undefined : entry.reading.partLabel,
+    }, data[entry.device.id]?.data, look.facets, look.valueParts, t, language, display);
+  };
   // A machine's colour: its own, else the measure's (a chart gives each machine a distinct one).
   const colorFor = (entry: typeof entries[number], index: number) => look.deviceColors[entry.device.id]
     ?? (display === 'chart' ? SERIES_COLORS[(metric === 'disk' ? entry.deviceIndex : index) % SERIES_COLORS.length] : look.metrics[metric].color);
@@ -91,7 +98,7 @@ export default function CalmeMetric({ metric: requestedMetric, devices, settings
   const threshold = thresholdOf(look, metric);
   const series: ChartSeries[] = entries.map((entry, index) => ({
     id: [entry.device.id, entry.reading.key].join('|'),
-    label: labelled(entry).label,
+    label: [labelled(entry).label, labelled(entry).owner].filter(Boolean).join(' · '),
     color: colorFor(entry, index),
     points: entry.reading.points,
     area: look.chart.style === 'area' && index === 0,
@@ -146,7 +153,7 @@ export default function CalmeMetric({ metric: requestedMetric, devices, settings
             if (metricOrder) onUpdateSettings({ ...settings, metricOrder });
           }}
           items={entries.map((entry, index) => ({
-            id: entryId(entry), label: labelled(entry).label,
+            id: entryId(entry), label: [labelled(entry).label, labelled(entry).owner].filter(Boolean).join(' · '),
             content: <MetricView
               reading={labelled(entry)}
               look={look}

@@ -52,19 +52,19 @@ test('Docker relay resources render safe names, retain errors and reset across h
     await expect(confirmation).toBeVisible();
     await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
     await unusedRow.getByRole('checkbox').check();
-    await page.getByRole('button', { name: /Portainer fixture/ }).click();
+    await page.locator('.ndc-chip', { hasText: 'Portainer fixture' }).click();
     await expect(explorer.getByRole('checkbox').filter({ has: page.locator(':checked') })).toHaveCount(0);
     await explorer.getByRole('tab', { name: /^Volumes/ }).click();
     await expect(explorer.getByRole('row').filter({ hasText: /^fixture-data/ }).getByRole('checkbox')).toBeDisabled();
     await expect(explorer.getByRole('row').filter({ hasText: 'unused-fixture-data' }).getByRole('checkbox')).toBeEnabled();
     await page.route('**/api/config?type=dockerHost&id=*', route => route.fulfill({ status: 500, json: { error: 'Fictional storage failure' } }));
     await page.getByTitle('Edit mode', { exact: true }).click();
-    await page.locator('[data-widget-id="relay-hosts"]').getByRole('button', { name: 'Delete the Docker host', exact: true }).first().click();
+    await page.locator('[data-widget-id="relay-hosts"]').getByRole('button', { name: /^Delete the Docker host/ }).first().click();
     const hostConfirmation = page.getByRole('dialog', { name: 'Delete the Docker host', exact: true });
     await hostConfirmation.getByRole('button', { name: 'Delete', exact: true }).click();
     await expect(hostConfirmation.getByRole('alert')).toContainText('Could not remove the Docker host');
     await expect(hostConfirmation).toBeVisible();
-    await expect(page.getByRole('button', { name: /Portainer fixture/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.ndc-chip', { hasText: 'Portainer fixture' })).toHaveAttribute('aria-pressed', 'true');
     await hostConfirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
     expect(failures).toEqual([]);
   } finally {

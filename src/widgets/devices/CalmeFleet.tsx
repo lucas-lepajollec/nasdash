@@ -14,7 +14,7 @@ import { latestTime, useDevicesData, type DeviceSnapshot } from './deviceData';
 import { uptimeText } from './format';
 import { isDanger, readLook, type LookDefaults, type MetricId, type WidgetLook } from './look';
 import { MetricView } from './MetricView';
-import { readingsOf, type Reading } from './readings';
+import { gpuKind, readingsOf, type Reading } from './readings';
 import { stateOf, type DeviceState } from './parts';
 import { SettingsButton } from './SettingsButton';
 
@@ -97,11 +97,19 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
   );
 }
 
-/** One reading per measure in a row: the fullest disk, the first GPU. */
+/**
+ * One reading per measure in a row, named by its kind only (`Disk`, `GPU`):
+ * the fullest disk, the dedicated GPU before integrated graphics.
+ */
 function rowReading(snapshot: DeviceSnapshot | undefined, metric: MetricId, t: (key: string, variables?: Record<string, string | number>) => string, language: Parameters<typeof readingsOf>[3]): Reading | undefined {
   const readings = readingsOf(snapshot, metric, t, language);
-  if (metric === 'disk') return [...readings].sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0];
-  return readings[0];
+  const reading = metric === 'disk' ? [...readings].sort((a, b) => (b.value ?? 0) - (a.value ?? 0))[0]
+    : metric === 'gpu' || metric === 'gpuTemperature' ? readings.find(item => gpuKind(item.source?.name) === 'gpu') ?? readings[0]
+      : readings[0];
+  if (!reading) return undefined;
+  // Cells are narrow: a temperature is written `CPU °C`, `iGPU °C`.
+  const label = metric === 'temperature' ? 'CPU °C' : metric === 'gpuTemperature' ? `${gpuKind(reading.source?.name) === 'igpu' ? 'iGPU' : 'GPU'} °C` : reading.kindLabel ?? reading.label;
+  return { ...reading, label };
 }
 
 function FleetRow({ device, snapshot, state, look, metrics, stacked }: { device: Device; snapshot?: DeviceSnapshot; state: DeviceState; look: WidgetLook; metrics: MetricId[]; stacked: boolean }) {

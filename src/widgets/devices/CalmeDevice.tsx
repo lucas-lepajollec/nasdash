@@ -22,6 +22,9 @@ import { deviceGroupOrder, readingOrderId, moveMetricEntry, orderMetricEntries, 
 import { SortableMetrics } from './SortableMetrics';
 import { displayName } from './DeviceWidgetDialog';
 
+/** GPUs of the machine left out of the widget (by metric key): an iGPU beside a GPU can be hidden. */
+export const hiddenGpus = (settings: WidgetSettings): string[] => (Array.isArray(settings.hiddenGpus) ? settings.hiddenGpus.filter((key): key is string => typeof key === 'string') : []);
+
 /** The layout follows the width: small below 260 px, medium below 440 px, large above. */
 const SMALL_BELOW_PX = 260;
 const MEDIUM_BELOW_PX = 440;
@@ -106,8 +109,10 @@ function DeviceBody({ snapshot, look, size, range, onRange, deviceId, settings, 
   const window: Window = { start: end - (range === '1h' ? 3_600_000 : 86_400_000), end, withSeconds: range === '1h' };
   const shown = (Object.keys(look.metrics) as MetricId[]).filter(id => id !== 'history' && look.metrics[id].shown && DEVICE_DEFAULTS.offered.includes(id));
   const readingId = (reading: Reading) => readingOrderId(deviceId, reading);
+  const hidden = hiddenGpus(settings);
   const byDisplay = (display: Display) => {
-    const readings = shown.filter(id => look.metrics[id].display === display).flatMap(id => readingsOf(snapshot, id, t, language));
+    const readings = shown.filter(id => look.metrics[id].display === display).flatMap(id => readingsOf(snapshot, id, t, language))
+      .filter(reading => !((reading.metric === 'gpu' || reading.metric === 'gpuTemperature') && reading.source && hidden.includes(reading.source.key)));
     return display === 'chart' ? readings : orderMetricEntries(readings, settings.metricOrder, readingId);
   };
   const rings = byDisplay('ring');

@@ -90,7 +90,8 @@ test('CPU and each GPU temperature stay separate, configurable and independently
     await expect(dialog.getByRole('checkbox', { name: 'GPU model', exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(metric.locator('.ndc-m-big')).toHaveText(['85 °C', '70 °C']);
-    const labels = ['Graphics A · GPU fixture', 'Graphics B · GPU fixture'];
+    // One machine in the widget: its GPUs need no machine name beside them.
+    const labels = ['Graphics A', 'Graphics B'];
     await expect(metric.locator('.ndc-m-label')).toHaveText(labels);
     const handles = metric.locator('.ndc-m-drag');
     await expect(handles).toHaveCount(2);
@@ -125,7 +126,7 @@ test('CPU and each GPU temperature stay separate, configurable and independently
   }
 });
 
-test('temperature labels remain readable in narrow figures and bars in five languages', async ({ page }) => {
+test('temperature labels stay on one line, shortened with their full name in the tooltip, in five languages', async ({ page }) => {
   test.skip(process.env.NASDASH_DEMO_MODE === 'true', 'Uses installed-instance fixtures.');
   const { fixture } = await temperatureFixture(page);
   const languages = [
@@ -144,17 +145,19 @@ test('temperature labels remain readable in narrow figures and bars in five lang
         await scope.scrollIntoViewIfNeeded();
         await expect(scope.locator('.ndc-m-label')).toHaveText([cpu, `${gpu} · Graphics A`, `${gpu} · Graphics B`]);
         const measurements = await scope.locator('.ndc-m-label').evaluateAll(elements => elements.map(element => {
-          const style = getComputedStyle(element);
+          const name = element.querySelector('.ndc-m-name')!;
+          const style = getComputedStyle(name);
           const rect = element.getBoundingClientRect();
           const card = element.closest('.ndc-m')!.getBoundingClientRect();
-          return { whiteSpace: style.whiteSpace, overflow: style.overflow, textOverflow: style.textOverflow, height: element.clientHeight, scrollHeight: element.scrollHeight, width: element.clientWidth, scrollWidth: element.scrollWidth, right: rect.right, cardRight: card.right };
+          const lineHeight = Number.parseFloat(getComputedStyle(element).lineHeight) || 16;
+          return { whiteSpace: getComputedStyle(element).whiteSpace, textOverflow: style.textOverflow, height: element.getBoundingClientRect().height, lineHeight, title: element.getAttribute('title'), text: element.textContent, right: rect.right, cardRight: card.right };
         }));
         for (const measurement of measurements) {
-          expect(measurement.whiteSpace).not.toBe('nowrap');
-          expect(measurement.textOverflow).not.toBe('ellipsis');
-          expect(measurement.overflow).toBe('visible');
-          expect(measurement.scrollHeight).toBeLessThanOrEqual(measurement.height + 1);
-          expect(measurement.scrollWidth).toBeLessThanOrEqual(measurement.width + 1);
+          // A name never wraps: too long for its line, it ends with an ellipsis and keeps its full text in the tooltip.
+          expect(measurement.whiteSpace).toBe('nowrap');
+          expect(measurement.textOverflow).toBe('ellipsis');
+          expect(measurement.height).toBeLessThanOrEqual(measurement.lineHeight * 1.5);
+          expect(measurement.title).toBe(measurement.text);
           expect(measurement.right).toBeLessThanOrEqual(measurement.cardRight + 1);
         }
         if (id === 'temperature-device-bars') {

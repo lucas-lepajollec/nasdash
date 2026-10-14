@@ -15,6 +15,7 @@ import { Emoji } from '../../shared/Emoji';
 import { dockerJsonFetcher, getDockerErrorPresentation, readDockerResponse, dockerActionError, DockerRequestError } from '@/lib/dockerErrorContract';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
+import type { DockerHost } from '@/lib/types';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 
@@ -166,26 +167,41 @@ export type DockerHostDraft =
 
 type DockerConnection = DockerHostDraft['type'];
 
-export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp' }: {
+/** Address and port of a direct host's URL, for the edit form (`http://nas:2375` → `nas`, `2375`). */
+function splitHostUrl(url: string): { host: string; port: string } {
+  try {
+    const parsed = new URL(url);
+    return { host: parsed.protocol === 'https:' ? `https://${parsed.hostname}` : parsed.hostname, port: parsed.port || (parsed.protocol === 'https:' ? '443' : '2375') };
+  } catch {
+    return { host: url, port: '2375' };
+  }
+}
+
+export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp', host: editing }: {
   onClose: () => void;
   onSave: (h: DockerHostDraft) => Promise<void>;
   /** Kind of connection selected when the form opens (from the Integrations page tiles). */
   initialConnection?: DockerHostDraft['type'];
+  /** Host being edited; its API key is never shown and is kept when left empty. */
+  host?: DockerHost;
 }) {
   const { t } = useI18n();
   const { config } = useConfig();
   const demoMode = config?.demoMode === true;
-  const [name, setName] = useState('');
-  const [icon, setIcon] = useState('🐳');
-  const [host, setHost] = useState('');
-  const [port, setPort] = useState('2375');
-  const [connection, setConnection] = useState<DockerConnection>(initialConnection);
-  const [serverUrl, setServerUrl] = useState('');
-  const [environment, setEnvironment] = useState('1');
+  const direct = editing?.type === 'tcp' || (editing && !editing.type) ? splitHostUrl(editing.url) : null;
+  const [name, setName] = useState(editing?.name ?? '');
+  const [icon, setIcon] = useState(editing?.icon || '🐳');
+  const [host, setHost] = useState(direct?.host ?? '');
+  const [port, setPort] = useState(direct?.port ?? '2375');
+  const [connection, setConnection] = useState<DockerConnection>(editing?.type ?? initialConnection);
+  const [serverUrl, setServerUrl] = useState(editing?.type === 'portainer' || editing?.type === 'dockhand' ? editing.url : '');
+  const [environment, setEnvironment] = useState(editing?.target ?? '1');
   const [apiKey, setApiKey] = useState('');
   const relay = connection === 'portainer' || connection === 'dockhand';
-  const [socketPath, setSocketPath] = useState('/var/run/docker.sock');
-  const [allowSelfSigned, setAllowSelfSigned] = useState(false);
+  // Editing a relay host of the same kind: an empty key keeps the saved one.
+  const keepsKey = !!editing && editing.type === connection && relay && !!editing.token;
+  const [socketPath, setSocketPath] = useState(editing?.socketPath || '/var/run/docker.sock');
+  const [allowSelfSigned, setAllowSelfSigned] = useState(editing?.allowSelfSigned === true);
   const isHttps = (relay ? serverUrl : host).trim().startsWith('https://');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -195,7 +211,7 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
   const submit = async () => {
               if (!name) return;
               if (relay) {
-                if (!serverUrl.trim() || !environment.trim() || !apiKey) return;
+                if (!serverUrl.trim() || !environment.trim() || (!apiKey && !keepsKey)) return;
                 setIsSaving(true);
                 setSaveError('');
                 try {
@@ -252,14 +268,14 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
     <div className="nd-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <CalmeDialog
         dialogRef={dialogRef}
-        label={t("Ajouter un hôte Docker")}
-        title={t("Ajouter un hôte Docker")}
+        label={t(editing ? 'docker.hosts.editTitle' : 'Ajouter un hôte Docker')}
+        title={t(editing ? 'docker.hosts.editTitle' : 'Ajouter un hôte Docker')}
         subtitle={demoMode ? t('docker.hostDemoHint', { example: 'docker-demo.invalid' }) : undefined}
         width={480}
         onClose={onClose}
         footer={<>
           <button type="button" className="nd-btn" onClick={onClose} disabled={isSaving}>{t("Annuler")}</button>
-          <button type="button" className="nd-btn nd-btn-accent" disabled={isSaving || !name} onClick={() => { void submit(); }}>{isSaving ? t("Enregistrement…") : t("Ajouter")}</button>
+          <button type="button" className="nd-btn nd-btn-accent" disabled={isSaving || !name} aria-busy={isSaving} onClick={() => { void submit(); }}>{isSaving && <Loader2 size={14} className="nd-spin" aria-hidden="true" />}{isSaving ? t("Enregistrement…") : t(editing ? 'Enregistrer' : 'Ajouter')}</button>
         </>}
       >
         <div className="ndc-field-inline">
@@ -295,7 +311,7 @@ export function DockerHostFormModal({ onClose, onSave, initialConnection = 'tcp'
                 <input id="docker-environment" aria-label={t('docker.environmentId')} className="nd-input" value={environment} onChange={e => setEnvironment(e.target.value)} placeholder="1" />
               </CalmeField>
               <CalmeField label={t('docker.apiKey')} htmlFor="docker-apiKey">
-                <input id="docker-apiKey" aria-label={t('docker.apiKey')} className="nd-input" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="••••••••" />
+                <input id="docker-apiKey" aria-label={t('docker.apiKey')} className="nd-input" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder={keepsKey ? t('docker.hosts.keepKey') : '••••••••'} />
               </CalmeField>
             </div>
             {selfSigned}

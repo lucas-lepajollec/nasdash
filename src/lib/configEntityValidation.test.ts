@@ -93,6 +93,37 @@ describe('configuration entity payloads', () => {
     }, 'reorderDevices', 'PUT')).toThrow('liste');
   });
 
+  it('requires an id and a valid transport address for Docker host edits', () => {
+    const host = { id: 'host-1', connection: 'tcp', url: 'http://docker.example.test:2375' };
+    expect(() => validateConfigMutationBody(host, 'dockerHost', 'PUT')).not.toThrow();
+    expect(() => validateConfigMutationBody({ ...host, id: undefined }, 'dockerHost', 'PUT')).toThrow('id');
+    expect(() => validateConfigMutationBody({ ...host, url: 'invalid' }, 'dockerHost', 'PUT')).toThrow('URL complète');
+    expect(() => validateConfigMutationBody({ ...host, connection: 'socket', socketPath: 'invalid' }, 'dockerHost', 'PUT')).toThrow('socket');
+    expect(() => validateConfigMutationBody({ ...host, connection: 'unsupported' }, 'dockerHost', 'PUT')).toThrow('valeur invalide');
+  });
+
+  it.each(['portainer', 'dockhand'])('validates %s edits while allowing deferred token reuse', connection => {
+    const host = { id: 'host-1', connection, url: 'https://relay.example.test', target: '1' };
+    for (const token of [undefined, '', '********', 'test-new-token']) {
+      expect(() => validateConfigMutationBody({ ...host, token }, 'dockerHost', 'PUT')).not.toThrow();
+    }
+    expect(() => validateConfigMutationBody(host, 'dockerHost', 'POST')).toThrow('La clé API est requise.');
+    expect(() => validateConfigMutationBody({ ...host, token: 123 }, 'dockerHost', 'PUT')).toThrow('chaîne');
+    expect(() => validateConfigMutationBody({ ...host, token: 'x'.repeat(4097) }, 'dockerHost', 'PUT')).toThrow('taille');
+    expect(() => validateConfigMutationBody({ ...host, target: '' }, 'dockerHost', 'PUT')).toThrow('environnement');
+  });
+
+  it('validates Docker host reorder ids before persistence', () => {
+    for (const ids of [[], ['host-1'], ['host-2', 'host-1']]) {
+      expect(() => validateConfigMutationBody({ ids }, 'reorderDockerHosts', 'PUT')).not.toThrow();
+    }
+    for (const ids of [undefined, null, 'host-1', {}, [123], ['../host'], ['']]) {
+      expect(() => validateConfigMutationBody({ ids }, 'reorderDockerHosts', 'PUT')).toThrow();
+    }
+    expect(() => validateConfigMutationBody({ ids: ['host-1', 'host-1'] }, 'reorderDockerHosts', 'PUT')).toThrow('double');
+    expect(() => validateConfigMutationBody({ ids: Array(501).fill('host-1') }, 'reorderDockerHosts', 'PUT')).toThrow('trop');
+  });
+
   it('rejects invalid nested device and Docker values', () => {
     expect(() => validateConfigMutationBody({
       type: 'device',

@@ -5,7 +5,8 @@ import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { useOpenSettings } from '@/components/integrations/useOpenSettings';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { ContainerListOptions, visibleRowsOf } from './ContainerListOptions';
-import { Container, Database, Layers, Loader2, Play, Plus, RefreshCw, RotateCcw, Search, SlidersHorizontal, Square, Trash2, X } from 'lucide-react';
+import { AlertCircle, Container, Database, Hash, Layers, Loader2, Pencil, Play, Plus, RefreshCw, RotateCcw, Search, SlidersHorizontal, Square, Trash2, X } from 'lucide-react';
+import { SortableMetrics } from '@/widgets/devices/SortableMetrics';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Emoji } from '../../shared/Emoji';
 import { ContainerDetailView, DockerErrorNotice, ImagesTab, VolumesTab } from './DockerViews';
@@ -31,74 +32,114 @@ function NoHostCallToAction() {
   return <div className="nd-card ndc-box"><SetupGuide kind="docker" /></div>;
 }
 
-export function DockerHostsWidget({ editMode }: DockerWidgetProps) {
+/** Running and stopped containers of the active host; a dash while they load. */
+function DockerCounters({ loading }: { loading: boolean }) {
   const { t } = useI18n();
-  const { hosts, activeHostId, setActiveHostId, setSelectedContainerId, openHostForm, requestHostRemoval } = useDockerWorkspace();
+  const { visibleContainers } = useDockerWorkspace();
+  const running = visibleContainers.filter(container => container.state === 'running').length;
+  const stopped = visibleContainers.filter(container => container.state === 'exited').length;
+  return (
+    <dl className={`ndc-counters ${loading ? 'is-loading' : ''}`} aria-busy={loading}>
+      <div><dt><span className="ndc-dot ndc-dot--running" />{t('Actifs')}</dt><dd>{loading ? '–' : running}</dd></div>
+      <div><dt><span className="ndc-dot ndc-dot--stopped" />{t('Stoppés')}</dt><dd>{loading ? '–' : stopped}</dd></div>
+    </dl>
+  );
+}
+
+/**
+ * The Docker hosts and, under them, the containers of the chosen one
+ * (running / stopped). In edit mode a host can be edited, removed or dragged
+ * to a new place; the host being opened or removed shows a spinner.
+ */
+export function DockerHostsWidget({ editMode, settings = {}, onUpdateSettings }: DockerWidgetProps & { settings?: WidgetSettings; onUpdateSettings?: (settings: WidgetSettings) => void }) {
+  const { t } = useI18n();
+  const {
+    hosts, activeHostId, setActiveHostId, setSelectedContainerId, openHostForm, requestHostRemoval, moveHost, removingHostIds,
+    containersLoading, containersError, summaryOnPage,
+  } = useDockerWorkspace();
   const { openIntegrations } = useOpenSettings();
   if (hosts.length === 0) return <NoHostCallToAction />;
+  const showCounters = settings.counters !== false && !summaryOnPage;
+  const loading = containersLoading && !containersError;
+  const chip = (host: typeof hosts[number]) => {
+    const active = activeHostId === host.id;
+    const removing = removingHostIds.includes(host.id);
+    const state = removing ? t('docker.hosts.removing') : active && loading ? t('docker.hosts.loading') : active && containersError ? t('docker.hosts.unreachable') : '';
+    return (
+      <span className={`ndc-host ${removing ? 'is-busy' : ''}`}>
+        <button
+          type="button"
+          className="ndc-chip"
+          aria-pressed={active}
+          disabled={removing}
+          title={state || undefined}
+          onClick={() => { setActiveHostId(host.id); setSelectedContainerId(null); }}
+        >
+          <Emoji emoji={host.icon} />
+          <span className="ndc-host-name">{host.name}</span>
+          {(removing || (active && loading)) && <Loader2 size={12} className="nd-spin" aria-hidden="true" />}
+          {!removing && active && containersError && <AlertCircle size={12} className="ndc-host-error" aria-hidden="true" />}
+          {state && <span className="nd-sr-only">{state}</span>}
+        </button>
+        {editMode && (
+          <>
+            <button type="button" className="ndc-icon-button ndc-host-tool" disabled={removing} onClick={() => openHostForm(host)} title={t('docker.hosts.editNamed', { name: host.name })} aria-label={t('docker.hosts.editNamed', { name: host.name })}>
+              <Pencil size={12} />
+            </button>
+            <button type="button" className="ndc-icon-button ndc-host-tool is-danger" disabled={removing} onClick={() => requestHostRemoval({ id: host.id, name: host.name })} title={t("Supprimer l'hôte Docker")} aria-label={[t("Supprimer l'hôte Docker"), host.name].join(' · ')}>
+              <X size={12} />
+            </button>
+          </>
+        )}
+      </span>
+    );
+  };
   // Calme shell: the title follows "hide titles" and can be renamed; hosts are
   // neutral chips, only the chosen one takes the accent.
   return (
     <CalmeWidget title={t('Hôtes Docker')} editMode={editMode}>
       {editMode && (
         <WidgetHeaderActions>
-          {/* Hosts are edited on the Integrations page, Docker section. */}
+          {onUpdateSettings && !summaryOnPage && (
+            <button type="button" className={`nd-action-icon ${showCounters ? 'accent' : ''}`} aria-pressed={showCounters} onClick={() => onUpdateSettings({ ...settings, counters: showCounters ? false : null })} title={t('docker.hosts.counters')} aria-label={t('docker.hosts.counters')}>
+              <Hash size={13} />
+            </button>
+          )}
+          {/* Connections are also listed on the Integrations page, Docker section. */}
           <button type="button" className="nd-action-icon" onClick={() => openIntegrations('docker')} title={t('docker.hosts.manage')} aria-label={t('docker.hosts.manage')}>
             <SlidersHorizontal size={13} />
           </button>
-          <button type="button" className="nd-action-icon success" onClick={openHostForm} title={t('Ajouter un hôte Docker')} aria-label={t('Ajouter un hôte Docker')}>
+          <button type="button" className="nd-action-icon success" onClick={() => openHostForm()} title={t('Ajouter un hôte Docker')} aria-label={t('Ajouter un hôte Docker')}>
             <Plus size={13} />
           </button>
         </WidgetHeaderActions>
       )}
-      <div className="ndc-hosts">
-        {hosts.map(host => (
-          <button
-            key={host.id}
-            type="button"
-            className="ndc-chip"
-            aria-pressed={activeHostId === host.id}
-            onClick={() => { setActiveHostId(host.id); setSelectedContainerId(null); }}
-          >
-            <Emoji emoji={host.icon} /> {host.name}
-            {editMode && (
-              <span
-                role="button"
-                tabIndex={0}
-                className="ndc-chip-remove"
-                aria-label={t("Supprimer l'hôte Docker")}
-                onClick={event => { event.stopPropagation(); requestHostRemoval({ id: host.id, name: host.name }); }}
-                onKeyDown={event => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    requestHostRemoval({ id: host.id, name: host.name });
-                  }
-                }}
-              >
-                <X size={10} />
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <SortableMetrics
+        className={`ndc-hosts ${editMode ? 'is-editing' : ''}`}
+        enabled={editMode}
+        items={hosts.map(host => ({ id: host.id, label: host.name, content: chip(host) }))}
+        onMove={moveHost}
+      />
+      {showCounters && <DockerCounters loading={loading} />}
     </CalmeWidget>
   );
 }
 
-export function DockerSummaryWidget({ editMode }: Partial<DockerWidgetProps>) {
+/** The former counters widget: its figures now live in the hosts widget. */
+export function DockerSummaryWidget({ editMode, onRemove }: Partial<DockerWidgetProps> & { onRemove?: () => void }) {
   const { t } = useI18n();
-  const { hosts, visibleContainers, containersError } = useDockerWorkspace();
+  const { hosts, containersError, containersLoading } = useDockerWorkspace();
   if (hosts.length === 0) return null;
   if (containersError) return <DockerErrorNotice error={containersError} compact />;
-  const running = visibleContainers.filter(container => container.state === 'running').length;
-  const stopped = visibleContainers.filter(container => container.state === 'exited').length;
   return (
     <CalmeWidget title={t('docker.calme.counters')} editMode={editMode}>
-      <dl className="ndc-counters">
-        <div><dt><span className="ndc-dot ndc-dot--running" />{t('Actifs')}</dt><dd>{running}</dd></div>
-        <div><dt><span className="ndc-dot ndc-dot--stopped" />{t('Stoppés')}</dt><dd>{stopped}</dd></div>
-      </dl>
+      <DockerCounters loading={containersLoading} />
+      {editMode && (
+        <p className="ndc-merge-note">
+          <span>{t('docker.hosts.countersMoved')}</span>
+          {onRemove && <button type="button" className="nd-btn" onClick={onRemove}>{t('docker.hosts.removeCounters')}</button>}
+        </p>
+      )}
     </CalmeWidget>
   );
 }

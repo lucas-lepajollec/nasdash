@@ -59,7 +59,7 @@ test('metric dragging stays in its widget and persists through displays and Stor
     await page.getByTitle('Edit mode', { exact: true }).click();
     const storage = page.locator('[data-widget-id="order-storage"]');
     const labels = storage.locator('.ndc-m-label');
-    const hostOrder = [`volume2 · ${first.name}`, `volume10 · ${first.name}`, `/ · ${second.name}`];
+    const hostOrder = [`volume2 · ${first.name}`, `volume10 · ${first.name}`, `${second.name}`];
     await expect(labels).toHaveText(hostOrder);
     await expect(storage.locator('.ndc-m-drag')).toHaveCount(0);
     const settingsButton = storage.getByRole('button', { name: 'Storage settings', exact: true });

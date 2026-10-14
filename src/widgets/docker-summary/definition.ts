@@ -5,6 +5,8 @@ export default defineWidget({
   nameKey: 'widget.dockerSummary.name', descriptionKey: 'widget.dockerSummary.description',
   access: { requirement: { tabs: ['docker'], widgets: ['dockercontainers'] } },
   linkGroup: 'docker',
+  // Merged into the Docker hosts widget: existing ones keep working, new pages do not offer it.
+  internal: true,
   // Widths it can be resized to (columns out of 24), width when added,
   // smallest usable width (px) and typical height (px) before measuring.
   sizes: { formats: [4, 6, 8, 12, 24], default: 6, minPx: 150, h: 80 },

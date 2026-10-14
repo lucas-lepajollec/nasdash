@@ -1027,6 +1027,17 @@ const en: Dictionary = {
   'docker.stopNamed': 'Stop {name}',
   'docker.startNamed': 'Start {name}',
   'docker.removeNamed': 'Delete {name}',
+  "devices.calme.igpuTemperature": "iGPU temperature",
+  "devices.look.gpusShown": "Graphics shown",
+  "docker.hosts.editTitle": "Edit Docker host",
+  "docker.hosts.editNamed": "Edit {name}",
+  "docker.hosts.keepKey": "Unchanged (leave empty)",
+  "docker.hosts.removing": "Removing…",
+  "docker.hosts.loading": "Loading containers…",
+  "docker.hosts.unreachable": "Host unreachable",
+  "docker.hosts.counters": "Show container counters",
+  "docker.hosts.countersMoved": "These counters are now part of the Docker hosts widget.",
+  "docker.hosts.removeCounters": "Remove this widget",
 };
 
 const fr: Dictionary = {
@@ -2040,6 +2051,17 @@ const fr: Dictionary = {
   'docker.stopNamed': 'Arrêter {name}',
   'docker.startNamed': 'Démarrer {name}',
   'docker.removeNamed': 'Supprimer {name}',
+  "devices.calme.igpuTemperature": "Température iGPU",
+  "devices.look.gpusShown": "Processeurs graphiques affichés",
+  "docker.hosts.editTitle": "Modifier l’hôte Docker",
+  "docker.hosts.editNamed": "Modifier {name}",
+  "docker.hosts.keepKey": "Inchangée (laisser vide)",
+  "docker.hosts.removing": "Suppression…",
+  "docker.hosts.loading": "Chargement des conteneurs…",
+  "docker.hosts.unreachable": "Hôte injoignable",
+  "docker.hosts.counters": "Afficher les compteurs de conteneurs",
+  "docker.hosts.countersMoved": "Ces compteurs font maintenant partie du widget Hôtes Docker.",
+  "docker.hosts.removeCounters": "Retirer ce widget",
 };
 
 const es: Dictionary = {
@@ -3053,6 +3075,17 @@ const es: Dictionary = {
   'docker.stopNamed': 'Detener {name}',
   'docker.startNamed': 'Iniciar {name}',
   'docker.removeNamed': 'Eliminar {name}',
+  "devices.calme.igpuTemperature": "Temperatura de iGPU",
+  "devices.look.gpusShown": "Gráficos mostrados",
+  "docker.hosts.editTitle": "Editar host Docker",
+  "docker.hosts.editNamed": "Editar {name}",
+  "docker.hosts.keepKey": "Sin cambios (dejar vacío)",
+  "docker.hosts.removing": "Eliminando…",
+  "docker.hosts.loading": "Cargando contenedores…",
+  "docker.hosts.unreachable": "Host inaccesible",
+  "docker.hosts.counters": "Mostrar contadores de contenedores",
+  "docker.hosts.countersMoved": "Estos contadores ahora forman parte del widget Hosts Docker.",
+  "docker.hosts.removeCounters": "Quitar este widget",
 };
 
 const de: Dictionary = {
@@ -4066,6 +4099,17 @@ const de: Dictionary = {
   'docker.stopNamed': '{name} stoppen',
   'docker.startNamed': '{name} starten',
   'docker.removeNamed': '{name} löschen',
+  "devices.calme.igpuTemperature": "iGPU-Temperatur",
+  "devices.look.gpusShown": "Angezeigte Grafikchips",
+  "docker.hosts.editTitle": "Docker-Host bearbeiten",
+  "docker.hosts.editNamed": "{name} bearbeiten",
+  "docker.hosts.keepKey": "Unverändert (leer lassen)",
+  "docker.hosts.removing": "Wird entfernt…",
+  "docker.hosts.loading": "Container werden geladen…",
+  "docker.hosts.unreachable": "Host nicht erreichbar",
+  "docker.hosts.counters": "Container-Zähler anzeigen",
+  "docker.hosts.countersMoved": "Diese Zähler sind jetzt Teil des Widgets Docker-Hosts.",
+  "docker.hosts.removeCounters": "Dieses Widget entfernen",
 };
 
 const it: Dictionary = {
@@ -5077,7 +5121,18 @@ const it: Dictionary = {
   "docker.restartNamed": "Riavvia {name}",
   "docker.stopNamed": "Arresta {name}",
   "docker.startNamed": "Avvia {name}",
-  "docker.removeNamed": "Elimina {name}"
+  "docker.removeNamed": "Elimina {name}",
+  "devices.calme.igpuTemperature": "Temperatura iGPU",
+  "devices.look.gpusShown": "Grafica mostrata",
+  "docker.hosts.editTitle": "Modifica host Docker",
+  "docker.hosts.editNamed": "Modifica {name}",
+  "docker.hosts.keepKey": "Invariata (lasciare vuoto)",
+  "docker.hosts.removing": "Rimozione…",
+  "docker.hosts.loading": "Caricamento dei container…",
+  "docker.hosts.unreachable": "Host non raggiungibile",
+  "docker.hosts.counters": "Mostra i contatori dei container",
+  "docker.hosts.countersMoved": "Questi contatori ora fanno parte del widget Host Docker.",
+  "docker.hosts.removeCounters": "Rimuovi questo widget",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Machine widgets name measures by their kind only (CPU, RAM, GPU, iGPU, Disk); disk and GPU names appear only when a machine has several, and full names stay in tooltips. Integrated graphics are shown as iGPU, and the Device widget can hide either graphics chip when a machine has both.
+- Measure names always sit on the left and values on the right: when they collide, values move to the next line, spread from edge to edge, and a name too long for its line is shortened with an ellipsis instead of wrapping. One-measure widgets keep the machine name visible beside a disk or GPU name.
+- The Docker hosts widget now includes the running/stopped container counters. Existing pages keep their counters widget until it is removed (a button offers it in edit mode); new Docker pages no longer add it.
+- Docker image and volume rows are more compact on small screens, and expanded details use the same background as the search fields.
+
+### Added
+
+- Docker hosts can be edited (an empty API key keeps the saved one) and reordered by drag and drop from the Docker hosts widget.
+
+### Fixed
+
+- Show progress while a Docker host is added, opened or removed: a new host is selected at once, its chip shows a spinner while its containers load and an alert when it cannot be reached, and confirmation buttons show a spinner while they run.
+
 ## [0.2.4] - 2026-10-13
 
 ### Upgrading from 0.2.3

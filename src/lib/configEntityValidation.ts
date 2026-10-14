@@ -580,14 +580,18 @@ export function validateConfigMutationBody(
   }
 
   if (type === 'dockerHost') {
+    if (method === 'PUT') readIdentifier(body);
     readString(body, 'name', { maxLength: 200 });
     readString(body, 'icon', { maxLength: 64, trim: false });
     const connection = readEnum(body, 'connection', ['tcp', 'socket', 'portainer', 'dockhand'] as const) ?? 'tcp';
+    body.connection = connection;
     readBoolean(body, 'allowSelfSigned');
     if (connection === 'portainer' || connection === 'dockhand') {
       const environment = readString(body, 'target', { maxLength: 64 });
       if (!environment || !/^[A-Za-z0-9_-]+$/.test(environment)) throw new RequestValidationError('L’identifiant d’environnement est requis (ex. 1).');
-      if (!readString(body, 'token', { maxLength: 4_096, trim: false })) throw new RequestValidationError('La clé API est requise.');
+      // PUT can keep a token; the route verifies reuse against the stored host
+      // and validates the resolved token with the POST rules before saving.
+      if (!readString(body, 'token', { maxLength: 4_096, trim: false }) && method === 'POST') throw new RequestValidationError('La clé API est requise.');
     }
     if (connection === 'socket') {
       try {
@@ -603,6 +607,13 @@ export function validateConfigMutationBody(
     } catch {
       throw new RequestValidationError('L’adresse Docker doit être une URL complète en http:// ou https:// avec le bon port.');
     }
+    return;
+  }
+
+  if (type === 'reorderDockerHosts') {
+    const ids = readArray(body, 'ids', 500, true)!;
+    ids.forEach(id => readIdentifier({ id }));
+    if (new Set(ids).size !== ids.length) throw new RequestValidationError('La liste contient des identifiants en double.');
     return;
   }
 

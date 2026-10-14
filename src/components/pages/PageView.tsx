@@ -162,7 +162,7 @@ export function PageView(props: PageViewProps) {
   const hasDocker = page.widgets.some(widget => !widget.hidden && getWidgetCatalogEntry(widget.type)?.linkGroup === 'docker');
 
   return (
-    <DockerWorkspaceProvider enabled={isVisible && hasDocker}>
+    <DockerWorkspaceProvider enabled={isVisible && hasDocker} summaryOnPage={page.widgets.some(widget => !widget.hidden && widget.type === 'docker-summary')}>
       <DndContext sensors={sensors} collisionDetection={innerCollision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setInnerDrag(null)}>
         <div className={`nd-page ${editMode ? 'nd-page--editing' : ''}`} data-page-id={page.id}>
           {page.id === 'dashboard' && !editMode && <GettingStarted />}

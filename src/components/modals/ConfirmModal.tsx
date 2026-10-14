@@ -2,6 +2,7 @@ import React, { useId, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
+import { Loader2 } from 'lucide-react';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -51,7 +52,7 @@ export default function ConfirmModal({
         {error && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{error}</p>}
         <div className="ndc-confirm-actions">
           <button type="button" className="nd-btn" disabled={pending} onClick={close}>{resolvedCancelLabel}</button>
-          <button type="button" className="nd-btn ndc-btn-danger" disabled={pending} aria-busy={pending} onClick={() => { void confirm(); }}>{resolvedConfirmLabel}</button>
+          <button type="button" className="nd-btn ndc-btn-danger" disabled={pending} aria-busy={pending} onClick={() => { void confirm(); }}>{pending && <Loader2 size={14} className="nd-spin" aria-hidden="true" />}{resolvedConfirmLabel}</button>
         </div>
       </div>
     </div>,

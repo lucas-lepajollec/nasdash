@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { applySoftEdges } from '@/lib/appearance';
-import { DashboardConfig, Category, Service, Device, DockerActionConfig, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
+import { DashboardConfig, Category, Service, Device, DockerActionConfig, DockerHost, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
@@ -42,6 +42,8 @@ export interface DashboardContextType {
   updateDockerAction: (id: string, updates: Partial<DockerActionConfig>) => Promise<void>;
   deleteDockerAction: (id: string) => Promise<void>;
   reorderDockerActions: (newActions: DockerActionConfig[]) => Promise<void>;
+  /** Saves the order of the Docker hosts (shown at once, reloaded if refused). */
+  reorderDockerHosts: (newHosts: DockerHost[]) => Promise<void>;
 
   // Local Events
   addLocalEvent: (event: Omit<LocalCalendarEvent, 'id'>) => Promise<void>;
@@ -561,6 +563,17 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) await fetchConfig();
   };
 
+  const reorderDockerHosts = async (newHosts: DockerHost[]) => {
+    if (!config) return;
+    setConfig(prev => prev ? { ...prev, dockerHosts: newHosts } : prev);
+    const res = await fetchWithAuth('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reorderDockerHosts', ids: newHosts.map(host => host.id) }),
+    });
+    if (!res.ok) await fetchConfig();
+  };
+
   const addLocalEvent = async (event: Omit<LocalCalendarEvent, 'id'>) => {
     const res = await fetchWithAuth('/api/config/calendar', {
       method: 'POST',
@@ -615,6 +628,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
         updateDockerAction,
         deleteDockerAction,
         reorderDockerActions,
+        reorderDockerHosts,
         addLocalEvent,
         updateLocalEvent,
         deleteLocalEvent,

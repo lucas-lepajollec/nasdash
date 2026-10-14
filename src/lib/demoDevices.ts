@@ -32,6 +32,8 @@ interface DemoProfile {
   memory: [number, number];
   disks: Array<{ key: string; name: string; percent: number; totalGiB: number }>;
   gpu?: { name: string; usage: [number, number]; temp: [number, number]; memoryGiB: number; usedGiB: number };
+  /** Integrated graphics beside the GPU (named like the sources report them). */
+  igpu?: { name: string; usage: [number, number]; temp: [number, number] };
   net: [rx: number, tx: number];
   load: [number, number];
 }
@@ -63,6 +65,7 @@ const PROFILES: Record<string, DemoProfile> = {
     cores: 12, cpu: [14, 10], cpuTemp: [49, 9], memoryGiB: 32, memory: [47, 5],
     disks: [{ key: 'nvme', name: 'NVMe', percent: 71, totalGiB: 2_000 }, { key: 'games', name: 'Jeux', percent: 83, totalGiB: 4_000 }],
     gpu: { name: 'RTX 4070', usage: [52, 40], temp: [63, 12], memoryGiB: 12, usedGiB: 7.4 },
+    igpu: { name: 'Intel UHD Graphics 770', usage: [6, 4], temp: [44, 5] },
     net: [1.2 * MB, 0.4 * MB], load: [1.4, 0.8],
   },
   // Edge VPS (Beszel): a small cloud server.
@@ -86,6 +89,7 @@ function seriesOf(id: string): DemoSeries[] {
     { id: 'memory.usage', base: profile.memory[0], amplitude: profile.memory[1] },
     ...profile.disks.map(disk => ({ id: `disk.usage:${disk.key}`, base: disk.percent, amplitude: 0.2 })),
     ...(profile.gpu ? [{ id: 'gpu.usage', base: profile.gpu.usage[0], amplitude: profile.gpu.usage[1] }, { id: 'gpu.usage@temp', base: profile.gpu.temp[0], amplitude: profile.gpu.temp[1] }] : []),
+    ...(profile.igpu ? [{ id: 'gpu.usage:igpu', base: profile.igpu.usage[0], amplitude: profile.igpu.usage[1] }, { id: 'gpu.usage:igpu@temp', base: profile.igpu.temp[0], amplitude: profile.igpu.temp[1] }] : []),
     { id: 'net.rx', base: profile.net[0], amplitude: profile.net[0] * 0.75, min: 0, max: Infinity },
     { id: 'net.tx', base: profile.net[1], amplitude: profile.net[1] * 0.75, min: 0, max: Infinity },
     { id: 'load.1', base: profile.load[0], amplitude: profile.load[1], min: 0, max: Infinity },
@@ -112,6 +116,7 @@ export function demoDeviceMetrics(id: string, now = Date.now()): Metric[] {
     { key: 'memory.usage', kind: 'memory', percent: memory, usedBytes: (memory / 100) * profile.memoryGiB * GIB, totalBytes: profile.memoryGiB * GIB },
     ...profile.disks.map(disk => ({ key: `disk.usage:${disk.key}`, kind: 'disk' as const, name: disk.name, percent: disk.percent, usedBytes: (disk.percent / 100) * disk.totalGiB * GIB, totalBytes: disk.totalGiB * GIB })),
     ...(profile.gpu ? [{ key: 'gpu.usage', kind: 'gpu' as const, name: profile.gpu.name, percent: at('gpu.usage')!, temperatureC: at('gpu.usage@temp'), usedBytes: profile.gpu.usedGiB * GIB, totalBytes: profile.gpu.memoryGiB * GIB }] : []),
+    ...(profile.igpu ? [{ key: 'gpu.usage:igpu', kind: 'gpu' as const, name: profile.igpu.name, percent: at('gpu.usage:igpu')!, temperatureC: at('gpu.usage:igpu@temp') }] : []),
   ];
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mergeSeries, latestTime } from './deviceData';
 import { loadText, percentText, rateText, temperatureText, uptimeText } from './format';
-import { readingsOf, withFacets } from './readings';
+import { gpuKind, gpuNames, readingsOf, shortGpuName, withFacets } from './readings';
 import { stateOf } from './parts';
 import { glancesMetrics } from '@/integrations/glances/collect';
 
@@ -98,15 +98,42 @@ describe('separate CPU and GPU temperature readings', () => {
     expect(stateOf({ data: snapshot, failed: false })).toBe('online');
   });
 
-  it('omits redundant CPU/GPU secondary lines but preserves a real GPU model', () => {
+  it('names a lone GPU by its kind, the model only in its tooltip', () => {
     expect(readingsOf(snapshot, 'temperature', t, 'en')[0].detail).toBeUndefined();
     const generic = { ...snapshot, metrics: [{ key: 'gpu', kind: 'gpu' as const, name: 'GPU', percent: 10, temperatureC: 50 }] };
     expect(readingsOf(generic, 'gpu', t, 'en')[0].detail).toBeUndefined();
     expect(readingsOf(generic, 'gpuTemperature', t, 'en')[0].detail).toBeUndefined();
     const named = { ...generic, metrics: [{ ...generic.metrics[0], name: 'RTX 4070' }] };
     const temperature = readingsOf(named, 'gpuTemperature', t, 'en')[0];
-    expect(withFacets(temperature, named, ['part'], [], t, 'en').detail).toBe('RTX 4070');
+    expect(temperature.part).toBe('RTX 4070');
+    expect(withFacets(temperature, named, ['part'], [], t, 'en').detail).toBe('GPU');
     expect(withFacets(temperature, named, [], [], t, 'en').detail).toBeUndefined();
+    expect(readingsOf(named, 'gpu', t, 'en')[0]).toMatchObject({ label: 'GPU', part: 'RTX 4070' });
+  });
+
+  it('tells integrated graphics from a dedicated GPU', () => {
+    for (const name of ['Intel(R) UHD Graphics 770', 'Intel Iris Xe Graphics', 'AMD Radeon Graphics', 'AMD Radeon 780M', 'Radeon Vega 8 Graphics', 'Intel Arc Graphics', 'Apple M2']) expect(gpuKind(name)).toBe('igpu');
+    for (const name of ['NVIDIA GeForce RTX 4070', 'AMD Radeon RX 7900 XTX', 'Intel Arc A770', 'GPU', undefined]) expect(gpuKind(name)).toBe('gpu');
+    const mixed = { ...snapshot, metrics: [
+      { key: 'gpu:i', kind: 'gpu' as const, name: 'Intel(R) UHD Graphics 770', percent: 5, temperatureC: 40 },
+      { key: 'gpu:d', kind: 'gpu' as const, name: 'NVIDIA GeForce RTX 4070', percent: 50, temperatureC: 60 },
+    ] };
+    expect(readingsOf(mixed, 'gpu', t, 'en').map(reading => reading.label)).toEqual(['iGPU', 'GPU']);
+    expect(readingsOf(mixed, 'gpuTemperature', t, 'en').map(reading => reading.label)).toEqual(['devices.calme.igpuTemperature:{}', 'devices.calme.gpuTemperature:{}']);
+  });
+
+  it('names repeated GPUs by their short model, numbered when even that repeats', () => {
+    const two = (a: string, b: string) => gpuNames([{ key: 'a', kind: 'gpu', name: a, percent: 0 }, { key: 'b', kind: 'gpu', name: b, percent: 0 }]);
+    expect(two('NVIDIA GeForce RTX 4070', 'NVIDIA GeForce RTX 3060')).toEqual(['RTX 4070', 'RTX 3060']);
+    expect(two('NVIDIA GeForce RTX 4070', 'NVIDIA GeForce RTX 4070')).toEqual(['RTX 4070 1', 'RTX 4070 2']);
+    expect(two('GPU', 'GPU')).toEqual(['GPU 1', 'GPU 2']);
+    expect(shortGpuName('Intel(R) UHD Graphics 770')).toBe('UHD 770');
+  });
+
+  it('calls a lone disk "Disk" and several disks by their names', () => {
+    const disk = (key: string, name: string) => ({ key, kind: 'disk' as const, name, percent: 10 });
+    expect(readingsOf({ ...snapshot, metrics: [disk('d1', '/volume1')] }, 'disk', t, 'en')[0]).toMatchObject({ label: 'devices.calme.disk:{}', part: '/volume1' });
+    expect(readingsOf({ ...snapshot, metrics: [disk('d1', '/volume1'), disk('d2', '/volume2')] }, 'disk', t, 'en').map(reading => reading.label)).toEqual(['/volume1', '/volume2']);
   });
 
   it('keeps multiple GPU identities in the labels without duplicating their model below', () => {

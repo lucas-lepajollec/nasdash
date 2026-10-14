@@ -134,6 +134,13 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
   const reported = (id: MetricId) => id === 'history'
     ? chosen.some(device => readingsOf(readings[device]?.data, 'cpu', t, language).length > 0)
     : chosen.some(device => readingsOf(readings[device]?.data, id, t, language).length > 0);
+  // One machine with several GPUs (an iGPU and a GPU…): each can be left out.
+  const gpus = options.deviceMode === 'single' && chosen[0] ? readingsOf(readings[chosen[0]]?.data, 'gpu', t, language) : [];
+  const hidden = Array.isArray(draft.hiddenGpus) ? (draft.hiddenGpus as unknown[]).filter((key): key is string => typeof key === 'string') : [];
+  const toggleGpu = (key: string) => {
+    const next = hidden.includes(key) ? hidden.filter(item => item !== key) : [...hidden, key];
+    change({ hiddenGpus: next.length ? next : null });
+  };
   const toggleDevice = (id: string) => {
     if (options.deviceMode === 'single') { change({ deviceId: id }); return; }
     const next = chosen.includes(id) ? chosen.filter(item => item !== id) : [...chosen, id];
@@ -317,6 +324,16 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
                         </label>
                       ) : <span />}
                     </div>
+                    {id === 'gpu' && gpus.length > 1 && (metric.shown || look.metrics.gpuTemperature.shown) && (
+                      <div className="ndc-dlg-parts" role="group" aria-label={t('devices.look.gpusShown')}>
+                        {gpus.map(gpu => (
+                          <CalmeCheckRow key={gpu.key} checked={!hidden.includes(gpu.key)} onChange={() => toggleGpu(gpu.key)}>
+                            <span className="ndc-dlg-name">{gpu.label}</span>
+                            {gpu.part && gpu.part !== gpu.label && <span className="ndc-dlg-note">{gpu.part}</span>}
+                          </CalmeCheckRow>
+                        ))}
+                      </div>
+                    )}
                     {!shared && metric.shown && metric.display === 'chart' && id !== 'history' && (
                       <ChartOptions value={metric.chart} onChange={chart => setMetric(id, { chart, ownChart: chart })} />
                     )}

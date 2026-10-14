@@ -37,13 +37,22 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
   const chartLook = chart ?? look.metrics[reading.metric].chart;
   const fill = fillOf(reading.metric, reading.value, reading.cores);
   const threshold = thresholdOf(look, reading.metric);
+  const fullName = [reading.label, reading.owner].filter(Boolean).join(' · ');
+  const tooltip = [fullName, reading.part && reading.part !== reading.label ? reading.part : '', reading.text, reading.detail].filter(Boolean).join(' · ');
+  // The part's name gives way (…) before the machine's; neither wraps.
+  const label = (className = 'ndc-m-label') => (
+    <span className={className} title={fullName}>
+      <span className="ndc-m-name">{reading.label}</span>
+      {reading.owner && <>{' '}<span className="ndc-m-owner">{["·", reading.owner].join(" ")}</span></>}
+    </span>
+  );
 
   if (inline && display === 'ring') {
     return (
-      <div className="ndc-m ndc-m--inline-ring" title={[reading.label, reading.text, reading.detail].filter(Boolean).join(' · ')}>
-        <RingGauge percent={fill} color={color} label={reading.label} size={30} text="" unit="" />
+      <div className="ndc-m ndc-m--inline-ring" title={tooltip}>
+        <RingGauge percent={fill} color={color} label={fullName} size={30} text="" unit="" />
         <span className="ndc-m-head">
-          {!hideLabel && <span className="ndc-m-label">{reading.label}</span>}
+          {!hideLabel && label()}
           <span className={`ndc-m-value ${danger ? 'is-danger' : ''}`} style={danger ? { color } : undefined}>{reading.text}</span>
         </span>
       </div>
@@ -52,12 +61,12 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
 
   if (inline && display === 'chart') {
     return (
-      <div className="ndc-m ndc-m--inline-chart">
+      <div className="ndc-m ndc-m--inline-chart" title={tooltip}>
         <span className="ndc-m-head">
-          {!hideLabel && <span className="ndc-m-label">{reading.label}</span>}
+          {!hideLabel && label()}
           <span className={`ndc-m-value ${danger ? 'is-danger' : ''}`} style={danger ? { color } : undefined}>{reading.text}</span>
         </span>
-        <Sparkline points={reading.points} color={color} height={20} max={reading.metric === 'network' || reading.metric === 'load' ? Math.max(1, ...reading.points.map(point => point[1])) : 100} filled label={reading.label} />
+        <Sparkline points={reading.points} color={color} height={20} max={reading.metric === 'network' || reading.metric === 'load' ? Math.max(1, ...reading.points.map(point => point[1])) : 100} filled label={fullName} />
       </div>
     );
   }
@@ -67,21 +76,22 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
     const [number, ...unit] = reading.text.split(' ');
     const custom = (reading.metric === 'temperature' || reading.metric === 'gpuTemperature') || reading.metric === 'load';
     // Short names (CPU, RAM) sit in the ring; a machine or disk name goes under it.
-    const inside = reading.label.length <= 5 && ringSize >= 64;
+    const inside = !reading.owner && reading.label.length <= 5 && ringSize >= 64;
     return (
-      <div className="ndc-m ndc-m--ring" title={[reading.label, reading.text, reading.detail].filter(Boolean).join(' · ')}>
+      <div className="ndc-m ndc-m--ring" title={tooltip}>
         <RingGauge percent={fill} color={color} label={inside ? reading.label : ''} size={ringSize} {...(custom ? { text: number, unit: unit.join(' ') } : {})} />
-        {!inside && !hideLabel && <span className="ndc-m-label ndc-m-ring-name">{reading.label}</span>}
+        {!inside && !hideLabel && label('ndc-m-label ndc-m-ring-name')}
         {reading.detail && size !== 'small' && <span className="ndc-m-detail">{reading.detail}</span>}
       </div>
     );
   }
 
+  // Name on the left, figures on the right. When both do not fit, the figures
+  // go to the next line, spread from edge to edge; a name too long for its
+  // line is cut (…) rather than wrapped.
   const head = (
-    <span className="ndc-m-head">
-      <span className="ndc-m-caption">
-        {!hideLabel && <span className="ndc-m-label">{reading.label}</span>}
-      </span>
+    <span className="ndc-m-head" title={tooltip}>
+      {!hideLabel && label()}
       <span className="ndc-m-stats">
         {reading.detail && display !== 'value' && !inline && <span className="ndc-m-detail">{reading.detail}</span>}
         <span className={`ndc-m-value ${danger ? 'is-danger' : ''}`} style={danger ? { color } : undefined}>{reading.text}</span>
@@ -105,7 +115,7 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
         {head}
         <TimeChart
           series={[
-            { id: reading.key, label: reading.label, color, points: reading.points, area: true },
+            { id: reading.key, label: fullName, color, points: reading.points, area: true },
             ...(reading.second ? [{ id: `${reading.key}-second`, label: reading.second.label, color: 'var(--ndc-kind-memory)', points: reading.second.points }] : []),
           ]}
           start={window.start}
@@ -116,7 +126,7 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
           threshold={threshold !== null && reading.metric !== 'network' && reading.metric !== 'load' ? { value: threshold, color: look.dangerColor } : undefined}
           formatValue={value => metricText(reading.metric, value, language)}
           formatTime={time => timeText(time, locale, window.withSeconds)}
-          ariaLabel={reading.label}
+          ariaLabel={fullName}
         />
       </div>
     );
@@ -125,8 +135,8 @@ export function MetricView({ reading, look, display, window, size = 'medium', hi
   // Figure only (in a row: as small as the other cells).
   if (inline) return <div className="ndc-m ndc-m--inline-value">{head}</div>;
   return (
-    <div className={`ndc-m ndc-m--value ndc-m--${reading.metric}`}>
-      {!hideLabel && <span className="ndc-m-label">{reading.label}</span>}
+    <div className={`ndc-m ndc-m--value ndc-m--${reading.metric}`} title={tooltip}>
+      {!hideLabel && label()}
       <span className={`ndc-m-big ${danger ? 'is-danger' : ''}`} style={danger ? { color } : undefined}>{reading.text}</span>
       {reading.detail && <span className="ndc-m-detail">{reading.detail}</span>}
     </div>

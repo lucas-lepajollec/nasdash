@@ -96,7 +96,7 @@ function buildSections(template: PageTemplateId, pageId: string, context: Preset
         sections: [{
           id: id('main'),
           columns: [
-            column(id('panel'), 'panel', 'stack', [b.add('docker-hosts'), b.add('docker-summary'), b.add('docker-container-list')]),
+            column(id('panel'), 'panel', 'stack', [b.add('docker-hosts'), b.add('docker-container-list')]),
             column(id('main-column'), 'fill', 'stack', [b.add('docker-explorer')]),
           ],
         }],

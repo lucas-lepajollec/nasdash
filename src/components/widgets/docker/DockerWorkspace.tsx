@@ -35,19 +35,27 @@ interface DockerWorkspaceValue extends DockerState {
   /** Containers minus those matching hidden secret services. */
   visibleContainers: DockerContainerSummary[];
   requestAction: (id: string, action: ContainerAction, name: string) => void;
-  openHostForm: () => void;
+  /** Opens the host form: empty to add a host, filled to edit one. */
+  openHostForm: (host?: DockerHost) => void;
   requestHostRemoval: (host: { id: string; name: string }) => void;
+  /** Moves a host before or after another one (saved order). */
+  moveHost: (activeId: string, overId: string) => void;
+  /** Hosts being removed: shown as busy until the configuration is saved. */
+  removingHostIds: string[];
+  /** The page still has the former counters widget: the hosts widget leaves its counters to it. */
+  summaryOnPage: boolean;
 }
 
 const DockerWorkspaceContext = createContext<DockerWorkspaceValue | null>(null);
 
-export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+export function DockerWorkspaceProvider({ enabled, summaryOnPage = false, children }: { enabled: boolean; summaryOnPage?: boolean; children: React.ReactNode }) {
   const { t } = useI18n();
-  const { config, refresh, showSecretSections } = useConfig();
+  const { config, refresh, showSecretSections, reorderDockerHosts } = useConfig();
   const hosts = useMemo(() => config?.dockerHosts || [], [config?.dockerHosts]);
   const docker = useDocker(hosts, enabled);
   const { activeHostId, setActiveHostId, containers, containerAction } = docker;
-  const [showHostForm, setShowHostForm] = useState(false);
+  const [hostForm, setHostForm] = useState<{ host?: DockerHost } | null>(null);
+  const [removingHostIds, setRemovingHostIds] = useState<string[]>([]);
   const [pendingConfirm, setPendingConfirm] = useState<{ id: string; action: ContainerAction; name: string } | null>(null);
   const [pendingDeleteHost, setPendingDeleteHost] = useState<{ id: string; name: string } | null>(null);
 
@@ -74,26 +82,43 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
     else setPendingConfirm({ id, action, name });
   };
 
-  const handleAddHost = async (data: DockerHostDraft) => {
+  const handleSaveHost = async (data: DockerHostDraft) => {
+    const editing = hostForm?.host;
     const response = await demoFetch('/api/config', {
-      method: 'POST',
+      method: editing ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       // `type` names the update; the host's own kind travels as `connection`.
-      body: JSON.stringify({ ...data, type: 'dockerHost', connection: data.type }),
+      body: JSON.stringify({ ...data, type: 'dockerHost', connection: data.type, ...(editing ? { id: editing.id } : {}) }),
     });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => null);
-      throw new Error(t(payload?.error || 'docker.failure.save_host'));
-    }
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(t(payload?.error || 'docker.failure.save_host'));
     await refresh();
-    setShowHostForm(false);
+    // A new host is opened at once: its containers load in sight.
+    const id = editing?.id ?? (typeof payload?.id === 'string' ? payload.id : null);
+    if (id) setActiveHostId(id);
+    setHostForm(null);
   };
 
   const handleDeleteHost = async (id: string) => {
-    const response = await demoFetch(`/api/config?type=dockerHost&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error(t('docker.failure.delete_host'));
-    await refresh();
-    if (activeHostId === id) setActiveHostId(hosts.find(host => host.id !== id)?.id || null);
+    setRemovingHostIds(current => [...current, id]);
+    try {
+      const response = await demoFetch(`/api/config?type=dockerHost&id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(t('docker.failure.delete_host'));
+      if (activeHostId === id) setActiveHostId(hosts.find(host => host.id !== id)?.id || null);
+      await refresh();
+    } finally {
+      setRemovingHostIds(current => current.filter(item => item !== id));
+    }
+  };
+
+  const moveHost = (activeId: string, overId: string) => {
+    const from = hosts.findIndex(host => host.id === activeId);
+    const to = hosts.findIndex(host => host.id === overId);
+    if (from === -1 || to === -1 || from === to) return;
+    const next = [...hosts];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    void reorderDockerHosts(next);
   };
 
   const value: DockerWorkspaceValue = {
@@ -101,8 +126,11 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
     hosts,
     visibleContainers,
     requestAction,
-    openHostForm: () => setShowHostForm(true),
+    openHostForm: host => setHostForm({ host }),
     requestHostRemoval: host => setPendingDeleteHost(host),
+    moveHost,
+    removingHostIds,
+    summaryOnPage,
   };
 
   const demoMode = config?.demoMode === true;
@@ -112,7 +140,7 @@ export function DockerWorkspaceProvider({ enabled, children }: { enabled: boolea
     <DockerWorkspaceContext.Provider value={value}>
       {docker.actionError && !pendingConfirm && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{docker.actionError}</p>}
       {children}
-      {showHostForm && <DockerHostFormModal onClose={() => setShowHostForm(false)} onSave={handleAddHost} />}
+      {hostForm && <DockerHostFormModal host={hostForm.host} onClose={() => setHostForm(null)} onSave={handleSaveHost} />}
       <ConfirmModal
         isOpen={!!pendingConfirm}
         onClose={() => setPendingConfirm(null)}

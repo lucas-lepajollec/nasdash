@@ -30,8 +30,8 @@ test('Storage groups hosts, saves its sort mode and keeps chart colours stable',
     await page.addInitScript(id => localStorage.setItem('nasdash-active-tab', id), fixture.id);
     await page.goto('/');
     const storage = page.locator('[data-widget-id="storage-feedback"]');
-    const hostOrder = [`volume2 · ${first.name}`, `volume10 · ${first.name}`, `/ · ${second.name}`];
-    const usageOrder = [`volume10 · ${first.name}`, `/ · ${second.name}`, `volume2 · ${first.name}`];
+    const hostOrder = [`volume2 · ${first.name}`, `volume10 · ${first.name}`, `${second.name}`];
+    const usageOrder = [`volume10 · ${first.name}`, `${second.name}`, `volume2 · ${first.name}`];
     await expect(storage.locator('.ndc-m-label')).toHaveText(hostOrder);
     await expect(page.locator('[data-widget-id="temperature-feedback"]')).toContainText('50 °C');
     await page.getByTitle('Edit mode', { exact: true }).click();

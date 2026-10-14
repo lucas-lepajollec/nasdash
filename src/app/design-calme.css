@@ -3099,16 +3099,24 @@ body.light {
 
 /* One measure */
 .ndc-m { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.ndc-m-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
-.ndc-m-label { font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); white-space: normal; overflow-wrap: anywhere; min-width: 0; line-height: 1.4; }
-.ndc-m-head .ndc-m-label { flex: 1 1 auto; }
-.ndc-m-caption { display: flex; flex: 1 1 min-content; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; max-width: 100%; }
-.ndc-m-caption .ndc-m-label { flex: 0 1 auto; max-width: 100%; overflow-wrap: break-word; }
-.ndc-m-stats { display: flex; flex: 0 1 auto; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 8px; min-width: 0; max-width: 100%; margin-left: auto; text-align: right; }
+/*
+ * A measure's head: the name on the left, the figures on the right, always.
+ * The name grows (999) while the figures barely do (1): side by side, the
+ * figures stay packed on the right. When both do not fit, the figures wrap
+ * to the next line where, alone, they take the width: the detail goes left
+ * and the value right. More figures than one line holds wrap again. The name
+ * never wraps: too long for its line, it is cut with an ellipsis.
+ */
+.ndc-m-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.ndc-m-label { display: flex; align-items: baseline; gap: 6px; min-width: 0; max-width: 100%; font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); line-height: 1.4; white-space: nowrap; }
+.ndc-m-head > .ndc-m-label { flex: 999 1 auto; }
+.ndc-m-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* The machine of a disk or GPU: dimmer, cut only after the part's name. */
+.ndc-m-owner { flex: 0 1 auto; min-width: 2.5em; overflow: hidden; text-overflow: ellipsis; color: var(--nd-text-dimmed); opacity: 0.8; }
+.ndc-m-stats { display: flex; flex: 1 0 auto; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; min-width: 0; max-width: 100%; }
 .ndc-m-value { font-size: 0.86rem; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ndc-m-head .ndc-m-value { margin-left: auto; flex-shrink: 0; }
-.ndc-m-detail { font-size: 0.68rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ndc-m-stats .ndc-m-detail { min-width: 0; max-width: 100%; white-space: normal; overflow: visible; overflow-wrap: break-word; }
+.ndc-m-detail { font-size: 0.68rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; max-width: 100%; }
 .ndc-m-big { font-size: 1.15rem; font-weight: 500; line-height: 1.15; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ndc-dev--large .ndc-m-big { font-size: 1.3rem; }
 .ndc-m--ring { align-items: center; text-align: center; gap: 4px; }
@@ -3116,7 +3124,8 @@ body.light {
 .ndc-m--chart .ndc-chart { margin-top: 2px; }
 .ndc-m--inline-ring { flex-direction: row; align-items: center; gap: 8px; }
 .ndc-m--inline-ring .ndc-m-head, .ndc-m--inline-chart .ndc-m-head, .ndc-m--inline-value .ndc-m-head { flex-direction: row; font-size: 0.8rem; }
-.ndc-m--inline-ring .ndc-m-head { flex-direction: column; gap: 0; align-items: flex-start; }
+.ndc-m--inline-ring .ndc-m-head { flex-direction: column; flex-wrap: nowrap; gap: 0; align-items: flex-start; min-width: 0; }
+.ndc-m--inline-ring .ndc-m-head > .ndc-m-label { flex: 0 1 auto; }
 .ndc-m--inline-ring .ndc-m-head .ndc-m-value { margin-left: 0; }
 .ndc-m--inline-value .ndc-m-head, .ndc-m--inline-chart .ndc-m-head { justify-content: space-between; }
 .ndc-m--empty { min-height: 1px; }
@@ -3217,7 +3226,7 @@ body.light {
 .ndc-m--ring .ndc-ring { margin: 0 auto; }
 .ndc-ring-center { padding: 0 14%; text-align: center; }
 .ndc-ring-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ndc-m-ring-name { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); text-align: center; }
+.ndc-m-ring-name { display: flex; justify-content: center; max-width: 100%; text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); text-align: center; }
 .ndc-m--ring .ndc-m-detail { display: block; max-width: 100%; text-align: center; }
 .ndc-dev-group--ring > .ndc-m--ring { width: auto; min-width: 64px; }
 
@@ -3228,6 +3237,10 @@ body.light {
 .ndc-dlg-metric-block { display: flex; flex-direction: column; gap: 6px; }
 .ndc-dlg-metric-block.is-off .ndc-dlg-metric > :not(:first-child) { opacity: 0.4; }
 .ndc-dlg-metric-block > .ndc-dlg-chart { padding: 0 0 8px 28px; }
+.ndc-dlg-parts { display: flex; flex-direction: column; padding: 0 0 6px 28px; }
+.ndc-dlg-parts .ndc-check-row { min-height: 32px; }
+/* Rings keep a compact cell: a long disk name is cut under its ring. */
+.ndc-dev-group--ring > .ndc-m-sortable { max-width: 140px; }
 .ndc-dlg-device { display: flex; align-items: center; gap: 10px; }
 .ndc-dlg-device > .ndc-check-row { flex: 1; min-width: 0; }
 .ndc-dlg-metric { grid-template-columns: minmax(110px, 1fr) minmax(112px, 136px) 32px minmax(176px, 186px); }
@@ -3380,9 +3393,24 @@ body[data-outlines="off"][data-design="calme"] .nd-header .nd-header-actions div
 
 /* Docker hosts widget: host chips. */
 .ndc-hosts { display: flex; flex-wrap: wrap; gap: 6px; }
-.ndc-hosts .ndc-chip { font-size: 0.74rem; }
-.ndc-chip-remove { display: inline-flex; margin-left: 2px; opacity: 0.5; cursor: pointer; }
-.ndc-chip-remove:hover { opacity: 1; color: var(--nd-red); }
+.ndc-hosts.is-editing { gap: 8px 10px; }
+.ndc-hosts .ndc-chip { font-size: 0.74rem; max-width: 100%; }
+.ndc-hosts .ndc-chip:disabled { cursor: progress; opacity: 0.6; }
+.ndc-hosts .ndc-m-drag { top: 3px; }
+.ndc-host { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; min-width: 0; }
+.ndc-hosts > .ndc-m-sortable { display: flex; min-width: 0; max-width: 100%; }
+.ndc-host > .ndc-chip { min-width: 0; }
+.ndc-host-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-host-error { color: var(--nd-red); flex-shrink: 0; }
+.ndc-host .nd-spin { color: var(--nd-text-dimmed); flex-shrink: 0; }
+.ndc-host-tool { width: 26px; height: 26px; flex-shrink: 0; color: var(--nd-text-dimmed); }
+.ndc-host-tool:hover:not(:disabled) { color: var(--nd-accent); }
+.ndc-host-tool.is-danger:hover:not(:disabled) { color: var(--nd-red); }
+.ndc-hosts .nd-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Counters under the hosts, in the same widget. */
+.ndc-hosts ~ .ndc-counters { margin-top: 18px; }
+.ndc-counters.is-loading dd { color: var(--nd-text-dimmed); }
+.ndc-merge-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 0; font-size: 0.72rem; color: var(--nd-text-dimmed); line-height: 1.5; }
 
 /* Themes tint the accent, surfaces and hover states, not the secondary text:
    it is always the theme's own text colour blended into its background
@@ -3687,7 +3715,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resources .nd-btn.ndc-danger-ghost { color: var(--nd-red) !important; }
 .nd-docker-resource-actions .nd-btn:disabled { color: var(--nd-text-dimmed) !important; }
 .nd-docker-resource-sort > button { width: 38px; padding: 0; justify-content: center; }
-.nd-docker-resource-selection { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 12px; margin-bottom: 12px; border-radius: var(--nd-card-radius); background: color-mix(in srgb, var(--nd-accent) 8%, var(--nd-card-bg)); border: 1px solid var(--nd-card-border); font-size: 0.76rem; }
+.nd-docker-resource-selection { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 12px; margin-bottom: 12px; border-radius: var(--nd-card-radius); background: color-mix(in srgb, var(--nd-accent) 8%, var(--nd-bg)); border: 1px solid var(--nd-card-border); font-size: 0.76rem; }
 .nd-docker-resource-selection > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .nd-docker-resource-list.nd-docker-detail { padding: 0; min-width: 0; overflow: hidden; }
 .nd-docker-resources input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: var(--nd-accent); cursor: pointer; }
@@ -3719,7 +3747,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-actions .nd-btn + .nd-btn { margin-left: 6px; }
 .nd-docker-resource-actions svg.is-open { transform: rotate(180deg); }
 .nd-docker-resource-details-row > td { padding: 0; }
-.nd-docker-resource-details { padding: 18px 24px 18px 58px; border-top: 1px solid var(--nd-card-border); background: var(--nd-subcard-bg); }
+.nd-docker-resource-details { padding: 18px 24px 18px 58px; border-top: 1px solid var(--nd-card-border); background: var(--nd-bg); }
 .nd-docker-resource-details dl { margin: 0; display: flex; flex-direction: column; gap: 14px; }
 .nd-docker-resource-details dl > div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 16px; }
 .nd-docker-resource-details dt { color: var(--nd-text-dimmed); font-size: 0.7rem; }
@@ -3746,35 +3774,41 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-confirm .nd-btn.ndc-btn-danger { background: var(--nd-red) !important; border-color: var(--nd-red) !important; color: #fff !important; }
 .nd-docker-resource-confirm .ndc-dialog-body { min-width: 0; }
 @container (max-width: 760px) {
-  .nd-docker-resource-tools { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .nd-docker-resource-tools { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
   .nd-docker-resource-query { grid-column: 1 / -1; }
   .nd-docker-resource-table, .nd-docker-resource-table tbody { display: block; }
   .nd-docker-resource-table colgroup { display: none; }
   .nd-docker-resource-table thead { display: block; }
-  .nd-docker-resource-table thead tr { display: grid; grid-template-columns: 46px minmax(0, 1fr); align-items: center; padding: 4px 8px 4px 4px; }
-  .nd-docker-resource-table thead th { min-width: 0; overflow-wrap: anywhere; }
+  .nd-docker-resource-table thead tr { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; padding: 2px 8px 2px 0; }
+  .nd-docker-resource-table thead th { min-width: 0; overflow-wrap: anywhere; padding: 8px 6px; }
   .nd-docker-resource-table thead th:nth-child(n + 3) { display: none; }
-  .nd-docker-resource-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) 94px; padding: 14px 8px 14px 4px; gap: 6px 0; }
-  .nd-docker-resource-row td { padding: 0 8px; min-width: 0; }
-  .nd-docker-resource-row .nd-docker-resource-check { grid-column: 1; grid-row: 1 / span 3; padding: 0; }
-  .nd-docker-resource-name { grid-column: 2; grid-row: 1; }
-  .nd-docker-resource-status { grid-column: 2; grid-row: 2; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .nd-docker-resource-meta { grid-column: 2; grid-row: 3; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 0.7rem; }
+  /* One compact card per resource: name and id, then status, size and date on a single line. */
+  .nd-docker-resource-row { display: grid; grid-template-columns: 40px auto minmax(0, 1fr) auto; align-items: center; padding: 10px 6px 10px 0; gap: 6px 0; }
+  .nd-docker-resource-row td { padding: 0 6px; min-width: 0; }
+  .nd-docker-resource-row .nd-docker-resource-check { grid-column: 1; grid-row: 1 / span 2; padding: 0; align-self: center; }
+  .nd-docker-resource-checkbox { width: 40px; min-height: 40px; }
+  .nd-docker-resource-name { grid-column: 2 / 4; grid-row: 1; }
+  .nd-docker-resource-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; line-height: 1.4; }
+  .nd-docker-resource-subline { margin-top: 2px; gap: 2px 8px; }
+  .nd-docker-resource-status { grid-column: 2; grid-row: 2; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+  .nd-docker-resource-badge { padding: 2px 6px; }
+  .nd-docker-resource-meta { grid-column: 3; grid-row: 2; display: flex; gap: 4px 10px; flex-wrap: wrap; align-items: center; font-size: 0.7rem; }
   .nd-docker-resource-meta > small, .nd-docker-resource-status > small { margin: 0; }
-  .nd-docker-resource-actions { grid-column: 3; grid-row: 1 / span 3; align-self: start; }
+  .nd-docker-resource-actions { grid-column: 4; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 4px; align-self: center; }
+  .nd-docker-resource-actions .nd-btn { width: 34px; min-height: 34px; }
+  .nd-docker-resource-actions .nd-btn + .nd-btn { margin-left: 0; }
   .nd-docker-resource-details-row, .nd-docker-resource-details-row > td { display: block; width: 100%; }
-  .nd-docker-resource-details { padding: 16px; }
+  .nd-docker-resource-details { padding: 14px 16px; }
+  .nd-docker-resource-details dl { gap: 10px; }
   .nd-docker-resource-details dl > div { grid-template-columns: 100px minmax(0, 1fr); }
 }
 @container (max-width: 440px) {
-  .nd-docker-resource-row { grid-template-columns: 46px minmax(0, 1fr); }
-  .nd-docker-resource-actions { grid-column: 2; grid-row: 4; margin-top: 4px; }
-  .nd-docker-resource-actions .nd-btn { width: 42px; min-height: 42px; }
-  .nd-docker-resource-tools { gap: 10px; }
+  .nd-docker-resource-tools { gap: 8px; }
   .nd-docker-resource-sort > button { flex-shrink: 0; }
+  .nd-docker-resource-status > small, .nd-docker-resource-meta > small { display: none; }
   .nd-docker-resource-pagination nav { width: 100%; justify-content: space-between; }
   .nd-docker-resource-pagination nav .nd-btn { width: 42px; min-height: 42px; }
-  .nd-docker-resource-details dl > div { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+  .nd-docker-resource-details dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   .nd-docker-resource-selection > div { width: 100%; }
   .nd-docker-resource-selection .nd-btn { white-space: normal !important; line-height: 1.5; }
 }
