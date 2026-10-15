@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
   const resolved = resolveWidgetSettings(request, body.widgetId, 'rss', body.draft);
   if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
   if (isDemoMode()) return NextResponse.json(demoRss(), { headers });
-  try { return NextResponse.json(await loadRss({ ...resolved.settings, feeds: widgetFeeds(resolved.settings, readConfig()) }), { headers }); }
+  // Only the saved feeds reach the loader: nothing from the request's settings is fetched.
+  try { return NextResponse.json(await loadRss({ feeds: widgetFeeds(resolved.settings, readConfig()) }), { headers }); }
   catch (error) {
     const failure = sourceError('', error);
     return NextResponse.json({ error: failure.error, parameters: failure.parameters }, { status: 502, headers });

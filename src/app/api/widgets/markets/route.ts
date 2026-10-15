@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const resolved = resolveWidgetSettings(request, body.widgetId, 'markets', body.draft);
   if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
   if (isDemoMode()) return NextResponse.json(demoMarkets(marketRange(body.range) ?? marketRange(resolved.settings.range)), { headers });
-  try { return NextResponse.json(await loadMarkets({ ...resolved.settings, symbols: widgetSymbols(resolved.settings, readConfig()) }, body.range), { headers }); }
+  try { return NextResponse.json(await loadMarkets({ range: resolved.settings.range, symbols: widgetSymbols(resolved.settings, readConfig()) }, body.range), { headers }); }
   catch (error) {
     const failure = sourceError('', error);
     return NextResponse.json({ error: failure.error, parameters: failure.parameters }, { status: 502, headers });
