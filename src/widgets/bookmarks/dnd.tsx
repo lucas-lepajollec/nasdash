@@ -99,7 +99,17 @@ export function useBookmarkZone(folderId: string | undefined, key: string) {
   return { attach: drop.setNodeRef, over: enabled && drop.isOver && target?.id === folderId && target?.position === 'inside' };
 }
 
-/** Whether a drag is going on (folders open by themselves under it). */
-export function useBookmarkDragging(): boolean {
-  return useContext(DragState).active !== null;
+/** Whether bookmarks can be dragged here (edit mode, library settings). */
+export function useBookmarkDragEnabled(): boolean {
+  return useContext(DragState).enabled;
+}
+
+export type BookmarkDragProps = { attach?: (node: HTMLElement | null) => void; handle: Record<string, unknown>; dropClass: string; enabled: boolean };
+/** Outside edit mode: no drag hooks at all, so a large library stays light. */
+export const NO_DRAG: BookmarkDragProps = { handle: {}, dropClass: '', enabled: false };
+
+/** Gives `render` the drag props of `item`; only mounted while dragging is possible. */
+export function WithBookmarkDrag({ item, axis, render }: { item: BookmarkItem; axis?: Axis; render: (drag: BookmarkDragProps) => React.ReactNode }) {
+  const { attach, handle, dropClass, enabled } = useBookmarkDrag(item, axis);
+  return <>{render({ attach, handle, dropClass, enabled })}</>;
 }

@@ -131,6 +131,8 @@ it('serves saved bookmark icons without a widget to administrators only (library
   vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'admin', role: 'admin', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
   expect((await favicon(libraryIcon('https://bookmarks.example/'))).status).toBe(200);
   expect((await favicon(libraryIcon('https://unsaved.example/'))).status).toBe(404);
+  // A bookmarks widget just added in edit mode is not saved yet: its icons still show.
+  expect((await favicon(new NextRequest(`http://localhost/api/widgets/favicon?widgetId=not-saved-yet&type=bookmarks&url=${encodeURIComponent('https://bookmarks.example/')}`))).status).toBe(200);
   vi.mocked(loadFavicon).mockClear();
   vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'reader', role: 'viewer', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
   expect((await favicon(libraryIcon('https://bookmarks.example/'))).status).not.toBe(200);

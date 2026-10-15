@@ -8,7 +8,8 @@ import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 import EmojiPickerModal from '@/components/modals/EmojiPickerModal';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
 import { BookmarkIcon } from '@/widgets/bookmarks/CalmeBookmarks';
-import { childrenOf, folderOptions, hostOf, moveInto, removeItem } from '@/widgets/bookmarks/tree';
+import { folderOptions, indexByParent, hostOf, moveInto, removeFolderKeepContent, removeItem } from '@/widgets/bookmarks/tree';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 import { BookmarkDragScope, useBookmarkDrag } from '@/widgets/bookmarks/dnd';
 import { importBookmarkHtml } from '@/widgets/bookmarks/importHtml';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
@@ -35,10 +36,11 @@ export function BookmarksWidgetTab() {
   const [notice, setNotice] = useState<string | null>(null);
   const file = React.useRef<HTMLInputElement>(null);
 
+  const [removing, setRemoving] = useState<BookmarkItem | null>(null);
+  // A link or an empty folder goes at once; a folder with content asks first.
   const remove = (item: BookmarkItem) => {
-    const inside = items.filter(entry => entry.parentId === item.id).length;
-    if (item.kind === 'folder' && inside > 0 && !window.confirm(t('settings.bookmarks.removeFolder', { name: item.title }))) return;
-    save(removeItem(items, item.id));
+    if (item.kind === 'folder' && items.some(entry => entry.parentId === item.id)) setRemoving(item);
+    else save(removeItem(items, item.id));
   };
 
   // The file every browser exports (HTML): its folders and links join the library.
@@ -49,7 +51,8 @@ export function BookmarksWidgetTab() {
     setNotice(added.length ? [t('settings.bookmarks.imported', { count: added.filter(item => item.kind === 'link').length }), skipped ? t('settings.bookmarks.importSkipped', { count: skipped }) : ''].join(' ').trim() : t('settings.bookmarks.importEmpty'));
   };
 
-  const rows = (parentId: string | undefined, depth: number): React.ReactNode[] => childrenOf(items, parentId).flatMap(item => [
+  const byParent = indexByParent(items);
+  const rows = (parentId: string | undefined, depth: number): React.ReactNode[] => (byParent.get(parentId) ?? []).flatMap(item => [
     <LibraryRow key={item.id} item={item} depth={depth}
       onEdit={() => setEditing({ kind: item.kind, item })}
       onAdd={item.kind === 'folder' ? () => setEditing({ kind: 'link', parentId: item.id }) : undefined}
@@ -83,6 +86,15 @@ export function BookmarksWidgetTab() {
             </BookmarkDragScope>
           )}
       </section>
+      <ConfirmModal
+        isOpen={!!removing}
+        onClose={() => setRemoving(null)}
+        title={t('settings.bookmarks.removeFolderTitle', { name: removing?.title ?? '' })}
+        description={t('settings.bookmarks.removeFolderText')}
+        confirmLabel={t('settings.bookmarks.removeFolderOnly')}
+        onConfirm={() => { if (removing) save(removeFolderKeepContent(items, removing.id)); }}
+        alternative={{ label: t('settings.bookmarks.removeFolderAll'), onConfirm: () => { if (removing) save(removeItem(items, removing.id)); } }}
+      />
       {editing && (
         <BookmarkDialog
           items={items}

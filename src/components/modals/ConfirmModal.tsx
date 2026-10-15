@@ -12,6 +12,8 @@ interface ConfirmModalProps {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  /** A second, quieter way through (delete a folder with its content…), between cancel and confirm. */
+  alternative?: { label: string; onConfirm: () => void | Promise<void> };
 }
 
 export default function ConfirmModal({
@@ -22,6 +24,7 @@ export default function ConfirmModal({
   description,
   confirmLabel,
   cancelLabel,
+  alternative,
 }: ConfirmModalProps) {
   const { t } = useI18n();
   const resolvedConfirmLabel = confirmLabel ?? t('Supprimer');
@@ -33,10 +36,10 @@ export default function ConfirmModal({
   useEffect(() => { if (!isOpen) setError(''); }, [isOpen]);
   const close = () => { if (!pending) onClose(); };
   const dialogRef = useDialogAccessibility(close, isOpen);
-  const confirm = async () => {
+  const confirm = async (action: () => void | Promise<void> = onConfirm) => {
     if (pending) return;
     setPending(true); setError('');
-    try { await onConfirm(); onClose(); }
+    try { await action(); onClose(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : t('errors.dockerAction')); }
     finally { setPending(false); }
   };
@@ -52,6 +55,7 @@ export default function ConfirmModal({
         {error && <p role="alert" className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{error}</p>}
         <div className="ndc-confirm-actions">
           <button type="button" className="nd-btn" disabled={pending} onClick={close}>{resolvedCancelLabel}</button>
+          {alternative && <button type="button" className="nd-btn" disabled={pending} onClick={() => { void confirm(alternative.onConfirm); }}>{alternative.label}</button>}
           <button type="button" className="nd-btn ndc-btn-danger" disabled={pending} aria-busy={pending} onClick={() => { void confirm(); }}>{pending && <Loader2 size={14} className="nd-spin" aria-hidden="true" />}{resolvedConfirmLabel}</button>
         </div>
       </div>

@@ -93,9 +93,12 @@ function perViewOf(display: PhotosDisplay, settings: WidgetSettings): number {
  * interval, pausing while the pointer is over the widget; otherwise arrows
  * move through them. The selection wraps around, so it never stops.
  */
-function usePhotoCycle(total: number, step: number, auto: boolean, interval: number, active: boolean) {
+function usePhotoCycle(total: number, step: number, auto: boolean, interval: number, visible: boolean) {
   const [start, setStart] = useState(0);
   const [paused, setPaused] = useState(false);
+  // A browser tab in the background loads no new photo.
+  const shown = usePageShown();
+  const active = visible && shown;
   const current = total ? start % total : 0;
   useEffect(() => {
     if (!auto || !active || paused || total <= step) return;
@@ -105,6 +108,17 @@ function usePhotoCycle(total: number, step: number, auto: boolean, interval: num
   const move = (direction: 1 | -1) => setStart(value => ((value + direction * step) % total + total) % total);
   const hover = { onPointerEnter: () => setPaused(true), onPointerLeave: () => setPaused(false) };
   return { start: current, move, hover };
+}
+
+/** Whether the browser tab is in front. */
+function usePageShown(): boolean {
+  const [shown, setShown] = useState(() => typeof document === 'undefined' || !document.hidden);
+  useEffect(() => {
+    const update = () => setShown(!document.hidden);
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+  return shown;
 }
 
 /** `count` photos from `start`, wrapping to the beginning. */
@@ -148,11 +162,7 @@ function PhotosBody({ photos, display, settings, width, visible, onOpen }: {
         <div key={cycle.start} className={display === 'grid' ? 'ndw-photo-grid' : 'ndw-photo-mosaic'} style={display === 'mosaic' ? { gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: Math.max(56, Math.round(width / columns * 0.62)) } : undefined}>
           {display === 'grid'
             ? shown.map(({ photo, index }) => thumb(photo, index, 'is-square'))
-            : (() => {
-              // Mixed sizes (wide, tall, a large one now and then), placed so no hole stays.
-              const tiles = packMosaic(shown.map(({ photo }, position) => wantedSpan(photo.width && photo.height ? photo.width / photo.height : 1.5, position, columns)), columns);
-              return shown.map(({ photo, index }, position) => thumb(photo, index, 'is-tile', { gridRow: `${tiles[position].row + 1} / span ${tiles[position].rows}`, gridColumn: `${tiles[position].column + 1} / span ${tiles[position].columns}` }));
-            })()}
+            : <Mosaic shown={shown} columns={columns} render={(photo, index, style) => thumb(photo, index, 'is-tile', style)} />}
         </div>
         {pager}
       </div>
@@ -160,6 +170,18 @@ function PhotosBody({ photos, display, settings, width, visible, onOpen }: {
   }
   if (display === 'strip') return <Strip photos={photos} start={cycle.start} auto={auto} hover={cycle.hover} render={(photo, index) => thumb(photo, index, 'is-strip')} />;
   return <Slideshow photos={photos} current={cycle.start} onMove={cycle.move} hover={cycle.hover} captions={settings.captions !== false} height={chartHeight(width, 0.62, 140, 520)} onOpen={onOpen} />;
+}
+
+/** Mixed sizes (wide, tall, a large one now and then), placed so no hole stays; computed once per page. */
+function Mosaic({ shown, columns, render }: { shown: { photo: Photo; index: number }[]; columns: number; render: (photo: Photo, index: number, style: React.CSSProperties) => React.ReactNode }) {
+  const shape = shown.map(({ photo }) => `${photo.id}:${photo.width ?? 0}x${photo.height ?? 0}`).join(',');
+  const tiles = useMemo(
+    () => packMosaic(shown.map(({ photo }, position) => wantedSpan(photo.width && photo.height ? photo.width / photo.height : 1.5, position, columns)), columns),
+    // The page's photos and the column count are the whole input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [shape, columns],
+  );
+  return <>{shown.map(({ photo, index }, position) => render(photo, index, { gridRow: `${tiles[position].row + 1} / span ${tiles[position].rows}`, gridColumn: `${tiles[position].column + 1} / span ${tiles[position].columns}` }))}</>;
 }
 
 /** Every photo in a sideways row; by itself it slides one photo at a time. */
