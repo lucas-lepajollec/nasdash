@@ -20,6 +20,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Feeds, the market watchlist and quotes are saved once in Settings → Widgets; each widget picks what it shows. Pi-hole and AdGuard Home connections are added in Settings → Integrations, several of each if needed.
 - Market symbols are found by searching a name (Bitcoin, Apple, CAC 40…). Cards and tiles show page by page or in a scrolling row, with an adjustable number per page.
 - Every content widget can be resized down to the narrowest width, and its dialog links to its shared settings.
+- Markets can show prices in each symbol's own currency or converted into one of 16 currencies (US dollar, euro, pound, Swiss franc, yen…) at the current rate; the percentage stays the market's own.
+- The Ad blocking (DNS) widget lets you choose its figures: total queries, blocked queries, blocked share, listed domains, active clients.
 
 ### Changed
 
@@ -35,6 +37,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Network ports seen both as a NasDash service and as a Docker container port appear once, under the service name; stopped containers are listed last under their own heading (#115).
 - The weather widget no longer replaces the forecast with an error after a brief network failure: it keeps the last forecast, retries within minutes and asks the weather service less often.
 - Main action buttons (Save, Done…) keep their colour on hover in every theme instead of turning dark.
+- Market rows with aligned columns no longer leave an empty column when the widget is narrow or curves are hidden.
 - Adding a saved connection and copying a quote work when NasDash is opened over plain HTTP on a LAN address.
 - Show progress while a Docker host is added, opened or removed: a new host is selected at once, its chip shows a spinner while its containers load and an alert when it cannot be reached, and confirmation buttons show a spinner while they run.
 
