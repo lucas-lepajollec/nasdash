@@ -176,18 +176,34 @@ export function photoUrls(widgetId: string, id: string, draft?: unknown) {
 }
 
 const photoMembership = new Map<string, { hash?: string; expires: number }>();
-/** Only assets returned by this instance can be proxied; no arbitrary hash oracle. */
-export function rememberPhoto(instance: IntegrationInstance, id: string, hash?: string) {
-  const key = `${serviceIdentity(instance)}:${id}`;
+function remember(key: string, hash?: string) {
   photoMembership.delete(key);
   photoMembership.set(key, { hash, expires: Date.now() + 86400000 });
   while (photoMembership.size > 20_000) photoMembership.delete(photoMembership.keys().next().value!);
 }
-export function knownPhoto(instance: IntegrationInstance, id: string): { hash?: string } | undefined {
-  const key = `${serviceIdentity(instance)}:${id}`;
+function recall(key: string) {
   const value = photoMembership.get(key);
   if (!value || value.expires < Date.now()) { photoMembership.delete(key); return undefined; }
   return value;
+}
+/** Only assets returned by this instance can be proxied; no arbitrary hash oracle. */
+export function rememberPhoto(instance: IntegrationInstance, id: string, hash?: string) {
+  remember(`${serviceIdentity(instance)}:${id}`, hash);
+}
+/**
+ * And only through the widget that listed them: a reader of one widget
+ * (one album) cannot fetch photos another widget or an admin preview showed.
+ */
+export function rememberWidgetPhoto(instance: IntegrationInstance, widgetId: string, id: string) {
+  remember(`${serviceIdentity(instance)}:${widgetId}:${id}`);
+}
+export function knownPhoto(instance: IntegrationInstance, id: string, widgetId: string): { hash?: string } | undefined {
+  if (!recall(`${serviceIdentity(instance)}:${widgetId}:${id}`)) return undefined;
+  return recall(`${serviceIdentity(instance)}:${id}`);
+}
+/** Any photo this instance returned: only for an administrator's draft preview. */
+export function knownInstancePhoto(instance: IntegrationInstance, id: string): { hash?: string } | undefined {
+  return recall(`${serviceIdentity(instance)}:${id}`);
 }
 
 /** Fictional service demos deliberately contain no provider URLs or secrets. */

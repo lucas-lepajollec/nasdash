@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Site icons (bookmarks, feeds) are sharp: the largest icon of a heavy page's head is used instead of a 16 px `favicon.ico`; icons found before are looked for again.
+- The Immich connection test only needs the reading permission the widget uses (`asset.read`), and tells a missing permission apart from a refused key.
+
+### Security
+
+- Photos are served only through the widget that listed them, and the link to the photo library (its address) is sent to administrators only.
+
 ### Added
 
 - Markets: in edit mode, symbols are put in order by drag and drop in the list, bars and tiles displays.

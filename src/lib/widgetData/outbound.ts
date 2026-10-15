@@ -20,7 +20,7 @@ export function sourceError(source: string, error: unknown): SourceError {
 }
 
 /** One deadline covers redirects AND streamed body reads. Never sends cookies/auth. */
-export async function fetchBytes(value: string, maxBytes: number, maxRedirects = 3): Promise<{ bytes: Uint8Array; contentType: string; url: string }> {
+export async function fetchBytes(value: string, maxBytes: number, maxRedirects = 3, truncate = false): Promise<{ bytes: Uint8Array; contentType: string; url: string }> {
   let url = httpUrl(value);
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -48,7 +48,7 @@ export async function fetchBytes(value: string, maxBytes: number, maxRedirects =
           await response.body?.cancel();
           throw new WidgetFetchError(response.status === 404 ? 'widgets.error.notFound' : 'widgets.error.http', { status: response.status });
         }
-        return { bytes: await readBoundedResponseBytes(response, maxBytes), contentType: (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase(), url: url.href };
+        return { bytes: await readBoundedResponseBytes(response, maxBytes, truncate), contentType: (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase(), url: url.href };
       }
     })()]);
   } catch (error) {
