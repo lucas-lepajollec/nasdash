@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-15
+
+### Upgrading from 0.2.4
+
+- Back up the complete data directory, then pull and recreate NasDash without deleting data or volumes. Accounts, credentials, integrations and saved pages are preserved; no automatic data migration is introduced. New settings (feeds, market watchlist, quotes) are added only when you use them.
+- Readers whose accounts list allowed widgets explicitly do not see the new Ad blocking (DNS) widget until an administrator grants it in **Settings → Users and access**; readers without a list are unaffected.
+- The network map's editing tools moved from the page header into the map, in edit mode.
+- When content widgets are configured, the NasDash server contacts the saved feeds, `query1.finance.yahoo.com` (markets), `zenquotes.io` (optional quotes) and the saved Pi-hole/AdGuard Home servers. Allow these destinations if outbound traffic is restricted.
+- To roll back, recreate the recorded `0.2.4` image with the same data mount. Version 0.2.4 ignores the new widgets and settings; remove those widgets first for a clean page, or restore the pre-upgrade backup if the exact earlier state is required.
+
 ### Changed
 
 - Machine widgets name measures by their kind only (CPU, RAM, GPU, iGPU, Disk); disk and GPU names appear only when a machine has several, and full names stay in tooltips. Integrated graphics are shown as iGPU, and the Device widget can hide either graphics chip when a machine has both.
@@ -16,7 +26,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - Docker hosts can be edited (an empty API key keeps the saved one) and reordered by drag and drop from the Docker hosts widget.
-- Content widgets: **News feeds** (RSS/Atom; list, headlines, cards, magazine), **Markets** (stocks, indices, currencies and crypto from Yahoo Finance; list, bars, chart, tiles, ticker), **Quotes** (your own quotes and an optional online source, six typographic styles) and **DNS blocking** (Pi-hole v6 and AdGuard Home; bars, chart, ring, compact, complete, with pause and resume for administrators).
+- Content widgets (#98 for markets): **News feeds** (RSS/Atom; list, headlines, cards, magazine), **Markets** (stocks, indices, currencies and crypto from Yahoo Finance; list, bars, chart, tiles, ticker), **Quotes** (your own quotes and an optional online source, six typographic styles) and **DNS blocking** (Pi-hole v6 and AdGuard Home; bars, chart, ring, compact, complete, with pause and resume for administrators).
 - Feeds, the market watchlist and quotes are saved once in Settings → Widgets; each widget picks what it shows. Pi-hole and AdGuard Home connections are added in Settings → Integrations, several of each if needed.
 - Market symbols are found by searching a name (Bitcoin, Apple, CAC 40…). Cards and tiles show page by page or in a scrolling row, with an adjustable number per page.
 - Every content widget can be resized down to the narrowest width, and its dialog links to its shared settings.
@@ -32,7 +42,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
-- Network ports seen both as a NasDash service and as a Docker container port appear once, under the service name; stopped containers are listed last under their own heading (#115).
+- Network ports seen both as a NasDash service and as a Docker container port appear once, under the service name; stopped containers are listed last under their own heading (#115). Thanks to @emile-bodin for the report and the proposed fix (#116).
 - The weather widget no longer replaces the forecast with an error after a brief network failure: it keeps the last forecast, retries within minutes and asks the weather service less often.
 - Main action buttons (Save, Done…) keep their colour on hover in every theme instead of turning dark.
 - Adding a saved connection and copying a quote work when NasDash is opened over plain HTTP on a LAN address.
