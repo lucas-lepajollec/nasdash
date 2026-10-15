@@ -1,5 +1,6 @@
 'use client';
 
+import { WidgetSettingsLink } from '@/components/widgets/content/kit';
 import React, { useState } from 'react';
 import type { Device } from '@/lib/types';
 import type { WidgetSettings } from '@/lib/pages/types';
@@ -173,6 +174,7 @@ export function DeviceWidgetDialog({ options, settings, onSave, onClose }: {
           title={options.title}
           onClose={onClose}
           width={620}
+          start={<WidgetSettingsLink tab="widget-devices" label={t('devices.manage')} onOpen={onClose} />}
           footer={<>
             <button type="button" className="nd-btn" onClick={onClose}>{t('Annuler')}</button>
             <button type="button" className="nd-btn nd-btn-accent" onClick={() => { onSave(draft); onClose(); }}>{t('Enregistrer')}</button>

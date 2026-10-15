@@ -1,0 +1,229 @@
+{
+  "auth": {
+    "session": {
+      "valid": true,
+      "sid": "fictional-pihole-session",
+      "validity": 300
+    }
+  },
+  "summary": {
+    "queries": {
+      "total": 28400,
+      "blocked": 6248,
+      "percent_blocked": 22
+    },
+    "gravity": {
+      "domains_being_blocked": 154000
+    },
+    "clients": {
+      "active": 8,
+      "total": 10
+    }
+  },
+  "blocking": {
+    "blocking": "enabled",
+    "timer": null
+  },
+  "history": {
+    "history": [
+      {
+        "timestamp": 1768395600,
+        "total": 680,
+        "blocked": 150,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768399200,
+        "total": 709,
+        "blocked": 156,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768402800,
+        "total": 738,
+        "blocked": 162,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768406400,
+        "total": 767,
+        "blocked": 168,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768410000,
+        "total": 796,
+        "blocked": 174,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768413600,
+        "total": 825,
+        "blocked": 180,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768417200,
+        "total": 854,
+        "blocked": 186,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768420800,
+        "total": 883,
+        "blocked": 192,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768424400,
+        "total": 912,
+        "blocked": 198,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768428000,
+        "total": 941,
+        "blocked": 204,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768431600,
+        "total": 970,
+        "blocked": 210,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768435200,
+        "total": 999,
+        "blocked": 216,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768438800,
+        "total": 1028,
+        "blocked": 222,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768442400,
+        "total": 1057,
+        "blocked": 228,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768446000,
+        "total": 1086,
+        "blocked": 234,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768449600,
+        "total": 1115,
+        "blocked": 240,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768453200,
+        "total": 1144,
+        "blocked": 246,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768456800,
+        "total": 1173,
+        "blocked": 252,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768460400,
+        "total": 1202,
+        "blocked": 258,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768464000,
+        "total": 1231,
+        "blocked": 264,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768467600,
+        "total": 1260,
+        "blocked": 270,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768471200,
+        "total": 1289,
+        "blocked": 276,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768474800,
+        "total": 1318,
+        "blocked": 282,
+        "cached": 200,
+        "forwarded": 330
+      },
+      {
+        "timestamp": 1768478400,
+        "total": 1347,
+        "blocked": 288,
+        "cached": 200,
+        "forwarded": 330
+      }
+    ]
+  },
+  "blocked": {
+    "domains": [
+      {
+        "domain": "ads.example.net",
+        "count": 920
+      }
+    ]
+  },
+  "queried": {
+    "domains": [
+      {
+        "domain": "media.example.com",
+        "count": 3800
+      }
+    ]
+  },
+  "clients": {
+    "clients": [
+      {
+        "name": "atlas-nas",
+        "ip": "192.0.2.10",
+        "count": 9300
+      },
+      {
+        "name": "",
+        "ip": "192.0.2.20",
+        "count": 2100
+      }
+    ]
+  }
+}

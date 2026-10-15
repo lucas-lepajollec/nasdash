@@ -1,0 +1,177 @@
+{
+  "assets": [
+    {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-01T10:00:00.000Z",
+      "localDateTime": "2024-06-01T10:00:00.000Z",
+      "isFavorite": true,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-02T10:00:00.000Z",
+      "localDateTime": "2024-06-02T10:00:00.000Z",
+      "isFavorite": false,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-03T10:00:00.000Z",
+      "localDateTime": "2024-06-03T10:00:00.000Z",
+      "isFavorite": true,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-04T10:00:00.000Z",
+      "localDateTime": "2024-06-04T10:00:00.000Z",
+      "isFavorite": false,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-05T10:00:00.000Z",
+      "localDateTime": "2024-06-05T10:00:00.000Z",
+      "isFavorite": true,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-06T10:00:00.000Z",
+      "localDateTime": "2024-06-06T10:00:00.000Z",
+      "isFavorite": false,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-07T10:00:00.000Z",
+      "localDateTime": "2024-06-07T10:00:00.000Z",
+      "isFavorite": true,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-08T10:00:00.000Z",
+      "localDateTime": "2024-06-08T10:00:00.000Z",
+      "isFavorite": false,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-09T10:00:00.000Z",
+      "localDateTime": "2024-06-09T10:00:00.000Z",
+      "isFavorite": true,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-10T10:00:00.000Z",
+      "localDateTime": "2024-06-10T10:00:00.000Z",
+      "isFavorite": false,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-11T10:00:00.000Z",
+      "localDateTime": "2024-06-11T10:00:00.000Z",
+      "isFavorite": true,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "type": "IMAGE",
+      "fileCreatedAt": "2024-06-12T10:00:00.000Z",
+      "localDateTime": "2024-06-12T10:00:00.000Z",
+      "isFavorite": false,
+      "exifInfo": {
+        "exifImageWidth": 1200,
+        "exifImageHeight": 800,
+        "city": "Silver Lake",
+        "country": "Example Country"
+      }
+    }
+  ],
+  "albums": [
+    {
+      "id": "00000000-0000-4000-8000-000000000060",
+      "albumName": "Summer Trails",
+      "assetCount": 12
+    }
+  ],
+  "statistics": {
+    "photos": 1240,
+    "videos": 38,
+    "usage": 1048576000
+  },
+  "user": {
+    "id": "00000000-0000-4000-8000-000000000099",
+    "email": "demo@example.com",
+    "name": "Demo User"
+  }
+}

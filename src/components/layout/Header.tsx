@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Pencil, Settings, Plus, X, Eye, EyeOff, Menu, LogIn, LogOut, User, ChevronDown } from 'lucide-react';
+import { Search, Pencil, Settings, X, Eye, EyeOff, Menu, LogIn, LogOut, User } from 'lucide-react';
 import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
@@ -21,7 +21,6 @@ interface HeaderProps {
   onOpenSettings: (trigger?: HTMLButtonElement) => void;
   onAddCategory: () => void;
   /** The active page shows the network topology: offer its editing actions. */
-  hasTopology?: boolean;
   secretMode: boolean;
   onToggleSecret?: () => void;
   activeTab?: TabId;
@@ -35,29 +34,6 @@ export default function Header(props: HeaderProps) {
   const { t } = useI18n();
   const { config, user, logout } = useConfig();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [desktopDropdownOpen, setDesktopDropdownOpen] = useState(false);
-  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
-
-  interface EditAction {
-    label: string;
-    onClick: () => void;
-  }
-
-  // Every page is built from the same widgets, so every page offers the same
-  // building actions; the topology keeps its own actions wherever it is placed.
-  const getEditActions = (): EditAction[] => {
-    if (!props.editMode) return [];
-    // Adding widgets and categories lives in the editor bar and the library.
-    const actions: EditAction[] = [];
-    if (props.hasTopology) {
-      actions.push(
-        { label: t("Créer un groupe"), onClick: () => window.dispatchEvent(new Event('networkActionAddGroup')) },
-        { label: t("Lier des nœuds"), onClick: () => window.dispatchEvent(new Event('networkActionAddLink')) },
-        { label: t("Créer un nœud"), onClick: () => window.dispatchEvent(new Event('networkActionAddNode')) },
-      );
-    }
-    return actions;
-  };
 
   // Settings
   const hideHeaderTitle = config?.settings?.hideHeaderTitle ?? true;
@@ -197,96 +173,8 @@ export default function Header(props: HeaderProps) {
   };
 
   const ActionsDesktop = () => {
-    const actions = getEditActions();
-
     return (
       <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {props.editMode && actions.length > 0 && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            {actions.length === 1 ? (
-              <button className="nd-btn" onClick={actions[0].onClick}>
-                <Plus size={12} />
-                {actions[0].label}
-              </button>
-            ) : (
-              <div style={{ position: 'relative' }}>
-                <button 
-                  className="nd-btn" 
-                  onClick={() => setDesktopDropdownOpen(!desktopDropdownOpen)}
-                >
-                  <Plus size={12} />
-                  {t("Actions")}
-                  <ChevronDown size={12} style={{ transform: desktopDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                </button>
-                {desktopDropdownOpen && (
-                  <>
-                    <div 
-                      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
-                      onClick={() => setDesktopDropdownOpen(false)} 
-                    />
-                    <div className="nd-custom-select-menu nd-action-menu"
-                      style={{ 
-                        position: 'absolute', 
-                        top: 'calc(100% + 6px)', 
-                        right: 0, 
-                        background: 'var(--nd-bg-surface, var(--nd-bg))', 
-                        border: '1px solid var(--nd-card-border)', 
-                        borderRadius: 'var(--nd-card-radius)', 
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                        zIndex: 1000, 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        padding: '6px',
-                        gap: 2,
-                        minWidth: '160px',
-                        animation: 'nd-fade-in 0.15s ease-out'
-                      }}
-                    >
-                      {actions.map((act, idx) => (
-                        <button
-                          key={idx}
-                          className="nd-dropdown-item nd-custom-select-option"
-                          onClick={() => {
-                            act.onClick();
-                            setDesktopDropdownOpen(false);
-                          }}
-                          style={{
-                            padding: '8px 12px',
-                            background: 'transparent',
-                            border: 'none',
-                            color: 'var(--nd-text-muted)',
-                            fontSize: '0.78rem',
-                            fontWeight: 400,
-                            fontFamily: 'inherit',
-                            textAlign: 'left',
-                            cursor: 'pointer',
-                            borderRadius: 'calc(var(--nd-card-radius) * 0.8)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            width: '100%',
-                            transition: 'background 0.15s, color 0.15s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                            e.currentTarget.style.color = 'var(--nd-text)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.color = 'var(--nd-text-muted)';
-                          }}
-                        >
-                          {act.label}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-            <div style={{ width: 1, height: 16, background: 'var(--nd-border)', margin: '0 4px', alignSelf: 'center' }} />
-          </div>
-        )}
         <button
           className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`}
           onClick={props.onToggleSecret}
@@ -417,93 +305,6 @@ export default function Header(props: HeaderProps) {
 
       </header>
 
-      {/* Mobile Edit Actions Toolbar (rendered below header in editMode for dashboard, networks, custom tabs) */}
-      {props.editMode && (() => {
-        const actions = getEditActions();
-        if (actions.length === 0) return null;
-        return (
-          <div className="flex md:hidden nd-mobile-edit-toolbar" style={{ width: '100%', boxSizing: 'border-box' }}>
-            <div style={{ position: 'relative', width: '100%' }}>
-              {actions.length === 1 ? (
-                <button 
-                  className="nd-btn" 
-                  onClick={actions[0].onClick}
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  <Plus size={12} />
-                  {actions[0].label}
-                </button>
-              ) : (
-                <>
-                  <button 
-                    className="nd-btn" 
-                    onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
-                    style={{ width: '100%', justifyContent: 'center' }}
-                  >
-                    <Plus size={12} />
-                    {t("Actions")}
-                    <ChevronDown size={12} style={{ transform: mobileDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 'auto' }} />
-                  </button>
-                  {mobileDropdownOpen && (
-                    <>
-                      <div 
-                        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999 }} 
-                        onClick={() => setMobileDropdownOpen(false)} 
-                      />
-                      <div className="nd-custom-select-menu nd-action-menu"
-                        style={{ 
-                          position: 'absolute', 
-                          top: 'calc(100% + 6px)', 
-                          left: 0, 
-                          right: 0, 
-                          background: 'var(--nd-bg-surface, var(--nd-bg))', 
-                          border: '1px solid var(--nd-card-border)', 
-                          borderRadius: 'var(--nd-card-radius)', 
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                          zIndex: 1000, 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          padding: '6px',
-                          gap: 2,
-                          animation: 'nd-fade-in 0.15s ease-out'
-                        }}
-                      >
-                        {actions.map((act, idx) => (
-                          <button
-                            key={idx}
-                            className="nd-dropdown-item nd-custom-select-option"
-                            onClick={() => {
-                              act.onClick();
-                              setMobileDropdownOpen(false);
-                            }}
-                            style={{
-                              padding: '10px 14px',
-                              background: 'transparent',
-                              border: 'none',
-                              color: 'var(--nd-text-muted)',
-                              fontSize: '0.8rem',
-                              fontWeight: 500,
-                              textAlign: 'left',
-                              cursor: 'pointer',
-                              borderRadius: 'calc(var(--nd-card-radius) * 0.8)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              width: '100%'
-                            }}
-                          >
-                            {act.label}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (

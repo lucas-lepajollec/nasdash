@@ -91,7 +91,7 @@ A failed refresh marks a device offline and suppresses stale readings while
 retaining its history internally for recovery. Server polling and shared browser
 readers serialize their requests so an older response cannot replace a newer one.
 
-## Service integrations (Tailscale…)
+## Service integrations (VPN, DNS and photos)
 
 Some integrations are a connection used by widgets rather than a device to
 monitor. They are saved once in `config.integrations` (`id`, `type`, `name`,
@@ -101,6 +101,64 @@ request validator only accepts those fields, and secrets only in secret fields.
 Secrets are encrypted on disk, shown masked to admins and never sent to other
 users. Older configurations are migrated on read (`settings.tailscale*` →
 `tailscale-main`, previous file kept as `config.pre-integrations.json`).
+
+DNS widgets use Pi-hole v6 (`pihole`) or AdGuard Home (`adguard`); photo
+widgets use Immich (`immich`) or PhotoPrism (`photoprism`). Multiple connections
+of the same type have distinct instance IDs. Each widget selects one through
+`settings.integrationId`; the server never selects the first connection by type.
+New connections must be saved with a fresh explicit ID (the legacy upsert fallback
+without an ID still edits that type's existing connection).
+`ServiceField.kind: 'toggle'` stores `'true'` / `'false'` strings, including Pi-hole's
+`allowSelfSigned`. Photo settings read `mode` (random/recent/favorites/album/memories),
+`albumId` and `count` (default 12, maximum 60). GET previews accept an admin-only
+JSON `draft`; the corresponding proxy image URLs carry the sanitized draft.
+
+Collectors and proxy routes use bounded responses and requests with deadlines
+of at most 6 seconds. Custom SID/API-key headers and binary image requests use
+`widgetData/services.ts` with redirects disabled; other JSON requests use
+`httpRequest`, with its per-host certificate option. DNS summaries cache for 15 s
+with up to 5 minutes stale fallback; photo selections cache for 5 minutes, with
+random `seed` included in the cache key. Only assets returned by an instance
+are admitted to its in-memory image allowlist (24 h, bounded); refreshing the
+photo widget repopulates it after a restart. Demo handlers never call providers.
+
+API contracts checked against upstream documentation/source (2026-10-14):
+
+- [Pi-hole API](https://docs.pi-hole.net/api/), and FTL's
+  [route table](https://github.com/pi-hole/FTL/blob/master/src/api/api.c),
+  [DNS](https://github.com/pi-hole/FTL/blob/master/src/api/dns.c),
+  [history](https://github.com/pi-hole/FTL/blob/master/src/api/history.c) and
+  [statistics](https://github.com/pi-hole/FTL/blob/master/src/api/stats.c): v6
+  `/api/auth`, `/api/stats/summary`, `/api/history`, top domains/clients and
+  `/api/dns/blocking`; blocking responses use an enum, toggle bodies a boolean,
+  and timers/validity seconds. Prefer an application password. The hosted FTL
+  OpenAPI document was unavailable during this check; the implementation was
+  verified directly against FTL source instead.
+- [AdGuard Home OpenAPI](https://github.com/AdguardTeam/AdGuardHome/blob/master/openapi/openapi.yaml):
+  Basic auth, `/control/status`, `/control/stats?recent=86400000` for hourly
+  24 h history, filtering rules, and protection duration in milliseconds.
+- [Immich OpenAPI](https://github.com/immich-app/immich/blob/main/open-api/immich-openapi-specs.json):
+  `x-api-key`, random/metadata search, albums, `/api/memories?for=YYYY-MM-DD`
+  returning memory groups with assets, thumbnail/preview sizes, and optional
+  admin-only statistics. Legacy search fields remain supported in the current
+  schema (deprecated in v3.2); memories fall back to bounded date searches over
+  ten previous years. Connection tests use authenticated `/api/users/me`.
+- [PhotoPrism API](https://docs.photoprism.app/developer-guide/api/),
+  [search](https://docs.photoprism.app/developer-guide/api/search/) and
+  [thumbnails](https://docs.photoprism.app/developer-guide/api/thumbnails/):
+  app passwords work directly as Bearer tokens, merged image searches support
+  newest/random, favorites and album scope; thumbnails require a file SHA1 hash
+  and the server-only config preview token, using `fit_720` / `fit_1920`.
+  Memories filter the current month/day in previous years.
+
+Manifest label keys for the UI are `integrations.<type>.url`,
+`integrations.pihole.password`, `integrations.adguard.username`,
+`integrations.adguard.password`, `integrations.immich.apiKey`,
+`integrations.photoprism.token` and the existing `integrations.allowSelfSigned`.
+Provider errors reuse `widgets.error.network`, `parse`, `http`, `timeout`,
+`tooLarge`, widget lookup/validation keys, and `integrations.error.authentication`;
+TLS/URL errors add `integrations.error.certificate` and `integrations.error.invalidUrl`.
+The UI owner maintains these keys in all five interface languages.
 
 ## Trying an integration without installing it
 
@@ -118,8 +176,12 @@ users. Older configurations are migrated on read (`settings.tailscale*` →
 | `127.0.0.1:2616` | Beszel, system `nas`, login `nasdash@example.com` / `fake-password` |
 | `127.0.0.1:2617` | Prometheus, instance `192.0.2.10:9100` |
 | `http://127.0.0.1:2620` | Headscale, API key `fake-headscale-key` (Tailscale widget settings) |
-| `http://127.0.0.1:2621` | Portainer, environment `1`, API key `fake-portainer-key` (Docker host) |
-| `http://127.0.0.1:2622` | Dockhand, environment `1`, token `dh_fake-dockhand-token` (Docker host) |
+| `http://127.0.0.1:2625` | Portainer, environment `1`, API key `fake-portainer-key` (Docker host) |
+| `http://127.0.0.1:2626` | Dockhand, environment `1`, token `dh_fake-dockhand-token` (Docker host) |
+| `http://127.0.0.1:2621` | Pi-hole v6, password `fake-password` |
+| `http://127.0.0.1:2622` | AdGuard Home, username `admin`, password `fake-password` |
+| `http://127.0.0.1:2623` | Immich, API key `fake-immich-key` |
+| `http://127.0.0.1:2624` | PhotoPrism, token `fake-photoprism-token` |
 | `127.0.0.1:2619` | A server answering HTML (error case) |
 | `127.0.0.1:2618` | Nothing (unreachable case) |
 

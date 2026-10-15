@@ -25,6 +25,10 @@ import spacer from './spacer/definition';
 import storage from './storage/definition';
 import tailscale from './tailscale/definition';
 import weather from './weather/definition';
+import quotes from './quotes/definition';
+import rss from './rss/definition';
+import markets from './markets/definition';
+import dns from './dns/definition';
 import type { WidgetDefinition } from './define';
 
 /**
@@ -40,7 +44,9 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // Docker
   dockercontainers, dockeractions, dockerHosts, dockerSummary, dockerContainerList, dockerExplorer,
   // Network
-  networkgraph, tailscale, networkTools, networkTopology,
+  networkgraph, tailscale, networkTools, networkTopology, dns,
+  // Content
+  rss, markets, quotes,
   // Gadgets
   clock, calendar, weather,
   // Layout

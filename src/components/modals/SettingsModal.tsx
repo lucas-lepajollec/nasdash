@@ -315,6 +315,10 @@ import { DockerActionsWidgetTab } from './settings/tabs/widgets/DockerActionsWid
 import { ClockWidgetTab } from './settings/tabs/widgets/ClockWidgetTab';
 import { CalendarWidgetTab } from './settings/tabs/widgets/CalendarWidgetTab';
 import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
+import { RssWidgetTab } from './settings/tabs/widgets/RssWidgetTab';
+import { MarketsWidgetTab } from './settings/tabs/widgets/MarketsWidgetTab';
+import { QuotesWidgetTab } from './settings/tabs/widgets/QuotesWidgetTab';
+import { DnsWidgetTab } from './settings/tabs/widgets/DnsWidgetTab';
 import { NetworkGraphWidgetTab } from './settings/tabs/widgets/NetworkGraphWidgetTab';
 import { DockerContainersWidgetTab } from './settings/tabs/widgets/DockerContainersWidgetTab';
 import { ServicesWidgetTab } from './settings/tabs/widgets/ServicesWidgetTab';
@@ -567,6 +571,10 @@ export default function SettingsModal({ onClose, restoreFocus, showSensitive = f
              TAB WEATHER
              ========================================== */}
           {currentTab === 'widget-weather' && <WeatherWidgetTab />}
+          {currentTab === 'widget-rss' && <RssWidgetTab />}
+          {currentTab === 'widget-markets' && <MarketsWidgetTab />}
+          {currentTab === 'widget-quotes' && <QuotesWidgetTab />}
+          {currentTab === 'widget-dns' && <DnsWidgetTab />}
 
             </>
           )}

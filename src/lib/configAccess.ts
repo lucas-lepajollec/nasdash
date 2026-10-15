@@ -42,6 +42,9 @@ function filterSecretCategories(config: SerializableConfig): void {
   }
 }
 
+/** Service connections whose address stays server-side for visitors (the widget only needs id, name, type). */
+const SERVICE_ADDRESS_TYPES = new Set(['pihole', 'adguard', 'immich', 'photoprism']);
+
 export function buildConfigForPrincipal(
   config: DashboardConfig,
   principal: AccessPrincipal
@@ -79,8 +82,10 @@ export function buildConfigForPrincipal(
   stripInstanceSecrets(safeConfig);
   // Monitoring connections: their address stays server-side too (name and type are enough).
   for (const instance of safeConfig.integrations ?? []) {
-    if (isMonitoringType(instance.type)) instance.settings = {};
+    if (isMonitoringType(instance.type) || SERVICE_ADDRESS_TYPES.has(instance.type)) instance.settings = {};
   }
+  // Feed addresses can carry private tokens: visitors get each feed's id and title only.
+  if (safeConfig.settings.rssFeeds) safeConfig.settings.rssFeeds = safeConfig.settings.rssFeeds.map(({ id, title }) => ({ id, url: '', ...(title ? { title } : {}) }));
 
   const canReadDocker =
     canAccessTab(principal, 'docker') ||

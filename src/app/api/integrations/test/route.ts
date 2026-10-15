@@ -3,13 +3,19 @@ import { checkAdmin } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
 import { isDemoMode } from '@/lib/demoMode';
 import { DEVICE_COLLECTORS, TARGET_LISTERS } from '@/integrations/collectors';
-import { getDeviceIntegration } from '@/integrations/registry';
+import { getServiceIntegration, getDeviceIntegration } from '@/integrations/registry';
 import { MASKED_SECRET, reusesSecretElsewhere } from '@/integrations/instances';
 import { isMonitoringType, sourceInput } from '@/integrations/sources';
 import { collectorFailure } from '@/integrations/errors';
 import { type CollectContext } from '@/integrations/types';
 import { isCertificateError } from '@/integrations/http';
 import type { IntegrationInstance } from '@/lib/types';
+
+import { piholeRequest } from '@/integrations/pihole/collect';
+import { adguardHeaders } from '@/integrations/adguard/collect';
+import { immichHeaders } from '@/integrations/immich/collect';
+import { photoprismHeaders } from '@/integrations/photoprism/collect';
+import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +34,46 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
   let body: Record<string, unknown>;
   try {
-    body = await request.json() as Record<string, unknown>;
+    body = await boundedJson(request);
   } catch {
     return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
   }
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
+  if (['pihole', 'adguard', 'immich', 'photoprism'].includes(type)) {
+    const service = getServiceIntegration(type)!;
+    if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
+    const sameType = saved?.type === type ? saved : undefined;
+    const settingsInput = body.settings && typeof body.settings === 'object' && !Array.isArray(body.settings) ? body.settings as Record<string, unknown> : undefined;
+    const secretsInput = body.secrets && typeof body.secrets === 'object' && !Array.isArray(body.secrets) ? body.secrets as Record<string, unknown> : {};
+    const settings: Record<string, string> = { ...(sameType?.settings ?? {}) };
+    const secrets: Record<string, string> = {};
+    const fresh: Record<string, string> = {};
+    for (const field of service.fields) {
+      if (field.kind === 'secret') {
+        fresh[field.id] = text(secretsInput[field.id] ?? body[field.id], 8_192);
+        secrets[field.id] = fresh[field.id] && fresh[field.id] !== MASKED_SECRET ? fresh[field.id] : sameType?.secrets?.[field.id] ?? '';
+      } else if (settingsInput && field.id in settingsInput) settings[field.id] = text(settingsInput[field.id]);
+    }
+    if (reusesSecretElsewhere(sameType, settings, fresh)) return NextResponse.json({ ok: false, message: 'integrations.secretRequired' });
+    if (service.fields.some(field => field.required && !(field.kind === 'secret' ? secrets[field.id] : settings[field.id]))) return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
+    const instance: IntegrationInstance = { id: sameType?.id ?? 'draft', type, name: sameType?.name ?? service.name, settings, secrets };
+    try {
+      if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
+      else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
+      // users/me actually authenticates the supplied key; a public about/status
+      // endpoint can succeed even when credentials are invalid.
+      else if (type === 'immich') await serviceJson(instance, '/api/users/me', { headers: immichHeaders(instance) });
+      else await serviceJson(instance, '/api/v1/config', { headers: photoprismHeaders(instance) });
+      return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: 1 });
+    } catch (error) {
+      const failure = error instanceof ServiceError ? error : undefined;
+      const response = serviceFailure(error);
+      const data = await response.json();
+      return NextResponse.json({ ok: false, message: data.error, ...(failure?.parameters ? { messageParameters: failure.parameters } : {}) }, { status: response.status });
+    }
+  }
   const manifest = getDeviceIntegration(type);
   if (!manifest || !isMonitoringType(type)) return NextResponse.json({ ok: false, message: 'integrations.error.unknown' }, { status: 400 });
 

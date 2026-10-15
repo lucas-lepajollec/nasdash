@@ -1,6 +1,16 @@
 {
   "version": 1,
   "settings": {
+    "rssFeeds": [
+      { "id": "feed-homelab", "url": "https://news.example/feed.xml", "title": "Homelab Gazette" },
+      { "id": "feed-selfhost", "url": "https://selfhost.example/rss", "title": "Self-host Weekly" }
+    ],
+    "marketSymbols": [
+      { "id": "symbol-demo", "symbol": "DEMO" },
+      { "id": "symbol-acme", "symbol": "ACME" },
+      { "id": "symbol-orbt", "symbol": "ORBT" },
+      { "id": "symbol-nova", "symbol": "NOVA-USD", "label": "Nova" }
+    ],
     "title": "HOME LAB",
     "titleTablet": "",
     "titleMobile": "",
@@ -271,6 +281,25 @@
         "port": "8090",
         "username": "",
         "allowSelfSigned": ""
+      }
+    },
+    {
+      "id": "pihole-demo",
+      "type": "pihole",
+      "name": "Pi-hole · Atlas NAS",
+      "settings": {
+        "url": "https://pihole.demo.invalid",
+        "allowSelfSigned": "false"
+      }
+    },
+    {
+      "id": "adguard-demo",
+      "type": "adguard",
+      "name": "AdGuard Home · Pi Edge",
+      "settings": {
+        "url": "https://adguard.demo.invalid",
+        "username": "demo",
+        "allowSelfSigned": "false"
       }
     }
   ],

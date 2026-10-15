@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { monitoringInstances } from '@/integrations/sources';
@@ -15,10 +15,13 @@ import { useOpenSettings } from './useOpenSettings';
  * Each step links straight to the right place; done steps are ticked.
  * Visitors who cannot change the settings are told an admin has to.
  */
-export function SetupGuide({ kind }: { kind: 'devices' | 'docker' | 'vpn' }) {
+export type SetupKind = 'devices' | 'docker' | 'vpn' | 'dns' | 'rss' | 'markets' | 'weather';
+
+
+export function SetupGuide({ kind }: { kind: SetupKind }) {
   const { t } = useI18n();
   const { config, user } = useConfig();
-  const { openIntegrations, openMachines } = useOpenSettings();
+  const { openIntegrations, openMachines, openWidgetSettings } = useOpenSettings();
   const admin = user?.role === 'admin';
 
   const steps = kind === 'devices'
@@ -28,24 +31,29 @@ export function SetupGuide({ kind }: { kind: 'devices' | 'docker' | 'vpn' }) {
     ]
     : kind === 'docker'
       ? [{ done: (config?.dockerHosts ?? []).length > 0, label: t('setup.docker.engine'), action: t('setup.docker.engineAction'), open: () => openIntegrations('docker') }]
-      : [{ done: !!latestInstance(config ?? {}, ['tailscale', 'headscale']), label: t('setup.vpn.connect'), action: t('setup.vpn.connectAction'), open: () => openIntegrations('vpn') }];
-  const next = steps.findIndex(step => !step.done);
+      : kind === 'vpn'
+        ? [{ done: !!latestInstance(config ?? {}, ['tailscale', 'headscale']), label: t('setup.vpn.connect'), action: t('setup.vpn.connectAction'), open: () => openIntegrations('vpn') }]
+        : kind === 'dns'
+          ? [{ done: !!latestInstance(config ?? {}, ['pihole', 'adguard']), label: t('setup.dns.connect'), action: t('setup.dns.connectAction'), open: () => openIntegrations('dns') }]
+          : kind === 'rss'
+            ? [{ done: (config?.settings?.rssFeeds ?? []).length > 0, label: t('setup.rss.feeds'), action: t('setup.rss.feedsAction'), open: () => openWidgetSettings('widget-rss') }]
+            : kind === 'weather'
+              ? [{ done: (config?.settings?.weatherLocations ?? []).length > 0, label: t('setup.weather.city'), action: t('setup.weather.cityAction'), open: () => openWidgetSettings('widget-weather') }]
+              : [{ done: (config?.settings?.marketSymbols ?? []).length > 0, label: t('setup.markets.symbols'), action: t('setup.markets.symbolsAction'), open: () => openWidgetSettings('widget-markets') }];
+  const index = Math.max(0, steps.findIndex(step => !step.done));
+  const step = steps[index];
 
+  // Sober: what the widget will show, the next thing to do, one quiet button.
   return (
-    <div className="ndc-guide">
-      <span className="ndc-guide-title">{t(kind === 'devices' ? 'setup.devices.title' : kind === 'docker' ? 'setup.docker.title' : 'setup.vpn.title')}</span>
-      <ol className="ndc-guide-steps">
-        {steps.map((step, index) => (
-          <li key={step.label} className={`ndc-guide-step ${step.done ? 'is-done' : index === next ? 'is-next' : ''}`}>
-            <span className="ndc-setup-number" aria-hidden="true">{step.done ? <CheckCircle2 size={14} /> : index + 1}</span>
-            <span className="ndc-guide-label">{step.label}</span>
-            {admin && !step.done && index === next && (
-              <button type="button" className="nd-btn nd-btn-accent ndc-guide-action" onClick={step.open}>{step.action} <ArrowRight size={12} /></button>
-            )}
-          </li>
-        ))}
-      </ol>
-      {!admin && <span className="ndc-guide-note">{t('setup.adminOnly')}</span>}
+    <div className="ndc-welcome">
+      <span className="ndc-welcome-title">{t(`setup.${kind}.title`)}</span>
+      <span className="ndc-welcome-text">
+        {steps.length > 1 && <span className="ndc-welcome-step">{index + 1}/{steps.length}</span>}
+        {step.label}
+      </span>
+      {admin
+        ? <button type="button" className="nd-btn nd-btn-compact ndc-welcome-action" onClick={step.open}>{step.action}<ArrowRight size={12} /></button>
+        : <span className="ndc-welcome-note">{t('setup.adminOnly')}</span>}
     </div>
   );
 }

@@ -15,6 +15,11 @@ export function useOpenSettings() {
       setDeviceModal({ open: false });
       setSettingsModal({ open: true, targetTab: 'integrations', targetSection: section });
     },
+    /** A widget type's shared settings (Settings → Widgets → its tab). */
+    openWidgetSettings: (tab: string) => {
+      setDeviceModal({ open: false });
+      setSettingsModal({ open: true, targetTab: tab });
+    },
     openMachines: () => {
       setDeviceModal({ open: false });
       setSettingsModal({ open: true, targetTab: 'widget-devices' });

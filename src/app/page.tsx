@@ -155,7 +155,6 @@ export default function Shell() {
             setCategoryModal({ open: true, placement: activePage ? { pageId: activePage.id } : undefined });
           }}
           onAddWidget={() => setLibraryTarget({ pageId: activeTab })}
-          hasTopology={!!activePage?.widgets.some(widget => widget.type === 'network-topology' && !widget.hidden)}
           secretMode={showSensitive}
           onToggleSecret={() => setShowSensitive(prev => !prev)}
           activeTab={activeTab}

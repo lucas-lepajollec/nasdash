@@ -96,6 +96,7 @@ export const EMOJI_TO_LUCIDE: Record<string, string> = {
   '🔨': 'Hammer',
   '🪜': 'Menu',
   '💬': 'MoreHorizontal',
+  '❝': 'Quote',
   '💭': 'MoreVertical',
   '🧩': 'Grid',
   '🪟': 'Layout',

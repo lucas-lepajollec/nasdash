@@ -408,6 +408,10 @@ async function handlePUT(req: NextRequest) {
     });
     if (body.weatherLocation !== undefined) config.settings.weatherLocation = body.weatherLocation;
     if (body.weatherLocations !== undefined) config.settings.weatherLocations = body.weatherLocations;
+    if (body.rssFeeds !== undefined) config.settings.rssFeeds = body.rssFeeds;
+    if (body.marketSymbols !== undefined) config.settings.marketSymbols = body.marketSymbols;
+    if (body.quotes !== undefined) config.settings.quotes = body.quotes;
+    if (body.quoteProviders !== undefined) config.settings.quoteProviders = body.quoteProviders;
     if (body.activeWeatherLocationId !== undefined) config.settings.activeWeatherLocationId = body.activeWeatherLocationId;
     if (body.weatherWidgetStyle !== undefined) config.settings.weatherWidgetStyle = body.weatherWidgetStyle;
     if (body.dockerContainersStyle !== undefined) config.settings.dockerContainersStyle = body.dockerContainersStyle;

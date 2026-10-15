@@ -359,6 +359,12 @@ export interface DashboardConfig {
     categoryTitlePosition?: 'inside' | 'above';
     weatherLocation?: { lat: number; lon: number; name: string };
     weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
+    /** Content widget sources, shared by every widget of the type (Settings → Widgets). */
+    rssFeeds?: { id: string; url: string; title?: string }[];
+    marketSymbols?: { id: string; symbol: string; label?: string; kind?: string; exchange?: string }[];
+    quotes?: { id: string; text: string; author?: string }[];
+    /** Online quote sources (ids from `quoteProviders.ts`). */
+    quoteProviders?: string[];
     weatherWidgetStyle?: 'default' | 'currentOnly' | 'minimal' | 'extended';
     activeWeatherLocationId?: string;
     hideDock?: boolean;

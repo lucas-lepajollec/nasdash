@@ -26,6 +26,10 @@ import spacer from './spacer/view';
 import storage from './storage/view';
 import tailscale from './tailscale/view';
 import weather from './weather/view';
+import quotes from './quotes/view';
+import rss from './rss/view';
+import markets from './markets/view';
+import dns from './dns/view';
 import type { WidgetViewProps } from './types';
 
 /**
@@ -56,6 +60,10 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'tailscale': tailscale,
   'network-tools': networkTools,
   'network-topology': networkTopology,
+  'dns': dns,
+  'rss': rss,
+  'markets': markets,
+  'quotes': quotes,
   'clock': clock,
   'calendar': calendar,
   'weather': weather,

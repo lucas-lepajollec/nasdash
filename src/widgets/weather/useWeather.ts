@@ -53,6 +53,26 @@ export function weatherUrl(location: Required<Pick<WeatherLocation, 'lat' | 'lon
   return `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
 }
 
+/** Retries after a failed load: soon, then less often (a busy source must not blank the widget for 30 min). */
+const RETRY_MS = [30_000, 120_000, 300_000] as const;
+
+/** Delay before the next try after `attempt` failures in a row. */
+export function retryDelay(attempt: number): number {
+  return RETRY_MS[Math.min(Math.max(0, attempt), RETRY_MS.length - 1)];
+}
+
+/** A failed refresh is an error only when there is nothing to show; otherwise the forecast is just stale. */
+export function weatherStatus(failed: boolean, hasForecast: boolean): { error: boolean; stale: boolean } {
+  return { error: failed && !hasForecast, stale: failed && hasForecast };
+}
+
+/**
+ * Last forecast per place, shared by every weather widget and kept across
+ * page changes: a widget shown again reuses a fresh one instead of asking
+ * Open-Meteo again (repeated requests are what get refused).
+ */
+const forecasts = new Map<string, { data: WeatherData; at: number }>();
+
 export function useWeather(isVisible: boolean) {
   const { config } = useConfig();
   const saved = config?.settings?.weatherLocations;
@@ -69,38 +89,58 @@ export function useWeather(isVisible: boolean) {
   }, [activeId, locations]);
 
   const location = locations[index] ?? locations[0];
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
   const demo = config?.demoMode === true;
+  // The place by value: a config refresh rebuilds the objects, not the place.
+  const lat = location?.lat, lon = location?.lon;
+  const key = lat === undefined || lon === undefined ? null : `${lat},${lon}`;
+  const [weather, setWeather] = useState<WeatherData | null>(() => (key ? forecasts.get(key)?.data ?? null : null));
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!isVisible || !location) return;
-    if (location.lat === undefined || location.lon === undefined) { setError(true); return; }
+    if (!key) { setFailed(true); return; }
     let cancelled = false;
-    const load = async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempt = 0;
+    const cached = forecasts.get(key);
+    // Another place: never keep the previous place's forecast on screen.
+    setWeather(cached?.data ?? null);
+
+    const schedule = (delay: number) => { timer = setTimeout(load, delay); };
+    async function load() {
       setLoading(true);
-      setError(false);
       try {
-        if (demo) { setWeather(demoWeather()); return; }
-        const response = await fetch(weatherUrl({ lat: location.lat!, lon: location.lon! }));
-        if (!response.ok) throw new Error('Weather fetch failed');
-        const data = await response.json() as WeatherData;
-        if (!cancelled) setWeather(data);
+        const data = demo ? demoWeather() : await (async () => {
+          const response = await fetch(weatherUrl({ lat: lat!, lon: lon! }));
+          if (!response.ok) throw new Error('Weather fetch failed');
+          return await response.json() as WeatherData;
+        })();
+        forecasts.set(key!, { data, at: Date.now() });
+        if (cancelled) return;
+        setWeather(data); setFailed(false); attempt = 0;
+        if (!demo) schedule(REFRESH_MS);
       } catch {
-        if (!cancelled) setError(true);
+        if (cancelled) return;
+        // Keep showing the last forecast; only an empty widget shows the error.
+        setFailed(true);
+        schedule(retryDelay(attempt++));
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
-    void load();
-    if (demo) return () => { cancelled = true; };
-    const timer = setInterval(load, REFRESH_MS);
-    return () => { cancelled = true; clearInterval(timer); };
-  }, [isVisible, location, demo]);
+    }
+
+    const age = cached ? Date.now() - cached.at : Infinity;
+    if (age < REFRESH_MS) { setFailed(false); if (!demo) schedule(REFRESH_MS - age); }
+    else void load();
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  // `location` is read for its presence only; the place is `key`.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible, key, demo, !!location]);
 
   const step = (delta: number) => setIndex(current => (current + delta + locations.length) % locations.length);
-  return { locations, location, weather, loading, error, previous: () => step(-1), next: () => step(1) };
+  // `error`: nothing to show at all; `stale`: the forecast on screen could not be refreshed lately.
+  return { locations, location, weather, loading, ...weatherStatus(failed, !!weather), previous: () => step(-1), next: () => step(1) };
 }
 
 export function weatherLabelKey(code: number): string {

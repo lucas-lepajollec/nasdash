@@ -145,6 +145,16 @@ body[data-design="calme"] .nd-btn-active {
   color: hsl(222 40% 8%);
 }
 
+/* The generic .nd-btn:hover outranks .nd-btn-accent: without this, hovering the
+   main action dropped its accent fill and left dark text on a dark card. */
+body[data-design="calme"] .nd-btn-accent:hover:not(:disabled),
+body[data-design="calme"] .nd-btn-accent:focus-visible {
+  background: var(--nd-accent);
+  border-color: var(--nd-accent);
+  color: hsl(222 40% 8%);
+  filter: brightness(1.08);
+}
+
 body[data-design="calme"] .nd-action-icon {
   border-color: transparent;
   border-radius: 6px;
@@ -3274,16 +3284,6 @@ body.light {
 .ndc-source-row { flex-wrap: nowrap; }
 
 /* First steps inside a widget */
-.ndc-guide { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.ndc-guide-title { font-size: 0.82rem; color: var(--nd-text); }
-.ndc-guide-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.ndc-guide-step { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; min-width: 0; color: var(--nd-text-dimmed); }
-.ndc-guide-step.is-next { color: var(--nd-text); }
-.ndc-guide-step.is-done { color: var(--nd-text-muted); }
-.ndc-guide-step.is-done .ndc-guide-label { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--nd-text) 30%, transparent); }
-.ndc-guide-label { flex: 1 1 140px; min-width: 0; font-size: 0.76rem; line-height: 1.4; }
-.ndc-guide-action { height: 28px; font-size: 0.72rem; gap: 6px; }
-.ndc-guide-note { font-size: 0.72rem; color: var(--nd-text-dimmed); }
 
 /* Integrations page, second pass: connections set up, then the tiles to add one. */
 .ndc-int-page .ndc-setup-step { width: 100%; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; }
@@ -3835,3 +3835,21 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-action-menu .nd-dropdown-item:focus-visible { outline: 1px solid var(--nd-accent); outline-offset: -2px; }
 
 .ndc-ctrs-bar > .nd-custom-select { flex: 1; min-width: 0; }
+
+/* A forecast still shown while its refresh fails: a quiet amber dot by the title. */
+.ndc-stale-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--nd-yellow); opacity: 0.8; }
+
+/* A widget that is not set up yet: a quiet title, one line, one discreet button. */
+.ndc-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 14px 6px; text-align: center; }
+.ndc-welcome-title { color: var(--nd-text-muted); font-size: 0.76rem; }
+.ndc-welcome-text { max-width: 36ch; color: var(--nd-text-dimmed); font-size: 0.68rem; line-height: 1.5; text-wrap: balance; }
+.ndc-welcome-step { margin-right: 6px; color: var(--nd-text-muted); font-variant-numeric: tabular-nums; }
+.ndc-welcome-action { margin-top: 6px; }
+.ndc-welcome-actions { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.ndc-welcome-note { margin-top: 2px; color: var(--nd-text-dimmed); font-size: 0.64rem; }
+.ndc-topology-welcome { position: absolute; inset: 0; z-index: 1; padding: 16px; pointer-events: none; }
+/* Map edit tools: a quiet row at the top left, matching the zoom tools on the right. */
+.ndc-map-edit { position: absolute; top: 12px; left: 12px; z-index: 3; display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100% - 190px); }
+.ndc-generate-note { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; color: var(--nd-text-muted); font-size: 0.74rem; line-height: 1.5; }
+.ndc-generate-note span { color: var(--nd-text-dimmed); font-size: 0.68rem; }
+.ndc-generate-note.is-empty { color: var(--nd-yellow); }

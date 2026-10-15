@@ -17,7 +17,7 @@ import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { DockerHostFormModal, type DockerHostDraft } from '@/components/widgets/docker/DockerViews';
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
-export type IntegrationSection = 'monitoring' | 'docker' | 'vpn';
+export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'photos';
 export const integrationSectionId = (section: IntegrationSection) => `settings-integrations-${section}`;
 
 type Status = TestResult | 'running' | undefined;
@@ -86,7 +86,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const { t } = useI18n();
   const { config, deleteIntegration, refresh } = useConfig();
   const [editing, setEditing] = useState<{ type: string; instance?: IntegrationInstance } | null>(null);
-  const [service, setService] = useState<string | null>(null);
+  const [service, setService] = useState<{ type: string; instance?: IntegrationInstance } | null>(null);
   const [removing, setRemoving] = useState<IntegrationInstance | null>(null);
   const [tests, setTests] = useState<Record<string, Status>>({});
   const [addingHost, setAddingHost] = useState<DockerHostDraft['type'] | null>(null);
@@ -96,6 +96,9 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const devices = config?.devices ?? [];
   const hosts = config?.dockerHosts ?? [];
   const mesh = (config?.integrations ?? []).filter(instance => instance.type === 'tailscale' || instance.type === 'headscale');
+  const dns = (config?.integrations ?? []).filter(instance => instance.type === 'pihole' || instance.type === 'adguard');
+  const photos = (config?.integrations ?? []).filter(instance => instance.type === 'immich' || instance.type === 'photoprism');
+  const serviceName = (type: string) => ({ pihole: 'Pi-hole', adguard: 'AdGuard Home', immich: 'Immich', photoprism: 'PhotoPrism' } as Record<string, string>)[type] ?? type;
 
   // Opened from a widget or a dialog: straight to its category.
   useEffect(() => {
@@ -113,7 +116,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   // Each saved connection is tried once when the page opens: its state shows at a glance.
   const tested = useRef(new Set<string>());
   useEffect(() => {
-    for (const instance of instances) {
+    for (const instance of [...instances, ...dns, ...photos]) {
       if (tested.current.has(instance.id)) continue;
       tested.current.add(instance.id);
       void runTest(instance);
@@ -225,18 +228,47 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
             logo={instance.type}
             name={instance.name}
             details={[instance.type === 'headscale' ? 'Headscale' : 'Tailscale', instance.type === 'headscale' ? address(instance.settings.url) : instance.settings.tailnet].filter(Boolean).join(' · ')}
-            onEdit={demoMode ? undefined : () => setService(instance.type)}
+            onEdit={demoMode ? undefined : () => setService({ type: instance.type })}
             onRemove={() => setRemoving(instance)}
           />
         )),
         t('integrations.vpnEmpty'),
         (['tailscale', 'headscale'] as const).map(kind => (
-          <Tile key={kind} logo={kind} name={kind === 'tailscale' ? 'Tailscale' : 'Headscale'} description={t(`integrations.info.${kind}`)} onClick={() => { if (!demoMode) setService(kind); }} />
+          <Tile key={kind} logo={kind} name={kind === 'tailscale' ? 'Tailscale' : 'Headscale'} description={t(`integrations.info.${kind}`)} onClick={() => { if (!demoMode) setService({ type: kind }); }} />
         )),
       )}
 
+      {/* Photos (Immich, PhotoPrism) appears with its widget; its connections are ready server-side. */}
+      {(['dns'] as const).map(id => {
+        const saved = id === 'dns' ? dns : photos;
+        const kinds = id === 'dns' ? ['pihole', 'adguard'] : ['immich', 'photoprism'];
+        return (
+          <React.Fragment key={id}>
+            {section(
+              id, t(`integrations.${id}`), t(`integrations.${id}Hint`),
+              saved.map(instance => (
+                <Connection
+                  key={instance.id}
+                  logo={instance.type}
+                  name={instance.name}
+                  details={[serviceName(instance.type), address(instance.settings.url)].filter(Boolean).join(' · ')}
+                  status={tests[instance.id]}
+                  onTest={() => void runTest(instance)}
+                  onEdit={() => setService({ type: instance.type, instance })}
+                  onRemove={() => setRemoving(instance)}
+                />
+              )),
+              t(`integrations.${id}Empty`),
+              kinds.map(kind => (
+                <Tile key={kind} logo={kind} name={serviceName(kind)} description={t(`integrations.info.${kind}`)} onClick={() => setService({ type: kind })} />
+              )),
+            )}
+          </React.Fragment>
+        );
+      })}
+
       {editing && <MonitoringConnectionDialog type={editing.type} instance={editing.instance} onClose={() => setEditing(null)} showSensitive={showSensitive} />}
-      {service && <ServiceConnectionDialog type={service} onClose={() => setService(null)} />}
+      {service && <ServiceConnectionDialog type={service.type} instance={service.instance} onClose={() => setService(null)} onSaved={instance => { if (instance.type !== 'tailscale' && instance.type !== 'headscale') { tested.current.add(instance.id); void runTest(instance); } }} />}
       {addingHost && <DockerHostFormModal initialConnection={addingHost} onClose={() => setAddingHost(null)} onSave={addHost} />}
       <ConfirmModal
         isOpen={!!removing}

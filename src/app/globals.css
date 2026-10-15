@@ -670,6 +670,14 @@ body {
   opacity: 0.9;
 }
 
+/* Inside widgets and on maps: the same button, smaller (one size for every widget). */
+.nd-btn.nd-btn-compact {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 0.7rem;
+  gap: 6px;
+}
+
 /* Enhanced Distinct Hitboxes for Edit Icons */
 .nd-action-icon {
   background: transparent;

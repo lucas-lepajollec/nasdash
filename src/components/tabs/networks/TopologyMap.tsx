@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Sparkles } from 'lucide-react';
+import { Link2, Plus, Sparkles } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { NetworkNode, NetworkGroup, NetworkConnection, NetworkTopology } from '@/lib/types';
 import ConfirmModal from '../../modals/ConfirmModal';
@@ -638,35 +638,26 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 12 }}>
 
-      {/* Empty state importer trigger */}
-      {topology.nodes.length === 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '0 4px', marginBottom: 12 }}>
-          <button
-            className="nd-btn"
-            onClick={() => {
-              setAutoImportGroupCategories(true);
-              setShowAutoImportModal(true);
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              fontSize: '0.72rem',
-              borderColor: 'var(--nd-accent)',
-              background: 'var(--nd-accent-glow)',
-              color: 'var(--nd-accent)',
-              fontWeight: 700
-            }}
-          >
-            <Sparkles size={13} />
-            <span>{t("Générer la carte automatiquement")}</span>
-          </button>
-        </div>
-      )}
-
       {/* The map: laid out and routed by ELK (TopologyCanvas). */}
       <div className="nd-topology-canvas" style={{ position: 'relative', flex: 1, minHeight: 240, padding: 12, borderRadius: 'var(--nd-card-radius)' }}>
+        {/* Edit tools live in the map, in edit mode only (no longer in the page header). */}
+        {editMode && (
+          <div className="ndc-map-edit" role="toolbar" aria-label={t('topology.edit.tools')}>
+            <button type="button" className="nd-btn nd-btn-compact" onClick={() => window.dispatchEvent(new Event('networkActionAddNode'))}><Plus size={12} />{t('topology.edit.node')}</button>
+            <button type="button" className="nd-btn nd-btn-compact" onClick={() => window.dispatchEvent(new Event('networkActionAddGroup'))}><Plus size={12} />{t('topology.edit.group')}</button>
+            <button type="button" className="nd-btn nd-btn-compact" disabled={topology.nodes.length < 2} onClick={() => window.dispatchEvent(new Event('networkActionAddLink'))}><Link2 size={12} />{t('topology.edit.link')}</button>
+            <button type="button" className="nd-btn nd-btn-compact" onClick={() => { setAutoImportGroupCategories(true); setShowAutoImportModal(true); }}><Sparkles size={12} />{t('topology.edit.generate')}</button>
+          </div>
+        )}
+
+        {/* Empty map: a quiet line; drawing starts in edit mode, generation is one of the tools. */}
+        {topology.nodes.length === 0 && (
+          <div className="ndc-welcome ndc-topology-welcome">
+            <span className="ndc-welcome-title">{t('topology.welcome.title')}</span>
+            <span className="ndc-welcome-text">{t(editMode ? 'topology.welcome.edit' : 'topology.welcome.view')}</span>
+          </div>
+        )}
+
         <TopologyCanvas
           topology={topology}
           serviceUrls={serviceUrls}
@@ -1003,14 +994,24 @@ export function TopologyMap({ editMode, searchQuery, showSensitive }: TopologyMa
             dialogRef={autoImportDialogRef}
             label={t("Générer la carte réseau automatiquement")}
             title={t('topology.calme.generate')}
-            subtitle={t("NasDash va analyser vos appareils et services configurés pour créer automatiquement votre cartographie topologique de départ.")}
+            subtitle={t('topology.welcome.dialog')}
             width={420}
             onClose={() => setShowAutoImportModal(false)}
             footer={<>
               <button type="button" className="nd-btn" onClick={() => setShowAutoImportModal(false)}>{t("Annuler")}</button>
-              <button type="button" className="nd-btn nd-btn-accent" onClick={async () => { setShowAutoImportModal(false); await handleAutoImport(autoImportGroupCategories); }}>{t("Générer")}</button>
+              <button type="button" className="nd-btn nd-btn-accent" disabled={!(config?.devices ?? []).length && !(config?.categories ?? []).some(category => category.services.length)} onClick={async () => { setShowAutoImportModal(false); await handleAutoImport(autoImportGroupCategories); }}>{t("Générer")}</button>
             </>}
           >
+            {(() => {
+              const services = (config?.categories ?? []).reduce((count, category) => count + category.services.length, 0);
+              const machines = (config?.devices ?? []).length;
+              return (
+                <p className={`ndc-generate-note ${services + machines === 0 ? 'is-empty' : ''}`}>
+                  {services + machines === 0 ? t('topology.welcome.needs') : t('topology.welcome.found', { services, machines })}
+                  <span>{t('topology.welcome.draft')}</span>
+                </p>
+              );
+            })()}
             <CalmeRow label={t("Regrouper par catégories du Dashboard")} info={t("Crée automatiquement des groupes basés sur vos catégories d'applications de l'onglet Accueil.")}>
               <CalmeSwitch label={t("Regrouper par catégories du Dashboard")} checked={autoImportGroupCategories} onChange={setAutoImportGroupCategories} />
             </CalmeRow>

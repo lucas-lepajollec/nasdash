@@ -7,20 +7,30 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { getServiceIntegration } from '@/integrations/registry';
 import { MASKED_SECRET } from '@/integrations/instances';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
+import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
+import type { IntegrationInstance } from '@/lib/types';
+import { createLocalId } from '@/lib/pages/operations';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
 
+/** Services a dashboard may connect several times (two Pi-holes, two photo libraries…). */
+export const MULTI_INSTANCE_SERVICES = ['pihole', 'adguard', 'immich', 'photoprism'];
+
 /**
- * A service connection (Tailscale, Headscale) in a dialog, from its manifest:
- * its fields with their labels, saved on "Save". A secret already stored is
- * kept when left empty.
+ * A service connection (Tailscale, Headscale, Pi-hole, AdGuard Home, Immich,
+ * PhotoPrism) in a dialog, from its manifest: its fields with their labels,
+ * saved on "Save". A secret already stored is kept when left empty. Services
+ * that can be connected several times get a name and a fresh id when added;
+ * `onSaved` receives the saved connection (a widget can then select it).
  */
-export function ServiceConnectionDialog({ type, onClose }: { type: string; onClose: () => void }) {
+export function ServiceConnectionDialog({ type, instance: chosen, onClose, onSaved }: { type: string; instance?: IntegrationInstance; onClose: () => void; onSaved?: (instance: IntegrationInstance) => void }) {
   const { t } = useI18n();
   const { config, saveIntegration } = useConfig();
   const manifest = getServiceIntegration(type);
-  const instance = config?.integrations?.find(candidate => candidate.type === type);
+  const multi = MULTI_INSTANCE_SERVICES.includes(type);
+  const instance = multi ? chosen : chosen ?? config?.integrations?.find(candidate => candidate.type === type);
+  const [name, setName] = useState(() => instance?.name ?? manifest?.name ?? type);
   const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries((manifest?.fields ?? []).map(field => [
-    field.id, field.kind === 'secret' ? '' : instance?.settings[field.id] ?? '',
+    field.id, field.kind === 'secret' ? '' : instance?.settings[field.id] ?? (field.kind === 'toggle' ? 'false' : ''),
   ])));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -37,7 +47,10 @@ export function ServiceConnectionDialog({ type, onClose }: { type: string; onClo
       else settings[field.id] = (values[field.id] ?? '').trim();
     }
     try {
-      await saveIntegration({ id: instance?.id, type, name: instance?.name ?? manifest.name, settings, secrets });
+      // Not crypto.randomUUID: browsers only offer it on HTTPS/localhost, NasDash is often opened by LAN address.
+      const id = instance?.id ?? (multi ? createLocalId(type) : undefined);
+      const saved = await saveIntegration({ id, type, name: multi ? name.trim() || manifest.name : instance?.name ?? manifest.name, settings, secrets });
+      onSaved?.(saved);
       onClose();
     } catch (reason) {
       setError(reason instanceof Error ? t(reason.message) : t('integrations.saveFailed'));
@@ -54,7 +67,7 @@ export function ServiceConnectionDialog({ type, onClose }: { type: string; onClo
           dialogRef={ref}
           label={title}
           title={title}
-          subtitle={t(type === 'headscale' ? 'integrations.info.headscale' : 'integrations.info.tailscale')}
+          subtitle={t(`integrations.info.${type}`)}
           onClose={onClose}
           width={480}
           footer={<>
@@ -63,7 +76,16 @@ export function ServiceConnectionDialog({ type, onClose }: { type: string; onClo
           </>}
         >
           <form id="nd-service-connection" className="ndc-form" onSubmit={save}>
-            {manifest.fields.map(field => (
+            {multi && (
+              <CalmeField label={t('integrations.connectionName')} htmlFor="service-name">
+                <input id="service-name" className="nd-input" value={name} maxLength={60} onChange={event => setName(event.target.value)} required />
+              </CalmeField>
+            )}
+            {manifest.fields.map(field => field.kind === 'toggle' ? (
+              <CalmeRow key={field.id} label={t(field.label)} info={field.id === 'allowSelfSigned' ? t('integrations.allowSelfSignedHint') : undefined}>
+                <CalmeSwitch label={t(field.label)} checked={values[field.id] === 'true'} onChange={on => setValues(current => ({ ...current, [field.id]: on ? 'true' : 'false' }))} />
+              </CalmeRow>
+            ) : (
               <CalmeField key={field.id} label={t(field.label)} htmlFor={`service-${field.id}`}>
                 <input
                   id={`service-${field.id}`}

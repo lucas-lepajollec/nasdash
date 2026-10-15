@@ -1,0 +1,528 @@
+/*
+ * Content widgets (RSS, markets, quotes, DNS, photos, bookmarks).
+ * Same principles as design-calme.css: theme tokens only, hierarchy through
+ * text colour, hairlines, one accent used sparingly. Layouts follow the
+ * widget's own width (container queries on .ndc-widget), never the screen.
+ * Prefix: .ndw-
+ */
+
+/* ---------- Shared ---------- */
+.ndw-note { margin: 2px 2px 0; font-size: 0.68rem; color: var(--nd-text-dimmed); }
+.ndw-textarea { width: 100%; min-height: 120px; padding: 10px 12px; resize: vertical; font: inherit; font-size: 0.78rem; line-height: 1.6; }
+.ndw-settings .ndc-dialog-body { display: flex; flex-direction: column; gap: 18px; }
+.ndw-muted { color: var(--nd-text-dimmed); }
+.ndw-up { color: var(--nd-green); }
+.ndw-down { color: var(--nd-red); }
+
+/* A site's icon, or its first letter on a tile tinted by its name. */
+.ndw-site-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 22%;
+  background: hsl(var(--ndw-hue, 200) 45% 50% / 0.16);
+  color: hsl(var(--ndw-hue, 200) 60% 72%);
+}
+.light .ndw-site-icon { color: hsl(var(--ndw-hue, 200) 55% 38%); }
+.ndw-site-icon.is-image { background: transparent; }
+.ndw-site-icon img { width: 100%; height: 100%; object-fit: contain; }
+.ndw-site-letter { font-weight: 600; line-height: 1; font-family: var(--font-geist), system-ui, sans-serif; }
+
+/* A list of rows separated by hairlines (feeds, tickers, top domains…). */
+.ndw-rows { display: flex; flex-direction: column; min-width: 0; }
+.ndw-rows > * + * { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+
+/* Segmented tabs inside a widget (feeds, ranges). */
+.ndw-tabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
+.ndw-tabs::-webkit-scrollbar { display: none; }
+.ndw-tab {
+  flex-shrink: 0;
+  padding: 4px 9px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--nd-text-dimmed);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ndw-tab:hover { color: var(--nd-text); }
+.ndw-tab[aria-selected="true"], .ndw-tab[aria-pressed="true"] { color: var(--nd-text); background: var(--nd-subcard-bg); }
+.ndw-tab:focus-visible { outline: 1px solid var(--nd-accent); }
+
+/* ---------- Quotes ---------- */
+/* Each style is a typeface and a voice; sizes follow the block and the quote's length. */
+.ndw-quote {
+  --ndw-q: 1;
+  position: relative; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  min-width: 0; padding: 4px 0; text-align: center;
+}
+/* The quote sits in the middle of its block, however the block is stretched. */
+.ndc-widget:has(> .ndc-box > .ndw-quote) { height: 100%; }
+.ndc-box:has(> .ndw-quote) { flex: 1; display: flex; flex-direction: column; justify-content: center; padding-left: 12px; padding-right: 12px; }
+/* Alignment (left, centre, right): the text, the author line and the mark follow. */
+.ndw-quote.is-left { align-items: flex-start; text-align: left; }
+.ndw-quote.is-right { align-items: flex-end; text-align: right; }
+.ndw-quote.is-left .ndw-quote-foot { justify-content: flex-start; }
+.ndw-quote.is-right .ndw-quote-foot { justify-content: flex-end; }
+.ndw-quote.is-right .ndw-quote-tools { right: auto; left: 0; }
+.ndw-quote--pen.is-left .ndw-quote-text { transform-origin: left center; }
+.ndw-quote--pen.is-right .ndw-quote-text { transform-origin: right center; }
+.ndw-quote.is-medium { --ndw-q: 0.84; }
+.ndw-quote.is-long { --ndw-q: 0.7; }
+.ndw-quote-text { position: relative; margin: 0; max-width: 62ch; color: var(--nd-text); text-wrap: pretty; overflow-wrap: break-word; hanging-punctuation: first; }
+.ndw-quote-open, .ndw-quote-close { color: var(--nd-accent); }
+.ndw-quote-foot { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; width: 100%; }
+.ndw-quote-author { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; color: var(--nd-text-muted); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.ndw-quote-dash { align-self: center; width: 18px; height: 1px; background: currentColor; opacity: 0.6; }
+.ndw-quote-author cite { font-style: italic; text-transform: none; letter-spacing: 0; color: var(--nd-text-dimmed); }
+.ndw-quote-tools { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: inline-flex; gap: 2px; opacity: 0; transition: opacity 0.14s ease; }
+.ndw-quote:hover .ndw-quote-tools, .ndw-quote-tools:focus-within { opacity: 1; }
+@media (hover: none) { .ndw-quote-tools { opacity: 1; } }
+
+/* Literary: Garamond italic, marks hung in the margin. */
+.ndw-quote--literary .ndw-quote-text {
+  font-family: var(--font-quote-literary), Georgia, serif; font-style: italic; font-weight: 500;
+  font-size: calc(clamp(1.2rem, 6.4cqi, 2.15rem) * var(--ndw-q)); line-height: 1.24; letter-spacing: -0.005em;
+}
+
+
+/* Quill: an old printed book, ink-brown, a fleuron before the author. */
+.ndw-quote--quill .ndw-quote-text {
+  font-family: var(--font-quote-quill), Georgia, serif; font-style: italic;
+  font-size: calc(clamp(1.1rem, 5.8cqi, 1.9rem) * var(--ndw-q)); line-height: 1.32;
+}
+.ndw-quote--quill .ndw-quote-dash { width: auto; height: auto; background: none; opacity: 0.8; }
+.ndw-quote--quill .ndw-quote-dash::before { content: "\2766"; font-size: 1.1em; color: var(--nd-accent); }
+.ndw-quote--quill .ndw-quote-author { font-family: var(--font-quote-quill), Georgia, serif; font-style: italic; text-transform: none; letter-spacing: 0.02em; font-size: 0.86rem; }
+
+/* Calligraphy: a copperplate hand, centred. */
+.ndw-quote--calligraphy .ndw-quote-text {
+  font-family: var(--font-quote-calligraphy), cursive;
+  font-size: calc(clamp(1.45rem, 8cqi, 2.6rem) * var(--ndw-q)); line-height: 1.22;
+}
+.ndw-quote--calligraphy .ndw-quote-open, .ndw-quote--calligraphy .ndw-quote-close { opacity: 0.6; }
+
+/* Pen: a handwritten note in blue ink, slightly tilted. */
+.ndw-quote--pen .ndw-quote-text {
+  font-family: var(--font-quote-pen), cursive; font-weight: 500;
+  font-size: calc(clamp(1.35rem, 7.4cqi, 2.4rem) * var(--ndw-q)); line-height: 1.15;
+  transform: rotate(-1.2deg);
+}
+.ndw-quote--pen .ndw-quote-open, .ndw-quote--pen .ndw-quote-close { color: inherit; opacity: 0.7; }
+.ndw-quote--pen .ndw-quote-author {
+  font-family: var(--font-quote-pen), cursive; font-size: 1.05rem; text-transform: none; letter-spacing: 0;
+  text-decoration: underline wavy color-mix(in srgb, var(--nd-accent) 55%, transparent); text-underline-offset: 5px; text-decoration-thickness: 1px;
+}
+.ndw-quote--pen .ndw-quote-dash { display: none; }
+
+/* Typewriter: struck letters and a blinking carriage. */
+.ndw-quote--typewriter .ndw-quote-text {
+  font-family: var(--font-quote-typewriter), 'Courier New', monospace;
+  font-size: calc(clamp(0.9rem, 4.2cqi, 1.3rem) * var(--ndw-q)); line-height: 1.55; letter-spacing: 0.01em;
+}
+.ndw-quote--typewriter .ndw-quote-close::after { content: ""; display: inline-block; width: 0.55em; height: 1.05em; margin-left: 4px; vertical-align: -0.15em; background: var(--nd-accent); animation: ndw-caret 1.1s steps(1) infinite; }
+.ndw-quote--typewriter .ndw-quote-author { font-family: var(--font-quote-typewriter), monospace; }
+@keyframes ndw-caret { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ndw-quote--typewriter .ndw-quote-close::after { animation: none; } }
+
+/* Modern: the display face, one oversized mark behind. */
+.ndw-quote--modern { gap: 12px; }
+/* One large mark above the text, never over the words. */
+.ndw-quote-glyph {
+  display: block; height: 0.46em; margin: -0.04em 0 0; pointer-events: none;
+  font-family: var(--font-geist), system-ui, sans-serif; font-weight: 700; font-size: clamp(3.4rem, 16cqi, 5.4rem); line-height: 0.95;
+  color: var(--nd-accent); opacity: 0.55;
+}
+.ndw-quote--modern .ndw-quote-text {
+  font-family: var(--font-geist), system-ui, sans-serif; font-weight: 500;
+  font-size: calc(clamp(1.1rem, 6cqi, 1.95rem) * var(--ndw-q)); line-height: 1.22; letter-spacing: -0.022em;
+}
+.ndw-quote--modern .ndw-quote-open, .ndw-quote--modern .ndw-quote-close { display: none; }
+
+/* Style choices in the widget dialog: each sample in its own face. */
+.ndw-style-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ndw-style-option {
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 10px; min-height: 84px; padding: 12px 12px 10px;
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); background: var(--nd-subcard-bg);
+  color: var(--nd-text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--nd-transition);
+}
+.ndw-style-option:hover { border-color: color-mix(in srgb, var(--nd-accent) 45%, var(--nd-card-border)); }
+.ndw-style-option[aria-checked="true"] { border-color: var(--nd-accent); box-shadow: inset 0 0 0 1px var(--nd-accent); }
+.ndw-style-option:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndw-style-sample { font-size: 1.05rem; line-height: 1.2; }
+.ndw-style-name { color: var(--nd-text-dimmed); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.ndw-quote-sample--literary .ndw-style-sample { font-family: var(--font-quote-literary), serif; font-style: italic; font-size: 1.3rem; }
+.ndw-quote-sample--quill .ndw-style-sample { font-family: var(--font-quote-quill), serif; font-style: italic; font-size: 1.2rem; }
+.ndw-quote-sample--calligraphy .ndw-style-sample { font-family: var(--font-quote-calligraphy), cursive; font-size: 1.5rem; }
+.ndw-quote-sample--pen .ndw-style-sample { font-family: var(--font-quote-pen), cursive; font-size: 1.45rem; }
+.ndw-quote-sample--typewriter .ndw-style-sample { font-family: var(--font-quote-typewriter), monospace; }
+.ndw-quote-sample--modern .ndw-style-sample { font-family: var(--font-geist), sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+/* Credit an online source asks for: discreet, after the author. */
+.ndw-quote-credit { font-size: 0.62rem; color: var(--nd-text-dimmed); text-decoration: none; white-space: nowrap; }
+.ndw-quote-credit:hover { color: var(--nd-text-muted); text-decoration: underline; }
+
+/* "N more" under a list. */
+.ndw-more {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  margin-top: 6px; padding: 7px; border: none; border-radius: 5px; background: transparent;
+  color: var(--nd-text-dimmed); font: inherit; font-size: 0.7rem; cursor: pointer;
+}
+.ndw-more:hover { color: var(--nd-text); background: var(--nd-subcard-bg); }
+.ndw-more svg { transition: transform 0.16s ease; }
+.ndw-more svg.is-open { transform: rotate(180deg); }
+
+/* Loading placeholders: the widget keeps its shape while its data arrives. */
+.ndw-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+.ndw-skeleton-row { display: block; height: 30px; border-radius: 5px; background: linear-gradient(90deg, var(--nd-subcard-bg), color-mix(in srgb, var(--nd-subcard-bg) 40%, var(--nd-card-bg)), var(--nd-subcard-bg)); background-size: 200% 100%; animation: ndw-shimmer 1.4s ease-in-out infinite; }
+.ndw-skeleton--cards { flex-direction: row; }
+.ndw-skeleton--cards .ndw-skeleton-row { flex: 1; height: 150px; }
+@keyframes ndw-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .ndw-skeleton-row { animation: none; } }
+
+/* A small accent dot: new since the last visit. */
+.ndw-new { display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--nd-accent); vertical-align: 0.12em; }
+
+/* ---------- RSS ---------- */
+.ndw-rss { min-width: 0; }
+.ndw-rss a { color: inherit; text-decoration: none; }
+.ndw-rss-title { color: var(--nd-text); font-size: 0.8rem; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+a:hover > .ndw-rss-title, a:hover .ndw-rss-title { color: var(--nd-accent); }
+a:visited .ndw-rss-title { color: var(--nd-text-muted); }
+.ndw-rss-summary { color: var(--nd-text-muted); font-size: 0.72rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ndw-rss-meta, .ndw-rss-meta-line { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 0.66rem; color: var(--nd-text-dimmed); }
+.ndw-rss-meta > * + *::before { content: "·"; margin-right: 6px; }
+.ndw-rss-source { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ndw-rss-meta time { white-space: nowrap; flex-shrink: 0; }
+.ndw-rss-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 2px; min-width: 0; }
+.ndw-rss-row:first-child { padding-top: 2px; }
+.ndw-rss-text { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+.ndw-rss-thumb { width: 78px; height: 54px; flex-shrink: 0; border-radius: 5px; object-fit: cover; background: var(--nd-subcard-bg); }
+@container (max-width: 360px) { .ndw-rss-thumb { display: none; } }
+
+.ndw-rss-headline { display: flex; align-items: center; gap: 9px; padding: 7px 2px; min-width: 0; }
+.ndw-rss-headline .ndw-rss-title { -webkit-line-clamp: 1; flex: 1; font-size: 0.76rem; }
+.ndw-rss-time { flex-shrink: 0; font-size: 0.66rem; color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
+
+.ndw-rss-card { display: flex; flex-direction: column; min-width: 0; height: 100%; border-radius: var(--nd-card-radius); overflow: hidden; background: color-mix(in srgb, var(--nd-text) 4%, transparent); transition: background 0.14s ease; }
+.ndw-rss-card:hover { background: color-mix(in srgb, var(--nd-text) 7%, transparent); }
+.ndw-rss-card-media { display: block; aspect-ratio: 16 / 9; background: color-mix(in srgb, var(--nd-text) 3%, transparent); }
+.ndw-rss-card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ndw-rss-card-fallback { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; }
+.ndw-rss-card-fallback .ndw-site-icon { width: 34px !important; height: 34px !important; }
+.ndw-rss-card-body { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; flex: 1; }
+.ndw-rss-card-body .ndw-rss-meta { margin-top: auto; }
+
+.ndw-rss-magazine { display: flex; flex-direction: column; gap: 10px; }
+.ndw-rss-lead { display: grid; gap: 10px 14px; min-width: 0; }
+.ndw-rss-lead-image { width: 100%; aspect-ratio: 16 / 8; object-fit: cover; border-radius: var(--nd-card-radius); background: var(--nd-subcard-bg); }
+.ndw-rss-lead-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ndw-rss-lead .ndw-rss-title { font-size: 0.95rem; font-weight: 500; -webkit-line-clamp: 3; }
+.ndw-rss-lead .ndw-rss-summary { -webkit-line-clamp: 3; }
+.ndw-rss-magazine .ndw-rss-row { flex-direction: column; gap: 4px; }
+@container (min-width: 620px) { .ndw-rss-lead { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; } .ndw-rss-lead-image { aspect-ratio: 16 / 10; } }
+
+/* ---------- Markets ---------- */
+/* Period switch in the title row: plain labels, the chosen one lit. */
+.ndw-range { display: inline-flex; gap: 1px; }
+.ndw-range-option {
+  padding: 1px 5px; border: none; border-radius: 4px; background: transparent;
+  color: var(--nd-text-dimmed); font: inherit; font-size: 0.62rem; letter-spacing: 0.03em; cursor: pointer;
+}
+.ndw-range-option:hover { color: var(--nd-text-muted); }
+.ndw-range-option[aria-pressed="true"] { color: var(--nd-text); background: var(--nd-subcard-bg); }
+.ndw-range-option:focus-visible { outline: 1px solid var(--nd-accent); }
+.ndw-market-foot { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+.ndw-change { font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.68rem; }
+.is-up .ndw-change { color: var(--nd-green); }
+.is-down .ndw-change { color: var(--nd-red); }
+.is-flat .ndw-change { color: var(--nd-text-dimmed); }
+/* Prices use the display face of the clock and weather. */
+.ndw-market-price { font-family: var(--font-geist), system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 500; letter-spacing: -0.01em; color: var(--nd-text); white-space: nowrap; }
+
+/* Rows: name over symbol · curve · price over change. */
+.ndw-market-rows { display: flex; flex-direction: column; min-width: 0; }
+.ndw-market-row {
+  /* The name takes its own width (up to 45 %), the curve fills what is left. */
+  display: grid; grid-template-columns: fit-content(45%) minmax(56px, 1fr) auto; align-items: center; gap: 16px;
+  padding: 10px 0; min-width: 0;
+}
+.ndw-market-row + .ndw-market-row { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+.ndw-market-row:first-child { padding-top: 2px; }
+.ndw-market-row:last-child { padding-bottom: 0; }
+.ndw-market-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ndw-market-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text); font-size: 0.8rem; }
+.ndw-market-sub { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--nd-text-dimmed); font-size: 0.64rem; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; }
+.ndw-market-state { color: var(--nd-yellow); font-size: 0.6rem; text-transform: lowercase; }
+.ndw-market-state.is-closed { color: var(--nd-text-dimmed); }
+.ndw-market-spark { display: block; min-width: 0; }
+.ndw-market-spark .ndc-spark { display: block; width: 100%; }
+.ndw-market-figures { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.ndw-market-figures .ndw-market-price { font-size: 0.92rem; }
+/* The change as a soft tinted pill. */
+.ndw-market-pill {
+  padding: 2px 6px; border-radius: 999px; font-size: 0.64rem; font-variant-numeric: tabular-nums; white-space: nowrap;
+  color: var(--nd-text-dimmed); background: color-mix(in srgb, var(--nd-text) 6%, transparent);
+}
+.is-up .ndw-market-pill { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 13%, transparent); }
+.is-down .ndw-market-pill { color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 13%, transparent); }
+/* Aligned rows: names and prices share one width, so every curve and bar lines up. */
+.ndw-market-rows.is-aligned .ndw-market-row { grid-template-columns: minmax(0, var(--ndw-name)) minmax(56px, 1fr) var(--ndw-price); }
+.ndw-market-bars.is-aligned .ndw-market-bar-row { grid-template-columns: minmax(0, var(--ndw-name)) minmax(60px, 1fr) 7ch var(--ndw-price); }
+
+/* Wide rows: the curve takes the room. */
+.ndw-market-rows.is-wide .ndw-market-row { grid-template-columns: fit-content(40%) minmax(120px, 1fr) auto; gap: 24px; }
+.ndw-market-rows.is-wide.is-aligned .ndw-market-row { grid-template-columns: minmax(0, var(--ndw-name)) minmax(120px, 1fr) var(--ndw-price); }
+
+/* Chart: one symbol large, the others as chips to switch to. */
+.ndw-market-feature { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ndw-market-feature-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; min-width: 0; }
+.ndw-market-feature-head .ndw-market-id { flex: 1; overflow: hidden; }
+.ndw-market-price--hero { font-size: clamp(1.4rem, 7cqi, 2.2rem); letter-spacing: -0.035em; line-height: 1; }
+.ndw-market-delta { font-size: 0.7rem; font-variant-numeric: tabular-nums; color: var(--nd-text-dimmed); }
+.ndw-market-feature.is-up .ndw-market-delta { color: var(--nd-green); }
+.ndw-market-feature.is-down .ndw-market-delta { color: var(--nd-red); }
+/* The chips scroll sideways (wheel, touch, arrows); faded edges show there is more. */
+.ndw-chip-strip { position: relative; min-width: 0; }
+.ndw-market-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+.ndw-market-chips::-webkit-scrollbar { display: none; }
+.ndw-chip-strip.has-end .ndw-market-chips { mask-image: linear-gradient(90deg, #000 85%, transparent); }
+.ndw-chip-strip.has-start .ndw-market-chips { mask-image: linear-gradient(90deg, transparent, #000 15%); }
+.ndw-chip-strip.has-start.has-end .ndw-market-chips { mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); }
+.ndw-chip-arrow { position: absolute; top: 50%; z-index: 1; width: 24px; height: 24px; transform: translateY(-50%); border-radius: 50%; background: var(--nd-card-bg); }
+.ndw-chip-arrow.is-start { left: -4px; }
+.ndw-chip-arrow.is-end { right: -4px; }
+.ndw-market-chip {
+  display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 5px 10px;
+  border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent;
+  color: var(--nd-text-muted); font: inherit; font-size: 0.68rem; cursor: pointer;
+}
+.ndw-market-chip:hover { color: var(--nd-text); }
+.ndw-market-chip[aria-selected="true"] { color: var(--nd-text); border-color: color-mix(in srgb, var(--nd-accent) 60%, var(--nd-card-border)); background: var(--nd-subcard-bg); }
+@container (max-width: 320px) {
+  .ndw-market-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .ndw-market-spark { display: none; }
+}
+
+/* Bars: each symbol's change from a centre line, green to the right, red to the left. */
+.ndw-market-bars { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ndw-market-bar-row { display: grid; grid-template-columns: fit-content(38%) minmax(60px, 1fr) auto auto; align-items: center; gap: 14px; min-width: 0; }
+.ndw-market-bar-track { position: relative; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.ndw-market-bar-track::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: color-mix(in srgb, var(--nd-text) 22%, transparent); }
+.ndw-market-bar-fill { position: absolute; top: 0; bottom: 0; min-width: 2px; border-radius: 4px; background: var(--nd-text-dimmed); }
+.is-up .ndw-market-bar-fill { background: var(--nd-green); }
+.is-down .ndw-market-bar-fill { background: var(--nd-red); }
+.ndw-market-bar-value { min-width: 5.5ch; text-align: right; font-size: 0.7rem; font-variant-numeric: tabular-nums; color: var(--nd-text-dimmed); }
+.is-up .ndw-market-bar-value { color: var(--nd-green); }
+.is-down .ndw-market-bar-value { color: var(--nd-red); }
+.ndw-market-bar-row .ndw-market-price { min-width: 7ch; text-align: right; font-size: 0.82rem; }
+
+/* Tiles: symbol and change on top, price large, curve along the bottom edge. */
+.ndw-market-tile {
+  position: relative; display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden;
+  padding: 11px 12px 40px; border-radius: var(--nd-card-radius);
+  /* Drawn from the theme's own text colour and borders, so it fits every theme. */
+  background: color-mix(in srgb, var(--nd-text) 4%, transparent);
+}
+.ndw-market-tile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.ndw-market-symbol { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-muted); font-size: 0.7rem; letter-spacing: 0.03em; }
+.ndw-market-price--big { margin-top: 4px; font-size: clamp(1.1rem, 9cqi, 1.45rem); line-height: 1.1; }
+.ndw-market-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.64rem; }
+.ndw-market-tile-spark { position: absolute; left: 0; right: 0; bottom: 0; height: 36px; pointer-events: none; }
+.ndw-market-tile-spark .ndc-spark { display: block; width: 100%; height: 100%; }
+
+.ndw-ticker { position: relative; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+.ndw-ticker-track { display: flex; width: max-content; animation: ndw-ticker linear infinite; }
+.ndw-ticker:hover .ndw-ticker-track, .ndw-ticker:focus-within .ndw-ticker-track { animation-play-state: paused; }
+.ndw-ticker-run { display: flex; gap: 28px; padding-right: 28px; }
+.ndw-ticker-item { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; font-size: 0.74rem; color: var(--nd-text-muted); }
+.ndw-ticker-item strong { color: var(--nd-text-muted); font-weight: 400; letter-spacing: 0.03em; }
+.ndw-ticker-item .ndw-market-price { font-size: 0.86rem; }
+@keyframes ndw-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .ndw-ticker { overflow-x: auto; mask-image: none; }
+  .ndw-ticker-track { animation: none; }
+  .ndw-ticker-run[aria-hidden="true"] { display: none; }
+}
+
+/* ---------- DNS (Pi-hole, AdGuard Home) ---------- */
+.ndw-dns-box { min-width: 0; }
+.ndw-dns-full, .ndw-dns-chart-style, .ndw-dns-ring, .ndw-dns-compact { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Status: the server, a dot and a word; an admin's switch on the right. */
+.ndw-dns-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.ndw-dns-status { display: inline-flex; align-items: center; gap: 8px; flex: 1; min-width: 0; overflow: hidden; font-size: 0.74rem; white-space: nowrap; }
+.ndw-dns-status.is-off .ndw-dns-server { flex-shrink: 0; max-width: 70%; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--nd-text); }
+.ndw-dns-shield { flex-shrink: 0; color: var(--nd-text-muted); }
+.ndw-dns-status.is-off .ndw-dns-shield { color: var(--nd-yellow); }
+.ndw-dns-state { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--nd-text-dimmed); font-size: 0.68rem; }
+.ndw-dns-status.is-off .ndw-dns-state { color: var(--nd-yellow); }
+.ndw-dns-control { position: relative; display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ndw-dns-menu-title { padding: 6px 10px 4px; color: var(--nd-text-dimmed); font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.ndw-dns-menu {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 20;
+  display: flex; flex-direction: column; min-width: 160px; padding: 4px;
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius);
+  background: var(--nd-card-bg); backdrop-filter: blur(12px); box-shadow: 0 12px 32px rgb(0 0 0 / 0.32);
+}
+.ndw-dns-menu button { padding: 7px 10px; border: none; border-radius: 5px; background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.72rem; text-align: left; cursor: pointer; }
+.ndw-dns-menu button:hover, .ndw-dns-menu button:focus-visible { background: var(--nd-subcard-bg); color: var(--nd-text); outline: none; }
+.ndw-dns-head > .ndw-note { position: absolute; top: 100%; left: 0; }
+
+/* Figures: number first in the display face, its label under it. */
+.ndw-dns-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 12px 18px; }
+.ndw-dns-figures--stack { grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; min-width: 0; }
+.ndw-dns-figure { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ndw-dns-figure-value { font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.32rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ndw-dns-figure.is-blocked .ndw-dns-figure-value { color: var(--nd-red); }
+.ndw-dns-figure-label { color: var(--nd-text-dimmed); font-size: 0.64rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Bars: figures, then the day as soft rounded hourly bars. */
+.ndw-dns-bars-style { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ndw-dns-barchart { margin: 0; }
+.ndw-dns-barrow { display: flex; align-items: flex-end; gap: 3px; }
+.ndw-dns-bar { display: flex; align-items: flex-end; flex: 1; height: 100%; min-width: 0; cursor: default; }
+.ndw-dns-bar-fill {
+  position: relative; display: flex; align-items: flex-end; width: 100%; overflow: hidden; border-radius: 3px;
+  background: color-mix(in srgb, var(--nd-accent) 30%, transparent); transition: background 0.15s ease;
+}
+.ndw-dns-bar-blocked { display: block; width: 100%; background: color-mix(in srgb, var(--nd-red) 75%, transparent); }
+.ndw-dns-bar.is-hovered .ndw-dns-bar-fill { background: color-mix(in srgb, var(--nd-accent) 60%, transparent); }
+.ndw-dns-barrow:hover .ndw-dns-bar:not(.is-hovered) .ndw-dns-bar-fill { opacity: 0.55; }
+.ndw-dns-barcaption { display: flex; justify-content: space-between; gap: 8px; min-height: 1.2em; margin-top: 7px; color: var(--nd-text-dimmed); font-size: 0.62rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+
+/* Complete. */
+.ndw-dns-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.ndw-dns-hero { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.ndw-dns-chart { min-width: 0; }
+.ndw-dns-full.is-wide .ndw-dns-main { display: grid; grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.6fr); align-items: center; gap: 28px; }
+
+/* Ring alone, centred. */
+.ndw-dns-ring { align-items: center; text-align: center; }
+.ndw-dns-ring .ndw-dns-head { align-self: stretch; }
+.ndw-dns-ring .ndc-ring-value { font-family: var(--font-geist), system-ui, sans-serif; letter-spacing: -0.03em; }
+.ndw-dns-ring-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; color: var(--nd-text-muted); font-size: 0.7rem; }
+.ndw-dns-ring-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.ndw-dns-ring-legend i { width: 7px; height: 7px; border-radius: 50%; }
+
+/* Compact: the share large, its parts beside it, a thin proportion line under. */
+.ndw-dns-compact { gap: 12px; }
+.ndw-dns-compact-line { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.ndw-dns-big { font-family: var(--font-geist), system-ui, sans-serif; font-size: 2rem; font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: var(--nd-text); font-variant-numeric: tabular-nums; }
+.ndw-dns-big small { margin-left: 2px; font-size: 0.5em; color: var(--nd-text-dimmed); }
+.ndw-dns-compact-text { min-width: 0; color: var(--nd-text-muted); font-size: 0.7rem; line-height: 1.4; }
+.ndw-dns-share-line { display: block; height: 4px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--nd-accent) 22%, transparent); }
+.ndw-dns-share-line > span { display: block; height: 100%; border-radius: inherit; background: var(--nd-red); }
+
+/* Top lists: name and count on a line, a thin meter under it. */
+.ndw-dns-tops .ndw-tabs { margin-bottom: 8px; }
+.ndw-dns-tops.is-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.ndw-dns-top-title { margin: 0 0 8px; color: var(--nd-text-dimmed); font-size: 0.64rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; }
+.ndw-dns-rows { display: flex; flex-direction: column; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.ndw-dns-rows li { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ndw-dns-row-text { display: flex; justify-content: space-between; gap: 10px; min-width: 0; font-size: 0.74rem; }
+.ndw-dns-name { min-width: 0; color: var(--nd-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ndw-dns-count { flex-shrink: 0; color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
+.ndw-dns-meter { display: block; height: 3px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--nd-text) 7%, transparent); }
+.ndw-dns-meter > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--nd-accent) 40%, transparent), var(--nd-accent)); }
+.ndw-dns-rows.is-blocked .ndw-dns-meter > span { background: linear-gradient(90deg, color-mix(in srgb, var(--nd-red) 35%, transparent), var(--nd-red)); }
+
+/* ---------- Settings → Widgets: saved sources ---------- */
+.ndc-source-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr) auto; gap: 8px; margin-bottom: 12px; }
+.ndc-source-form .nd-btn { display: inline-flex; align-items: center; gap: 6px; }
+.ndc-source-form--quote { grid-template-columns: minmax(0, 1fr) auto; }
+.ndc-source-form--quote textarea { grid-column: 1 / -1; min-height: 58px; padding: 9px 11px; resize: vertical; font: inherit; font-size: 0.8rem; line-height: 1.5; }
+.ndc-source-list { margin: 0; padding: 0; list-style: none; }
+.ndc-source-row { gap: 12px; }
+.ndc-source-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ndc-source-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: var(--nd-text); }
+.ndc-source-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-source-tools { display: flex; flex-shrink: 0; gap: 2px; }
+.ndc-source-tools .ndc-icon-button:disabled { opacity: 0.3; cursor: default; }
+.ndc-source-tools .is-danger:hover { color: var(--nd-red); }
+.ndc-source-empty, .ndc-source-note { margin: 4px 0 0; font-size: 0.72rem; color: var(--nd-text-dimmed); }
+.ndc-source-note { margin-top: 12px; }
+.ndc-source-logo { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 560px) {
+  .ndc-source-form { grid-template-columns: minmax(0, 1fr) auto; }
+  .ndc-source-form .ndc-source-short { grid-column: 1; }
+}
+
+/* A content widget's connection: its name (or a choice) and the way to Integrations. */
+.ndw-connection { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ndw-connection > :first-child { flex: 1; min-width: 0; }
+.ndw-connection-name { font-size: 0.8rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Smallest blocks (3 of 24 columns, ~170 px), as for the weather ---------- */
+@container (max-width: 240px) {
+  /* Quotes: tighter, the tools under the author. */
+  .ndw-quote { gap: 10px; padding: 2px 0; }
+  .ndw-quote-author { font-size: 0.6rem; letter-spacing: 0.06em; }
+  .ndw-quote-author cite, .ndw-quote-dash { display: none; }
+
+  /* Markets: name over symbol, price over change; no curve. */
+  .ndw-market-row, .ndw-market-rows.is-aligned .ndw-market-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 8px 0; }
+  .ndw-market-spark { display: none; }
+  .ndw-market-title { font-size: 0.72rem; }
+  .ndw-market-figures .ndw-market-price { font-size: 0.8rem; }
+    .ndw-market-bar-row, .ndw-market-bars.is-aligned .ndw-market-bar-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; }
+  .ndw-market-bar-track { grid-column: 1 / -1; grid-row: 2; }
+  .ndw-market-bar-row .ndw-market-price { display: none; }
+  .ndw-market-feature-head { flex-direction: column; align-items: stretch; gap: 6px; }
+  .ndw-market-feature-head .ndw-market-figures { align-items: flex-start; }
+  .ndw-range-option { padding: 1px 3px; font-size: 0.58rem; }
+
+  /* DNS: the server name goes, figures and ring stack. */
+  .ndw-dns-server { display: none; }
+  .ndw-dns-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .ndw-dns-figures, .ndw-dns-figures--stack { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+  .ndw-dns-figure-value { font-size: 1.05rem; }
+  .ndw-dns-compact-line { flex-direction: column; gap: 4px; }
+  .ndw-dns-big { font-size: 1.6rem; }
+
+  /* News: title and age only. */
+  .ndw-rss-summary, .ndw-rss-source { display: none; }
+  .ndw-rss-title { font-size: 0.74rem; }
+}
+
+/* Settings → Markets: search by name, results to pick from. */
+.ndc-market-search { position: relative; margin-bottom: 8px; }
+.ndc-market-search .nd-input { width: 100%; padding-left: 32px; }
+.ndc-market-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--nd-text-dimmed); pointer-events: none; }
+.ndc-market-search-spin { position: absolute; right: 11px; top: 50%; width: 12px; height: 12px; margin-top: -6px; }
+.ndc-market-results { margin: 0 0 14px; padding: 4px; list-style: none; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); background: var(--nd-subcard-bg); }
+.ndc-market-results .ndc-source-empty { padding: 8px 10px; margin: 0; }
+.ndc-market-result { justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 5px; border: none; }
+.ndc-market-result:hover:not(:disabled) { background: color-mix(in srgb, var(--nd-text) 5%, transparent); }
+.ndc-market-result:disabled { cursor: default; opacity: 0.6; }
+.ndc-market-result-add { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; color: var(--nd-accent); font-size: 0.7rem; }
+.ndc-market-result:disabled .ndc-market-result-add { color: var(--nd-text-dimmed); }
+
+
+/* Widget dialog: all symbols, or a compact set of chips that scrolls past a few rows. */
+.ndw-symbol-choice { display: flex; flex-direction: column; gap: 10px; }
+.ndw-symbol-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 108px; overflow-y: auto; padding: 2px; }
+.ndw-symbol-chip {
+  padding: 5px 11px; border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent;
+  color: var(--nd-text-muted); font: inherit; font-size: 0.7rem; cursor: pointer; white-space: nowrap; max-width: 22ch; overflow: hidden; text-overflow: ellipsis;
+}
+.ndw-symbol-chip:hover { color: var(--nd-text); }
+.ndw-symbol-chip[aria-pressed="true"] { color: var(--nd-text); border-color: color-mix(in srgb, var(--nd-accent) 65%, var(--nd-card-border)); background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
+
+/* Paged grid (market tiles, news cards): columns follow the block; arrows and "2 / 3" under it. */
+.ndw-paged { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ndw-paged-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--ndw-col, 160px), 1fr)); gap: 10px; }
+.ndw-paged-cell, .ndw-scroll-cell { display: flex; min-width: 0; }
+.ndw-paged-cell > *, .ndw-scroll-cell > * { flex: 1; min-width: 0; }
+.ndw-pager { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ndw-pager .ndc-icon-button:disabled { opacity: 0.3; cursor: default; }
+.ndw-pager-count { color: var(--nd-text-dimmed); font-size: 0.66rem; font-variant-numeric: tabular-nums; }
+/* Scrolling row: cards side by side, the next page brought in by the last button. */
+.ndw-scroll-row { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; scrollbar-width: thin; }
+.ndw-scroll-cell { flex: 0 0 max(var(--ndw-col, 160px), 30%); scroll-snap-align: start; }
+.ndw-scroll-more { flex: 0 0 auto; align-self: center; }

@@ -4,6 +4,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { CalmeWidget } from '../calme';
 import CalmeWeatherIcon from './CalmeWeatherIcon';
 import { skyOf, timeOfDay, useWeather, weatherLabelKey } from './useWeather';
@@ -17,18 +18,15 @@ import { skyOf, timeOfDay, useWeather, weatherLabelKey } from './useWeather';
  */
 export default function CalmeWeather({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
   const { t, locale } = useI18n();
-  const { config, setSettingsModal } = useConfig();
+  const { config } = useConfig();
   const style = config?.settings?.weatherWidgetStyle || 'default';
-  const { locations, location, weather, loading, error, previous, next } = useWeather(isVisible);
+  const { locations, location, weather, loading, error, stale, previous, next } = useWeather(isVisible);
   const round = (value: number) => Math.round(value);
 
   if (!location) {
     return (
       <CalmeWidget title={t('widget.weather.name')} editMode={editMode}>
-        <div className="ndc-empty">
-          <span>{t('Météo non configurée')}</span>
-          {editMode && <button type="button" className="nd-btn nd-btn-accent" onClick={() => setSettingsModal({ open: true, targetTab: 'widget-weather' })}>{t('Configurer')}</button>}
-        </div>
+        <SetupGuide kind="weather" />
       </CalmeWidget>
     );
   }
@@ -56,7 +54,7 @@ export default function CalmeWeather({ editMode, isVisible = true }: { editMode?
     <CalmeWidget
       title={t('widget.weather.name')}
       editMode={editMode}
-      aside={loading ? <span className="nd-spinner" style={{ width: 10, height: 10 }} /> : undefined}
+      aside={loading ? <span className="nd-spinner" style={{ width: 10, height: 10 }} /> : stale ? <span className="ndc-stale-dot" title={t('weather.stale')} aria-label={t('weather.stale')} /> : undefined}
     >
       <div className="ndc-weather" data-sky={sky} data-time={moment} data-style={style}>
         <div className="ndc-weather-scene" aria-hidden="true">

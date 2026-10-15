@@ -4,13 +4,15 @@ import { Search, ShieldAlert, CheckCircle, AlertTriangle, RefreshCw, HelpCircle,
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 
-interface ActivePortItem {
-  port: number;
-  serviceName: string;
-  ip: string;
-  source: string;
-  type: string; // 'tcp' | 'udp' | 'http' etc.
-  status?: string; // e.g. 'running', 'active', 'offline'
+import { buildPortInventory, type PortEntry } from './portInventory';
+
+/** Where a port was found, in the interface language: the service category, the Docker host, or both. */
+function sourceLabel(item: PortEntry, t: (key: string) => string): string {
+  if (item.origins.includes('service')) {
+    const label = item.secondary ? t('ports.secondaryAddress') : item.category ?? 'NasDash';
+    return item.origins.includes('docker') ? `${label} · Docker` : label;
+  }
+  return item.dockerHost ? `Docker · ${item.dockerHost}` : 'Docker';
 }
 
 export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boolean }) {
@@ -69,152 +71,12 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
   }, [dockerHostsSerialized]);
 
   // Aggregate all ports from NasDash services config and Docker containers
-  const activePorts = useMemo((): ActivePortItem[] => {
-    const list: ActivePortItem[] = [];
-
-    const secretServiceNames = new Set<string>();
-    if (!showSecretSections && config?.categories) {
-      config.categories.forEach(cat => {
-        if (cat.isSecret) {
-          cat.services.forEach(svc => {
-            secretServiceNames.add(svc.name.toLowerCase().trim());
-          });
-        }
-      });
-    }
-
-    const addPortItem = (item: ActivePortItem) => {
-      // Find an existing item with the same port, serviceName, type, and source
-      const existingIndex = list.findIndex(
-        x => x.port === item.port && 
-             x.serviceName === item.serviceName && 
-             x.type === item.type && 
-             x.source === item.source &&
-             (x.ip === item.ip || x.ip === '0.0.0.0' || x.ip === '::' || item.ip === '0.0.0.0' || item.ip === '::')
-      );
-
-      if (existingIndex >= 0) {
-        const existing = list[existingIndex];
-        // Rules for preferring a cleaner/more specific IP:
-        // - We prefer a specific IP (not '::' and not '0.0.0.0') over '0.0.0.0' or '::'
-        // - We prefer '0.0.0.0' over '::'
-        const isExistingIpWildcardV6 = existing.ip === '::';
-        const isExistingIpWildcardV4 = existing.ip === '0.0.0.0';
-        const isNewIpWildcardV6 = item.ip === '::';
-        const isNewIpWildcardV4 = item.ip === '0.0.0.0';
-
-        let shouldOverwrite = false;
-        if (isExistingIpWildcardV6 && !isNewIpWildcardV6) {
-          shouldOverwrite = true;
-        } else if (isExistingIpWildcardV4 && !isNewIpWildcardV4 && !isNewIpWildcardV6) {
-          shouldOverwrite = true;
-        }
-
-        if (shouldOverwrite) {
-          list[existingIndex].ip = item.ip;
-        }
-      } else {
-        list.push(item);
-      }
-    };
-
-    // Helper to parse IP and Port from URL
-    const parseUrl = (urlString: string) => {
-      if (!urlString) return null;
-      try {
-        // Handle URL missing http protocol prefix for standard URL constructor
-        const urlWithProto = urlString.match(/^https?:\/\//i) ? urlString : `http://${urlString}`;
-        const urlObj = new URL(urlWithProto);
-        const port = urlObj.port ? parseInt(urlObj.port, 10) : (urlObj.protocol === 'https:' ? 443 : 80);
-        return {
-          ip: urlObj.hostname,
-          port
-        };
-      } catch (e) {
-        // Fallback simple regex parsing for common format "ip:port"
-        const match = urlString.match(/^(?:https?:\/\/)?([^:\/]+):(\d+)/i);
-        if (match) {
-          return {
-            ip: match[1],
-            port: parseInt(match[2], 10)
-          };
-        }
-        return null;
-      }
-    };
-
-    // 1. Extract ports from configured NasDash Services
-    const categories = config?.categories || [];
-    categories.forEach(cat => {
-      if (!showSecretSections && cat.isSecret) return;
-      cat.services.forEach(svc => {
-        if (svc.localUrl) {
-          const parsed = parseUrl(svc.localUrl);
-          if (parsed) {
-            addPortItem({
-              port: parsed.port,
-              serviceName: svc.name,
-              ip: parsed.ip,
-              source: `Service NasDash (${cat.title})`,
-              type: svc.localUrl.startsWith('https') ? 'HTTPS' : 'HTTP'
-            });
-          }
-        }
-        if (svc.secondaryUrl) {
-          const parsed = parseUrl(svc.secondaryUrl);
-          if (parsed) {
-            addPortItem({
-              port: parsed.port,
-              serviceName: svc.name,
-              ip: parsed.ip,
-              source: `Service NasDash (Secondaire)`,
-              type: svc.secondaryUrl.startsWith('https') ? 'HTTPS' : 'HTTP'
-            });
-          }
-        }
-      });
+  const activePorts = useMemo((): PortEntry[] => {
+    return buildPortInventory({
+      categories: config?.categories || [],
+      containers: dockerContainers,
+      showSecretSections,
     });
-
-    // 2. Extract ports from Docker hosts containers
-    dockerContainers.forEach((c) => {
-      const containerName = c.names?.[0] || c.id;
-
-      if (!showSecretSections && secretServiceNames.size > 0) {
-        const isSecretContainer = (c.names || []).some((n: string) => {
-          const name = n.replace(/^\//, '').toLowerCase().trim();
-          return secretServiceNames.has(name);
-        }) || secretServiceNames.has((c.names?.[0] || '').replace(/^\//, '').toLowerCase().trim());
-
-        if (isSecretContainer) return;
-      }
-      const hostIp = (() => {
-        try {
-          const u = new URL(c.hostUrl);
-          return u.hostname;
-        } catch (e) {
-          return 'localhost';
-        }
-      })();
-
-      c.ports?.forEach((p: any) => {
-        const publicPort = p.publicPort;
-        if (publicPort) {
-          // Resolve wildcard binding IPs (0.0.0.0 and ::) to the host's actual IP
-          const resolvedIp = (!p.ip || p.ip === '0.0.0.0' || p.ip === '::') ? hostIp : p.ip;
-
-          addPortItem({
-            port: publicPort,
-            serviceName: containerName,
-            ip: resolvedIp,
-            source: `Conteneur Docker (${c.hostName})`,
-            type: p.type?.toUpperCase() || 'TCP',
-            status: c.state
-          });
-        }
-      });
-    });
-
-    return list.sort((a, b) => a.port - b.port);
   }, [config?.categories, dockerContainers, showSecretSections]);
 
   // Filtered active ports
@@ -226,7 +88,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
         item.port.toString().includes(q) ||
         item.serviceName.toLowerCase().includes(q) ||
         item.ip.toLowerCase().includes(q) ||
-        item.source.toLowerCase().includes(q)
+        sourceLabel(item, t).toLowerCase().includes(q)
       );
     });
   }, [activePorts, searchQuery]);
@@ -285,17 +147,6 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
     return list;
   }, [activePorts, genPortInput, genIpInput]);
 
-  const cleanSource = (src: string) => {
-    if (src.includes('Conteneur Docker')) {
-      const match = src.match(/\(([^)]+)\)/);
-      return match ? match[1] : 'Docker';
-    }
-    if (src.includes('Service NasDash')) {
-      const match = src.match(/\(([^)]+)\)/);
-      return match ? match[1] : 'NasDash';
-    }
-    return src;
-  };
 
   return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -335,6 +186,16 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
           }
           .nd-port-row:hover {
             background: rgba(255, 255, 255, 0.03);
+          }
+          .nd-port-group {
+            padding: 10px 0 4px;
+            font-size: 0.56rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--nd-text-dimmed);
+          }
+          .nd-port-row--stopped {
+            opacity: 0.6;
           }
           .nd-port-row:last-child {
             border-bottom: none;
@@ -406,7 +267,10 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
               </div>
             ) : (
               filteredPorts.map((item, i) => (
-                <div key={i} className="nd-port-row">
+                <React.Fragment key={i}>
+                {/* Stopped containers come last, under their own heading. */}
+                {item.stopped && !filteredPorts[i - 1]?.stopped && <div className="nd-port-group">{t('ports.stopped')}</div>}
+                <div className={`nd-port-row ${item.stopped ? 'nd-port-row--stopped' : ''}`}>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span className="nd-port-tag">
@@ -419,13 +283,14 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.58rem', color: 'var(--nd-text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <span style={{ fontFamily: 'monospace', opacity: 0.85 }}>{!showSensitive ? '•••' : item.ip}</span>
                       <span style={{ opacity: 0.3 }}>•</span>
-                      <span style={{ opacity: 0.65 }}>{cleanSource(item.source)}</span>
+                      <span style={{ opacity: 0.65 }}>{sourceLabel(item, t)}</span>
                     </div>
                   </div>
-                  <span className={`nd-port-protocol ${item.status === 'exited' ? 'nd-port-protocol--exited' : ''}`}>
+                  <span className={`nd-port-protocol ${item.stopped ? 'nd-port-protocol--exited' : ''}`}>
                     {item.type}
                   </span>
                 </div>
+                </React.Fragment>
               ))
             )}
           </div>
@@ -472,7 +337,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4, color: 'var(--nd-text)', fontSize: '0.6rem' }}>
                 {checkResult.collisions.map((item, idx) => (
                   <div key={idx} style={{ opacity: 0.85 }}>
-                    {t("Occupé par")} <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> {t("sur")} <code>{!showSensitive ? '•••' : item.ip}</code> ({item.source})
+                    {t("Occupé par")} <strong style={{ color: 'var(--nd-accent)' }}>{item.serviceName}</strong> {t("sur")} <code>{!showSensitive ? '•••' : item.ip}</code> ({sourceLabel(item, t)})
                   </div>
                 ))}
               </div>

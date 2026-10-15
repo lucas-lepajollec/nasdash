@@ -1,0 +1,101 @@
+{
+  "status": {
+    "protection_enabled": true,
+    "protection_disabled_duration": 0,
+    "version": "v0.107.0",
+    "running": true
+  },
+  "stats": {
+    "time_units": "hours",
+    "num_dns_queries": 28400,
+    "num_blocked_filtering": 6248,
+    "avg_processing_time": 0.0024,
+    "dns_queries": [
+      680,
+      709,
+      738,
+      767,
+      796,
+      825,
+      854,
+      883,
+      912,
+      941,
+      970,
+      999,
+      1028,
+      1057,
+      1086,
+      1115,
+      1144,
+      1173,
+      1202,
+      1231,
+      1260,
+      1289,
+      1318,
+      1347
+    ],
+    "blocked_filtering": [
+      150,
+      156,
+      162,
+      168,
+      174,
+      180,
+      186,
+      192,
+      198,
+      204,
+      210,
+      216,
+      222,
+      228,
+      234,
+      240,
+      246,
+      252,
+      258,
+      264,
+      270,
+      276,
+      282,
+      288
+    ],
+    "top_blocked_domains": [
+      {
+        "ads.example.net": 920
+      }
+    ],
+    "top_queried_domains": [
+      {
+        "media.example.com": 3800
+      }
+    ],
+    "top_clients": [
+      {
+        "atlas-nas": 9300
+      },
+      {
+        "travel-laptop": 4800
+      }
+    ]
+  },
+  "filtering": {
+    "enabled": true,
+    "filters": [
+      {
+        "id": 1,
+        "name": "Example Filter",
+        "enabled": true,
+        "rules_count": 150000
+      },
+      {
+        "id": 2,
+        "name": "Example Privacy Filter",
+        "enabled": true,
+        "rules_count": 4000
+      }
+    ]
+  }
+}

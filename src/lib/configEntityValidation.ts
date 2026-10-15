@@ -271,6 +271,23 @@ function validateWeatherLocation(value: unknown, requireId: boolean, label: stri
   readString(location, 'name', { required: true, maxLength: 200 });
 }
 
+/** A list of shared content sources (feeds, symbols, quotes): ids plus bounded text fields. */
+function validateSourceList(value: unknown, label: string, maxItems: number, fields: Record<string, { required?: boolean; maxLength: number; pattern?: RegExp }>): void {
+  if (!Array.isArray(value)) throw new RequestValidationError(`Le champ « ${label} » doit être une liste.`);
+  if (value.length > maxItems) throw new RequestValidationError(`Le champ « ${label} » contient trop d’éléments.`, 413);
+  value.forEach((raw, index) => {
+    const item = requireObject(raw, `${label}.${index}`);
+    readIdentifier(item);
+    for (const key of Object.keys(item)) {
+      if (key !== 'id' && !(key in fields)) throw new RequestValidationError(`Champ « ${key} » inconnu dans « ${label}.${index} ».`);
+    }
+    for (const [key, options] of Object.entries(fields)) {
+      const text = readString(item, key, { required: options.required, maxLength: options.maxLength });
+      if (text !== undefined && options.pattern && !options.pattern.test(text)) throw new RequestValidationError(`Le champ « ${label}.${index}.${key} » est invalide.`);
+    }
+  });
+}
+
 function validateAppearanceProfiles(value: unknown, label: string): void {
   if (!Array.isArray(value)) throw new RequestValidationError(`Le champ « ${label} » doit être une liste.`);
   if (value.length > 100) throw new RequestValidationError(`Le champ « ${label} » contient trop d’éléments.`, 413);
@@ -383,6 +400,11 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
     if (body.weatherLocations.length > 100) throw new RequestValidationError('Le champ « weatherLocations » contient trop d’éléments.');
     body.weatherLocations.forEach((location, index) => validateWeatherLocation(location, true, `weatherLocations.${index}`));
   }
+
+  if (body.rssFeeds !== undefined) validateSourceList(body.rssFeeds, 'rssFeeds', 50, { url: { required: true, maxLength: 2_048, pattern: /^https?:\/\/[^\s]+$/i }, title: { maxLength: 80 } });
+  if (body.marketSymbols !== undefined) validateSourceList(body.marketSymbols, 'marketSymbols', 30, { symbol: { required: true, maxLength: 20, pattern: /^[A-Za-z0-9.^=_-]{1,20}$/ }, label: { maxLength: 80 }, kind: { maxLength: 16, pattern: /^(stock|etf|fund|index|crypto|currency|future|other)$/ }, exchange: { maxLength: 40 } });
+  if (body.quotes !== undefined) validateSourceList(body.quotes, 'quotes', 200, { text: { required: true, maxLength: 1_000 }, author: { maxLength: 200 } });
+  if (body.quoteProviders !== undefined) readStringArray(body, 'quoteProviders', { maxItems: 10, maxItemLength: 64 });
 
   if (allowProfiles && body.appearanceProfiles !== undefined) validateAppearanceProfiles(body.appearanceProfiles, 'appearanceProfiles');
   if (allowProfiles && body.mobileAppearanceProfiles !== undefined) validateAppearanceProfiles(body.mobileAppearanceProfiles, 'mobileAppearanceProfiles');
@@ -518,6 +540,7 @@ function validateIntegrationInstance(payload: JsonObject): void {
   for (const [key, value] of Object.entries(readObject(body, 'settings') ?? {})) {
     if (!plain.has(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour ${manifest.name}.`);
     if (typeof value !== 'string' || value.length > 2_048) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
+    if (service?.fields.find(field => field.id === key)?.kind === 'toggle' && !['', 'true', 'false'].includes(value)) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
   }
   for (const [key, value] of Object.entries(readObject(body, 'secrets') ?? {})) {
     if (!secret.has(key)) throw new RequestValidationError(`Secret « ${key} » inconnu pour ${manifest.name}.`);

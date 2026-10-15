@@ -177,7 +177,8 @@ export interface ServiceField {
   id: string;
   label: string;
   placeholder?: string;
-  kind: 'text' | 'hidden' | 'secret';
+  /** Toggle values are stored as strings ('true' / 'false') in instance.settings. */
+  kind: 'text' | 'hidden' | 'secret' | 'toggle';
   required?: boolean;
 }
 

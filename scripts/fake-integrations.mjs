@@ -140,6 +140,72 @@ function dockhand(containers) {
   };
 }
 
+/** Saved widget services; authenticated and stateful, all fixtures fictional. */
+async function serviceBody(req) {
+  let body = '';
+  for await (const chunk of req) {
+    body += chunk;
+    if (Buffer.byteLength(body) > 16384) throw new Error('Body too large');
+  }
+  return JSON.parse(body || '{}');
+}
+// Small raster fixture; no external assets are fetched.
+const photoPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==', 'base64');
+function widgetService(id, data) {
+  let enabled = true, resumes = 0;
+  return async (req, res) => {
+    try {
+      const url = new URL(req.url ?? '/', 'http://fake');
+      const path = url.pathname;
+      if (resumes && Date.now() >= resumes) { enabled = true; resumes = 0; }
+      const json = value => send(res, 200, JSON.stringify(value));
+      if (id === 'pihole') {
+        if (path === '/api/auth' && req.method === 'POST') {
+          const body = await serviceBody(req);
+          return body.password === 'fake-password' ? json(data.auth) : send(res, 401, '{}');
+        }
+        if (req.headers['x-ftl-sid'] !== data.auth.session.sid) return send(res, 401, '{}');
+        if (path === '/api/dns/blocking') {
+          if (req.method === 'POST') { const body = await serviceBody(req); enabled = body.blocking === true; resumes = !enabled && body.timer ? Date.now() + body.timer * 1000 : 0; }
+          return json({ blocking: enabled ? 'enabled' : 'disabled', timer: resumes ? (resumes - Date.now()) / 1000 : null });
+        }
+        if (path === '/api/stats/summary') return json(data.summary);
+        if (path === '/api/history') { const live = structuredClone(data.history); const now = Math.floor(Date.now() / 3600000) * 3600; live.history.forEach((point, i) => point.timestamp = now - (23 - i) * 3600); return json(live); }
+        if (path === '/api/stats/top_domains') return json(url.searchParams.get('blocked') === 'true' ? data.blocked : data.queried);
+        if (path === '/api/stats/top_clients') return json(data.clients);
+      } else if (id === 'adguard') {
+        if (req.headers.authorization !== `Basic ${Buffer.from('admin:fake-password').toString('base64')}`) return send(res, 401, '{}');
+        if (path === '/control/protection' && req.method === 'POST') { const body = await serviceBody(req); enabled = body.enabled === true; resumes = !enabled && body.duration ? Date.now() + body.duration : 0; return json({}); }
+        if (path === '/control/status') return json({ ...data.status, protection_enabled: enabled, protection_disabled_duration: resumes ? resumes - Date.now() : 0 });
+        if (path === '/control/stats') return json(data.stats);
+        if (path === '/control/filtering/status') return json(data.filtering);
+      } else if (id === 'immich') {
+        if (req.headers['x-api-key'] !== 'fake-immich-key') return send(res, 401, '{}');
+        if (path === '/api/users/me' || path === '/api/server/about') return json(data.user);
+        if (path === '/api/server/statistics') return json(data.statistics);
+        if (path === '/api/albums') return json(data.albums);
+        if (path.startsWith('/api/albums/')) return json({ ...data.albums[0], assets: data.assets });
+        if (path === '/api/memories') return json([{ assets: data.assets }]);
+        if (path === '/api/search/random' || path === '/api/search/metadata') {
+          const body = await serviceBody(req);
+          let assets = body.isFavorite ? data.assets.filter(asset => asset.isFavorite) : data.assets;
+          if (body.takenAfter) assets = assets.filter(asset => asset.fileCreatedAt >= body.takenAfter && asset.fileCreatedAt < body.takenBefore);
+          assets = assets.slice(0, Math.min(body.size ?? 12, 60));
+          return json(path.endsWith('/random') ? assets : { assets: { items: assets, total: assets.length } });
+        }
+        if (/^\/api\/assets\/[a-f0-9-]+\/thumbnail$/.test(path)) return send(res, 200, photoPixel, 'image/png');
+      } else if (id === 'photoprism') {
+        if (req.headers.authorization !== 'Bearer fake-photoprism-token') return send(res, 401, '{}');
+        if (path === '/api/v1/config') return json(data.config);
+        if (path === '/api/v1/albums') return json(data.albums);
+        if (path === '/api/v1/photos') return json((url.searchParams.get('favorite') === 'true' ? data.photos.filter(photo => photo.Favorite) : data.photos).slice(0, Number(url.searchParams.get('count') ?? 12)));
+        if (/^\/api\/v1\/t\/[a-f0-9]{40}\/fictional-preview-token\/fit_(720|1920)$/.test(path)) return send(res, 200, photoPixel, 'image/png');
+      }
+      send(res, 404, '{}');
+    } catch { send(res, 400, '{}'); }
+  };
+}
+
 /** A server that answers HTML instead of JSON (wrong port, login page…). */
 const html = (_req, res) => send(res, 200, '<html><body>Login</body></html>', 'text/html');
 
@@ -156,8 +222,12 @@ const servers = [
   { port: 2616, name: 'Beszel — system "nas" (nasdash@example.com / fake-password)', handler: beszel(sample('beszel', 'systems')) },
   { port: 2617, name: 'Prometheus — instance "192.0.2.10:9100"', handler: prometheus(sample('prometheus', 'node')) },
   { port: 2620, name: 'Headscale — API key "fake-headscale-key" (Tailscale widget settings)', handler: headscale(sample('headscale', 'nodes')) },
-  { port: 2621, name: 'Portainer — environment 1, API key "fake-portainer-key"', handler: portainer(sample('docker', 'containers')) },
-  { port: 2622, name: 'Dockhand — environment 1, token "dh_fake-dockhand-token"', handler: dockhand(sample('docker', 'dockhand-containers')) },
+  { port: 2625, name: 'Portainer — environment 1, API key "fake-portainer-key"', handler: portainer(sample('docker', 'containers')) },
+  { port: 2626, name: 'Dockhand — environment 1, token "dh_fake-dockhand-token"', handler: dockhand(sample('docker', 'dockhand-containers')) },
+  { port: 2621, name: 'Pi-hole v6 — password "fake-password"', handler: widgetService('pihole', sample('pihole', 'service')) },
+  { port: 2622, name: 'AdGuard Home — admin / fake-password', handler: widgetService('adguard', sample('adguard', 'service')) },
+  { port: 2623, name: 'Immich — API key "fake-immich-key"', handler: widgetService('immich', sample('immich', 'service')) },
+  { port: 2624, name: 'PhotoPrism — token "fake-photoprism-token"', handler: widgetService('photoprism', sample('photoprism', 'service')) },
   { port: 2619, name: 'Error case — HTML instead of JSON (use with Glances)', handler: html },
 ];
 
