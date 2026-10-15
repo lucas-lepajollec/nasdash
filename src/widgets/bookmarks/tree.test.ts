@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BookmarkItem } from '@/lib/widgetData/contracts';
-import { childrenOf, descendantsOf, dropItem, folderOptions, moveInto, pathTo, removeItem } from './tree';
+import { childrenOf, descendantsOf, dropItem, removeFolderKeepContent, folderOptions, moveInto, pathTo, removeItem } from './tree';
 
 const items: BookmarkItem[] = [
   { id: 'dev', kind: 'folder', title: 'Dev' },
@@ -19,6 +19,14 @@ describe('bookmarks tree', () => {
   });
   it('removes a folder with its content', () => {
     expect(removeItem(items, 'dev').map(item => item.id)).toEqual(['c']);
+  });
+  it('removes a folder only, its content moving up where it was', () => {
+    const next = removeFolderKeepContent(items, 'docs');
+    expect(childrenOf(next, 'dev').map(item => item.id)).toEqual(['b', 'a']);
+    expect(next.find(item => item.id === 'docs')).toBeUndefined();
+    const top = removeFolderKeepContent(items, 'dev');
+    expect(childrenOf(top, undefined).map(item => item.id)).toEqual(['docs', 'a', 'c']);
+    expect(childrenOf(top, 'docs').map(item => item.id)).toEqual(['b']);
   });
   it('moves into a folder but never into itself or below itself', () => {
     expect(moveInto(items, 'c', 'docs').find(item => item.id === 'c')?.parentId).toBe('docs');

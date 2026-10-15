@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const type = params.get('type') === 'rss' ? 'rss' : 'bookmarks';
   // Administrators see the bookmarks library itself (settings, a widget not
   // saved yet); others only through a bookmarks widget they can see.
-  const library = type === 'bookmarks' && !params.get('widgetId') && resolveAccessPrincipal(request)?.role === 'admin';
+  const library = type === 'bookmarks' && resolveAccessPrincipal(request)?.role === 'admin';
   const resolved = library ? null : resolveWidgetSettings(request, params.get('widgetId'), type, undefined);
   if (resolved && !resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
   if (isDemoMode()) return new NextResponse(null, { status: 404, headers });

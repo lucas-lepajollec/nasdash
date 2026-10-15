@@ -6,8 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- Content widgets ask their service (Immich, Pi-hole, feeds…) only once they are first on screen, not while their page is closed; photos stop changing while the browser tab is in the background.
+- Deleting a bookmarks folder keeps what it holds by default (moved up one level); deleting everything is a second choice in the confirmation.
+- Bookmarks render from one index of the library and mount drag and drop only in edit mode; the photo mosaic layout is computed once per page.
+
 ### Fixed
 
+- Bookmark icons show in edit mode for a widget not saved yet, and retry once when a just-added link was not saved yet.
 - Site icons (bookmarks, feeds) are sharp: the largest icon of a heavy page's head is used instead of a 16 px `favicon.ico`; icons found before are looked for again.
 - The Immich connection test only needs the reading permission the widget uses (`asset.read`), and tells a missing permission apart from a refused key.
 

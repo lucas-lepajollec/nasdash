@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { ChevronLeft, ChevronRight, Pencil, Settings2 } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
@@ -35,8 +35,9 @@ async function readJson<T>(response: Response): Promise<T> {
 /**
  * Data of one widget instance. The server reads the widget's saved settings;
  * an admin also sends the current ones, so changes show before the page is
- * saved (and in the public demo, whose pages live in the browser). Refreshes
- * every `refreshMs` while visible, never while hidden.
+ * saved (and in the public demo, whose pages live in the browser). First asked
+ * when the widget is first visible, then every `refreshMs` while visible, never
+ * while hidden (another page, or a browser tab in the background).
  */
 export function useWidgetData<T>(route: string, widgetId: string, settings: WidgetSettings, options: { refreshMs: number; isVisible?: boolean; method?: 'GET' | 'POST'; params?: Record<string, string>; body?: Record<string, unknown>; enabled?: boolean }) {
   const { user } = useAuth();
@@ -46,7 +47,11 @@ export function useWidgetData<T>(route: string, widgetId: string, settings: Widg
   const draftKey = useMemo(() => (draft ? JSON.stringify(draft) : ''), [draft]);
   const paramsKey = JSON.stringify(options.params ?? {});
   const bodyKey = JSON.stringify(options.body ?? {});
-  const key = options.enabled === false ? null : [route, widgetId, method, draftKey, paramsKey, bodyKey];
+  // Nothing is asked before the widget is first on screen: a widget on another page
+  // of the dashboard does not reach its service (Immich, Pi-hole…) until it is opened.
+  const [seen, setSeen] = useState(options.isVisible !== false);
+  if (!seen && options.isVisible !== false) setSeen(true);
+  const key = options.enabled === false || !seen ? null : [route, widgetId, method, draftKey, paramsKey, bodyKey];
   return useSWR<T, WidgetDataError>(key, async () => {
     if (method === 'GET') {
       const query = new URLSearchParams({ widgetId, ...(options.params ?? {}) });
@@ -165,9 +170,17 @@ export function hueOf(text: string): number {
 export function SiteIcon({ url, name, widget, size = 18, className = '' }: { url?: string; name: string; widget?: { id: string; type: 'rss' | 'bookmarks' }; size?: number; className?: string }) {
   const [failed, setFailed] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
+  const [retried, setRetried] = useState<string | null>(null);
   // The server serves icons of a widget's saved sources; without a widget, of the
   // saved bookmarks (administrators, in the library settings).
-  const source = url && /^https?:\/\//i.test(url) ? `/api/widgets/favicon?${new URLSearchParams({ url, ...(widget ? { widgetId: widget.id, type: widget.type } : { type: 'bookmarks' }) })}` : null;
+  const base = url && /^https?:\/\//i.test(url) ? `/api/widgets/favicon?${new URLSearchParams({ url, ...(widget ? { widgetId: widget.id, type: widget.type } : { type: 'bookmarks' }) })}` : null;
+  // A link just added may be asked for before the server has saved it: one more try a moment later.
+  const source = base && retried === base ? `${base}&retry=1` : base;
+  useEffect(() => {
+    if (!base || failed !== base || retried === base) return;
+    const timer = window.setTimeout(() => setRetried(base), 2500);
+    return () => window.clearTimeout(timer);
+  }, [base, failed, retried]);
   const letter = (name.trim()[0] ?? '?').toUpperCase();
   const style = { width: size, height: size, '--ndw-hue': hueOf(name || url || '?') } as React.CSSProperties;
   return (

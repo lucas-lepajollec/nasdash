@@ -2146,7 +2146,9 @@ body[data-design="calme"] .nd-modal:not(.nd-settings-modal) div:is([style*="rgba
 /* Confirmation (ConfirmModal, Calme branch) */
 .ndc-confirm { max-width: 420px !important; text-align: left; }
 .ndc-confirm-text { margin: 8px 0 0; font-size: 0.84rem; line-height: 1.55; color: var(--nd-text-muted); }
-.ndc-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.ndc-confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.ndc-confirm-actions > .nd-btn { white-space: nowrap; }
+.ndc-confirm:has(.ndc-confirm-actions > :nth-child(3)) { max-width: 480px !important; }
 body[data-design="calme"] .nd-btn.ndc-btn-danger { background: var(--nd-red); border-color: var(--nd-red); color: #fff; }
 body[data-design="calme"] .nd-btn.ndc-btn-danger:hover { filter: brightness(1.08); }
 

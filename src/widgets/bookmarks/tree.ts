@@ -7,6 +7,17 @@ import type { BookmarkItem } from '@/lib/widgetData/contracts';
  * ever breaking that shape.
  */
 
+/** Children of every folder at once (`undefined`: the top level), in order: one pass for a whole tree. */
+export function indexByParent(items: readonly BookmarkItem[]): Map<string | undefined, BookmarkItem[]> {
+  const index = new Map<string | undefined, BookmarkItem[]>();
+  for (const item of items) {
+    const key = item.parentId ?? undefined;
+    const list = index.get(key);
+    if (list) list.push(item); else index.set(key, [item]);
+  }
+  return index;
+}
+
 /** Items directly inside a folder (`undefined`: the root), in order. */
 export function childrenOf(items: readonly BookmarkItem[], parentId: string | undefined): BookmarkItem[] {
   return items.filter(item => (item.parentId ?? undefined) === parentId);
@@ -40,6 +51,19 @@ export function removeItem(items: readonly BookmarkItem[], id: string): Bookmark
   const gone = descendantsOf(items, id);
   gone.add(id);
   return items.filter(item => !gone.has(item.id));
+}
+
+/** Removes a folder only: what it held moves up one level, where the folder was. */
+export function removeFolderKeepContent(items: readonly BookmarkItem[], id: string): BookmarkItem[] {
+  const folder = items.find(item => item.id === id);
+  if (!folder) return [...items];
+  const lift = (item: BookmarkItem): BookmarkItem => {
+    const moved: BookmarkItem = { ...item };
+    if (folder.parentId) moved.parentId = folder.parentId; else delete moved.parentId;
+    return moved;
+  };
+  const inside = items.filter(item => item.parentId === id);
+  return items.flatMap(item => item.id === id ? inside.map(lift) : item.parentId === id ? [] : [item]);
 }
 
 /** Moves an item into another folder (at its end); refused into itself or its own descendants. */
