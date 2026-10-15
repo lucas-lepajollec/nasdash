@@ -1271,6 +1271,16 @@ const en: Dictionary = {
   'widgets.rss.limitMagazine': 'Articles shown (with the lead)',
   'widgets.rss.leadImage': 'Image of the lead article',
   'widgets.rss.thumbnails': 'Thumbnails',
+  'widgets.markets.currency': 'Currency',
+  'widgets.markets.currencyHint': 'Converted at the current rate (Yahoo Finance); the percentage stays the market’s own.',
+  'widgets.markets.currencyNative': 'Each symbol’s own currency',
+  'widgets.dns.figures': 'Figures shown',
+  'widgets.dns.figuresHint': 'Leave all unticked to keep only the chart or the ring.',
+  'widgets.dns.figure.queries': 'Total queries',
+  'widgets.dns.figure.blocked': 'Blocked queries',
+  'widgets.dns.figure.share': 'Blocked share (%)',
+  'widgets.dns.figure.listed': 'Listed domains',
+  'widgets.dns.figure.clients': 'Active clients',
 };
 
 const fr: Dictionary = {
@@ -2528,6 +2538,16 @@ const fr: Dictionary = {
   'widgets.rss.limitMagazine': 'Articles affichés (à la une compris)',
   'widgets.rss.leadImage': 'Image de l’article à la une',
   'widgets.rss.thumbnails': 'Vignettes',
+  'widgets.markets.currency': 'Devise',
+  'widgets.markets.currencyHint': 'Conversion au taux du moment (Yahoo Finance) ; le pourcentage reste celui du marché d’origine.',
+  'widgets.markets.currencyNative': 'Devise d’origine de chaque valeur',
+  'widgets.dns.figures': 'Chiffres affichés',
+  'widgets.dns.figuresHint': 'Décochez tout pour ne garder que le graphique ou l’anneau.',
+  'widgets.dns.figure.queries': 'Nombre total de requêtes',
+  'widgets.dns.figure.blocked': 'Requêtes bloquées',
+  'widgets.dns.figure.share': 'Part bloquée (%)',
+  'widgets.dns.figure.listed': 'Domaines listés',
+  'widgets.dns.figure.clients': 'Clients actifs',
 };
 
 const es: Dictionary = {
@@ -3785,6 +3805,16 @@ const es: Dictionary = {
   'widgets.rss.limitMagazine': 'Artículos mostrados (con el destacado)',
   'widgets.rss.leadImage': 'Imagen del artículo destacado',
   'widgets.rss.thumbnails': 'Miniaturas',
+  'widgets.markets.currency': 'Divisa',
+  'widgets.markets.currencyHint': 'Convertido al tipo de cambio actual (Yahoo Finance); el porcentaje es el del mercado de origen.',
+  'widgets.markets.currencyNative': 'Divisa de origen de cada valor',
+  'widgets.dns.figures': 'Cifras mostradas',
+  'widgets.dns.figuresHint': 'Desmarca todo para dejar solo el gráfico o el anillo.',
+  'widgets.dns.figure.queries': 'Total de consultas',
+  'widgets.dns.figure.blocked': 'Consultas bloqueadas',
+  'widgets.dns.figure.share': 'Porcentaje bloqueado (%)',
+  'widgets.dns.figure.listed': 'Dominios en listas',
+  'widgets.dns.figure.clients': 'Clientes activos',
 };
 
 const de: Dictionary = {
@@ -5042,6 +5072,16 @@ const de: Dictionary = {
   'widgets.rss.limitMagazine': 'Angezeigte Artikel (mit Aufmacher)',
   'widgets.rss.leadImage': 'Bild des Aufmachers',
   'widgets.rss.thumbnails': 'Vorschaubilder',
+  'widgets.markets.currency': 'Währung',
+  'widgets.markets.currencyHint': 'Zum aktuellen Kurs umgerechnet (Yahoo Finance); der Prozentsatz bleibt der des Heimatmarkts.',
+  'widgets.markets.currencyNative': 'Eigene Währung jedes Werts',
+  'widgets.dns.figures': 'Angezeigte Kennzahlen',
+  'widgets.dns.figuresHint': 'Alles abwählen, um nur das Diagramm oder den Ring zu behalten.',
+  'widgets.dns.figure.queries': 'Anfragen insgesamt',
+  'widgets.dns.figure.blocked': 'Blockierte Anfragen',
+  'widgets.dns.figure.share': 'Blockierter Anteil (%)',
+  'widgets.dns.figure.listed': 'Gelistete Domains',
+  'widgets.dns.figure.clients': 'Aktive Clients',
 };
 
 const it: Dictionary = {
@@ -6298,6 +6338,16 @@ const it: Dictionary = {
   'widgets.rss.limitMagazine': 'Articoli mostrati (con quello in evidenza)',
   'widgets.rss.leadImage': 'Immagine dell’articolo in evidenza',
   'widgets.rss.thumbnails': 'Miniature',
+  'widgets.markets.currency': 'Valuta',
+  'widgets.markets.currencyHint': 'Convertito al cambio attuale (Yahoo Finance); la percentuale resta quella del mercato d’origine.',
+  'widgets.markets.currencyNative': 'Valuta d’origine di ogni titolo',
+  'widgets.dns.figures': 'Dati mostrati',
+  'widgets.dns.figuresHint': 'Deseleziona tutto per tenere solo il grafico o l’anello.',
+  'widgets.dns.figure.queries': 'Query totali',
+  'widgets.dns.figure.blocked': 'Query bloccate',
+  'widgets.dns.figure.share': 'Quota bloccata (%)',
+  'widgets.dns.figure.listed': 'Domini in lista',
+  'widgets.dns.figure.clients': 'Client attivi',
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

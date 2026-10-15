@@ -43,16 +43,24 @@ function walk(from: number, to: number, seed: number, length = 78): number[] {
   return steps.map((step, i) => from + (to - from) * (i / (length - 1)) + step - end * (i / (length - 1)));
 }
 
-export function demoMarkets(range: MarketRange = '1d'): MarketsResponse {
+/** Fictional rates from one US dollar, so the demo can show the currency choice without any request. */
+const DEMO_FX: Record<string, number> = { USD: 1, EUR: 0.92, GBP: 0.79, CHF: 0.88, JPY: 150, CAD: 1.36, AUD: 1.52, CNY: 7.2, HKD: 7.8, SEK: 10.5, NOK: 10.7, DKK: 6.9, PLN: 3.9, INR: 83, BRL: 5.1, KRW: 1350 };
+
+export function demoMarkets(range: MarketRange = '1d', currency?: string): MarketsResponse {
   const now = demoNow();
   const step = range === '1d' ? 300_000 : range === '5d' ? 1_800_000 : range === '1mo' ? 9 * HOUR : 2 * 24 * HOUR;
-  return { range, fetchedAt: now, errors: [], quotes: DEMO_TICKERS.map((ticker, index) => {
+  const quotes = DEMO_TICKERS.map((ticker, index) => {
     const change = ticker.price - ticker.previousClose;
     return {
       ...ticker, exchange: 'Example Exchange', change, changePercent: (change / ticker.previousClose) * 100, marketState: 'open' as const, time: now,
       // A gentle wave from the previous close to today's price.
       points: walk(ticker.previousClose, ticker.price, index).map((value, i, all): [number, number] => [now - (all.length - 1 - i) * step, value]),
     };
+  });
+  const to = currency && DEMO_FX[currency] ? currency : undefined;
+  return { range, fetchedAt: now, errors: [], quotes: !to ? quotes : quotes.map(quote => {
+    const factor = DEMO_FX[to] / (DEMO_FX[quote.currency ?? 'USD'] ?? 1);
+    return { ...quote, currency: to, price: quote.price * factor, change: quote.change * factor, previousClose: quote.previousClose * factor, points: quote.points.map(([time, value]) => [time, value * factor] as [number, number]) };
   }) };
 }
 export function demoQuotes(): QuotesResponse {

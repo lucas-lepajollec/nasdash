@@ -1,4 +1,4 @@
-import type { MarketQuote, MarketRange, MarketsResponse } from './contracts';
+import { MARKET_CURRENCIES, type MarketCurrency, type MarketQuote, type MarketRange, type MarketsResponse } from './contracts';
 import { TtlCache } from './cache';
 import { fetchJson, sourceError, WidgetFetchError } from './outbound';
 
@@ -59,7 +59,9 @@ export async function loadMarkets(settings: Record<string, unknown>, override?: 
     } catch (error) { return sourceError(typeof symbol === 'string' ? symbol : '', error); }
   }));
   const good = results.filter((r): r is { quote: MarketQuote; fetchedAt: number } => 'quote' in r);
-  return { range, quotes: good.map(r => r.quote), errors: results.filter((r): r is ReturnType<typeof sourceError> => 'error' in r), fetchedAt: good.length ? Math.min(...good.map(r => r.fetchedAt)) : Date.now() };
+  const target = marketCurrency(settings.currency);
+  const quotes = target ? await Promise.all(good.map(r => convertQuote(r.quote, target))) : good.map(r => r.quote);
+  return { range, quotes, errors: results.filter((r): r is ReturnType<typeof sourceError> => 'error' in r), fetchedAt: good.length ? Math.min(...good.map(r => r.fetchedAt)) : Date.now() };
 }
 
 /** What a symbol is, as shown next to search results and saved symbols. */
@@ -92,4 +94,44 @@ export async function searchMarkets(query: string): Promise<MarketSearchResult[]
   return marketSearchCache.get(q.toLowerCase(), async () => mapMarketSearch(await fetchJson(
     `https://query1.finance.yahoo.com/v1/finance/search?${new URLSearchParams({ q, quotesCount: '8', newsCount: '0', listsCount: '0' })}`, 256 * 1024,
   )));
+}
+
+export function marketCurrency(value: unknown): MarketCurrency | undefined {
+  return MARKET_CURRENCIES.includes(value as MarketCurrency) ? value as MarketCurrency : undefined;
+}
+
+export const fxCache = new TtlCache<number>(900_000, 100, 6 * 3_600_000);
+
+/** Units of `to` for one unit of `from`, from Yahoo's `FROMTO=X` pair (kept 15 min). */
+export async function fxRate(from: string, to: string): Promise<number> {
+  if (from === to) return 1;
+  if (!/^[A-Z]{3}$/.test(from) || !/^[A-Z]{3}$/.test(to)) throw new WidgetFetchError('widgets.error.parse');
+  return fxCache.get(`${from}${to}`, async () => {
+    const pair = await fetchJson(`https://query1.finance.yahoo.com/v8/finance/chart/${from}${to}=X?range=1d&interval=1h`);
+    const rate = mapMarket(pair, `${from}${to}=X`, '1d').price;
+    if (!(rate > 0)) throw new WidgetFetchError('widgets.error.parse');
+    return rate;
+  });
+}
+
+/**
+ * A quote shown in another currency: price, curve and change converted at
+ * today's rate (the percentage is the market's own). London prices quoted in
+ * pence (GBp) count as pounds / 100. An unknown or unavailable rate leaves
+ * the quote in its own currency.
+ */
+export async function convertQuote(quote: MarketQuote, target: MarketCurrency): Promise<MarketQuote> {
+  if (!quote.currency) return quote;
+  const pence = quote.currency === 'GBp' || quote.currency === 'GBX';
+  const from = pence ? 'GBP' : quote.currency.toUpperCase();
+  if (from === target && !pence) return quote;
+  try {
+    const factor = (pence ? 0.01 : 1) * await fxRate(from, target);
+    const scale = (value: number) => value * factor;
+    return {
+      ...quote, currency: target, price: scale(quote.price), change: scale(quote.change),
+      ...(quote.previousClose === undefined ? {} : { previousClose: scale(quote.previousClose) }),
+      points: quote.points.map(([time, value]) => [time, scale(value)] as [number, number]),
+    };
+  } catch { return quote; }
 }

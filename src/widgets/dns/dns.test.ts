@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { halfHours } from './CalmeDns';
+import { figuresOf, halfHours } from './CalmeDns';
 
 describe('DNS chart buckets', () => {
   it('sums reports per half-hour and leaves out the cut half-hours at both ends', () => {
@@ -9,5 +9,15 @@ describe('DNS chart buckets', () => {
     const buckets = halfHours(history);
     expect(buckets.map(([time]) => new Date(time).toISOString().slice(11, 16))).toEqual(['10:45', '11:15', '11:45']);
     expect(buckets.every(([, total, blocked]) => total === 30 && blocked === 6)).toBe(true);
+  });
+});
+
+describe('DNS figures', () => {
+  it('keeps each style’s defaults until a choice is made, then follows it in a fixed order', () => {
+    expect(figuresOf({}, 'bars')).toEqual(['queries', 'blocked', 'share']);
+    expect(figuresOf({}, 'full')).toEqual(['queries', 'blocked', 'listed', 'clients']);
+    expect(figuresOf({}, 'ring')).toEqual(['queries', 'blocked']);
+    expect(figuresOf({ figures: ['clients', 'share', 'nope'] }, 'chart')).toEqual(['share', 'clients']);
+    expect(figuresOf({ figures: [] }, 'bars')).toEqual([]);
   });
 });

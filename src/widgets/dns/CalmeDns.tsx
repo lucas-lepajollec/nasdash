@@ -21,6 +21,13 @@ export type DnsStyle = 'bars' | 'chart' | 'ring' | 'compact' | 'full';
 const STYLES: readonly DnsStyle[] = ['bars', 'chart', 'ring', 'compact', 'full'];
 type Section = 'stats' | 'history' | 'top';
 const SECTIONS: readonly Section[] = ['stats', 'history', 'top'];
+export type DnsFigure = 'queries' | 'blocked' | 'share' | 'listed' | 'clients';
+const FIGURES: readonly DnsFigure[] = ['queries', 'blocked', 'share', 'listed', 'clients'];
+/** Chosen figures in their fixed order; without a choice, what each style shows by default. */
+export function figuresOf(settings: WidgetSettings, style: DnsStyle): DnsFigure[] {
+  if (Array.isArray(settings.figures)) return FIGURES.filter(id => (settings.figures as unknown[]).includes(id));
+  return style === 'full' ? ['queries', 'blocked', 'listed', 'clients'] : style === 'ring' ? ['queries', 'blocked'] : ['queries', 'blocked', 'share'];
+}
 type TopList = 'topBlocked' | 'topClients' | 'topQueried';
 const TOPS: readonly TopList[] = ['topBlocked', 'topClients', 'topQueried'];
 /** Pause choices, in seconds (0: until resumed). */
@@ -80,16 +87,22 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
   const topCount = bounded(settings.topCount, 3, 10, 5);
   const head = <DnsHead data={data} settings={settings} widgetId={widgetId} onChanged={onChanged} />;
   const share = `${number.percent.format(data.blockedPercent)}`;
+  // The figures this widget shows (its choice, else what suits the style), in a fixed order.
+  const shown = figuresOf(settings, style);
+  const all: Record<DnsFigure, React.ReactNode> = {
+    queries: <Figure key="queries" label={t('widgets.dns.queries')} value={number.short.format(data.queries)} title={number.full.format(data.queries)} />,
+    blocked: <Figure key="blocked" label={t('widgets.dns.blocked')} value={number.short.format(data.blocked)} title={number.full.format(data.blocked)} tone="blocked" />,
+    share: <Figure key="share" label={t('widgets.dns.blockedShare')} value={`${share} %`} />,
+    listed: data.listedDomains === undefined ? null : <Figure key="listed" label={t('widgets.dns.listed')} value={number.short.format(data.listedDomains)} title={number.full.format(data.listedDomains)} />,
+    clients: data.clients === undefined ? null : <Figure key="clients" label={t('widgets.dns.clients')} value={number.full.format(data.clients)} />,
+  };
+  const figures = shown.map(id => all[id]);
 
   if (style === 'bars') {
     return (
       <div className="ndw-dns-bars-style">
         {head}
-        <div className="ndw-dns-figures">
-          <Figure label={t('widgets.dns.queries')} value={number.short.format(data.queries)} title={number.full.format(data.queries)} />
-          <Figure label={t('widgets.dns.blocked')} value={number.short.format(data.blocked)} title={number.full.format(data.blocked)} tone="blocked" />
-          <Figure label={t('widgets.dns.blockedShare')} value={`${share} %`} />
-        </div>
+        {figures.some(Boolean) && <div className="ndw-dns-figures">{figures}</div>}
         {data.history.length > 1 && <DnsBars data={data} height={chartHeight(width, 0.18, 56, 120)} />}
       </div>
     );
@@ -116,8 +129,8 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
         {head}
         <RingGauge percent={data.blockedPercent} color={BLOCKED} label={t('widgets.dns.blockedShort')} size={size} text={share} unit="%" />
         <div className="ndw-dns-ring-legend">
-          <span><i style={{ background: QUERIES }} />{t('widgets.dns.queriesCount', { count: number.short.format(data.queries) })}</span>
-          <span><i style={{ background: BLOCKED }} />{t('widgets.dns.blockedCount', { count: number.short.format(data.blocked) })}</span>
+          {shown.includes('queries') && <span><i style={{ background: QUERIES }} />{t('widgets.dns.queriesCount', { count: number.short.format(data.queries) })}</span>}
+          {shown.includes('blocked') && <span><i style={{ background: BLOCKED }} />{t('widgets.dns.blockedCount', { count: number.short.format(data.blocked) })}</span>}
         </div>
       </div>
     );
@@ -127,11 +140,7 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
     return (
       <div className="ndw-dns-chart-style">
         {head}
-        <div className="ndw-dns-figures">
-          <Figure label={t('widgets.dns.queries')} value={number.short.format(data.queries)} title={number.full.format(data.queries)} />
-          <Figure label={t('widgets.dns.blocked')} value={number.short.format(data.blocked)} title={number.full.format(data.blocked)} tone="blocked" />
-          <Figure label={t('widgets.dns.blockedShare')} value={`${share} %`} />
-        </div>
+        {figures.some(Boolean) && <div className="ndw-dns-figures">{figures}</div>}
         <DnsChart data={data} height={chartHeight(width, 0.36, 120, 300)} narrow={width < 240} />
       </div>
     );
@@ -148,10 +157,7 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
           <div className="ndw-dns-hero">
             <RingGauge percent={data.blockedPercent} color={BLOCKED} label={t('widgets.dns.blockedShort')} size={wide ? 104 : 88} text={share} unit="%" />
             <div className="ndw-dns-figures ndw-dns-figures--stack">
-              <Figure label={t('widgets.dns.queries')} value={number.short.format(data.queries)} title={number.full.format(data.queries)} />
-              <Figure label={t('widgets.dns.blocked')} value={number.short.format(data.blocked)} title={number.full.format(data.blocked)} tone="blocked" />
-              {data.listedDomains !== undefined && <Figure label={t('widgets.dns.listed')} value={number.short.format(data.listedDomains)} title={number.full.format(data.listedDomains)} />}
-              {data.clients !== undefined && <Figure label={t('widgets.dns.clients')} value={number.full.format(data.clients)} />}
+              {figures}
             </div>
           </div>
         )}
@@ -382,6 +388,20 @@ function DnsSettings({ draft, change }: { draft: WidgetSettings; change: (patch:
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={style} options={STYLES.map(value => ({ value, label: t(`widgets.dns.style.${value}`) }))} onChange={value => change({ style: value })} />
       </CalmeField>
+      {style !== 'compact' && (
+        <CalmeField label={t('widgets.dns.figures')} info={t('widgets.dns.figuresHint')}>
+          <div className="ndc-dlg-stack">
+            {FIGURES.filter(id => style !== 'ring' || id === 'queries' || id === 'blocked').map(id => {
+              const current = figuresOf(draft, style);
+              return (
+                <CalmeCheckRow key={id} checked={current.includes(id)} onChange={() => change({ figures: current.includes(id) ? current.filter(other => other !== id) : FIGURES.filter(other => other === id || current.includes(other)) })}>
+                  <span className="ndc-dlg-name">{t(`widgets.dns.figure.${id}`)}</span>
+                </CalmeCheckRow>
+              );
+            })}
+          </div>
+        </CalmeField>
+      )}
       {style === 'full' && (
         <CalmeField label={t('widgets.dns.sections')}>
           <div className="ndc-dlg-stack">

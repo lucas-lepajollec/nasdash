@@ -3,10 +3,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
-import type { MarketQuote, MarketRange, MarketsResponse } from '@/lib/widgetData/contracts';
+import { MARKET_CURRENCIES, type MarketQuote, type MarketRange, type MarketsResponse } from '@/lib/widgetData/contracts';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
+import CustomSelect from '@/components/shared/CustomSelect';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { Sparkline } from '@/components/charts/Gauges';
@@ -226,7 +227,7 @@ function MarketsBody({ quotes, display, labels, showName, spark, width, range, a
   return (
     <div className={`ndw-market-rows ${width >= 560 ? 'is-wide' : ''} ${aligned ? 'is-aligned' : ''}`} style={columns}>
       {quotes.map(quote => (
-        <div key={quote.symbol} className={`ndw-market-row ${direction(quote)}`} title={label(quote)}>
+        <div key={quote.symbol} className={`ndw-market-row ${direction(quote)} ${spark ? '' : 'no-spark'}`} title={label(quote)}>
           <span className="ndw-market-id">
             <span className="ndw-market-title">{showName ? name(quote) : quote.symbol}</span>
             <span className="ndw-market-sub">{showName && <span>{quote.symbol}</span>}{state(quote)}</span>
@@ -293,6 +294,9 @@ function MarketsSettings({ draft, change, saved }: { draft: WidgetSettings; chan
         <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, DISPLAYS, 'list')} options={DISPLAYS.map(value => ({ value, label: t(`widgets.markets.display.${value}`) }))} onChange={value => change({ display: value })} />
       </CalmeField>
       {pick(draft.display, DISPLAYS, 'list') === 'tiles' && <PagedGridSettings draft={draft} change={change} />}
+      <CalmeField label={t('widgets.markets.currency')} info={t('widgets.markets.currencyHint')}>
+        <CurrencySelect value={typeof draft.currency === 'string' ? draft.currency : ''} onChange={value => change({ currency: value || null })} />
+      </CalmeField>
       <CalmeField label={t('widgets.markets.defaultRange')}>
         <CalmeSegmented label={t('widgets.markets.defaultRange')} value={pick(draft.range, RANGES, '1d')} options={RANGES.map(value => ({ value, label: t(`widgets.markets.range.${value}`) }))} onChange={value => change({ range: value })} />
       </CalmeField>
@@ -348,5 +352,21 @@ function ChipStrip({ label, children }: { label: string; children: React.ReactNo
       <div ref={strip} className="ndw-market-chips" role="tablist" aria-label={label} onScroll={measure}>{children}</div>
       {edges.end && <button type="button" className="ndc-icon-button ndw-chip-arrow is-end" onClick={() => by(1)} aria-label={t('widgets.markets.scrollMore')} title={t('widgets.markets.scrollMore')}><ChevronRight size={14} /></button>}
     </div>
+  );
+}
+
+/** Prices in each symbol's own currency, or converted into one (names in the interface language). */
+function CurrencySelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const { t, locale } = useI18n();
+  const names = useMemo(() => {
+    try { return new Intl.DisplayNames(locale, { type: 'currency' }); } catch { return null; }
+  }, [locale]);
+  return (
+    <CustomSelect
+      ariaLabel={t('widgets.markets.currency')}
+      value={value}
+      onChange={onChange}
+      options={[{ value: '', label: t('widgets.markets.currencyNative') }, ...MARKET_CURRENCIES.map(code => ({ value: code, label: `${names?.of(code) ?? code} (${code})` }))]}
+    />
   );
 }

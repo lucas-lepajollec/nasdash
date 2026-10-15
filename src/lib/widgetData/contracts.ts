@@ -64,6 +64,10 @@ export interface RssResponse {
 
 export type MarketRange = '1d' | '5d' | '1mo' | '6mo' | '1y';
 
+/** Currencies a markets widget can convert prices into (otherwise each symbol keeps its own). */
+export const MARKET_CURRENCIES = ['USD', 'EUR', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'CNY', 'HKD', 'SEK', 'NOK', 'DKK', 'PLN', 'INR', 'BRL', 'KRW'] as const;
+export type MarketCurrency = typeof MARKET_CURRENCIES[number];
+
 export interface MarketQuote {
   /** As configured (`AAPL`, `BTC-USD`, `^GSPC`, `MC.PA`). */
   symbol: string;

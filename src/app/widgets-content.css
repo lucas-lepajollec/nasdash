@@ -278,6 +278,8 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 /* Wide rows: the curve takes the room. */
 .ndw-market-rows.is-wide .ndw-market-row { grid-template-columns: fit-content(40%) minmax(120px, 1fr) auto; gap: 24px; }
 .ndw-market-rows.is-wide.is-aligned .ndw-market-row { grid-template-columns: minmax(0, var(--ndw-name)) minmax(120px, 1fr) var(--ndw-price); }
+/* Without curves there is nothing to line up: name, then figures at the far end (outranks every layout above). */
+.ndw-market-rows.ndw-market-rows .ndw-market-row.no-spark { grid-template-columns: minmax(0, 1fr) auto; }
 
 /* Chart: one symbol large, the others as chips to switch to. */
 .ndw-market-feature { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -305,7 +307,8 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-market-chip:hover { color: var(--nd-text); }
 .ndw-market-chip[aria-selected="true"] { color: var(--nd-text); border-color: color-mix(in srgb, var(--nd-accent) 60%, var(--nd-card-border)); background: var(--nd-subcard-bg); }
 @container (max-width: 320px) {
-  .ndw-market-row { grid-template-columns: minmax(0, 1fr) auto; }
+  /* No curve here: name and figures only, aligned or not (otherwise an empty middle column remains). */
+  .ndw-market-row, .ndw-market-rows.is-aligned .ndw-market-row { grid-template-columns: minmax(0, 1fr) auto; }
   .ndw-market-spark { display: none; }
 }
 

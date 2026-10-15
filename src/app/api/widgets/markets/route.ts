@@ -18,8 +18,8 @@ export async function POST(request: NextRequest) {
   } catch { return NextResponse.json({ error: 'widgets.error.parse' }, { status: 400, headers }); }
   const resolved = resolveWidgetSettings(request, body.widgetId, 'markets', body.draft);
   if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
-  if (isDemoMode()) return NextResponse.json(demoMarkets(marketRange(body.range) ?? marketRange(resolved.settings.range)), { headers });
-  try { return NextResponse.json(await loadMarkets({ range: resolved.settings.range, symbols: widgetSymbols(resolved.settings, readConfig()) }, body.range), { headers }); }
+  if (isDemoMode()) return NextResponse.json(demoMarkets(marketRange(body.range) ?? marketRange(resolved.settings.range), typeof resolved.settings.currency === 'string' ? resolved.settings.currency : undefined), { headers });
+  try { return NextResponse.json(await loadMarkets({ range: resolved.settings.range, currency: resolved.settings.currency, symbols: widgetSymbols(resolved.settings, readConfig()) }, body.range), { headers }); }
   catch (error) {
     const failure = sourceError('', error);
     return NextResponse.json({ error: failure.error, parameters: failure.parameters }, { status: 502, headers });
