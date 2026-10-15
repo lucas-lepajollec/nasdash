@@ -529,3 +529,91 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-scroll-row { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; scrollbar-width: thin; }
 .ndw-scroll-cell { flex: 0 0 max(var(--ndw-col, 160px), 30%); scroll-snap-align: start; }
 .ndw-scroll-more { flex: 0 0 auto; align-self: center; }
+
+/* ---------- Photos ---------- */
+.ndw-photos-box { min-width: 0; }
+.ndw-photo {
+  position: relative; display: block; width: 100%; padding: 0; overflow: hidden; border: none;
+  border-radius: calc(var(--nd-card-radius) * 0.75); background: color-mix(in srgb, var(--nd-text) 4%, transparent); cursor: zoom-in;
+}
+.ndw-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.ndw-photo:hover img { transform: scale(1.03); }
+.ndw-photo:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndw-photo.is-square { aspect-ratio: 1; }
+.ndw-photo.is-natural { margin-bottom: 8px; break-inside: avoid; }
+.ndw-photo.is-natural img { height: auto; }
+.ndw-photo-video { position: absolute; right: 6px; bottom: 6px; display: inline-flex; padding: 4px; border-radius: 50%; color: #fff; background: rgb(0 0 0 / 0.45); }
+.ndw-photo-mosaic { column-gap: 8px; }
+.ndw-photo-strip { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; scrollbar-width: thin; }
+.ndw-photo.is-strip { flex: 0 0 auto; width: auto; height: 120px; aspect-ratio: 4 / 3; scroll-snap-align: start; }
+
+/* Slideshow: the current photo fades in over the previous one. */
+.ndw-slideshow { position: relative; overflow: hidden; border-radius: calc(var(--nd-card-radius) * 0.75); background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
+.ndw-slide { position: absolute; inset: 0; padding: 0; border: none; background: none; opacity: 0; transition: opacity 0.9s ease; cursor: zoom-in; }
+.ndw-slide.is-current { opacity: 1; z-index: 1; }
+.ndw-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ndw-slide-caption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 22px 12px 9px; pointer-events: none;
+  color: #fff; font-size: 0.68rem; letter-spacing: 0.02em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.45));
+}
+.ndw-slide-arrow {
+  position: absolute; top: 50%; z-index: 2; display: inline-flex; padding: 6px; border: none; border-radius: 50%;
+  color: #fff; background: rgb(0 0 0 / 0.35); transform: translateY(-50%); opacity: 0; transition: opacity 0.15s ease; cursor: pointer;
+}
+.ndw-slide-arrow.is-prev { left: 8px; }
+.ndw-slide-arrow.is-next { right: 8px; }
+.ndw-slideshow:hover .ndw-slide-arrow, .ndw-slide-arrow:focus-visible { opacity: 1; }
+@media (hover: none) { .ndw-slide-arrow { opacity: 0.8; } }
+@media (prefers-reduced-motion: reduce) { .ndw-slide { transition: none; } .ndw-photo img { transition: none; } }
+
+/* Viewer: the photo large, its date and place, arrows and the library link. */
+.ndw-viewer { display: flex; flex-direction: column; gap: 10px; max-width: min(1200px, 94vw); max-height: 92vh; outline: none; }
+.ndw-viewer-image { display: block; min-width: min(640px, 90vw); max-width: 100%; max-height: calc(92vh - 56px); object-fit: contain; border-radius: var(--nd-card-radius); box-shadow: 0 20px 60px rgb(0 0 0 / 0.45); }
+.ndw-viewer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 6px 10px; border-radius: var(--nd-card-radius); background: var(--nd-card-bg); border: 1px solid var(--nd-card-border); }
+.ndw-viewer-text { display: inline-flex; gap: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text); font-size: 0.74rem; }
+.ndw-viewer-count { color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
+.ndw-viewer-tools { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+/* ---------- Bookmarks ---------- */
+.ndw-bookmarks { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ndw-bookmark-list { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.ndw-bookmark {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; padding: 6px 8px; border: none; border-radius: 8px;
+  color: var(--nd-text); background: none; text-align: start; text-decoration: none; font: inherit; cursor: pointer; transition: background 0.12s ease;
+}
+.ndw-bookmark:hover { background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.ndw-bookmark:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: -2px; }
+.ndw-bookmark-text { display: flex; flex-direction: column; min-width: 0; }
+.ndw-bookmark-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; }
+.ndw-bookmark-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.66rem; }
+.ndw-bookmark-count { margin-inline-start: auto; color: var(--nd-text-dimmed); font-size: 0.66rem; font-variant-numeric: tabular-nums; }
+.ndw-bookmark-chevron { flex-shrink: 0; color: var(--nd-text-dimmed); transition: transform 0.15s ease; }
+.ndw-bookmark-chevron.is-open { transform: rotate(90deg); }
+.ndw-bookmark-folder-icon { flex-shrink: 0; color: var(--nd-accent); }
+.ndw-bookmark-emoji { display: inline-flex; color: var(--nd-accent); align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+.ndw-bookmark-nested { margin-inline-start: 14px; padding-inline-start: 6px; border-inline-start: 1px solid var(--nd-card-border); }
+.ndw-bookmark-search { display: flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--nd-card-border); border-radius: 8px; color: var(--nd-text-dimmed); }
+.ndw-bookmark-search input { flex: 1; min-width: 0; border: none; outline: none; color: var(--nd-text); background: none; font: inherit; font-size: 0.76rem; }
+.ndw-bookmark-search:focus-within { border-color: var(--nd-accent); }
+.ndw-bookmark-path { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; color: var(--nd-text-dimmed); font-size: 0.7rem; }
+.ndw-bookmark-path button { padding: 0; border: none; color: var(--nd-text-dimmed); background: none; font: inherit; cursor: pointer; }
+.ndw-bookmark-path button:hover { color: var(--nd-text); text-decoration: underline; }
+.ndw-bookmark-path [aria-current] { color: var(--nd-text); }
+.ndw-bookmark-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.ndw-bookmark-tiles .ndw-bookmark { padding: 9px 10px; border: 1px solid var(--nd-card-border); }
+.ndw-bookmark-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 4px; }
+.ndw-bookmark.is-icon { flex-direction: column; gap: 6px; padding: 10px 4px 8px; }
+.ndw-bookmark-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.68rem; color: var(--nd-text-dimmed); }
+.ndw-bookmark.is-icon:hover .ndw-bookmark-label { color: var(--nd-text); }
+@media (prefers-reduced-motion: reduce) { .ndw-bookmark-chevron { transition: none; } }
+
+/* Library in Settings → Widgets → Bookmarks. */
+.ndc-bookmark-row { gap: 8px; }
+.ndc-bookmark-name { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.ndc-bookmark-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.ndc-bookmark-form.is-editing { margin: 4px 0; padding: 10px; border: 1px solid var(--nd-card-border); border-radius: 10px; list-style: none; }
+.ndc-bookmark-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+.ndc-bookmark-wide { grid-column: 1 / -1; }
+.ndc-bookmark-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.ndc-bookmark-icon-button { margin-inline-end: auto; }

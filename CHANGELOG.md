@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Photos widget for Immich and PhotoPrism: slideshow, grid, mosaic or strip, random/recent/favorite/album/"on this day" selections, and a viewer with date, place and a link to the library. Photos pass through NasDash; no address or key reaches the browser. Connections are added in Settings → Integrations → Photos.
+- Bookmarks widget with folders: one library in Settings → Widgets → Bookmarks (folders inside folders, up to eight levels, icons and notes), shown as a folding tree, tiles or icons, with an optional search box. Each widget can open the library at a chosen folder. Site icons are fetched only for saved link origins, including for administrators.
+
 ## [0.2.5] - 2026-10-15
 
 ### Upgrading from 0.2.4

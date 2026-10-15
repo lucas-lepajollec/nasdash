@@ -64,6 +64,8 @@ export function buildConfigForPrincipal(
     // No page can expose a category; do not ship service addresses in bootstrap data.
     safeConfig.categories = [];
     if (Array.isArray(safeConfig.slots)) safeConfig.slots = [];
+    // Nor the bookmarks library: links are shown only by widgets on a visible page.
+    delete safeConfig.settings.bookmarks;
   }
   safeConfig.settings.calendarConfigured = Boolean(safeConfig.settings.calendarUrl);
   delete safeConfig.settings.calendarUrl;

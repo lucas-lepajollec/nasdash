@@ -5,6 +5,19 @@
       { "id": "feed-homelab", "url": "https://news.example/feed.xml", "title": "Homelab Gazette" },
       { "id": "feed-selfhost", "url": "https://selfhost.example/rss", "title": "Self-host Weekly" }
     ],
+    "bookmarks": [
+      { "id": "bookmark-homelab", "kind": "folder", "title": "Homelab", "icon": "lucide:Server", "color": "#38bdf8" },
+      { "id": "bookmark-atlas", "kind": "link", "title": "Atlas NAS", "url": "https://atlas.demo.invalid", "parentId": "bookmark-homelab", "description": "Storage and backups" },
+      { "id": "bookmark-status", "kind": "link", "title": "Lab status", "url": "https://status.demo.invalid", "parentId": "bookmark-homelab" },
+      { "id": "bookmark-photos", "kind": "link", "title": "Photo library", "url": "https://photos.demo.invalid", "parentId": "bookmark-homelab" },
+      { "id": "bookmark-dev", "kind": "folder", "title": "Dev", "icon": "lucide:Code", "color": "#a78bfa" },
+      { "id": "bookmark-forge", "kind": "link", "title": "Code forge", "url": "https://forge.example", "parentId": "bookmark-dev" },
+      { "id": "bookmark-builds", "kind": "link", "title": "Build dashboard", "url": "https://builds.example", "parentId": "bookmark-dev" },
+      { "id": "bookmark-docs", "kind": "folder", "title": "Docs", "parentId": "bookmark-dev", "icon": "lucide:BookOpen", "color": "#34d399" },
+      { "id": "bookmark-handbook", "kind": "link", "title": "Team handbook", "url": "https://handbook.example", "parentId": "bookmark-docs" },
+      { "id": "bookmark-api", "kind": "link", "title": "API reference", "url": "https://api.example/docs", "parentId": "bookmark-docs" },
+      { "id": "bookmark-gazette", "kind": "link", "title": "Homelab Gazette", "url": "https://news.example" }
+    ],
     "marketSymbols": [
       { "id": "symbol-demo", "symbol": "DEMO" },
       { "id": "symbol-acme", "symbol": "ACME" },
@@ -290,6 +303,22 @@
       "settings": {
         "url": "https://pihole.demo.invalid",
         "allowSelfSigned": "false"
+      }
+    },
+    {
+      "id": "immich-demo",
+      "type": "immich",
+      "name": "Immich · Atlas NAS",
+      "settings": {
+        "url": "https://photos.demo.invalid"
+      }
+    },
+    {
+      "id": "photoprism-demo",
+      "type": "photoprism",
+      "name": "PhotoPrism · Pi Edge",
+      "settings": {
+        "url": "https://prism.demo.invalid"
       }
     },
     {

@@ -14,6 +14,7 @@ import { DEVICE_INTEGRATION_IDS, getDeviceIntegration, getServiceIntegration } f
 import { connectionFields, isMonitoringType } from '@/integrations/sources';
 import { validateDockerHostUrl, validateDockerSocketPath } from './dockerClient';
 import { BACKUP_SCHEDULES, TASK_LIMITS } from './tasks';
+import type { BookmarkItem } from './widgetData/contracts';
 
 const CATEGORY_LAYOUTS = [
   'standard',
@@ -288,6 +289,67 @@ function validateSourceList(value: unknown, label: string, maxItems: number, fie
   });
 }
 
+/** Flat shared library: validate fields first, then references and folder ancestry. */
+function validateBookmarks(value: unknown): void {
+  const label = 'bookmarks';
+  if (!Array.isArray(value)) throw new RequestValidationError(`Le champ « ${label} » doit être une liste.`);
+  if (value.length > 500) throw new RequestValidationError(`Le champ « ${label} » contient trop d’éléments.`, 413);
+  const items = new Map<string, Pick<BookmarkItem, 'kind' | 'parentId'>>();
+  value.forEach((raw, index) => {
+    const item = requireObject(raw, `${label}.${index}`);
+    for (const key of Object.keys(item)) {
+      if (!['id', 'kind', 'title', 'url', 'parentId', 'icon', 'color', 'description'].includes(key)) {
+        throw new RequestValidationError(`Champ « ${key} » inconnu dans « ${label}.${index} ».`);
+      }
+    }
+    const id = readIdentifier(item)!;
+    const kind = readEnum(item, 'kind', ['link', 'folder'] as const, true)!;
+    const parentId = readIdentifier(item, 'parentId', item.parentId !== undefined);
+    // Validation does not rewrite the payload: saved identifiers must match references exactly.
+    if (id !== item.id || kind !== item.kind || (item.parentId !== undefined && parentId !== item.parentId)) {
+      throw new RequestValidationError(`Le champ « ${label}.${index} » contient une valeur invalide.`);
+    }
+    if (items.has(id)) throw new RequestValidationError(`Le champ « ${label} » contient un identifiant en double.`);
+    const title = readString(item, 'title', { required: true, maxLength: 120, trim: false })!;
+    if (!title.trim()) throw new RequestValidationError('Le champ « title » est requis.');
+    for (const key of ['icon', 'description'] as const) {
+      if (item[key] === null) throw new RequestValidationError(`Le champ « ${key} » doit être une chaîne de caractères.`);
+      readString(item, key, { maxLength: 200, trim: false });
+    }
+    if (item.color !== undefined && (typeof item.color !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(item.color))) {
+      throw new RequestValidationError(`Le champ « ${label}.${index}.color » doit être une couleur #rrggbb.`);
+    }
+    if (kind === 'folder') {
+      if ('url' in item) throw new RequestValidationError(`Le champ « ${label}.${index}.url » est interdit pour un dossier.`);
+    } else {
+      const url = readString(item, 'url', { required: true, maxLength: 2_048, trim: false })!;
+      try {
+        const parsed = new URL(url);
+        if (!/^https?:\/\/[^\s]+$/i.test(url) || !['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error();
+      } catch {
+        throw new RequestValidationError(`Le champ « ${label}.${index}.url » doit être une URL HTTP(S) absolue sans identifiants.`);
+      }
+    }
+    items.set(id, { kind, parentId });
+  });
+  for (const [id, item] of items) {
+    if (item.parentId !== undefined && items.get(item.parentId)?.kind !== 'folder') {
+      throw new RequestValidationError(`Le champ « ${label}.${id}.parentId » doit référencer un dossier existant.`);
+    }
+  }
+  for (const [id, item] of items) {
+    if (item.kind !== 'folder') continue;
+    const ancestors = new Set<string>();
+    let current: string | undefined = id;
+    while (current !== undefined) {
+      if (ancestors.has(current)) throw new RequestValidationError(`Le champ « ${label} » contient un cycle de dossiers.`);
+      ancestors.add(current);
+      if (ancestors.size > 8) throw new RequestValidationError(`Le champ « ${label} » dépasse la profondeur maximale de 8 dossiers.`);
+      current = items.get(current)!.parentId;
+    }
+  }
+}
+
 function validateAppearanceProfiles(value: unknown, label: string): void {
   if (!Array.isArray(value)) throw new RequestValidationError(`Le champ « ${label} » doit être une liste.`);
   if (value.length > 100) throw new RequestValidationError(`Le champ « ${label} » contient trop d’éléments.`, 413);
@@ -402,6 +464,7 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   }
 
   if (body.rssFeeds !== undefined) validateSourceList(body.rssFeeds, 'rssFeeds', 50, { url: { required: true, maxLength: 2_048, pattern: /^https?:\/\/[^\s]+$/i }, title: { maxLength: 80 } });
+  if (body.bookmarks !== undefined) validateBookmarks(body.bookmarks);
   if (body.marketSymbols !== undefined) validateSourceList(body.marketSymbols, 'marketSymbols', 30, { symbol: { required: true, maxLength: 20, pattern: /^[A-Za-z0-9.^=_-]{1,20}$/ }, label: { maxLength: 80 }, kind: { maxLength: 16, pattern: /^(stock|etf|fund|index|crypto|currency|future|other)$/ }, exchange: { maxLength: 40 } });
   if (body.quotes !== undefined) validateSourceList(body.quotes, 'quotes', 200, { text: { required: true, maxLength: 1_000 }, author: { maxLength: 200 } });
   if (body.quoteProviders !== undefined) readStringArray(body, 'quoteProviders', { maxItems: 10, maxItemLength: 64 });

@@ -15,7 +15,7 @@ import { useOpenSettings } from './useOpenSettings';
  * Each step links straight to the right place; done steps are ticked.
  * Visitors who cannot change the settings are told an admin has to.
  */
-export type SetupKind = 'devices' | 'docker' | 'vpn' | 'dns' | 'rss' | 'markets' | 'weather';
+export type SetupKind = 'devices' | 'docker' | 'vpn' | 'dns' | 'photos' | 'bookmarks' | 'rss' | 'markets' | 'weather';
 
 
 export function SetupGuide({ kind }: { kind: SetupKind }) {
@@ -35,6 +35,10 @@ export function SetupGuide({ kind }: { kind: SetupKind }) {
         ? [{ done: !!latestInstance(config ?? {}, ['tailscale', 'headscale']), label: t('setup.vpn.connect'), action: t('setup.vpn.connectAction'), open: () => openIntegrations('vpn') }]
         : kind === 'dns'
           ? [{ done: !!latestInstance(config ?? {}, ['pihole', 'adguard']), label: t('setup.dns.connect'), action: t('setup.dns.connectAction'), open: () => openIntegrations('dns') }]
+          : kind === 'photos'
+            ? [{ done: !!latestInstance(config ?? {}, ['immich', 'photoprism']), label: t('setup.photos.connect'), action: t('setup.photos.connectAction'), open: () => openIntegrations('photos') }]
+          : kind === 'bookmarks'
+            ? [{ done: (config?.settings?.bookmarks ?? []).some(item => item.kind === 'link'), label: t('setup.bookmarks.links'), action: t('setup.bookmarks.linksAction'), open: () => openWidgetSettings('widget-bookmarks') }]
           : kind === 'rss'
             ? [{ done: (config?.settings?.rssFeeds ?? []).length > 0, label: t('setup.rss.feeds'), action: t('setup.rss.feedsAction'), open: () => openWidgetSettings('widget-rss') }]
             : kind === 'weather'

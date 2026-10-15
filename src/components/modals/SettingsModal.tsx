@@ -318,7 +318,8 @@ import { WeatherWidgetTab } from './settings/tabs/widgets/WeatherWidgetTab';
 import { RssWidgetTab } from './settings/tabs/widgets/RssWidgetTab';
 import { MarketsWidgetTab } from './settings/tabs/widgets/MarketsWidgetTab';
 import { QuotesWidgetTab } from './settings/tabs/widgets/QuotesWidgetTab';
-import { DnsWidgetTab } from './settings/tabs/widgets/DnsWidgetTab';
+import { DnsWidgetTab, PhotosWidgetTab } from './settings/tabs/widgets/ServiceConnectionsTab';
+import { BookmarksWidgetTab } from './settings/tabs/widgets/BookmarksWidgetTab';
 import { NetworkGraphWidgetTab } from './settings/tabs/widgets/NetworkGraphWidgetTab';
 import { DockerContainersWidgetTab } from './settings/tabs/widgets/DockerContainersWidgetTab';
 import { ServicesWidgetTab } from './settings/tabs/widgets/ServicesWidgetTab';
@@ -575,6 +576,8 @@ export default function SettingsModal({ onClose, restoreFocus, showSensitive = f
           {currentTab === 'widget-markets' && <MarketsWidgetTab />}
           {currentTab === 'widget-quotes' && <QuotesWidgetTab />}
           {currentTab === 'widget-dns' && <DnsWidgetTab />}
+          {currentTab === 'widget-photos' && <PhotosWidgetTab />}
+          {currentTab === 'widget-bookmarks' && <BookmarksWidgetTab />}
 
             </>
           )}

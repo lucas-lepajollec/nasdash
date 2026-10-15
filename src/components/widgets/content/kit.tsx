@@ -159,10 +159,11 @@ export function hueOf(text: string): number {
  * A site's own icon (fetched once by the server, then cached), or its first
  * letter on a tinted tile while it loads or when the site has none.
  */
-export function SiteIcon({ url, name, widget, size = 18, className = '' }: { url?: string; name: string; widget: { id: string; type: 'rss' | 'bookmarks' }; size?: number; className?: string }) {
+export function SiteIcon({ url, name, widget, size = 18, className = '' }: { url?: string; name: string; widget?: { id: string; type: 'rss' | 'bookmarks' }; size?: number; className?: string }) {
   const [failed, setFailed] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
-  const source = url && /^https?:\/\//i.test(url) ? `/api/widgets/favicon?${new URLSearchParams({ url, widgetId: widget.id, type: widget.type })}` : null;
+  // The server serves icons for a widget's saved sources; outside a widget, the letter is enough.
+  const source = widget && url && /^https?:\/\//i.test(url) ? `/api/widgets/favicon?${new URLSearchParams({ url, widgetId: widget.id, type: widget.type })}` : null;
   const letter = (name.trim()[0] ?? '?').toUpperCase();
   const style = { width: size, height: size, '--ndw-hue': hueOf(name || url || '?') } as React.CSSProperties;
   return (

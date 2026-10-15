@@ -409,6 +409,7 @@ async function handlePUT(req: NextRequest) {
     if (body.weatherLocation !== undefined) config.settings.weatherLocation = body.weatherLocation;
     if (body.weatherLocations !== undefined) config.settings.weatherLocations = body.weatherLocations;
     if (body.rssFeeds !== undefined) config.settings.rssFeeds = body.rssFeeds;
+    if (body.bookmarks !== undefined) config.settings.bookmarks = body.bookmarks;
     if (body.marketSymbols !== undefined) config.settings.marketSymbols = body.marketSymbols;
     if (body.quotes !== undefined) config.settings.quotes = body.quotes;
     if (body.quoteProviders !== undefined) config.settings.quoteProviders = body.quoteProviders;

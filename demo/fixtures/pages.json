@@ -380,6 +380,44 @@
           "y": 54,
           "w": 5,
           "h": 84
+        },
+        {
+          "id": "photos-demo",
+          "type": "photos",
+          "settings": {
+            "display": "slideshow",
+            "mode": "random",
+            "count": 12
+          },
+          "x": 0,
+          "y": 419,
+          "w": 10,
+          "h": 320
+        },
+        {
+          "id": "bookmarks-demo",
+          "type": "bookmarks",
+          "settings": {
+            "display": "tree"
+          },
+          "x": 10,
+          "y": 419,
+          "w": 6,
+          "h": 320
+        },
+        {
+          "id": "photos-grid-demo",
+          "type": "photos",
+          "settings": {
+            "display": "mosaic",
+            "mode": "recent",
+            "count": 12,
+            "integrationId": "photoprism-demo"
+          },
+          "x": 16,
+          "y": 419,
+          "w": 8,
+          "h": 320
         }
       ]
     },

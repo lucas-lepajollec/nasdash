@@ -192,8 +192,8 @@ export interface PhotosResponse {
 /* ------------------------------------------------------------ Bookmarks */
 
 /**
- * Bookmarks are stored in the widget settings as a flat list (no nesting
- * limit to hit): `settings.items: BookmarkItem[]`, folders reference their
+ * Bookmarks are shared by every bookmarks widget as a flat list in
+ * `config.settings.bookmarks: BookmarkItem[]`, folders reference their
  * parent by id, `parentId` absent means the root. Order = array order.
  */
 export interface BookmarkItem {
@@ -215,7 +215,7 @@ export interface BookmarkItem {
  * GET /api/widgets/favicon?url=<absolute http(s) url>&widgetId=… → the site's
  * icon (image bytes, long cache) or 404. The server finds it once (page
  * `<link rel=icon|apple-touch-icon>`, web manifest, `/favicon.ico`), keeps it
- * in `<data>/favicons/`, and only fetches for admins or for URLs saved in that
- * bookmarks widget.
+ * in `<data>/favicons/`, and only fetches origins saved in the shared bookmarks
+ * library or the RSS widget's saved feeds, including for admins.
  */
 export const FAVICON_ROUTE = '/api/widgets/favicon';

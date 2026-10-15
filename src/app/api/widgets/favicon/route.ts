@@ -22,9 +22,7 @@ export async function GET(request: NextRequest) {
   // saved one, read from the config, never the text of this request.
   const savedUrls = type === 'rss'
     ? widgetFeeds(resolved.settings, readConfig()).map(feed => feed.url)
-    : Array.isArray(resolved.settings.items)
-      ? resolved.settings.items.flatMap(item => (!!item && typeof item === 'object' && 'kind' in item && item.kind === 'link' && 'url' in item && typeof item.url === 'string' ? [item.url] : []))
-      : [];
+    : (readConfig().settings?.bookmarks ?? []).flatMap(item => item.kind === 'link' && typeof item.url === 'string' ? [item.url] : []);
   const origin = savedUrls.map(url => { try { return httpUrl(url).origin; } catch { return undefined; } }).find(saved => saved === requested);
   if (!origin) return NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404, headers });
   try {
