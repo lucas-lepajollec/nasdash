@@ -143,9 +143,9 @@ export function CalmeSlider({ value, min, max, step, onChange, onCommit, format,
 }
 
 /** A bare switch, for the control side of a CalmeRow. */
-export function CalmeSwitch({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
+export function CalmeSwitch({ checked, onChange, label, disabled }: { checked: boolean; onChange: (value: boolean) => void; label: string; disabled?: boolean }) {
   return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} className="ndc-switch-button" onClick={() => onChange(!checked)}>
+    <button type="button" role="switch" aria-checked={checked} aria-label={label} className="ndc-switch-button" disabled={disabled} onClick={() => onChange(!checked)}>
       <span className={`ndc-switch ${checked ? 'is-on' : ''}`} aria-hidden="true"><span /></span>
     </button>
   );

@@ -14,6 +14,7 @@ import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/setti
 import { CalmeWidget } from '../calme';
 import { pick, SiteIcon, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { childrenOf, descendantsOf, folderOptions, hostOf, pathTo } from './tree';
+import { BookmarkDragScope, useBookmarkDrag, useBookmarkZone } from './dnd';
 
 export type BookmarksDisplay = 'tree' | 'tiles' | 'icons';
 const DISPLAYS: readonly BookmarksDisplay[] = ['tree', 'tiles', 'icons'];
@@ -28,7 +29,7 @@ export default function CalmeBookmarks({ widgetId, settings, editMode, onUpdateS
   widgetId: string; settings: WidgetSettings; editMode: boolean; onUpdateSettings: (settings: WidgetSettings) => void;
 }) {
   const { t } = useI18n();
-  const { config } = useConfig();
+  const { config, updateConfig } = useConfig();
   const items = useMemo<BookmarkItem[]>(() => config?.settings?.bookmarks ?? [], [config?.settings?.bookmarks]);
   const display = pick(settings.display, DISPLAYS, 'tree');
   const root = typeof settings.rootId === 'string' && items.some(item => item.id === settings.rootId && item.kind === 'folder') ? settings.rootId : undefined;
@@ -65,8 +66,13 @@ export default function CalmeBookmarks({ widgetId, settings, editMode, onUpdateS
           {found
             ? (found.length ? <ul className="ndw-bookmark-list">{found.map(item => <li key={item.id}><BookmarkLink item={item} {...options} path={pathTo(items, item.parentId).map(folder => folder.title).join(' / ')} /></li>)}</ul>
               : <div className="ndc-empty">{t('widgets.bookmarks.noMatch')}</div>)
-            : display === 'tree' ? <Tree items={items} parentId={root} depth={0} options={options} />
-              : <Browser items={items} root={root} icons={display === 'icons'} options={options} />}
+            : (
+              // In edit mode, links and folders move by drag and drop (saved for every bookmarks widget).
+              <BookmarkDragScope items={items} enabled={editMode} onChange={next => void updateConfig({ bookmarks: next })} overlay={item => <span className="ndw-bookmark"><BookmarkIcon item={item} widget={widget} size={18} /><span className="ndw-bookmark-title">{item.title}</span></span>}>
+                {display === 'tree' ? <Tree items={items} parentId={root} depth={0} options={options} />
+                  : <Browser items={items} root={root} icons={display === 'icons'} options={options} />}
+              </BookmarkDragScope>
+            )}
         </div>
       )}
     </CalmeWidget>
@@ -84,8 +90,9 @@ export function BookmarkIcon({ item, widget, size }: { item: BookmarkItem; widge
 
 function BookmarkLink({ item, widget, newTab, descriptions, path, compact }: LinkOptions & { item: BookmarkItem; path?: string; compact?: boolean }) {
   const detail = descriptions && item.description ? item.description : path;
+  const { attach, handle, dropClass, enabled: dragging } = useBookmarkDrag(item, compact ? 'horizontal' : 'vertical');
   return (
-    <a className={`ndw-bookmark ${compact ? 'is-icon' : ''}`} href={item.url} {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : { rel: 'noreferrer' })} title={[item.title, item.description, hostOf(item.url)].filter(Boolean).join('\n')}>
+    <a ref={attach} {...handle} onClick={dragging ? event => event.preventDefault() : undefined} className={`ndw-bookmark ${compact ? 'is-icon' : ''} ${dropClass}`} href={item.url} {...(newTab ? { target: '_blank', rel: 'noopener noreferrer' } : { rel: 'noreferrer' })} title={[item.title, item.description, hostOf(item.url)].filter(Boolean).join('\n')}>
       <BookmarkIcon item={item} widget={widget} size={compact ? 26 : 18} />
       {!compact && (
         <span className="ndw-bookmark-text">
@@ -106,17 +113,43 @@ function Tree({ items, parentId, depth, options }: { items: BookmarkItem[]; pare
     <ul className="ndw-bookmark-list" role={depth === 0 ? 'tree' : 'group'} aria-label={depth === 0 ? t('widget.bookmarks.name') : undefined}>
       {childrenOf(items, parentId).map(item => item.kind === 'folder' ? (
         <li key={item.id} role="treeitem" aria-expanded={open.has(item.id)} aria-selected={false}>
-          <button type="button" className="ndw-bookmark is-folder" onClick={() => setOpen(item.id)}>
-            <ChevronRight size={13} className={`ndw-bookmark-chevron ${open.has(item.id) ? 'is-open' : ''}`} aria-hidden="true" />
-            <BookmarkIcon item={item} widget={options.widget} size={18} />
-            <span className="ndw-bookmark-title">{item.title}</span>
-            <span className="ndw-bookmark-count">{childrenOf(items, item.id).length}</span>
-          </button>
+          <FolderRow item={item} count={childrenOf(items, item.id).length} open={open.has(item.id)} onToggle={() => setOpen(item.id)} widget={options.widget} />
           {open.has(item.id) && <div className="ndw-bookmark-nested"><Tree items={items} parentId={item.id} depth={depth + 1} options={options} /></div>}
         </li>
       ) : <li key={item.id} role="treeitem" aria-selected={false}><BookmarkLink item={item} {...options} /></li>)}
     </ul>
   );
+}
+
+function FolderRow({ item, count, open, onToggle, widget }: { item: BookmarkItem; count: number; open: boolean; onToggle: () => void; widget: LinkOptions['widget'] }) {
+  const { attach, handle, dropClass, enabled: dragging } = useBookmarkDrag(item);
+  return (
+    <button ref={attach} {...handle} type="button" className={`ndw-bookmark is-folder ${dropClass}`} onClick={onToggle}>
+      <ChevronRight size={13} className={`ndw-bookmark-chevron ${open ? 'is-open' : ''}`} aria-hidden="true" />
+      <BookmarkIcon item={item} widget={widget} size={18} />
+      <span className="ndw-bookmark-title">{item.title}</span>
+      <span className="ndw-bookmark-count">{count}</span>
+    </button>
+  );
+}
+
+/** A folder tile of the tiles and icons displays: a click steps in. */
+function FolderTile({ item, count, icons, onOpen, widget }: { item: BookmarkItem; count: number; icons: boolean; onOpen: () => void; widget: LinkOptions['widget'] }) {
+  const { t } = useI18n();
+  const { attach, handle, dropClass, enabled: dragging } = useBookmarkDrag(item, 'horizontal');
+  return (
+    <button ref={attach} {...handle} type="button" className={`ndw-bookmark is-folder ${icons ? 'is-icon' : ''} ${dropClass}`} onClick={onOpen} title={item.title}>
+      <BookmarkIcon item={item} widget={widget} size={icons ? 28 : 20} />
+      {icons ? <span className="ndw-bookmark-label">{item.title}</span> : <span className="ndw-bookmark-text"><span className="ndw-bookmark-title">{item.title}</span><span className="ndw-bookmark-detail">{t('widgets.bookmarks.itemCount', { count })}</span></span>}
+    </button>
+  );
+}
+
+/** A path segment: steps back to that folder, and takes dropped bookmarks into it. */
+function PathStep({ folderId, label, current, onOpen }: { folderId: string | undefined; label: string; current?: boolean; onOpen: () => void }) {
+  const { attach, over } = useBookmarkZone(folderId, `path-${folderId ?? 'root'}`);
+  if (current) return <span ref={attach} className={over ? 'is-drop-inside' : undefined} aria-current="location">{label}</span>;
+  return <button ref={attach} type="button" className={over ? 'is-drop-inside' : undefined} onClick={onOpen}>{label}</button>;
 }
 
 function useOpenFolders(widgetId: string): [Set<string>, (id: string) => void] {
@@ -144,21 +177,18 @@ function Browser({ items, root, icons, options }: { items: BookmarkItem[]; root?
     <>
       {path.length > 0 && (
         <nav className="ndw-bookmark-path" aria-label={t('widgets.bookmarks.path')}>
-          <button type="button" onClick={() => setHere(root)}>{root ? items.find(item => item.id === root)?.title : t('widget.bookmarks.name')}</button>
+          <PathStep folderId={root} label={(root ? items.find(item => item.id === root)?.title : undefined) ?? t('widget.bookmarks.name')} onOpen={() => setHere(root)} />
           {path.map((folder, index) => (
             <React.Fragment key={folder.id}>
               <ChevronRight size={11} aria-hidden="true" />
-              {index === path.length - 1 ? <span aria-current="location">{folder.title}</span> : <button type="button" onClick={() => setHere(folder.id)}>{folder.title}</button>}
+              <PathStep folderId={folder.id} label={folder.title} current={index === path.length - 1} onOpen={() => setHere(folder.id)} />
             </React.Fragment>
           ))}
         </nav>
       )}
       <div className={icons ? 'ndw-bookmark-icons' : 'ndw-bookmark-tiles'}>
         {childrenOf(items, current).map(item => item.kind === 'folder' ? (
-          <button key={item.id} type="button" className={`ndw-bookmark is-folder ${icons ? 'is-icon' : ''}`} onClick={() => setHere(item.id)} title={item.title}>
-            <BookmarkIcon item={item} widget={options.widget} size={icons ? 28 : 20} />
-            {icons ? <span className="ndw-bookmark-label">{item.title}</span> : <span className="ndw-bookmark-text"><span className="ndw-bookmark-title">{item.title}</span><span className="ndw-bookmark-detail">{t('widgets.bookmarks.itemCount', { count: childrenOf(items, item.id).length })}</span></span>}
-          </button>
+          <FolderTile key={item.id} item={item} count={childrenOf(items, item.id).length} icons={icons} onOpen={() => setHere(item.id)} widget={options.widget} />
         ) : <BookmarkLink key={item.id} item={item} {...options} compact={icons} />)}
       </div>
     </>

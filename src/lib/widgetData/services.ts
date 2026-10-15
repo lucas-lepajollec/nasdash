@@ -213,12 +213,24 @@ export function demoPhotos(instance: IntegrationInstance, count: number, widgetI
   const photos = Array.from({ length: count }, (_, i) => {
     const n = (i + offset) % 60;
     const id = instance.type === 'immich' ? `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` : `pdemo${String(n).padStart(11, '0')}`;
-    return { id, ...photoUrls(widgetId, id, draft), width: 1200, height: 800, takenAt: Date.UTC(2024, 5, 1 + n), place: ['Silver Lake', 'Blue Ridge', 'Quiet Coast'][n % 3] };
+    return { id, ...photoUrls(widgetId, id, draft), ...(demoPortrait(id) ? { width: 800, height: 1200 } : { width: 1200, height: 800 }), takenAt: Date.UTC(2024, 5, 1 + n), place: ['Silver Lake', 'Blue Ridge', 'Quiet Coast'][n % 3] };
   });
   return { provider: instance.type as 'immich' | 'photoprism', name: instance.name, photos, stats: { photos: 1240, videos: 38 }, fetchedAt: Date.UTC(2026, 0, 15, 12) };
 }
+/** One demo photo in three is upright, so mosaics get their mixed sizes. */
+function demoPortrait(id: string): boolean {
+  return Number(id.replace(/\D/g, '').slice(-3)) % 3 === 1;
+}
+/** Calm generated landscapes (dawn, sea, forest, dusk…): no real photo ships with the demo. */
 export function demoLandscape(id: string): string {
   const n = [...id].reduce((sum, char) => sum * 31 + char.charCodeAt(0) >>> 0, 0);
-  const hue = n % 360;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="hsl(${hue} 60% 65%)"/><stop offset="1" stop-color="hsl(${(hue + 40) % 360} 70% 88%)"/></linearGradient></defs><path fill="url(#sky)" d="M0 0h1200v800H0z"/><circle fill="#fff2c0" cx="${200 + n % 700}" cy="170" r="65"/><path fill="hsl(${hue} 25% 40%)" d="M0 580L280 270l260 270L860 320l340 280v200H0z"/><path fill="hsl(${hue} 35% 27%)" d="M0 640q300-190 600 0t600 0v160H0z"/></svg>`;
+  const [sky, glow, far, near] = [
+    ['#f4a261', '#ffe8c2', '#6d597a', '#355070'], ['#8ecae6', '#e0f4ff', '#5c8a74', '#2d4a3e'], ['#264653', '#9fc5c9', '#2a9d8f', '#1d3b3f'],
+    ['#ffb4a2', '#ffeadf', '#b5838d', '#6d6875'], ['#a8dadc', '#f1faee', '#457b9d', '#1d3557'], ['#e9c46a', '#fff4d6', '#8a6d3b', '#4a3b24'],
+  ][n % 6];
+  const portrait = demoPortrait(id);
+  const [w, h] = portrait ? [800, 1200] : [1200, 800];
+  const sun = 120 + n % (w - 240);
+  const horizon = h * 0.62;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="s" x2="0" y2="1"><stop stop-color="${sky}"/><stop offset="1" stop-color="${glow}"/></linearGradient></defs><path fill="url(#s)" d="M0 0h${w}v${h}H0z"/><circle fill="#fff7e0" opacity=".85" cx="${sun}" cy="${h * 0.24}" r="${w * 0.06}"/><path fill="${far}" opacity=".85" d="M0 ${horizon}L${w * 0.22} ${horizon - h * 0.22}L${w * 0.45} ${horizon - h * 0.06}L${w * 0.7} ${horizon - h * 0.28}L${w} ${horizon - h * 0.1}V${h}H0z"/><path fill="${near}" d="M0 ${horizon + h * 0.12}Q${w * 0.3} ${horizon - h * 0.02} ${w * 0.55} ${horizon + h * 0.1}T${w} ${horizon + h * 0.06}V${h}H0z"/></svg>`;
 }

@@ -1917,6 +1917,7 @@ body[data-design="calme"] .ndc-settings .nd-settings-content h4 { font-weight: 5
 .ndc-set-row-label { display: flex; align-items: center; }
 
 .ndc-switch-button { padding: 4px 0; border: none; background: transparent; cursor: pointer; display: inline-flex; }
+.ndc-switch-button:disabled { opacity: 0.55; cursor: default; }
 .ndc-switch-button:focus-visible .ndc-switch { box-shadow: 0 0 0 3px var(--nd-accent-glow); }
 
 /* Accent swatches */

@@ -128,12 +128,15 @@ function SettingsDialog({ title, settings, width, onSave, onClose, shared, child
             <button type="button" className="nd-btn nd-btn-accent" onClick={() => { onSave(draft); onClose(); }}>{t('Enregistrer')}</button>
           </>}
         >
-          {children(draft, change)}
+          <CloseWidgetDialog.Provider value={onClose}>{children(draft, change)}</CloseWidgetDialog.Provider>
         </CalmeDialog>
       )}
     </DialogPortal>
   );
 }
+
+/** Closes the widget dialog around a control, before it opens the settings elsewhere. */
+export const CloseWidgetDialog = React.createContext<(() => void) | null>(null);
 
 /**
  * From a widget's own dialog to its type's shared settings (the quotes,

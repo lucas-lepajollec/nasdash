@@ -540,10 +540,13 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-photo:hover img { transform: scale(1.03); }
 .ndw-photo:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
 .ndw-photo.is-square { aspect-ratio: 1; }
-.ndw-photo.is-natural { margin-bottom: 8px; break-inside: avoid; }
-.ndw-photo.is-natural img { height: auto; }
 .ndw-photo-video { position: absolute; right: 6px; bottom: 6px; display: inline-flex; padding: 4px; border-radius: 50%; color: #fff; background: rgb(0 0 0 / 0.45); }
-.ndw-photo-mosaic { column-gap: 8px; }
+.ndw-photo-pages { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ndw-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; animation: ndw-photo-in 0.6s ease; }
+/* Mosaic: tiles of mixed sizes packed densely (spans set per photo). */
+.ndw-photo-mosaic { display: grid; gap: 6px; animation: ndw-photo-in 0.6s ease; }
+.ndw-photo.is-tile { height: 100%; }
+@keyframes ndw-photo-in { from { opacity: 0; } to { opacity: 1; } }
 .ndw-photo-strip { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; scrollbar-width: thin; }
 .ndw-photo.is-strip { flex: 0 0 auto; width: auto; height: 120px; aspect-ratio: 4 / 3; scroll-snap-align: start; }
 
@@ -565,7 +568,7 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-slide-arrow.is-next { right: 8px; }
 .ndw-slideshow:hover .ndw-slide-arrow, .ndw-slide-arrow:focus-visible { opacity: 1; }
 @media (hover: none) { .ndw-slide-arrow { opacity: 0.8; } }
-@media (prefers-reduced-motion: reduce) { .ndw-slide { transition: none; } .ndw-photo img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ndw-slide { transition: none; } .ndw-photo img { transition: none; } .ndw-photo-grid, .ndw-photo-mosaic { animation: none; } }
 
 /* Viewer: the photo large, its date and place, arrows and the library link. */
 .ndw-viewer { display: flex; flex-direction: column; gap: 10px; max-width: min(1200px, 94vw); max-height: 92vh; outline: none; }
@@ -617,3 +620,19 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndc-bookmark-wide { grid-column: 1 / -1; }
 .ndc-bookmark-actions { display: flex; justify-content: flex-end; gap: 6px; }
 .ndc-bookmark-icon-button { margin-inline-end: auto; }
+
+/* ---------- Drag and drop (edit mode, bookmarks library) ---------- */
+.is-sortable, .ndw-bookmark.is-draggable { cursor: grab; touch-action: none; }
+.is-sortable.is-dragging { position: relative; z-index: 2; opacity: 0.85; cursor: grabbing; }
+.ndw-bookmark.is-dragged, .ndc-bookmark-row.is-dragged { opacity: 0.35; }
+/* Where a bookmark would land: a line before or after, a tint inside a folder. */
+.ndw-bookmark.is-drop-before, .ndc-bookmark-row.is-drop-before { box-shadow: inset 0 2px 0 var(--nd-accent); }
+.ndw-bookmark.is-drop-after, .ndc-bookmark-row.is-drop-after { box-shadow: inset 0 -2px 0 var(--nd-accent); }
+.ndw-bookmark-tiles .ndw-bookmark.is-drop-before, .ndw-bookmark-icons .ndw-bookmark.is-drop-before { box-shadow: inset 2px 0 0 var(--nd-accent); }
+.ndw-bookmark-tiles .ndw-bookmark.is-drop-after, .ndw-bookmark-icons .ndw-bookmark.is-drop-after { box-shadow: inset -2px 0 0 var(--nd-accent); }
+.is-drop-inside { background: color-mix(in srgb, var(--nd-accent) 14%, transparent) !important; outline: 1px dashed var(--nd-accent); outline-offset: -1px; border-radius: 8px; }
+.ndw-bookmark-path .is-drop-inside { padding: 1px 4px; }
+.ndw-bookmark-overlay { border-radius: 8px; background: var(--nd-card-bg); border: 1px solid var(--nd-card-border); box-shadow: 0 10px 24px rgb(0 0 0 / 0.25); cursor: grabbing; }
+.ndw-bookmark-overlay > * { padding: 6px 10px; }
+.ndc-bookmark-grip { display: inline-flex; padding: 2px; border: none; color: var(--nd-text-dimmed); background: none; cursor: grab; touch-action: none; }
+.ndc-bookmark-grip:hover { color: var(--nd-text); }

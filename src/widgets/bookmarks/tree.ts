@@ -53,20 +53,6 @@ export function moveInto(items: readonly BookmarkItem[], id: string, parentId: s
   return [...rest, moved];
 }
 
-/** Swaps an item with its previous (-1) or next (+1) sibling. */
-export function moveAmongSiblings(items: readonly BookmarkItem[], id: string, step: -1 | 1): BookmarkItem[] {
-  const item = items.find(entry => entry.id === id);
-  if (!item) return [...items];
-  const siblings = childrenOf(items, item.parentId);
-  const position = siblings.findIndex(entry => entry.id === id);
-  const other = siblings[position + step];
-  if (!other) return [...items];
-  const next = [...items];
-  const a = next.findIndex(entry => entry.id === id), b = next.findIndex(entry => entry.id === other.id);
-  [next[a], next[b]] = [next[b], next[a]];
-  return next;
-}
-
 /** Folders in display order, each with its depth (for an indented picker). */
 export function folderOptions(items: readonly BookmarkItem[], exclude?: string): { folder: BookmarkItem; depth: number }[] {
   const blocked = exclude ? new Set([exclude, ...descendantsOf(items, exclude)]) : new Set<string>();
@@ -82,4 +68,28 @@ export function folderOptions(items: readonly BookmarkItem[], exclude?: string):
 export function hostOf(url: string | undefined): string {
   if (!url) return '';
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+}
+
+export type DropPosition = 'before' | 'after' | 'inside';
+
+/**
+ * Drops an item next to another (taking that one's folder) or inside a
+ * folder (at its end). Refused onto itself or, for a folder, anywhere
+ * inside it.
+ */
+export function dropItem(items: readonly BookmarkItem[], id: string, targetId: string | undefined, position: DropPosition): BookmarkItem[] {
+  const item = items.find(entry => entry.id === id);
+  if (!item || targetId === id) return [...items];
+  if (targetId && descendantsOf(items, id).has(targetId)) return [...items];
+  if (position === 'inside') {
+    if (targetId && items.find(entry => entry.id === targetId)?.kind !== 'folder') return [...items];
+    return moveInto(items, id, targetId);
+  }
+  const target = items.find(entry => entry.id === targetId);
+  if (!target) return [...items];
+  const rest = items.filter(entry => entry.id !== id);
+  const moved: BookmarkItem = { ...item };
+  if (target.parentId) moved.parentId = target.parentId; else delete moved.parentId;
+  const at = rest.findIndex(entry => entry.id === target.id) + (position === 'after' ? 1 : 0);
+  return [...rest.slice(0, at), moved, ...rest.slice(at)];
 }

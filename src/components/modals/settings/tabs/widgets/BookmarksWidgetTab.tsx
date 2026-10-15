@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowDown, ArrowUp, Pencil, Plus, X } from 'lucide-react';
+import { GripVertical, Pencil, Plus, Upload, X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { BookmarkItem } from '@/lib/widgetData/contracts';
 import CustomSelect from '@/components/shared/CustomSelect';
 import EmojiPickerModal from '@/components/modals/EmojiPickerModal';
 import { BookmarkIcon } from '@/widgets/bookmarks/CalmeBookmarks';
-import { childrenOf, folderOptions, hostOf, moveAmongSiblings, moveInto, removeItem } from '@/widgets/bookmarks/tree';
+import { childrenOf, folderOptions, hostOf, moveInto, removeItem } from '@/widgets/bookmarks/tree';
+import { BookmarkDragScope, useBookmarkDrag } from '@/widgets/bookmarks/dnd';
+import { importBookmarkHtml } from '@/widgets/bookmarks/importHtml';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
 import { CalmeHeading, CalmeSegmented } from '../../shared/CalmeControls';
 import { sourceId } from '../../shared/SourceList';
@@ -24,6 +26,16 @@ export function BookmarksWidgetTab() {
   const items: BookmarkItem[] = config?.settings?.bookmarks ?? [];
   const save = (next: BookmarkItem[]) => void updateConfig({ bookmarks: next });
   const [editing, setEditing] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const file = React.useRef<HTMLInputElement>(null);
+
+  // The file every browser exports (HTML): its folders and links join the library.
+  const importFile = async (chosen: File | undefined) => {
+    if (!chosen) return;
+    const { items: added, skipped } = importBookmarkHtml(await chosen.text(), sourceId, items.length);
+    if (added.length) save([...items, ...added]);
+    setNotice(added.length ? [t('settings.bookmarks.imported', { count: added.filter(item => item.kind === 'link').length }), skipped ? t('settings.bookmarks.importSkipped', { count: skipped }) : ''].join(' ').trim() : t('settings.bookmarks.importEmpty'));
+  };
 
   const remove = (item: BookmarkItem) => {
     const inside = items.filter(entry => entry.parentId === item.id).length;
@@ -31,26 +43,10 @@ export function BookmarksWidgetTab() {
     save(removeItem(items, item.id));
   };
 
-  const rows = (parentId: string | undefined, depth: number): React.ReactNode[] => childrenOf(items, parentId).flatMap((item, index, siblings) => [
+  const rows = (parentId: string | undefined, depth: number): React.ReactNode[] => childrenOf(items, parentId).flatMap(item => [
     editing === item.id
       ? <li key={item.id} style={{ paddingLeft: depth * 18 }}><BookmarkForm items={items} initial={item} onCancel={() => setEditing(null)} onSave={next => { save(withEdit(items, next)); setEditing(null); }} /></li>
-      : (
-        <li key={item.id} className="ndc-set-list-row ndc-bookmark-row" style={{ paddingLeft: depth * 18 }}>
-          <span className="ndc-bookmark-name">
-            <BookmarkIcon item={item} size={16} />
-            <span className="ndc-source-text">
-              <span className="ndc-source-name">{item.title}</span>
-              {item.kind === 'link' && <span className="ndc-set-list-sub ndc-source-detail">{hostOf(item.url)}</span>}
-            </span>
-          </span>
-          <span className="ndc-source-tools">
-            <button type="button" className="ndc-icon-button" disabled={index === 0} onClick={() => save(moveAmongSiblings(items, item.id, -1))} aria-label={t('widgets.list.moveUp', { name: item.title })} title={t('widgets.list.moveUp', { name: item.title })}><ArrowUp size={13} /></button>
-            <button type="button" className="ndc-icon-button" disabled={index === siblings.length - 1} onClick={() => save(moveAmongSiblings(items, item.id, 1))} aria-label={t('widgets.list.moveDown', { name: item.title })} title={t('widgets.list.moveDown', { name: item.title })}><ArrowDown size={13} /></button>
-            <button type="button" className="ndc-icon-button" onClick={() => setEditing(item.id)} aria-label={t('settings.bookmarks.edit', { name: item.title })} title={t('settings.bookmarks.edit', { name: item.title })}><Pencil size={13} /></button>
-            <button type="button" className="ndc-icon-button is-danger" onClick={() => remove(item)} aria-label={t('widgets.list.remove', { name: item.title })} title={t('widgets.list.remove', { name: item.title })}><X size={13} /></button>
-          </span>
-        </li>
-      ),
+      : <LibraryRow key={item.id} item={item} depth={depth} onEdit={() => setEditing(item.id)} onRemove={() => remove(item)} />,
     ...(item.kind === 'folder' ? rows(item.id, depth + 1) : []),
   ]);
 
@@ -58,13 +54,46 @@ export function BookmarksWidgetTab() {
     <div className="ndc-set-page">
       <WidgetPlacementNote type="bookmarks" />
       <section className="ndc-set-block">
-        <CalmeHeading info={t('settings.bookmarks.hint')}>{t('settings.bookmarks.library')}</CalmeHeading>
+        <CalmeHeading
+          info={t('settings.bookmarks.hint')}
+          action={<button type="button" className="nd-btn" onClick={() => file.current?.click()} title={t('settings.bookmarks.importHint')}><Upload size={13} />{t('settings.bookmarks.import')}</button>}
+        >
+          {t('settings.bookmarks.library')}
+        </CalmeHeading>
+        <input ref={file} type="file" accept=".html,.htm,text/html" hidden onChange={event => { void importFile(event.target.files?.[0]); event.target.value = ''; }} />
+        {notice && <p className="ndw-note" role="status">{notice}</p>}
         <BookmarkForm items={items} onSave={item => save([...items, item])} />
         {items.length === 0
           ? <p className="ndc-source-empty">{t('settings.bookmarks.empty')}</p>
-          : <ul className="ndc-set-list ndc-source-list" aria-label={t('settings.bookmarks.library')}>{rows(undefined, 0)}</ul>}
+          : (
+            <BookmarkDragScope items={items} enabled={editing === null} onChange={save} overlay={item => <span className="ndc-bookmark-name"><BookmarkIcon item={item} size={16} /><span className="ndc-source-name">{item.title}</span></span>}>
+              <ul className="ndc-set-list ndc-source-list" aria-label={t('settings.bookmarks.library')}>{rows(undefined, 0)}</ul>
+            </BookmarkDragScope>
+          )}
       </section>
     </div>
+  );
+}
+
+/** One library row: dragged by its grip onto another row (before, after, or inside a folder). */
+function LibraryRow({ item, depth, onEdit, onRemove }: { item: BookmarkItem; depth: number; onEdit: () => void; onRemove: () => void }) {
+  const { t } = useI18n();
+  const { attach, handle, dropClass, enabled: dragging } = useBookmarkDrag(item);
+  return (
+    <li ref={attach} className={`ndc-set-list-row ndc-bookmark-row ${dropClass}`} style={{ paddingLeft: depth * 18 }}>
+      <span className="ndc-bookmark-name">
+        <button type="button" className="ndc-bookmark-grip" {...handle} aria-label={t('widgets.bookmarks.move', { name: item.title })} title={t('widgets.bookmarks.move', { name: item.title })}><GripVertical size={13} /></button>
+        <BookmarkIcon item={item} size={16} />
+        <span className="ndc-source-text">
+          <span className="ndc-source-name">{item.title}</span>
+          {item.kind === 'link' && <span className="ndc-set-list-sub ndc-source-detail">{hostOf(item.url)}</span>}
+        </span>
+      </span>
+      <span className="ndc-source-tools">
+        <button type="button" className="ndc-icon-button" onClick={onEdit} aria-label={t('settings.bookmarks.edit', { name: item.title })} title={t('settings.bookmarks.edit', { name: item.title })}><Pencil size={13} /></button>
+        <button type="button" className="ndc-icon-button is-danger" onClick={onRemove} aria-label={t('widgets.list.remove', { name: item.title })} title={t('widgets.list.remove', { name: item.title })}><X size={13} /></button>
+      </span>
+    </li>
   );
 }
 

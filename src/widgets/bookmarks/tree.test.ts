@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { BookmarkItem } from '@/lib/widgetData/contracts';
-import { childrenOf, descendantsOf, folderOptions, moveAmongSiblings, moveInto, pathTo, removeItem } from './tree';
+import { childrenOf, descendantsOf, dropItem, folderOptions, moveInto, pathTo, removeItem } from './tree';
 
 const items: BookmarkItem[] = [
   { id: 'dev', kind: 'folder', title: 'Dev' },
@@ -26,12 +26,26 @@ describe('bookmarks tree', () => {
     expect(moveInto(items, 'dev', 'docs')).toEqual(items);
     expect(moveInto(items, 'dev', 'dev')).toEqual(items);
   });
-  it('reorders among siblings only', () => {
-    expect(childrenOf(moveAmongSiblings(items, 'a', -1), 'dev').map(item => item.id)).toEqual(['a', 'docs']);
-    expect(moveAmongSiblings(items, 'docs', -1)).toEqual(items);
-  });
   it('lists folders indented, without a folder and its descendants when moving it', () => {
     expect(folderOptions(items).map(entry => [entry.folder.id, entry.depth])).toEqual([['dev', 0], ['docs', 1]]);
     expect(folderOptions(items, 'dev')).toEqual([]);
+  });
+});
+
+describe('bookmarks drop', () => {
+  const order = (list: BookmarkItem[], parent?: string) => childrenOf(list, parent).map(item => item.id);
+  it('drops before or after a sibling, taking its folder', () => {
+    expect(order(dropItem(items, 'c', 'a', 'before'), 'dev')).toEqual(['docs', 'c', 'a']);
+    expect(order(dropItem(items, 'b', 'dev', 'after'))).toEqual(['dev', 'b', 'c']);
+    expect(order(dropItem(items, 'a', 'docs', 'before'), 'dev')).toEqual(['a', 'docs']);
+  });
+  it('drops inside a folder, at its end, or out to the top level', () => {
+    expect(order(dropItem(items, 'c', 'docs', 'inside'), 'docs')).toEqual(['b', 'c']);
+    expect(order(dropItem(items, 'b', undefined, 'inside'))).toEqual(['dev', 'c', 'b']);
+  });
+  it('refuses a folder into itself or below itself, and inside a link', () => {
+    expect(dropItem(items, 'dev', 'b', 'before')).toEqual(items);
+    expect(dropItem(items, 'dev', 'docs', 'inside')).toEqual(items);
+    expect(dropItem(items, 'c', 'a', 'inside')).toEqual(items);
   });
 });

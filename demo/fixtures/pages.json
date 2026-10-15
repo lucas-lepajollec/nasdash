@@ -411,7 +411,9 @@
           "settings": {
             "display": "mosaic",
             "mode": "recent",
-            "count": 12,
+            "count": 24,
+            "perPage": 7,
+            "auto": false,
             "integrationId": "photoprism-demo"
           },
           "x": 16,

@@ -13,8 +13,9 @@ import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
 import { CalmeWidget } from '../calme';
-import { bounded, chartHeight, DataError, GRID_MODES, PagedGrid, PagedGridSettings, perPageOf, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, chartHeight, DataError, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
+import { packMosaic, wantedSpan } from './mosaic';
 
 export type PhotosDisplay = 'slideshow' | 'grid' | 'mosaic' | 'strip';
 const DISPLAYS: readonly PhotosDisplay[] = ['slideshow', 'grid', 'mosaic', 'strip'];
@@ -81,51 +82,114 @@ function usePhotoText() {
   return (photo: Photo) => [photo.takenAt ? date.format(photo.takenAt) : undefined, photo.place].filter(Boolean).join(' · ');
 }
 
+/** Photos shown at once by a display; the slideshow one, the strip all of them. */
+function perViewOf(display: PhotosDisplay, settings: WidgetSettings): number {
+  return display === 'slideshow' ? 1 : bounded(settings.perPage, 2, 24, display === 'mosaic' ? 7 : 8);
+}
+
+/**
+ * Which photos of the loaded selection are on screen. With "change by
+ * itself" (always on for random photos) the next ones come in every
+ * interval, pausing while the pointer is over the widget; otherwise arrows
+ * move through them. The selection wraps around, so it never stops.
+ */
+function usePhotoCycle(total: number, step: number, auto: boolean, interval: number, active: boolean) {
+  const [start, setStart] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const current = total ? start % total : 0;
+  useEffect(() => {
+    if (!auto || !active || paused || total <= step) return;
+    const timer = window.setTimeout(() => setStart(value => (value + step) % total), interval * 1000);
+    return () => window.clearTimeout(timer);
+  }, [auto, active, paused, total, step, interval, start]);
+  const move = (direction: 1 | -1) => setStart(value => ((value + direction * step) % total + total) % total);
+  const hover = { onPointerEnter: () => setPaused(true), onPointerLeave: () => setPaused(false) };
+  return { start: current, move, hover };
+}
+
+/** `count` photos from `start`, wrapping to the beginning. */
+function windowOf(photos: Photo[], start: number, count: number): { photo: Photo; index: number }[] {
+  return Array.from({ length: Math.min(count, photos.length) }, (_, offset) => {
+    const index = (start + offset) % photos.length;
+    return { photo: photos[index], index };
+  });
+}
+
 function PhotosBody({ photos, display, settings, width, visible, onOpen }: {
   photos: Photo[]; display: PhotosDisplay; settings: WidgetSettings; width: number; visible: boolean; onOpen: (index: number) => void;
 }) {
   const { t } = useI18n();
   const caption = usePhotoText();
-  const captions = settings.captions !== false;
-  const thumb = (photo: Photo, index: number, className: string) => (
-    <button key={photo.id} type="button" className={`ndw-photo ${className}`} onClick={() => onOpen(index)} title={caption(photo) || undefined} aria-label={caption(photo) || t('widgets.photos.open')}>
+  const auto = autoOf(settings);
+  const interval = Number(pick(String(settings.interval), INTERVALS, '30'));
+  const perView = perViewOf(display, settings);
+  const cycle = usePhotoCycle(photos.length, display === 'strip' ? 1 : perView, auto, interval, visible);
+  const thumb = (photo: Photo, index: number, className: string, style?: React.CSSProperties) => (
+    <button key={photo.id} type="button" className={`ndw-photo ${className}`} style={style} onClick={() => onOpen(index)} title={caption(photo) || undefined} aria-label={caption(photo) || t('widgets.photos.open')}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={photo.thumb} alt="" loading="lazy" decoding="async" />
       {photo.video && <span className="ndw-photo-video" aria-hidden="true"><Play size={12} /></span>}
     </button>
   );
+  const pager = photos.length > perView && !auto && (
+    <div className="ndw-pager">
+      <button type="button" className="ndc-icon-button" onClick={() => cycle.move(-1)} aria-label={t('widgets.photos.previous')} title={t('widgets.photos.previous')}><ChevronLeft size={14} /></button>
+      <span className="ndw-pager-count">{t('widgets.grid.page', { current: Math.floor(cycle.start / perView) + 1, total: Math.ceil(photos.length / perView) })}</span>
+      <button type="button" className="ndc-icon-button" onClick={() => cycle.move(1)} aria-label={t('widgets.photos.next')} title={t('widgets.photos.next')}><ChevronRight size={14} /></button>
+    </div>
+  );
 
-  if (display === 'grid') {
-    return <PagedGrid items={photos.map((photo, index) => thumb(photo, index, 'is-square'))} perPage={perPageOf(settings)} mode={pick(settings.gridMode, GRID_MODES, 'pages')} minColumn={110} label={t('widget.photos.name')} />;
+  if (display === 'grid' || display === 'mosaic') {
+    const shown = windowOf(photos, cycle.start, perView);
+    const columns = display === 'mosaic' ? Math.max(2, Math.min(6, Math.round(width / 150))) : 0;
+    return (
+      <div className="ndw-photo-pages" {...cycle.hover}>
+        {/* The key restarts the fade each time other photos come in. */}
+        <div key={cycle.start} className={display === 'grid' ? 'ndw-photo-grid' : 'ndw-photo-mosaic'} style={display === 'mosaic' ? { gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: Math.max(56, Math.round(width / columns * 0.62)) } : undefined}>
+          {display === 'grid'
+            ? shown.map(({ photo, index }) => thumb(photo, index, 'is-square'))
+            : (() => {
+              // Mixed sizes (wide, tall, a large one now and then), placed so no hole stays.
+              const tiles = packMosaic(shown.map(({ photo }, position) => wantedSpan(photo.width && photo.height ? photo.width / photo.height : 1.5, position, columns)), columns);
+              return shown.map(({ photo, index }, position) => thumb(photo, index, 'is-tile', { gridRow: `${tiles[position].row + 1} / span ${tiles[position].rows}`, gridColumn: `${tiles[position].column + 1} / span ${tiles[position].columns}` }));
+            })()}
+        </div>
+        {pager}
+      </div>
+    );
   }
-  if (display === 'mosaic') {
-    return <div className="ndw-photo-mosaic" style={{ columnCount: Math.max(2, Math.min(5, Math.round(width / 170))) }}>{photos.map((photo, index) => thumb(photo, index, 'is-natural'))}</div>;
-  }
-  if (display === 'strip') {
-    return <div className="ndw-photo-strip">{photos.map((photo, index) => thumb(photo, index, 'is-strip'))}</div>;
-  }
-  return <Slideshow photos={photos} interval={Number(pick(String(settings.interval), INTERVALS, '30'))} captions={captions} height={chartHeight(width, 0.62, 140, 520)} visible={visible} onOpen={onOpen} />;
+  if (display === 'strip') return <Strip photos={photos} start={cycle.start} auto={auto} hover={cycle.hover} render={(photo, index) => thumb(photo, index, 'is-strip')} />;
+  return <Slideshow photos={photos} current={cycle.start} onMove={cycle.move} hover={cycle.hover} captions={settings.captions !== false} height={chartHeight(width, 0.62, 140, 520)} onOpen={onOpen} />;
 }
 
-/** One photo at a time, crossfading; the pointer pauses it and shows the arrows. */
-function Slideshow({ photos, interval, captions, height, visible, onOpen }: {
-  photos: Photo[]; interval: number; captions: boolean; height: number; visible: boolean; onOpen: (index: number) => void;
+/** Every photo in a sideways row; by itself it slides one photo at a time. */
+function Strip({ photos, start, auto, hover, render }: {
+  photos: Photo[]; start: number; auto: boolean; hover: { onPointerEnter: () => void; onPointerLeave: () => void }; render: (photo: Photo, index: number) => React.ReactNode;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = ref.current;
+    if (!auto || !row) return;
+    const cell = row.children[start] as HTMLElement | undefined;
+    // Back to the beginning once the last photo is in view.
+    const left = cell && cell.offsetLeft + row.clientWidth <= row.scrollWidth + cell.offsetWidth ? cell.offsetLeft - row.offsetLeft : 0;
+    row.scrollTo({ left: start === 0 ? 0 : left, behavior: 'smooth' });
+  }, [auto, start]);
+  return <div ref={ref} className="ndw-photo-strip" {...hover}>{photos.map((photo, index) => render(photo, index))}</div>;
+}
+
+/** One photo at a time, crossfading; arrows show on hover. */
+function Slideshow({ photos, current, onMove, hover, captions, height, onOpen }: {
+  photos: Photo[]; current: number; onMove: (direction: 1 | -1) => void; hover: { onPointerEnter: () => void; onPointerLeave: () => void };
+  captions: boolean; height: number; onOpen: (index: number) => void;
 }) {
   const { t } = useI18n();
   const caption = usePhotoText();
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const current = index % photos.length;
-  useEffect(() => {
-    if (!visible || paused || photos.length < 2) return;
-    const timer = window.setTimeout(() => setIndex(value => (value + 1) % photos.length), interval * 1000);
-    return () => window.clearTimeout(timer);
-  }, [index, interval, paused, photos.length, visible]);
   // The next photo is fetched ahead, so the fade never shows an empty frame.
   const next = photos[(current + 1) % photos.length];
   const text = caption(photos[current]);
   return (
-    <div className="ndw-slideshow" style={{ height }} onPointerEnter={() => setPaused(true)} onPointerLeave={() => setPaused(false)}>
+    <div className="ndw-slideshow" style={{ height }} {...hover}>
       {photos.map((photo, position) => (position === current || photo === next) && (
         <button key={photo.id} type="button" className={`ndw-slide ${position === current ? 'is-current' : ''}`} onClick={() => onOpen(position)} tabIndex={position === current ? 0 : -1} aria-hidden={position !== current} aria-label={text || t('widgets.photos.open')}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -135,12 +199,17 @@ function Slideshow({ photos, interval, captions, height, visible, onOpen }: {
       {captions && text && <span className="ndw-slide-caption">{text}</span>}
       {photos.length > 1 && (
         <>
-          <button type="button" className="ndw-slide-arrow is-prev" onClick={() => setIndex((current - 1 + photos.length) % photos.length)} aria-label={t('widgets.photos.previous')} title={t('widgets.photos.previous')}><ChevronLeft size={16} /></button>
-          <button type="button" className="ndw-slide-arrow is-next" onClick={() => setIndex((current + 1) % photos.length)} aria-label={t('widgets.photos.next')} title={t('widgets.photos.next')}><ChevronRight size={16} /></button>
+          <button type="button" className="ndw-slide-arrow is-prev" onClick={() => onMove(-1)} aria-label={t('widgets.photos.previous')} title={t('widgets.photos.previous')}><ChevronLeft size={16} /></button>
+          <button type="button" className="ndw-slide-arrow is-next" onClick={() => onMove(1)} aria-label={t('widgets.photos.next')} title={t('widgets.photos.next')}><ChevronRight size={16} /></button>
         </>
       )}
     </div>
   );
+}
+
+/** Random photos always change by themselves; other selections when asked. */
+function autoOf(settings: WidgetSettings): boolean {
+  return settings.mode === undefined || settings.mode === 'random' || settings.auto !== false;
 }
 
 /** The photo large: arrows and keyboard move through the selection, Escape closes. */
@@ -203,17 +272,24 @@ function PhotosSettings({ draft, change }: { draft: WidgetSettings; change: (pat
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={display} options={DISPLAYS.map(value => ({ value, label: t(`widgets.photos.display.${value}`) }))} onChange={value => change({ display: value })} />
       </CalmeField>
-      {display === 'slideshow' && (
-        <>
-          <CalmeField label={t('widgets.photos.interval')}>
-            <CalmeSegmented label={t('widgets.photos.interval')} value={pick(String(draft.interval), INTERVALS, '30')} options={INTERVALS.map(value => ({ value, label: t(`widgets.photos.interval.${value}`) }))} onChange={value => change({ interval: Number(value) })} />
-          </CalmeField>
-          <CalmeRow label={t('widgets.photos.captions')}>
-            <CalmeSwitch label={t('widgets.photos.captions')} checked={draft.captions !== false} onChange={on => change({ captions: on ? null : false })} />
-          </CalmeRow>
-        </>
+      {(display === 'grid' || display === 'mosaic') && (
+        <CalmeRow label={t('widgets.photos.perPage')}>
+          <CalmeSlider label={t('widgets.photos.perPage')} value={perViewOf(display, draft)} min={2} max={24} step={1} onChange={value => change({ perPage: value })} onCommit={value => change({ perPage: value })} format={String} />
+        </CalmeRow>
       )}
-      {display === 'grid' && <PagedGridSettings draft={draft} change={change} />}
+      <CalmeRow label={t('widgets.photos.auto')} info={t(mode === 'random' ? 'widgets.photos.autoRandom' : 'widgets.photos.autoHint')}>
+        <CalmeSwitch label={t('widgets.photos.auto')} checked={autoOf(draft)} disabled={mode === 'random'} onChange={on => change({ auto: on ? null : false })} />
+      </CalmeRow>
+      {autoOf(draft) && (
+        <CalmeField label={t('widgets.photos.interval')}>
+          <CalmeSegmented label={t('widgets.photos.interval')} value={pick(String(draft.interval), INTERVALS, '30')} options={INTERVALS.map(value => ({ value, label: t(`widgets.photos.interval.${value}`) }))} onChange={value => change({ interval: Number(value) })} />
+        </CalmeField>
+      )}
+      {display === 'slideshow' && (
+        <CalmeRow label={t('widgets.photos.captions')}>
+          <CalmeSwitch label={t('widgets.photos.captions')} checked={draft.captions !== false} onChange={on => change({ captions: on ? null : false })} />
+        </CalmeRow>
+      )}
     </>
   );
 }
