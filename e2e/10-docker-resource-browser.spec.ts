@@ -169,6 +169,8 @@ test('mobile resources default to five rows and shared dropdowns keep explicit c
     const status = explorer.getByRole('button', { name: 'Status', exact: true });
     await status.focus();
     await page.keyboard.press('ArrowDown');
+    // Wait for the list before choosing in it: on a busy runner the keys could reach the button instead.
+    await expect(page.getByRole('listbox', { name: 'Status', exact: true })).toBeVisible();
     await page.keyboard.press('End');
     await page.keyboard.press('Enter');
     await expect(explorer.locator('.nd-docker-resource-row')).toHaveCount(1);
