@@ -1,9 +1,9 @@
 import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/dataDirectory', () => ({ getDataDirectory: vi.fn() }));
 import { getDataDirectory } from '@/lib/dataDirectory';
-import { iconLinks, loadFavicon, sniffIcon } from './favicon';
+import { iconLinks, loadFavicon, sniffIcon, withoutComments } from './favicon';
 const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const svg = (text: string) => new TextEncoder().encode(text);
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
@@ -51,4 +51,19 @@ it('falls back through manifest and conventional icon, caches misses for one day
     vi.advanceTimersByTime(61000); expect(await loadFavicon('http://example.com/')).toBeNull(); expect(fetch).toHaveBeenCalledTimes(4);
     vi.advanceTimersByTime(86400000); await loadFavicon('http://example.com/'); expect(fetch).toHaveBeenCalledTimes(8);
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+describe('HTML comment handling', () => {
+  it('drops every comment, and an unclosed one hides the rest', () => {
+    expect(withoutComments('a<!-- x -->b<!--y-->c')).toBe('abc');
+    expect(withoutComments('a<!--<!-- x -->--><link rel="icon" href="/x.png">')).toBe('a--><link rel="icon" href="/x.png">');
+    expect(withoutComments('a<!-- never closed <link rel="icon">')).toBe('a');
+  });
+  it('stays linear on hostile comment runs', () => {
+    const hostile = '<!--' + '--><!--'.repeat(50_000);
+    const started = Date.now();
+    withoutComments(hostile);
+    expect(sniffIcon(new TextEncoder().encode(hostile), 'image/svg+xml')).toBeUndefined();
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
 });

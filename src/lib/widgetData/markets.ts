@@ -87,7 +87,8 @@ export function mapMarketSearch(data: unknown): MarketSearchResult[] {
 /** Search by name or symbol on the fixed Yahoo endpoint; the query is bounded and only encoded into it. */
 export async function searchMarkets(query: string): Promise<MarketSearchResult[]> {
   const q = query.trim().slice(0, 40);
-  if (!q) return [];
+  // Names and tickers only (letters, digits, spaces and . - ^ = & '): nothing else reaches the source.
+  if (!/^[\p{L}\p{N} .^=&'-]{1,40}$/u.test(q)) return [];
   return marketSearchCache.get(q.toLowerCase(), async () => mapMarketSearch(await fetchJson(
     `https://query1.finance.yahoo.com/v1/finance/search?${new URLSearchParams({ q, quotesCount: '8', newsCount: '0', listsCount: '0' })}`, 256 * 1024,
   )));

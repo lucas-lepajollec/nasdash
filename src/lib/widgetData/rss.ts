@@ -51,8 +51,33 @@ function safeLink(value: string | undefined, base: string): string | undefined {
   if (!value?.trim()) return undefined;
   try { return httpUrl(value.trim(), base).href; } catch { return undefined; }
 }
+/**
+ * Text of an HTML fragment: tags dropped (script and style with their content)
+ * by a single scan rather than regular expressions, which can leave pieces of
+ * nested or broken tags. Entities are decoded afterwards, then scanned again:
+ * the result never contains markup, only text React prints as text.
+ */
+function stripTags(html: string): string {
+  const lower = html.toLowerCase();
+  let out = '';
+  let from = 0;
+  while (from < html.length) {
+    const open = html.indexOf('<', from);
+    if (open < 0) { out += html.slice(from); break; }
+    out += html.slice(from, open) + ' ';
+    const raw = /^<(script|style)\b/.exec(lower.slice(open, open + 8));
+    const close = raw ? lower.indexOf(`</${raw[1]}`, open) : open;
+    if (close < 0) break;
+    const end = html.indexOf('>', close);
+    // A lone "<" (as in "a < b") is text: keep what follows, without the sign.
+    if (end < 0) { out += raw ? '' : html.slice(open + 1); break; }
+    from = end + 1;
+  }
+  return out;
+}
+
 export function plainText(html: string, max = 280): string {
-  const text = decodeEntities(html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+  const text = stripTags(decodeEntities(stripTags(html))).replace(/\s+/g, ' ').trim();
   if (text.length <= max) return text;
   const cut = text.slice(0, max - 1);
   const space = cut.lastIndexOf(' ');

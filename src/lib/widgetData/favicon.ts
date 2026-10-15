@@ -20,13 +20,43 @@ export function sniffIcon(bytes: Uint8Array, contentType: string): Favicon | und
   else {
     const svg = new TextDecoder('utf-8', { fatal: false }).decode(bytes).replace(/^\uFEFF/, '').trim();
     // Entities/DTDs are unnecessary for icons and can hide external references.
-    if (!/^(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg(?:\s|\/?>)/i.test(svg) || /<!DOCTYPE|<!ENTITY|<\s*(?:[\w.-]+:)?(?:script|foreignObject|iframe|object|embed)\b|\bon[\w:-]+\s*=/i.test(svg)) return undefined;
+    if (!/^<svg(?:\s|\/?>)/i.test(svgBody(svg)) || /<!DOCTYPE|<!ENTITY|<\s*(?:[\w.-]+:)?(?:script|foreignObject|iframe|object|embed)\b|\bon[\w:-]+\s*=/i.test(svg)) return undefined;
     if (/\b(?:[\w.-]+:)?href\s*=\s*(?!["']#)["'][^"']*["']/i.test(svg) || /\b(?:[\w.-]+:)?href\s*=\s*[^\s"'>]/i.test(svg)) return undefined;
     if (/@import|url\s*\(\s*(?!["']?#)/i.test(svg)) return undefined;
     ext = 'svg'; type = 'image/svg+xml';
   }
   return { bytes, ext, contentType: type! };
 }
+/** The SVG after an optional XML declaration and leading comments (a linear scan, no backtracking). */
+function svgBody(text: string): string {
+  let rest = text;
+  if (/^<\?xml/i.test(rest)) {
+    const end = rest.indexOf('?>');
+    if (end < 0) return '';
+    rest = rest.slice(end + 2).trimStart();
+  }
+  while (rest.startsWith('<!--')) {
+    const end = rest.indexOf('-->', 4);
+    if (end < 0) return '';
+    rest = rest.slice(end + 3).trimStart();
+  }
+  return rest;
+}
+
+/** HTML without its comments; an unclosed comment hides the rest, as browsers do. */
+export function withoutComments(html: string): string {
+  let out = '';
+  let from = 0;
+  for (;;) {
+    const start = html.indexOf('<!--', from);
+    if (start < 0) return out + html.slice(from);
+    out += html.slice(from, start);
+    const end = html.indexOf('-->', start + 4);
+    if (end < 0) return out;
+    from = end + 3;
+  }
+}
+
 function attributes(tag: string): Record<string, string> {
   const attrs: Record<string, string> = {};
   for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) attrs[match[1].toLowerCase()] = decodeEntities(match[2] ?? match[3] ?? match[4]);
@@ -38,7 +68,7 @@ export function iconLinks(html: string, pageUrl: string): { icons: string[]; man
   const baseTag = /<base\b[^>]*>/i.exec(html);
   let base = pageUrl;
   try { if (baseTag) base = httpUrl(attributes(baseTag[0]).href, pageUrl).href; } catch { /* invalid base */ }
-  for (const match of html.replace(/<!--[\s\S]*?-->/g, '').matchAll(/<link\b(?:"[^"]*"|'[^']*'|[^'">])*>/gi)) {
+  for (const match of withoutComments(html).matchAll(/<link\b(?:"[^"]*"|'[^']*'|[^'">])*>/gi)) {
     const attrs = attributes(match[0]), rel = (attrs.rel ?? '').toLowerCase().split(/\s+/);
     if (!attrs.href) continue;
     try {

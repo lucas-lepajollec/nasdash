@@ -134,7 +134,7 @@ function RssItems({ entries, display, images, summaries, seen, single, widgetId,
     // eslint-disable-next-line @next/next/no-img-element
     ? <img className={className} src={item.image} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.display = 'none'; }} />
     : null;
-  const icon = (feed: Feed) => <SiteIcon url={feed.site || feed.source} name={sourceName(feed)} widget={{ id: widgetId, type: 'rss' }} size={16} />;
+  const icon = (feed: Feed) => <SiteIcon url={feed.source} name={sourceName(feed)} widget={{ id: widgetId, type: 'rss' }} size={16} />;
 
   if (display === 'cards') {
     const cards = entries.map(({ item, feed }) => link(item, <>

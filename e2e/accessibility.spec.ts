@@ -161,8 +161,8 @@ test('network editor dialogs keep keyboard focus without changing topology', asy
   await expect(page.locator('.ndc-map').first()).toBeVisible({ timeout: 30_000 });
 
   await page.getByTitle('Edit mode').click();
-  await page.getByRole('button', { name: 'Actions' }).click();
-  await page.getByRole('button', { name: 'Create a node' }).click();
+  // Editing tools live in the map itself, in edit mode.
+  await page.getByRole('toolbar', { name: 'Map tools' }).getByRole('button', { name: 'Node' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Add a topology node' });
   await expect(dialog).toBeVisible();

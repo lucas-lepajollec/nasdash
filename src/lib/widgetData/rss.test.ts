@@ -63,3 +63,9 @@ it('keeps up to 50 items per feed by default, so a widget showing 20 or 50 gets 
   const [feed] = filterFeeds([{ source: 'https://example.org/feed', title: 'Feed', items }], {});
   expect(feed.items).toHaveLength(50);
 });
+it('turns HTML into plain text without leaving markup, even from escaped or broken tags', () => {
+  expect(plainText('<p>Hello <b>world</b></p><script>alert(1)</script>')).toBe('Hello world');
+  expect(plainText('&lt;script&gt;alert(1)&lt;/script&gt; safe')).toBe('safe');
+  expect(plainText('<scr<script>ipt>x')).not.toMatch(/<script/i);
+  expect(plainText('a < b')).toBe('a b');
+});

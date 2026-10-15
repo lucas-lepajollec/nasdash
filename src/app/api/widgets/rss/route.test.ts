@@ -78,7 +78,7 @@ it('returns 400 and private no-store for malformed request bodies', async () => 
     const response = await route(request(null)); expect(response.status).toBe(400); expect(response.headers.get('cache-control')).toBe('private, no-store');
   }
 });
-it('authorizes favicon origins from saved links and allows admin unsaved origins', async () => {
+it('serves favicons only for saved origins, admins included, fetching the saved address', async () => {
   vi.mocked(loadFavicon).mockResolvedValue({ bytes: new TextEncoder().encode('<svg/>'), contentType: 'image/svg+xml', ext: 'svg' });
   expect((await favicon(iconRequest('http://unsaved.example/'))).status).toBe(404);
   expect(loadFavicon).not.toHaveBeenCalled();
@@ -87,7 +87,8 @@ it('authorizes favicon origins from saved links and allows admin unsaved origins
   expect(response.headers.get('content-type')).toBe('image/svg+xml'); expect(response.headers.get('x-content-type-options')).toBe('nosniff');
   expect(response.headers.get('content-security-policy')).toContain("default-src 'none'");
   vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'admin', role: 'admin', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
-  expect((await favicon(iconRequest('http://unsaved.example/'))).status).toBe(200);
+  expect((await favicon(iconRequest('http://unsaved.example/'))).status).toBe(404);
+  expect(loadFavicon).toHaveBeenCalledTimes(1);
   expect((await favicon(iconRequest('file:///etc/passwd'))).status).toBe(400);
 });
 it('authorizes RSS favicon origins from the saved feeds only', async () => {
