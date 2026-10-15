@@ -125,3 +125,14 @@ it('authorizes RSS favicon origins from the saved feeds only', async () => {
   // The type selects which saved widget is read: an RSS id is not a bookmarks widget.
   expect((await favicon(new NextRequest('http://localhost/api/widgets/favicon?widgetId=rss-widget&url=https%3A%2F%2Fsaved.example%2F'))).status).toBe(404);
 });
+it('serves saved bookmark icons without a widget to administrators only (library settings)', async () => {
+  vi.mocked(loadFavicon).mockResolvedValue({ bytes: new Uint8Array([137, 80, 78, 71]), contentType: 'image/png', ext: 'png' });
+  const libraryIcon = (url: string) => new NextRequest(`http://localhost/api/widgets/favicon?type=bookmarks&url=${encodeURIComponent(url)}`);
+  vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'admin', role: 'admin', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
+  expect((await favicon(libraryIcon('https://bookmarks.example/'))).status).toBe(200);
+  expect((await favicon(libraryIcon('https://unsaved.example/'))).status).toBe(404);
+  vi.mocked(loadFavicon).mockClear();
+  vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'reader', role: 'viewer', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
+  expect((await favicon(libraryIcon('https://bookmarks.example/'))).status).not.toBe(200);
+  expect(loadFavicon).not.toHaveBeenCalled();
+});

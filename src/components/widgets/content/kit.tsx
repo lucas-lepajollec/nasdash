@@ -165,8 +165,9 @@ export function hueOf(text: string): number {
 export function SiteIcon({ url, name, widget, size = 18, className = '' }: { url?: string; name: string; widget?: { id: string; type: 'rss' | 'bookmarks' }; size?: number; className?: string }) {
   const [failed, setFailed] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<string | null>(null);
-  // The server serves icons for a widget's saved sources; outside a widget, the letter is enough.
-  const source = widget && url && /^https?:\/\//i.test(url) ? `/api/widgets/favicon?${new URLSearchParams({ url, widgetId: widget.id, type: widget.type })}` : null;
+  // The server serves icons of a widget's saved sources; without a widget, of the
+  // saved bookmarks (administrators, in the library settings).
+  const source = url && /^https?:\/\//i.test(url) ? `/api/widgets/favicon?${new URLSearchParams({ url, ...(widget ? { widgetId: widget.id, type: widget.type } : { type: 'bookmarks' }) })}` : null;
   const letter = (name.trim()[0] ?? '?').toUpperCase();
   const style = { width: size, height: size, '--ndw-hue': hueOf(name || url || '?') } as React.CSSProperties;
   return (

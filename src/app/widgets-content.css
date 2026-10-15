@@ -614,12 +614,17 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 /* Library in Settings → Widgets → Bookmarks. */
 .ndc-bookmark-row { gap: 8px; }
 .ndc-bookmark-name { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.ndc-bookmark-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.ndc-bookmark-form.is-editing { margin: 4px 0; padding: 10px; border: 1px solid var(--nd-card-border); border-radius: 10px; list-style: none; }
-.ndc-bookmark-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
-.ndc-bookmark-wide { grid-column: 1 / -1; }
-.ndc-bookmark-actions { display: flex; justify-content: flex-end; gap: 6px; }
-.ndc-bookmark-icon-button { margin-inline-end: auto; }
+.ndc-bookmark-toolbar { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.ndc-bookmark-row .ndc-source-tools { opacity: 0.55; transition: opacity 0.12s ease; }
+.ndc-bookmark-row:hover .ndc-source-tools, .ndc-bookmark-row:focus-within .ndc-source-tools { opacity: 1; }
+.ndc-bookmark-dialog { display: flex; flex-direction: column; gap: 12px; }
+.ndc-bookmark-title-row { display: flex; align-items: center; gap: 8px; }
+.ndc-bookmark-title-row .nd-input { flex: 1; min-width: 0; }
+.ndc-bookmark-icon-pick {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; height: 38px; padding: 0;
+  border: 1px solid var(--nd-card-border); border-radius: 10px; background: color-mix(in srgb, var(--nd-text) 4%, transparent); cursor: pointer;
+}
+.ndc-bookmark-icon-pick:hover { border-color: var(--nd-accent); }
 
 /* ---------- Drag and drop (edit mode, bookmarks library) ---------- */
 .is-sortable, .ndw-bookmark.is-draggable { cursor: grab; touch-action: none; }

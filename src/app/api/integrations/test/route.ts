@@ -62,9 +62,18 @@ export async function POST(request: NextRequest) {
     try {
       if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
       else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
-      // users/me actually authenticates the supplied key; a public about/status
-      // endpoint can succeed even when credentials are invalid.
-      else if (type === 'immich') await serviceJson(instance, '/api/users/me', { headers: immichHeaders(instance) });
+      // One random photo: authenticates the key with the permission the widget
+      // needs (asset.read), so a key limited to reading still passes. A public
+      // about/status endpoint would succeed even with an invalid key.
+      else if (type === 'immich') {
+        try {
+          await serviceJson(instance, '/api/search/random', { method: 'POST', json: { size: 1 }, headers: immichHeaders(instance) });
+        } catch (error) {
+          // 403: the key is valid but lacks the reading permission.
+          if (error instanceof ServiceError && error.parameters?.status === 403) throw new ServiceError('integrations.immich.missingPermission', 502);
+          throw error;
+        }
+      }
       else await serviceJson(instance, '/api/v1/config', { headers: photoprismHeaders(instance) });
       return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: 1 });
     } catch (error) {
