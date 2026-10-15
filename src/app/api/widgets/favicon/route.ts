@@ -3,6 +3,7 @@ import { resolveWidgetSettings } from '@/lib/widgetData/resolve';
 import { httpUrl } from '@/lib/widgetData/outbound';
 import { loadFavicon } from '@/lib/widgetData/favicon';
 import { isDemoMode } from '@/lib/demoMode';
+import { resolveAccessPrincipal } from '@/lib/access';
 import { readConfig } from '@/lib/config';
 import { widgetFeeds } from '@/lib/widgetData/sources';
 
@@ -12,8 +13,11 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   // Bookmarks show their links' icons, RSS its feeds' sites.
   const type = params.get('type') === 'rss' ? 'rss' : 'bookmarks';
-  const resolved = resolveWidgetSettings(request, params.get('widgetId'), type, undefined);
-  if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
+  // Administrators see the bookmarks library itself (settings, a widget not
+  // saved yet); others only through a bookmarks widget they can see.
+  const library = type === 'bookmarks' && !params.get('widgetId') && resolveAccessPrincipal(request)?.role === 'admin';
+  const resolved = library ? null : resolveWidgetSettings(request, params.get('widgetId'), type, undefined);
+  if (resolved && !resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
   if (isDemoMode()) return new NextResponse(null, { status: 404, headers });
   let requested: string;
   try { requested = httpUrl(params.get('url') ?? '').origin; }
@@ -21,10 +25,8 @@ export async function GET(request: NextRequest) {
   // Only the sites of sources an admin saved, for everyone: the address fetched is the
   // saved one, read from the config, never the text of this request.
   const savedUrls = type === 'rss'
-    ? widgetFeeds(resolved.settings, readConfig()).map(feed => feed.url)
-    : Array.isArray(resolved.settings.items)
-      ? resolved.settings.items.flatMap(item => (!!item && typeof item === 'object' && 'kind' in item && item.kind === 'link' && 'url' in item && typeof item.url === 'string' ? [item.url] : []))
-      : [];
+    ? widgetFeeds(resolved?.ok ? resolved.settings : {}, readConfig()).map(feed => feed.url)
+    : (readConfig().settings?.bookmarks ?? []).flatMap(item => item.kind === 'link' && typeof item.url === 'string' ? [item.url] : []);
   const origin = savedUrls.map(url => { try { return httpUrl(url).origin; } catch { return undefined; } }).find(saved => saved === requested);
   if (!origin) return NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404, headers });
   try {

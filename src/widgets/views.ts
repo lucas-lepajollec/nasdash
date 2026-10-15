@@ -27,6 +27,8 @@ import storage from './storage/view';
 import tailscale from './tailscale/view';
 import weather from './weather/view';
 import quotes from './quotes/view';
+import photos from './photos/view';
+import bookmarks from './bookmarks/view';
 import rss from './rss/view';
 import markets from './markets/view';
 import dns from './dns/view';
@@ -64,6 +66,8 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'rss': rss,
   'markets': markets,
   'quotes': quotes,
+  'photos': photos,
+  'bookmarks': bookmarks,
   'clock': clock,
   'calendar': calendar,
   'weather': weather,

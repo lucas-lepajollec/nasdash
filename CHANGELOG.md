@@ -6,6 +6,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Site icons (bookmarks, feeds) are sharp: the largest icon of a heavy page's head is used instead of a 16 px `favicon.ico`; icons found before are looked for again.
+- The Immich connection test only needs the reading permission the widget uses (`asset.read`), and tells a missing permission apart from a refused key.
+
+### Security
+
+- Photos are served only through the widget that listed them, and the link to the photo library (its address) is sent to administrators only.
+
+### Added
+
+- Markets: in edit mode, symbols are put in order by drag and drop in the list, bars and tiles displays.
+- Photos widget for Immich and PhotoPrism: slideshow, grid, mosaic (mixed tile sizes, no holes) or strip, random/recent/favorite/album/"on this day" selections, and a viewer with date, place and a link to the library. Photos either change by themselves at a chosen pace (always for random photos) or are browsed with arrows. Photos pass through NasDash; no address or key reaches the browser. Connections are added in Settings → Integrations → Photos.
+- Bookmarks widget with folders: one library in Settings → Widgets → Bookmarks (folders inside folders, up to eight levels, icons and notes), shown as a folding tree, tiles or icons, with an optional search box. Bookmarks move by drag and drop (before, after or into a folder) in the library and in edit mode, and the bookmarks file exported by any browser can be imported. Each widget can open the library at a chosen folder. Site icons are fetched only for saved link origins, including for administrators.
+
 ## [0.2.5] - 2026-10-15
 
 ### Upgrading from 0.2.4

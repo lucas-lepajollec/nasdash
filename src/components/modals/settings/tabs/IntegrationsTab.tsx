@@ -238,8 +238,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
         )),
       )}
 
-      {/* Photos (Immich, PhotoPrism) appears with its widget; its connections are ready server-side. */}
-      {(['dns'] as const).map(id => {
+      {(['dns', 'photos'] as const).map(id => {
         const saved = id === 'dns' ? dns : photos;
         const kinds = id === 'dns' ? ['pihole', 'adguard'] : ['immich', 'photoprism'];
         return (

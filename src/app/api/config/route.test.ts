@@ -77,6 +77,32 @@ describe('configuration write contracts', () => {
     expect(mockedWriteConfig.mock.calls[0][0].settings.mode).toBe('light');
   });
 
+  it('persists, preserves on unrelated updates, and clears the shared bookmarks library', async () => {
+    const bookmarks = [
+      { id: 'link', kind: 'link', title: 'Saved', url: 'https://saved.example/', parentId: 'folder' },
+      { id: 'folder', kind: 'folder', title: 'Folder' },
+    ];
+    for (const body of [{ bookmarks }, { mode: 'light' }, { bookmarks: [] }]) {
+      const response = await PUT(new Request('http://localhost/api/config', {
+        method: 'PUT', body: JSON.stringify({ type: 'settings', ...body }),
+      }) as never);
+      expect(response.status).toBe(200);
+      expect(mockedReadConfig().settings.bookmarks).toEqual('bookmarks' in body ? body.bookmarks : bookmarks);
+    }
+    expect(mockedWriteConfig).toHaveBeenCalledTimes(3);
+  });
+
+  it('rejects invalid bookmark ancestry before changing or persisting settings', async () => {
+    const response = await PUT(new Request('http://localhost/api/config', {
+      method: 'PUT', body: JSON.stringify({ type: 'settings', title: 'Changed', bookmarks: [
+        { id: 'folder', kind: 'folder', title: 'Folder', parentId: 'missing' },
+      ] }),
+    }) as never);
+    expect(response.status).toBe(400);
+    expect(mockedWriteConfig).not.toHaveBeenCalled();
+    expect(mockedReadConfig().settings).toEqual({ title: 'NasDash', showMonitor: true });
+  });
+
   it('rejects malformed deep settings without writing partial configuration', async () => {
     const response = await PUT(new Request('http://localhost/api/config', {
       method: 'PUT',

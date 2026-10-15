@@ -13,6 +13,7 @@ import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { Sparkline } from '@/components/charts/Gauges';
 import { TimeChart, type ChartSeries } from '@/components/charts/TimeChart';
 import { CalmeWidget } from '../calme';
+import { moveById, SortableItem, SortableList } from '@/components/widgets/content/Sortable';
 import { chartHeight, DataError, GRID_MODES, type GridMode, PagedGrid, PagedGridSettings, perPageOf, pick, SourceChoice, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 
 export type MarketsDisplay = 'list' | 'bars' | 'chart' | 'tiles' | 'ticker';
@@ -44,7 +45,7 @@ export default function CalmeMarkets({ widgetId, settings, editMode, isVisible, 
   widgetId: string; settings: WidgetSettings; editMode: boolean; isVisible: boolean; onUpdateSettings: (settings: WidgetSettings) => void;
 }) {
   const { t } = useI18n();
-  const { config } = useConfig();
+  const { config, updateConfig } = useConfig();
   const saved = config?.settings?.marketSymbols ?? [];
   const symbols = chosenSymbols(saved, settings.symbolIds);
   const display = pick(settings.display, DISPLAYS, 'list');
@@ -71,7 +72,13 @@ export default function CalmeMarkets({ widgetId, settings, editMode, isVisible, 
             : !data ? <div className="ndw-skeleton" aria-hidden="true">{symbols.slice(0, 5).map(item => <span key={item.id} className="ndw-skeleton-row" />)}</div>
               : (
                 <>
+                  {/* Editing: list, bars and tiles put the symbols in order by drag and drop (the saved order, for every markets widget). */}
+                  <SortableList ids={data.quotes.map(quote => quote.symbol)} enabled={editMode && ['list', 'bars', 'tiles'].includes(display)} layout={display === 'tiles' ? 'grid' : 'list'} onMove={(moved, over) => {
+                    const symbolOf = (item: SavedSymbol) => item.symbol.toUpperCase();
+                    void updateConfig({ marketSymbols: moveById(saved, symbolOf, moved.toUpperCase(), over.toUpperCase()) });
+                  }}>
                   <MarketsBody quotes={data.quotes} display={display} labels={labels} showName={settings.showName !== false} spark={settings.sparkline !== false} width={width} range={range} aligned={settings.align !== 'free'} grid={{ perPage: perPageOf(settings), mode: pick(settings.gridMode, GRID_MODES, 'pages') }} />
+                  </SortableList>
                   {data.errors.length > 0 && <p className="ndw-note" role="status">{t('widgets.markets.missing', { symbols: data.errors.map(item => item.source).join(', ') })}</p>}
                   {/* In the block, not the title row: it stays when titles are hidden. */}
                   {showRange && (
@@ -194,14 +201,14 @@ function MarketsBody({ quotes, display, labels, showName, spark, width, range, a
         {quotes.map(quote => {
           const share = (Math.abs(quote.changePercent) / widest) * 50;
           return (
-            <div key={quote.symbol} className={`ndw-market-bar-row ${direction(quote)}`} title={label(quote)}>
+            <SortableItem key={quote.symbol} id={quote.symbol} className={`ndw-market-bar-row ${direction(quote)}`} title={label(quote)}>
               <span className="ndw-market-title">{showName ? name(quote) : quote.symbol}</span>
               <span className="ndw-market-bar-track" aria-hidden="true">
                 <span className="ndw-market-bar-fill" style={quote.change >= 0 ? { left: '50%', width: `${share}%` } : { right: '50%', width: `${share}%` }} />
               </span>
               <span className="ndw-market-bar-value">{format.percent(quote.changePercent)}</span>
               <span className="ndw-market-price">{format.price(quote.price, quote.currency)}</span>
-            </div>
+            </SortableItem>
           );
         })}
       </div>
@@ -210,7 +217,7 @@ function MarketsBody({ quotes, display, labels, showName, spark, width, range, a
 
   if (display === 'tiles') {
     const tiles = quotes.map(quote => (
-      <div key={quote.symbol} className={`ndw-market-tile ${direction(quote)}`} title={label(quote)}>
+      <SortableItem key={quote.symbol} id={quote.symbol} className={`ndw-market-tile ${direction(quote)}`} title={label(quote)}>
         <span className="ndw-market-tile-head">
           <span className="ndw-market-symbol">{labels[quote.symbol] || quote.symbol}</span>
           <span className="ndw-market-pill">{format.percent(quote.changePercent)}</span>
@@ -218,7 +225,7 @@ function MarketsBody({ quotes, display, labels, showName, spark, width, range, a
         <span className="ndw-market-price ndw-market-price--big">{format.price(quote.price, quote.currency)}</span>
         {showName && <span className="ndw-market-name">{name(quote)}</span>}
         {spark && <span className="ndw-market-tile-spark">{curve(quote, 34)}</span>}
-      </div>
+      </SortableItem>
     ));
     return <PagedGrid items={tiles} perPage={grid.perPage} mode={grid.mode} minColumn={150} label={t('widgets.markets.shown')} />;
   }
@@ -227,7 +234,7 @@ function MarketsBody({ quotes, display, labels, showName, spark, width, range, a
   return (
     <div className={`ndw-market-rows ${width >= 560 ? 'is-wide' : ''} ${aligned ? 'is-aligned' : ''}`} style={columns}>
       {quotes.map(quote => (
-        <div key={quote.symbol} className={`ndw-market-row ${direction(quote)} ${spark ? '' : 'no-spark'}`} title={label(quote)}>
+        <SortableItem key={quote.symbol} id={quote.symbol} className={`ndw-market-row ${direction(quote)} ${spark ? '' : 'no-spark'}`} title={label(quote)}>
           <span className="ndw-market-id">
             <span className="ndw-market-title">{showName ? name(quote) : quote.symbol}</span>
             <span className="ndw-market-sub">{showName && <span>{quote.symbol}</span>}{state(quote)}</span>
@@ -237,7 +244,7 @@ function MarketsBody({ quotes, display, labels, showName, spark, width, range, a
             <span className="ndw-market-price">{format.price(quote.price, quote.currency)}</span>
             <span className="ndw-market-pill">{format.percent(quote.changePercent)}</span>
           </span>
-        </div>
+        </SortableItem>
       ))}
     </div>
   );

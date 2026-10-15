@@ -19,7 +19,7 @@ import { collectPihole, togglePihole } from '@/integrations/pihole/collect';
 import { collectAdguard } from '@/integrations/adguard/collect';
 import { collectImmich, immichAlbums } from '@/integrations/immich/collect';
 import { collectPhotoprism, photoprismPreviewToken } from '@/integrations/photoprism/collect';
-import { demoDns, demoPhotos, rememberPhoto, serviceBytes, serviceJson, ServiceError } from '@/lib/widgetData/services';
+import { demoDns, demoPhotos, rememberPhoto, rememberWidgetPhoto, serviceBytes, serviceJson, ServiceError } from '@/lib/widgetData/services';
 const instance = (id: string, type: string): IntegrationInstance => ({ id, type, name: `Fictional ${id}`, settings: { url: 'http://fixture.example.com' }, secrets: { password: 'fake-password' } });
 const get = (path: string) => new NextRequest(`http://nasdash.example.com/api/widgets/${path}`);
 const toggle = (body: unknown) => new NextRequest('http://nasdash.example.com/api/widgets/dns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -126,7 +126,7 @@ describe('Photo routes', () => {
   it('proxies only image bytes with private cache and correct Immich size', async () => {
     state.settings = { integrationId: 'photos-one' };
     const id = '00000000-0000-4000-8000-000000000070';
-    rememberPhoto(state.instances[2], id);
+    rememberPhoto(state.instances[2], id); rememberWidgetPhoto(state.instances[2], 'w', id);
     vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from('fictional'), contentType: 'image/jpeg', status: 200 });
     const response = await imageGet(get(`photos/image?widgetId=w&id=${id}&size=preview`));
     expect(response.status).toBe(200);
@@ -136,10 +136,24 @@ describe('Photo routes', () => {
     vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from('<html>'), contentType: 'text/html', status: 200 });
     expect((await imageGet(get(`photos/image?widgetId=w&id=${id}`))).status).toBe(502);
   });
+  it('serves a photo only through the widget that listed it, and the library link to admins only', async () => {
+    state.settings = { integrationId: 'photos-one' };
+    const id = '00000000-0000-4000-8000-000000000071';
+    rememberPhoto(state.instances[2], id); rememberWidgetPhoto(state.instances[2], 'other-widget', id);
+    expect((await imageGet(get(`photos/image?widgetId=w&id=${id}`))).status).toBe(404);
+    expect(serviceBytes).not.toHaveBeenCalled();
+    vi.mocked(collectImmich).mockResolvedValue({ provider: 'immich', name: 'Fictional', photos: [{ id, thumb: '', preview: '', link: 'http://service.example.com/photos/x' }], fetchedAt: 1 });
+    state.admin = false;
+    const forViewer = await (await photosGet(get('photos?widgetId=w&seed=link-1'))).json();
+    expect(forViewer.photos[0].link).toBeUndefined();
+    state.admin = true;
+    const forAdmin = await (await photosGet(get('photos?widgetId=w&seed=link-2'))).json();
+    expect(forAdmin.photos[0].link).toBe('http://service.example.com/photos/x');
+  });
   it('resolves PhotoPrism hashes and preview token server-side only', async () => {
     state.settings = { integrationId: 'photos-two' };
     const id = 'pdemo00000000070', hash = 'a'.repeat(40);
-    rememberPhoto(state.instances[3], id, hash);
+    rememberPhoto(state.instances[3], id, hash); rememberWidgetPhoto(state.instances[3], 'w', id);
     vi.mocked(photoprismPreviewToken).mockResolvedValue('fictional-preview');
     vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from('fixture'), contentType: 'image/webp', status: 200 });
     expect((await imageGet(get(`photos/image?widgetId=w&id=${id}`))).status).toBe(200);

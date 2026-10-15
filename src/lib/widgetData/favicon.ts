@@ -62,7 +62,7 @@ function attributes(tag: string): Record<string, string> {
   for (const match of tag.matchAll(/([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g)) attrs[match[1].toLowerCase()] = decodeEntities(match[2] ?? match[3] ?? match[4]);
   return attrs;
 }
-export function iconLinks(html: string, pageUrl: string): { icons: string[]; manifest?: string } {
+export function iconLinks(html: string, pageUrl: string): { icons: string[]; manifest?: string; sharp: number } {
   const candidates: { url: string; score: number }[] = [];
   let manifest: string | undefined;
   const baseTag = /<base\b[^>]*>/i.exec(html);
@@ -76,15 +76,28 @@ export function iconLinks(html: string, pageUrl: string): { icons: string[]; man
       if (rel.includes('manifest')) { manifest ??= url; continue; }
       if (!rel.includes('icon') && !rel.includes('apple-touch-icon')) continue;
       const sizes = [...(attrs.sizes ?? '').matchAll(/(\d+)x(\d+)/gi)].map(m => Math.min(Number(m[1]), Number(m[2])));
-      const size = Math.max(0, ...sizes);
       const svg = attrs.type === 'image/svg+xml' || /\.svg(?:[?#]|$)/i.test(url);
-      const png = attrs.type === 'image/png' || /\.png(?:[?#]|$)/i.test(url);
-      candidates.push({ url, score: svg ? 100000 : png && size >= 32 ? 1000 + Math.min(90000, size) : size });
+      // Apple touch icons are 180 px when their size is not given; plain icons, 16.
+      const size = Math.max(0, ...sizes) || (rel.includes('apple-touch-icon') ? 180 : 16);
+      candidates.push({ url, score: iconScore(size, svg) });
     } catch { /* Ignore unsafe protocols/userinfo. */ }
   }
-  return { icons: candidates.sort((a, b) => b.score - a.score).map(c => c.url), manifest };
+  candidates.sort((a, b) => b.score - a.score);
+  // How many of the first icons are sharp (vector, or 64 px and more).
+  return { icons: candidates.map(c => c.url), manifest, sharp: candidates.filter(c => c.score >= 64).length };
 }
-interface Index { fetchedAt: number; ext?: string; contentType?: string }
+/**
+ * Sharp first: vector, then the smallest raster of at least 64 px (shown at
+ * up to 32 px on high-density screens), then larger ones, then small ones.
+ */
+function iconScore(size: number, svg: boolean): number {
+  if (svg) return 100000;
+  if (size >= 64) return 50000 - Math.min(size, 1024);
+  return size;
+}
+/** Bumped when the choice of icon improves: icons found by an older version are looked for again. */
+const INDEX_VERSION = 2;
+interface Index { fetchedAt: number; ext?: string; contentType?: string; version?: number }
 const cachedIcons = new TtlCache<Favicon | null>(60000, 200);
 const DAY = 86400000;
 export async function loadFavicon(value: string): Promise<Favicon | null> {
@@ -95,7 +108,7 @@ export async function loadFavicon(value: string): Promise<Favicon | null> {
     const indexPath = path.join(directory, `${key}.json`);
     try {
       const index = JSON.parse(await readFile(indexPath, 'utf8')) as Index;
-      if (Number.isFinite(index.fetchedAt) && Date.now() - index.fetchedAt < (index.ext ? 30 * DAY : DAY)) {
+      if (index.version === INDEX_VERSION && Number.isFinite(index.fetchedAt) && Date.now() - index.fetchedAt < (index.ext ? 30 * DAY : DAY)) {
         if (!index.ext) return null;
         if (/^(png|ico|jpg|webp|gif|svg)$/.test(index.ext)) {
           const bytes = await readFile(path.join(directory, `${key}.${index.ext}`));
@@ -105,9 +118,10 @@ export async function loadFavicon(value: string): Promise<Favicon | null> {
       }
     } catch { /* First fetch or damaged index: refresh. */ }
     let found: Favicon | null = null;
-    let links: ReturnType<typeof iconLinks> = { icons: [] };
+    let links: ReturnType<typeof iconLinks> = { icons: [], sharp: 0 };
     try {
-      const page = await fetchBytes(`${origin}/`, 512 * 1024, 3);
+      // The icons are in the page's head: its first 512 KiB are enough, even for a heavy page.
+      const page = await fetchBytes(`${origin}/`, 512 * 1024, 3, true);
       if (['text/html', 'application/xhtml+xml'].includes(page.contentType)) links = iconLinks(new TextDecoder().decode(page.bytes), page.url);
     } catch { /* The root page may require login; try the conventional icon. */ }
     const tryIcons = async (urls: string[]) => {
@@ -120,21 +134,25 @@ export async function loadFavicon(value: string): Promise<Favicon | null> {
       }
       return null;
     };
-    found = await tryIcons(links.icons);
-    if (!found && links.manifest) {
+    const manifestIcons = async () => {
+      if (!links.manifest) return [];
       try {
         const manifest = await fetchJson(links.manifest, 512 * 1024) as { icons?: { src?: string; sizes?: string; type?: string }[] };
-        if (Array.isArray(manifest.icons)) {
-          const html = manifest.icons.slice(0, 30).map(icon => {
-            // Reuse HTML ranking without interpolating untrusted markup.
-            const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-            return typeof icon.src === 'string' ? `<link rel="icon" href="${escape(icon.src)}" sizes="${escape(icon.sizes ?? '')}" type="${escape(icon.type ?? '')}">` : '';
-          }).join('');
-          found = await tryIcons(iconLinks(html, links.manifest).icons);
-        }
-      } catch { /* Missing/malformed manifest. */ }
-    }
-    found ??= await tryIcons([`${origin}/favicon.ico`]);
+        if (!Array.isArray(manifest.icons)) return [];
+        const html = manifest.icons.slice(0, 30).map(icon => {
+          // Reuse HTML ranking without interpolating untrusted markup.
+          const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+          return typeof icon.src === 'string' ? `<link rel="icon" href="${escape(icon.src)}" sizes="${escape(icon.sizes ?? '')}" type="${escape(icon.type ?? '')}">` : '';
+        }).join('');
+        return iconLinks(html, links.manifest).icons;
+      } catch { return []; /* Missing/malformed manifest. */ }
+    };
+    // Small page icons (16–48 px) only when nothing sharper exists.
+    const sharp = links.icons.filter((_, index) => index < links.sharp);
+    found = await tryIcons(sharp)
+      ?? await tryIcons(await manifestIcons())
+      ?? await tryIcons([`${origin}/apple-touch-icon.png`])
+      ?? await tryIcons([...links.icons.slice(links.sharp), `${origin}/favicon.ico`]);
     await mkdir(directory, { recursive: true });
     const atomicWrite = async (file: string, data: string | Uint8Array) => {
       const temp = `${file}.${randomUUID()}.tmp`;
@@ -142,7 +160,7 @@ export async function loadFavicon(value: string): Promise<Favicon | null> {
       finally { await unlink(temp).catch(() => {}); }
     };
     if (found) await atomicWrite(path.join(directory, `${key}.${found.ext}`), found.bytes);
-    await atomicWrite(indexPath, JSON.stringify({ fetchedAt: Date.now(), ...(found ? { ext: found.ext, contentType: found.contentType } : {}) } satisfies Index));
+    await atomicWrite(indexPath, JSON.stringify({ fetchedAt: Date.now(), version: INDEX_VERSION, ...(found ? { ext: found.ext, contentType: found.contentType } : {}) } satisfies Index));
     return found;
   });
 }

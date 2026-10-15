@@ -18,7 +18,7 @@ it.each(['pihole', 'adguard', 'immich', 'photoprism'])('tests %s with the existi
   const response = await POST(request(input(type)));
   expect(response.status).toBe(200); expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
   if (type === 'pihole') expect(vi.mocked(piholeRequest).mock.calls[0][1]).toBe('/api/stats/summary');
-  else expect(vi.mocked(serviceJson).mock.calls[0][1]).toBe(type === 'adguard' ? '/control/status' : type === 'immich' ? '/api/users/me' : '/api/v1/config');
+  else expect(vi.mocked(serviceJson).mock.calls[0][1]).toBe(type === 'adguard' ? '/control/status' : type === 'immich' ? '/api/search/random' : '/api/v1/config');
 });
 it('refuses non-admin tests', async () => {
   state.admin = false;
@@ -47,4 +47,10 @@ it('reports typed provider errors and parameters with 502/504', async () => {
   vi.mocked(serviceJson).mockRejectedValue(new ServiceError('widgets.error.http', 502, { status: 401 }));
   const response = await POST(request(input('immich')));
   expect(response.status).toBe(502); expect(await response.json()).toEqual({ ok: false, message: 'widgets.error.http', messageParameters: { status: 401 } });
+});
+it('tells an Immich key without the reading permission apart from a refused key', async () => {
+  vi.mocked(serviceJson).mockRejectedValue(new ServiceError('integrations.error.authentication', 502, { status: 403 }));
+  expect(await (await POST(request(input('immich')))).json()).toEqual({ ok: false, message: 'integrations.immich.missingPermission' });
+  vi.mocked(serviceJson).mockRejectedValue(new ServiceError('integrations.error.authentication', 502, { status: 401 }));
+  expect(await (await POST(request(input('immich')))).json()).toMatchObject({ ok: false, message: 'integrations.error.authentication' });
 });

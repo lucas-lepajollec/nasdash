@@ -40,16 +40,32 @@ it('stores a validated icon and a JSON index, uses disk cache and refreshes afte
     await loadFavicon('https://example.com/'); expect(fetch).toHaveBeenCalledTimes(4);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
-it('falls back through manifest and conventional icon, caches misses for one day', async () => {
+it('falls back through manifest and conventional icons, caches misses for one day', async () => {
   const directory = await mkdtemp('/tmp/nasdash-favicon-negative-');
   vi.mocked(getDataDirectory).mockReturnValue(directory);
   vi.useFakeTimers(); vi.setSystemTime(2000000000);
   const fetch = vi.fn(async (url: URL) => url.pathname === '/' ? new Response('<link rel="manifest" href="/manifest.json">', { headers: { 'content-type': 'text/html' } }) : url.pathname === '/manifest.json' ? new Response('{"icons":[{"src":"/missing.png","sizes":"64x64"}]}') : new Response('', { status: 404 }));
   vi.stubGlobal('fetch', fetch);
   try {
-    expect(await loadFavicon('http://example.com/')).toBeNull(); expect(fetch).toHaveBeenCalledTimes(4);
-    vi.advanceTimersByTime(61000); expect(await loadFavicon('http://example.com/')).toBeNull(); expect(fetch).toHaveBeenCalledTimes(4);
-    vi.advanceTimersByTime(86400000); await loadFavicon('http://example.com/'); expect(fetch).toHaveBeenCalledTimes(8);
+    expect(await loadFavicon('http://example.com/')).toBeNull(); expect(fetch).toHaveBeenCalledTimes(5);
+    vi.advanceTimersByTime(61000); expect(await loadFavicon('http://example.com/')).toBeNull(); expect(fetch).toHaveBeenCalledTimes(5);
+    vi.advanceTimersByTime(86400000); await loadFavicon('http://example.com/'); expect(fetch).toHaveBeenCalledTimes(10);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+it('prefers a sharp icon from the head of a heavy page over a small one', async () => {
+  const directory = await mkdtemp('/tmp/nasdash-favicon-sharp-');
+  vi.mocked(getDataDirectory).mockReturnValue(directory);
+  const png = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0]);
+  const head = '<link rel="icon" href="/16.png" sizes="16x16"><link rel="icon" href="/144.png" sizes="144x144"><link rel="icon" href="/32.png" sizes="32x32">';
+  // Over 512 KiB: only its beginning is read, which holds the icons.
+  const page = head + ' '.repeat(700 * 1024);
+  const fetch = vi.fn(async (url: URL) => url.pathname === '/' ? new Response(page, { headers: { 'content-type': 'text/html' } })
+    : url.pathname === '/144.png' ? new Response(png, { headers: { 'content-type': 'image/png' } }) : new Response('', { status: 404 }));
+  vi.stubGlobal('fetch', fetch);
+  try {
+    expect(await loadFavicon('http://heavy.example/')).not.toBeNull();
+    expect(fetch.mock.calls.map(([url]) => (url as URL).pathname)).toEqual(['/', '/144.png']);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 

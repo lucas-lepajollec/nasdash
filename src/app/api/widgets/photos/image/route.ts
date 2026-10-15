@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
 import { immichHeaders } from '@/integrations/immich/collect';
 import { photoprismHeaders, photoprismPreviewToken } from '@/integrations/photoprism/collect';
-import { assertStatus, demoLandscape, knownPhoto, PHOTO_HASH, queryDraft, resolveServiceWidget, serviceBytes, serviceFailure, ServiceError, validPhotoId } from '@/lib/widgetData/services';
+import { assertStatus, demoLandscape, knownInstancePhoto, knownPhoto, PHOTO_HASH, queryDraft, resolveServiceWidget, serviceBytes, serviceFailure, ServiceError, validPhotoId } from '@/lib/widgetData/services';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, max-age=86400', 'X-Content-Type-Options': 'nosniff' };
 export async function GET(request: NextRequest) {
@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
     const id = url.searchParams.get('id') ?? '', size = url.searchParams.get('size') ?? 'thumb';
     if (!validPhotoId(instance.type, id) || !['thumb', 'preview'].includes(size)) throw new ServiceError('widgets.error.invalidRequest', 400);
     if (isDemoMode()) return new NextResponse(demoLandscape(id), { headers: { ...headers, 'Content-Type': 'image/svg+xml', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
-    const asset = knownPhoto(instance, id);
+    // A draft preview (admin) may show photos the saved widget did not list.
+    const draft = resolved.principal.role === 'admin' && url.searchParams.has('draft');
+    const asset = draft ? knownInstancePhoto(instance, id) : knownPhoto(instance, id, url.searchParams.get('widgetId')!);
     if (!asset) throw new ServiceError('widgets.error.notFound', 404);
     let path: string;
     if (instance.type === 'immich') path = `/api/assets/${id}/thumbnail?size=${size === 'thumb' ? 'thumbnail' : 'preview'}`;

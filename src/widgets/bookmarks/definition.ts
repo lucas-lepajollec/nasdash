@@ -1,0 +1,11 @@
+import { defineWidget } from '../define';
+
+export default defineWidget({
+  type: 'bookmarks', group: 'content', icon: '🔖',
+  nameKey: 'widget.bookmarks.name', descriptionKey: 'widget.bookmarks.description',
+  access: null, settingsTab: 'widget-bookmarks',
+  // Widths it can be resized to (columns out of 24), width when added,
+  // smallest usable width (px) and typical height (px) before measuring.
+  sizes: { formats: [3, 4, 6, 8, 12, 16, 24], default: 6, minPx: 140, h: 320 },
+  defaultSettings: { display: 'tree' },
+});

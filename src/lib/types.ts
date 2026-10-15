@@ -1,3 +1,5 @@
+import type { BookmarkItem } from './widgetData/contracts';
+
 export interface Service {
   id: string;
   name: string;
@@ -361,6 +363,7 @@ export interface DashboardConfig {
     weatherLocations?: { id: string; lat: number; lon: number; name: string }[];
     /** Content widget sources, shared by every widget of the type (Settings → Widgets). */
     rssFeeds?: { id: string; url: string; title?: string }[];
+    bookmarks?: BookmarkItem[];
     marketSymbols?: { id: string; symbol: string; label?: string; kind?: string; exchange?: string }[];
     quotes?: { id: string; text: string; author?: string }[];
     /** Online quote sources (ids from `quoteProviders.ts`). */
@@ -503,4 +506,3 @@ export interface NetworkTopology {
   groups: NetworkGroup[];
   connections: NetworkConnection[];
 }
-

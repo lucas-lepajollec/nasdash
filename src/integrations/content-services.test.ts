@@ -6,7 +6,7 @@ import immichSample from './immich/samples/service.json';
 import photoprismSample from './photoprism/samples/service.json';
 vi.mock('@/lib/config', () => ({ readConfig: vi.fn(() => ({ integrations: [] })) }));
 vi.mock('@/lib/widgetData/services', async importOriginal => ({ ...await importOriginal<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn() }));
-import { serviceJson, ServiceError, serviceIdentity, knownPhoto, validPhotoId, photoSelection } from '@/lib/widgetData/services';
+import { serviceJson, ServiceError, serviceIdentity, knownInstancePhoto, validPhotoId, photoSelection } from '@/lib/widgetData/services';
 import { clearPiholeSessions, collectPihole, piholeRequest, toPiholeSummary, togglePihole } from './pihole/collect';
 import { collectAdguard, toAdguardSummary, toggleAdguard } from './adguard/collect';
 import { collectImmich, toImmichPhotos, immichAlbums } from './immich/collect';
@@ -107,8 +107,8 @@ describe('Photo libraries', () => {
     expect(result).toHaveLength(12);
     expect(result[0]).toMatchObject({ id: 'pdemo00000000000', width: 1200, height: 800 });
     expect(result[0].link).toContain('q=uid%3A');
-    expect(knownPhoto(source, result[0].id)?.hash).toBe(photoprismSample.photos[0].Hash);
-    expect(knownPhoto(instance('photoprism', 'other'), result[0].id)).toBeUndefined();
+    expect(knownInstancePhoto(source, result[0].id)?.hash).toBe(photoprismSample.photos[0].Hash);
+    expect(knownInstancePhoto(instance('photoprism', 'other'), result[0].id)).toBeUndefined();
     expect(serviceIdentity(source)).not.toContain('fake-token');
   });
   it('validates UUID, UID/hash, album IDs and bounded counts', () => {

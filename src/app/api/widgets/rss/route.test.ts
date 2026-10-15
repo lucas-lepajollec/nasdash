@@ -25,7 +25,14 @@ const iconRequest = (url: string) => new NextRequest(`http://localhost/api/widge
 let document: PagesDocument;
 beforeEach(() => {
   vi.resetAllMocks(); rssCache.clear();
-  vi.mocked(readConfig).mockReturnValue({ version: 1, categories: [], settings: { title: 'NasDash', showMonitor: true, rssFeeds: [{ id: 'feed-saved', url: 'https://saved.example/feed' }, { id: 'feed-other', url: 'https://other.example/rss' }] } });
+  vi.mocked(readConfig).mockReturnValue({ version: 1, categories: [], settings: {
+    title: 'NasDash', showMonitor: true,
+    rssFeeds: [{ id: 'feed-saved', url: 'https://saved.example/feed' }, { id: 'feed-other', url: 'https://other.example/rss' }],
+    bookmarks: [
+      { id: 'folder', kind: 'folder', title: 'Folder' },
+      { id: 'link', kind: 'link', title: 'Saved', url: 'https://bookmarks.example/service', parentId: 'folder' },
+    ],
+  } });
   vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'reader', role: 'viewer', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
   document = { schemaVersion: 5, pages: [{ id: 'dashboard', name: 'Dashboard', icon: '', revision: 1, widgets: ['rss', 'markets', 'quotes', 'bookmarks'].map((type): WidgetInstance => ({ id: `${type}-widget`, type, x: 0, y: 0, w: 6, h: 10, settings: type === 'rss' ? { feedIds: ['feed-saved'] } : type === 'bookmarks' ? { items: [{ id: 'link', kind: 'link', title: 'Saved', url: 'http://example.com/service' }] } : {} })) }] };
   vi.mocked(readPagesDocument).mockImplementation(() => document);
@@ -70,7 +77,7 @@ it('returns deterministic demo fixtures for all data routes without outbound fet
     expect(first.status).toBe(200); expect(await first.json()).toEqual(await second.json());
     expect(first.headers.get('cache-control')).toBe('private, no-store');
   }
-  expect((await favicon(iconRequest('http://example.com/'))).status).toBe(404);
+  expect((await favicon(iconRequest('https://bookmarks.example/'))).status).toBe(404);
   expect(fetch).not.toHaveBeenCalled(); expect(loadFavicon).not.toHaveBeenCalled();
 });
 it('returns 400 and private no-store for malformed request bodies', async () => {
@@ -78,18 +85,35 @@ it('returns 400 and private no-store for malformed request bodies', async () => 
     const response = await route(request(null)); expect(response.status).toBe(400); expect(response.headers.get('cache-control')).toBe('private, no-store');
   }
 });
-it('serves favicons only for saved origins, admins included, fetching the saved address', async () => {
+it.each(['viewer', 'admin'] as const)('serves bookmarks favicons only for saved library origins for %s, fetching the saved address', async role => {
+  vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: role, role, allowedTabs: [], allowedWidgets: [], isAnonymous: false });
   vi.mocked(loadFavicon).mockResolvedValue({ bytes: new TextEncoder().encode('<svg/>'), contentType: 'image/svg+xml', ext: 'svg' });
-  expect((await favicon(iconRequest('http://unsaved.example/'))).status).toBe(404);
+  for (const url of ['https://unsaved.example/', 'http://example.com/', 'https://saved.example/', 'http://bookmarks.example/', 'https://bookmarks.example:8443/']) {
+    expect((await favicon(iconRequest(url))).status).toBe(404);
+  }
   expect(loadFavicon).not.toHaveBeenCalled();
-  const response = await favicon(iconRequest('http://example.com/elsewhere'));
-  expect(response.status).toBe(200); expect(loadFavicon).toHaveBeenCalledWith('http://example.com');
+  const response = await favicon(iconRequest('https://BOOKMARKS.example/elsewhere?untrusted=request#fragment'));
+  expect(response.status).toBe(200); expect(loadFavicon).toHaveBeenCalledWith('https://bookmarks.example');
   expect(response.headers.get('content-type')).toBe('image/svg+xml'); expect(response.headers.get('x-content-type-options')).toBe('nosniff');
   expect(response.headers.get('content-security-policy')).toContain("default-src 'none'");
-  vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'admin', role: 'admin', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
-  expect((await favicon(iconRequest('http://unsaved.example/'))).status).toBe(404);
   expect(loadFavicon).toHaveBeenCalledTimes(1);
   expect((await favicon(iconRequest('file:///etc/passwd'))).status).toBe(400);
+});
+it('does not use folder URLs or old widget items when no saved bookmark links exist', async () => {
+  const config = readConfig();
+  config.settings.bookmarks = [{ id: 'folder', kind: 'folder', title: 'Legacy folder', url: 'https://folder.example/' }];
+  expect((await favicon(iconRequest('https://folder.example/'))).status).toBe(404);
+  delete config.settings.bookmarks;
+  expect((await favicon(iconRequest('http://example.com/'))).status).toBe(404);
+  expect((await favicon(iconRequest('https://bookmarks.example/'))).status).toBe(404);
+  expect(loadFavicon).not.toHaveBeenCalled();
+});
+it('requires a bookmarks widget visible to the requester before fetching saved library icons', async () => {
+  document.pages[0].widgets.find(widget => widget.type === 'bookmarks')!.hidden = true;
+  expect((await favicon(iconRequest('https://bookmarks.example/'))).status).toBe(404);
+  vi.mocked(resolveAccessPrincipal).mockReturnValue(null);
+  expect((await favicon(iconRequest('https://bookmarks.example/'))).status).toBe(401);
+  expect(loadFavicon).not.toHaveBeenCalled();
 });
 it('authorizes RSS favicon origins from the saved feeds only', async () => {
   vi.mocked(loadFavicon).mockResolvedValue({ bytes: new TextEncoder().encode('<svg/>'), contentType: 'image/svg+xml', ext: 'svg' });
@@ -100,4 +124,15 @@ it('authorizes RSS favicon origins from the saved feeds only', async () => {
   expect(loadFavicon).toHaveBeenCalledWith('https://saved.example');
   // The type selects which saved widget is read: an RSS id is not a bookmarks widget.
   expect((await favicon(new NextRequest('http://localhost/api/widgets/favicon?widgetId=rss-widget&url=https%3A%2F%2Fsaved.example%2F'))).status).toBe(404);
+});
+it('serves saved bookmark icons without a widget to administrators only (library settings)', async () => {
+  vi.mocked(loadFavicon).mockResolvedValue({ bytes: new Uint8Array([137, 80, 78, 71]), contentType: 'image/png', ext: 'png' });
+  const libraryIcon = (url: string) => new NextRequest(`http://localhost/api/widgets/favicon?type=bookmarks&url=${encodeURIComponent(url)}`);
+  vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'admin', role: 'admin', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
+  expect((await favicon(libraryIcon('https://bookmarks.example/'))).status).toBe(200);
+  expect((await favicon(libraryIcon('https://unsaved.example/'))).status).toBe(404);
+  vi.mocked(loadFavicon).mockClear();
+  vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'reader', role: 'viewer', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
+  expect((await favicon(libraryIcon('https://bookmarks.example/'))).status).not.toBe(200);
+  expect(loadFavicon).not.toHaveBeenCalled();
 });
