@@ -220,7 +220,12 @@ body[data-design="calme"] .nd-page {
   padding-right: var(--nd-page-actions-width, 0px);
 }
 
-.nd-page-widget--editing .ndc-title { padding-right: calc(var(--nd-page-actions-width, 0px) + 12px); }
+/* Edit mode: notes beside the title ("1 playing") stay at the edge until the
+   controls show (hover, keyboard focus), then make room for them. */
+.nd-page-widget--editing .ndc-title { padding-right: 2px; transition: padding-right 0.14s ease; }
+body[data-design="calme"] .grid-stack-item:hover .nd-page-widget--editing .ndc-title,
+body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .ndc-title { padding-right: calc(var(--nd-page-actions-width, 0px) + 12px); }
+@media (hover: none) { .nd-page-widget--editing .ndc-title { padding-right: calc(var(--nd-page-actions-width, 0px) + 12px); } }
 
 /* Edit mode: widget controls appear on hover (always on touch screens). */
 body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-actions {
@@ -3177,7 +3182,8 @@ body.light {
 .ndc-group-drag { position: absolute; top: 0; left: 0; display: flex; align-items: center; gap: 5px; min-height: 24px; padding: 0 4px; border: none; border-radius: 4px; background: transparent; color: var(--nd-text-dimmed); font: inherit; font-size: 0.64rem; cursor: grab; touch-action: none; }
 .ndc-group-drag:hover, .ndc-group-drag:focus-visible { color: var(--nd-accent); background: var(--nd-subcard-bg); }
 .ndc-group-drag:active { cursor: grabbing; }
-.ndc-device-settings .ndc-dlg-stack > .ndc-check-row:last-child { border-bottom: 0; }
+/* A list of checks followed by a setting row: one line between them, not two. */
+.ndc-dlg-stack > .ndc-check-row:last-child { border-bottom: 0; }
 .ndc-metric-list .ndc-m--value .ndc-m-label { text-transform: none; letter-spacing: 0; font-size: 0.72rem; color: var(--nd-text-muted); }
 .ndc-metric-list .ndc-m--bar .ndc-m-label { text-transform: none; letter-spacing: 0; font-size: 0.76rem; color: var(--nd-text); }
 

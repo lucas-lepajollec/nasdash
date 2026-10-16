@@ -241,6 +241,8 @@
     }
   },
   "integrations": [
+    { "id": "jellyfin-demo", "type": "jellyfin", "name": "Jellyfin · Atlas NAS", "settings": { "url": "https://jellyfin.demo.invalid", "allowSelfSigned": "false" } },
+    { "id": "plex-demo", "type": "plex", "name": "Plex · Atlas NAS", "settings": { "url": "https://plex.demo.invalid", "allowSelfSigned": "false" } },
     {
       "id": "customapi-demo",
       "type": "customapi",

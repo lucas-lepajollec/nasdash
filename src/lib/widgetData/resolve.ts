@@ -17,7 +17,7 @@ export type WidgetLookup =
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
 
-export function resolveWidgetSettings(request: NextRequest | Request, widgetId: unknown, type: string, draft?: unknown): WidgetLookup {
+export function resolveWidgetSettings(request: NextRequest | Request, widgetId: unknown, type: string | readonly string[], draft?: unknown): WidgetLookup {
   if (typeof widgetId !== 'string' || !ID.test(widgetId)) return { ok: false, status: 400, error: 'widgets.error.invalidWidget' };
   const config = readConfig();
   const principal = resolveAccessPrincipal(request as NextRequest, config.settings?.securityMode || 'public');
@@ -31,7 +31,7 @@ export function resolveWidgetSettings(request: NextRequest | Request, widgetId: 
   }
   const widget = pagesForViewer(readPagesDocument(), principal)
     .flatMap(page => page.widgets)
-    .find(candidate => candidate.id === widgetId && candidate.type === type);
+    .find(candidate => candidate.id === widgetId && (typeof type === 'string' ? candidate.type === type : type.includes(candidate.type)));
   if (!widget) return { ok: false, status: 404, error: 'widgets.error.notFound' };
   return { ok: true, settings: widget.settings ?? {}, principal, draft: false };
 }

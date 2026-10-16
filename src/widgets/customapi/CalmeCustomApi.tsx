@@ -44,7 +44,7 @@ export default function CalmeCustomApi({ widgetId, settings, editMode, isVisible
   const fields = fieldsOf(settings);
   const refresh = Number(pick(String(settings.refresh), REFRESHES, '60'));
   const ready = display === 'status' ? typeof settings.okPath === 'string' && settings.okPath !== '' : fields.length > 0 && (display !== 'table' || typeof settings.listPath === 'string');
-  const { data, error, mutate, isValidating } = useWidgetData<CustomApiResponse>('/api/widgets/customapi', widgetId, settings, {
+  const { data, error, mutate, isValidating, stale } = useWidgetData<CustomApiResponse>('/api/widgets/customapi', widgetId, settings, {
     refreshMs: refresh * 1000, isVisible, method: 'GET', enabled: !!connection && ready,
   });
   const title = typeof settings.title === 'string' && settings.title.trim() ? settings.title.trim() : t('widget.customapi.name');
@@ -56,7 +56,7 @@ export default function CalmeCustomApi({ widgetId, settings, editMode, isVisible
           {(draft, change) => <CustomApiSettings draft={draft} change={change} />}
         </WidgetSettingsButton>
       )}
-      <div className="ndw-api-box">
+      <div className={`ndw-api-box ${stale ? 'is-stale' : ''}`}>
         {!connection ? (settings.integrationId ? <div className="ndc-empty ndc-empty--error">{t('widgets.dns.connectionGone')}</div> : <SetupGuide kind="customapi" />)
           : !ready ? <div className="ndc-empty">{t(user?.role === 'admin' ? 'widgets.customapi.pickHint' : 'widgets.customapi.notReady')}</div>
             : error && !data ? <DataError error={error} onRetry={() => void mutate()} />

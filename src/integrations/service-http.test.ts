@@ -35,13 +35,13 @@ it('uses httpRequest for normal JSON, including the certificate option and bound
   expect(await serviceJson(source, '/api/auth', { method: 'POST', json: { password: 'fake-password' } })).toEqual({ session: {} });
   expect(httpRequest).toHaveBeenCalledWith('https://fixture.example.com/api/auth', { method: 'POST', json: { password: 'fake-password' }, allowSelfSigned: true, timeoutMs: 6000 });
 });
-it('keeps SID/API-key credentials on a transport that never follows redirects', async () => {
+it.each(['X-FTL-SID', 'x-api-key', 'X-Emby-Token', 'X-Plex-Token', 'x-emby-token', 'x-plex-token'])('keeps %s on a transport that never follows redirects', async header => {
   nextStatus = 302;
-  await expect(serviceJson(source, '/api/stats/summary', { headers: { 'X-FTL-SID': 'fictional-sid' } })).rejects.toMatchObject({ key: 'widgets.error.http', parameters: { status: 302 } });
+  await expect(serviceJson(source, '/api/stats/summary', { headers: { [header]: 'fictional-sid' } })).rejects.toMatchObject({ key: 'widgets.error.http', parameters: { status: 302 } });
   expect(httpRequest).not.toHaveBeenCalled();
   expect(https.request).toHaveBeenCalledTimes(1);
   expect(sentUrl.origin).toBe('https://fixture.example.com');
-  expect(sentOptions).toMatchObject({ rejectUnauthorized: false, headers: { 'X-FTL-SID': 'fictional-sid' } });
+  expect(sentOptions).toMatchObject({ rejectUnauthorized: false, headers: { [header]: 'fictional-sid' } });
 });
 it('enforces certificate checks unless explicitly opted in, and serializes bounded toggle bodies', async () => {
   await serviceBytes({ ...source, settings: { ...source.settings, allowSelfSigned: 'false' } }, '/api/dns/blocking', { method: 'POST', json: { blocking: false, timer: 60 } });
@@ -68,4 +68,10 @@ it('rejects non-HTTP URLs, embedded credentials, invalid JSON and oversized inbo
   await expect(serviceJson(source, '/x', { headers: { 'x-api-key': 'fake-key' } })).rejects.toMatchObject({ key: 'widgets.error.parse' });
   await expect(boundedJson(new Request('http://fictional', { method: 'POST', body: 'x'.repeat(17000) }))).rejects.toMatchObject({ status: 400 });
   await expect(boundedJson(new Request('http://fictional', { method: 'POST', body: 'null' }))).rejects.toMatchObject({ status: 400 });
+});
+it('names its client (some APIs refuse anonymous requests), unless the caller sets its own', async () => {
+  await serviceBytes(source, '/api/status');
+  expect(sentOptions.headers).toMatchObject({ 'User-Agent': 'NasDash' });
+  await serviceBytes(source, '/api/status', { headers: { 'User-Agent': 'Custom' } });
+  expect(sentOptions.headers).toMatchObject({ 'User-Agent': 'Custom' });
 });

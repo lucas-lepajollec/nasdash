@@ -28,6 +28,9 @@ const LOGOS: Record<string, string> = {
   technitium: `${ICONS}/svg/technitium.svg`,
   immich: `${ICONS}/svg/immich.svg`,
   photoprism: `${ICONS}/svg/photoprism.svg`,
+  jellyfin: `${ICONS}/svg/jellyfin.svg`,
+  emby: `${ICONS}/svg/emby.svg`,
+  plex: `${ICONS}/svg/plex.svg`,
 };
 
 export function IntegrationLogo({ id, size = 28 }: { id: string; size?: number }) {

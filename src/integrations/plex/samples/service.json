@@ -1,0 +1,197 @@
+{
+  "identity": {
+    "MediaContainer": {
+      "machineIdentifier": "fictional-machine"
+    }
+  },
+  "sessions": {
+    "MediaContainer": {
+      "Metadata": [
+        {
+          "ratingKey": "100",
+          "type": "movie",
+          "title": "The Quiet Orbit",
+          "year": 2025,
+          "duration": 6840000,
+          "viewOffset": 2130000,
+          "addedAt": 1768478400,
+          "thumb": "/library/metadata/100/thumb/1",
+          "art": "/library/metadata/100/art/1",
+          "Player": {
+            "state": "playing",
+            "title": "Living room",
+            "product": "Plex TV"
+          },
+          "User": {
+            "title": "Alex"
+          },
+          "Media": [
+            {
+              "videoResolution": "4k"
+            }
+          ],
+          "Session": {
+            "id": "session-1",
+            "bandwidth": 24000
+          }
+        },
+        {
+          "ratingKey": "101",
+          "type": "episode",
+          "title": "The Fifth Beacon",
+          "grandparentTitle": "Harbor Lights",
+          "parentIndex": 2,
+          "index": 5,
+          "duration": 2640000,
+          "viewOffset": 930000,
+          "grandparentThumb": "/library/metadata/90/thumb/1",
+          "thumb": "/library/metadata/101/thumb/1",
+          "art": "/library/metadata/90/art/1",
+          "Player": {
+            "state": "paused",
+            "title": "Den",
+            "product": "Plex Web"
+          },
+          "User": {
+            "title": "Robin"
+          },
+          "TranscodeSession": {
+            "videoDecision": "transcode",
+            "audioDecision": "copy"
+          },
+          "Media": [
+            {
+              "videoResolution": "1080"
+            }
+          ],
+          "Session": {
+            "id": "session-2",
+            "bandwidth": 8000
+          }
+        },
+        {
+          "ratingKey": "102",
+          "type": "track",
+          "title": "Paper Moons",
+          "grandparentTitle": "The Paper Satellites",
+          "parentTitle": "Signals from the Garden",
+          "Player": {
+            "state": "buffering"
+          },
+          "TranscodeSession": {
+            "audioDecision": "copy"
+          },
+          "Media": [
+            {
+              "audioCodec": "flac"
+            }
+          ],
+          "Session": {
+            "id": "session-3"
+          }
+        }
+      ]
+    }
+  },
+  "recent": {
+    "MediaContainer": {
+      "Metadata": [
+        {
+          "ratingKey": "100",
+          "type": "movie",
+          "title": "The Quiet Orbit",
+          "year": 2025,
+          "duration": 6840000,
+          "viewOffset": 2130000,
+          "addedAt": 1768478400,
+          "thumb": "/library/metadata/100/thumb/1",
+          "art": "/library/metadata/100/art/1",
+          "Player": {
+            "state": "playing",
+            "title": "Living room",
+            "product": "Plex TV"
+          },
+          "User": {
+            "title": "Alex"
+          },
+          "Media": [
+            {
+              "videoResolution": "4k"
+            }
+          ],
+          "Session": {
+            "id": "session-1",
+            "bandwidth": 24000
+          }
+        },
+        {
+          "ratingKey": "101",
+          "type": "episode",
+          "title": "The Fifth Beacon",
+          "grandparentTitle": "Harbor Lights",
+          "parentIndex": 2,
+          "index": 5,
+          "duration": 2640000,
+          "viewOffset": 930000,
+          "grandparentThumb": "/library/metadata/90/thumb/1",
+          "thumb": "/library/metadata/101/thumb/1",
+          "art": "/library/metadata/90/art/1",
+          "Player": {
+            "state": "paused",
+            "title": "Den",
+            "product": "Plex Web"
+          },
+          "User": {
+            "title": "Robin"
+          },
+          "TranscodeSession": {
+            "videoDecision": "transcode",
+            "audioDecision": "copy"
+          },
+          "Media": [
+            {
+              "videoResolution": "1080"
+            }
+          ],
+          "Session": {
+            "id": "session-2",
+            "bandwidth": 8000
+          }
+        },
+        {
+          "ratingKey": "103",
+          "type": "season",
+          "title": "Harbor Lights \u2014 Season 2",
+          "grandparentTitle": "Harbor Lights"
+        },
+        {
+          "ratingKey": "104",
+          "type": "album",
+          "title": "Signals from the Garden",
+          "parentTitle": "The Paper Satellites"
+        }
+      ]
+    }
+  },
+  "sections": {
+    "MediaContainer": {
+      "Directory": [
+        {
+          "key": "1",
+          "type": "movie",
+          "title": "Evening Cinema"
+        },
+        {
+          "key": "2",
+          "type": "show",
+          "title": "Harbor Stories"
+        },
+        {
+          "key": "3",
+          "type": "artist",
+          "title": "Paper Satellites Radio"
+        }
+      ]
+    }
+  }
+}

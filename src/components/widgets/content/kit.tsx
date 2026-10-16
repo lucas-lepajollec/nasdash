@@ -52,7 +52,7 @@ export function useWidgetData<T>(route: string, widgetId: string, settings: Widg
   const [seen, setSeen] = useState(options.isVisible !== false);
   if (!seen && options.isVisible !== false) setSeen(true);
   const key = options.enabled === false || !seen ? null : [route, widgetId, method, draftKey, paramsKey, bodyKey];
-  return useSWR<T, WidgetDataError>(key, async () => {
+  const result = useSWR<T, WidgetDataError>(key, async () => {
     if (method === 'GET') {
       const query = new URLSearchParams({ widgetId, ...(options.params ?? {}) });
       if (draftKey) query.set('draft', draftKey);
@@ -70,6 +70,8 @@ export function useWidgetData<T>(route: string, widgetId: string, settings: Widg
     dedupingInterval: 5_000,
     errorRetryCount: 2,
   });
+  // A setting changed and the new answer is on its way: the shown data is the previous one's.
+  return Object.assign(result, { stale: result.isLoading && result.data !== undefined });
 }
 
 /** "3 min", "2 h", "5 d": the age of a date, short, in the interface language. */
@@ -373,5 +375,38 @@ export function SourceChoice({ label, items, value, onChange }: {
         </div>
       )}
     </div>
+  );
+}
+
+/** Columns of a list widget: automatic (from its width) or a fixed number. */
+export const COLUMN_CHOICES = ['auto', '1', '2', '3', '4'] as const;
+
+/**
+ * How many columns a list widget shows: its choice, never narrower than
+ * `minColumn` px each (a stretched widget spreads its rows side by side).
+ */
+export function columnsOf(settings: WidgetSettings, width: number, minColumn: number): number {
+  const choice = pick(String(settings.columns), COLUMN_CHOICES, 'auto');
+  const fit = Math.max(1, Math.floor((width + 22) / (minColumn + 22)));
+  return Math.min(4, choice === 'auto' ? fit : Math.min(Number(choice), fit));
+}
+
+/** Rows laid out in `columns` columns, a line between rows (none above the first). */
+export function ColumnRows({ columns, className = '', children }: { columns: number; className?: string; children: React.ReactNode }) {
+  if (columns <= 1) return <div className={`ndw-rows ${className}`}>{children}</div>;
+  return (
+    <div className="ndw-columns-clip">
+      <div className={`ndw-rows is-columns ${className}`} style={{ '--ndw-cols': columns } as React.CSSProperties}>{children}</div>
+    </div>
+  );
+}
+
+/** The Columns choice of a list widget's dialog. */
+export function ColumnsSetting({ draft, change }: { draft: WidgetSettings; change: (patch: WidgetSettings) => void }) {
+  const { t } = useI18n();
+  return (
+    <CalmeField label={t('widgets.columns')} info={t('widgets.columnsHint')}>
+      <CalmeSegmented label={t('widgets.columns')} value={pick(String(draft.columns), COLUMN_CHOICES, 'auto')} options={COLUMN_CHOICES.map(value => ({ value, label: value === 'auto' ? t('widgets.columns.auto') : value }))} onChange={value => change({ columns: value === 'auto' ? null : Number(value) })} />
+    </CalmeField>
   );
 }

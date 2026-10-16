@@ -10,7 +10,7 @@ import { CalmeField } from '@/components/shared/CalmeDialog';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, DataError, GRID_MODES, type GridMode, PagedGrid, PagedGridSettings, perPageOf, pick, SiteIcon, SourceChoice, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, GRID_MODES, type GridMode, PagedGrid, PagedGridSettings, perPageOf, pick, SiteIcon, SourceChoice, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 
 export type RssDisplay = 'list' | 'headlines' | 'cards' | 'magazine';
 const DISPLAYS: readonly RssDisplay[] = ['list', 'headlines', 'cards', 'magazine'];
@@ -71,6 +71,7 @@ export default function CalmeRss({ widgetId, settings, editMode, isVisible, onUp
   const paged = display === 'cards';
   const visible = paged || expanded ? items : items.slice(0, limit);
   const title = t('widget.rss.name');
+  const [box, width] = useBoxWidth<HTMLDivElement>();
   const failed = data?.errors.length ?? 0;
 
   return (
@@ -89,7 +90,7 @@ export default function CalmeRss({ widgetId, settings, editMode, isVisible, onUp
         : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
         : !data ? <RssSkeleton display={display} />
           : (
-            <div className={`ndw-rss ndw-rss--${display}`}>
+            <div ref={box} className={`ndw-rss ndw-rss--${display}`}>
               {tabs && feeds.length > 1 && (
                 <div className="ndw-tabs" role="tablist" aria-label={title}>
                   {feeds.map((feed, index) => (
@@ -100,7 +101,7 @@ export default function CalmeRss({ widgetId, settings, editMode, isVisible, onUp
                 </div>
               )}
               {visible.length === 0 ? <div className="ndc-empty">{t('widgets.rss.noItems')}</div> : (
-                <RssItems entries={visible} display={display} images={images} summaries={summaries} seen={seen} single={shown.length === 1} widgetId={widgetId} grid={{ perPage: perPageOf(settings), mode: pick(settings.gridMode, GRID_MODES, 'pages') }} />
+                <RssItems entries={visible} display={display} images={images} summaries={summaries} seen={seen} single={shown.length === 1} widgetId={widgetId} grid={{ perPage: perPageOf(settings), mode: pick(settings.gridMode, GRID_MODES, 'pages') }} columns={columnsOf(settings, width, display === 'headlines' ? 240 : 300)} />
               )}
               {!paged && items.length > limit && (
                 <button type="button" className="ndw-more" onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
@@ -114,8 +115,8 @@ export default function CalmeRss({ widgetId, settings, editMode, isVisible, onUp
   );
 }
 
-function RssItems({ entries, display, images, summaries, seen, single, widgetId, grid }: {
-  entries: { item: FeedItem; feed: Feed }[]; display: RssDisplay; images: boolean; summaries: boolean; seen: number; single: boolean; widgetId: string; grid: { perPage: number; mode: GridMode };
+function RssItems({ entries, display, images, summaries, seen, single, widgetId, grid, columns }: {
+  entries: { item: FeedItem; feed: Feed }[]; display: RssDisplay; images: boolean; summaries: boolean; seen: number; single: boolean; widgetId: string; grid: { perPage: number; mode: GridMode }; columns: number;
 }) {
   const { t } = useI18n();
   const ago = useRelativeTime();
@@ -170,18 +171,18 @@ function RssItems({ entries, display, images, summaries, seen, single, widgetId,
 
   if (display === 'headlines') {
     return (
-      <div className="ndw-rows ndw-rss-headlines">
+      <ColumnRows columns={columns} className="ndw-rss-headlines">
         {entries.map(({ item, feed }) => link(item, <>
           {!single && icon(feed)}
           <span className="ndw-rss-title">{isNew(item) && <span className="ndw-new" aria-label={t('widgets.rss.new')} />}{item.title}</span>
           {item.date && <time className="ndw-rss-time" dateTime={new Date(item.date).toISOString()} title={new Date(item.date).toLocaleString()}>{ago(item.date)}</time>}
         </>, 'ndw-rss-headline'))}
-      </div>
+      </ColumnRows>
     );
   }
 
   return (
-    <div className="ndw-rows">
+    <ColumnRows columns={columns}>
       {entries.map(({ item, feed }) => link(item, <>
         <span className="ndw-rss-text">
           <span className="ndw-rss-title">{isNew(item) && <span className="ndw-new" aria-label={t('widgets.rss.new')} />}{item.title}</span>
@@ -190,7 +191,7 @@ function RssItems({ entries, display, images, summaries, seen, single, widgetId,
         </span>
         {thumb(item)}
       </>, 'ndw-rss-row'))}
-    </div>
+    </ColumnRows>
   );
 }
 
@@ -231,6 +232,7 @@ function RssSettings({ draft, change, saved }: { draft: WidgetSettings; change: 
         </CalmeRow>
       )}
       {display === 'cards' && <PagedGridSettings draft={draft} change={change} />}
+      {(display === 'list' || display === 'headlines') && <ColumnsSetting draft={draft} change={change} />}
       {uses.images && (
         <CalmeRow label={t(display === 'magazine' ? 'widgets.rss.leadImage' : display === 'list' ? 'widgets.rss.thumbnails' : 'widgets.rss.images')}>
           <CalmeSwitch label={t('widgets.rss.images')} checked={draft.images !== false} onChange={on => change({ images: on })} />
