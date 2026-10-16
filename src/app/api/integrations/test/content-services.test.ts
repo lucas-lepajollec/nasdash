@@ -54,3 +54,11 @@ it('tells an Immich key without the reading permission apart from a refused key'
   vi.mocked(serviceJson).mockRejectedValue(new ServiceError('integrations.error.authentication', 502, { status: 401 }));
   expect(await (await POST(request(input('immich')))).json()).toMatchObject({ ok: false, message: 'integrations.error.authentication' });
 });
+it('tests Technitium on the statistics the widget reads and names a missing permission', async () => {
+  vi.mocked(serviceJson).mockResolvedValue({ status: 'ok', response: {} });
+  expect(await (await POST(request(input('technitium')))).json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  expect(vi.mocked(serviceJson).mock.calls[0][1]).toBe('/api/dashboard/stats/get?type=LastHour&utc=true');
+  expect(vi.mocked(serviceJson).mock.calls[0][2]?.headers).toEqual({ Authorization: 'Bearer fake-token' });
+  vi.mocked(serviceJson).mockResolvedValue({ status: 'error', errorMessage: 'Access was denied.' });
+  expect(await (await POST(request(input('technitium')))).json()).toMatchObject({ ok: false, message: 'integrations.technitium.missingPermission' });
+});

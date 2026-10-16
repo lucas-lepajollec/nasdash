@@ -7,6 +7,7 @@ import { getServiceIntegration } from '@/integrations/registry';
 import type { IntegrationSection } from '../IntegrationsTab';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
 import { CalmeHeading, CalmeRow } from '../../shared/CalmeControls';
+import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /**
  * Settings tab of a widget that reads service connections (DNS, photos):
@@ -40,5 +41,5 @@ export function ServiceConnectionsTab({ widget, types, section, hintKey, emptyKe
   );
 }
 
-export const DnsWidgetTab = () => <ServiceConnectionsTab widget="dns" types={['pihole', 'adguard']} section="dns" hintKey="settings.dns.connectionsHint" emptyKey="settings.dns.empty" />;
-export const PhotosWidgetTab = () => <ServiceConnectionsTab widget="photos" types={['immich', 'photoprism']} section="photos" hintKey="settings.photos.connectionsHint" emptyKey="settings.photos.empty" />;
+export const DnsWidgetTab = () => <ServiceConnectionsTab widget="dns" types={DNS_TYPES} section="dns" hintKey="settings.dns.connectionsHint" emptyKey="settings.dns.empty" />;
+export const PhotosWidgetTab = () => <ServiceConnectionsTab widget="photos" types={PHOTO_TYPES} section="photos" hintKey="settings.photos.connectionsHint" emptyKey="settings.photos.empty" />;

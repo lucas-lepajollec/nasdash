@@ -1,5 +1,6 @@
 'use client';
 
+import { getServiceIntegration } from '@/integrations/registry';
 import { demoFetch } from '@/lib/demoTransport';
 
 import React, { useEffect, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ import { MONITORING_INFO, MonitoringConnectionDialog, testConnection, type TestR
 import { ServiceConnectionDialog } from '@/components/integrations/ServiceConnectionDialog';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { DockerHostFormModal, type DockerHostDraft } from '@/components/widgets/docker/DockerViews';
+import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
 export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'photos';
@@ -96,9 +98,9 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const devices = config?.devices ?? [];
   const hosts = config?.dockerHosts ?? [];
   const mesh = (config?.integrations ?? []).filter(instance => instance.type === 'tailscale' || instance.type === 'headscale');
-  const dns = (config?.integrations ?? []).filter(instance => instance.type === 'pihole' || instance.type === 'adguard');
+  const dns = (config?.integrations ?? []).filter(instance => (DNS_TYPES as readonly string[]).includes(instance.type));
   const photos = (config?.integrations ?? []).filter(instance => instance.type === 'immich' || instance.type === 'photoprism');
-  const serviceName = (type: string) => ({ pihole: 'Pi-hole', adguard: 'AdGuard Home', immich: 'Immich', photoprism: 'PhotoPrism' } as Record<string, string>)[type] ?? type;
+  const serviceName = (type: string) => getServiceIntegration(type)?.name ?? type;
 
   // Opened from a widget or a dialog: straight to its category.
   useEffect(() => {
@@ -240,7 +242,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
 
       {(['dns', 'photos'] as const).map(id => {
         const saved = id === 'dns' ? dns : photos;
-        const kinds = id === 'dns' ? ['pihole', 'adguard'] : ['immich', 'photoprism'];
+        const kinds: readonly string[] = id === 'dns' ? DNS_TYPES : PHOTO_TYPES;
         return (
           <React.Fragment key={id}>
             {section(

@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Technitium DNS Server as a third source of the DNS widget, next to Pi-hole and AdGuard Home: statistics of the last day, answers from cache and recursive resolution, top domains and clients, and, for a cluster, the server itself, the whole cluster or one node per widget. A token with Dashboard (view) is enough; Settings (view, modify) adds the blocking state and its pause. Proposed in #123 with a first implementation in #125 by @emile-bodin.
+- Markets: in edit mode, symbols are put in order by drag and drop in the list, bars and tiles displays.
+- Photos widget for Immich and PhotoPrism: slideshow, grid, mosaic (mixed tile sizes, no holes) or strip, random/recent/favorite/album/"on this day" selections, and a viewer with date, place and a link to the library. Photos either change by themselves at a chosen pace (always for random photos) or are browsed with arrows. Photos pass through NasDash; no address or key reaches the browser. Connections are added in Settings → Integrations → Photos.
+- Bookmarks widget with folders: one library in Settings → Widgets → Bookmarks (folders inside folders, up to eight levels, icons and notes), shown as a folding tree, tiles or icons, with an optional search box. Bookmarks move by drag and drop (before, after or into a folder) in the library and in edit mode, and the bookmarks file exported by any browser can be imported. Each widget can open the library at a chosen folder. Site icons are fetched only for saved link origins, including for administrators.
+
 ### Changed
 
 - Content widgets ask their service (Immich, Pi-hole, feeds…) only once they are first on screen, not while their page is closed; photos stop changing while the browser tab is in the background.
@@ -21,12 +28,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Security
 
 - Photos are served only through the widget that listed them, and the link to the photo library (its address) is sent to administrators only.
-
-### Added
-
-- Markets: in edit mode, symbols are put in order by drag and drop in the list, bars and tiles displays.
-- Photos widget for Immich and PhotoPrism: slideshow, grid, mosaic (mixed tile sizes, no holes) or strip, random/recent/favorite/album/"on this day" selections, and a viewer with date, place and a link to the library. Photos either change by themselves at a chosen pace (always for random photos) or are browsed with arrows. Photos pass through NasDash; no address or key reaches the browser. Connections are added in Settings → Integrations → Photos.
-- Bookmarks widget with folders: one library in Settings → Widgets → Bookmarks (folders inside folders, up to eight levels, icons and notes), shown as a folding tree, tiles or icons, with an optional search box. Bookmarks move by drag and drop (before, after or into a folder) in the library and in edit mode, and the bookmarks file exported by any browser can be imported. Each widget can open the library at a chosen folder. Site icons are fetched only for saved link origins, including for administrators.
 
 ## [0.2.5] - 2026-10-15
 

@@ -4,11 +4,13 @@ import piholeSample from './pihole/samples/service.json';
 import adguardSample from './adguard/samples/service.json';
 import immichSample from './immich/samples/service.json';
 import photoprismSample from './photoprism/samples/service.json';
+import technitiumSample from './technitium/samples/service.json';
 vi.mock('@/lib/config', () => ({ readConfig: vi.fn(() => ({ integrations: [] })) }));
 vi.mock('@/lib/widgetData/services', async importOriginal => ({ ...await importOriginal<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn() }));
 import { serviceJson, ServiceError, serviceIdentity, knownInstancePhoto, validPhotoId, photoSelection } from '@/lib/widgetData/services';
 import { clearPiholeSessions, collectPihole, piholeRequest, toPiholeSummary, togglePihole } from './pihole/collect';
 import { collectAdguard, toAdguardSummary, toggleAdguard } from './adguard/collect';
+import { collectTechnitium, technitiumNode, technitiumNodes, toggleTechnitium, toTechnitiumSummary } from './technitium/collect';
 import { collectImmich, toImmichPhotos, immichAlbums } from './immich/collect';
 import { collectPhotoprism, toPhotoprismPhotos, photoprismAlbums } from './photoprism/collect';
 const now = Date.UTC(2026, 0, 15, 12);
@@ -158,5 +160,63 @@ describe('Photo libraries', () => {
     json.mockResolvedValueOnce(immichSample.albums).mockResolvedValueOnce(photoprismSample.albums);
     expect(await immichAlbums(instance('immich'))).toEqual([{ id: immichSample.albums[0].id, name: 'Summer Trails', count: 12 }]);
     expect(await photoprismAlbums(instance('photoprism'))).toEqual([{ id: 'ademo00000000001', name: 'Summer Trails', count: 12 }]);
+  });
+});
+
+describe('Technitium DNS', () => {
+  const t = technitiumSample;
+  it('maps statistics, the day chart, client names and the blocking state', () => {
+    const result = toTechnitiumSummary(instance('technitium'), t.stats.response, t.settings.response, now);
+    expect(result).toMatchObject({ provider: 'technitium', queries: 28400, blocked: 6248, clients: 8, cached: 9100, recursive: 12900, listedDomains: 154010, blocking: true });
+    expect(result.blockedPercent).toBeCloseTo(22, 0);
+    expect(result.history).toHaveLength(24);
+    expect(result.history[23]).toEqual([now, 830, 123]);
+    expect(result.topClients).toEqual([{ name: 'atlas-nas.home.example', count: 9300 }, { name: '192.0.2.20', count: 4800 }]);
+    expect(result.canToggle).toBeUndefined();
+  });
+  it('shows a timed pause, and no state nor switch without settings access', () => {
+    const paused = toTechnitiumSummary(instance('technitium'), t.stats.response, { enableBlocking: true, temporaryDisableBlockingTill: new Date(now + 300000).toISOString() }, now);
+    expect(paused).toMatchObject({ blocking: false, blockingResumesAt: now + 300000 });
+    const blind = toTechnitiumSummary(instance('technitium'), t.stats.response, null, now);
+    expect(blind.blocking).toBeUndefined(); expect(blind.canToggle).toBe(false);
+  });
+  it('sends the token as a header, never in the address, and reads settings only when allowed', async () => {
+    json.mockImplementation(async (_instance, path) => path.startsWith('/api/dashboard') ? t.stats : t.denied);
+    const result = await collectTechnitium(instance('technitium'), 'dns2.home.example');
+    expect(result.canToggle).toBe(false);
+    const [, statsPath, options] = json.mock.calls[0];
+    expect(statsPath).toBe('/api/dashboard/stats/get?type=LastDay&utc=true&node=dns2.home.example');
+    expect(statsPath).not.toContain('fake-token');
+    expect(options?.headers).toEqual({ Authorization: 'Bearer fake-token' });
+    expect(json.mock.calls[1][1]).toBe('/api/settings/get?node=dns2.home.example');
+  });
+  it('turns Technitium statuses into clear errors without its own text', async () => {
+    json.mockResolvedValue(t.invalidToken);
+    await expect(collectTechnitium(instance('technitium'))).rejects.toMatchObject({ key: 'integrations.error.authentication' });
+    json.mockResolvedValue(t.denied);
+    await expect(collectTechnitium(instance('technitium'))).rejects.toMatchObject({ key: 'integrations.technitium.missingPermission' });
+    json.mockResolvedValue({ status: 'error', errorMessage: 'secret internal detail' });
+    await expect(collectTechnitium(instance('technitium'))).rejects.toMatchObject({ key: 'widgets.error.parse' });
+  });
+  it('pauses for whole minutes or until resumed, on the chosen node but never on "cluster"', async () => {
+    json.mockResolvedValue(t.settings);
+    await toggleTechnitium(instance('technitium'), false, 90, 'dns2.home.example');
+    await toggleTechnitium(instance('technitium'), false, undefined, 'cluster');
+    await toggleTechnitium(instance('technitium'), true);
+    expect(json.mock.calls.map(([, path]) => path)).toEqual([
+      '/api/settings/temporaryDisableBlocking?minutes=2&node=dns2.home.example',
+      '/api/settings/set?enableBlocking=false',
+      '/api/settings/set?enableBlocking=true',
+    ]);
+  });
+  it('accepts only "cluster" or a DNS name as node, and lists cluster nodes by name', async () => {
+    expect(technitiumNode(undefined)).toBeUndefined();
+    expect(technitiumNode('cluster')).toBe('cluster');
+    expect(technitiumNode('dns1.home.example')).toBe('dns1.home.example');
+    for (const bad of ['a&token=x', '../x', 'a b', 'x'.repeat(300), 3]) expect(() => technitiumNode(bad)).toThrow(ServiceError);
+    json.mockResolvedValue(t.cluster);
+    expect(await technitiumNodes(instance('technitium'))).toEqual({ cluster: true, nodes: ['dns1.home.example', 'dns2.home.example'] });
+    json.mockResolvedValue(t.denied);
+    expect(await technitiumNodes(instance('technitium'))).toEqual({ cluster: false, nodes: [] });
   });
 });

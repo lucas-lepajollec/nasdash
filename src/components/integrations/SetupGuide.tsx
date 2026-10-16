@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { monitoringInstances } from '@/integrations/sources';
 import { latestInstance } from '@/integrations/instances';
 import { useOpenSettings } from './useOpenSettings';
+import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /**
  * What a widget shows before it can work, in the order to follow: for the
@@ -34,9 +35,9 @@ export function SetupGuide({ kind }: { kind: SetupKind }) {
       : kind === 'vpn'
         ? [{ done: !!latestInstance(config ?? {}, ['tailscale', 'headscale']), label: t('setup.vpn.connect'), action: t('setup.vpn.connectAction'), open: () => openIntegrations('vpn') }]
         : kind === 'dns'
-          ? [{ done: !!latestInstance(config ?? {}, ['pihole', 'adguard']), label: t('setup.dns.connect'), action: t('setup.dns.connectAction'), open: () => openIntegrations('dns') }]
+          ? [{ done: !!latestInstance(config ?? {}, [...DNS_TYPES]), label: t('setup.dns.connect'), action: t('setup.dns.connectAction'), open: () => openIntegrations('dns') }]
           : kind === 'photos'
-            ? [{ done: !!latestInstance(config ?? {}, ['immich', 'photoprism']), label: t('setup.photos.connect'), action: t('setup.photos.connectAction'), open: () => openIntegrations('photos') }]
+            ? [{ done: !!latestInstance(config ?? {}, [...PHOTO_TYPES]), label: t('setup.photos.connect'), action: t('setup.photos.connectAction'), open: () => openIntegrations('photos') }]
           : kind === 'bookmarks'
             ? [{ done: (config?.settings?.bookmarks ?? []).some(item => item.kind === 'link'), label: t('setup.bookmarks.links'), action: t('setup.bookmarks.linksAction'), open: () => openWidgetSettings('widget-bookmarks') }]
           : kind === 'rss'

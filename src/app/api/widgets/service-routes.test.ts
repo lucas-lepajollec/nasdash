@@ -9,6 +9,7 @@ vi.mock('@/lib/widgetData/resolve', () => ({ resolveWidgetSettings: vi.fn((_req,
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/pihole/collect', () => ({ collectPihole: vi.fn(), togglePihole: vi.fn() }));
 vi.mock('@/integrations/adguard/collect', () => ({ collectAdguard: vi.fn(), toggleAdguard: vi.fn() }));
+vi.mock('@/integrations/technitium/collect', async original => ({ ...await original<typeof import('@/integrations/technitium/collect')>(), collectTechnitium: vi.fn(), toggleTechnitium: vi.fn(), technitiumNodes: vi.fn() }));
 vi.mock('@/integrations/immich/collect', () => ({ collectImmich: vi.fn(), immichAlbums: vi.fn(), immichHeaders: () => ({ 'x-api-key': 'fake-key' }) }));
 vi.mock('@/integrations/photoprism/collect', () => ({ collectPhotoprism: vi.fn(), photoprismAlbums: vi.fn(), photoprismHeaders: () => ({ Authorization: 'Bearer fake-token' }), photoprismPreviewToken: vi.fn() }));
 import { GET as dnsGet, POST as dnsPost } from './dns/route';
@@ -17,6 +18,8 @@ import { GET as imageGet } from './photos/image/route';
 import { GET as albumsGet } from './photos/albums/route';
 import { collectPihole, togglePihole } from '@/integrations/pihole/collect';
 import { collectAdguard } from '@/integrations/adguard/collect';
+import { collectTechnitium, technitiumNodes, toggleTechnitium } from '@/integrations/technitium/collect';
+import { GET as nodesGet } from './dns/nodes/route';
 import { collectImmich, immichAlbums } from '@/integrations/immich/collect';
 import { collectPhotoprism, photoprismPreviewToken } from '@/integrations/photoprism/collect';
 import { demoDns, demoPhotos, rememberPhoto, rememberWidgetPhoto, serviceBytes, serviceJson, ServiceError } from '@/lib/widgetData/services';
@@ -56,6 +59,29 @@ describe('DNS routes', () => {
     expect((await (await dnsGet(get(`dns?widgetId=w&draft=${draft}`))).json()).provider).toBe('pihole');
     state.admin = false;
     expect((await (await dnsGet(get(`dns?widgetId=w&draft=${draft}`))).json()).provider).toBe('adguard');
+  });
+  it('reads a Technitium node, one cache entry per node, and refuses an invalid node', async () => {
+    state.instances.push(instance('dns-three', 'technitium'));
+    vi.mocked(collectTechnitium).mockImplementation(async (source, node) => ({ ...demoDns(source), name: node ?? 'self' }));
+    state.settings = { integrationId: 'dns-three', node: 'dns2.home.example' };
+    expect((await (await dnsGet(get('dns?widgetId=w'))).json()).name).toBe('dns2.home.example');
+    state.settings = { integrationId: 'dns-three', node: 'cluster' };
+    expect((await (await dnsGet(get('dns?widgetId=w'))).json()).name).toBe('cluster');
+    expect(collectTechnitium).toHaveBeenCalledTimes(2);
+    state.settings = { integrationId: 'dns-three', node: 'x&token=stolen' };
+    expect((await dnsGet(get('dns?widgetId=w'))).status).toBe(400);
+    vi.mocked(collectTechnitium).mockClear();
+    state.settings = { integrationId: 'dns-three', node: 'dns2.home.example' };
+    expect((await dnsPost(toggle({ widgetId: 'w', blocking: false, durationSeconds: 300 }))).status).toBe(200);
+    expect(toggleTechnitium).toHaveBeenCalledWith(state.instances[4], false, 300, 'dns2.home.example');
+  });
+  it('lists Technitium nodes to administrators only', async () => {
+    state.instances.push(instance('dns-three', 'technitium'));
+    vi.mocked(technitiumNodes).mockResolvedValue({ cluster: true, nodes: ['dns1.home.example'] });
+    expect(await (await nodesGet(get('dns/nodes?integrationId=dns-three'))).json()).toEqual({ cluster: true, nodes: ['dns1.home.example'] });
+    expect((await nodesGet(get('dns/nodes?integrationId=dns-one'))).status).toBe(404);
+    state.admin = false;
+    expect((await nodesGet(get('dns/nodes?integrationId=dns-three'))).status).toBe(401);
   });
   it('toggles then returns a fresh summary and invalidates cached GETs', async () => {
     const source = state.instances[0];

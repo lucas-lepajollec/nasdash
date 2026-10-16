@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import type { WidgetSettings } from '@/lib/pages/types';
-import type { DnsSummary, DnsTopEntry } from '@/lib/widgetData/contracts';
+import { DNS_TYPES, type DnsSummary, type DnsTopEntry } from '@/lib/widgetData/contracts';
 import { demoFetch } from '@/lib/demoTransport';
 import { ShieldCheck, ShieldOff } from 'lucide-react';
 import { useAuth } from '@/providers/AuthProvider';
@@ -10,6 +10,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField, CalmeCheckRow } from '@/components/shared/CalmeDialog';
 import { CalmeSegmented } from '@/components/modals/settings/shared/CalmeControls';
+import CustomSelect from '@/components/shared/CustomSelect';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { TimeChart, type ChartSeries } from '@/components/charts/TimeChart';
 import { RingGauge } from '@/components/charts/Gauges';
@@ -21,8 +22,10 @@ export type DnsStyle = 'bars' | 'chart' | 'ring' | 'compact' | 'full';
 const STYLES: readonly DnsStyle[] = ['bars', 'chart', 'ring', 'compact', 'full'];
 type Section = 'stats' | 'history' | 'top';
 const SECTIONS: readonly Section[] = ['stats', 'history', 'top'];
-export type DnsFigure = 'queries' | 'blocked' | 'share' | 'listed' | 'clients';
-const FIGURES: readonly DnsFigure[] = ['queries', 'blocked', 'share', 'listed', 'clients'];
+export type DnsFigure = 'queries' | 'blocked' | 'share' | 'listed' | 'clients' | 'cached' | 'recursive';
+const FIGURES: readonly DnsFigure[] = ['queries', 'blocked', 'share', 'listed', 'clients', 'cached', 'recursive'];
+/** Figures only some servers report (Technitium). */
+const TECHNITIUM_FIGURES: readonly DnsFigure[] = ['cached', 'recursive'];
 /** Chosen figures in their fixed order; without a choice, what each style shows by default. */
 export function figuresOf(settings: WidgetSettings, style: DnsStyle): DnsFigure[] {
   if (Array.isArray(settings.figures)) return FIGURES.filter(id => (settings.figures as unknown[]).includes(id));
@@ -36,7 +39,7 @@ const BLOCKED = 'var(--nd-red)';
 const QUERIES = 'var(--nd-accent)';
 
 /**
- * A Pi-hole or AdGuard Home in four styles: complete (share blocked as a
+ * A Pi-hole, AdGuard Home or Technitium DNS server in four styles: complete (share blocked as a
  * ring, figures, the day as a chart, top lists), chart, ring alone, and a
  * compact line. The block's width decides the chart height and whether
  * parts sit side by side. An admin can pause blocking or resume it.
@@ -46,7 +49,7 @@ export default function CalmeDns({ widgetId, settings, editMode, isVisible, onUp
 }) {
   const { t } = useI18n();
   const { config } = useConfig();
-  const connection = chosenConnection(config?.integrations, ['pihole', 'adguard'], settings.integrationId);
+  const connection = chosenConnection(config?.integrations, DNS_TYPES, settings.integrationId);
   const style = pick(settings.style, STYLES, 'bars');
   const { data, error, mutate } = useWidgetData<DnsSummary>('/api/widgets/dns', widgetId, settings, { refreshMs: 15_000, isVisible, method: 'GET', enabled: !!connection });
   const title = t('widget.dns.name');
@@ -95,6 +98,8 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
     share: <Figure key="share" label={t('widgets.dns.blockedShare')} value={`${share} %`} />,
     listed: data.listedDomains === undefined ? null : <Figure key="listed" label={t('widgets.dns.listed')} value={number.short.format(data.listedDomains)} title={number.full.format(data.listedDomains)} />,
     clients: data.clients === undefined ? null : <Figure key="clients" label={t('widgets.dns.clients')} value={number.full.format(data.clients)} />,
+    cached: data.cached === undefined ? null : <Figure key="cached" label={t('widgets.dns.cached')} value={number.short.format(data.cached)} title={number.full.format(data.cached)} />,
+    recursive: data.recursive === undefined ? null : <Figure key="recursive" label={t('widgets.dns.recursive')} value={number.short.format(data.recursive)} title={number.full.format(data.recursive)} />,
   };
   const figures = shown.map(id => all[id]);
 
@@ -201,16 +206,18 @@ function DnsHead({ data, settings, widgetId, onChanged }: { data: DnsSummary; se
     } finally { setBusy(false); }
   };
   const resumesIn = data.blockingResumesAt ? Math.max(1, Math.round((data.blockingResumesAt - Date.now()) / 60_000)) : undefined;
-  const state = data.blocking ? t('widgets.dns.protected') : resumesIn ? t('widgets.dns.pausedFor', { minutes: resumesIn }) : t('widgets.dns.paused');
+  // Unknown (a Technitium token without settings access): the server answers, nothing more is claimed.
+  const unknown = data.blocking === undefined;
+  const state = unknown ? t('widgets.dns.online') : data.blocking ? t('widgets.dns.protected') : resumesIn ? t('widgets.dns.pausedFor', { minutes: resumesIn }) : t('widgets.dns.paused');
   // A quiet line: the server, its state as a dot and a word; an admin gets a real switch.
   return (
     <div className="ndw-dns-head">
-      <span className={`ndw-dns-status ${data.blocking ? 'is-on' : 'is-off'}`} title={state}>
-        {data.blocking ? <ShieldCheck size={13} className="ndw-dns-shield" aria-hidden="true" /> : <ShieldOff size={13} className="ndw-dns-shield" aria-hidden="true" />}
+      <span className={`ndw-dns-status ${unknown ? '' : data.blocking ? 'is-on' : 'is-off'}`} title={state}>
+        {data.blocking !== false ? <ShieldCheck size={13} className="ndw-dns-shield" aria-hidden="true" /> : <ShieldOff size={13} className="ndw-dns-shield" aria-hidden="true" />}
         <span className="ndw-dns-server">{data.name}</span>
         <span className="ndw-dns-state">{state}</span>
       </span>
-      {user?.role === 'admin' && (
+      {user?.role === 'admin' && !unknown && data.canToggle !== false && (
         <span className="ndw-dns-control">
           {busy && <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" />}
           <button
@@ -378,20 +385,28 @@ function TopRows({ entries, format, tone, empty }: { entries: DnsTopEntry[]; for
 
 function DnsSettings({ draft, change }: { draft: WidgetSettings; change: (patch: WidgetSettings) => void }) {
   const { t } = useI18n();
+  const { config } = useConfig();
+  const connection = chosenConnection(config?.integrations, DNS_TYPES, draft.integrationId);
+  const technitium = connection?.type === 'technitium';
   const style = pick(draft.style, STYLES, 'bars');
   const sections = Array.isArray(draft.sections) ? SECTIONS.filter(section => (draft.sections as unknown[]).includes(section)) : [...SECTIONS];
   return (
     <>
       <CalmeField label={t('widgets.connection')}>
-        <ConnectionPicker types={['pihole', 'adguard']} section="dns" value={typeof draft.integrationId === 'string' ? draft.integrationId : undefined} onChange={id => change({ integrationId: id })} />
+        <ConnectionPicker types={DNS_TYPES} section="dns" value={typeof draft.integrationId === 'string' ? draft.integrationId : undefined} onChange={id => change({ integrationId: id, node: null })} />
       </CalmeField>
+      {technitium && connection && (
+        <CalmeField label={t('widgets.dns.node')} info={t('widgets.dns.nodeHint')}>
+          <NodeSelect integrationId={connection.id} value={typeof draft.node === 'string' ? draft.node : ''} onChange={node => change({ node: node || null })} />
+        </CalmeField>
+      )}
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={style} options={STYLES.map(value => ({ value, label: t(`widgets.dns.style.${value}`) }))} onChange={value => change({ style: value })} />
       </CalmeField>
       {style !== 'compact' && (
         <CalmeField label={t('widgets.dns.figures')} info={t('widgets.dns.figuresHint')}>
           <div className="ndc-dlg-stack">
-            {FIGURES.filter(id => style !== 'ring' || id === 'queries' || id === 'blocked').map(id => {
+            {FIGURES.filter(id => (style !== 'ring' || id === 'queries' || id === 'blocked') && (technitium || !TECHNITIUM_FIGURES.includes(id))).map(id => {
               const current = figuresOf(draft, style);
               return (
                 <CalmeCheckRow key={id} checked={current.includes(id)} onChange={() => change({ figures: current.includes(id) ? current.filter(other => other !== id) : FIGURES.filter(other => other === id || current.includes(other)) })}>
@@ -423,4 +438,27 @@ function DnsSettings({ draft, change }: { draft: WidgetSettings; change: (patch:
       )}
     </>
   );
+}
+
+/** A Technitium cluster's scope: the server itself, the whole cluster, or one node (names asked to the server, admins only). */
+function NodeSelect({ integrationId, value, onChange }: { integrationId: string; value: string; onChange: (node: string) => void }) {
+  const { t } = useI18n();
+  const [state, setState] = useState<{ id: string; cluster: boolean; nodes: string[] } | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    demoFetch(`/api/widgets/dns/nodes?${new URLSearchParams({ integrationId })}`)
+      .then(async response => {
+        if (!response.ok) throw new Error();
+        const payload = await response.json() as { cluster: boolean; nodes: string[] };
+        if (!cancelled) setState({ id: integrationId, ...payload });
+      })
+      .catch(() => { if (!cancelled) setFailed(integrationId); });
+    return () => { cancelled = true; };
+  }, [integrationId]);
+  if (failed === integrationId) return <p className="ndw-note ndw-down">{t('widgets.dns.nodesFailed')}</p>;
+  if (state?.id !== integrationId) return <p className="ndw-note">{t('widgets.dns.nodesLoading')}</p>;
+  if (!state.cluster) return <p className="ndw-note">{t('widgets.dns.noCluster')}</p>;
+  const options = [{ value: '', label: t('widgets.dns.nodeSelf') }, { value: 'cluster', label: t('widgets.dns.nodeCluster') }, ...state.nodes.map(node => ({ value: node, label: node }))];
+  return <CustomSelect ariaLabel={t('widgets.dns.node')} value={options.some(option => option.value === value) ? value : ''} onChange={onChange} options={options} />;
 }

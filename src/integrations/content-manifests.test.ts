@@ -5,7 +5,7 @@ import { validateConfigMutationBody } from '@/lib/configEntityValidation';
 import type { DashboardConfig } from '@/lib/types';
 
 describe('saved DNS/photo connections', () => {
-  it.each(['pihole', 'adguard', 'immich', 'photoprism'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
+  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
     const manifest = getServiceIntegration(type)!;
     expect(SERVICE_INTEGRATIONS).toContain(manifest);
     const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : 'fictional']));

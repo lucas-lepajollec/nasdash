@@ -13,9 +13,11 @@ import type { IntegrationInstance } from '@/lib/types';
 
 import { piholeRequest } from '@/integrations/pihole/collect';
 import { adguardHeaders } from '@/integrations/adguard/collect';
+import { technitiumRequest } from '@/integrations/technitium/collect';
 import { immichHeaders } from '@/integrations/immich/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
+import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if (['pihole', 'adguard', 'immich', 'photoprism'].includes(type)) {
+  if (([...DNS_TYPES, ...PHOTO_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -62,6 +64,8 @@ export async function POST(request: NextRequest) {
     try {
       if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
       else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
+      // The statistics the widget reads (Dashboard: view); a missing permission is told apart.
+      else if (type === 'technitium') await technitiumRequest(instance, '/api/dashboard/stats/get', { type: 'LastHour', utc: 'true' });
       // One random photo: authenticates the key with the permission the widget
       // needs (asset.read), so a key limited to reading still passes. A public
       // about/status endpoint would succeed even with an invalid key.
