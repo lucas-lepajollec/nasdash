@@ -15,6 +15,13 @@ type Count = keyof MediaCounts;
 const COUNTS: readonly Count[] = ['movies', 'series', 'episodes', 'artists', 'albums', 'tracks', 'books'];
 const ICONS: Record<Count, typeof Film> = { movies: Film, series: Tv, episodes: Clapperboard, artists: Mic2, albums: Disc3, tracks: Music, books: BookOpen };
 const LIBRARY_ICONS = { movies: Film, series: Tv, music: Music, books: BookOpen, other: Clapperboard } as const;
+/** One tile per shelf: its main total large, the others beneath, over the newest title's art. */
+const SHELVES: readonly { id: string; counts: Count[]; cover?: string }[] = [
+  { id: 'movies', counts: ['movies'], cover: 'movies' },
+  { id: 'series', counts: ['series', 'episodes'], cover: 'series' },
+  { id: 'music', counts: ['albums', 'artists', 'tracks'], cover: 'music' },
+  { id: 'books', counts: ['books'] },
+];
 
 /**
  * What a Jellyfin, Emby or Plex server holds: movies, series, episodes,
@@ -68,32 +75,44 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 64 }} /></div>
               : (
                 <>
-                  <div className="ndw-media-counts">
-                    {shown.map(id => {
-                      const Icon = ICONS[id];
-                      const value = data.counts[id] ?? 0;
+                  <div className="ndw-media-shelves">
+                    {SHELVES.map(shelf => {
+                      const ids = shelf.counts.filter(id => shown.includes(id));
+                      if (!ids.length) return null;
+                      const [main, ...more] = ids;
+                      const Icon = ICONS[main];
+                      const cover = data.covers?.[shelf.cover as keyof NonNullable<MediaLibraryResponse['covers']>];
                       return (
-                        <div key={id} className={`ndw-media-count is-${id}`} title={number.full.format(value)}>
-                          <span className="ndw-media-count-icon" aria-hidden="true"><Icon size={16} /></span>
-                          <span className="ndw-media-count-value">{number.short.format(value)}</span>
-                          <span className="ndw-media-count-label">{t(`widgets.media.count.${id}`)}</span>
+                        <div key={shelf.id} className={`ndw-media-shelf is-${shelf.id} ${cover ? 'has-cover' : ''}`} title={ids.map(id => `${number.full.format(data.counts[id] ?? 0)} ${t(`widgets.media.count.${id}`)}`).join(' · ')}>
+                          {cover && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img className="ndw-media-shelf-art" src={cover} alt="" loading="lazy" decoding="async" />
+                          )}
+                          <span className="ndw-media-shelf-shade" aria-hidden="true" />
+                          <span className="ndw-media-shelf-head"><Icon size={14} aria-hidden="true" />{t(`widgets.media.shelf.${shelf.id}`)}</span>
+                          <span className="ndw-media-shelf-value">{number.short.format(data.counts[main] ?? 0)}<span className="ndw-media-shelf-unit">{t(`widgets.media.count.${main}`)}</span></span>
+                          {more.length > 0 && (
+                            <span className="ndw-media-shelf-more">
+                              {more.map(id => <span key={id}>{number.short.format(data.counts[id] ?? 0)} {t(`widgets.media.count.${id}`)}</span>)}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                   {settings.libraries === true && data.libraries.length > 0 && (
-                    <ul className="ndw-media-libraries">
+                    <div className="ndw-media-library-chips">
                       {data.libraries.map(library => {
                         const Icon = LIBRARY_ICONS[library.kind] ?? Clapperboard;
                         return (
-                          <li key={library.name}>
-                            <Icon size={13} aria-hidden="true" />
-                            <span className="ndw-media-title">{library.name}</span>
-                            {library.count !== undefined && <span className="ndw-media-time">{number.full.format(library.count)}</span>}
-                          </li>
+                          <span key={library.name} className="ndw-media-library-chip">
+                            <Icon size={12} aria-hidden="true" />
+                            <span>{library.name}</span>
+                            {library.count !== undefined && <span className="ndw-media-library-count">{number.short.format(library.count)}</span>}
+                          </span>
                         );
                       })}
-                    </ul>
+                    </div>
                   )}
                 </>
               )}

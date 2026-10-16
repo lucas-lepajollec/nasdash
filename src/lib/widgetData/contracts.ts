@@ -325,6 +325,8 @@ export interface MediaItem {
   /** When it was added to the library (ms). */
   addedAt?: number;
   durationMs?: number;
+  /** A series standing for several new episodes (recently added, grouped): how many. */
+  count?: number;
   /** Opens the title in the server's web app; administrators only (it carries the server address). */
   link?: string;
 }
@@ -354,13 +356,22 @@ export interface MediaSession {
 /** GET /api/widgets/media/now-playing?widgetId=… */
 export interface MediaNowPlayingResponse { server: MediaServer; name: string; sessions: MediaSession[]; fetchedAt: number }
 
-/** GET /api/widgets/media/recent?widgetId=… → the newest titles (settings: `kinds`: movie | episode | album, `count` 4–40). */
+/**
+ * GET /api/widgets/media/recent?widgetId=… → the newest titles (settings: `kinds`: movie | episode | album,
+ * `count` 4–40, `group` (default true): new episodes of one series come as that series, with their `count`).
+ */
 export interface MediaRecentResponse { server: MediaServer; name: string; items: MediaItem[]; fetchedAt: number }
 
 /** Library totals; absent when the server does not report them. */
 export interface MediaCounts { movies?: number; series?: number; episodes?: number; artists?: number; albums?: number; tracks?: number; books?: number }
 /** GET /api/widgets/media/library?widgetId=… */
-export interface MediaLibraryResponse { server: MediaServer; name: string; counts: MediaCounts; libraries: { name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other'; count?: number }[]; fetchedAt: number }
+export interface MediaLibraryResponse {
+  server: MediaServer; name: string; counts: MediaCounts;
+  libraries: { name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other'; count?: number }[];
+  /** Art of the newest title of each kind, as backgrounds (proxied like posters). */
+  covers?: { movies?: string; series?: string; music?: string };
+  fetchedAt: number;
+}
 
 /**
  * GET /api/widgets/media/image?widgetId=…&id=…&kind=poster|backdrop → the

@@ -40,6 +40,11 @@ export function useMediaLine() {
       const code = item.season !== undefined && item.episode !== undefined ? t('widgets.media.episodeCode', { season: item.season, episode: item.episode }) : '';
       return [item.subtitle, code].filter(Boolean).join(' · ');
     }
+    if (item.kind === 'series') {
+      // New episodes folded into their series: how many, and the season when they share one.
+      const episodes = item.count ? t('widgets.media.newEpisodes', { count: item.count }) : '';
+      return [item.season !== undefined ? t('widgets.media.season', { season: item.season }) : '', episodes].filter(Boolean).join(' · ');
+    }
     if (item.kind === 'movie') return item.year ? String(item.year) : '';
     return item.subtitle ?? (item.year ? String(item.year) : '');
   };

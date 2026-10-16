@@ -6,7 +6,7 @@ import type { WidgetSettings } from '@/lib/pages/types';
 import type { MediaItem, MediaRecentResponse } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField, CalmeCheckRow } from '@/components/shared/CalmeDialog';
-import { CalmeRow, CalmeSegmented, CalmeSlider } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
 import { bounded, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { MediaConnectionField, MediaPoster, MediaSetup, useMediaConnection, useMediaLine } from '@/components/widgets/media/shared';
@@ -65,6 +65,7 @@ function PosterCard({ item, width, now }: { item: MediaItem; width: number; now:
       <span className="ndw-media-poster-wrap">
         <MediaPoster item={item} width={width} frame />
         {fresh && <span className="ndw-media-fresh" aria-hidden="true" />}
+        {item.count !== undefined && item.count > 1 && <span className="ndw-media-episodes" aria-hidden="true">{item.count}</span>}
       </span>
       <span className="ndw-media-card-title">{item.kind === 'episode' && item.subtitle ? item.subtitle : item.title}</span>
       {sub && <span className="ndw-media-card-sub">{item.kind === 'episode' ? [item.season !== undefined && item.episode !== undefined ? `S${item.season} · E${item.episode}` : '', item.title].filter(Boolean).join(' · ') : sub}</span>}
@@ -109,7 +110,7 @@ function Hero({ items, width, now }: { items: MediaItem[]; width: number; now: n
       <span className="ndw-media-hero-body">
         <MediaPoster item={first} width={Math.round(height * 0.5)} eager />
         <span className="ndw-media-hero-text">
-          <span className="ndw-media-hero-tag">{t(`widgets.media.kind.${first.kind === 'album' ? 'album' : first.kind === 'episode' ? 'episode' : 'movie'}`)}{first.addedAt && <span className="ndw-media-hero-when">{relative(first.addedAt)}</span>}</span>
+          <span className="ndw-media-hero-tag">{t(`widgets.media.kind.${first.kind === 'album' ? 'album' : first.kind === 'episode' ? 'episode' : first.kind === 'series' ? 'series' : 'movie'}`)}{first.addedAt && <span className="ndw-media-hero-when">{relative(first.addedAt)}</span>}</span>
           <span className="ndw-media-hero-title">{heading}</span>
           {sub && <span className="ndw-media-hero-sub">{sub}</span>}
         </span>
@@ -169,6 +170,11 @@ function RecentSettings({ draft, change }: { draft: WidgetSettings; change: (pat
           ))}
         </div>
       </CalmeField>
+      {kinds.includes('episode') && (
+        <CalmeRow label={t('widgets.media.group')} info={t('widgets.media.groupHint')}>
+          <CalmeSwitch label={t('widgets.media.group')} checked={draft.group !== false} onChange={on => change({ group: on ? null : false })} />
+        </CalmeRow>
+      )}
       <CalmeRow label={t('widgets.media.count')}>
         <CalmeSlider label={t('widgets.media.count')} value={bounded(draft.count, 4, 40, 16)} min={4} max={40} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
       </CalmeRow>

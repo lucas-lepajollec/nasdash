@@ -6,13 +6,59 @@ import { serviceIdentity, ServiceError } from './services';
 
 export const MEDIA_WIDGET_TYPES = ['media-nowplaying', 'media-recent', 'media-library'] as const;
 export type MediaWidgetType = typeof MEDIA_WIDGET_TYPES[number];
-export interface MediaSelection { kinds: ('movie' | 'episode' | 'album')[]; count: number }
+export interface MediaSelection { kinds: ('movie' | 'episode' | 'album')[]; count: number; group: boolean }
 export function mediaSelection(settings: Record<string, unknown>): MediaSelection {
   const kinds = settings.kinds === undefined ? ['movie', 'episode', 'album'] : settings.kinds;
   const count = settings.count === undefined ? 16 : settings.count;
   if (!Array.isArray(kinds) || !kinds.length || kinds.length > 3 || kinds.some(kind => !['movie', 'episode', 'album'].includes(kind)) || new Set(kinds).size !== kinds.length || typeof count !== 'number' || !Number.isInteger(count) || count < 4 || count > 40) throw new ServiceError('widgets.error.invalidSettings', 400);
-  return { kinds: kinds as MediaSelection['kinds'], count };
+  if (settings.group !== undefined && settings.group !== null && typeof settings.group !== 'boolean') throw new ServiceError('widgets.error.invalidSettings', 400);
+  return { kinds: kinds as MediaSelection['kinds'], count, group: settings.group !== false };
 }
+/** Titles to ask the server for: grouping folds many episodes into one series, so it asks for more. */
+export function fetchCount(selection: MediaSelection): number {
+  return selection.group && selection.kinds.includes('episode') ? Math.min(120, selection.count * 6) : selection.count;
+}
+
+/**
+ * New episodes of one series become that series (its poster and art, the
+ * newest episode's date, how many came, the season when they share one);
+ * other titles stay as they are. Order: newest first.
+ */
+export function groupRecent(items: MediaItem[], count: number): MediaItem[] {
+  const out: MediaItem[] = [];
+  const series = new Map<string, { item: MediaItem; seasons: Set<number | undefined> }>();
+  for (const item of items) {
+    const key = item.kind === 'episode' && item.subtitle ? item.subtitle.toLowerCase() : undefined;
+    if (!key) { out.push(item); continue; }
+    const group = series.get(key);
+    if (group) {
+      group.item.count = (group.item.count ?? 1) + 1;
+      group.seasons.add(item.season);
+      continue;
+    }
+    const entry: MediaItem = { ...item, count: 1 };
+    series.set(key, { item: entry, seasons: new Set([item.season]) });
+    out.push(entry);
+  }
+  return out.slice(0, count).map(item => {
+    const group = item.kind === 'episode' && item.subtitle ? series.get(item.subtitle.toLowerCase()) : undefined;
+    if (!group || (item.count ?? 1) < 2) { const { count: _count, ...single } = item; return single; }
+    // A series card: named after the series, one season when they all share it.
+    const seasons = [...group.seasons].filter((season): season is number => season !== undefined);
+    const { episode: _episode, season: _season, ...rest } = item;
+    return { ...rest, kind: 'series' as const, title: item.subtitle!, subtitle: undefined, ...(seasons.length === 1 && group.seasons.size === 1 ? { season: seasons[0] } : {}) };
+  });
+}
+
+/** Background art for the library widget: the newest movie, series and album. */
+export function libraryCovers(items: MediaItem[]): { movies?: MediaItem; series?: MediaItem; music?: MediaItem } {
+  return {
+    movies: items.find(item => item.kind === 'movie' && (item.backdrop || item.poster)),
+    series: items.find(item => item.kind === 'episode' && (item.backdrop || item.poster)),
+    music: items.find(item => item.kind === 'album' && item.poster),
+  };
+}
+
 export function mediaShowUsers(settings: Record<string, unknown>): boolean {
   if (settings.showUsers !== undefined && typeof settings.showUsers !== 'boolean') throw new ServiceError('widgets.error.invalidSettings', 400);
   return settings.showUsers === true;
@@ -61,7 +107,7 @@ export function demoMediaNowPlaying(instance: IntegrationInstance): MediaNowPlay
   ] };
 }
 export function demoMediaRecent(instance: IntegrationInstance, selection: MediaSelection): MediaRecentResponse {
-  return { ...identity(instance), items: Array.from({ length: 120 }, (_, n) => demoItem(n)).filter(item => selection.kinds.some(kind => kind === item.kind)).slice(0, selection.count) };
+  return { ...identity(instance), items: Array.from({ length: 120 }, (_, n) => demoItem(n)).filter(item => selection.kinds.some(kind => kind === item.kind)).slice(0, fetchCount(selection)) };
 }
 export function demoMediaLibrary(instance: IntegrationInstance): MediaLibraryResponse {
   return { ...identity(instance), counts: { movies: 284, series: 42, episodes: 1280, artists: 96, albums: 210, tracks: 2640 },

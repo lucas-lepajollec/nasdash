@@ -8,7 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- Media widgets, in a new Media group, for Jellyfin, Emby and Plex (Settings → Integrations → Media servers): **Now playing** (cards over the title's art with poster, player, quality, direct play or transcoding, live progress; or compact rows), **Recently added** (a scrolling row of posters, the newest one featured large, a grid or a list; movies, episodes and albums) and **Media library** (totals of movies, series, episodes, artists, albums, tracks, books, and the libraries). Posters and art pass through NasDash; links to the server are for administrators, account names for administrators unless a widget shows them; viewers need the Media permission.
+- Media widgets, in a new Media group, for Jellyfin, Emby and Plex (Settings → Integrations → Media servers): **Now playing** (cards over the title's art with poster, player, quality, direct play or transcoding, live progress; or compact rows), **Recently added** (a scrolling row of posters, the newest one featured large, a grid or a list; movies, episodes and albums; new episodes of a series folded into one card with their number, on by default) and **Media library** (shelves for movies, series, music and books over the newest title's art, with their totals, and the libraries). Posters and art pass through NasDash; links to the server are for administrators, account names only when a widget shows them; viewers need the Media permission.
 - Custom API widget: any JSON API saved in Settings → Integrations → Custom APIs (no key, token, header, user and password, or URL parameter), read by the server. In the widget settings, values are picked by clicking them in the API's answer, then shown as figures, gauges, a list, a table built from a list, or a single status, with formats (percent, bytes, bit rate, duration, date, time ago…), units, decimals and warning/critical colours. Only the picked values reach the browser, never the whole answer, the address or the key.
 - Technitium DNS Server as a third source of the DNS widget, next to Pi-hole and AdGuard Home: statistics of the last day, answers from cache and recursive resolution, top domains and clients, and, for a cluster, the server itself, the whole cluster or one node per widget. A token with Dashboard (view) is enough; Settings (view, modify) adds the blocking state and its pause. Proposed in #123 with a first implementation in #125 by @emile-bodin.
 - Markets: in edit mode, symbols are put in order by drag and drop in the list, bars and tiles displays.
@@ -23,6 +23,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Edit mode: notes beside a widget's title stay at the edge until its controls show; dialogs no longer draw two lines between a list of choices and the next setting.
 - Bookmark icons show in edit mode for a widget not saved yet, and retry once when a just-added link was not saved yet.
 - Site icons (bookmarks, feeds) are sharp: the largest icon of a heavy page's head is used instead of a 16 px `favicon.ico`; icons found before are looked for again.
 - The Immich connection test only needs the reading permission the widget uses (`asset.read`), and tells a missing permission apart from a refused key.

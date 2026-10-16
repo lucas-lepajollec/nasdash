@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IntegrationInstance } from '@/lib/types';
+import type { MediaItem } from '@/lib/widgetData/contracts';
 import jellyfin from './jellyfin/samples/service.json';
 import plex from './plex/samples/service.json';
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ integrations: [] }) }));
@@ -41,7 +42,7 @@ describe('Jellyfin and Emby', () => {
     const source = instance(type), prefix = type === 'emby' ? '/emby' : '';
     json.mockImplementation(async (_instance, path) => path.includes('/Sessions?') ? jellyfin.sessions : path.includes('/Items?') ? jellyfin.recent : path.endsWith('/Counts') ? jellyfin.counts : jellyfin.folders);
     expect((await collectJellyfinNowPlaying(source)).sessions).toHaveLength(3);
-    const recent = await collectJellyfinRecent(source, { kinds: ['movie', 'album'], count: 4 });
+    const recent = await collectJellyfinRecent(source, { kinds: ['movie', 'album'], count: 4, group: false });
     expect(recent.items.map(item => item.kind)).toEqual(['movie', 'album']);
     const library = await collectJellyfinLibrary(source);
     expect(library.counts).toEqual({ movies: 284, series: 42, episodes: 1280, artists: 96, albums: 210, tracks: 2640, books: 8 });
@@ -74,7 +75,7 @@ describe('Plex', () => {
     const source = instance('plex');
     json.mockImplementation(async (_instance, path) => path === '/' ? plex.identity : path === '/status/sessions' ? plex.sessions : plex.recent);
     await collectPlexNowPlaying(source);
-    const recent = await collectPlexRecent(source, { kinds: ['episode', 'album'], count: 4 });
+    const recent = await collectPlexRecent(source, { kinds: ['episode', 'album'], count: 4, group: false });
     expect(recent.items.map(item => item.kind)).toEqual(['episode', 'episode', 'album']);
     expect(json.mock.calls.filter(([, path]) => path === '/')).toHaveLength(1);
     await collectPlexNowPlaying(instance('plex'));
@@ -100,5 +101,21 @@ describe('Plex', () => {
     expect(result.libraries.map(entry => [entry.kind, entry.count])).toEqual([['movies', 284], ['series', 42], ['music', 96]]);
     expect(json.mock.calls).toHaveLength(7);
     expect(json.mock.calls.slice(1).every(([, path]) => path.includes('X-Plex-Container-Start=0&X-Plex-Container-Size=0'))).toBe(true);
+  });
+});
+
+describe('recently added, grouped by series', () => {
+  const episode = (n: number, series: string, season = 1): MediaItem => ({ id: `e${n}`, kind: 'episode', title: `Episode ${n}`, subtitle: series, season, episode: n, addedAt: 100 - n });
+  it('folds new episodes of a series into one card, newest first, keeping other titles', async () => {
+    const { groupRecent } = await import('@/lib/widgetData/media');
+    const movie: MediaItem = { id: 'm1', kind: 'movie', title: 'A Film', addedAt: 99 };
+    const items = [episode(1, 'Harbor'), movie, episode(2, 'Harbor'), episode(3, 'harbor'), episode(4, 'Orbit', 2)];
+    const grouped = groupRecent(items, 10);
+    expect(grouped.map(item => [item.kind, item.title, item.count, item.season])).toEqual([
+      ['series', 'Harbor', 3, 1], ['movie', 'A Film', undefined, undefined], ['episode', 'Episode 4', undefined, 2],
+    ]);
+    const mixed = groupRecent([episode(1, 'Harbor', 1), episode(2, 'Harbor', 2)], 10)[0];
+    expect(mixed).toMatchObject({ kind: 'series', count: 2 }); expect(mixed).not.toHaveProperty('season');
+    expect(groupRecent(items, 1)).toHaveLength(1);
   });
 });

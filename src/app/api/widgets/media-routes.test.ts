@@ -39,11 +39,11 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('media data routes', () => {
-  it('filters links and users after the shared cache, with showUsers applied only to users', async () => {
+  it('filters links after the shared cache, and shows account names only when the widget does, for everyone', async () => {
     const admin = await nowGet(get());
     expect(admin.headers.get('cache-control')).toBe('private, no-store');
     const full = await admin.json();
-    expect(full.sessions[0].user).toBe('Alex'); expect(full.sessions[0].item.link).toContain('media.example.com');
+    expect(full.sessions[0].user).toBeUndefined(); expect(full.sessions[0].item.link).toContain('media.example.com');
     state.admin = false;
     let result = await (await nowGet(get())).json();
     expect(result.sessions[0].user).toBeUndefined(); expect(result.sessions[0].item.link).toBeUndefined();
@@ -56,10 +56,11 @@ describe('media data routes', () => {
   it('uses saved recent settings, defaults, and administrator drafts, ignoring viewer drafts', async () => {
     setType('media-recent');
     await recentGet(get());
-    expect(collectJellyfinRecent).toHaveBeenLastCalledWith(state.instances[0], { kinds: ['movie', 'episode', 'album'], count: 16 });
+    // Grouping episodes asks for more titles to fold.
+    expect(collectJellyfinRecent).toHaveBeenLastCalledWith(state.instances[0], { kinds: ['movie', 'episode', 'album'], count: 96, group: true });
     const draft = encodeURIComponent(JSON.stringify({ integrationId: state.instances[0].id, kinds: ['album'], count: 4 }));
     const preview = await (await recentGet(get(`widgetId=w&draft=${draft}`))).json();
-    expect(collectJellyfinRecent).toHaveBeenLastCalledWith(state.instances[0], { kinds: ['album'], count: 4 });
+    expect(collectJellyfinRecent).toHaveBeenLastCalledWith(state.instances[0], { kinds: ['album'], count: 4, group: true });
     expect(preview.items[0].poster).toContain('draft=');
     state.admin = false;
     const visitor = await (await recentGet(get(`widgetId=w&draft=${draft}&url=https://other.example.com`))).json();

@@ -106,7 +106,7 @@ function Session({ session, layout, elapsed }: { session: MediaSession; layout: 
   const badges = (
     <span className="ndw-media-badges">
       {session.quality && <span className="ndw-media-badge">{session.quality}</span>}
-      {method && <span className={`ndw-media-badge ${session.method === 'transcode' ? 'is-transcode' : ''}`} title={session.bitrateKbps ? t('widgets.media.bitrate', { value: Math.round(session.bitrateKbps / 100) / 10 }) : undefined}>{method}</span>}
+      {method && <span className="ndw-media-badge" title={session.bitrateKbps ? t('widgets.media.bitrate', { value: Math.round(session.bitrateKbps / 100) / 10 }) : undefined}>{method}</span>}
     </span>
   );
 
