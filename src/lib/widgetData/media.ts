@@ -50,13 +50,11 @@ export function groupRecent(items: MediaItem[], count: number): MediaItem[] {
   });
 }
 
-/** Background art for the library widget: the newest movie, series and album. */
-export function libraryCovers(items: MediaItem[]): { movies?: MediaItem; series?: MediaItem; music?: MediaItem } {
-  return {
-    movies: items.find(item => item.kind === 'movie' && (item.backdrop || item.poster)),
-    series: items.find(item => item.kind === 'episode' && (item.backdrop || item.poster)),
-    music: items.find(item => item.kind === 'album' && item.poster),
-  };
+/** Library shelves' backgrounds: the newest title of each kind, one at random among the newest, or none. */
+export function coverMode(settings: Record<string, unknown>): 'newest' | 'random' | 'none' {
+  const mode = settings.cover ?? 'newest';
+  if (mode !== 'newest' && mode !== 'random' && mode !== 'none') throw new ServiceError('widgets.error.invalidSettings', 400);
+  return mode;
 }
 
 export function mediaShowUsers(settings: Record<string, unknown>): boolean {

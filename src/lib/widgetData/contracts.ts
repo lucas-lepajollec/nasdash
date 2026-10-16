@@ -353,8 +353,8 @@ export interface MediaSession {
   bitrateKbps?: number;
 }
 
-/** GET /api/widgets/media/now-playing?widgetId=… */
-export interface MediaNowPlayingResponse { server: MediaServer; name: string; sessions: MediaSession[]; fetchedAt: number }
+/** GET /api/widgets/media/now-playing?widgetId=… (`recent`: when nothing plays, the newest titles, for a calm idle view). */
+export interface MediaNowPlayingResponse { server: MediaServer; name: string; sessions: MediaSession[]; recent?: MediaItem[]; fetchedAt: number }
 
 /**
  * GET /api/widgets/media/recent?widgetId=… → the newest titles (settings: `kinds`: movie | episode | album,
@@ -368,7 +368,7 @@ export interface MediaCounts { movies?: number; series?: number; episodes?: numb
 export interface MediaLibraryResponse {
   server: MediaServer; name: string; counts: MediaCounts;
   libraries: { name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other'; count?: number }[];
-  /** Art of the newest title of each kind, as backgrounds (proxied like posters). */
+  /** Shelf backgrounds (settings `cover`: newest — default —, random among the newest, none), proxied like posters. */
   covers?: { movies?: string; series?: string; music?: string };
   fetchedAt: number;
 }

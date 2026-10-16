@@ -4,7 +4,7 @@ import { collectJellyfinLibrary, collectJellyfinNowPlaying, collectJellyfinRecen
 import { collectPlexLibrary, collectPlexNowPlaying, collectPlexRecent } from '@/integrations/plex/collect';
 import { TtlCache } from './cache';
 import type { MediaItem, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse } from './contracts';
-import { demoMediaLibrary, demoMediaNowPlaying, demoMediaRecent, fetchCount, groupRecent, libraryCovers, mediaSelection, mediaShowUsers, proxyMediaItem, type MediaSelection, type MediaWidgetType } from './media';
+import { coverMode, demoMediaLibrary, demoMediaNowPlaying, demoMediaRecent, fetchCount, groupRecent, mediaSelection, mediaShowUsers, proxyMediaItem, type MediaSelection, type MediaWidgetType } from './media';
 import { queryDraft, resolveServiceWidget, serviceFailure, serviceIdentity } from './services';
 
 const nowPlaying = new TtlCache<MediaNowPlayingResponse>(5000);
@@ -32,7 +32,14 @@ export async function mediaRoute(request: NextRequest, type: MediaWidgetType) {
       // Account names only when the widget shows them, for everyone (administrators included).
       const showUsers = mediaShowUsers(settings);
       const result = demo ? demoMediaNowPlaying(instance) : await nowPlaying.get(key, () => plex ? collectPlexNowPlaying(instance) : collectJellyfinNowPlaying(instance));
-      return NextResponse.json({ ...result, sessions: result.sessions.map(({ user, item: media, ...session }) => ({ ...session, item: item(media), ...(user && showUsers ? { user } : {}) })) }, { headers });
+      const sessions = result.sessions.map(({ user, item: media, ...session }) => ({ ...session, item: item(media), ...(user && showUsers ? { user } : {}) }));
+      // Nothing playing: the newest titles, so the widget still shows the library (best effort).
+      let idle: MediaItem[] | undefined;
+      if (!sessions.length) {
+        try { idle = groupRecent((await newest(instance, { kinds: ['movie', 'episode'], count: 8, group: true }, key, demo, plex)).items, 6).map(item); }
+        catch { /* The idle view does without. */ }
+      }
+      return NextResponse.json({ ...result, sessions, ...(idle?.length ? { recent: idle } : {}) }, { headers });
     }
     if (type === 'media-recent') {
       const selection = mediaSelection(settings);
@@ -43,11 +50,22 @@ export async function mediaRoute(request: NextRequest, type: MediaWidgetType) {
     const result = demo ? demoMediaLibrary(instance) : await library.get(key, () => plex ? collectPlexLibrary(instance) : collectJellyfinLibrary(instance));
     // Backgrounds: the newest titles, from the same cached read as Recently added.
     let covers: MediaLibraryResponse['covers'];
-    try {
-      const art = libraryCovers((await newest(instance, { kinds: ['movie', 'episode', 'album'], count: 40, group: false }, key, demo, plex)).items);
-      const image = (media?: MediaItem) => { if (!media) return undefined; const proxied = item(media); return proxied.backdrop ?? proxied.poster; };
-      covers = { movies: image(art.movies), series: image(art.series), music: image(art.music) };
-    } catch { /* The totals do not depend on the art. */ }
+    const mode = coverMode(settings);
+    if (mode !== 'none') {
+      // One read per kind, so a library full of new episodes still has a movie to show.
+      const pick = async (kind: 'movie' | 'episode' | 'album') => {
+        try {
+          const list = (await newest(instance, { kinds: [kind], count: mode === 'random' ? 24 : 4, group: false }, key, demo, plex)).items
+            .filter(media => media.backdrop || media.poster);
+          const chosen = mode === 'random' ? list[Math.floor(Math.random() * list.length)] : list[0];
+          if (!chosen) return undefined;
+          const proxied = item(chosen);
+          return kind === 'album' ? proxied.poster ?? proxied.backdrop : proxied.backdrop ?? proxied.poster;
+        } catch { return undefined; /* The totals do not depend on the art. */ }
+      };
+      const [movies, series, music] = await Promise.all([pick('movie'), pick('episode'), pick('album')]);
+      covers = { ...(movies ? { movies } : {}), ...(series ? { series } : {}), ...(music ? { music } : {}) };
+    }
     return NextResponse.json({ ...result, ...(covers ? { covers } : {}) }, { headers });
   } catch (error) {
     const response = serviceFailure(error);

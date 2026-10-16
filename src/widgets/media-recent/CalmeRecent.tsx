@@ -8,11 +8,15 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField, CalmeCheckRow } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { MediaConnectionField, MediaPoster, MediaSetup, useMediaConnection, useMediaLine } from '@/components/widgets/media/shared';
 
 type Display = 'posters' | 'hero' | 'grid' | 'list';
 const DISPLAYS: readonly Display[] = ['posters', 'hero', 'grid', 'list'];
+type Size = 'small' | 'medium' | 'large';
+const SIZES: readonly Size[] = ['small', 'medium', 'large'];
+/** List rows: poster width per size. */
+const ROW_POSTER: Record<Size, number> = { small: 26, medium: 38, large: 56 };
 type Kind = 'movie' | 'episode' | 'album';
 const KINDS: readonly Kind[] = ['movie', 'episode', 'album'];
 /** Added in the last two days: a small dot. */
@@ -48,7 +52,7 @@ export default function CalmeRecent({ widgetId, settings, editMode, isVisible, o
               : items.length === 0 ? <div className="ndc-empty">{t('widgets.media.nothingNew')}</div>
                 : display === 'hero' ? <Hero items={items} width={width} now={data.fetchedAt} />
                   : display === 'grid' ? <div className="ndw-media-grid">{items.map(item => <PosterCard key={item.id} now={data.fetchedAt} item={item} width={Math.max(84, Math.min(130, width / Math.max(2, Math.round(width / 120)) - 10))} />)}</div>
-                    : display === 'list' ? <RecentList items={items} />
+                    : display === 'list' ? <RecentList items={items} size={pick(settings.size, SIZES, 'medium')} columns={columnsOf(settings, width, 260)} />
                       : <PosterRow items={items} now={data.fetchedAt} />}
       </div>
     </CalmeWidget>
@@ -127,15 +131,15 @@ function Hero({ items, width, now }: { items: MediaItem[]; width: number; now: n
   );
 }
 
-function RecentList({ items }: { items: MediaItem[] }) {
+function RecentList({ items, size, columns }: { items: MediaItem[]; size: Size; columns: number }) {
   const line = useMediaLine();
   const relative = useRelativeTime();
   return (
-    <ul className="ndw-media-list">
+    <ColumnRows columns={columns} className={`ndw-media-list is-${size}`}>
       {items.map(item => {
         const text = (
           <>
-            <MediaPoster item={item} width={32} />
+            <MediaPoster item={item} width={ROW_POSTER[size]} />
             <span className="ndw-media-row-text">
               <span className="ndw-media-title">{item.kind === 'episode' && item.subtitle ? item.subtitle : item.title}</span>
               <span className="ndw-media-sub">{item.kind === 'episode' ? [item.season !== undefined && item.episode !== undefined ? `S${item.season} · E${item.episode}` : '', item.title].filter(Boolean).join(' · ') : line(item)}</span>
@@ -143,9 +147,11 @@ function RecentList({ items }: { items: MediaItem[] }) {
             {item.addedAt && <span className="ndw-media-time">{relative(item.addedAt)}</span>}
           </>
         );
-        return <li key={item.id}>{item.link ? <a className="ndw-media-row" href={item.link} target="_blank" rel="noopener noreferrer">{text}</a> : <span className="ndw-media-row">{text}</span>}</li>;
+        return item.link
+          ? <a key={item.id} className="ndw-media-row" href={item.link} target="_blank" rel="noopener noreferrer">{text}</a>
+          : <span key={item.id} className="ndw-media-row">{text}</span>;
       })}
-    </ul>
+    </ColumnRows>
   );
 }
 
@@ -158,6 +164,14 @@ function RecentSettings({ draft, change }: { draft: WidgetSettings; change: (pat
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, DISPLAYS, 'posters')} options={DISPLAYS.map(value => ({ value, label: t(`widgets.media.recent.${value}`) }))} onChange={value => change({ display: value })} />
       </CalmeField>
+      {pick(draft.display, DISPLAYS, 'posters') === 'list' && (
+        <>
+          <CalmeField label={t('widgets.media.size')}>
+            <CalmeSegmented label={t('widgets.media.size')} value={pick(draft.size, SIZES, 'medium')} options={SIZES.map(value => ({ value, label: t(`widgets.media.size.${value}`) }))} onChange={value => change({ size: value === 'medium' ? null : value })} />
+          </CalmeField>
+          <ColumnsSetting draft={draft} change={change} />
+        </>
+      )}
       <CalmeField label={t('widgets.media.kinds')}>
         <div className="ndc-dlg-stack">
           {KINDS.map(kind => (

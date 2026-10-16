@@ -8,7 +8,8 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { DataError, pick, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import type { MediaItem } from '@/lib/widgetData/contracts';
 import { clock, MediaConnectionField, MediaPoster, MediaProgress, MediaSetup, useMediaConnection, useMediaLine } from '@/components/widgets/media/shared';
 
 type Layout = 'cards' | 'compact';
@@ -38,6 +39,7 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
   const connection = useMediaConnection(settings);
   const layout = pick(settings.layout, LAYOUTS, 'cards');
   const { data, error, mutate } = useNowPlaying(widgetId, settings, isVisible, !!connection);
+  const [box, width] = useBoxWidth<HTMLDivElement>();
   const sessions = data?.sessions ?? [];
   const now = useNow(isVisible && sessions.some(session => session.state === 'playing'));
   const title = t('widget.media-nowplaying.name');
@@ -52,6 +54,7 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
               <CalmeField label={t('widgets.display')}>
                 <CalmeSegmented label={t('widgets.display')} value={pick(draft.layout, LAYOUTS, 'cards')} options={LAYOUTS.map(value => ({ value, label: t(`widgets.media.layout.${value}`) }))} onChange={value => change({ layout: value })} />
               </CalmeField>
+              <ColumnsSetting draft={draft} change={change} />
               <CalmeRow label={t('widgets.media.showUsers')} info={t('widgets.media.showUsersHint')}>
                 <CalmeSwitch label={t('widgets.media.showUsers')} checked={draft.showUsers === true} onChange={on => change({ showUsers: on || null })} />
               </CalmeRow>
@@ -59,18 +62,13 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
           )}
         </WidgetSettingsButton>
       )}
-      <div className="ndw-media-box">
+      <div ref={box} className="ndw-media-box">
         {!connection ? <MediaSetup settings={settings} />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 96 }} /></div>
-              : sessions.length === 0 ? (
-                <div className="ndw-media-idle">
-                  <Clapperboard size={20} aria-hidden="true" />
-                  <span>{t('widgets.media.idle')}</span>
-                  <span className="ndw-media-idle-server">{data.name}</span>
-                </div>
-              ) : (
-                <ul className={`ndw-media-sessions is-${layout}`}>
+              : sessions.length === 0 ? <Idle data={data} />
+              : (
+                <ul className={`ndw-media-sessions is-${layout}`} style={{ '--ndw-cols': columnsOf(settings, width, layout === 'cards' ? 320 : 240) } as React.CSSProperties}>
                   {sessions.map(session => <Session key={session.id} session={session} layout={layout} elapsed={session.state === 'playing' ? Math.min(MAX_DRIFT, Math.max(0, now - data.fetchedAt)) : 0} />)}
                 </ul>
               )}
@@ -153,5 +151,44 @@ function Session({ session, layout, elapsed }: { session: MediaSession; layout: 
         </span>
       </span>
     </li>
+  );
+}
+
+/**
+ * Nothing playing: the newest title's art in the background, a quiet word,
+ * and the latest additions as small posters, so the widget never looks empty.
+ */
+function Idle({ data }: { data: MediaNowPlayingResponse }) {
+  const { t } = useI18n();
+  const recent: MediaItem[] = data.recent ?? [];
+  const art = recent.find(item => item.backdrop)?.backdrop;
+  return (
+    <div className={`ndw-media-idle ${art ? 'has-art' : ''}`}>
+      {art && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="ndw-media-idle-art" src={art} alt="" loading="lazy" decoding="async" />
+      )}
+      <span className="ndw-media-idle-shade" aria-hidden="true" />
+      <span className="ndw-media-idle-head">
+        <span className="ndw-media-idle-icon" aria-hidden="true"><Clapperboard size={16} /></span>
+        <span className="ndw-media-idle-text">
+          <span className="ndw-media-idle-word">{t('widgets.media.idle')}</span>
+          <span className="ndw-media-idle-server">{data.name}</span>
+        </span>
+      </span>
+      {recent.length > 0 && (
+        <span className="ndw-media-idle-latest">
+          <span className="ndw-media-idle-label">{t('widgets.media.latest')}</span>
+          <span className="ndw-media-idle-posters">
+            {recent.slice(0, 6).map(item => (
+              <span key={item.id} className="ndw-media-idle-poster" title={item.title}>
+                <MediaPoster item={item} width={44} frame />
+                {item.count !== undefined && item.count > 1 && <span className="ndw-media-episodes" aria-hidden="true">{item.count}</span>}
+              </span>
+            ))}
+          </span>
+        </span>
+      )}
+    </div>
   );
 }

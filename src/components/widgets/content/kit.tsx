@@ -375,3 +375,36 @@ export function SourceChoice({ label, items, value, onChange }: {
     </div>
   );
 }
+
+/** Columns of a list widget: automatic (from its width) or a fixed number. */
+export const COLUMN_CHOICES = ['auto', '1', '2', '3', '4'] as const;
+
+/**
+ * How many columns a list widget shows: its choice, never narrower than
+ * `minColumn` px each (a stretched widget spreads its rows side by side).
+ */
+export function columnsOf(settings: WidgetSettings, width: number, minColumn: number): number {
+  const choice = pick(String(settings.columns), COLUMN_CHOICES, 'auto');
+  const fit = Math.max(1, Math.floor((width + 22) / (minColumn + 22)));
+  return Math.min(4, choice === 'auto' ? fit : Math.min(Number(choice), fit));
+}
+
+/** Rows laid out in `columns` columns, a line between rows (none above the first). */
+export function ColumnRows({ columns, className = '', children }: { columns: number; className?: string; children: React.ReactNode }) {
+  if (columns <= 1) return <div className={`ndw-rows ${className}`}>{children}</div>;
+  return (
+    <div className="ndw-columns-clip">
+      <div className={`ndw-rows is-columns ${className}`} style={{ '--ndw-cols': columns } as React.CSSProperties}>{children}</div>
+    </div>
+  );
+}
+
+/** The Columns choice of a list widget's dialog. */
+export function ColumnsSetting({ draft, change }: { draft: WidgetSettings; change: (patch: WidgetSettings) => void }) {
+  const { t } = useI18n();
+  return (
+    <CalmeField label={t('widgets.columns')} info={t('widgets.columnsHint')}>
+      <CalmeSegmented label={t('widgets.columns')} value={pick(String(draft.columns), COLUMN_CHOICES, 'auto')} options={COLUMN_CHOICES.map(value => ({ value, label: value === 'auto' ? t('widgets.columns.auto') : value }))} onChange={value => change({ columns: value === 'auto' ? null : Number(value) })} />
+    </CalmeField>
+  );
+}

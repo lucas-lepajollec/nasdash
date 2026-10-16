@@ -208,3 +208,26 @@ it('strips media server addresses and credentials from viewer configuration', ()
   const admin = buildConfigForPrincipal(config, { ...viewer, role: 'admin' });
   expect(admin.integrations?.[0].settings.url).toBe('https://media.example.com'); expect(admin.integrations?.[0].secrets?.apiKey).toBe('********');
 });
+
+describe('media idle view and library pictures', () => {
+  it('sends the newest titles when nothing plays, proxied for the widget', async () => {
+    const source = state.instances[0];
+    vi.mocked(collectJellyfinNowPlaying).mockResolvedValue({ server: 'jellyfin', name: source.name, sessions: [], fetchedAt: 1000 });
+    const body = await (await nowGet(get())).json();
+    expect(body.sessions).toEqual([]);
+    expect(body.recent.length).toBeGreaterThan(0);
+    expect(JSON.stringify(body.recent)).not.toMatch(/media\.example\.com\/Items|fictional-secret/);
+  });
+  it('picks shelf pictures per kind, and none when asked', async () => {
+    setType('media-library');
+    const withArt = await (await libraryGet(get())).json();
+    expect(vi.mocked(collectJellyfinRecent).mock.calls.map(([, selection]) => selection.kinds)).toEqual(expect.arrayContaining([['movie'], ['episode'], ['album']]));
+    expect(Object.values(withArt.covers ?? {}).every(url => String(url).startsWith('/api/widgets/media/image?'))).toBe(true);
+    vi.mocked(collectJellyfinRecent).mockClear();
+    saved().cover = 'none';
+    const plain = await (await libraryGet(get())).json();
+    expect(plain.covers).toBeUndefined(); expect(collectJellyfinRecent).not.toHaveBeenCalled();
+    saved().cover = 'everything';
+    expect((await libraryGet(get())).status).toBe(400);
+  });
+});
