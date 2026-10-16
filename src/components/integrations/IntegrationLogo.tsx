@@ -25,6 +25,7 @@ const LOGOS: Record<string, string> = {
   headscale: `${ICONS}/svg/headscale.svg`,
   pihole: `${ICONS}/svg/pi-hole.svg`,
   adguard: `${ICONS}/svg/adguard-home.svg`,
+  technitium: `${ICONS}/svg/technitium.svg`,
   immich: `${ICONS}/svg/immich.svg`,
   photoprism: `${ICONS}/svg/photoprism.svg`,
 };

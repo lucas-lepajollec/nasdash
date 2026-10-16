@@ -1,0 +1,202 @@
+{
+  "stats": {
+    "status": "ok",
+    "response": {
+      "stats": {
+        "totalQueries": 28400,
+        "totalNoError": 21000,
+        "totalServerFailure": 12,
+        "totalNxDomain": 900,
+        "totalRefused": 3,
+        "totalAuthoritative": 2100,
+        "totalRecursive": 12900,
+        "totalCached": 9100,
+        "totalBlocked": 6248,
+        "totalDropped": 0,
+        "totalClients": 8,
+        "zones": 6,
+        "cachedEntries": 5400,
+        "allowedZones": 2,
+        "blockedZones": 10,
+        "allowListZones": 0,
+        "blockListZones": 154000
+      },
+      "mainChartData": {
+        "labels": [
+          "2026-01-14T13:00:00Z",
+          "2026-01-14T14:00:00Z",
+          "2026-01-14T15:00:00Z",
+          "2026-01-14T16:00:00Z",
+          "2026-01-14T17:00:00Z",
+          "2026-01-14T18:00:00Z",
+          "2026-01-14T19:00:00Z",
+          "2026-01-14T20:00:00Z",
+          "2026-01-14T21:00:00Z",
+          "2026-01-14T22:00:00Z",
+          "2026-01-14T23:00:00Z",
+          "2026-01-15T00:00:00Z",
+          "2026-01-15T01:00:00Z",
+          "2026-01-15T02:00:00Z",
+          "2026-01-15T03:00:00Z",
+          "2026-01-15T04:00:00Z",
+          "2026-01-15T05:00:00Z",
+          "2026-01-15T06:00:00Z",
+          "2026-01-15T07:00:00Z",
+          "2026-01-15T08:00:00Z",
+          "2026-01-15T09:00:00Z",
+          "2026-01-15T10:00:00Z",
+          "2026-01-15T11:00:00Z",
+          "2026-01-15T12:00:00Z"
+        ],
+        "datasets": [
+          {
+            "label": "Total",
+            "data": [
+              600,
+              610,
+              620,
+              630,
+              640,
+              650,
+              660,
+              670,
+              680,
+              690,
+              700,
+              710,
+              720,
+              730,
+              740,
+              750,
+              760,
+              770,
+              780,
+              790,
+              800,
+              810,
+              820,
+              830
+            ]
+          },
+          {
+            "label": "Blocked",
+            "data": [
+              100,
+              101,
+              102,
+              103,
+              104,
+              105,
+              106,
+              107,
+              108,
+              109,
+              110,
+              111,
+              112,
+              113,
+              114,
+              115,
+              116,
+              117,
+              118,
+              119,
+              120,
+              121,
+              122,
+              123
+            ]
+          },
+          {
+            "label": "Cached",
+            "data": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        ]
+      },
+      "topClients": [
+        {
+          "name": "192.0.2.10",
+          "domain": "atlas-nas.home.example",
+          "hits": 9300
+        },
+        {
+          "name": "192.0.2.20",
+          "domain": "",
+          "hits": 4800
+        }
+      ],
+      "topDomains": [
+        {
+          "name": "media.example.com",
+          "hits": 3800
+        }
+      ],
+      "topBlockedDomains": [
+        {
+          "name": "ads.example.net",
+          "hits": 920
+        }
+      ]
+    }
+  },
+  "settings": {
+    "status": "ok",
+    "response": {
+      "enableBlocking": true,
+      "temporaryDisableBlockingTill": null
+    }
+  },
+  "cluster": {
+    "status": "ok",
+    "response": {
+      "clusterInitialized": true,
+      "dnsServerDomain": "dns1.home.example",
+      "clusterNodes": [
+        {
+          "name": "dns1.home.example",
+          "type": "Primary"
+        },
+        {
+          "name": "dns2.home.example",
+          "type": "Secondary"
+        },
+        {
+          "name": "bad name;x"
+        }
+      ]
+    }
+  },
+  "denied": {
+    "status": "error",
+    "errorMessage": "Access was denied."
+  },
+  "invalidToken": {
+    "status": "invalid-token",
+    "errorMessage": "Invalid token or session expired."
+  }
+}

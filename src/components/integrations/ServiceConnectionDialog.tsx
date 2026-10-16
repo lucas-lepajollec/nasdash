@@ -11,9 +11,10 @@ import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/Calme
 import type { IntegrationInstance } from '@/lib/types';
 import { createLocalId } from '@/lib/pages/operations';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
+import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /** Services a dashboard may connect several times (two Pi-holes, two photo libraries…). */
-export const MULTI_INSTANCE_SERVICES = ['pihole', 'adguard', 'immich', 'photoprism'];
+export const MULTI_INSTANCE_SERVICES: readonly string[] = [...DNS_TYPES, ...PHOTO_TYPES];
 
 /**
  * A service connection (Tailscale, Headscale, Pi-hole, AdGuard Home, Immich,

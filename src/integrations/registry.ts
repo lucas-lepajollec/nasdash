@@ -1,5 +1,6 @@
 import { piholeManifest } from './pihole/manifest';
 import { adguardManifest } from './adguard/manifest';
+import { technitiumManifest } from './technitium/manifest';
 import { immichManifest } from './immich/manifest';
 import { photoprismManifest } from './photoprism/manifest';
 import { beszelManifest } from './beszel/manifest';
@@ -55,7 +56,7 @@ export const DEVICE_INTEGRATION_IDS = DEVICE_INTEGRATIONS.map(integration => int
  * widgets, instead of a device to monitor. Adding one: `<id>/manifest.ts`
  * (fields), server code reading it, then list the manifest here.
  */
-export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tailscaleManifest, headscaleManifest, piholeManifest, adguardManifest, immichManifest, photoprismManifest];
+export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tailscaleManifest, headscaleManifest, piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest];
 
 export function getServiceIntegration(id: string | undefined): ServiceIntegrationManifest | undefined {
   return SERVICE_INTEGRATIONS.find(integration => integration.id === id);

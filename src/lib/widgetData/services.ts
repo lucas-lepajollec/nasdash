@@ -9,6 +9,7 @@ import { getServiceIntegration } from '@/integrations/registry';
 import type { IntegrationInstance } from '@/lib/types';
 import { httpRequest, isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
+import { DNS_TYPES, PHOTO_TYPES, type DnsProvider } from './contracts';
 
 export class ServiceError extends Error {
   constructor(readonly key: string, readonly status = 502, readonly parameters?: Record<string, string | number>) {
@@ -44,7 +45,7 @@ export function getServiceInstance(integrationId: unknown, types: readonly strin
 export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos', draft?: unknown) {
   const lookup = resolveWidgetSettings(request, widgetId, type, draft);
   if (!lookup.ok) return { response: NextResponse.json({ error: lookup.error }, { status: lookup.status }) };
-  const types = type === 'dns' ? ['pihole', 'adguard'] : ['immich', 'photoprism'];
+  const types: readonly string[] = type === 'dns' ? DNS_TYPES : PHOTO_TYPES;
   const instance = getServiceInstance(lookup.settings.integrationId, types) ?? demoVisitorInstance(lookup.settings.integrationId, types);
   if (!instance) return { response: NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404 }) };
   return { instance, settings: lookup.settings, principal: lookup.principal };
@@ -209,10 +210,11 @@ export function knownInstancePhoto(instance: IntegrationInstance, id: string): {
 /** Fictional service demos deliberately contain no provider URLs or secrets. */
 export function demoDns(instance: IntegrationInstance, blocking = true, durationSeconds?: number): import('./contracts').DnsSummary {
   const now = Date.UTC(2026, 0, 15, 12);
-  return { provider: instance.type as 'pihole' | 'adguard', name: instance.name, blocking,
+  return { provider: instance.type as DnsProvider, name: instance.name, blocking,
     ...(!blocking && durationSeconds ? { blockingResumesAt: Date.now() + durationSeconds * 1000 } : {}),
     queries: 28400, blocked: 6248, blockedPercent: 22, listedDomains: 154000, clients: 8,
     ...(instance.type === 'adguard' ? { averageMs: 2.4 } : {}),
+    ...(instance.type === 'technitium' ? { cached: 9100, recursive: 12900 } : {}),
     // Every 10 min over the day: quiet nights, busy evenings, a little noise.
     history: Array.from({ length: 144 }, (_, i) => {
       const hour = (i / 6 + 12) % 24;

@@ -124,17 +124,21 @@ export interface QuotesResponse {
 
 /* ------------------------------------------------------------------ DNS */
 
-export type DnsProvider = 'pihole' | 'adguard';
+/** Every DNS blocker the DNS widget reads; the one list the app uses (connections, widget, server). */
+export const DNS_TYPES = ['pihole', 'adguard', 'technitium'] as const;
+export type DnsProvider = typeof DNS_TYPES[number];
 
 export interface DnsTopEntry { name: string; count: number }
 
-/** GET /api/widgets/dns?widgetId=… → the summary of the widget's Pi-hole / AdGuard Home connection. */
+/** GET /api/widgets/dns?widgetId=… → the summary of the widget's Pi-hole / AdGuard Home / Technitium connection. */
 export interface DnsSummary {
   provider: DnsProvider;
   /** Connection name (`config.integrations[].name`). */
   name: string;
-  /** Blocking on (`false` while paused/disabled). */
-  blocking: boolean;
+  /** Blocking on (`false` while paused/disabled); absent when the key may not read it (Technitium without settings access). */
+  blocking?: boolean;
+  /** `false` when the saved credential may not pause blocking: no switch is shown. */
+  canToggle?: boolean;
   /** When a timed pause ends (ms), if any. */
   blockingResumesAt?: number;
   queries: number;
@@ -146,6 +150,9 @@ export interface DnsSummary {
   clients?: number;
   /** Average processing time (ms), AdGuard only. */
   averageMs?: number;
+  /** Answered from the cache / resolved recursively (Technitium). */
+  cached?: number;
+  recursive?: number;
   /** Last 24 h, oldest first: `[time ms, queries, blocked]`, ~24–144 points. */
   history: [number, number, number][];
   topBlocked: DnsTopEntry[];
@@ -159,7 +166,8 @@ export interface DnsToggleRequest { widgetId: string; blocking: boolean; duratio
 
 /* --------------------------------------------------------------- Photos */
 
-export type PhotoProvider = 'immich' | 'photoprism';
+export const PHOTO_TYPES = ['immich', 'photoprism'] as const;
+export type PhotoProvider = typeof PHOTO_TYPES[number];
 
 export interface Photo {
   /** Provider asset id (opaque). */

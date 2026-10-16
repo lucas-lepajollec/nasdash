@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink, Play, X } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
-import type { Photo, PhotosResponse } from '@/lib/widgetData/contracts';
+import { PHOTO_TYPES, type Photo, type PhotosResponse } from '@/lib/widgetData/contracts';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { demoFetch } from '@/lib/demoTransport';
@@ -23,7 +23,7 @@ export type PhotosMode = 'random' | 'recent' | 'favorites' | 'album' | 'memories
 const MODES: readonly PhotosMode[] = ['random', 'recent', 'favorites', 'album', 'memories'];
 /** Slideshow pace, in seconds. */
 const INTERVALS = ['10', '30', '60', '300'] as const;
-const TYPES = ['immich', 'photoprism'] as const;
+const TYPES = PHOTO_TYPES;
 
 /** Random selections change once an hour, the same for every screen in that hour. */
 const hourSeed = () => String(Math.floor(Date.now() / 3_600_000));

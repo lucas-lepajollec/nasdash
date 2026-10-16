@@ -420,6 +420,25 @@
           "y": 419,
           "w": 8,
           "h": 320
+        },
+        {
+          "id": "dns-demo",
+          "type": "dns",
+          "settings": {
+            "integrationId": "technitium-demo",
+            "node": "cluster",
+            "figures": [
+              "queries",
+              "blocked",
+              "share",
+              "cached",
+              "recursive"
+            ]
+          },
+          "x": 0,
+          "y": 739,
+          "w": 10,
+          "h": 260
         }
       ]
     },

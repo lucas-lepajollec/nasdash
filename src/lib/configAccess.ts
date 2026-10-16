@@ -3,6 +3,7 @@ import { DashboardConfig } from './types';
 import { NO_ACCESS } from './permissions';
 import { maskInstanceSecrets, stripInstanceSecrets } from '@/integrations/instances';
 import { isMonitoringType } from '@/integrations/sources';
+import { DNS_TYPES, PHOTO_TYPES } from './widgetData/contracts';
 
 type SerializableConfig = DashboardConfig & {
   slots?: Array<Record<string, unknown>>;
@@ -43,7 +44,7 @@ function filterSecretCategories(config: SerializableConfig): void {
 }
 
 /** Service connections whose address stays server-side for visitors (the widget only needs id, name, type). */
-const SERVICE_ADDRESS_TYPES = new Set(['pihole', 'adguard', 'immich', 'photoprism']);
+const SERVICE_ADDRESS_TYPES = new Set<string>([...DNS_TYPES, ...PHOTO_TYPES]);
 
 export function buildConfigForPrincipal(
   config: DashboardConfig,

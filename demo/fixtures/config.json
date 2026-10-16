@@ -330,6 +330,15 @@
         "username": "demo",
         "allowSelfSigned": "false"
       }
+    },
+    {
+      "id": "technitium-demo",
+      "type": "technitium",
+      "name": "Technitium · DNS cluster",
+      "settings": {
+        "url": "https://dns.demo.invalid",
+        "allowSelfSigned": "false"
+      }
     }
   ],
   "devices": [
