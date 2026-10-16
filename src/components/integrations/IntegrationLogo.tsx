@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Cpu, Plug } from 'lucide-react';
+import { Braces, Cpu, Plug } from 'lucide-react';
 
 /**
  * Logos of the integrations, from the dashboard-icons collection the service
- * logos already use. Libre Hardware Monitor has none: it shows a chip icon,
- * as does any logo that fails to load.
+ * logos already use. Libre Hardware Monitor has none: it shows a chip icon;
+ * a custom API shows braces; any logo that fails to load, a plug.
  */
 const ICONS = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons';
 const LOGOS: Record<string, string> = {
@@ -37,7 +37,7 @@ export function IntegrationLogo({ id, size = 28 }: { id: string; size?: number }
     <span className="ndc-int-logo" style={{ width: size, height: size }} aria-hidden="true">
       {src && !failed
         ? <img src={src} alt="" width={Math.round(size * 0.72)} height={Math.round(size * 0.72)} loading="lazy" onError={() => setFailed(true)} />
-        : id === 'lhm' ? <Cpu size={Math.round(size * 0.55)} /> : <Plug size={Math.round(size * 0.55)} />}
+        : id === 'lhm' ? <Cpu size={Math.round(size * 0.55)} /> : id === 'customapi' ? <Braces size={Math.round(size * 0.55)} /> : <Plug size={Math.round(size * 0.55)} />}
     </span>
   );
 }

@@ -17,7 +17,8 @@ import { technitiumRequest } from '@/integrations/technitium/collect';
 import { immichHeaders } from '@/integrations/immich/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
-import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
+import { customApiRequest } from '@/lib/widgetData/customApi';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if (([...DNS_TYPES, ...PHOTO_TYPES] as string[]).includes(type)) {
+  if (([...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
           throw error;
         }
       }
+      else if (type === 'customapi') await customApiRequest(instance);
       else await serviceJson(instance, '/api/v1/config', { headers: photoprismHeaders(instance) });
       return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: 1 });
     } catch (error) {

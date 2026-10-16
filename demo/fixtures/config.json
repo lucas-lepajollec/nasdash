@@ -242,6 +242,16 @@
   },
   "integrations": [
     {
+      "id": "customapi-demo",
+      "type": "customapi",
+      "name": "Lab status API",
+      "settings": {
+        "url": "https://status.demo.invalid/api",
+        "authType": "none",
+        "allowSelfSigned": "false"
+      }
+    },
+    {
       "id": "glances-1",
       "type": "glances",
       "name": "Glances · Atlas NAS",

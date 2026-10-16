@@ -604,6 +604,8 @@ function validateIntegrationInstance(payload: JsonObject): void {
     if (!plain.has(key)) throw new RequestValidationError(`Champ « ${key} » inconnu pour ${manifest.name}.`);
     if (typeof value !== 'string' || value.length > 2_048) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
     if (service?.fields.find(field => field.id === key)?.kind === 'toggle' && !['', 'true', 'false'].includes(value)) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
+    const field = service?.fields.find(field => field.id === key);
+    if (field?.kind === 'select' && value !== '' && !field.options?.some(option => option.value === value)) throw new RequestValidationError(`Le champ « ${key} » est invalide.`);
   }
   for (const [key, value] of Object.entries(readObject(body, 'secrets') ?? {})) {
     if (!secret.has(key)) throw new RequestValidationError(`Secret « ${key} » inconnu pour ${manifest.name}.`);

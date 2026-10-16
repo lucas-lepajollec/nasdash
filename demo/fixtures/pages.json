@@ -439,6 +439,123 @@
           "y": 739,
           "w": 10,
           "h": 260
+        },
+        {
+          "id": "api-speed-demo",
+          "type": "customapi",
+          "settings": {
+            "integrationId": "customapi-demo",
+            "title": "Speedtest",
+            "display": "figures",
+            "refresh": 60,
+            "fields": [
+              {
+                "id": "f-down",
+                "path": "download",
+                "label": "Download",
+                "unit": "Mbit/s",
+                "decimals": 0
+              },
+              {
+                "id": "f-up",
+                "path": "upload",
+                "label": "Upload",
+                "unit": "Mbit/s",
+                "decimals": 0
+              },
+              {
+                "id": "f-ping",
+                "path": "ping",
+                "label": "Ping",
+                "unit": "ms",
+                "warn": 20,
+                "crit": 50
+              }
+            ]
+          },
+          "x": 10,
+          "y": 739,
+          "w": 7,
+          "h": 130
+        },
+        {
+          "id": "api-disks-demo",
+          "type": "customapi",
+          "settings": {
+            "integrationId": "customapi-demo",
+            "title": "Disks",
+            "display": "table",
+            "listPath": "disks",
+            "limit": 10,
+            "refresh": 300,
+            "fields": [
+              {
+                "id": "c-name",
+                "path": "name",
+                "label": "Disk",
+                "format": "text"
+              },
+              {
+                "id": "c-temp",
+                "path": "temp",
+                "label": "Temp",
+                "unit": "°C",
+                "warn": 45,
+                "crit": 55
+              },
+              {
+                "id": "c-used",
+                "path": "used",
+                "label": "Used",
+                "format": "percent",
+                "warn": 0.8,
+                "crit": 0.9
+              },
+              {
+                "id": "c-health",
+                "path": "health",
+                "label": "Health",
+                "format": "text"
+              }
+            ]
+          },
+          "x": 17,
+          "y": 739,
+          "w": 7,
+          "h": 200
+        },
+        {
+          "id": "api-ups-demo",
+          "type": "customapi",
+          "settings": {
+            "integrationId": "customapi-demo",
+            "title": "UPS",
+            "display": "gauges",
+            "refresh": 60,
+            "fields": [
+              {
+                "id": "g-bat",
+                "path": "ups.battery",
+                "label": "Battery",
+                "unit": "%",
+                "warn": 40,
+                "crit": 20,
+                "lowIsBad": true
+              },
+              {
+                "id": "g-load",
+                "path": "ups.load",
+                "label": "Load",
+                "unit": "%",
+                "warn": 70,
+                "crit": 90
+              }
+            ]
+          },
+          "x": 10,
+          "y": 869,
+          "w": 7,
+          "h": 170
         }
       ]
     },
