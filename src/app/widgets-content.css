@@ -733,7 +733,12 @@ a.ndw-media-title:hover { text-decoration: underline; }
 .ndw-media-poster .ndw-media-poster-blur { inset: -12%; width: 124%; height: 124%; filter: blur(14px) brightness(0.7) saturate(1.2); }
 .ndw-media-poster .ndw-media-poster-cover { top: 50%; bottom: auto; height: auto; aspect-ratio: 1; transform: translateY(-50%); box-shadow: 0 6px 18px rgb(0 0 0 / 0.4); }
 .ndw-media-poster-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: rgb(255 255 255 / 0.55); font-size: 0.72rem; font-weight: 600; }
-.ndw-media-poster.is-loaded .ndw-media-poster-fallback { visibility: hidden; }
+.ndw-media-poster.is-loaded .ndw-media-poster-fallback, .ndw-media-poster.is-loaded .ndw-media-poster-loading { visibility: hidden; }
+.ndw-media-poster-loading { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.07) 50%, transparent 80%) 0 0 / 220% 100%; animation: ndw-shimmer 1.4s ease-in-out infinite; }
+.ndw-media-poster:has(.ndw-media-poster-loading) { background: color-mix(in srgb, var(--nd-text) 7%, var(--nd-card-bg)); }
+@keyframes ndw-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+/* A setting changed: the previous answer dims until the new one arrives. */
+.ndw-media-box.is-stale > *, .ndw-api-box.is-stale > * { opacity: 0.4; transition: opacity 0.2s ease; pointer-events: none; }
 
 .ndw-media-progress { position: relative; display: block; height: 3px; overflow: hidden; border-radius: 3px; background: color-mix(in srgb, var(--nd-text) 14%, transparent); }
 .ndw-media-progress > span { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--nd-accent); transition: width 1s linear; }
@@ -767,8 +772,6 @@ a.ndw-media-title:hover { text-decoration: underline; }
 .ndw-media-idle-art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; filter: blur(3px) saturate(1.05); transform: scale(1.08); }
 .ndw-media-idle-shade { position: absolute; inset: 0; z-index: -1; }
 .ndw-media-idle.has-art .ndw-media-idle-shade { background: linear-gradient(100deg, color-mix(in srgb, var(--nd-card-bg) 94%, transparent) 25%, color-mix(in srgb, var(--nd-card-bg) 70%, transparent) 75%, color-mix(in srgb, var(--nd-card-bg) 55%, transparent)); }
-.ndw-media-idle-head { display: flex; align-items: center; gap: 10px; }
-.ndw-media-idle-icon { display: inline-flex; padding: 8px; border-radius: 50%; color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 14%, transparent); }
 .ndw-media-idle-text { display: flex; flex-direction: column; gap: 2px; }
 .ndw-media-idle-word { color: var(--nd-text); font-size: 0.86rem; font-weight: 500; }
 .ndw-media-idle-server { color: var(--nd-text-dimmed); font-size: 0.66rem; }
@@ -830,8 +833,15 @@ a.ndw-media-hero:hover .ndw-media-hero-art { transform: scale(1.03); }
 }
 .ndw-media-shelf.is-series { background: linear-gradient(200deg, color-mix(in srgb, var(--nd-accent) 15%, var(--nd-card-bg)), color-mix(in srgb, var(--nd-text) 4%, var(--nd-card-bg))); }
 .ndw-media-shelf.is-music, .ndw-media-shelf.is-books { background: linear-gradient(110deg, color-mix(in srgb, var(--nd-accent) 10%, var(--nd-card-bg)), color-mix(in srgb, var(--nd-text) 5%, var(--nd-card-bg))); }
-.ndw-media-shelf-art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); transition: transform 0.6s ease; }
-.ndw-media-shelf:hover .ndw-media-shelf-art { transform: scale(1.08); }
+.ndw-media-shelf-art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.04); transition: opacity 1.2s ease, transform 8s ease; }
+.ndw-media-shelf-art.is-current { opacity: 1; transform: scale(1.1); }
+/* No picture: the kind's icon large and faint, so the shelf still reads as one. */
+.ndw-media-shelf-mark { position: absolute; right: -14px; bottom: -18px; z-index: -1; width: 112px; height: 112px; color: var(--nd-accent); opacity: 0.12; stroke-width: 1.2; }
+.ndw-media-tally { display: flex; flex-wrap: wrap; gap: 14px 0; }
+.ndw-media-tally-item { display: flex; flex-direction: column; gap: 4px; min-width: 92px; padding: 2px 18px; border-left: 1px solid color-mix(in srgb, var(--nd-text) 10%, transparent); }
+.ndw-media-tally-item:first-child { padding-left: 2px; border-left: none; }
+.ndw-media-tally-value { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.6rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ndw-media-tally-label { color: var(--nd-text-dimmed); font-size: 0.66rem; letter-spacing: 0.04em; }
 .ndw-media-shelf-shade { position: absolute; inset: 0; z-index: -1; }
 .ndw-media-shelf.has-cover .ndw-media-shelf-shade { background: linear-gradient(0deg, rgb(0 0 0 / 0.82), rgb(0 0 0 / 0.35) 60%, rgb(0 0 0 / 0.15)); }
 .ndw-media-shelf-head { position: absolute; top: 11px; left: 14px; display: inline-flex; align-items: center; gap: 6px; color: var(--nd-text-dimmed); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -845,7 +855,7 @@ a.ndw-media-hero:hover .ndw-media-hero-art { transform: scale(1.03); }
 .ndw-media-library-chip svg { flex-shrink: 0; color: var(--nd-text-dimmed); }
 .ndw-media-library-chip > span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ndw-media-library-count { color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: reduce) { .ndw-media-poster img, .ndw-media-tile .ndw-media-poster, .ndw-media-hero-art, .ndw-media-shelf-art, .ndw-media-progress > span { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ndw-media-poster-loading { animation: none; } .ndw-media-poster img, .ndw-media-tile .ndw-media-poster, .ndw-media-hero-art, .ndw-media-shelf-art, .ndw-media-progress > span { transition: none; } .ndw-media-shelf-art.is-current { transform: none; } }
 
 /* List widgets in columns once stretched (feeds, recently added…). */
 .ndw-columns-clip { overflow: hidden; min-width: 0; }

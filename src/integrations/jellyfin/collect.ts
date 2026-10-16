@@ -1,6 +1,6 @@
 /** Jellyfin and Emby share the media API; credentials always travel in headers. */
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 import type { MediaSelection } from '@/lib/widgetData/media';
 
@@ -71,4 +71,25 @@ export async function collectJellyfinLibrary(instance: IntegrationInstance): Pro
   }
   const libraryKinds = new Map<string, MediaLibraryResponse['libraries'][number]['kind']>([['movies', 'movies'], ['tvshows', 'series'], ['music', 'music'], ['books', 'books']]);
   return { ...identity(instance), counts, libraries: folders.slice(0, 100).map(object).map(folder => ({ name: string(folder.Name), kind: libraryKinds.get(string(folder.CollectionType)) ?? 'other' })) };
+}
+
+/**
+ * What was watched lately on the server: each account's titles by last
+ * played date (Jellyfin and Emby keep it per account), merged, newest first.
+ */
+export async function collectJellyfinHistory(instance: IntegrationInstance, limit = 8): Promise<MediaWatched[]> {
+  const users = array(await request(instance, '/Users')).slice(0, 10).map(object).filter(user => string(user.Id));
+  const fields = 'DateCreated,ProductionYear,SeriesId,SeriesPrimaryImageTag,ParentBackdropItemId,ParentBackdropImageTags,BackdropImageTags,ImageTags';
+  const lists = await Promise.all(users.map(async user => {
+    try {
+      const data = object(await request(instance, `/Users/${encodeURIComponent(string(user.Id))}/Items?SortBy=DatePlayed&SortOrder=Descending&Recursive=true&IncludeItemTypes=Movie,Episode&Limit=${limit}&Fields=${fields}&EnableUserData=true&ImageTypeLimit=1&EnableImageTypes=Primary,Backdrop,Thumb`));
+      return array(data.Items).flatMap(value => {
+        const watchedAt = date(object(object(value).UserData).LastPlayedDate);
+        const item = toJellyfinItem(instance, value);
+        return item && watchedAt ? [{ item, user: string(user.Name) || undefined, watchedAt }] : [];
+      });
+    } catch { return []; /* One account that cannot be read does not hide the others. */ }
+  }));
+  const seen = new Set<string>();
+  return lists.flat().sort((a, b) => (b.watchedAt ?? 0) - (a.watchedAt ?? 0)).filter(entry => !seen.has(entry.item.id) && !!seen.add(entry.item.id)).slice(0, limit);
 }

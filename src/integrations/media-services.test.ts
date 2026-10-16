@@ -119,3 +119,19 @@ describe('recently added, grouped by series', () => {
     expect(groupRecent(items, 1)).toHaveLength(1);
   });
 });
+
+describe('Jellyfin play history', () => {
+  it('merges accounts by last played date, newest first, one entry per title', async () => {
+    const { collectJellyfinHistory } = await import('./jellyfin/collect');
+    const source: IntegrationInstance = { id: 'jf', type: 'jellyfin', name: 'Fictional', settings: { url: 'https://media.example.com' }, secrets: { apiKey: 'fictional-secret' } };
+    const entry = (id: string, played: string) => ({ Id: id, Type: 'Movie', Name: `Film ${id}`, UserData: { LastPlayedDate: played } });
+    vi.mocked(serviceJson).mockImplementation(async (_instance, path) => {
+      if (path === '/Users') return [{ Id: 'u1', Name: 'Alex' }, { Id: 'u2', Name: 'Robin' }];
+      if (path.startsWith('/Users/u1/')) return { Items: [entry('a', '2026-01-10T10:00:00Z'), entry('b', '2026-01-09T10:00:00Z'), { Id: 'never', Type: 'Movie', Name: 'Unplayed', UserData: {} }] };
+      return { Items: [entry('b', '2026-01-11T10:00:00Z')] };
+    });
+    const watched = await collectJellyfinHistory(source);
+    expect(watched.map(({ item, user }) => [item.id, user])).toEqual([['b', 'Robin'], ['a', 'Alex']]);
+    expect(vi.mocked(serviceJson).mock.calls.every(([, path, options]) => !String(path).includes('fictional-secret') && (options?.headers as Record<string, string>)['X-Emby-Token'] === 'fictional-secret')).toBe(true);
+  });
+});

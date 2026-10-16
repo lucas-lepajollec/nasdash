@@ -52,7 +52,7 @@ export function useWidgetData<T>(route: string, widgetId: string, settings: Widg
   const [seen, setSeen] = useState(options.isVisible !== false);
   if (!seen && options.isVisible !== false) setSeen(true);
   const key = options.enabled === false || !seen ? null : [route, widgetId, method, draftKey, paramsKey, bodyKey];
-  return useSWR<T, WidgetDataError>(key, async () => {
+  const result = useSWR<T, WidgetDataError>(key, async () => {
     if (method === 'GET') {
       const query = new URLSearchParams({ widgetId, ...(options.params ?? {}) });
       if (draftKey) query.set('draft', draftKey);
@@ -70,6 +70,8 @@ export function useWidgetData<T>(route: string, widgetId: string, settings: Widg
     dedupingInterval: 5_000,
     errorRetryCount: 2,
   });
+  // A setting changed and the new answer is on its way: the shown data is the previous one's.
+  return Object.assign(result, { stale: result.isLoading && result.data !== undefined });
 }
 
 /** "3 min", "2 h", "5 d": the age of a date, short, in the interface language. */

@@ -69,3 +69,9 @@ it('rejects non-HTTP URLs, embedded credentials, invalid JSON and oversized inbo
   await expect(boundedJson(new Request('http://fictional', { method: 'POST', body: 'x'.repeat(17000) }))).rejects.toMatchObject({ status: 400 });
   await expect(boundedJson(new Request('http://fictional', { method: 'POST', body: 'null' }))).rejects.toMatchObject({ status: 400 });
 });
+it('names its client (some APIs refuse anonymous requests), unless the caller sets its own', async () => {
+  await serviceBytes(source, '/api/status');
+  expect(sentOptions.headers).toMatchObject({ 'User-Agent': 'NasDash' });
+  await serviceBytes(source, '/api/status', { headers: { 'User-Agent': 'Custom' } });
+  expect(sentOptions.headers).toMatchObject({ 'User-Agent': 'Custom' });
+});

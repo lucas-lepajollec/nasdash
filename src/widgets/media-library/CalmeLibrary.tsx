@@ -33,13 +33,14 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
 }) {
   const { t, locale } = useI18n();
   const connection = useMediaConnection(settings);
-  const { data, error, mutate } = useWidgetData<MediaLibraryResponse>('/api/widgets/media/library', widgetId, settings, { refreshMs: 15 * 60_000, isVisible, method: 'GET', enabled: !!connection });
+  const { data, error, mutate, stale } = useWidgetData<MediaLibraryResponse>('/api/widgets/media/library', widgetId, settings, { refreshMs: 15 * 60_000, isVisible, method: 'GET', enabled: !!connection });
   const number = useMemo(() => ({ full: new Intl.NumberFormat(locale), short: new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }) }), [locale]);
   const title = t('widget.media-library.name');
   const chosen = Array.isArray(settings.counts) ? COUNTS.filter(id => (settings.counts as unknown[]).includes(id)) : [...COUNTS];
   // Zero totals hidden unless the widget keeps them.
   const shown = data ? chosen.filter(id => data.counts[id] !== undefined && (settings.zeros === true || (data.counts[id] ?? 0) > 0)) : [];
   const own = imagesOf(settings);
+  const display = pick(settings.display, LIBRARY_DISPLAYS, 'shelves');
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={data ? <span className="ndc-title-note">{data.name}</span> : undefined}>
@@ -48,38 +49,46 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
           {(draft, change) => <LibrarySettings draft={draft} change={change} />}
         </WidgetSettingsButton>
       )}
-      <div className="ndw-media-box">
+      <div className={`ndw-media-box ${stale ? 'is-stale' : ''}`}>
         {!connection ? <MediaSetup settings={settings} />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 64 }} /></div>
               : (
                 <>
-                  <div className="ndw-media-shelves">
-                    {SHELVES.map(shelf => {
-                      const ids = shelf.counts.filter(id => shown.includes(id));
-                      if (!ids.length) return null;
-                      const [main, ...more] = ids;
-                      const Icon = ICONS[main];
-                      // A picture chosen for the shelf, else the server's (newest or random title).
-                      const cover = own[shelf.id] ?? data.covers?.[shelf.cover as keyof NonNullable<MediaLibraryResponse['covers']>];
-                      return (
-                        <div key={shelf.id} className={`ndw-media-shelf is-${shelf.id} ${cover ? 'has-cover' : ''}`} title={ids.map(id => `${number.full.format(data.counts[id] ?? 0)} ${t(`widgets.media.count.${id}`)}`).join(' · ')}>
-                          {cover && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img className="ndw-media-shelf-art" src={cover} alt="" loading="lazy" decoding="async" />
-                          )}
-                          <span className="ndw-media-shelf-shade" aria-hidden="true" />
-                          <span className="ndw-media-shelf-head"><Icon size={14} aria-hidden="true" />{t(`widgets.media.shelf.${shelf.id}`)}</span>
-                          <span className="ndw-media-shelf-value">{number.short.format(data.counts[main] ?? 0)}<span className="ndw-media-shelf-unit">{t(`widgets.media.count.${main}`)}</span></span>
-                          {more.length > 0 && (
-                            <span className="ndw-media-shelf-more">
-                              {more.map(id => <span key={id}>{number.short.format(data.counts[id] ?? 0)} {t(`widgets.media.count.${id}`)}</span>)}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  {display === 'text' ? (
+                    <div className="ndw-media-tally">
+                      {SHELVES.map(shelf => shelf.counts.filter(id => shown.includes(id))).flat().map(id => (
+                        <span key={id} className="ndw-media-tally-item" title={number.full.format(data.counts[id] ?? 0)}>
+                          <span className="ndw-media-tally-value">{number.short.format(data.counts[id] ?? 0)}</span>
+                          <span className="ndw-media-tally-label">{t(`widgets.media.count.${id}`)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="ndw-media-shelves">
+                      {SHELVES.map((shelf, index) => {
+                        const ids = shelf.counts.filter(id => shown.includes(id));
+                        if (!ids.length) return null;
+                        const [main, ...more] = ids;
+                        const Icon = ICONS[main];
+                        // A picture chosen for the shelf, else the server's, rotating.
+                        const covers = own[shelf.id] ? [own[shelf.id]!] : data.covers?.[shelf.cover as keyof NonNullable<MediaLibraryResponse['covers']>] ?? [];
+                        return (
+                          <div key={shelf.id} className={`ndw-media-shelf is-${shelf.id} ${covers.length ? 'has-cover' : ''}`} title={ids.map(id => `${number.full.format(data.counts[id] ?? 0)} ${t(`widgets.media.count.${id}`)}`).join(' · ')}>
+                            {covers.length > 0 ? <RotatingArt urls={covers} offset={index * 4000} active={isVisible} /> : <Icon className="ndw-media-shelf-mark" aria-hidden="true" />}
+                            <span className="ndw-media-shelf-shade" aria-hidden="true" />
+                            <span className="ndw-media-shelf-head"><Icon size={14} aria-hidden="true" />{t(`widgets.media.shelf.${shelf.id}`)}</span>
+                            <span className="ndw-media-shelf-value">{number.short.format(data.counts[main] ?? 0)}<span className="ndw-media-shelf-unit">{t(`widgets.media.count.${main}`)}</span></span>
+                            {more.length > 0 && (
+                              <span className="ndw-media-shelf-more">
+                                {more.map(id => <span key={id}>{number.short.format(data.counts[id] ?? 0)} {t(`widgets.media.count.${id}`)}</span>)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   {settings.libraries === true && data.libraries.length > 0 && (
                     <div className="ndw-media-library-chips">
                       {data.libraries.map(library => {
@@ -104,6 +113,32 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
 type ShelfId = 'movies' | 'series' | 'music' | 'books';
 const SHELF_IDS: readonly ShelfId[] = ['movies', 'series', 'music', 'books'];
 const COVERS = ['newest', 'random', 'none'] as const;
+const LIBRARY_DISPLAYS = ['shelves', 'text'] as const;
+/** Each picture stays this long before the next fades in. */
+const ROTATE_MS = 12_000;
+
+/** The shelf's pictures in turn, crossfading; `offset` staggers shelves so they never change together. */
+function RotatingArt({ urls, offset, active }: { urls: string[]; offset: number; active: boolean }) {
+  const [index, setIndex] = useState(0);
+  React.useEffect(() => {
+    if (!active || urls.length < 2) return;
+    let timer = window.setTimeout(function next() {
+      setIndex(value => (value + 1) % urls.length);
+      timer = window.setTimeout(next, ROTATE_MS);
+    }, ROTATE_MS + offset);
+    return () => window.clearTimeout(timer);
+  }, [active, offset, urls.length]);
+  const current = index % urls.length;
+  return (
+    <>
+      {/* The previous picture fades out under the current one; the next is already loaded. */}
+      {urls.map((url, position) => (position === current || position === (current + 1) % urls.length || position === (current - 1 + urls.length) % urls.length) && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={url} className={`ndw-media-shelf-art ${position === current ? 'is-current' : ''}`} src={url} alt="" decoding="async" />
+      ))}
+    </>
+  );
+}
 /** Uploaded pictures only (this NasDash's own files). */
 const OWN_IMAGE = /^\/api\/logos\/[A-Za-z0-9._-]+$/;
 
@@ -122,6 +157,9 @@ function LibrarySettings({ draft, change }: { draft: WidgetSettings; change: (pa
   return (
     <>
       <MediaConnectionField draft={draft} change={change} />
+      <CalmeField label={t('widgets.display')}>
+        <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, LIBRARY_DISPLAYS, 'shelves')} options={LIBRARY_DISPLAYS.map(value => ({ value, label: t(`widgets.media.library.${value}`) }))} onChange={value => change({ display: value === 'shelves' ? null : value })} />
+      </CalmeField>
       <CalmeField label={t('widgets.media.cover')} info={t('widgets.media.coverHint')}>
         <CalmeSegmented label={t('widgets.media.cover')} value={pick(draft.cover, COVERS, 'newest')} options={COVERS.map(value => ({ value, label: t(`widgets.media.cover.${value}`) }))} onChange={value => change({ cover: value === 'newest' ? null : value })} />
       </CalmeField>

@@ -108,7 +108,8 @@ export function assertStatus(status: number) {
  */
 export async function serviceBytes(instance: IntegrationInstance, path: string, options: HttpOptions = {}, maxBytes = 8 * 1024 * 1024): Promise<{ bytes: Buffer; contentType: string; status: number }> {
   const url = new URL(serviceUrl(instance, path));
-  const headers = { ...options.headers };
+  // Some APIs (GitHub…) refuse requests that do not name their client.
+  const headers: Record<string, string> = { 'User-Agent': 'NasDash', ...options.headers };
   const body = options.json === undefined ? undefined : JSON.stringify(options.json);
   if (body !== undefined) { headers['Content-Type'] = 'application/json'; headers['Content-Length'] = String(Buffer.byteLength(body)); }
   try {

@@ -10,13 +10,13 @@ vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
 vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
-vi.mock('@/integrations/jellyfin/collect', async original => ({ ...await original<typeof import('@/integrations/jellyfin/collect')>(), collectJellyfinNowPlaying: vi.fn(), collectJellyfinRecent: vi.fn(), collectJellyfinLibrary: vi.fn() }));
+vi.mock('@/integrations/jellyfin/collect', async original => ({ ...await original<typeof import('@/integrations/jellyfin/collect')>(), collectJellyfinNowPlaying: vi.fn(), collectJellyfinRecent: vi.fn(), collectJellyfinLibrary: vi.fn(), collectJellyfinHistory: vi.fn() }));
 vi.mock('@/integrations/plex/collect', async original => ({ ...await original<typeof import('@/integrations/plex/collect')>(), collectPlexNowPlaying: vi.fn(), collectPlexRecent: vi.fn(), collectPlexLibrary: vi.fn() }));
 import { GET as nowGet } from './media/now-playing/route';
 import { GET as recentGet } from './media/recent/route';
 import { GET as libraryGet } from './media/library/route';
 import { GET as imageGet } from './media/image/route';
-import { collectJellyfinLibrary, collectJellyfinNowPlaying, collectJellyfinRecent, toJellyfinItem, toJellyfinSessions } from '@/integrations/jellyfin/collect';
+import { collectJellyfinHistory, collectJellyfinLibrary, collectJellyfinNowPlaying, collectJellyfinRecent, toJellyfinItem, toJellyfinSessions } from '@/integrations/jellyfin/collect';
 import { collectPlexLibrary, collectPlexNowPlaying, collectPlexRecent } from '@/integrations/plex/collect';
 import { serviceBytes, serviceJson, ServiceError } from '@/lib/widgetData/services';
 import { buildConfigForPrincipal } from '@/lib/configAccess';
@@ -229,5 +229,28 @@ describe('media idle view and library pictures', () => {
     expect(plain.covers).toBeUndefined(); expect(collectJellyfinRecent).not.toHaveBeenCalled();
     saved().cover = 'everything';
     expect((await libraryGet(get())).status).toBe(400);
+  });
+});
+
+describe('recently watched when nothing plays', () => {
+  it('prefers the play history, names accounts only when the widget shows them', async () => {
+    const source = state.instances[0];
+    vi.mocked(collectJellyfinNowPlaying).mockResolvedValue({ server: 'jellyfin', name: source.name, sessions: [], fetchedAt: 1000 });
+    const item = toJellyfinItem(source, jellyfin.recent.Items[0])!;
+    vi.mocked(collectJellyfinHistory).mockResolvedValue([{ item, user: 'Alex', watchedAt: 5000 }]);
+    const hidden = await (await nowGet(get())).json();
+    expect(hidden.history).toHaveLength(1); expect(hidden.recent).toBeUndefined();
+    expect(hidden.history[0].user).toBeUndefined(); expect(hidden.history[0].watchedAt).toBe(5000);
+    expect(hidden.history[0].item.poster ?? '').not.toContain('media.example.com');
+    saved().showUsers = true;
+    const named = await (await nowGet(get())).json();
+    expect(named.history[0].user).toBe('Alex');
+  });
+  it('falls back to the newest titles when the server keeps no history', async () => {
+    const source = state.instances[0];
+    vi.mocked(collectJellyfinNowPlaying).mockResolvedValue({ server: 'jellyfin', name: source.name, sessions: [], fetchedAt: 1000 });
+    vi.mocked(collectJellyfinHistory).mockRejectedValue(new ServiceError('widgets.error.http'));
+    const body = await (await nowGet(get())).json();
+    expect(body.history).toBeUndefined(); expect(body.recent.length).toBeGreaterThan(0);
   });
 });

@@ -61,9 +61,9 @@ export function clock(ms: number | undefined): string {
 const KIND_ICON = { movie: Film, episode: Tv, series: Tv, album: Disc3, track: Disc3, video: Film, other: Film } as const;
 
 /**
- * A poster (2:3, or square for music), loaded lazily; while it loads or
- * when the server has none, a tinted tile with the kind's icon and the
- * title's first letter.
+ * A poster (2:3, or square for music), loaded lazily: a shimmer while it
+ * loads, a tinted tile with the kind's icon and the title's first letter
+ * when the server has none.
  */
 export function MediaPoster({ item, width, className = '', eager, frame }: { item: MediaItem; width: number; className?: string; eager?: boolean; frame?: boolean }) {
   const [failed, setFailed] = useState<string | null>(null);
@@ -79,7 +79,8 @@ export function MediaPoster({ item, width, className = '', eager, frame }: { ite
       style={{ width, '--ndw-hue': hueOf(item.subtitle || item.title) } as React.CSSProperties}
       aria-hidden="true"
     >
-      <span className="ndw-media-poster-fallback"><Icon size={Math.round(width / 4)} /><span>{(item.title.trim()[0] ?? '?').toUpperCase()}</span></span>
+      {/* While the picture loads, a quiet shimmer; the icon and letter only when there is none. */}
+      {source ? <span className="ndw-media-poster-loading" /> : <span className="ndw-media-poster-fallback"><Icon size={Math.round(width / 4)} /><span>{(item.title.trim()[0] ?? '?').toUpperCase()}</span></span>}
       {source && framed && (
         // eslint-disable-next-line @next/next/no-img-element
         <img className="ndw-media-poster-blur" src={source} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" />

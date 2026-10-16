@@ -1,7 +1,7 @@
 /** Server-only media settings, image membership, and fictional demo data. */
 import { createHash } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
-import { MEDIA_IMAGE_ROUTE, type MediaItem, type MediaLibraryResponse, type MediaNowPlayingResponse, type MediaRecentResponse, type MediaServer } from './contracts';
+import { MEDIA_IMAGE_ROUTE, type MediaItem, type MediaWatched, type MediaLibraryResponse, type MediaNowPlayingResponse, type MediaRecentResponse, type MediaServer } from './contracts';
 import { serviceIdentity, ServiceError } from './services';
 
 export const MEDIA_WIDGET_TYPES = ['media-nowplaying', 'media-recent', 'media-library'] as const;
@@ -103,6 +103,10 @@ export function demoMediaNowPlaying(instance: IntegrationInstance): MediaNowPlay
     { id: 'demo-session-1', item: demoItem(0), user: 'Alex', player: 'Media Web · Living room', state: 'playing', positionMs: 2130000, method: 'direct', quality: '4K HDR', bitrateKbps: 24000 },
     { id: 'demo-session-2', item: demoItem(1), user: 'Robin', player: 'Media TV · Den', state: 'paused', positionMs: 930000, method: 'transcode', quality: '1080p', bitrateKbps: 8000 },
   ] };
+}
+export function demoMediaHistory(): MediaWatched[] {
+  const people = ['Alex', 'Robin', 'Sam'];
+  return Array.from({ length: 6 }, (_, n) => ({ item: demoItem(n * 2), user: people[n % people.length], watchedAt: Date.UTC(2026, 0, 15, 11) - n * 5_400_000 }));
 }
 export function demoMediaRecent(instance: IntegrationInstance, selection: MediaSelection): MediaRecentResponse {
   return { ...identity(instance), items: Array.from({ length: 120 }, (_, n) => demoItem(n)).filter(item => selection.kinds.some(kind => kind === item.kind)).slice(0, fetchCount(selection)) };

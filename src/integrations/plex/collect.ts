@@ -1,5 +1,5 @@
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaSession } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
 import { array, number, object, string, serviceIdentity, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 import { TtlCache } from '@/lib/widgetData/cache';
 import type { MediaSelection } from '@/lib/widgetData/media';
@@ -83,4 +83,19 @@ export async function collectPlexLibrary(instance: IntegrationInstance): Promise
     }
   }
   return { ...identity(instance), counts, libraries };
+}
+
+/** What was watched lately (the server's play history), with account names when Plex lists them. */
+export async function collectPlexHistory(instance: IntegrationInstance, limit = 8): Promise<MediaWatched[]> {
+  const [data, machine] = await Promise.all([request(instance, `/status/sessions/history/all?sort=viewedAt:desc&X-Plex-Container-Start=0&X-Plex-Container-Size=${limit * 2}`), machineId(instance)]);
+  let names = new Map<string, string>();
+  try { names = new Map(array((await request(instance, '/accounts')).Account).map(object).map(account => [String(account.id), string(account.name)])); }
+  catch { /* Names are optional. */ }
+  const seen = new Set<string>();
+  return array(data.Metadata).map(object).flatMap(entry => {
+    const item = toPlexItem(instance, entry, machine), viewed = number(entry.viewedAt);
+    if (!item || !viewed || seen.has(item.id)) return [];
+    seen.add(item.id);
+    return [{ item, user: names.get(String(entry.accountID)) || undefined, watchedAt: viewed * 1000 }];
+  }).slice(0, limit);
 }

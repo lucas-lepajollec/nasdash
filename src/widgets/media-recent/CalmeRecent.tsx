@@ -33,7 +33,7 @@ export default function CalmeRecent({ widgetId, settings, editMode, isVisible, o
   const { t } = useI18n();
   const connection = useMediaConnection(settings);
   const display = pick(settings.display, DISPLAYS, 'posters');
-  const { data, error, mutate } = useWidgetData<MediaRecentResponse>('/api/widgets/media/recent', widgetId, settings, { refreshMs: 5 * 60_000, isVisible, method: 'GET', enabled: !!connection });
+  const { data, error, mutate, stale } = useWidgetData<MediaRecentResponse>('/api/widgets/media/recent', widgetId, settings, { refreshMs: 5 * 60_000, isVisible, method: 'GET', enabled: !!connection });
   const [ref, width] = useBoxWidth<HTMLDivElement>();
   const title = t('widget.media-recent.name');
   const items = data?.items ?? [];
@@ -45,7 +45,7 @@ export default function CalmeRecent({ widgetId, settings, editMode, isVisible, o
           {(draft, change) => <RecentSettings draft={draft} change={change} />}
         </WidgetSettingsButton>
       )}
-      <div ref={ref} className="ndw-media-box">
+      <div ref={ref} className={`ndw-media-box ${stale ? 'is-stale' : ''}`}>
         {!connection ? <MediaSetup settings={settings} />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 170 }} /></div>
