@@ -7,27 +7,30 @@ vi.mock('@/lib/auth', () => ({ checkAdmin: () => state.admin ? null : NextRespon
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn() }));
 vi.mock('@/integrations/pihole/collect', () => ({ piholeRequest: vi.fn() }));
+vi.mock('@/lib/widgetData/customApi', () => ({ customApiRequest: vi.fn() }));
+import { customApiRequest } from '@/lib/widgetData/customApi';
 import { POST } from './route';
 import { piholeRequest } from '@/integrations/pihole/collect';
 import { serviceJson, ServiceError } from '@/lib/widgetData/services';
 const request = (body: unknown) => new NextRequest('http://nasdash.example.com/api/integrations/test', { method: 'POST', body: JSON.stringify(body) });
 const input = (type: string) => ({ type, settings: { url: 'http://service.example.com', username: 'admin' }, secrets: { password: 'fake-password', apiKey: 'fake-key', token: 'fake-token' } });
 beforeEach(() => { vi.resetAllMocks(); state.admin = true; state.demo = false; state.instances = []; });
-it.each(['pihole', 'adguard', 'immich', 'photoprism'])('tests %s with the existing success shape', async type => {
+it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi'])('tests %s with the existing success shape', async type => {
   vi.mocked(serviceJson).mockResolvedValue({}); vi.mocked(piholeRequest).mockResolvedValue({});
   const response = await POST(request(input(type)));
   expect(response.status).toBe(200); expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
-  if (type === 'pihole') expect(vi.mocked(piholeRequest).mock.calls[0][1]).toBe('/api/stats/summary');
+  if (type === 'customapi') expect(customApiRequest).toHaveBeenCalledWith(expect.objectContaining({ type: 'customapi' }));
+  else if (type === 'pihole') expect(vi.mocked(piholeRequest).mock.calls[0][1]).toBe('/api/stats/summary');
   else expect(vi.mocked(serviceJson).mock.calls[0][1]).toBe(type === 'adguard' ? '/control/status' : type === 'immich' ? '/api/search/random' : '/api/v1/config');
 });
 it('refuses non-admin tests', async () => {
   state.admin = false;
   expect((await POST(request(input('immich')))).status).toBe(401); expect(serviceJson).not.toHaveBeenCalled();
 });
-it.each(['pihole', 'adguard', 'immich', 'photoprism'])('never contacts %s in demo', async type => {
+it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi'])('never contacts %s in demo', async type => {
   state.demo = true;
   expect(await (await POST(request(input(type)))).json()).toEqual({ ok: true, message: 'integrations.test.demo' });
-  expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled();
+  expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled(); expect(customApiRequest).not.toHaveBeenCalled();
 });
 it('reuses a masked saved secret only at its saved URL and with matching type', async () => {
   state.instances = [{ id: 'photo-service', type: 'immich', name: 'Fictional Photos', settings: { url: 'http://service.example.com' }, secrets: { apiKey: 'fake-saved-key' } }];
@@ -61,4 +64,11 @@ it('tests Technitium on the statistics the widget reads and names a missing perm
   expect(vi.mocked(serviceJson).mock.calls[0][2]?.headers).toEqual({ Authorization: 'Bearer fake-token' });
   vi.mocked(serviceJson).mockResolvedValue({ status: 'error', errorMessage: 'Access was denied.' });
   expect(await (await POST(request(input('technitium')))).json()).toMatchObject({ ok: false, message: 'integrations.technitium.missingPermission' });
+});
+
+it('reports a custom API response that is not JSON as a failed connection test', async () => {
+  vi.mocked(customApiRequest).mockRejectedValue(new ServiceError('widgets.error.parse'));
+  const response = await POST(request(input('customapi')));
+  expect(response.status).toBe(502);
+  expect(await response.json()).toEqual({ ok: false, message: 'widgets.error.parse' });
 });

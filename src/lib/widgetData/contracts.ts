@@ -227,3 +227,70 @@ export interface BookmarkItem {
  * library or the RSS widget's saved feeds, including for admins.
  */
 export const FAVICON_ROUTE = '/api/widgets/favicon';
+
+/* ----------------------------------------------------------- Custom API */
+
+/**
+ * A custom API connection (`type: 'customapi'`, Settings → Integrations →
+ * Custom APIs): any HTTP(S) endpoint answering JSON, read by the server.
+ * Settings: `url`, `authType` (none | bearer | header | basic | query),
+ * `authName` (header name, query parameter or basic user), `allowSelfSigned`;
+ * secret: `authValue`. The browser never receives the address nor the secret.
+ */
+export const CUSTOM_API_TYPES = ['customapi'] as const;
+export type CustomApiAuth = 'none' | 'bearer' | 'header' | 'basic' | 'query';
+
+/**
+ * A value picked in the JSON answer: a path such as `data.items[0].speed` or
+ * `servers.length` (letters, digits, `_`, `-`, `$`, `[n]`; at most 16 steps).
+ * Only strings (≤ 300 characters), finite numbers, booleans and null come back.
+ */
+export type CustomApiPath = string;
+export type CustomApiValue = string | number | boolean | null;
+export type CustomApiFormat = 'auto' | 'number' | 'percent' | 'bytes' | 'bitrate' | 'duration' | 'date' | 'relative' | 'text' | 'boolean';
+
+/** One field shown by a custom API widget (in its settings, `settings.fields`). */
+export interface CustomApiField {
+  id: string;
+  /** From the answer's root, or from each row in the table display. */
+  path: CustomApiPath;
+  label: string;
+  format?: CustomApiFormat;
+  /** Shown after the value (`ms`, `°C`…). */
+  unit?: string;
+  decimals?: number;
+  /** Gauges: the scale (default 0–100). */
+  min?: number;
+  max?: number;
+  /** Colours: warning and critical thresholds; `lowIsBad` when going down is the problem. */
+  warn?: number;
+  crit?: number;
+  lowIsBad?: boolean;
+}
+
+/**
+ * Widget settings: `integrationId`, `title`, `display` (figures | gauges |
+ * list | table | status), `fields` (≤ 12), `listPath` and `limit` (table,
+ * ≤ 50 rows), `okPath` / `okValue` (status: the value that means "fine";
+ * without one, any truthy value), `refresh` (seconds: 15, 30, 60, 300, 900).
+ */
+export type CustomApiDisplay = 'figures' | 'gauges' | 'list' | 'table' | 'status';
+
+/** GET /api/widgets/customapi?widgetId=… → only the picked values, never the whole answer. */
+export interface CustomApiResponse {
+  name: string;
+  /** `settings.fields` order. */
+  values: CustomApiValue[];
+  /** Table display: one array of values per row, `settings.fields` order. */
+  rows?: CustomApiValue[][];
+  /** Status display: the `okPath` value and whether it means fine. */
+  status?: { value: CustomApiValue; ok: boolean };
+  fetchedAt: number;
+}
+
+/**
+ * GET /api/widgets/customapi/sample?integrationId=… (administrators) → the
+ * answer, cut down for picking fields: 6 levels, 20 items per array, strings
+ * of 200 characters, 2,000 values at most.
+ */
+export interface CustomApiSample { sample: unknown; truncated: boolean; fetchedAt: number }

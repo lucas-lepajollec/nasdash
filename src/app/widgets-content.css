@@ -641,3 +641,75 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-bookmark-overlay > * { padding: 6px 10px; }
 .ndc-bookmark-grip { display: inline-flex; padding: 2px; border: none; color: var(--nd-text-dimmed); background: none; cursor: grab; touch-action: none; }
 .ndc-bookmark-grip:hover { color: var(--nd-text); }
+
+/* ---------- Custom API ---------- */
+.ndw-api-box { min-width: 0; }
+.ndw-api-value { font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.5rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ndw-api-value.is-compact { font-size: 0.82rem; letter-spacing: 0; font-weight: 500; }
+.ndw-api-value.is-warn { color: var(--nd-yellow); }
+.ndw-api-value.is-crit { color: var(--nd-red); }
+.ndw-api-value.is-ok { color: var(--nd-green); }
+.ndw-api-unit { margin-inline-start: 3px; font-size: 0.55em; font-weight: 400; color: var(--nd-text-dimmed); letter-spacing: 0; }
+.ndw-api-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.68rem; letter-spacing: 0.02em; }
+.ndw-api-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 16px 18px; }
+.ndw-api-figure { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ndw-api-gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 14px; justify-items: center; }
+.ndw-api-gauge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.ndw-api-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.ndw-api-list li { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid color-mix(in srgb, var(--nd-text) 7%, transparent); }
+.ndw-api-list li:last-child { border-bottom: none; }
+.ndw-api-list .ndw-api-label { font-size: 0.74rem; color: var(--nd-text-muted, var(--nd-text-dimmed)); }
+.ndw-api-table-wrap { overflow-x: auto; scrollbar-width: thin; }
+.ndw-api-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+.ndw-api-table th { padding: 0 10px 6px 0; text-align: start; font-weight: 400; color: var(--nd-text-dimmed); font-size: 0.64rem; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.ndw-api-table td { padding: 6px 10px 6px 0; border-top: 1px solid color-mix(in srgb, var(--nd-text) 7%, transparent); color: var(--nd-text); }
+.ndw-api-table td:first-child .ndw-api-value { font-weight: 500; }
+.ndw-api-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ndw-api-status-mark { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; }
+.ndw-api-status.is-ok .ndw-api-status-mark { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 14%, transparent); }
+.ndw-api-status.is-down .ndw-api-status-mark { color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 14%, transparent); }
+.ndw-api-status-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ndw-api-status-word { font-size: 1rem; font-weight: 500; color: var(--nd-text); }
+.ndw-api-status-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.7rem; }
+.ndw-api-status-values { display: flex; gap: 14px; margin-inline-start: auto; }
+
+/* Dialog: settings on the left, the API's answer to pick from on the right. */
+.ndw-api-settings { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .ndw-api-settings { grid-template-columns: minmax(0, 1fr); } }
+.ndw-api-settings-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.ndw-api-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ndw-api-path-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 4px 3px 9px; border: 1px solid var(--nd-card-border); border-radius: 999px; font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 0.7rem; color: var(--nd-text); overflow-wrap: anywhere; }
+.ndw-api-fields { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ndw-api-field { display: flex; flex-direction: column; gap: 4px; padding: 8px; border: 1px solid var(--nd-card-border); border-radius: 10px; }
+.ndw-api-field-main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 84px auto; gap: 6px; align-items: center; }
+@media (max-width: 520px) { .ndw-api-field-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.ndw-api-field-tools { display: inline-flex; gap: 2px; }
+.ndw-api-field-tools .ndc-icon-button:disabled { opacity: 0.3; }
+.ndw-api-field-tools .ndc-icon-button.is-active { color: var(--nd-accent); }
+.ndw-api-field-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline-start: 2px; font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 0.64rem; color: var(--nd-text-dimmed); }
+.ndw-api-field-more { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; padding-top: 6px; }
+.ndw-api-field-more label { display: flex; flex-direction: column; gap: 4px; font-size: 0.66rem; color: var(--nd-text-dimmed); }
+.ndw-api-field-more .ndc-set-row { grid-column: 1 / -1; }
+.ndw-api-explorer { position: sticky; top: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; max-height: min(62vh, 560px); padding: 10px; border: 1px solid var(--nd-card-border); border-radius: 12px; background: color-mix(in srgb, var(--nd-text) 2.5%, transparent); }
+.ndw-api-explorer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--nd-text-dimmed); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.ndw-api-tree { overflow: auto; min-height: 0; font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 0.7rem; scrollbar-width: thin; }
+.ndw-api-children { margin-inline-start: 8px; padding-inline-start: 8px; border-inline-start: 1px solid color-mix(in srgb, var(--nd-text) 10%, transparent); }
+.ndw-api-node-row, .ndw-api-leaf { display: flex; align-items: center; gap: 6px; min-height: 26px; padding: 1px 4px; border-radius: 6px; }
+.ndw-api-leaf:hover, .ndw-api-node-row:hover { background: color-mix(in srgb, var(--nd-text) 5%, transparent); }
+.ndw-api-node-toggle { display: inline-flex; align-items: center; gap: 5px; min-width: 0; padding: 0; border: none; color: inherit; background: none; font: inherit; cursor: pointer; }
+.ndw-api-node-toggle svg { flex-shrink: 0; color: var(--nd-text-dimmed); transition: transform 0.15s ease; }
+.ndw-api-node-toggle svg.is-open { transform: rotate(90deg); }
+.ndw-api-key { color: var(--nd-text); white-space: nowrap; }
+.ndw-api-kind { color: var(--nd-text-dimmed); white-space: nowrap; }
+.ndw-api-preview { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); }
+.ndw-api-preview.is-number { color: var(--nd-accent); }
+.ndw-api-preview.is-boolean { color: var(--nd-green); }
+.ndw-api-preview.is-string { color: color-mix(in srgb, var(--nd-text) 75%, var(--nd-yellow)); }
+.ndw-api-leaf.is-blocked { opacity: 0.45; }
+.ndw-api-pick { display: inline-flex; flex-shrink: 0; margin-inline-start: auto; padding: 3px; border: 1px solid var(--nd-card-border); border-radius: 6px; color: var(--nd-text-dimmed); background: var(--nd-card-bg); cursor: pointer; opacity: 0; transition: opacity 0.12s ease; }
+.ndw-api-leaf:hover .ndw-api-pick, .ndw-api-node-row:hover .ndw-api-pick, .ndw-api-pick:focus-visible, .ndw-api-pick.is-picked { opacity: 1; }
+.ndw-api-pick:hover:not(:disabled) { color: var(--nd-accent); border-color: var(--nd-accent); }
+.ndw-api-pick.is-picked { color: var(--nd-accent); border-color: transparent; background: none; cursor: default; }
+.ndw-api-pick:disabled:not(.is-picked) { cursor: default; opacity: 0.3; }
+.ndw-api-use-list { margin-inline-start: auto; }
+@media (hover: none) { .ndw-api-pick { opacity: 1; } }

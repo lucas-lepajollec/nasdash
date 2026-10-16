@@ -11,10 +11,11 @@ import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/Calme
 import type { IntegrationInstance } from '@/lib/types';
 import { createLocalId } from '@/lib/pages/operations';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
-import { DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
+import CustomSelect from '@/components/shared/CustomSelect';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /** Services a dashboard may connect several times (two Pi-holes, two photo libraries…). */
-export const MULTI_INSTANCE_SERVICES: readonly string[] = [...DNS_TYPES, ...PHOTO_TYPES];
+export const MULTI_INSTANCE_SERVICES: readonly string[] = [...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES];
 
 /**
  * A service connection (Tailscale, Headscale, Pi-hole, AdGuard Home, Immich,
@@ -31,7 +32,7 @@ export function ServiceConnectionDialog({ type, instance: chosen, onClose, onSav
   const instance = multi ? chosen : chosen ?? config?.integrations?.find(candidate => candidate.type === type);
   const [name, setName] = useState(() => instance?.name ?? manifest?.name ?? type);
   const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries((manifest?.fields ?? []).map(field => [
-    field.id, field.kind === 'secret' ? '' : instance?.settings[field.id] ?? (field.kind === 'toggle' ? 'false' : ''),
+    field.id, field.kind === 'secret' ? '' : instance?.settings[field.id] ?? (field.kind === 'toggle' ? 'false' : field.kind === 'select' ? field.options?.[0]?.value ?? '' : ''),
   ])));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -82,7 +83,16 @@ export function ServiceConnectionDialog({ type, instance: chosen, onClose, onSav
                 <input id="service-name" className="nd-input" value={name} maxLength={60} onChange={event => setName(event.target.value)} required />
               </CalmeField>
             )}
-            {manifest.fields.map(field => field.kind === 'toggle' ? (
+            {manifest.fields.filter(field => (!field.showWhen || field.showWhen.values.includes(values[field.showWhen.field] ?? ''))).map(field => field.kind === 'select' ? (
+              <CalmeField key={field.id} label={t(field.label)}>
+                <CustomSelect
+                  ariaLabel={t(field.label)}
+                  value={values[field.id] || field.options?.[0]?.value || ''}
+                  onChange={value => setValues(current => ({ ...current, [field.id]: value }))}
+                  options={(field.options ?? []).map(option => ({ value: option.value, label: t(option.label) }))}
+                />
+              </CalmeField>
+            ) : field.kind === 'toggle' ? (
               <CalmeRow key={field.id} label={t(field.label)} info={field.id === 'allowSelfSigned' ? t('integrations.allowSelfSignedHint') : undefined}>
                 <CalmeSwitch label={t(field.label)} checked={values[field.id] === 'true'} onChange={on => setValues(current => ({ ...current, [field.id]: on ? 'true' : 'false' }))} />
               </CalmeRow>
