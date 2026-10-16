@@ -8,7 +8,7 @@ import { permissionSelection, savedPermissions } from '@/lib/permissions';
 
 /** Widgets a viewer can be allowed individually: those whose definition names a permission. */
 const PERMISSION_WIDGETS = [...new Map(WIDGET_CATALOG.flatMap(entry => entry.access && 'permission' in entry.access
-  ? [{ id: entry.access.permission, icon: entry.icon, nameKey: entry.access.permission === 'devices' ? 'Appareils' : entry.nameKey }]
+  ? [{ id: entry.access.permission, icon: entry.access.permission === 'media' ? '🎬' : entry.icon, nameKey: entry.access.permission === 'devices' ? 'Appareils' : entry.access.permission === 'media' ? 'pages.library.group.media' : entry.nameKey }]
   : []).map(entry => [entry.id, entry])).values()];
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { CalmeHeading, CalmeRow, CalmeSegmented } from '../shared/CalmeControls';

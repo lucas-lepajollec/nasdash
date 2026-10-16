@@ -15,7 +15,7 @@ import CustomSelect from '@/components/shared/CustomSelect';
 import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /** Services a dashboard may connect several times (two Pi-holes, two photo libraries…). */
-export const MULTI_INSTANCE_SERVICES: readonly string[] = [...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES];
+import { MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts'; export const MULTI_INSTANCE_SERVICES: readonly string[] = [...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES];
 
 /**
  * A service connection (Tailscale, Headscale, Pi-hole, AdGuard Home, Immich,

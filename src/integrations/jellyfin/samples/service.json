@@ -1,0 +1,175 @@
+{
+  "sessions": [
+    {
+      "Id": "session-1",
+      "NowPlayingItem": {
+        "Id": "movie-1",
+        "Type": "Movie",
+        "Name": "The Quiet Orbit",
+        "ProductionYear": 2025,
+        "RunTimeTicks": 68400000000,
+        "DateCreated": "2026-01-15T12:00:00Z",
+        "ImageTags": {
+          "Primary": "poster-tag"
+        },
+        "BackdropImageTags": [
+          "art-tag"
+        ],
+        "MediaStreams": [
+          {
+            "Type": "Video",
+            "Height": 2160,
+            "VideoRangeType": "DOVIWithHDR10"
+          }
+        ],
+        "Bitrate": 24000000
+      },
+      "UserName": "Alex",
+      "Client": "Jellyfin Web",
+      "DeviceName": "Living room",
+      "PlayState": {
+        "IsPaused": false,
+        "PositionTicks": 21300000000,
+        "PlayMethod": "DirectPlay"
+      }
+    },
+    {
+      "Id": "session-2",
+      "NowPlayingItem": {
+        "Id": "episode-1",
+        "Type": "Episode",
+        "Name": "The Fifth Beacon",
+        "SeriesName": "Harbor Lights",
+        "ParentIndexNumber": 2,
+        "IndexNumber": 5,
+        "SeriesId": "series-1",
+        "SeriesPrimaryImageTag": "series-poster",
+        "ParentBackdropItemId": "series-1",
+        "ParentBackdropImageTags": [
+          "series-art"
+        ],
+        "RunTimeTicks": 26400000000,
+        "MediaStreams": [
+          {
+            "Type": "Video",
+            "Height": 1080,
+            "VideoRange": "SDR"
+          }
+        ]
+      },
+      "UserName": "Robin",
+      "PlayState": {
+        "IsPaused": true,
+        "PositionTicks": 9300000000,
+        "PlayMethod": "Transcode"
+      },
+      "TranscodingInfo": {
+        "Bitrate": 8000000
+      }
+    },
+    {
+      "Id": "session-3",
+      "NowPlayingItem": {
+        "Id": "track-1",
+        "Type": "Audio",
+        "Name": "Paper Moons",
+        "AlbumArtist": "The Paper Satellites",
+        "Album": "Signals from the Garden",
+        "MediaStreams": [
+          {
+            "Type": "Audio",
+            "Codec": "flac"
+          }
+        ],
+        "RunTimeTicks": 1800000000
+      },
+      "PlayState": {
+        "PlayMethod": "DirectStream"
+      }
+    }
+  ],
+  "recent": {
+    "Items": [
+      {
+        "Id": "movie-1",
+        "Type": "Movie",
+        "Name": "The Quiet Orbit",
+        "ProductionYear": 2025,
+        "RunTimeTicks": 68400000000,
+        "DateCreated": "2026-01-15T12:00:00Z",
+        "ImageTags": {
+          "Primary": "poster-tag"
+        },
+        "BackdropImageTags": [
+          "art-tag"
+        ],
+        "MediaStreams": [
+          {
+            "Type": "Video",
+            "Height": 2160,
+            "VideoRangeType": "DOVIWithHDR10"
+          }
+        ],
+        "Bitrate": 24000000
+      },
+      {
+        "Id": "episode-1",
+        "Type": "Episode",
+        "Name": "The Fifth Beacon",
+        "SeriesName": "Harbor Lights",
+        "ParentIndexNumber": 2,
+        "IndexNumber": 5,
+        "SeriesId": "series-1",
+        "SeriesPrimaryImageTag": "series-poster",
+        "ParentBackdropItemId": "series-1",
+        "ParentBackdropImageTags": [
+          "series-art"
+        ],
+        "RunTimeTicks": 26400000000,
+        "MediaStreams": [
+          {
+            "Type": "Video",
+            "Height": 1080,
+            "VideoRange": "SDR"
+          }
+        ]
+      },
+      {
+        "Id": "album-1",
+        "Type": "MusicAlbum",
+        "Name": "Signals from the Garden",
+        "AlbumArtist": "The Paper Satellites"
+      }
+    ]
+  },
+  "counts": {
+    "MovieCount": 284,
+    "SeriesCount": 42,
+    "EpisodeCount": 1280,
+    "ArtistCount": 96,
+    "AlbumCount": 210,
+    "SongCount": 2640,
+    "BookCount": 8
+  },
+  "folders": [
+    {
+      "Name": "Evening Cinema",
+      "CollectionType": "movies",
+      "Locations": [
+        "/fictional/library/movies"
+      ]
+    },
+    {
+      "Name": "Harbor Stories",
+      "CollectionType": "tvshows"
+    },
+    {
+      "Name": "Paper Satellites Radio",
+      "CollectionType": "music"
+    },
+    {
+      "Name": "Paper Pages",
+      "CollectionType": "books"
+    }
+  ]
+}

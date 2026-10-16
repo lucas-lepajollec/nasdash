@@ -556,6 +556,56 @@
           "y": 869,
           "w": 7,
           "h": 170
+        },
+        {
+          "id": "media-now-demo",
+          "type": "media-nowplaying",
+          "settings": {
+            "integrationId": "jellyfin-demo",
+            "showUsers": true
+          },
+          "x": 0,
+          "y": 1040,
+          "w": 10,
+          "h": 260
+        },
+        {
+          "id": "media-recent-demo",
+          "type": "media-recent",
+          "settings": {
+            "integrationId": "jellyfin-demo",
+            "display": "hero",
+            "count": 12
+          },
+          "x": 10,
+          "y": 1040,
+          "w": 14,
+          "h": 420
+        },
+        {
+          "id": "media-library-demo",
+          "type": "media-library",
+          "settings": {
+            "integrationId": "plex-demo",
+            "libraries": true
+          },
+          "x": 0,
+          "y": 1300,
+          "w": 10,
+          "h": 200
+        },
+        {
+          "id": "media-posters-demo",
+          "type": "media-recent",
+          "settings": {
+            "integrationId": "plex-demo",
+            "display": "posters",
+            "count": 16
+          },
+          "x": 0,
+          "y": 1500,
+          "w": 24,
+          "h": 260
         }
       ]
     },

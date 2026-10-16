@@ -9,7 +9,7 @@ import { getServiceIntegration } from '@/integrations/registry';
 import type { IntegrationInstance } from '@/lib/types';
 import { httpRequest, isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, type DnsProvider } from './contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, MEDIA_SERVER_TYPES, type DnsProvider } from './contracts';
 
 export class ServiceError extends Error {
   constructor(readonly key: string, readonly status = 502, readonly parameters?: Record<string, string | number>) {
@@ -43,10 +43,11 @@ export function getServiceInstance(integrationId: unknown, types: readonly strin
   const matching = (readConfig().integrations ?? []).filter(instance => types.includes(instance.type));
   return integrationId === undefined || integrationId === null ? matching[0] : matching.find(instance => instance.id === integrationId);
 }
-export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos' | 'customapi', draft?: unknown) {
+export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos' | 'customapi' | 'media-nowplaying' | 'media-recent' | 'media-library' | readonly ('media-nowplaying' | 'media-recent' | 'media-library')[], draft?: unknown) {
   const lookup = resolveWidgetSettings(request, widgetId, type, draft);
   if (!lookup.ok) return { response: NextResponse.json({ error: lookup.error }, { status: lookup.status }) };
-  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'photos' ? PHOTO_TYPES : CUSTOM_API_TYPES;
+  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'photos' ? PHOTO_TYPES : type === 'customapi' ? CUSTOM_API_TYPES : MEDIA_SERVER_TYPES;
+  if (types === MEDIA_SERVER_TYPES && lookup.settings.integrationId !== undefined && (typeof lookup.settings.integrationId !== 'string' || !lookup.settings.integrationId)) throw new ServiceError('widgets.error.invalidSettings', 400);
   const instance = getServiceInstance(lookup.settings.integrationId, types) ?? demoVisitorInstance(lookup.settings.integrationId, types);
   if (!instance) return { response: NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404 }) };
   return { instance, settings: lookup.settings, principal: lookup.principal };
@@ -137,7 +138,7 @@ export async function serviceBytes(instance: IntegrationInstance, path: string, 
 export async function serviceJson<T>(instance: IntegrationInstance, path: string, options: HttpOptions = {}): Promise<T> {
   try {
     let text: string;
-    if (Object.keys(options.headers ?? {}).some(key => /^(x-ftl-sid|x-api-key)$/i.test(key))) {
+    if (Object.keys(options.headers ?? {}).some(key => /^(x-ftl-sid|x-api-key|x-emby-token|x-plex-token)$/i.test(key))) {
       const answer = await serviceBytes(instance, path, options, 2 * 1024 * 1024);
       assertStatus(answer.status);
       text = answer.bytes.toString('utf8');

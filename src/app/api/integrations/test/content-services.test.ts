@@ -27,7 +27,7 @@ it('refuses non-admin tests', async () => {
   state.admin = false;
   expect((await POST(request(input('immich')))).status).toBe(401); expect(serviceJson).not.toHaveBeenCalled();
 });
-it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi'])('never contacts %s in demo', async type => {
+it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex'])('never contacts %s in demo', async type => {
   state.demo = true;
   expect(await (await POST(request(input(type)))).json()).toEqual({ ok: true, message: 'integrations.test.demo' });
   expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled(); expect(customApiRequest).not.toHaveBeenCalled();
@@ -71,4 +71,15 @@ it('reports a custom API response that is not JSON as a failed connection test',
   const response = await POST(request(input('customapi')));
   expect(response.status).toBe(502);
   expect(await response.json()).toEqual({ ok: false, message: 'widgets.error.parse' });
+});
+
+it.each(['jellyfin', 'emby', 'plex'])('authenticates the %s media connection with header credentials', async type => {
+  vi.mocked(serviceJson).mockResolvedValue({});
+  const response = await POST(request(input(type)));
+  expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  expect(vi.mocked(serviceJson).mock.calls.map(([, path]) => path)).toEqual(type === 'plex' ? ['/identity', '/library/sections'] : [type === 'emby' ? '/emby/System/Info' : '/System/Info']);
+  for (const [, path, options] of vi.mocked(serviceJson).mock.calls) {
+    expect(path).not.toMatch(/fake-key|fake-token/);
+    expect(options?.headers).toEqual(type === 'plex' ? { 'X-Plex-Token': 'fake-token', Accept: 'application/json' } : { 'X-Emby-Token': 'fake-key' });
+  }
 });
