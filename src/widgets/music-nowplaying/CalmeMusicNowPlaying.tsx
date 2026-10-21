@@ -11,7 +11,7 @@ import { CalmeWidget } from '../calme';
 import { bounded, DataError, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { clock } from '@/components/widgets/media/shared';
 import { Backdrop, Track } from '@/components/widgets/media/visual';
-import { AlbumCard, Cover, MusicServerField, MusicSetup, useMusicConnection } from '@/components/widgets/music/shared';
+import { AlbumCard, Cover, MusicServerField, MusicSetup, PlaybackSetting, useMusicConnection } from '@/components/widgets/music/shared';
 import { musicPlayer, PlayButton, useCanPlay, useMusicPlayer } from '@/components/widgets/music/player';
 
 /** Time played since the server read the sessions; bounded, so a clock gap between machines cannot run away. */
@@ -45,7 +45,7 @@ export default function CalmeMusicNowPlaying({ widgetId, settings = {}, editMode
   const now = useNow(isVisible && sessions.some(session => session.state === 'playing'));
   const relative = useRelativeTime();
   const player = useMusicPlayer();
-  const canPlay = useCanPlay();
+  const canPlay = useCanPlay(settings);
   const title = t('widget.music-nowplaying.name');
   const recentCount = bounded(settings.count, 1, 12, 6);
   const columns = Math.max(2, Math.min(6, Math.floor((width + 12) / 120)));
@@ -74,6 +74,7 @@ export default function CalmeMusicNowPlaying({ widgetId, settings = {}, editMode
               <CalmeRow label={t('widgets.music.recentCount')}>
                 <CalmeSlider label={t('widgets.music.recentCount')} value={bounded(draft.count, 1, 12, 6)} min={1} max={12} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
               </CalmeRow>
+              <PlaybackSetting draft={draft} change={change} />
               <CalmeRow label={t('widgets.media.showUsers')} info={t('widgets.media.showUsersHint')}>
                 <CalmeSwitch label={t('widgets.media.showUsers')} checked={draft.showUsers === true} onChange={on => change({ showUsers: on || null })} />
               </CalmeRow>
@@ -165,7 +166,7 @@ export default function CalmeMusicNowPlaying({ widgetId, settings = {}, editMode
                         <div className="ndw-mx-section">
                           <span className="ndw-mx-label">{t('widgets.music.playedLately')}</span>
                           <div className="ndw-mx-rail" style={{ '--ndw-cols': columns } as React.CSSProperties}>
-                            {data.recent!.slice(0, recentCount).map(album => <AlbumCard key={album.id} album={album} widgetId={widgetId} />)}
+                            {data.recent!.slice(0, recentCount).map(album => <AlbumCard key={album.id} album={album} widgetId={widgetId} playable={canPlay} />)}
                           </div>
                         </div>
                       )}
@@ -222,15 +223,16 @@ function MusicSearch({ widgetId }: { widgetId: string }) {
   };
   const empty = result && !result.tracks.length && !result.albums.length && !result.playlists.length;
   if (!open) return (
-    <button type="button" className="ndc-icon-button ndw-music-search-toggle" onClick={() => setOpen(true)} aria-label={t('widgets.music.search')} title={t('widgets.music.search')}><Search size={14} /></button>
+    <button type="button" className="ndw-music-search-toggle" onClick={() => setOpen(true)} aria-label={t('widgets.music.search')} title={t('widgets.music.search')}><Search size={18} /></button>
   );
   return (
     <div className="ndw-mx-section">
-      <form className="ndw-mx-search" onSubmit={event => { event.preventDefault(); void run(); }}>
-        <Search size={14} aria-hidden="true" />
-        <input className="ndc-input" autoFocus value={query} onChange={event => { setQuery(event.target.value); if (!event.target.value) setResult(null); }} onKeyDown={event => { if (event.key === 'Escape') { setOpen(false); setResult(null); setQuery(''); } }} placeholder={t('widgets.music.searchPlaceholder')} aria-label={t('widgets.music.search')} maxLength={80} />
-        {searching && <span className="nd-spinner" aria-hidden="true" />}
-        <button type="button" className="ndc-icon-button" onClick={() => { setResult(null); setQuery(''); setOpen(false); }} aria-label={t('widgets.music.clearSearch')} title={t('widgets.music.clearSearch')}><X size={13} /></button>
+      {/* NasDash's own search field, at the width of the widget. */}
+      <form className="nd-search ndw-music-searchbar" onSubmit={event => { event.preventDefault(); void run(); }}>
+        <Search size={13} className="nd-search-icon" aria-hidden="true" />
+        <input type="text" autoFocus value={query} onChange={event => { setQuery(event.target.value); if (!event.target.value) setResult(null); }} onKeyDown={event => { if (event.key === 'Escape') { setOpen(false); setResult(null); setQuery(''); } }} placeholder={t('widgets.music.searchPlaceholder')} aria-label={t('widgets.music.search')} maxLength={80} />
+        {searching && <span className="nd-spinner ndw-music-searchbar-spin" aria-hidden="true" />}
+        <button type="button" className="ndw-music-searchbar-close" onClick={() => { setResult(null); setQuery(''); setOpen(false); }} aria-label={t('widgets.music.clearSearch')} title={t('widgets.music.clearSearch')}><X size={13} /></button>
       </form>
       {failed && <p className="ndw-note ndw-down">{t('widgets.music.error.search')}</p>}
       {empty && <p className="ndw-note">{t('widgets.music.noResult')}</p>}

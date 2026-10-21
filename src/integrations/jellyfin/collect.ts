@@ -205,6 +205,18 @@ async function jellyfinMusicUsers(instance: IntegrationInstance) {
 /** Album UserData.PlayCount is per account, not a BaseItemDto property.
  * Sum all accessible accounts, paging through positive counts so merging
  * per-user top-N lists cannot undercount an album's other listeners. */
+/** Tracks played most, all accounts summed (each account's own play counts). */
+export async function collectJellyfinMusicTopTracks(instance: IntegrationInstance, count: number): Promise<MusicTrack[]> {
+  const merged = new Map<string, MusicTrack>();
+  for (const user of await jellyfinMusicUsers(instance)) {
+    const data = object(await request(instance, `/Users/${encodeURIComponent(user)}/Items?IncludeItemTypes=Audio&Recursive=true&SortBy=PlayCount&SortOrder=Descending&EnableUserData=true&Limit=${Math.min(200, count * 4)}`));
+    for (const value of musicItems(data)) {
+      const track = toJellyfinMusicTrack(instance, value), plays = number(object(object(value).UserData).PlayCount);
+      if (track && plays > 0) merged.set(track.id, { ...track, plays: (merged.get(track.id)?.plays ?? 0) + plays });
+    }
+  }
+  return [...merged.values()].sort((a, b) => (b.plays ?? 0) - (a.plays ?? 0)).slice(0, count);
+}
 export async function collectJellyfinMusicTop(instance: IntegrationInstance, count: number): Promise<MusicTopResponse> {
   const merged = new Map<string, MusicAlbum>();
   for (const user of await jellyfinMusicUsers(instance)) {

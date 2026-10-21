@@ -83,6 +83,15 @@ export async function navidromePlayedTracks(instance: IntegrationInstance, count
     durationMs: optionalMusicNumber(item.duration) === undefined ? undefined : number(item.duration) * 1000, playedAt: date(item.playDate), cover: cover(item.albumId || item.id),
   })).filter(track => !!track.id);
 }
+/** Tracks played most (Navidrome only: Subsonic counts albums, not tracks). */
+export async function collectNavidromeTopTracks(instance: IntegrationInstance, count: number): Promise<MusicTrack[]> {
+  const data = await navidromeNative(instance, `/api/song?${new URLSearchParams({ _start: '0', _end: String(count), _sort: 'play_count', _order: 'DESC' })}`);
+  if (!Array.isArray(data)) throw new ServiceError('widgets.error.parse');
+  return data.map(object).filter(item => number(item.playCount) > 0).map(item => ({
+    id: string(item.id), title: string(item.title), artist: string(item.artist) || undefined, album: string(item.album) || undefined, albumId: string(item.albumId) || undefined,
+    durationMs: optionalMusicNumber(item.duration) === undefined ? undefined : number(item.duration) * 1000, plays: number(item.playCount), cover: cover(item.albumId || item.id),
+  })).filter(track => !!track.id);
+}
 /** Forget native sessions (tests). */
 export function clearNavidromeSessions() { nativeTokens.clear(); }
 export async function collectNavidromeRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): Promise<MusicRecentResponse> {

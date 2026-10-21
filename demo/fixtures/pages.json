@@ -763,7 +763,8 @@
           "id": "music-top-demo",
           "type": "music-top",
           "settings": {
-            "integrationId": "navidrome-demo"
+            "integrationId": "navidrome-demo",
+            "content": "pages"
           },
           "x": 12,
           "y": 4014,

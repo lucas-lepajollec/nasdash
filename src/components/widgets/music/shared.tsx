@@ -6,6 +6,7 @@ import { MUSIC_SERVER_TYPES, type MusicAlbum } from '@/lib/widgetData/contracts'
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
+import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { MediaPoster } from '@/components/widgets/media/shared';
@@ -37,9 +38,9 @@ export function Cover({ id, title, cover, size }: { id: string; title: string; c
 }
 
 /** An album as a cover with its title, artist and one more line beneath; a play button over the cover for signed-in users. */
-export function AlbumCard({ album, line, widgetId }: { album: MusicAlbum; line?: string; widgetId?: string }) {
+export function AlbumCard({ album, line, widgetId, playable = true }: { album: MusicAlbum; line?: string; widgetId?: string; playable?: boolean }) {
   const { t } = useI18n();
-  const canPlay = useCanPlay();
+  const canPlay = useCanPlay() && playable;
   const body = (
     <>
       <span className="ndw-music-cover">
@@ -54,4 +55,14 @@ export function AlbumCard({ album, line, widgetId }: { album: MusicAlbum; line?:
   return album.link
     ? <a className="ndw-mx-rail-item" href={album.link} target="_blank" rel="noopener noreferrer" title={album.title}>{body}</a>
     : <span className="ndw-mx-rail-item" title={album.title}>{body}</span>;
+}
+
+/** "Start music from this widget": the play buttons of a music widget, on or off. */
+export function PlaybackSetting({ draft, change }: { draft: WidgetSettings; change: (patch: WidgetSettings) => void }) {
+  const { t } = useI18n();
+  return (
+    <CalmeRow label={t('widgets.music.playback')} info={t('widgets.music.playbackHint')}>
+      <CalmeSwitch label={t('widgets.music.playback')} checked={draft.playback !== false} onChange={on => change({ playback: on ? null : false })} />
+    </CalmeRow>
+  );
 }

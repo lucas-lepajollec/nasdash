@@ -106,10 +106,15 @@ export function useMusicPlayer(): PlayerState {
   );
 }
 
-/** Playback is for signed-in users: anonymous visitors of a public dashboard see no play buttons. */
-export function useCanPlay(): boolean {
+/**
+ * Whether a widget offers to start music: signed-in users only (anonymous
+ * visitors of a public dashboard see no play buttons), and only when the
+ * widget allows it (`playback`, on by default). What already plays can
+ * always be steered from Listening.
+ */
+export function useCanPlay(settings?: { playback?: unknown }): boolean {
   const { user } = useAuth();
-  return !!user;
+  return !!user && settings?.playback !== false;
 }
 
 /** A round play button over a cover or at the end of a row; spins while its music starts. */

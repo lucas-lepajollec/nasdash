@@ -5,7 +5,7 @@ vi.mock('@/lib/widgetData/services', async original => ({ ...await original<type
 import { serviceJson, serviceBytes } from '@/lib/widgetData/services';
 import { collectJellyfinMusicNowPlaying, collectJellyfinMusicRecent, collectJellyfinMusicPlaylists, collectJellyfinMusicTracks, collectJellyfinMusicSearch, controlJellyfinMusic, jellyfinMusicStreamPath } from './jellyfin/collect';
 import { collectPlexMusicRecent, collectPlexMusicPlaylists, collectPlexMusicTracks, collectPlexMusicSearch, plexMusicStreamPath } from './plex/collect';
-import { clearNavidromeSessions, collectNavidromeRecent, collectNavidromePlaylists, collectNavidromeTracks, collectNavidromeSearch } from './navidrome/collect';
+import { clearNavidromeSessions, collectNavidromeRecent, collectNavidromeTopTracks, collectNavidromePlaylists, collectNavidromeTracks, collectNavidromeSearch } from './navidrome/collect';
 const source = (type: string): IntegrationInstance => ({ id: `playback-${type}`, type, name: 'Fictional Music', settings: { url: 'https://music.example.com', username: 'alex' }, secrets: { apiKey: 'fictional-key', token: 'fictional-token', password: 'fictional-password' } });
 const json = vi.mocked(serviceJson), bytes = vi.mocked(serviceBytes);
 const song = { Id: 'song', Type: 'Audio', Name: 'Glass', AlbumId: 'album', Album: 'Garden', RunTimeTicks: 1200000000, UserData: { LastPlayedDate: '2026-01-15T12:00:00Z' } };
@@ -105,4 +105,13 @@ it('reads tracks played lately through Navidrome\'s own API, and refuses on serv
   clearNavidromeSessions();
   bytes.mockResolvedValue({ status: 404, contentType: 'text/plain', bytes: Buffer.from('') } as never);
   await expect(collectNavidromeRecent(instance, 12, 'tracks')).rejects.toMatchObject({ key: 'widgets.music.error.noTrackHistory', status: 422 });
+});
+
+it('reads the tracks played most through Navidrome\'s own API', async () => {
+  clearNavidromeSessions();
+  bytes.mockImplementation(async (_instance, path) => path === '/auth/login'
+    ? { status: 200, contentType: 'application/json', bytes: Buffer.from(JSON.stringify({ token: 'fictional-jwt' })) } as never
+    : { status: 200, contentType: 'application/json', bytes: Buffer.from(JSON.stringify([{ id: 's1', title: 'Glass', albumId: 'al1', playCount: 9 }, { id: 's2', title: 'Never', playCount: 0 }])) } as never);
+  expect(await collectNavidromeTopTracks(source('navidrome'), 6)).toEqual([expect.objectContaining({ id: 's1', plays: 9 })]);
+  expect(String(bytes.mock.calls.at(-1)![1])).toContain('_sort=play_count');
 });

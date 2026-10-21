@@ -702,6 +702,8 @@ export interface MusicTrack {
   id: string; title: string; artist?: string; album?: string; albumId?: string; durationMs?: number; cover?: string;
   /** When it was last played (recently played tracks). */
   playedAt?: number;
+  /** Times played (most played tracks). */
+  plays?: number;
 }
 export interface MusicPlaylist { id: string; name: string; trackCount?: number; durationMs?: number; cover?: string; owner?: string; changedAt?: number }
 export interface MusicAlbum {
@@ -751,5 +753,8 @@ export interface MusicLibraryResponse {
   week?: MusicAlbum[]; weekCount?: number;
   fetchedAt: number;
 }
-/** GET /api/widgets/music/top?widgetId=… (settings `integrationId`, `count` 3–20 default 6): most played albums, all time. */
-export interface MusicTopResponse { server: MusicServer; name: string; albums: MusicAlbum[]; fetchedAt: number }
+/**
+ * GET /api/widgets/music/top?widgetId=… (settings `integrationId`, `count` 3–20 default 6, `content` 'albums' (default) | 'tracks' | 'pages'
+ * with `pages` an ordered subset of albums | tracks): most played, all time; `tracks` when that page is on.
+ */
+export interface MusicTopResponse { server: MusicServer; name: string; albums: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }

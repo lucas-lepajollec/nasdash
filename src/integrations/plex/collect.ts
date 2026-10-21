@@ -166,6 +166,18 @@ export async function collectPlexMusicRecent(instance: IntegrationInstance, coun
   if (content === 'tracks') return { ...identity(instance), albums: [], tracks: await plexMusicTrackHistory(instance, count) };
   return { ...identity(instance), albums: await plexMusicList(instance, count, 'addedAt:desc') };
 }
+/** Tracks played most, from each music section's own play counts. */
+export async function collectPlexMusicTopTracks(instance: IntegrationInstance, count: number): Promise<MusicTrack[]> {
+  const tracks: MusicTrack[] = [];
+  for (const section of await plexMusicSections(instance)) {
+    const data = await request(instance, `/library/sections/${encodeURIComponent(string(section.key))}/all?type=10&sort=viewCount:desc&X-Plex-Container-Start=0&X-Plex-Container-Size=${count}`);
+    for (const value of array(data.Metadata)) {
+      const track = toPlexMusicTrack(value), plays = optionalNumber(object(value).viewCount);
+      if (track && plays) tracks.push({ ...track, plays });
+    }
+  }
+  return tracks.sort((a, b) => (b.plays ?? 0) - (a.plays ?? 0)).slice(0, count);
+}
 export async function collectPlexMusicTop(instance: IntegrationInstance, count: number): Promise<MusicTopResponse> {
   return { ...identity(instance), albums: await plexMusicList(instance, count, 'viewCount:desc') };
 }

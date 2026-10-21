@@ -10,7 +10,7 @@ import { CalmeRow, CalmeSlider } from '@/components/modals/settings/shared/Calme
 import { CalmeWidget } from '../calme';
 import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { clock } from '@/components/widgets/media/shared';
-import { Cover, MusicServerField, MusicSetup, useMusicConnection } from '@/components/widgets/music/shared';
+import { Cover, MusicServerField, MusicSetup, PlaybackSetting, useMusicConnection } from '@/components/widgets/music/shared';
 import { musicPlayer, PlayButton, useCanPlay } from '@/components/widgets/music/player';
 
 /**
@@ -26,6 +26,7 @@ export default function CalmeMusicPlaylists({ widgetId, settings = {}, editMode,
   const [box, width] = useBoxWidth<HTMLDivElement>();
   const title = t('widget.music-playlists.name');
   const playlists = data?.playlists ?? [];
+  const canPlay = useCanPlay(settings);
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={data ? <span className="ndc-title-note">{data.name}</span> : undefined}>
@@ -38,6 +39,7 @@ export default function CalmeMusicPlaylists({ widgetId, settings = {}, editMode,
                 <CalmeSlider label={t('widgets.music.playlistCount')} value={bounded(draft.count, 3, 40, 12)} min={3} max={40} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
               </CalmeRow>
               <ColumnsSetting draft={draft} change={change} />
+              <PlaybackSetting draft={draft} change={change} />
             </>
           )}
         </WidgetSettingsButton>
@@ -47,16 +49,15 @@ export default function CalmeMusicPlaylists({ widgetId, settings = {}, editMode,
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true">{[0, 1, 2].map(row => <span key={row} className="ndw-skeleton-row" />)}</div>
               : playlists.length === 0 ? <div className="ndw-mx-empty"><span className="ndw-mx-calm">{t('widgets.music.noPlaylist')}</span></div>
-                : <ColumnRows columns={columnsOf(settings, width, 320)} className="ndw-mx-lines">{playlists.map(playlist => <Playlist key={playlist.id} playlist={playlist} widgetId={widgetId} />)}</ColumnRows>}
+                : <ColumnRows columns={columnsOf(settings, width, 320)} className="ndw-mx-lines">{playlists.map(playlist => <Playlist key={playlist.id} playlist={playlist} widgetId={widgetId} canPlay={canPlay} />)}</ColumnRows>}
       </div>
     </CalmeWidget>
   );
 }
 
-function Playlist({ playlist, widgetId }: { playlist: MusicPlaylist; widgetId: string }) {
+function Playlist({ playlist, widgetId, canPlay }: { playlist: MusicPlaylist; widgetId: string; canPlay: boolean }) {
   const { t } = useI18n();
   const relative = useRelativeTime();
-  const canPlay = useCanPlay();
   const [open, setOpen] = useState(false);
   const [tracks, setTracks] = useState<MusicTrack[] | null>(null);
   const [loading, setLoading] = useState(false);

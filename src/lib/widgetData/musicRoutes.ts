@@ -7,20 +7,21 @@ import { checkAdmin } from '@/lib/auth';
 import { TtlCache } from './cache';
 import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack, MusicPlaylist } from './contracts';
 import { mediaShowUsers } from './media';
-import { MUSIC_WIDGET_TYPES, demoMusicAudio, demoMusicTracks, demoMusicPlaylists, demoMusicSearch, knownMusicTrack, rememberMusicTrack, musicContent, musicPages, musicPlaylistPrivacy, demoMusicAlbums, demoMusicLibrary, demoMusicNowPlaying, demoMusicRecent, demoMusicTop, musicCount, proxyMusicItem, type MusicWidgetType } from './music';
+import { MUSIC_WIDGET_TYPES, demoMusicAudio, demoMusicTracks, demoMusicPlaylists, demoMusicSearch, knownMusicTrack, rememberMusicTrack, musicContent, musicPages, musicTopPages, musicPlaylistPrivacy, demoMusicAlbums, demoMusicLibrary, demoMusicNowPlaying, demoMusicRecent, demoMusicTop, musicCount, proxyMusicItem, type MusicWidgetType } from './music';
 import { boundedJson, queryDraft, resolveServiceWidget, serviceFailure, serviceIdentity, serviceStream, ServiceError } from './services';
 
 const nowPlaying = new TtlCache<MusicNowPlayingResponse>(10000);
 const recent = new TtlCache<MusicRecentResponse>(300000);
 const library = new TtlCache<MusicLibraryResponse>(300000);
 const top = new TtlCache<MusicTopResponse>(300000);
+const topTracks = new TtlCache<MusicTrack[]>(300000);
 const history = new TtlCache<MusicAlbum[]>(300000);
 const headers = { 'Cache-Control': 'private, no-store' };
-const jellyfinCollectors = { now: jellyfin.collectJellyfinMusicNowPlaying, recent: jellyfin.collectJellyfinMusicRecent, library: jellyfin.collectJellyfinMusicLibrary, top: jellyfin.collectJellyfinMusicTop, history: jellyfin.collectJellyfinMusicHistory, playlists: jellyfin.collectJellyfinMusicPlaylists, tracks: jellyfin.collectJellyfinMusicTracks, search: jellyfin.collectJellyfinMusicSearch };
+const jellyfinCollectors = { now: jellyfin.collectJellyfinMusicNowPlaying, recent: jellyfin.collectJellyfinMusicRecent, library: jellyfin.collectJellyfinMusicLibrary, top: jellyfin.collectJellyfinMusicTop, topTracks: jellyfin.collectJellyfinMusicTopTracks, history: jellyfin.collectJellyfinMusicHistory, playlists: jellyfin.collectJellyfinMusicPlaylists, tracks: jellyfin.collectJellyfinMusicTracks, search: jellyfin.collectJellyfinMusicSearch };
 const collectors = {
   jellyfin: jellyfinCollectors, emby: jellyfinCollectors,
-  plex: { now: plex.collectPlexMusicNowPlaying, recent: plex.collectPlexMusicRecent, library: plex.collectPlexMusicLibrary, top: plex.collectPlexMusicTop, history: plex.collectPlexMusicHistory, playlists: plex.collectPlexMusicPlaylists, tracks: plex.collectPlexMusicTracks, search: plex.collectPlexMusicSearch },
-  navidrome: { now: navidrome.collectNavidromeNowPlaying, recent: navidrome.collectNavidromeRecent, library: navidrome.collectNavidromeLibrary, top: navidrome.collectNavidromeTop, history: navidrome.collectNavidromeHistory, playlists: navidrome.collectNavidromePlaylists, tracks: navidrome.collectNavidromeTracks, search: navidrome.collectNavidromeSearch },
+  plex: { now: plex.collectPlexMusicNowPlaying, recent: plex.collectPlexMusicRecent, library: plex.collectPlexMusicLibrary, top: plex.collectPlexMusicTop, topTracks: plex.collectPlexMusicTopTracks, history: plex.collectPlexMusicHistory, playlists: plex.collectPlexMusicPlaylists, tracks: plex.collectPlexMusicTracks, search: plex.collectPlexMusicSearch },
+  navidrome: { now: navidrome.collectNavidromeNowPlaying, recent: navidrome.collectNavidromeRecent, library: navidrome.collectNavidromeLibrary, top: navidrome.collectNavidromeTop, topTracks: navidrome.collectNavidromeTopTracks, history: navidrome.collectNavidromeHistory, playlists: navidrome.collectNavidromePlaylists, tracks: navidrome.collectNavidromeTracks, search: navidrome.collectNavidromeSearch },
 };
 export async function musicRoute(request: NextRequest, type: MusicWidgetType) {
   try {
@@ -62,11 +63,19 @@ export async function musicRoute(request: NextRequest, type: MusicWidgetType) {
         ...(played ? { played: played.albums.slice(0, count).map(proxy) } : {}),
         ...(heard?.tracks ? { tracks: heard.tracks.slice(0, count).map(track => { rememberMusicTrack(instance, widgetId!, track.id, imageDraft); return proxy(track); }) } : {}) }, { headers });
     }
-    if (type === 'music-recent' || type === 'music-top') {
-      const count = musicCount(settings, type === 'music-top'), content = type === 'music-recent' ? musicContent(settings) as 'added' | 'albums' | 'tracks' : 'added', cacheKey = `${key}:${content}:${count}`;
-      const result = type === 'music-top'
-        ? demo ? demoMusicTop(instance, count) : await top.get(cacheKey, () => collect.top(instance, count))
-        : demo ? demoMusicRecent(instance, count, content) : await recent.get(cacheKey, () => collect.recent(instance, count, content));
+    if (type === 'music-top') {
+      // Albums and/or tracks played most; a page the server cannot give (Subsonic tracks) is left out unless it is the only one.
+      const count = musicCount(settings, true), pages = musicTopPages(settings);
+      const [albums, tracks] = await Promise.all([
+        pages.includes('albums') ? (demo ? Promise.resolve(demoMusicTop(instance, count)) : top.get(`${key}:${count}`, () => collect.top(instance, count))) : Promise.resolve(undefined),
+        pages.includes('tracks') ? (demo ? Promise.resolve(demoMusicTracks(count).map((track, index) => ({ ...track, plays: 60 - index * 7 }))) : topTracks.get(`${key}:${count}`, () => collect.topTracks(instance, count))).catch(error => { if (pages.length === 1) throw error; return undefined; }) : Promise.resolve(undefined),
+      ]);
+      return NextResponse.json({ server: instance.type, name: instance.name, fetchedAt: Date.now(), albums: (albums?.albums ?? []).slice(0, count).map(proxy),
+        ...(tracks ? { tracks: tracks.slice(0, count).map(track => { rememberMusicTrack(instance, widgetId!, track.id, imageDraft); return proxy(track); }) } : {}) }, { headers });
+    }
+    if (type === 'music-recent') {
+      const count = musicCount(settings, false), content = musicContent(settings) as 'added' | 'albums' | 'tracks', cacheKey = `${key}:${content}:${count}`;
+      const result = demo ? demoMusicRecent(instance, count, content) : await recent.get(cacheKey, () => collect.recent(instance, count, content));
       const tracks = 'tracks' in result ? result.tracks as MusicTrack[] | undefined : undefined;
       return NextResponse.json({ ...result, albums: result.albums.slice(0, count).map(proxy), ...(tracks ? { tracks: tracks.slice(0, count).map(track => { rememberMusicTrack(instance, widgetId!, track.id, imageDraft); return proxy(track); }) } : {}) }, { headers });
     }

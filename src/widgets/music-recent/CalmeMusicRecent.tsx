@@ -9,7 +9,7 @@ import { CalmeCheckRow, CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
 import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
-import { AlbumCard, Cover, MusicServerField, MusicSetup, useMusicConnection } from '@/components/widgets/music/shared';
+import { AlbumCard, Cover, MusicServerField, MusicSetup, PlaybackSetting, useMusicConnection } from '@/components/widgets/music/shared';
 import { musicPlayer, PlayButton, useCanPlay } from '@/components/widgets/music/player';
 
 const DISPLAYS = ['grid', 'list'] as const;
@@ -40,6 +40,7 @@ export default function CalmeMusicRecent({ widgetId, settings = {}, editMode, is
   const pages = pagesOf(settings);
   const [tab, setTab] = useState<Page | null>(null);
   const page: Page = content === 'pages' ? (tab && pages.includes(tab) ? tab : pages[0]) : content;
+  const canPlay = useCanPlay(settings);
   const list = (which: Page) => which === 'tracks' ? data?.tracks : which === 'albums' ? (content === 'pages' ? data?.played : data?.albums) : data?.albums;
 
   return (
@@ -65,8 +66,8 @@ export default function CalmeMusicRecent({ widgetId, settings = {}, editMode, is
                     </div>
                   )}
                   {page === 'tracks'
-                    ? <Tracks tracks={list('tracks') ?? []} widgetId={widgetId} columns={columnsOf(settings, width, 300)} />
-                    : <Albums albums={list(page) ?? []} played={page === 'albums'} widgetId={widgetId} display={pick(settings.display, DISPLAYS, 'grid')} width={width} columns={columnsOf(settings, width, 300)} />}
+                    ? <Tracks tracks={list('tracks') ?? []} widgetId={widgetId} columns={columnsOf(settings, width, 300)} canPlay={canPlay} />
+                    : <Albums albums={list(page) ?? []} played={page === 'albums'} widgetId={widgetId} display={pick(settings.display, DISPLAYS, 'grid')} width={width} columns={columnsOf(settings, width, 300)} canPlay={canPlay} />}
                 </div>
               )}
       </div>
@@ -74,10 +75,9 @@ export default function CalmeMusicRecent({ widgetId, settings = {}, editMode, is
   );
 }
 
-function Albums({ albums, played, widgetId, display, width, columns }: { albums: MusicAlbum[]; played: boolean; widgetId: string; display: typeof DISPLAYS[number]; width: number; columns: number }) {
+function Albums({ albums, played, widgetId, display, width, columns, canPlay }: { albums: MusicAlbum[]; played: boolean; widgetId: string; display: typeof DISPLAYS[number]; width: number; columns: number; canPlay: boolean }) {
   const { t } = useI18n();
   const relative = useRelativeTime();
-  const canPlay = useCanPlay();
   if (!albums.length) return <div className="ndw-mx-empty"><span className="ndw-mx-calm">{t(played ? 'widgets.music.noPlays' : 'widgets.music.noAlbum')}</span></div>;
   const when = (album: MusicAlbum) => (played ? album.playedAt : album.addedAt);
   if (display === 'list') return (
@@ -96,15 +96,14 @@ function Albums({ albums, played, widgetId, display, width, columns }: { albums:
   );
   return (
     <div className="ndw-mx-rail" style={{ '--ndw-cols': Math.max(2, Math.min(8, Math.floor((width + 14) / 124))) } as React.CSSProperties}>
-      {albums.map(album => <AlbumCard key={album.id} album={album} widgetId={widgetId} line={when(album) ? relative(when(album)!) : undefined} />)}
+      {albums.map(album => <AlbumCard key={album.id} album={album} widgetId={widgetId} playable={canPlay} line={when(album) ? relative(when(album)!) : undefined} />)}
     </div>
   );
 }
 
-function Tracks({ tracks, widgetId, columns }: { tracks: MusicTrack[]; widgetId: string; columns: number }) {
+function Tracks({ tracks, widgetId, columns, canPlay }: { tracks: MusicTrack[]; widgetId: string; columns: number; canPlay: boolean }) {
   const { t } = useI18n();
   const relative = useRelativeTime();
-  const canPlay = useCanPlay();
   if (!tracks.length) return <div className="ndw-mx-empty"><span className="ndw-mx-calm">{t('widgets.music.noPlays')}</span></div>;
   return (
     <ColumnRows columns={columns} className="ndw-mx-lines">
@@ -165,6 +164,7 @@ function RecentSettings({ draft, change }: { draft: WidgetSettings; change: (pat
         <CalmeSlider label={t('widgets.music.shown')} value={bounded(draft.count, 4, 40, 12)} min={4} max={40} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
       </CalmeRow>
       <ColumnsSetting draft={draft} change={change} />
+      <PlaybackSetting draft={draft} change={change} />
     </>
   );
 }

@@ -73,6 +73,15 @@ export function musicContent(settings: Record<string, unknown>): 'added' | 'albu
   return content;
 }
 export const MUSIC_PAGES = ['added', 'albums', 'tracks'] as const;
+/** Most played: albums (default), tracks, or both as pages in the chosen order. */
+export function musicTopPages(settings: Record<string, unknown>): ('albums' | 'tracks')[] {
+  const content = settings.content ?? 'albums';
+  if (content === 'albums' || content === 'tracks') return [content];
+  if (content !== 'pages') throw new ServiceError('widgets.error.invalidSettings', 400);
+  const pages = settings.pages ?? ['albums', 'tracks'];
+  if (!Array.isArray(pages) || !pages.length || pages.some(page => page !== 'albums' && page !== 'tracks') || new Set(pages).size !== pages.length) throw new ServiceError('widgets.error.invalidSettings', 400);
+  return pages as ('albums' | 'tracks')[];
+}
 /** The pages of the `pages` content, in the chosen order (default: all three). */
 export function musicPages(settings: Record<string, unknown>): (typeof MUSIC_PAGES[number])[] {
   const pages = settings.pages ?? [...MUSIC_PAGES];
