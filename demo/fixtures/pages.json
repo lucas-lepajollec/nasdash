@@ -740,7 +740,8 @@
           "id": "music-recent-demo",
           "type": "music-recent",
           "settings": {
-            "integrationId": "navidrome-demo"
+            "integrationId": "navidrome-demo",
+            "content": "pages"
           },
           "x": 0,
           "y": 4014,
@@ -750,8 +751,13 @@
         {
           "id": "music-playlists-demo",
           "type": "music-playlists",
-          "settings": { "integrationId": "navidrome-demo" },
-          "x": 0, "y": 4354, "w": 12, "h": 320
+          "settings": {
+            "integrationId": "navidrome-demo"
+          },
+          "x": 0,
+          "y": 4354,
+          "w": 12,
+          "h": 320
         },
         {
           "id": "music-top-demo",

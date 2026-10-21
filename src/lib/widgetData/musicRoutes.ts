@@ -7,7 +7,7 @@ import { checkAdmin } from '@/lib/auth';
 import { TtlCache } from './cache';
 import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack, MusicPlaylist } from './contracts';
 import { mediaShowUsers } from './media';
-import { MUSIC_WIDGET_TYPES, demoMusicAudio, demoMusicTracks, demoMusicPlaylists, demoMusicSearch, knownMusicTrack, rememberMusicTrack, musicContent, musicPlaylistPrivacy, demoMusicAlbums, demoMusicLibrary, demoMusicNowPlaying, demoMusicRecent, demoMusicTop, musicCount, proxyMusicItem, type MusicWidgetType } from './music';
+import { MUSIC_WIDGET_TYPES, demoMusicAudio, demoMusicTracks, demoMusicPlaylists, demoMusicSearch, knownMusicTrack, rememberMusicTrack, musicContent, musicPages, musicPlaylistPrivacy, demoMusicAlbums, demoMusicLibrary, demoMusicNowPlaying, demoMusicRecent, demoMusicTop, musicCount, proxyMusicItem, type MusicWidgetType } from './music';
 import { boundedJson, queryDraft, resolveServiceWidget, serviceFailure, serviceIdentity, serviceStream, ServiceError } from './services';
 
 const nowPlaying = new TtlCache<MusicNowPlayingResponse>(10000);
@@ -51,8 +51,19 @@ export async function musicRoute(request: NextRequest, type: MusicWidgetType) {
       const result = demo ? demoMusicPlaylists(instance, count) : await collect.playlists(instance, count);
       return NextResponse.json({ ...result, playlists: result.playlists.map(item => proxy(musicPlaylistPrivacy(item, mediaShowUsers(settings)))) }, { headers });
     }
+    if (type === 'music-recent' && musicContent(settings) === 'pages') {
+      // Every page at once, so switching inside the widget is instant; a page the server cannot give is left out.
+      const count = musicCount(settings, false), pages = musicPages(settings);
+      const read = (content: 'added' | 'albums' | 'tracks') => (demo ? Promise.resolve(demoMusicRecent(instance, count, content)) : recent.get(`${key}:${content}:${count}`, () => collect.recent(instance, count, content))).catch(() => undefined);
+      const [added, played, heard] = await Promise.all((['added', 'albums', 'tracks'] as const).map(content => pages.includes(content) ? read(content) : Promise.resolve(undefined)));
+      const base = added ?? played ?? heard;
+      if (!base) throw new ServiceError('widgets.error.http');
+      return NextResponse.json({ server: base.server, name: base.name, fetchedAt: base.fetchedAt, albums: (added?.albums ?? []).slice(0, count).map(proxy),
+        ...(played ? { played: played.albums.slice(0, count).map(proxy) } : {}),
+        ...(heard?.tracks ? { tracks: heard.tracks.slice(0, count).map(track => { rememberMusicTrack(instance, widgetId!, track.id, imageDraft); return proxy(track); }) } : {}) }, { headers });
+    }
     if (type === 'music-recent' || type === 'music-top') {
-      const count = musicCount(settings, type === 'music-top'), content = type === 'music-recent' ? musicContent(settings) : 'added', cacheKey = `${key}:${content}:${count}`;
+      const count = musicCount(settings, type === 'music-top'), content = type === 'music-recent' ? musicContent(settings) as 'added' | 'albums' | 'tracks' : 'added', cacheKey = `${key}:${content}:${count}`;
       const result = type === 'music-top'
         ? demo ? demoMusicTop(instance, count) : await top.get(cacheKey, () => collect.top(instance, count))
         : demo ? demoMusicRecent(instance, count, content) : await recent.get(cacheKey, () => collect.recent(instance, count, content));

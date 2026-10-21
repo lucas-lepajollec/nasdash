@@ -723,7 +723,8 @@ export interface MusicNowPlayingResponse {
  * GET /api/widgets/music/recent?widgetId=… (settings `integrationId`, `count` 4–40 default 12,
  * `content` 'added' (default: albums newest added first) | 'albums' (albums played lately) | 'tracks' (tracks played lately, in `tracks`)).
  */
-export interface MusicRecentResponse { server: MusicServer; name: string; albums: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }
+/** `content: 'pages'` (`pages`: ordered subset of added | albums | tracks): `albums` added, `played` albums played, `tracks` played, each when its page is on. */
+export interface MusicRecentResponse { server: MusicServer; name: string; albums: MusicAlbum[]; played?: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }
 /** GET /api/widgets/music/playlists?widgetId=… (widget `music-playlists`, settings `integrationId`, `count` 3–40 default 12). */
 export interface MusicPlaylistsResponse { server: MusicServer; name: string; playlists: MusicPlaylist[]; fetchedAt: number }
 /** GET /api/widgets/music/tracks?widgetId=…&kind=album|playlist&id=… — the tracks to play, in order (≤ 300). Any music widget id. */

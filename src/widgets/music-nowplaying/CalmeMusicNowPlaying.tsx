@@ -203,6 +203,8 @@ function UpNext({ tracks, onPick }: { tracks: MusicTrack[]; onPick?: (offset: nu
 /** Finds tracks, albums and playlists on the server, each with its play button. */
 function MusicSearch({ widgetId }: { widgetId: string }) {
   const { t } = useI18n();
+  // A magnifier in the corner; opened, a bar above what plays.
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<MusicSearchResponse | null>(null);
   const [searching, setSearching] = useState(false);
@@ -219,13 +221,16 @@ function MusicSearch({ widgetId }: { widgetId: string }) {
     finally { setSearching(false); }
   };
   const empty = result && !result.tracks.length && !result.albums.length && !result.playlists.length;
+  if (!open) return (
+    <button type="button" className="ndc-icon-button ndw-music-search-toggle" onClick={() => setOpen(true)} aria-label={t('widgets.music.search')} title={t('widgets.music.search')}><Search size={14} /></button>
+  );
   return (
     <div className="ndw-mx-section">
       <form className="ndw-mx-search" onSubmit={event => { event.preventDefault(); void run(); }}>
         <Search size={14} aria-hidden="true" />
-        <input className="ndc-input" value={query} onChange={event => { setQuery(event.target.value); if (!event.target.value) setResult(null); }} placeholder={t('widgets.music.searchPlaceholder')} aria-label={t('widgets.music.search')} maxLength={80} />
+        <input className="ndc-input" autoFocus value={query} onChange={event => { setQuery(event.target.value); if (!event.target.value) setResult(null); }} onKeyDown={event => { if (event.key === 'Escape') { setOpen(false); setResult(null); setQuery(''); } }} placeholder={t('widgets.music.searchPlaceholder')} aria-label={t('widgets.music.search')} maxLength={80} />
         {searching && <span className="nd-spinner" aria-hidden="true" />}
-        {result && <button type="button" className="ndc-icon-button" onClick={() => { setResult(null); setQuery(''); }} aria-label={t('widgets.music.clearSearch')} title={t('widgets.music.clearSearch')}><X size={13} /></button>}
+        <button type="button" className="ndc-icon-button" onClick={() => { setResult(null); setQuery(''); setOpen(false); }} aria-label={t('widgets.music.clearSearch')} title={t('widgets.music.clearSearch')}><X size={13} /></button>
       </form>
       {failed && <p className="ndw-note ndw-down">{t('widgets.music.error.search')}</p>}
       {empty && <p className="ndw-note">{t('widgets.music.noResult')}</p>}

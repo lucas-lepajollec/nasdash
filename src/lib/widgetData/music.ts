@@ -67,10 +67,17 @@ export function knownMusicTrack(instance: IntegrationInstance, widgetId: string,
   if (!until || until <= Date.now()) { tracks.delete(key); return false; }
   return true;
 }
-export function musicContent(settings: Record<string, unknown>): 'added' | 'albums' | 'tracks' {
+export function musicContent(settings: Record<string, unknown>): 'added' | 'albums' | 'tracks' | 'pages' {
   const content = settings.content ?? 'added';
-  if (content !== 'added' && content !== 'albums' && content !== 'tracks') throw new ServiceError('widgets.error.invalidSettings', 400);
+  if (content !== 'added' && content !== 'albums' && content !== 'tracks' && content !== 'pages') throw new ServiceError('widgets.error.invalidSettings', 400);
   return content;
+}
+export const MUSIC_PAGES = ['added', 'albums', 'tracks'] as const;
+/** The pages of the `pages` content, in the chosen order (default: all three). */
+export function musicPages(settings: Record<string, unknown>): (typeof MUSIC_PAGES[number])[] {
+  const pages = settings.pages ?? [...MUSIC_PAGES];
+  if (!Array.isArray(pages) || !pages.length || pages.some(page => !(MUSIC_PAGES as readonly unknown[]).includes(page)) || new Set(pages).size !== pages.length) throw new ServiceError('widgets.error.invalidSettings', 400);
+  return pages as (typeof MUSIC_PAGES[number])[];
 }
 export const demoMusicTracks = (count = 8): MusicTrack[] => Array.from({ length: count }, (_, n) => ({ id: `demo-song-${n}`, title: ['The Glass Meridian', 'Aerial Seeds', 'Soft Geometry', 'Moonlit Maps'][n % 4], artist: artists[n % 4], album: titles[n % 6], albumId: `demo-music-${n % 6}`, durationMs: 198000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, cover: `demo:music:${n % 6}` }));
 export const demoMusicPlaylists = (instance: IntegrationInstance, count: number) => ({ ...identity(instance), playlists: Array.from({ length: Math.min(count, 4) }, (_, n): MusicPlaylist => ({ id: `demo-playlist-${n}`, name: ['Quiet mornings', 'Night signals', 'Garden radio', 'Copper evenings'][n], trackCount: 8, durationMs: 1584000, cover: `demo:music:${n}`, owner: 'Alex' })) });

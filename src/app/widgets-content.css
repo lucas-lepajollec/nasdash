@@ -1153,12 +1153,23 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-music-toprow { border-top: 1px solid var(--nd-card-border); }
 
 /* Music playback: round play buttons, controls, a clickable progress, playlists that open. */
-.ndw-music-play { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; padding: 0; border: 1px solid var(--nd-card-hover-border); border-radius: 50%; color: var(--nd-text); background: color-mix(in srgb, var(--nd-card-bg) 80%, transparent); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
-.ndw-music-play:hover, .ndw-music-play.is-on { color: var(--nd-bg); background: var(--nd-text); border-color: var(--nd-text); }
-.ndw-music-play.is-large { width: 40px; height: 40px; }
+/* Play buttons: a quiet round in rows, a solid one where music is shown large. No border, no geometry
+   change on hover, and their own layer, so the hover never shifts the button a fraction of a pixel
+   (which made it flicker under a cursor resting on its edge). */
+.ndw-music-play { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; padding: 0; border: none; border-radius: 50%; color: var(--nd-text-muted); background: color-mix(in srgb, var(--nd-text) 7%, transparent); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; transform: translateZ(0); backface-visibility: hidden; }
+.ndw-music-play:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 14%, transparent); }
+.ndw-music-play.is-on { color: var(--nd-accent); background: color-mix(in srgb, var(--nd-text) 10%, transparent); }
+.ndw-music-play.is-large { width: 42px; height: 42px; color: #0b0c0e; background: #fff; }
+.ndw-music-play.is-large:hover { background: rgb(255 255 255 / 0.88); }
+.ndw-music-play.is-large.is-on { color: #0b0c0e; }
+.ndw-music-play svg { pointer-events: none; }
+.ndw-music-cover-play .ndw-music-play.is-large { width: 38px; height: 38px; }
+.ndw-media-box:has(> .ndw-mx-stack > .ndw-music-search-toggle) { position: relative; }
+.ndw-music-search-toggle { position: absolute; top: 10px; right: 10px; z-index: 3; color: rgb(255 255 255 / 0.75); background: rgb(10 11 13 / 0.45); }
+.ndw-music-search-toggle:hover { color: #fff; background: rgb(10 11 13 / 0.7); }
 .ndw-music-play .nd-spinner { width: 12px; height: 12px; }
 .ndw-music-cover { position: relative; display: block; }
-.ndw-music-cover-play { position: absolute; right: 8px; bottom: 8px; opacity: 0; transition: opacity 0.15s ease; }
+.ndw-music-cover-play { position: absolute; right: 8px; bottom: 8px; opacity: 0; transition: opacity 0.15s ease; transform: translateZ(0); }
 .ndw-mx-rail-item:hover .ndw-music-cover-play, .ndw-music-cover-play:focus-within, .ndw-music-cover-play:has(.is-on) { opacity: 1; }
 @media (hover: none) { .ndw-music-cover-play { opacity: 1; } }
 .ndw-music-controls { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
