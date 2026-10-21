@@ -40,6 +40,9 @@ const LOGOS: Record<string, string> = {
   deluge: `${ICONS}/svg/deluge.svg`,
   sabnzbd: `${ICONS}/svg/sabnzbd.svg`,
   nzbget: `${ICONS}/svg/nzbget.svg`,
+  tmdb: `${ICONS}/svg/tmdb.svg`,
+  piwigo: `${ICONS}/svg/piwigo.svg`,
+  librephotos: `${ICONS}/png/librephotos.png`,
 };
 
 /** `bare`: the logo alone, without its tile (inside widgets). */

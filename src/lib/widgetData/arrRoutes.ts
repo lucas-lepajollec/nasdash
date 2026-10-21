@@ -3,9 +3,9 @@ import { collectExternal } from '@/integrations/catalog/collect';
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
 import { collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers } from '@/integrations/arr/collect';
-import { collectDownloadClient } from '@/integrations/downloads/collect';
+import { downloadStatus } from './downloadStatus';
 import type { IntegrationInstance } from '@/lib/types';
-import type { UpcomingResponse, ArrAppStatus, DownloadClientStatus, FollowUpItem, ImportedItem, IndexersResponse, QueueItem, SourceFailure, UpcomingItem } from './contracts';
+import type { UpcomingResponse, ArrAppStatus, FollowUpItem, ImportedItem, IndexersResponse, QueueItem, SourceFailure, UpcomingItem } from './contracts';
 import { TtlCache } from './cache';
 import { demoMediaUpcoming, proxyMediaItem } from './media';
 import { collectLibraryUpcoming } from './libraryUpcoming';
@@ -14,7 +14,7 @@ import { queryDraft, serviceFailure, serviceIdentity } from './services';
 import { librarySource, settingNumber, sourceTypes, upcomingKinds, upcomingSources, upcomingPhase, followUpPhase, externalSettings, validateIntegrationIds, widgetSources, type ArrWidgetType } from './arr';
 import { demoExternalUpcoming, demoArrQueue, demoArrRecent, demoArrStatus, demoArrUpcoming, demoDownloadClient, demoIndexers } from './arrDemo';
 const upcoming = new TtlCache<UpcomingItem[]>(300000), queue = new TtlCache<{ items: QueueItem[]; total: number }>(10000);
-const status = new TtlCache<ArrAppStatus>(60000), indexers = new TtlCache<IndexersResponse>(120000), downloads = new TtlCache<DownloadClientStatus>(3000);
+const status = new TtlCache<ArrAppStatus>(60000), indexers = new TtlCache<IndexersResponse>(120000);
 const recent = new TtlCache<ImportedItem[]>(60000), library = new TtlCache<FollowUpItem[]>(1800000);
 const headers = { 'Cache-Control': 'private, no-store' };
 async function sources<T>(instances: IntegrationInstance[], load: (instance: IntegrationInstance) => Promise<T>) {
@@ -97,8 +97,8 @@ export async function arrRoute(request: NextRequest, type: ArrWidgetType) {
       return NextResponse.json({ apps, fetchedAt }, { headers });
     }
     if (type === 'media-downloads') {
-      const result = await sources(instances, instance => demo ? Promise.resolve(demoDownloadClient(instance)) : downloads.get(serviceIdentity(instance), () => collectDownloadClient(instance)));
-      return NextResponse.json({ clients: result.values.map(({ value }) => ({ ...value, items: value.items.slice(0, items) })), failures: result.failures, fetchedAt }, { headers });
+      const result = await sources(instances, instance => demo ? Promise.resolve(demoDownloadClient(instance)) : downloadStatus(instance));
+      return NextResponse.json({ clients: result.values.map(({ value }) => ({ ...value, canControl: admin || demo, items: value.items.slice(0, items) })), failures: result.failures, fetchedAt }, { headers });
     }
     const result = await sources(instances, instance => demo ? Promise.resolve(demoArrQueue(instance)) : queue.get(serviceIdentity(instance), () => collectArrQueue(instance)));
     const total = result.values.reduce((sum, { value }) => sum + value.total, 0);

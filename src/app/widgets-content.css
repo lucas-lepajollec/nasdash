@@ -629,12 +629,12 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 /* ---------- Drag and drop (edit mode, bookmarks library) ---------- */
 .is-sortable, .ndw-bookmark.is-draggable { cursor: grab; touch-action: none; }
 .is-sortable.is-dragging { position: relative; z-index: 2; opacity: 0.85; cursor: grabbing; }
-.ndw-bookmark.is-dragged, .ndc-bookmark-row.is-dragged { opacity: 0.35; }
+.ndw-bookmark.is-dragged, .ndc-bookmark-row.is-dragged { opacity: 0.3; outline: 1px dashed var(--nd-card-hover-border); outline-offset: -1px; border-radius: 8px; }
 /* Where a bookmark would land: a line before or after, a tint inside a folder. */
-.ndw-bookmark.is-drop-before, .ndc-bookmark-row.is-drop-before { box-shadow: inset 0 2px 0 var(--nd-accent); }
-.ndw-bookmark.is-drop-after, .ndc-bookmark-row.is-drop-after { box-shadow: inset 0 -2px 0 var(--nd-accent); }
-.ndw-bookmark-tiles .ndw-bookmark.is-drop-before, .ndw-bookmark-icons .ndw-bookmark.is-drop-before { box-shadow: inset 2px 0 0 var(--nd-accent); }
-.ndw-bookmark-tiles .ndw-bookmark.is-drop-after, .ndw-bookmark-icons .ndw-bookmark.is-drop-after { box-shadow: inset -2px 0 0 var(--nd-accent); }
+.ndw-bookmark.is-drop-before, .ndc-bookmark-row.is-drop-before { box-shadow: 0 -2px 0 var(--nd-accent); }
+.ndw-bookmark.is-drop-after, .ndc-bookmark-row.is-drop-after { box-shadow: 0 2px 0 var(--nd-accent); }
+.ndw-bookmark-tiles .ndw-bookmark.is-drop-before, .ndw-bookmark-icons .ndw-bookmark.is-drop-before { box-shadow: -3px 0 0 var(--nd-accent); }
+.ndw-bookmark-tiles .ndw-bookmark.is-drop-after, .ndw-bookmark-icons .ndw-bookmark.is-drop-after { box-shadow: 3px 0 0 var(--nd-accent); }
 .is-drop-inside { background: color-mix(in srgb, var(--nd-accent) 14%, transparent) !important; outline: 1px dashed var(--nd-accent); outline-offset: -1px; border-radius: 8px; }
 .ndw-bookmark-path .is-drop-inside { padding: 1px 4px; }
 .ndw-bookmark-overlay { border-radius: 8px; background: var(--nd-card-bg); border: 1px solid var(--nd-card-border); box-shadow: 0 10px 24px rgb(0 0 0 / 0.25); cursor: grabbing; }
@@ -733,7 +733,7 @@ a.ndw-media-title:hover { text-decoration: underline; }
 .ndw-media-poster {
   position: relative; display: block; flex-shrink: 0; aspect-ratio: 2 / 3; overflow: hidden; border-radius: 8px;
   background: linear-gradient(160deg, hsl(var(--ndw-hue, 220) 32% 30%), hsl(calc(var(--ndw-hue, 220) + 40) 36% 18%));
-  box-shadow: 0 6px 16px rgb(0 0 0 / 0.28), inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.28);
 }
 .ndw-media-poster.is-square { aspect-ratio: 1; }
 .ndw-media-poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s ease; }
@@ -989,7 +989,8 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-mx-shelves.is-medium { --ndw-shelf-h: 210px; --ndw-fan: 100px; }
 .ndw-mx-shelves.is-large { --ndw-shelf-h: 280px; --ndw-fan: 136px; }
 .ndw-mx-fan { position: absolute; top: calc(var(--ndw-shelf-h, 210px) * 0.08); right: 0; left: 0; z-index: -1; height: calc(var(--ndw-fan, 100px) * 1.5); }
-.ndw-mx-fan-set { position: absolute; inset: 0; display: flex; justify-content: center; opacity: 0; transition: opacity 1.2s ease; }
+.ndw-mx-fan-set { position: absolute; inset: 0; z-index: 1; display: flex; justify-content: center; opacity: 0; transition: opacity 1.2s ease; isolation: isolate; }
+.ndw-mx-fan-set.is-under { z-index: 0; }
 .ndw-mx-fan-set.is-loaded, .ndw-mx-fan-set.is-under { opacity: 1; }
 .ndw-mx-fan-set img { width: calc(var(--ndw-fan, 100px) * 0.86); aspect-ratio: 2 / 3; align-self: flex-start; border-radius: 6px; object-fit: cover; }
 .ndw-mx-fan-set img.is-0 { transform: rotate(-8deg) translateX(calc(var(--ndw-fan, 100px) * 0.4)); opacity: 0.8; }
@@ -1024,7 +1025,7 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-mx-tile-foot { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--nd-card-border); }
 .ndw-mx-stat { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .ndw-mx-stat-value { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.6rem; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
-.ndw-mx-stat-label { color: var(--nd-text-muted); font-size: 0.64rem; white-space: nowrap; }
+.ndw-mx-stat-label { color: var(--nd-text-muted); font-size: 0.64rem; line-height: 1.3; }
 .ndw-mx-stat.is-muted .ndw-mx-stat-value { color: var(--nd-text-dimmed); }
 .ndw-mx-stat.is-bad .ndw-mx-stat-value { color: var(--nd-red); }
 .ndw-mx-ring-figure { position: relative; display: inline-flex; flex-shrink: 0; }
@@ -1052,3 +1053,51 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-mx-hits > li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 7px 0; border-top: 1px solid var(--nd-card-border); }
 .ndw-mx-hits > li:first-child { border-top: none; }
 .ndw-mx-hits .ndw-media-row-text { flex: 1; }
+
+/* The art reaches a little past the rounded edge, so no fractional pixel of the base shows as a light rim;
+   posters inside these widgets carry no ring or shadow. */
+.ndw-mx-hero > .ndw-mx-backdrop:not(.is-blurred), .ndw-mx-shelf > .ndw-mx-backdrop:not(.is-blurred), .ndw-mx-thumb > .ndw-mx-backdrop:not(.is-blurred) { inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); }
+.ndw-mx-scrim { inset: -2px; }
+.ndw-media-box .ndw-mx-stack .ndw-media-poster, .ndw-mx-hero .ndw-media-poster { box-shadow: none; }
+
+/* A row of figures in equal columns, split by hairlines (indexers, queue). */
+.ndw-mx-statrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 14px 0; }
+.ndw-mx-statrow > .ndw-mx-stat { padding: 0 12px; border-left: 1px solid var(--nd-card-border); }
+.ndw-mx-statrow > .ndw-mx-stat:first-child { padding-left: 0; border-left: none; }
+.ndw-mx-stat-of { color: var(--nd-text-dimmed); font-size: 0.6em; font-weight: 500; }
+
+/* *arr status: media folders, health folded into a count, a row layout. */
+.ndw-mx-roots { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--nd-card-border); }
+.ndw-mx-root { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ndw-mx-root-head { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.ndw-mx-root-name { flex: 1; min-width: 0; overflow: hidden; color: var(--nd-text); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-mx-health { display: flex; flex-direction: column; gap: 8px; }
+.ndw-mx-health-toggle { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 0; border: none; color: var(--nd-text-muted); background: none; font: inherit; font-size: 0.68rem; cursor: pointer; }
+.ndw-mx-health-toggle.is-warn { color: var(--nd-yellow); }
+.ndw-mx-health-toggle.is-bad { color: var(--nd-red); }
+.ndw-mx-health-toggle svg { transition: transform 0.15s ease; }
+.ndw-mx-health-toggle svg.is-open { transform: rotate(180deg); }
+.ndw-mx-health-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.ndw-mx-health-list > li { padding: 7px 0; border-top: 1px solid var(--nd-card-border); color: var(--nd-text-muted); font-size: 0.68rem; line-height: 1.45; }
+.ndw-mx-health-list > li.is-error { color: var(--nd-red); }
+.ndw-mx-applist { display: flex; flex-direction: column; }
+.ndw-mx-approw { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-top: 1px solid var(--nd-card-border); }
+.ndw-mx-approw:first-child { border-top: none; padding-top: 0; }
+.ndw-mx-approw-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ndw-mx-approw-main > .ndw-mx-tile-name { flex: 0 1 auto; min-width: 70px; }
+.ndw-mx-approw-figures { display: flex; gap: 14px; flex: 1; min-width: 0; color: var(--nd-text-muted); font-size: 0.7rem; white-space: nowrap; }
+.ndw-mx-approw-figures b { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.9rem; font-weight: 600; }
+.ndw-mx-approw-figures .is-muted b { color: var(--nd-text-dimmed); }
+.ndw-mx-approw-figures .is-bad b { color: var(--nd-red); }
+
+/* Queue rows: progress under the title, share and time on the right. */
+.ndw-mx-queue { row-gap: 0; column-gap: 28px; }
+.ndw-mx-qitem { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 10px 0; border-top: 1px solid var(--nd-card-border); }
+.ndw-mx-queue > :first-child .ndw-mx-qitem, .ndw-mx-queue > .ndw-mx-qitem:first-child { border-top: none; }
+.ndw-mx-qitem-text { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.ndw-mx-qitem-text > .ndw-media-title { font-family: var(--font-geist), system-ui, sans-serif; font-weight: 600; }
+.ndw-mx-qitem-end { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; min-width: 56px; }
+.ndw-mx-qitem-share { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; }
+.ndw-mx-stat.is-warn .ndw-mx-stat-value { color: var(--nd-yellow); }
+
+.ndw-mx-dl-action { flex-shrink: 0; width: 26px; height: 26px; }

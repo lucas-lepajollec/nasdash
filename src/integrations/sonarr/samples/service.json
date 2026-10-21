@@ -103,13 +103,13 @@
   "missing": {
     "totalRecords": 12
   },
-  "disks": [
+  "roots": [
     {
-      "path": "/fictional/library",
+      "path": "/fictional/Movies",
       "freeSpace": 1200000000000
     },
     {
-      "path": "/fictional/backup",
+      "path": "/fictional/TV",
       "freeSpace": 800000000000
     }
   ],

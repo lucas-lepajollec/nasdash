@@ -29,10 +29,11 @@ const failed = new Set<string>();
  * A title in large over its art: the backdrop, a scrim from the reading side,
  * the poster and the text. `children` is the text column.
  */
-export function Hero({ backdrop, poster, children, href, size = 'large' }: { backdrop?: string; poster?: React.ReactNode; children: React.ReactNode; href?: string; size?: 'large' | 'medium' }) {
+/** `blurred`: the art is a poster standing in for a missing backdrop, shown as a soft blur. */
+export function Hero({ backdrop, poster, children, href, size = 'large', blurred }: { backdrop?: string; poster?: React.ReactNode; children: React.ReactNode; href?: string; size?: 'large' | 'medium'; blurred?: boolean }) {
   const body = (
     <>
-      <Backdrop src={backdrop} />
+      <Backdrop src={backdrop} blur={blurred} />
       <span className="ndw-mx-scrim" aria-hidden="true" />
       <span className="ndw-mx-hero-body">
         {poster}
@@ -107,7 +108,7 @@ export function Bars({ values, height = 32 }: { values: number[]; height?: numbe
 }
 
 /** A figure over its label (tiles and summaries). */
-export function Stat({ value, label, tone }: { value: React.ReactNode; label: string; tone?: 'muted' | 'bad' | 'warn' }) {
+export function Stat({ value, label, tone }: { value: React.ReactNode; label: React.ReactNode; tone?: 'muted' | 'bad' | 'warn' }) {
   return (
     <span className={`ndw-mx-stat ${tone ? `is-${tone}` : ''}`}>
       <span className="ndw-mx-stat-value">{value}</span>

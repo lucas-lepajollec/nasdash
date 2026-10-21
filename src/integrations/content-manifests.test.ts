@@ -6,7 +6,7 @@ import { MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widg
 import type { DashboardConfig } from '@/lib/types';
 
 describe('saved content service connections', () => {
-  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex', ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
+  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'piwigo', 'librephotos', 'customapi', 'jellyfin', 'emby', 'plex', ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
     const manifest = getServiceIntegration(type)!;
     expect(SERVICE_INTEGRATIONS).toContain(manifest);
     const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : field.kind === 'select' ? field.options![0].value : 'fictional']));

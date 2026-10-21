@@ -1,5 +1,5 @@
 import type { IntegrationInstance } from '@/lib/types';
-import { array, number, object, string, serviceBytes, assertStatus, serviceIdentity, ServiceError } from '@/lib/widgetData/services';
+import { array, number, object, string, serviceBytes, assertStatus, serviceIdentity, ServiceError, type ServiceOptions } from '@/lib/widgetData/services';
 import { clientStatus, completedItems, optionalBytes, parseJson, percent, responseCookie, seconds, type DownloadState } from '../downloads/shared';
 interface Session { cookie: string; expires: number }
 const sessions = new Map<string, Session>(), logins = new Map<string, Promise<Session>>();
@@ -21,17 +21,17 @@ async function login(instance: IntegrationInstance): Promise<Session> {
   logins.set(key, request);
   try { return await request; } finally { logins.delete(key); }
 }
-async function qbittorrentResponse(instance: IntegrationInstance, path: string) {
+export async function qbittorrentResponse(instance: IntegrationInstance, path: string, options: ServiceOptions = {}) {
   if (instance.settings.auth === 'apikey') {
     // An API key replaces the cookie login (qBittorrent 5.2+).
-    const answer = await serviceBytes(instance, path, { headers: { Authorization: `Bearer ${instance.secrets?.apiKey ?? ''}` } }, 2 * 1024 * 1024);
+    const answer = await serviceBytes(instance, path, { ...options, headers: { ...options.headers, Authorization: `Bearer ${instance.secrets?.apiKey ?? ''}` } }, 2 * 1024 * 1024);
     if (answer.status === 401 || answer.status === 403) throw new ServiceError('integrations.error.authentication');
     assertStatus(answer.status);
     return answer;
   }
   const session = await login(instance);
   const send = async (cookie: string) => {
-    const answer = await serviceBytes(instance, path, { headers: { Cookie: cookie } }, 2 * 1024 * 1024);
+    const answer = await serviceBytes(instance, path, { ...options, headers: { ...options.headers, Cookie: cookie } }, 2 * 1024 * 1024);
     assertStatus(answer.status);
     return answer;
   };
@@ -57,9 +57,11 @@ export function qbittorrentState(value: unknown): DownloadState {
 }
 export function toQbittorrent(instance: IntegrationInstance, transfer: unknown, mode: unknown, torrents: unknown, sync?: unknown) {
   if (!Array.isArray(torrents) || typeof object(transfer).dl_info_speed !== 'number') throw new ServiceError('widgets.error.parse');
-  const info = object(transfer), free = object(object(sync).server_state).free_space_on_disk;
+  const info = object(transfer), server = object(object(sync).server_state), free = server.free_space_on_disk;
+  const paused = server.session_state ?? info.session_state;
   return clientStatus(instance, array(torrents).map(raw => { const item = object(raw); return { id: string(item.hash), name: string(item.name), progress: percent(number(item.progress) * 100), state: qbittorrentState(item.state), downloadBps: number(item.dlspeed), etaMs: seconds(item.eta), sizeBytes: number(item.size) }; }),
     { downloadBps: number(info.dl_info_speed), uploadBps: number(info.up_info_speed), downloadLimitBps: number(info.dl_rate_limit), uploadLimitBps: number(info.up_rate_limit), altSpeed: mode === 1 || mode === true, ...(typeof free === 'number' ? { freeBytes: number(free) } : {}),
+      ...(typeof paused === 'boolean' ? { clientPaused: paused } : {}),
       sessionDownloaded: optionalBytes(info.dl_info_data), sessionUploaded: optionalBytes(info.up_info_data),
       completed: completedItems(array(torrents).map(object).filter(item => number(item.completion_on) > 0).map(item => ({ id: string(item.hash), name: string(item.name), sizeBytes: optionalBytes(item.size), at: number(item.completion_on) * 1000 }))) });
 }

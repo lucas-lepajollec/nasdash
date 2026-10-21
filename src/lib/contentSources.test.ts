@@ -113,17 +113,17 @@ describe('content widget sources (Settings → Widgets)', () => {
     expect(widgetSymbols({ symbolIds: ['y', 'x'] }, config)).toEqual(['BBB', 'AAA']);
     expect(widgetSymbols({ symbolIds: [] }, config)).toEqual([]);
   });
-  it('keeps feed addresses and service connection addresses server-side for visitors', () => {
+  it.each(['pihole', 'immich', 'photoprism', 'piwigo', 'librephotos'])('keeps feed addresses and %s connection addresses server-side for visitors', type => {
     const config = { version: 1, categories: [], localEvents: [], settings: {
       title: 'Fictional', showMonitor: true,
       rssFeeds: [{ id: 'a', url: 'https://private.example/feed?token=fictional-capability', title: 'Private' }],
-    }, integrations: [{ id: 'pihole-a', type: 'pihole', name: 'Pi-hole', settings: { url: 'http://dns.fictional.lan' }, secrets: {} }] } as DashboardConfig;
+    }, integrations: [{ id: 'service-a', type, name: 'Fictional library', settings: { url: 'http://dns.fictional.lan' }, secrets: {} }] } as DashboardConfig;
     const viewer: AccessPrincipal = { username: 'reader', role: 'viewer', allowedTabs: [], allowedWidgets: [], isAnonymous: false };
     const output = buildConfigForPrincipal(config, viewer);
     expect(JSON.stringify(output)).not.toContain('fictional-capability');
     expect(JSON.stringify(output)).not.toContain('dns.fictional.lan');
     expect(output.settings.rssFeeds).toEqual([{ id: 'a', url: '', title: 'Private' }]);
-    expect(output.integrations?.[0]).toMatchObject({ id: 'pihole-a', type: 'pihole', name: 'Pi-hole', settings: {} });
+    expect(output.integrations?.[0]).toMatchObject({ id: 'service-a', type, name: 'Fictional library', settings: {} });
     expect(buildConfigForPrincipal(config, { ...viewer, role: 'admin' }).settings.rssFeeds?.[0].url).toContain('fictional-capability');
   });
 });

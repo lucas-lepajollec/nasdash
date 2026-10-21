@@ -4,11 +4,11 @@ import React from 'react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { LIBRARY_ARR_TYPES, type ImportedItem, type QueueItem, type QueueResponse } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
-import { CalmeRow, CalmeSlider } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, Pager, useBoxWidth, usePage, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { MediaPoster } from '@/components/widgets/media/shared';
-import { Figure, Track } from '@/components/widgets/media/visual';
+import { Stat, Track } from '@/components/widgets/media/visual';
 import { ArrSetup, chosenSources, FailuresNote, SourcesField, useByteFormat, useConnections, useEta } from '@/components/widgets/media/arr';
 
 const PROBLEMS = new Set<QueueItem['status']>(['warning', 'failed']);
@@ -22,9 +22,10 @@ function useCode() {
 }
 
 /**
- * What Sonarr, Radarr and Lidarr are fetching: how many, what is left, then
- * each title with its progress and state (a warning says why). An empty
- * queue shows the last titles that arrived.
+ * What Sonarr, Radarr and Lidarr are fetching: each title with its
+ * progress and state (a warning says why), how much is left and when it
+ * should be done; above several, the total left. An empty queue shows the
+ * last titles that arrived.
  */
 export default function CalmeQueue({ widgetId, settings, editMode, isVisible, onUpdateSettings }: {
   widgetId: string; settings: WidgetSettings; editMode: boolean; isVisible: boolean; onUpdateSettings: (settings: WidgetSettings) => void;
@@ -36,6 +37,8 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
   const [box, width] = useBoxWidth<HTMLDivElement>();
   const title = t('widget.media-queue.name');
   const items = data?.items ?? [];
+  const page = usePage(items, bounded(settings.perPage, 1, 30, 8));
+  const columns = columnsOf(settings, width, 340);
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={<FailuresNote failures={data?.failures} />}>
@@ -44,8 +47,14 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
           {(draft, change) => (
             <>
               <SourcesField connections={connections} draft={draft} change={change} />
-              <CalmeRow label={t('widgets.arr.count')}>
-                <CalmeSlider label={t('widgets.arr.count')} value={bounded(draft.count, 3, 50, 10)} min={3} max={50} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
+              <CalmeRow label={t('widgets.arr.perPage')}>
+                <CalmeSlider label={t('widgets.arr.perPage')} value={bounded(draft.perPage, 1, 30, 8)} min={1} max={30} step={1} onChange={value => change({ perPage: value })} onCommit={value => change({ perPage: value })} format={String} />
+              </CalmeRow>
+              <CalmeRow label={t('widgets.arr.queue.summary')}>
+                <CalmeSwitch label={t('widgets.arr.queue.summary')} checked={draft.summary !== false} onChange={on => change({ summary: on ? null : false })} />
+              </CalmeRow>
+              <CalmeRow label={t('widgets.arr.queue.history')} info={t('widgets.arr.queue.historyHint')}>
+                <CalmeSwitch label={t('widgets.arr.queue.history')} checked={draft.history !== false} onChange={on => change({ history: on ? null : false })} />
               </CalmeRow>
               <ColumnsSetting draft={draft} change={change} />
             </>
@@ -56,11 +65,12 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
         {!connections.length ? <ArrSetup kind="arr" />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true">{[0, 1, 2].map(row => <span key={row} className="ndw-skeleton-row" />)}</div>
-              : items.length === 0 ? <Arrived recent={data.recent ?? []} width={width} columns={columnsOf(settings, width, 320)} />
+              : items.length === 0 ? <Arrived recent={settings.history === false ? [] : data.recent ?? []} width={width} columns={columns} />
                 : (
                   <div className="ndw-mx-stack">
-                    <Summary items={items} total={data.total} />
-                    <ColumnRows columns={columnsOf(settings, width, 320)}>{items.map(item => <QueueRow key={item.id} item={item} />)}</ColumnRows>
+                    {settings.summary !== false && items.length > 1 && <Summary items={items} total={data.total} />}
+                    <ColumnRows columns={columns} className="ndw-mx-queue">{page.visible.map(item => <QueueRow key={item.id} item={item} />)}</ColumnRows>
+                    <Pager page={page.page} pages={page.pages} onChange={page.setPage} />
                   </div>
                 )}
       </div>
@@ -68,7 +78,7 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
   );
 }
 
-/** How many, what is left and how long; problems counted apart. */
+/** Several titles: how many, what is left and how long; problems counted apart. */
 function Summary({ items, total }: { items: QueueItem[]; total: number }) {
   const { t } = useI18n();
   const bytes = useByteFormat();
@@ -77,37 +87,35 @@ function Summary({ items, total }: { items: QueueItem[]; total: number }) {
   const longest = Math.max(0, ...items.filter(item => item.status === 'downloading').map(item => item.etaMs ?? 0));
   const problems = items.filter(item => PROBLEMS.has(item.status)).length;
   return (
-    <div className="ndw-mx-summary">
-      <Figure value={total} unit={t('widgets.arr.inProgress', { count: total })} />
-      <span className="ndw-mx-summary-text">
-        {[left ? t('widgets.arr.left', { size: bytes.size(left) }) : '', longest ? `≈ ${eta(longest)}` : ''].filter(Boolean).join(' · ')}
-        {problems > 0 && <span className="ndw-mx-warn">{t('widgets.arr.toCheck', { count: problems })}</span>}
-      </span>
+    <div className="ndw-mx-statrow">
+      <Stat value={total} label={t('widgets.arr.inProgress', { count: total })} />
+      {left > 0 && <Stat value={bytes.size(left)} label={t('widgets.arr.queue.left')} />}
+      {longest > 0 && <Stat value={eta(longest)} label={t('widgets.arr.queue.until')} />}
+      {problems > 0 && <Stat value={problems} label={t('widgets.arr.toCheck', { count: problems })} tone="warn" />}
     </div>
   );
 }
 
+/** Poster, title and its line; the progress beneath; the share and time left on the right. */
 function QueueRow({ item }: { item: QueueItem }) {
   const { t } = useI18n();
   const bytes = useByteFormat();
   const eta = useEta();
   const code = useCode();
   const problem = PROBLEMS.has(item.status);
+  const done = item.status === 'importing' || item.status === 'completed';
   const sub = problem && item.message ? item.message : [code(item), item.kind === 'album' ? item.subtitle : '', item.quality, item.sizeBytes ? bytes.size(item.sizeBytes) : ''].filter(Boolean).join(' · ');
-  const end = item.status === 'downloading' ? [`${Math.round(item.progress)} %`, eta(item.etaMs)].filter(Boolean).join(' · ') : item.status === 'importing' || item.status === 'completed' ? t('widgets.arr.done') : `${Math.round(item.progress)} %`;
   return (
-    <div className="ndw-mx-qrow" title={item.message || undefined}>
-      <MediaPoster item={posterOf(item)} width={40} />
-      <span className="ndw-mx-qrow-text">
-        <span className="ndw-mx-qrow-head">
-          <span className="ndw-media-title">{item.kind === 'episode' && item.subtitle ? item.subtitle : item.title}</span>
-          <span className={`ndw-mx-state ${problem ? 'is-warn' : item.status === 'importing' ? 'is-done' : ''}`}>{t(`widgets.arr.status.${item.status}`)}</span>
-        </span>
-        <Track value={item.progress} tone={problem ? 'warn' : item.status === 'importing' || item.status === 'completed' ? 'done' : item.status === 'paused' || item.status === 'queued' ? 'muted' : undefined} />
-        <span className="ndw-mx-qrow-foot">
-          <span className={`ndw-media-sub ${problem ? 'ndw-mx-warn' : ''}`}>{sub}</span>
-          <span className="ndw-media-time">{end}</span>
-        </span>
+    <div className="ndw-mx-qitem" title={item.message || undefined}>
+      <MediaPoster item={posterOf(item)} width={42} />
+      <span className="ndw-mx-qitem-text">
+        <span className="ndw-media-title">{item.kind === 'episode' && item.subtitle ? item.subtitle : item.title}</span>
+        <span className={`ndw-media-sub ${problem ? 'ndw-mx-warn' : ''}`}>{sub}</span>
+        <Track thin value={item.progress} tone={problem ? 'warn' : done ? 'done' : item.status === 'paused' || item.status === 'queued' ? 'muted' : undefined} />
+      </span>
+      <span className="ndw-mx-qitem-end">
+        <span className="ndw-mx-qitem-share">{done ? t('widgets.arr.done') : t('widgets.arr.percent', { value: Math.round(item.progress) })}</span>
+        <span className={`ndw-mx-state ${problem ? 'is-warn' : ''}`}>{item.status === 'downloading' && item.etaMs ? eta(item.etaMs) : t(`widgets.arr.status.${item.status}`)}</span>
       </span>
     </div>
   );

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Pause, Play } from 'lucide-react';
+import { demoFetch } from '@/lib/demoTransport';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { DOWNLOAD_CLIENT_TYPES, type DownloadClientStatus, type DownloadsResponse } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -33,6 +34,19 @@ export default function CalmeDownloads({ widgetId, settings, editMode, isVisible
   const title = t('widget.media-downloads.name');
   const clients = data?.clients ?? [];
   const client = clients.find(item => item.id === chosen) ?? clients[0];
+  // Pause or resume a download (or the whole client), then show the client's answer at once.
+  const [busy, setBusy] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const act = async (clientId: string, action: 'pause' | 'resume', itemId?: string) => {
+    setBusy(itemId ?? clientId); setFailed(null);
+    try {
+      const response = await demoFetch('/api/widgets/downloads/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ widgetId, clientId, action, ...(itemId ? { itemId } : {}) }) });
+      const answer = await response.json().catch(() => null) as (DownloadClientStatus & { error?: string }) | null;
+      if (!response.ok || !answer) throw new Error(answer?.error ?? 'widgets.error.network');
+      if (data) void mutate({ ...data, clients: data.clients.map(item => item.id === clientId ? answer : item) }, { revalidate: false });
+    } catch (cause) { setFailed(cause instanceof Error && cause.message.startsWith('widgets.') ? cause.message : 'widgets.error.network'); }
+    finally { setBusy(null); }
+  };
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={<FailuresNote failures={data?.failures} />}>
@@ -64,8 +78,15 @@ export default function CalmeDownloads({ widgetId, settings, editMode, isVisible
                       {clients.length > 1
                         ? <CalmeSegmented label={t('widgets.arr.client')} value={client.id} options={clients.map(item => ({ value: item.id, label: item.name }))} onChange={setChosen} />
                         : <span className="ndw-mx-meta is-quiet">{state(client, t)}</span>}
+                      {client.canControl && (
+                        <button type="button" className="ndc-icon-button" disabled={busy !== null} onClick={() => void act(client.id, client.clientPaused ? 'resume' : 'pause')}
+                          aria-label={t(client.clientPaused ? 'widgets.arr.resumeAll' : 'widgets.arr.pauseAll')} title={t(client.clientPaused ? 'widgets.arr.resumeAll' : 'widgets.arr.pauseAll')}>
+                          {client.clientPaused ? <Play size={13} /> : <Pause size={13} />}
+                        </button>
+                      )}
                     </header>
-                    <Client client={client} samples={history[client.id] ?? []} chart={settings.chart !== false} count={bounded(settings.items, 0, 10, 5)} />
+                    {failed && <p className="ndw-note ndw-down">{t(failed)}</p>}
+                    <Client client={client} samples={history[client.id] ?? []} chart={settings.chart !== false} count={bounded(settings.items, 0, 10, 5)} busy={busy} onAct={(action, itemId) => void act(client.id, action, itemId)} />
                   </div>
                 )}
       </div>
@@ -87,7 +108,7 @@ function useSpeedHistory(data: DownloadsResponse | undefined): Record<string, [n
   return store.history;
 }
 
-function Client({ client, samples, chart, count }: { client: DownloadClientStatus; samples: [number, number][]; chart: boolean; count: number }) {
+function Client({ client, samples, chart, count, busy, onAct }: { client: DownloadClientStatus; samples: [number, number][]; chart: boolean; count: number; busy: string | null; onAct: (action: 'pause' | 'resume', itemId: string) => void }) {
   const { t } = useI18n();
   const bytes = useByteFormat();
   const eta = useEta();
@@ -140,6 +161,12 @@ function Client({ client, samples, chart, count }: { client: DownloadClientStatu
                 <span className="ndw-media-sub">{[item.sizeBytes ? bytes.size(item.sizeBytes) : '', item.downloadBps ? `${bytes.speed(item.downloadBps).value} ${bytes.speed(item.downloadBps).unit}` : '', `${Math.round(item.progress)} %`].filter(Boolean).join(' · ')}</span>
               </span>
               <span className="ndw-media-time">{item.state === 'downloading' ? eta(item.etaMs) : t(`widgets.arr.state.${item.state}`)}</span>
+              {client.canControl && (
+                <button type="button" className="ndc-icon-button ndw-mx-dl-action" disabled={busy !== null} onClick={() => onAct(item.state === 'paused' ? 'resume' : 'pause', item.id)}
+                  aria-label={t(item.state === 'paused' ? 'widgets.arr.resumeOne' : 'widgets.arr.pauseOne', { name: item.name })} title={t(item.state === 'paused' ? 'widgets.arr.resumeOne' : 'widgets.arr.pauseOne', { name: item.name })}>
+                  {busy === item.id ? <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" /> : item.state === 'paused' ? <Play size={12} /> : <Pause size={12} />}
+                </button>
+              )}
             </li>
           ))}
         </ul>

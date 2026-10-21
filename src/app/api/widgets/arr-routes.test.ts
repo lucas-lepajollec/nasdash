@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import type { DashboardConfig, IntegrationInstance } from '@/lib/types';
 import type { Page, PagesDocument, WidgetSettings } from '@/lib/pages/types';
 import type { AccessPrincipal } from '@/lib/access';
@@ -7,6 +7,11 @@ import { ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 import sonarr from '@/integrations/sonarr/samples/service.json';
 import radarr from '@/integrations/radarr/samples/service.json';
 const state = vi.hoisted(() => ({ demo: false, admin: true, authenticated: true, instances: [] as IntegrationInstance[], pages: [] as Page[], allowedTabs: [] as string[], allowedWidgets: [] as string[] }));
+vi.mock('@/lib/auth', async original => {
+  const auth = await original<typeof import('@/lib/auth')>();
+  return { ...auth, checkAdmin: (request: NextRequest) => auth.verifyCsrf(request) && (state.admin || state.demo) ? null : NextResponse.json({ error: 'denied' }, { status: 401 }) };
+});
+vi.mock('@/integrations/downloads/action', async original => ({ ...await original<typeof import('@/integrations/downloads/action')>(), controlDownloadClient: vi.fn() }));
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
@@ -23,6 +28,8 @@ import { GET as queueGet } from './arr/queue/route';
 import { GET as statusGet } from './arr/status/route';
 import { GET as indexersGet } from './arr/indexers/route';
 import { GET as downloadsGet } from './downloads/route';
+import { POST as downloadAction } from './downloads/action/route';
+import { controlDownloadClient } from '@/integrations/downloads/action';
 import { GET as imageGet } from './media/image/route';
 import { collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers, toArrUpcoming, toArrQueue } from '@/integrations/arr/collect';
 import { collectLibraryUpcoming } from '@/lib/widgetData/libraryUpcoming';
@@ -354,5 +361,114 @@ describe('admin catalogue search route', () => {
   it('returns fictional demo hits without contacting any catalogue', async () => {
     state.demo = true; const response = await catalogGet(search('q=cloud&kinds=movie'));
     expect(await response.json()).toMatchObject([{ title: 'The Clockwork Aurora', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
+  });
+});
+
+describe('download control route', () => {
+  const post = (body: unknown, headers: Record<string, string> = {}) => downloadAction(new NextRequest('https://nasdash.example.com/api/widgets/downloads/action', { method: 'POST', headers: { origin: 'https://nasdash.example.com', 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) }));
+  const body = (extra: Record<string, unknown> = {}) => ({ widgetId: 'w', clientId: state.instances[3].id, action: 'pause', ...extra });
+  beforeEach(() => { widget().type = 'media-downloads'; });
+  it.each(DOWNLOAD_CLIENT_TYPES)('sets %s control permission per caller after the shared GET cache', async type => {
+    state.instances = [source(type)];
+    expect((await (await downloadsGet(get())).json()).clients[0].canControl).toBe(true);
+    state.admin = false;
+    expect((await (await downloadsGet(get())).json()).clients[0].canControl).toBe(false);
+    state.demo = true;
+    expect((await (await downloadsGet(get())).json()).clients[0].canControl).toBe(true);
+  });
+  it('denies viewers and unauthenticated callers with 403, even for a public widget', async () => {
+    state.admin = false;
+    expect((await post(body())).status).toBe(403);
+    state.authenticated = false;
+    expect((await post(body())).status).toBe(403);
+    expect(controlDownloadClient).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled();
+  });
+  it('rejects foreign origins and cross-site requests, including in demo mode', async () => {
+    for (const demo of [false, true]) {
+      state.demo = demo;
+      expect((await post(body(), { origin: 'https://foreign.example.com', host: 'nasdash.example.com' })).status).toBe(403);
+      expect((await post(body(), { 'sec-fetch-site': 'cross-site' })).status).toBe(403);
+    }
+    expect(controlDownloadClient).not.toHaveBeenCalled();
+  });
+  it.each([
+    { action: 'delete' }, { action: 1 }, { clientId: '' }, { clientId: '../private' }, { widgetId: null }, { widgetId: '!' },
+    { itemId: '' }, { itemId: 1 }, { itemId: 'all' }, { itemId: 'f'.repeat(39) }, { itemId: 'g'.repeat(40) },
+  ])('validates request %j before any network', async extra => {
+    expect((await post(body(extra))).status).toBe(400);
+    expect(controlDownloadClient).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled();
+  });
+  it('bounds JSON bodies and refuses invalid JSON and non-object bodies', async () => {
+    for (const raw of ['{invalid', '[]', 'null', JSON.stringify({ huge: 'x'.repeat(17000) })]) {
+      const request = new NextRequest('https://nasdash.example.com/api/widgets/downloads/action', { method: 'POST', headers: { origin: 'https://nasdash.example.com' }, body: raw });
+      expect((await downloadAction(request)).status).toBe(400);
+    }
+    expect(controlDownloadClient).not.toHaveBeenCalled();
+  });
+  it('requires a saved downloads widget and exact source membership, ignoring injected drafts', async () => {
+    expect((await post(body({ widgetId: 'missing' }))).status).toBe(404);
+    widget().type = 'media-upcoming'; expect((await post(body())).status).toBe(404);
+    widget().type = 'media-downloads'; widget().settings.integrationIds = [state.instances[4].id];
+    expect((await post(body({ draft: { integrationIds: [state.instances[3].id] } }))).status).toBe(404);
+    expect((await post(body({ clientId: state.instances[0].id }))).status).toBe(404);
+    expect(controlDownloadClient).not.toHaveBeenCalled();
+  });
+  it.each(DOWNLOAD_CLIENT_TYPES)('validates %s native ids, dispatches and returns fresh status with control', async type => {
+    const instance = source(type); state.instances = [instance];
+    widget().settings = { integrationIds: null };
+    const itemId = type === 'qbittorrent' || type === 'deluge' ? 'a'.repeat(40) : type === 'sabnzbd' ? 'SABnzbd_71' : '71';
+    const request = { widgetId: 'w', clientId: instance.id, action: 'pause', itemId };
+    expect((await post({ ...request, itemId: '../private' })).status).toBe(400);
+    const response = await post(request);
+    expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(await response.json()).toMatchObject({ id: instance.id, canControl: true });
+    expect(controlDownloadClient).toHaveBeenCalledWith(instance, 'pause', itemId);
+    expect(collectDownloadClient).toHaveBeenCalledTimes(1);
+  });
+  it('invalidates the existing client cache while preserving other clients', async () => {
+    await downloadsGet(get()); expect(collectDownloadClient).toHaveBeenCalledTimes(2);
+    const fresh = { ...demoDownloadClient(state.instances[3]), downloadBps: 0, clientPaused: true };
+    vi.mocked(collectDownloadClient).mockResolvedValue(fresh);
+    expect(await (await post(body())).json()).toMatchObject({ downloadBps: 0, clientPaused: true });
+    expect(collectDownloadClient).toHaveBeenCalledTimes(3);
+    const clients = (await (await downloadsGet(get())).json()).clients;
+    expect(clients.find((client: { id: string }) => client.id === fresh.id)).toMatchObject({ downloadBps: 0 });
+    expect(collectDownloadClient).toHaveBeenCalledTimes(3);
+  });
+  it('does not allow a GET started before the action to restore old cached status', async () => {
+    state.instances = [state.instances[3]];
+    const instance = state.instances[0], stale = demoDownloadClient(instance), fresh = { ...stale, downloadBps: 0, clientPaused: true };
+    let release!: (value: typeof stale) => void;
+    vi.mocked(collectDownloadClient).mockImplementationOnce(() => new Promise(resolve => { release = resolve; })).mockResolvedValue(fresh);
+    const pendingGet = downloadsGet(get());
+    expect((await post({ widgetId: 'w', clientId: instance.id, action: 'pause' })).status).toBe(200);
+    release(stale); await pendingGet;
+    expect((await (await downloadsGet(get())).json()).clients[0]).toMatchObject({ downloadBps: 0, clientPaused: true });
+    expect(collectDownloadClient).toHaveBeenCalledTimes(2);
+  });
+  it('invalidates cached status on an ambiguous upstream failure and sanitizes its error', async () => {
+    state.instances = [state.instances[3]]; const instance = state.instances[0]; await downloadsGet(get());
+    vi.mocked(controlDownloadClient).mockRejectedValue(new Error('https://private.example.com?key=secret'));
+    const response = await post({ widgetId: 'w', clientId: instance.id, action: 'pause' });
+    expect(await response.json()).toEqual({ error: 'widgets.error.network' });
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    await downloadsGet(get()); expect(collectDownloadClient).toHaveBeenCalledTimes(2);
+  });
+  it.each(DOWNLOAD_CLIENT_TYPES)('simulates %s item and client actions in demo mode and keeps GET in sync without network', async type => {
+    state.demo = true; state.admin = false; const instance = source(type); state.instances = [instance];
+    const status = demoDownloadClient(instance), itemId = status.items[0].id;
+    const missingId = type === 'qbittorrent' || type === 'deluge' ? 'f'.repeat(40) : type === 'sabnzbd' ? 'SABnzbd_missing' : '999';
+    expect((await post({ widgetId: 'w', clientId: instance.id, action: 'pause', itemId: missingId })).status).toBe(404);
+    const request = { widgetId: 'w', clientId: instance.id, action: 'pause', itemId };
+    let response = await post(request); expect(response.status).toBe(200);
+    expect((await response.json()).items[0]).toMatchObject({ id: itemId, state: 'paused' });
+    expect((await (await downloadsGet(get())).json()).clients[0].items[0].state).toBe('paused');
+    response = await post({ ...request, action: 'resume' }); expect((await response.json()).items[0].state).toBe('downloading');
+    response = await post({ ...request, itemId: undefined }); const paused = await response.json();
+    expect(paused.downloadBps).toBe(0); expect(paused.items.every((item: { state: string }) => item.state === 'paused')).toBe(true);
+    if (['qbittorrent', 'sabnzbd', 'nzbget'].includes(type)) expect(paused.clientPaused).toBe(true); else expect(paused.clientPaused).toBeUndefined();
+    response = await post({ ...request, action: 'resume', itemId: undefined }); const resumed = await response.json();
+    expect(resumed.items.every((item: { state: string }) => item.state !== 'paused')).toBe(true);
+    expect(controlDownloadClient).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
   });
 });

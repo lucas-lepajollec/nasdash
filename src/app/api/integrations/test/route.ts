@@ -24,10 +24,12 @@ import { technitiumRequest } from '@/integrations/technitium/collect';
 import { jellyfinHeaders, jellyfinPrefix } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { immichHeaders } from '@/integrations/immich/collect';
+import { piwigoRequest } from '@/integrations/piwigo/collect';
+import { librephotosRequest } from '@/integrations/librephotos/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
 import { customApiRequest } from '@/lib/widgetData/customApi';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +55,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if ((['tmdb', ...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
+  if ((['tmdb', ...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -100,6 +102,8 @@ export async function POST(request: NextRequest) {
       else if (type === 'deluge') { if (await delugeRequest(instance, 'web.connected') !== true) throw new ServiceError('widgets.error.network'); }
       else if (type === 'sabnzbd') { const result = await sabnzbdRequest(instance, 'version'); if (!result || typeof result !== 'object' || !('version' in result)) throw new ServiceError('integrations.error.authentication'); }
       else if (type === 'nzbget') await nzbgetRequest(instance, 'version');
+      else if (type === 'piwigo') await piwigoRequest(instance);
+      else if (type === 'librephotos') await librephotosRequest(instance, '/api/stats/');
       else if (type === 'customapi') await customApiRequest(instance);
       else await serviceJson(instance, '/api/v1/config', { headers: photoprismHeaders(instance) });
       return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: 1 });

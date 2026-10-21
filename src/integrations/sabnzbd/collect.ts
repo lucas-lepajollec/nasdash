@@ -3,8 +3,8 @@ import { array, object, string, ServiceError } from '@/lib/widgetData/services';
 import { clientJson, clientStatus, completedItems, numeric, optionalBytes, percent, type DownloadState } from '../downloads/shared';
 import { etaMs } from '../arr/collect';
 /** SABnzbd only supports query authentication; this URL is never returned or logged. */
-export function sabnzbdRequest(instance: IntegrationInstance, mode: 'queue' | 'version' | 'history' | 'server_stats') {
-  return clientJson(instance, `/api?${new URLSearchParams({ mode, output: 'json', apikey: instance.secrets?.apiKey ?? '', ...(mode === 'history' ? { limit: '5' } : {}) })}`);
+export function sabnzbdRequest(instance: IntegrationInstance, mode: 'queue' | 'version' | 'history' | 'server_stats' | 'pause' | 'resume', params: Record<string, string> = {}) {
+  return clientJson(instance, `/api?${new URLSearchParams({ ...params, mode, output: 'json', apikey: instance.secrets?.apiKey ?? '', ...(mode === 'history' ? { limit: '5' } : {}) })}`);
 }
 export function sabnzbdState(value: unknown): DownloadState {
   const state = string(value).toLowerCase();
@@ -21,7 +21,7 @@ export function toSabnzbd(instance: IntegrationInstance, value: unknown, stats?:
   const paused = queue.paused === true || queue.status === 'Paused';
   const slots = object(object(history).history).slots;
   return clientStatus(instance, array(queue.slots).map(raw => { const item = object(raw); return { id: string(item.nzo_id), name: string(item.filename), progress: percent(item.percentage), state: paused ? 'paused' : sabnzbdState(item.status), etaMs: etaMs(item.timeleft), sizeBytes: numeric(item.mb) * 1048576 }; }),
-    { downloadBps: numeric(queue.kbpersec) * 1024, sessionDownloaded: optionalBytes(object(stats).day),
+    { ...(typeof queue.paused === 'boolean' ? { clientPaused: queue.paused } : {}), downloadBps: numeric(queue.kbpersec) * 1024, sessionDownloaded: optionalBytes(object(stats).day),
       ...(Array.isArray(slots) ? { completed: completedItems(slots.map(object).filter(item => item.status === 'Completed').map(item => ({ id: string(item.nzo_id), name: string(item.name), sizeBytes: optionalBytes(item.bytes ?? item.downloaded), ...(numeric(item.completed) > 0 ? { at: numeric(item.completed) * 1000 } : {}) }))) } : {}),
       ...(queue.diskspace1 !== undefined ? { freeBytes: numeric(queue.diskspace1) * 1073741824 } : {}) });
 }

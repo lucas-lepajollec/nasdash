@@ -45,9 +45,11 @@ export function toArrUpcoming(instance: IntegrationInstance, value: unknown, sta
       subtitle: string(parent.title) || string(parent.artistName) || undefined,
       ...(instance.type === 'sonarr' ? { season: number(item.seasonNumber), episode: number(item.episodeNumber) } : {}),
       at, ...(release ? { release: release.release } : {}), hasFile: item.hasFile === true || number(object(item.statistics).trackFileCount) > 0,
-      ...art(instance, item, parent), ...(slug !== undefined ? { link: serviceUrl(instance, `/${segment}/${encodeURIComponent(String(slug))}`) } : {}) }];
+      ...withLocalPoster(instance, art(instance, item, parent), instance.type === 'sonarr' ? item.seriesId ?? parent.id : item.id), ...(slug !== undefined ? { link: serviceUrl(instance, `/${segment}/${encodeURIComponent(String(slug))}`) } : {}) }];
   });
 }
+/** Calendars often carry only remote artwork: the *arr's own cover stands in for a missing poster. */
+const withLocalPoster = (instance: IntegrationInstance, images: { poster?: string; backdrop?: string }, id: unknown) => ({ ...images, poster: images.poster ?? localCover(instance, id) });
 export async function collectArrUpcoming(instance: IntegrationInstance, start: number, end: number): Promise<UpcomingItem[]> {
   const query = new URLSearchParams({ start: new Date(start).toISOString(), end: new Date(end).toISOString() });
   if (instance.type === 'sonarr') query.set('includeSeries', 'true');
@@ -88,7 +90,7 @@ export function toArrQueue(instance: IntegrationInstance, value: unknown): { ite
       progress: size ? Math.min(100, Math.max(0, 100 * (size - left) / size)) : 0, status: queueStatus(item), message: safeArrMessage(message), sizeBytes: size, leftBytes: left,
       etaMs: etaMs(item.timeleft, item.estimatedCompletionTime), quality: string(object(object(item.quality).quality).name) || undefined,
       ...(item.protocol === 'torrent' || item.protocol === 'usenet' ? { protocol: item.protocol } : {}), client: string(item.downloadClient) || undefined,
-      poster: art(instance, media, parent).poster };
+      poster: art(instance, media, parent).poster ?? localCover(instance, instance.type === 'sonarr' ? item.seriesId ?? parent.id : instance.type === 'radarr' ? item.movieId ?? media.id : item.albumId ?? media.id) };
   }) };
 }
 export async function collectArrQueue(instance: IntegrationInstance) {
@@ -101,9 +103,14 @@ const localCover = (instance: IntegrationInstance, id: unknown) => typeof id !==
   : instance.type === 'lidarr' ? `${arrPrefix(instance)}/mediacover/album/${id}/cover.jpg` : `${arrPrefix(instance)}/mediacover/${id}/poster.jpg`;
 export function toArrRecent(instance: IntegrationInstance, value: unknown): ImportedItem[] {
   const seen = new Map<string, ImportedItem>();
+  // Newest first: a file deleted after its import is not "arrived" any more.
+  const deleted = new Set<string>();
+  const fileKey = (item: Record<string, unknown>) => String(instance.type === 'sonarr' ? item.episodeId : instance.type === 'radarr' ? item.movieId : item.albumId);
   return list(object(value).records).map(object).sort((a, b) => (date(b.date) ?? 0) - (date(a.date) ?? 0)).flatMap(item => {
+    if (typeof item.eventType === 'string' && /FileDeleted$/i.test(item.eventType)) { deleted.add(fileKey(item)); return []; }
     // Paged APIs accept integer filters. Lidarr calls event 3 trackFileImported.
     if (![3, 'downloadFolderImported', 'trackFileImported'].includes(item.eventType as string | number)) return [];
+    if (deleted.has(fileKey(item))) return [];
     const at = date(item.date);
     if (at === undefined) return [];
     const media = object(instance.type === 'sonarr' ? item.episode : instance.type === 'radarr' ? item.movie : item.album), parent = object(instance.type === 'sonarr' ? item.series : item.artist);
@@ -121,7 +128,8 @@ export function toArrRecent(instance: IntegrationInstance, value: unknown): Impo
 }
 export async function collectArrRecent(instance: IntegrationInstance): Promise<ImportedItem[]> {
   const include = instance.type === 'sonarr' ? 'includeSeries=true&includeEpisode=true' : instance.type === 'radarr' ? 'includeMovie=true' : 'includeArtist=true&includeAlbum=true';
-  return toArrRecent(instance, await arrRequest(instance, `/history?page=1&pageSize=50&sortKey=date&sortDirection=descending&eventType=3&${include}`));
+  // Every event (not only imports), so deletions that followed an import are seen.
+  return toArrRecent(instance, await arrRequest(instance, `/history?page=1&pageSize=200&sortKey=date&sortDirection=descending&${include}`));
 }
 export function prowlarrActivity(history: unknown, now = Date.now()): Pick<IndexersResponse, 'hourly' | 'lastQueryAt'> {
   const hourly = Array<number>(24).fill(0), start = now - 86400000;
@@ -157,15 +165,24 @@ export async function collectProwlarrIndexers(instance: IntegrationInstance): Pr
 export async function collectArrStatus(instance: IntegrationInstance): Promise<ArrAppStatus> {
   const base = { id: instance.id, name: instance.name, type: instance.type as ArrType };
   try {
-    const paths = instance.type === 'prowlarr' ? ['/system/status', '/health', '/indexer', '/indexerstatus'] : ['/system/status', '/health', '/queue/status', '/wanted/missing?pageSize=1', '/diskspace'];
-    const [status, health, third, fourth, disks] = await Promise.all(paths.map(path => arrRequest(instance, path)));
+    const paths = instance.type === 'prowlarr' ? ['/system/status', '/health', '/indexer', '/indexerstatus'] : ['/system/status', '/health', '/queue/status', '/wanted/missing?pageSize=1', '/rootfolder'];
+    const [status, health, third, fourth, folders] = await Promise.all(paths.map(path => arrRequest(instance, path)));
     if (typeof object(status).version !== 'string') throw new ServiceError('widgets.error.parse');
     const common = { ...base, version: string(object(status).version), health: list(health).map(raw => { const item = object(raw); return { level: item.type === 'error' ? 'error' as const : 'warning' as const, message: safeArrMessage(item.message, 200) ?? '' }; }), online: true };
     if (instance.type === 'prowlarr') {
       const entries = toProwlarrIndexers(instance, third, fourth, {}).indexers;
       return { ...common, indexers: entries.filter(item => item.enabled).length, failingIndexers: entries.filter(item => !item.healthy).length };
     }
-    const free = list(disks).map(object).filter(item => typeof item.freeSpace === 'number').map(item => number(item.freeSpace));
-    return { ...common, queue: number(object(third).totalCount), missing: number(object(fourth).totalRecords), ...(free.length ? { freeBytes: Math.min(...free) } : {}) };
+    const seen = new Set<string>();
+    const roots = list(folders).map(object).flatMap(item => {
+      const name = string(item.path).split(/[\\/]+/).filter(Boolean).at(-1)?.slice(0, 60);
+      if (!name || name === '.' || name === '..' || /^[A-Za-z]:$/.test(name) || typeof item.freeSpace !== 'number' || !Number.isFinite(item.freeSpace) || item.freeSpace < 0) return [];
+      const totalBytes = typeof item.totalSpace === 'number' && Number.isFinite(item.totalSpace) && item.totalSpace >= 0 ? item.totalSpace : undefined;
+      const key = JSON.stringify([item.freeSpace, totalBytes]);
+      if (seen.has(key)) return [];
+      seen.add(key);
+      return [{ name, freeBytes: item.freeSpace, ...(totalBytes !== undefined ? { totalBytes } : {}) }];
+    });
+    return { ...common, queue: number(object(third).totalCount), missing: number(object(fourth).totalRecords), roots };
   } catch { return { ...base, health: [], online: false }; }
 }

@@ -197,6 +197,39 @@ export interface PhotosResponse {
   fetchedAt: number;
 }
 
+/**
+ * GET /api/widgets/photos/stats?widgetId=… (widget type `photos-stats`, settings `integrationId`, `showUsers`) —
+ * what a photo library holds. Every field is optional: each provider reports what it knows.
+ */
+export interface PhotoStatsResponse {
+  provider: PhotoStatsProvider;
+  name: string;
+  photos?: number;
+  videos?: number;
+  /** Photos and videos together, when the provider cannot split them (a key without statistics access). */
+  items?: number;
+  /** The key may not read the library's statistics: figures are partial. */
+  limited?: boolean;
+  albums?: number;
+  people?: number;
+  places?: number;
+  favorites?: number;
+  /** Space the library's files take. */
+  libraryBytes?: number;
+  /** The disk holding the library, when the provider reports it. */
+  disk?: { usedBytes: number; totalBytes: number };
+  /** Photos and videos per year taken, oldest first (≤ 20 years). */
+  byYear?: { year: number; count: number }[];
+  /** Items added per day over the last 30 days, oldest first (30 values). */
+  added?: number[];
+  /** Per account (names only when the widget allows them, as media widgets do). */
+  users?: { name?: string; photos: number; videos: number; bytes?: number }[];
+  fetchedAt: number;
+}
+/** Providers the stats widget reads: the photo widget's, plus libraries that only report figures well. */
+export const PHOTO_STATS_TYPES = ['immich', 'photoprism', 'piwigo', 'librephotos'] as const;
+export type PhotoStatsProvider = typeof PHOTO_STATS_TYPES[number];
+
 /* ------------------------------------------------------------ Bookmarks */
 
 /**
@@ -593,7 +626,16 @@ export interface DownloadClientStatus {
   seeding?: number;
   /** Finished lately, newest first (≤ 5). */
   completed?: { id: string; name: string; sizeBytes?: number; at?: number }[];
+  /** The viewer may pause and resume here (administrators, on a client that supports it). */
+  canControl?: boolean;
+  /** The whole client is paused (qBittorrent, SABnzbd, NZBGet). */
+  clientPaused?: boolean;
 }
+/**
+ * POST /api/widgets/downloads/action { widgetId, clientId, action: 'pause' | 'resume', itemId? } —
+ * administrators only; without `itemId`, the whole client. Answers the client's new status.
+ */
+export interface DownloadActionRequest { widgetId: string; clientId: string; action: 'pause' | 'resume'; itemId?: string }
 /** GET /api/widgets/downloads?widgetId=… (settings: `integrationIds` (default: every client), `items` 0–10 default 5). */
 export interface DownloadsResponse { clients: DownloadClientStatus[]; failures: SourceFailure[]; fetchedAt: number }
 
@@ -636,8 +678,11 @@ export interface ArrAppStatus {
   /** Prowlarr: indexers enabled / failing. */
   indexers?: number;
   failingIndexers?: number;
-  /** Smallest free space among the root folders. */
-  freeBytes?: number;
+  /**
+   * The media root folders (where the library lives, not the app's own disk):
+   * the folder's last path segment only, its free and total space.
+   */
+  roots?: { name: string; freeBytes: number; totalBytes?: number }[];
   online: boolean;
 }
 /** GET /api/widgets/arr/status?widgetId=… (settings: `integrationIds`, default every *arr). */

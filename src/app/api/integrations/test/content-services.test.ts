@@ -27,7 +27,7 @@ it('refuses non-admin tests', async () => {
   state.admin = false;
   expect((await POST(request(input('immich')))).status).toBe(401); expect(serviceJson).not.toHaveBeenCalled();
 });
-it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('never contacts %s in demo', async type => {
+it.each(['pihole', 'adguard', 'immich', 'photoprism', 'piwigo', 'librephotos', 'customapi', 'jellyfin', 'emby', 'plex', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('never contacts %s in demo', async type => {
   state.demo = true;
   expect(await (await POST(request(input(type)))).json()).toEqual({ ok: true, message: 'integrations.test.demo' });
   expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled(); expect(customApiRequest).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
@@ -110,4 +110,12 @@ it.each(['qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('tests %
   else if (type === 'sabnzbd') expect(calls[0][1]).toBe('/api?mode=version&output=json&apikey=fake-key');
   else expect(calls[0][2]?.json).toMatchObject({ method: 'version' });
   expect(JSON.stringify(await (await POST(request(input(type)))).json())).not.toMatch(/fake-key|fake-password|fictional-session/);
+});
+
+ it.each(['piwigo', 'librephotos'])('tests %s with its own session auth', async type => {
+  vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from('{"stat":"ok","result":true}'), contentType: 'application/json', status: 200, headers: { 'set-cookie': ['pwg_id=fake-test-session; Path=/'] } });
+  vi.mocked(serviceJson).mockImplementation(async (_source, path) => path.includes('obtain') ? { access: 'fake-access', refresh: 'fake-refresh' } : type === 'piwigo' ? { stat: 'ok', result: { infos: [] } } : { num_photos: 0 });
+  const response = await POST(request(input(type)));
+  expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  expect(vi.mocked(serviceJson).mock.calls.at(-1)?.[1]).toBe(type === 'piwigo' ? '/ws.php?format=json&method=pwg.getInfos' : '/api/stats/');
 });

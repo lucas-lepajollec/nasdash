@@ -7,7 +7,7 @@ import { connectionDetail } from '@/components/widgets/content/ConnectionPicker'
 import type { IntegrationSection } from '../IntegrationsTab';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
 import { CalmeHeading, CalmeRow } from '../../shared/CalmeControls';
-import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
+import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES } from '@/lib/widgetData/contracts';
 
 /**
  * Settings tab of a widget that reads service connections (DNS, photos):
@@ -46,4 +46,4 @@ export const ArrWidgetTab = () => <ServiceConnectionsTab widget="media-upcoming"
 export const DownloadsWidgetTab = () => <ServiceConnectionsTab widget="media-downloads" types={DOWNLOAD_CLIENT_TYPES} section="downloads" hintKey="settings.downloads.connectionsHint" emptyKey="settings.downloads.empty" />;
 export const MediaWidgetTab = () => <ServiceConnectionsTab widget="media-nowplaying" types={MEDIA_SERVER_TYPES} section="media" hintKey="settings.media.connectionsHint" emptyKey="settings.media.empty" />;
 export const CustomApiWidgetTab = () => <ServiceConnectionsTab widget="customapi" types={CUSTOM_API_TYPES} section="custom" hintKey="settings.customapi.connectionsHint" emptyKey="settings.customapi.empty" />;
-export const PhotosWidgetTab = () => <ServiceConnectionsTab widget="photos" types={PHOTO_TYPES} section="photos" hintKey="settings.photos.connectionsHint" emptyKey="settings.photos.empty" />;
+export const PhotosWidgetTab = () => <ServiceConnectionsTab widget="photos" types={PHOTO_STATS_TYPES} section="photos" hintKey="settings.photos.connectionsHint" emptyKey="settings.photos.empty" />;

@@ -28,6 +28,7 @@ import tailscale from './tailscale/view';
 import weather from './weather/view';
 import quotes from './quotes/view';
 import photos from './photos/view';
+import photosStats from './photos-stats/view';
 import bookmarks from './bookmarks/view';
 import customapi from './customapi/view';
 import mediaNowPlaying from './media-nowplaying/view';
@@ -76,6 +77,7 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'markets': markets,
   'quotes': quotes,
   'photos': photos,
+  'photos-stats': photosStats,
   'bookmarks': bookmarks,
   'customapi': customapi,
   'media-nowplaying': mediaNowPlaying,

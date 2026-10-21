@@ -182,3 +182,27 @@ describe('optional download counters and completions', () => {
     expect(result.completed).toHaveLength(1); historyFails = true; const partial = await collectNzbget(instance('nzbget')); expect(partial.completed).toBeUndefined(); expect(partial.items).toHaveLength(1);
   });
 });
+
+describe('native item ids and whole-client state', () => {
+  it('keeps only the native id for each client, including when upstream has other ids', () => {
+    const hash = 'a'.repeat(40);
+    expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [{ ...qb.torrents[0], hash, id: 'private' }]).items[0].id).toBe(hash);
+    expect(toTransmission(instance('transmission'), tr.stats, tr.session, { torrents: [{ ...tr.torrents.torrents[0], id: 71, hashString: hash }] }).items[0].id).toBe('71');
+    expect(toDeluge(instance('deluge'), { torrents: { [hash]: { id: 'private' } } }).items[0].id).toBe(hash);
+    expect(toSabnzbd(instance('sabnzbd'), { queue: { slots: [{ nzo_id: 'SABnzbd_71', id: 'private' }] } }).items[0].id).toBe('SABnzbd_71');
+    expect(toNzbget(instance('nzbget'), nzb.status, [{ NZBID: 71, ID: 'private' }]).items[0].id).toBe('71');
+    expect(toNzbget(instance('nzbget'), nzb.status, [], [{ ID: 'private', Status: 'SUCCESS/ALL' }]).completed).toEqual([]);
+  });
+  it('only reports global pauses when explicitly available, including false', () => {
+    for (const paused of [true, false]) {
+      expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [], { server_state: { session_state: paused } }).clientPaused).toBe(paused);
+      expect(toQbittorrent(instance('qbittorrent'), { ...qb.transfer, session_state: paused }, 0, []).clientPaused).toBe(paused);
+      expect(toSabnzbd(instance('sabnzbd'), { queue: { ...sab.queue, paused } }).clientPaused).toBe(paused);
+      expect(toNzbget(instance('nzbget'), { ...nzb.status, DownloadPaused: paused }, []).clientPaused).toBe(paused);
+    }
+    expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [{ ...qb.torrents[0], state: 'pausedDL' }]).clientPaused).toBeUndefined();
+    expect(toSabnzbd(instance('sabnzbd'), { queue: { slots: [], status: 'Paused' } }).clientPaused).toBeUndefined();
+    expect(toTransmission(instance('transmission'), tr.stats, tr.session, tr.torrents).clientPaused).toBeUndefined();
+    expect(toDeluge(instance('deluge'), de.update).clientPaused).toBeUndefined();
+  });
+});

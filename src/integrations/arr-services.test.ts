@@ -88,11 +88,13 @@ describe('*arr health and indexers', () => {
     expect(Date.parse(new URL(path, 'http://fixture').searchParams.get('startDate')!)).toBeGreaterThanOrEqual(before - 86400000);
   });
   it.each(['sonarr', 'radarr', 'lidarr', 'prowlarr'])('maps %s status and hides all failure details', async type => {
-    json.mockImplementation(async (_instance, path) => path.endsWith('/system/status') ? sonarr.status : path.endsWith('/health') ? sonarr.health : path.endsWith('/queue/status') ? sonarr.queueStatus : path.includes('/wanted/missing') ? sonarr.missing : path.endsWith('/diskspace') ? sonarr.disks : path.endsWith('/indexerstatus') ? prowlarr.statuses : prowlarr.indexers);
+    json.mockImplementation(async (_instance, path) => path.endsWith('/system/status') ? sonarr.status : path.endsWith('/health') ? sonarr.health : path.endsWith('/queue/status') ? sonarr.queueStatus : path.includes('/wanted/missing') ? sonarr.missing : path.endsWith('/rootfolder') ? sonarr.roots : path.endsWith('/indexerstatus') ? prowlarr.statuses : prowlarr.indexers);
     const app = await collectArrStatus(instance(type));
     expect(app).toMatchObject({ online: true, version: '4.0.0' });
-    if (type === 'prowlarr') expect(app.indexers).toBe(2);
-    else expect(app).toMatchObject({ queue: 8, missing: 12, freeBytes: 800000000000 });
+    expect(app).not.toHaveProperty('freeBytes');
+    expect(json.mock.calls.some(([, path]) => path.includes('/diskspace'))).toBe(false);
+    if (type === 'prowlarr') { expect(app.indexers).toBe(2); expect(app.roots).toBeUndefined(); }
+    else expect(app).toMatchObject({ queue: 8, missing: 12, roots: [{ name: 'Movies', freeBytes: 1200000000000 }, { name: 'TV', freeBytes: 800000000000 }] });
     json.mockRejectedValue(new Error('http://private.example.com?apikey=secret'));
     expect(await collectArrStatus(instance(type))).toEqual({ id: `${type}-fictional`, name: `Fictional ${type}`, type, health: [], online: false });
   });
@@ -109,7 +111,7 @@ describe('recent imports and search activity', () => {
     const result = await collectArrRecent(instance(type));
     expect(result).toHaveLength(1); expect(result[0]).toMatchObject({ source: type, at: Date.parse('2026-10-20T22:00:00Z'), quality: type === 'lidarr' ? 'FLAC' : '1080p' });
     expect(result[0].poster).toContain('/mediacover/');
-    expect(json.mock.calls[0][1]).toContain('page=1&pageSize=50&sortKey=date&sortDirection=descending&eventType=3');
+    expect(json.mock.calls[0][1]).toContain('page=1&pageSize=200&sortKey=date&sortDirection=descending&include');
     expect(json.mock.calls[0][2]?.headers).toEqual({ 'X-Api-Key': 'fictional-key' });
   });
   it('deduplicates Lidarr tracks into albums, ignores other events and bounds recent imports', () => {
@@ -118,6 +120,12 @@ describe('recent imports and search activity', () => {
     const records = Array.from({ length: 12 }, (_, i) => ({ ...sonarr.history.records[0], id: i, seriesId: 100 + i, eventType: 3, date: new Date(start - i * 1000).toISOString() })).reverse();
     const result = toArrRecent(instance('sonarr'), { records }); expect(result).toHaveLength(6); expect(result[0].at).toBe(start);
     expect(toArrRecent(instance('sonarr'), { records: [{ ...records[0], date: 'bad' }] })).toEqual([]);
+  });
+  it('leaves out imports whose file was deleted afterwards', () => {
+    const base = { ...sonarr.history.records[0], seriesId: 58, episodeId: 7 };
+    const records = [{ ...base, id: 2, eventType: 'episodeFileDeleted', date: new Date(start).toISOString() }, { ...base, id: 1, eventType: 'downloadFolderImported', date: new Date(start - 1000).toISOString() }];
+    expect(toArrRecent(instance('sonarr'), { records })).toEqual([]);
+    expect(toArrRecent(instance('sonarr'), { records: [records[1]] })).toHaveLength(1);
   });
   it('folds episodes of one series into its newest import, with how many and its local poster', () => {
     const base = { ...sonarr.history.records[0], seriesId: 58, series: { title: 'Fictional Series', images: [{ coverType: 'poster', remoteUrl: 'https://artworks.example.com/p.jpg' }] } };
@@ -135,5 +143,31 @@ describe('recent imports and search activity', () => {
   it('omits activity if the optional history endpoint fails', async () => {
     json.mockImplementation(async (_instance, path) => { if (path.includes('/history?')) throw new Error('denied'); return path.includes('/indexerstats?') ? prowlarr.stats : path.endsWith('/indexerstatus') ? prowlarr.statuses : prowlarr.indexers; });
     const result = await collectProwlarrIndexers(instance('prowlarr')); expect(result.indexers).toHaveLength(3); expect(result.hourly).toBeUndefined();
+  });
+});
+
+describe('root-folder space and queue cover fallbacks', () => {
+  it.each(['sonarr', 'radarr', 'lidarr'])('maps %s root-folder space, deduplicates volumes and hides parent paths', async type => {
+    const roots = [
+      { path: '/private/library/Movies/', freeSpace: 20, totalSpace: 100 },
+      { path: '/another/private/TV', freeSpace: 20, totalSpace: 100 },
+      { path: 'C:\\private\\Music\\', freeSpace: 20, totalSpace: 200 },
+      { path: '/private/' + 'A'.repeat(100), freeSpace: 10 },
+      { path: '/', freeSpace: 1 }, { path: 'C:\\', freeSpace: 2 },
+      { path: '/private/Invalid', freeSpace: -1 }, { path: '/private/Missing' },
+    ];
+    json.mockImplementation(async (_instance, path) => path.endsWith('/rootfolder') ? roots : path.endsWith('/system/status') ? sonarr.status : path.endsWith('/health') ? [] : {});
+    const result = await collectArrStatus(instance(type));
+    expect(result.roots).toEqual([{ name: 'Movies', freeBytes: 20, totalBytes: 100 }, { name: 'Music', freeBytes: 20, totalBytes: 200 }, { name: 'A'.repeat(60), freeBytes: 10 }]);
+    expect(JSON.stringify(result)).not.toMatch(/private|library|another/);
+    expect(json.mock.calls.find(([, path]) => path.endsWith('/rootfolder'))?.[1]).toBe(`${type === 'lidarr' ? '/api/v1' : '/api/v3'}/rootfolder`);
+  });
+  it.each([
+    ['sonarr', { seriesId: 58, series: { id: 58, images: [{ coverType: 'poster', remoteUrl: 'https://art.example.com/cover' }] } }, '/api/v3/mediacover/58/poster.jpg'],
+    ['radarr', { movie: { id: 42, images: [{ coverType: 'poster', remoteUrl: 'https://art.example.com/cover' }] } }, '/api/v3/mediacover/42/poster.jpg'],
+    ['lidarr', { albumId: 31, album: { id: 31, images: [{ coverType: 'cover', remoteUrl: 'https://art.example.com/cover' }] } }, '/api/v1/mediacover/album/31/cover.jpg'],
+  ])('uses %s local covers when embedded images are remote-only', (type, record, poster) => {
+    expect(toArrQueue(instance(type), { records: [record] }).items[0].poster).toBe(poster);
+    expect(toArrQueue(instance(type), { records: [{}] }).items[0].poster).toBeUndefined();
   });
 });

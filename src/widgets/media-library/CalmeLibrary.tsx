@@ -89,8 +89,9 @@ function useDetail() {
 function Shelf({ library, own, offset, active, number }: { library: MediaLibrary; own?: string; offset: number; active: boolean; number: Intl.NumberFormat }) {
   const detail = useDetail();
   const covers = library.covers ?? [];
-  const shift = useRotation(covers.length, offset, active);
-  const trioAt = (at: number) => covers.length >= 3 ? [0, 1, 2].map(step => covers[(at + step) % covers.length]) : covers.slice(0, 1);
+  const shift = useRotation(Math.max(1, Math.floor(covers.length / 3)), offset, active);
+  // Each turn brings three new covers at once: never one shared between the set leaving and the set arriving.
+  const trioAt = (at: number) => covers.length >= 3 ? [0, 1, 2].map(step => covers[(at * 3 + step) % covers.length]) : covers.slice(0, 1);
   // The previous trio stays beneath while the new one fades in over it.
   const [layers, setLayers] = useState<{ shift: number; previous?: number }>({ shift });
   if (layers.shift !== shift) setLayers({ shift, previous: layers.shift });
@@ -199,8 +200,10 @@ function LibrarySettings({ draft, change }: { draft: WidgetSettings; change: (pa
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, LIBRARY_DISPLAYS, 'shelves')} options={LIBRARY_DISPLAYS.map(value => ({ value, label: t(`widgets.media.library.${value}`) }))} onChange={value => change({ display: value === 'shelves' ? null : value })} />
       </CalmeField>
+      {pick(draft.display, LIBRARY_DISPLAYS, 'shelves') === 'shelves' && (
+        <>
       <CalmeField label={t('widgets.media.cover')} info={t('widgets.media.coverHint')}>
-        <CalmeSegmented label={t('widgets.media.cover')} value={pick(draft.cover, COVERS, 'random')} options={COVERS.map(value => ({ value, label: t(`widgets.media.cover.${value}`) }))} onChange={value => change({ cover: value === 'random' ? null : value })} />
+        <CalmeSegmented label={t('widgets.media.cover')} value={pick(draft.cover, COVERS, 'random')} options={COVERS.filter(value => value !== 'none').map(value => ({ value, label: t(`widgets.media.cover.${value}`) }))} onChange={value => change({ cover: value === 'random' ? null : value })} />
       </CalmeField>
       <CalmeField label={t('widgets.media.shelfSize')}>
         <CalmeSegmented label={t('widgets.media.shelfSize')} value={pick(draft.shelf, SHELF_SIZES, 'medium')} options={SHELF_SIZES.map(value => ({ value, label: t(`widgets.media.size.${value}`) }))} onChange={value => change({ shelf: value === 'medium' ? null : value })} />
@@ -221,6 +224,8 @@ function LibrarySettings({ draft, change }: { draft: WidgetSettings; change: (pa
           ))}
         </div>
       </CalmeField>
+        </>
+      )}
       <CalmeField label={t('widgets.media.counts')}>
         <div className="ndc-dlg-stack">
           {COUNTS.map(id => (

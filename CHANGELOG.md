@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Photo library statistics for Immich, PhotoPrism, Piwigo and LibrePhotos, with cached totals, optional storage and history, per-account names only when explicitly enabled, and offline fictional demo data. Piwigo and LibrePhotos use saved account sessions in the Photos integrations section.
+
+- Administrator-only pause/resume controls for qBittorrent, Transmission, Deluge, SABnzbd and NZBGet items or whole clients, with origin protection, fresh status after actions and offline demo simulation.
+
 - Coming soon supports ordered combinations of *arr calendars, library follow-ups and external catalogue watchlists/discovery, with current/announced phases and isolated source failures. Adds administrator-only catalogue search, optional TMDB credentials, paced cached public requests, allowlisted public artwork and offline fictional demo data.
 
 - Media and *arr widgets redrawn around the art: the next title large over its backdrop, rails of posters or wide pictures, figures in Geist, progress as lines and rings; states are words, coloured only when they need attention (no tinted badges, shadows or coloured outlines).
@@ -20,6 +24,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Recently played**: how many titles to show (1–12), three list sizes, time left inside the picture.
 - **Media library**: covers drawn at random from the whole library (no longer the last batch added), larger, crossfading, three card sizes.
 - **\*arr status** and **Indexers** redrawn: quiet tiles with figures over their labels, one line per indexer. The queue's last imports use the queue's rows.
+- **Photo library stats** widget (Immich, PhotoPrism, and new **Piwigo** and **LibrePhotos** connections): photos, videos, albums, people, places, favorites, storage, photos per year taken, the last 30 days' additions and, when allowed, per account. A scoped Immich key shows what it may read, flagged as partial.
+- **Downloads**: pause and resume a download or the whole client (administrators), on qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
+- **\*arr status**: free space per media root folder (where the library lives, not the app's own disk), tiles or rows, parts to show; health checks folded into a count. **Indexers**: figures, requests per hour and the list each optional, indexers per page with pages. **Download queue**: progress under the title, share and time on the right, totals only above several titles, pages; the last imports leave out files deleted since.
+- **Media library**: the three covers change together, without repeats; cover options only in the shelves display. **Recently played**: no more light rim around the art.
+- **Coming soon**: titles without episode numbers read in words ("Airing") instead of an unfilled template; a missing backdrop uses the blurred poster; calendar posters fall back to the *arr's own covers.
+- DNS widget: the server (and Technitium node) its figures come from, in its header (#130).
 - Settings dialogs: segmented choices drawn as a block inside one frame (no more cut edges); a connection named after its service no longer reads "Jellyfin · Jellyfin".
 
 - *arr and download widgets in the Media group, with Sonarr, Radarr, Lidarr, Prowlarr and qBittorrent, Transmission, Deluge, SABnzbd, NZBGet connections (Settings → Integrations): **Coming soon** (episodes, movies with their cinema/digital/physical release, albums, as an agenda by day, posters or a list), **Download queue** (progress, state and the reason of a warning, time left), **Downloads** (speeds with a live line, active/paused/waiting, free space, busiest downloads), **Indexers** (Prowlarr's last-day searches, grabs and failures, failing indexers first) and ***arr status** (version, health checks, queue, missing, free space). Several sources per widget, partial failures named; API keys and passwords stay on the server.
@@ -39,6 +49,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Bookmarks render from one index of the library and mount drag and drop only in edit mode; the photo mosaic layout is computed once per page.
 
 ### Fixed
+
+- *arr space readings use media root folders instead of application disks, deduplicating volumes and returning only folder names. Queue posters fall back to local series, movie and album covers when embedded artwork has only remote URLs.
 
 - Media and *arr widgets read a cleared setting (`null`) as unset instead of refusing it: turning **Show who is watching** off works.
 - Posters keep a day in the browser cache instead of being fetched again at every refresh.

@@ -93,6 +93,8 @@ function useEntries(data: UpcomingResponse | undefined, sources: Source[], showD
   return useMemo(() => {
     if (!data) return [];
     const code = (season?: number, episode?: number) => season !== undefined && episode !== undefined ? t('widgets.media.episodeCode', { season, episode }) : '';
+    // Without episode numbers (Kitsu gives only the next date): words, never a template with holes.
+    const statusLine = (status: 'airing' | 'upcoming' | 'announced' | 'ended') => t(`widgets.arr.status.line.${status}`);
     const fromArr = (item: UpcomingItem): Entry => ({
       key: `arr:${item.id}`, origin: 'arr', name: item.kind === 'episode' && item.subtitle ? item.subtitle : item.title,
       line: item.kind === 'episode' ? [code(item.season, item.episode), item.title && item.title !== item.subtitle ? `« ${item.title} »` : ''].filter(Boolean).join(' · ')
@@ -103,14 +105,14 @@ function useEntries(data: UpcomingResponse | undefined, sources: Source[], showD
     const fromLibrary = (item: FollowUpItem): Entry => ({
       key: `library:${item.id}`, origin: 'library', name: item.title,
       line: [item.status === 'upcoming' && (item.episode ?? 1) <= 1 && item.season !== undefined ? t('widgets.arr.follow.season', { season: item.season })
-        : item.season !== undefined && item.episode !== undefined ? code(item.season, item.episode) : t(`widgets.arr.follow.${item.status}`),
+        : item.season !== undefined && item.episode !== undefined ? code(item.season, item.episode) : statusLine(item.status),
       item.ownedSeason !== undefined ? t('widgets.arr.follow.ownedShort', { season: item.ownedSeason }) : ''].filter(Boolean).join(' · '),
       at: item.at, timed: item.status === 'airing', phase: item.phase ?? (item.status === 'airing' ? 'current' : 'announced'), quiet: item.status === 'ended', from: item.network,
       poster: item.poster, backdrop: item.backdrop, link: item.link, kind: 'episode',
     });
     const fromCatalog = (item: ExternalItem): Entry => ({
       key: `external:${item.provider}:${item.id}`, origin: 'external', name: item.title,
-      line: item.season !== undefined && item.episode !== undefined ? code(item.season, item.episode) : item.kind === 'movie' ? t('widgets.arr.catalog.kind.movie') : t(`widgets.arr.follow.${item.status}`),
+      line: item.season !== undefined && item.episode !== undefined ? code(item.season, item.episode) : item.kind === 'movie' ? t('widgets.arr.catalog.kind.movie') : statusLine(item.status),
       at: item.at, timed: item.kind !== 'movie' && item.status === 'airing', phase: item.phase, quiet: item.status === 'ended', from: item.network ?? t(`widgets.arr.catalog.${item.provider}`),
       poster: item.poster, backdrop: item.backdrop, link: item.link, kind: item.kind === 'movie' ? 'movie' : 'episode',
     });
@@ -212,7 +214,7 @@ function Feature({ entries, now, columns }: { entries: Entry[]; now: number; col
   const days = first.at !== undefined ? when.days(first.at, now) : undefined;
   return (
     <>
-      <Hero href={first.link} backdrop={first.backdrop} poster={<MediaPoster item={posterOf(first)} width={88} eager />}>
+      <Hero href={first.link} backdrop={first.backdrop ?? first.poster} blurred={!first.backdrop} poster={<MediaPoster item={posterOf(first)} width={88} eager />}>
         <span className="ndw-mx-eyebrow is-accent">
           {first.at === undefined ? t('widgets.arr.noDate') : [when.day(first.at, now), first.timed ? when.time(first.at) : '', days !== undefined && days > 1 ? t('widgets.arr.inDays', { count: days }) : ''].filter(Boolean).join(' · ')}
         </span>
