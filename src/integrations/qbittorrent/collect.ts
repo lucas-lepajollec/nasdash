@@ -1,6 +1,6 @@
 import type { IntegrationInstance } from '@/lib/types';
 import { array, number, object, string, serviceBytes, assertStatus, serviceIdentity, ServiceError } from '@/lib/widgetData/services';
-import { clientStatus, parseJson, percent, responseCookie, seconds, type DownloadState } from '../downloads/shared';
+import { clientStatus, completedItems, optionalBytes, parseJson, percent, responseCookie, seconds, type DownloadState } from '../downloads/shared';
 interface Session { cookie: string; expires: number }
 const sessions = new Map<string, Session>(), logins = new Map<string, Promise<Session>>();
 export function clearQbittorrentSessions() { sessions.clear(); logins.clear(); }
@@ -59,7 +59,9 @@ export function toQbittorrent(instance: IntegrationInstance, transfer: unknown, 
   if (!Array.isArray(torrents) || typeof object(transfer).dl_info_speed !== 'number') throw new ServiceError('widgets.error.parse');
   const info = object(transfer), free = object(object(sync).server_state).free_space_on_disk;
   return clientStatus(instance, array(torrents).map(raw => { const item = object(raw); return { id: string(item.hash), name: string(item.name), progress: percent(number(item.progress) * 100), state: qbittorrentState(item.state), downloadBps: number(item.dlspeed), etaMs: seconds(item.eta), sizeBytes: number(item.size) }; }),
-    { downloadBps: number(info.dl_info_speed), uploadBps: number(info.up_info_speed), downloadLimitBps: number(info.dl_rate_limit), uploadLimitBps: number(info.up_rate_limit), altSpeed: mode === 1 || mode === true, ...(typeof free === 'number' ? { freeBytes: number(free) } : {}) });
+    { downloadBps: number(info.dl_info_speed), uploadBps: number(info.up_info_speed), downloadLimitBps: number(info.dl_rate_limit), uploadLimitBps: number(info.up_rate_limit), altSpeed: mode === 1 || mode === true, ...(typeof free === 'number' ? { freeBytes: number(free) } : {}),
+      sessionDownloaded: optionalBytes(info.dl_info_data), sessionUploaded: optionalBytes(info.up_info_data),
+      completed: completedItems(array(torrents).map(object).filter(item => number(item.completion_on) > 0).map(item => ({ id: string(item.hash), name: string(item.name), sizeBytes: optionalBytes(item.size), at: number(item.completion_on) * 1000 }))) });
 }
 export async function collectQbittorrent(instance: IntegrationInstance) {
   const [transfer, mode, torrents, sync] = await Promise.all(['/api/v2/transfer/info', '/api/v2/transfer/speedLimitsMode', '/api/v2/torrents/info?sort=dlspeed&reverse=true', '/api/v2/sync/maindata'].map((path, i) => i === 3 ? qbittorrentRequest(instance, path).catch(() => undefined) : qbittorrentRequest(instance, path)));

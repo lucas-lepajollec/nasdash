@@ -7,7 +7,7 @@ import prowlarr from './prowlarr/samples/service.json';
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ integrations: [] }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn() }));
 import { serviceJson, ServiceError } from '@/lib/widgetData/services';
-import { arrImage, collectArrUpcoming, collectArrQueue, collectArrStatus, collectProwlarrIndexers, etaMs, queueStatus, radarrRelease, safeArrMessage, toArrQueue, toArrUpcoming, toProwlarrIndexers } from './arr/collect';
+import { arrImage, collectArrRecent, toArrRecent, prowlarrActivity, collectArrUpcoming, collectArrQueue, collectArrStatus, collectProwlarrIndexers, etaMs, queueStatus, radarrRelease, safeArrMessage, toArrQueue, toArrUpcoming, toProwlarrIndexers } from './arr/collect';
 const instance = (type: string): IntegrationInstance => ({ id: `${type}-fictional`, type, name: `Fictional ${type}`, settings: { url: `http://${type}.example.com` }, secrets: { apiKey: 'fictional-key' } });
 const start = Date.parse('2026-10-21T00:00:00Z'), end = start + 14 * 86400000;
 const json = vi.mocked(serviceJson);
@@ -100,5 +100,40 @@ describe('*arr health and indexers', () => {
     expect(() => toArrUpcoming(instance('sonarr'), {}, start, end)).toThrow(ServiceError);
     expect(() => toArrQueue(instance('sonarr'), {})).toThrow(ServiceError);
     expect(() => toProwlarrIndexers(instance('prowlarr'), {}, [], {})).toThrow(ServiceError);
+  });
+});
+
+describe('recent imports and search activity', () => {
+  it.each([['sonarr', sonarr], ['radarr', radarr], ['lidarr', lidarr]])('maps %s import history with the correct API filter and local artwork', async (type, fixture) => {
+    json.mockResolvedValue(fixture.history);
+    const result = await collectArrRecent(instance(type));
+    expect(result).toHaveLength(1); expect(result[0]).toMatchObject({ source: type, at: Date.parse('2026-10-20T22:00:00Z'), quality: type === 'lidarr' ? 'FLAC' : '1080p' });
+    expect(result[0].poster).toContain('/mediacover/');
+    expect(json.mock.calls[0][1]).toContain('page=1&pageSize=50&sortKey=date&sortDirection=descending&eventType=3');
+    expect(json.mock.calls[0][2]?.headers).toEqual({ 'X-Api-Key': 'fictional-key' });
+  });
+  it('deduplicates Lidarr tracks into albums, ignores other events and bounds recent imports', () => {
+    const row = lidarr.history.records[0];
+    expect(toArrRecent(instance('lidarr'), { records: [row, { ...row, id: 802 }, { ...row, id: 803, eventType: 'grabbed' }] })).toHaveLength(1);
+    const records = Array.from({ length: 12 }, (_, i) => ({ ...sonarr.history.records[0], id: i, seriesId: 100 + i, eventType: 3, date: new Date(start - i * 1000).toISOString() })).reverse();
+    const result = toArrRecent(instance('sonarr'), { records }); expect(result).toHaveLength(6); expect(result[0].at).toBe(start);
+    expect(toArrRecent(instance('sonarr'), { records: [{ ...records[0], date: 'bad' }] })).toEqual([]);
+  });
+  it('folds episodes of one series into its newest import, with how many and its local poster', () => {
+    const base = { ...sonarr.history.records[0], seriesId: 58, series: { title: 'Fictional Series', images: [{ coverType: 'poster', remoteUrl: 'https://artworks.example.com/p.jpg' }] } };
+    const records = [0, 1, 2].map(i => ({ ...base, id: i, date: new Date(start - i * 1000).toISOString() }));
+    const [entry, ...rest] = toArrRecent(instance('sonarr'), { records });
+    expect(rest).toEqual([]); expect(entry).toMatchObject({ count: 3, at: start, subtitle: 'Fictional Series' });
+    expect(entry.poster).toMatch(/\/mediacover\/58\/poster\.jpg$/); expect(JSON.stringify(entry)).not.toContain('artworks.example.com');
+  });
+  it('buckets query and rss events, excludes grabs, old and future dates, and preserves latest time', () => {
+    const result = prowlarrActivity(prowlarr.history, start);
+    expect(result.hourly).toHaveLength(24); expect(result.hourly?.[0]).toBe(1); expect(result.hourly?.[23]).toBe(1);
+    expect(result.hourly?.reduce((sum, n) => sum + n, 0)).toBe(2); expect(result.lastQueryAt).toBe(Date.parse('2026-10-20T23:30:00Z'));
+    expect(prowlarrActivity({ records: [{ eventType: 2, date: new Date(start + 1).toISOString() }] }, start)).toEqual({ hourly: Array(24).fill(0) });
+  });
+  it('omits activity if the optional history endpoint fails', async () => {
+    json.mockImplementation(async (_instance, path) => { if (path.includes('/history?')) throw new Error('denied'); return path.includes('/indexerstats?') ? prowlarr.stats : path.endsWith('/indexerstatus') ? prowlarr.statuses : prowlarr.indexers; });
+    const result = await collectProwlarrIndexers(instance('prowlarr')); expect(result.indexers).toHaveLength(3); expect(result.hourly).toBeUndefined();
   });
 });

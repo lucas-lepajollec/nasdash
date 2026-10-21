@@ -4,7 +4,7 @@ import { jellyfinHeaders } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { arrHeaders } from '@/integrations/arr/collect';
 import { demoMediaArt, knownMediaImage, MEDIA_WIDGET_TYPES } from '@/lib/widgetData/media';
-import { ARR_IMAGE_WIDGET_TYPES, widgetSources } from '@/lib/widgetData/arr';
+import { ARR_IMAGE_WIDGET_TYPES, librarySource, upcomingSource, widgetSources } from '@/lib/widgetData/arr';
 import { LIBRARY_ARR_TYPES, MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts';
 import { resolveWidgetSettings } from '@/lib/widgetData/resolve';
 import { assertStatus, queryDraft, serviceBytes, serviceFailure, ServiceError } from '@/lib/widgetData/services';
@@ -18,14 +18,16 @@ export async function GET(request: NextRequest) {
     const draft = queryDraft(url);
     const resolved = resolveWidgetSettings(request, widgetId, [...MEDIA_WIDGET_TYPES, ...ARR_IMAGE_WIDGET_TYPES], draft);
     if (!resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
-    const { settings, principal, widgetType } = resolved;
+    const { principal, widgetType } = resolved;
+    const settings = Object.fromEntries(Object.entries(resolved.settings).filter(([, value]) => value !== null));
     const id = url.searchParams.get('id') ?? '', kind = url.searchParams.get('kind');
     if (!/^[a-f0-9]{64}$/.test(id) || (kind !== 'poster' && kind !== 'backdrop')) throw new ServiceError('widgets.error.invalidRequest', 400);
     // Saved widgets use exactly their type's source selection. Admin drafts have
     // no saved type; membership in that exact preview still gates every image.
     const isArr = widgetType ? ARR_IMAGE_WIDGET_TYPES.some(type => type === widgetType) : settings.integrationIds !== undefined;
     let instances;
-    if (widgetType || settings.integrationId !== undefined || settings.integrationIds !== undefined) instances = widgetSources(settings, isArr ? LIBRARY_ARR_TYPES : MEDIA_SERVER_TYPES, !isArr);
+    if ((widgetType === 'media-upcoming' || !widgetType && settings.source === 'library') && upcomingSource(settings) === 'library') instances = librarySource(settings);
+    else if (widgetType || settings.integrationId !== undefined || settings.integrationIds !== undefined) instances = widgetSources(settings, isArr ? LIBRARY_ARR_TYPES : MEDIA_SERVER_TYPES, !isArr);
     else instances = [...widgetSources(settings, LIBRARY_ARR_TYPES), ...widgetSources(settings, MEDIA_SERVER_TYPES)];
     const imageDraft = principal.role === 'admin' && resolved.draft ? settings : undefined;
     const match = instances.map(instance => ({ instance, path: knownMediaImage(instance, widgetId!, id, kind, imageDraft) })).find(value => value.path);

@@ -112,5 +112,56 @@
       "path": "/fictional/backup",
       "freeSpace": 800000000000
     }
-  ]
+  ],
+  "history": {
+    "records": [
+      {
+        "episode": {
+          "id": 101,
+          "title": "A Lantern for the Tide",
+          "airDateUtc": "2026-10-22T20:00:00Z",
+          "seasonNumber": 2,
+          "episodeNumber": 3,
+          "hasFile": false,
+          "series": {
+            "title": "The Weather Cartographers",
+            "titleSlug": "weather-cartographers",
+            "images": [
+              {
+                "coverType": "poster",
+                "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+              },
+              {
+                "coverType": "fanart",
+                "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+              }
+            ]
+          }
+        },
+        "series": {
+          "title": "The Weather Cartographers",
+          "titleSlug": "weather-cartographers",
+          "images": [
+            {
+              "coverType": "poster",
+              "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+            },
+            {
+              "coverType": "fanart",
+              "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+            }
+          ]
+        },
+        "quality": {
+          "quality": {
+            "name": "1080p"
+          }
+        },
+        "id": 801,
+        "eventType": "downloadFolderImported",
+        "date": "2026-10-20T22:00:00Z"
+      }
+    ],
+    "totalRecords": 1
+  }
 }

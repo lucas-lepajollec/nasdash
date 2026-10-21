@@ -94,5 +94,40 @@
       "path": "/fictional/backup",
       "freeSpace": 800000000000
     }
-  ]
+  ],
+  "history": {
+    "records": [
+      {
+        "movie": {
+          "id": 201,
+          "title": "The Glass Orchard",
+          "titleSlug": "glass-orchard",
+          "tmdbId": 424242,
+          "inCinemas": "2026-10-20T20:00:00Z",
+          "digitalRelease": "2026-10-23T20:00:00Z",
+          "physicalRelease": "2026-10-30T20:00:00Z",
+          "hasFile": false,
+          "images": [
+            {
+              "coverType": "poster",
+              "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+            },
+            {
+              "coverType": "fanart",
+              "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+            }
+          ]
+        },
+        "quality": {
+          "quality": {
+            "name": "1080p"
+          }
+        },
+        "id": 801,
+        "eventType": "downloadFolderImported",
+        "date": "2026-10-20T22:00:00Z"
+      }
+    ],
+    "totalRecords": 1
+  }
 }

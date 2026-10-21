@@ -1,7 +1,11 @@
 {
   "stats": {
     "downloadSpeed": 8000000,
-    "uploadSpeed": 320000
+    "uploadSpeed": 320000,
+    "currentStats": {
+      "downloadedBytes": 12000000000,
+      "uploadedBytes": 3400000000
+    }
   },
   "session": {
     "alt-speed-enabled": true,
@@ -30,7 +34,8 @@
         "status": 6,
         "rateDownload": 0,
         "eta": -1,
-        "totalSize": 2000000000
+        "totalSize": 2000000000,
+        "doneDate": 1792533600
       }
     ]
   }

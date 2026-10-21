@@ -452,8 +452,40 @@ export interface UpcomingItem {
   /** Opens it in the *arr web UI (administrators only). */
   link?: string;
 }
-/** GET /api/widgets/arr/upcoming?widgetId=… (settings: `integrationIds` (default: every Sonarr/Radarr/Lidarr), `days` 1–60 default 14, `kinds`). */
-export interface UpcomingResponse { items: UpcomingItem[]; failures: SourceFailure[]; fetchedAt: number }
+/**
+ * What comes next for a series of the media library (mode `library`): read
+ * from the media server, its next episode / season looked up on TVMaze.
+ */
+export interface FollowUpItem {
+  /** Opaque, unique. */
+  id: string;
+  /** The series' name in the library. */
+  title: string;
+  /** `airing`: next episode dated; `upcoming`: a new season dated; `announced`: still running, no date yet; `ended`: no more to come. */
+  status: 'airing' | 'upcoming' | 'announced' | 'ended';
+  season?: number;
+  episode?: number;
+  episodeTitle?: string;
+  /** Air date of the next episode (ms), when known. */
+  at?: number;
+  /** Broadcaster or streaming service (TVMaze). */
+  network?: string;
+  /** The last season present in the library. */
+  ownedSeason?: number;
+  /** Proxied images from the media server, like media posters. */
+  poster?: string;
+  backdrop?: string;
+  /** Opens the series in the media server (administrators only). */
+  link?: string;
+}
+/**
+ * GET /api/widgets/arr/upcoming?widgetId=… — settings: `source` `arr` (default) | `library`.
+ * `arr`: `integrationIds` (default: every Sonarr/Radarr/Lidarr), `days` 1–60 default 14, `kinds`;
+ * `later`: when nothing falls in the window, the next ones after it (≤ 3, within 120 days).
+ * `library`: `mediaId` (a Jellyfin/Emby/Plex connection, default the first), `ended` (show ended series, default false);
+ * `followUps` sorted: dated first (soonest), then announced, then ended.
+ */
+export interface UpcomingResponse { items: UpcomingItem[]; later?: UpcomingItem[]; followUps?: FollowUpItem[]; failures: SourceFailure[]; fetchedAt: number }
 
 export type QueueStatus = 'downloading' | 'queued' | 'paused' | 'importing' | 'warning' | 'failed' | 'completed';
 /** An item in a *arr download queue. */
@@ -480,8 +512,11 @@ export interface QueueItem {
   client?: string;
   poster?: string;
 }
-/** GET /api/widgets/arr/queue?widgetId=… (settings: `integrationIds`, `count` 3–50 default 10). */
-export interface QueueResponse { items: QueueItem[]; total: number; failures: SourceFailure[]; fetchedAt: number }
+/** A title the *arr imported lately (its history). */
+/** `count`: imports folded into this one (episodes of the same series), when more than one. */
+export interface ImportedItem { id: string; source: 'sonarr' | 'radarr' | 'lidarr'; kind: 'episode' | 'movie' | 'album'; title: string; subtitle?: string; season?: number; episode?: number; count?: number; quality?: string; at: number; poster?: string }
+/** GET /api/widgets/arr/queue?widgetId=… (settings: `integrationIds`, `count` 3–50 default 10). `recent`: the last imports (≤ 6, newest first), for the empty queue. */
+export interface QueueResponse { items: QueueItem[]; total: number; recent?: ImportedItem[]; failures: SourceFailure[]; fetchedAt: number }
 
 /** One download client, now. */
 export interface DownloadClientStatus {
@@ -503,6 +538,13 @@ export interface DownloadClientStatus {
   items: { id: string; name: string; progress: number; state: 'downloading' | 'seeding' | 'paused' | 'queued' | 'checking' | 'error' | 'completed'; downloadBps?: number; etaMs?: number; sizeBytes?: number }[];
   /** Free space where the client saves, when it reports it. */
   freeBytes?: number;
+  /** Bytes received / sent since the client started (its own session totals). */
+  sessionDownloaded?: number;
+  sessionUploaded?: number;
+  /** Torrents being shared. */
+  seeding?: number;
+  /** Finished lately, newest first (≤ 5). */
+  completed?: { id: string; name: string; sizeBytes?: number; at?: number }[];
 }
 /** GET /api/widgets/downloads?widgetId=… (settings: `integrationIds` (default: every client), `items` 0–10 default 5). */
 export interface DownloadsResponse { clients: DownloadClientStatus[]; failures: SourceFailure[]; fetchedAt: number }
@@ -523,7 +565,14 @@ export interface IndexerStatus {
   averageMs?: number;
 }
 /** GET /api/widgets/arr/indexers?widgetId=… (a Prowlarr connection). */
-export interface IndexersResponse { name: string; indexers: IndexerStatus[]; totals: { queries: number; grabs: number; failures: number }; fetchedAt: number }
+export interface IndexersResponse {
+  name: string; indexers: IndexerStatus[]; totals: { queries: number; grabs: number; failures: number };
+  /** Searches per hour over the last 24 hours, oldest first (24 values), from Prowlarr's history. */
+  hourly?: number[];
+  /** Last time Prowlarr searched (ms). */
+  lastQueryAt?: number;
+  fetchedAt: number;
+}
 
 /** One *arr application at a glance. */
 export interface ArrAppStatus {

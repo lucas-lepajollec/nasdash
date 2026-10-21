@@ -3,7 +3,9 @@
     "dl_info_speed": 8000000,
     "up_info_speed": 320000,
     "dl_rate_limit": 12000000,
-    "up_rate_limit": 0
+    "up_rate_limit": 0,
+    "dl_info_data": 12000000000,
+    "up_info_data": 3400000000
   },
   "mode": 1,
   "torrents": [
@@ -23,7 +25,8 @@
       "state": "stalledUP",
       "dlspeed": 0,
       "eta": 8640000,
-      "size": 2000000000
+      "size": 2000000000,
+      "completion_on": 1792533600
     }
   ],
   "sync": {

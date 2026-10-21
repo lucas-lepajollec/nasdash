@@ -12,7 +12,8 @@ vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
 vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
-vi.mock('@/integrations/arr/collect', async original => ({ ...await original<typeof import('@/integrations/arr/collect')>(), collectArrUpcoming: vi.fn(), collectArrQueue: vi.fn(), collectArrStatus: vi.fn(), collectProwlarrIndexers: vi.fn() }));
+vi.mock('@/integrations/arr/collect', async original => ({ ...await original<typeof import('@/integrations/arr/collect')>(), collectArrUpcoming: vi.fn(), collectArrQueue: vi.fn(), collectArrRecent: vi.fn(), collectArrStatus: vi.fn(), collectProwlarrIndexers: vi.fn() }));
+vi.mock('@/lib/widgetData/libraryUpcoming', () => ({ collectLibraryUpcoming: vi.fn() }));
 vi.mock('@/integrations/downloads/collect', () => ({ collectDownloadClient: vi.fn() }));
 import { GET as upcomingGet } from './arr/upcoming/route';
 import { GET as queueGet } from './arr/queue/route';
@@ -20,9 +21,11 @@ import { GET as statusGet } from './arr/status/route';
 import { GET as indexersGet } from './arr/indexers/route';
 import { GET as downloadsGet } from './downloads/route';
 import { GET as imageGet } from './media/image/route';
-import { collectArrUpcoming, collectArrQueue, collectArrStatus, collectProwlarrIndexers, toArrUpcoming, toArrQueue } from '@/integrations/arr/collect';
+import { collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers, toArrUpcoming, toArrQueue } from '@/integrations/arr/collect';
+import { collectLibraryUpcoming } from '@/lib/widgetData/libraryUpcoming';
+import { demoMediaUpcoming } from '@/lib/widgetData/media';
 import { collectDownloadClient } from '@/integrations/downloads/collect';
-import { demoArrStatus, demoDownloadClient, demoIndexers } from '@/lib/widgetData/arrDemo';
+import { demoArrRecent, demoArrStatus, demoDownloadClient, demoIndexers } from '@/lib/widgetData/arrDemo';
 import { serviceBytes, serviceJson, ServiceError } from '@/lib/widgetData/services';
 import { buildConfigForPrincipal } from '@/lib/configAccess';
 const get = (query = 'widgetId=w') => new NextRequest(`https://nasdash.example.com/api/widgets/arr/upcoming?${query}`);
@@ -38,6 +41,8 @@ beforeEach(() => {
   state.pages = [{ id: 'dashboard', name: 'Dashboard', icon: '', revision: 1, widgets: [{ id: 'w', type: 'media-upcoming', x: 0, y: 0, w: 12, h: 10, settings: {} }] }];
   vi.mocked(collectArrUpcoming).mockImplementation(async instance => toArrUpcoming(instance, instance.type === 'radarr' ? radarr.calendar : sonarr.calendar, start, start + 14 * 86400000));
   vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, instance.type === 'radarr' ? radarr.queue : sonarr.queue));
+  vi.mocked(collectArrRecent).mockImplementation(async instance => demoArrRecent(instance));
+  vi.mocked(collectLibraryUpcoming).mockImplementation(async () => demoMediaUpcoming());
   vi.mocked(collectArrStatus).mockImplementation(async instance => demoArrStatus(instance));
   vi.mocked(collectProwlarrIndexers).mockImplementation(async instance => demoIndexers(instance));
   vi.mocked(collectDownloadClient).mockImplementation(async instance => demoDownloadClient(instance));
@@ -184,7 +189,7 @@ describe('fictional demo and config privacy', () => {
     state.demo = true; widget().type = type;
     const response = await route(get()), result = await response.json(); expect(response.status).toBe(200);
     if (type === 'media-upcoming' || type === 'media-queue') { expect(result.items.length).toBeGreaterThan(0); expect((await imageGet(image(result.items[0].poster))).headers.get('content-type')).toBe('image/svg+xml'); }
-    for (const collector of [collectArrUpcoming, collectArrQueue, collectArrStatus, collectProwlarrIndexers, collectDownloadClient, serviceBytes, serviceJson]) expect(collector).not.toHaveBeenCalled();
+    for (const collector of [collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers, collectDownloadClient, serviceBytes, serviceJson]) expect(collector).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toMatch(/fictional-key|fictional-password|example.com/);
   });
   it('supports browser-local demo connections without outbound requests', async () => {
@@ -209,5 +214,72 @@ describe('cleared settings', () => {
     const response = await downloadsGet(get());
     expect(response.status).toBe(200);
     expect((await response.json()).clients.length).toBeGreaterThan(0);
+  });
+});
+
+describe('upcoming library mode and idle data', () => {
+  it.each([['source', 'other'], ['source', false], ['mediaId', ''], ['mediaId', 5], ['ended', 'true'], ['ended', 1]])('validates %s before any source read', async (field, value) => {
+    widget().settings = { source: 'library', [field]: value };
+    expect((await upcomingGet(get())).status).toBe(400); expect(collectLibraryUpcoming).not.toHaveBeenCalled(); expect(collectArrUpcoming).not.toHaveBeenCalled();
+  });
+  it('defaults to the first media server, filters ended after the shared cache and caps results', async () => {
+    const server = source('jellyfin'); state.instances.push(server); widget().settings = { source: 'library', ended: null, mediaId: null };
+    vi.mocked(collectLibraryUpcoming).mockResolvedValue([...demoMediaUpcoming(), ...Array.from({ length: 50 }, (_, n) => ({ id: `show-${n}`, title: `Show ${n}`, status: 'announced' as const }))]);
+    const body = await (await upcomingGet(get())).json(); expect(body.items).toEqual([]); expect(body.followUps).toHaveLength(40); expect(body.followUps.some((item: { status: string }) => item.status === 'ended')).toBe(false);
+    widget().settings.ended = true; await upcomingGet(get()); expect(collectLibraryUpcoming).toHaveBeenCalledTimes(1);
+    expect(collectLibraryUpcoming).toHaveBeenCalledWith(server);
+    vi.setSystemTime(start + 1800000); await upcomingGet(get()); expect(collectLibraryUpcoming).toHaveBeenCalledTimes(2);
+    server.secrets = { apiKey: 'changed' }; await upcomingGet(get()); expect(collectLibraryUpcoming).toHaveBeenCalledTimes(3);
+  });
+  it('requires a saved media source, distinguishes missing servers and isolates failures', async () => {
+    widget().settings = { source: 'library' }; expect((await upcomingGet(get())).status).toBe(404);
+    const server = source('plex'); state.instances.push(server); widget().settings.mediaId = state.instances[0].id; expect((await upcomingGet(get())).status).toBe(404);
+    widget().settings.mediaId = server.id; vi.mocked(collectLibraryUpcoming).mockRejectedValue(new Error('https://private.example.com?token=secret'));
+    const result = await (await upcomingGet(get())).json(); expect(result.failures).toEqual([{ id: server.id, name: server.name, error: 'widgets.error.network' }]); expect(result.followUps).toEqual([]);
+  });
+  it('proxies library art for the selected server with exact widget/draft membership and removes viewer links', async () => {
+    const first = source('emby'), second = source('plex'); state.instances.push(first, second); widget().settings = { source: 'library', mediaId: first.id };
+    vi.mocked(collectLibraryUpcoming).mockResolvedValue([{ id: 'local-series', title: 'Private library title', status: 'announced', poster: '/emby/Items/local-series/Images/Primary', link: 'https://media.example.com/web' }]);
+    const body = await (await upcomingGet(get())).json(), path = body.followUps[0].poster;
+    expect((await imageGet(image(path))).status).toBe(200); expect(vi.mocked(serviceBytes).mock.calls.at(-1)?.[0]).toBe(first);
+    state.pages[0].widgets.push({ ...widget(), id: 'other' }); expect((await imageGet(image(path.replace('widgetId=w', 'widgetId=other')))).status).toBe(404);
+    widget().settings.mediaId = second.id; expect((await imageGet(image(path))).status).toBe(404);
+    const draft = encodeURIComponent(JSON.stringify({ source: 'library', mediaId: first.id }));
+    const preview = await (await upcomingGet(get(`widgetId=w&draft=${draft}`))).json(); expect((await imageGet(image(preview.followUps[0].poster))).status).toBe(200);
+    const stripped = new URL(preview.followUps[0].poster, 'https://fixture'); stripped.searchParams.delete('draft'); expect((await imageGet(new NextRequest(stripped))).status).toBe(404);
+    state.admin = false; const viewer = await (await upcomingGet(get())).json(); expect(viewer.followUps[0].link).toBeUndefined(); expect(JSON.stringify(viewer)).not.toMatch(/fictional-key|example.com|\/emby\/Items/);
+  });
+  it('reads later only for an empty filtered window, caches it, sorts and bounds to three', async () => {
+    state.instances = [state.instances[0]]; const server = state.instances[0];
+    vi.mocked(collectArrUpcoming).mockImplementation(async (instance, from) => from === start ? [] : Array.from({ length: 6 }, (_, n) => ({ id: `later-${n}`, source: 'sonarr' as const, sourceName: instance.name, kind: 'episode' as const, hasFile: false, title: `Episode ${n}`, at: from + (6 - n) * 86400000, poster: '/api/v3/mediacover/12/poster.jpg' })));
+    const result = await (await upcomingGet(get())).json(); expect(result.items).toEqual([]); expect(result.later).toHaveLength(3); expect(result.later[0].id).toBe('later-5'); expect(result.later[0].poster).toContain('/api/widgets/media/image?');
+    expect(collectArrUpcoming).toHaveBeenLastCalledWith(server, start + 14 * 86400000, start + 134 * 86400000);
+    await upcomingGet(get()); expect(collectArrUpcoming).toHaveBeenCalledTimes(2);
+    server.secrets = { apiKey: 'changed' }; vi.mocked(collectArrUpcoming).mockResolvedValue(toArrUpcoming(server, sonarr.calendar, start, start + 14 * 86400000));
+    expect((await (await upcomingGet(get())).json()).later).toBeUndefined(); expect(collectArrUpcoming).toHaveBeenCalledTimes(3);
+  });
+  it('reads recent imports only for an empty queue, caches for 60 seconds and merges newest six', async () => {
+    widget().type = 'media-queue'; vi.mocked(collectArrQueue).mockResolvedValue({ items: [], total: 0 });
+    const result = await (await queueGet(get())).json(); expect(result.recent).toHaveLength(6); expect(result.recent[0].poster).toContain('/api/widgets/media/image?');
+    expect(collectArrRecent).toHaveBeenCalledTimes(2); await queueGet(get()); expect(collectArrRecent).toHaveBeenCalledTimes(2);
+    vi.setSystemTime(start + 60000); await queueGet(get()); expect(collectArrRecent).toHaveBeenCalledTimes(4);
+    state.instances[0].secrets = { apiKey: 'changed' }; state.instances[1].secrets = { apiKey: 'changed' }; vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, sonarr.queue));
+    expect((await (await queueGet(get())).json()).recent).toBeUndefined(); expect(collectArrRecent).toHaveBeenCalledTimes(4);
+  });
+  it('has fictional values for every new demo field and never fetches library metadata or TVMaze', async () => {
+    state.demo = true; const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
+    try {
+      state.instances.push(source('jellyfin')); widget().settings = { source: 'library', ended: true };
+      const result = await (await upcomingGet(get())).json(); expect(result.followUps).toHaveLength(5); expect(new Set(result.followUps.map((item: { status: string }) => item.status)).size).toBe(4);
+      expect((await imageGet(image(result.followUps[0].poster))).status).toBe(200);
+      expect(demoArrRecent(state.instances[0])).toHaveLength(3); expect(demoIndexers(state.instances[2]).hourly).toHaveLength(24);
+      expect(demoDownloadClient(state.instances[3])).toMatchObject({ sessionDownloaded: 48600000000, sessionUploaded: 12400000000, seeding: 1 }); expect(demoDownloadClient(state.instances[3]).completed?.length).toBeGreaterThan(0);
+      expect(fetcher).not.toHaveBeenCalled(); expect(collectLibraryUpcoming).not.toHaveBeenCalled(); expect(serviceJson).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
+    } finally { vi.unstubAllGlobals(); }
+  });
+  it('returns fictional later releases for an empty one-day album window without fetching', async () => {
+    state.demo = true; state.instances = [source('lidarr')]; widget().settings = { days: 1, kinds: ['album'] };
+    const result = await (await upcomingGet(get())).json(); expect(result.items).toEqual([]); expect(result.later).toHaveLength(3);
+    expect(result.later[0].poster).toContain('/api/widgets/media/image?'); expect(collectArrUpcoming).not.toHaveBeenCalled();
   });
 });

@@ -12,8 +12,19 @@
     },
     "stats": {
       "download_rate": 8000000,
-      "upload_rate": 320000
+      "upload_rate": 320000,
+      "total_download": 12000000000,
+      "total_upload": 3400000000
     }
   },
-  "free": 800000000000
+  "free": 800000000000,
+  "finished": {
+    "torrents": {
+      "fictional-finished": {
+        "name": "The Clockwork Meadow",
+        "total_size": 2000000000,
+        "completed_time": 1792533600
+      }
+    }
+  }
 }

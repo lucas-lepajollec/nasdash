@@ -1,6 +1,11 @@
 import type { IntegrationInstance } from '@/lib/types';
 import type { DownloadClientStatus, DownloadClientType } from '@/lib/widgetData/contracts';
 import { assertStatus, object, serviceBytes, ServiceError, type ServiceOptions } from '@/lib/widgetData/services';
+/** Missing optional counters stay absent, including on older client releases. */
+export const optionalBytes = (value: unknown): number | undefined => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
+export function completedItems(items: NonNullable<DownloadClientStatus['completed']>): NonNullable<DownloadClientStatus['completed']> {
+  return items.sort((a, b) => (b.at ?? 0) - (a.at ?? 0)).slice(0, 5);
+}
 export type DownloadItem = DownloadClientStatus['items'][number];
 export type DownloadState = DownloadItem['state'];
 export const numeric = (value: unknown) => { const n = typeof value === 'number' || typeof value === 'string' && value.trim() ? Number(value) : NaN; return Number.isFinite(n) ? Math.max(0, n) : 0; };
@@ -29,6 +34,7 @@ export function clientStatus(instance: IntegrationInstance, items: DownloadItem[
   return { id: instance.id, name: instance.name, type: instance.type as DownloadClientType, downloadBps: 0,
     active: items.filter(item => item.state === 'downloading' || item.state === 'seeding').length,
     paused: items.filter(item => item.state === 'paused').length, queued: items.filter(item => item.state === 'queued').length,
+    ...(['qbittorrent', 'transmission', 'deluge'].includes(instance.type) ? { seeding: items.filter(item => item.state === 'seeding').length } : {}),
     ...values, items: [...items].sort((a, b) => (b.downloadBps ?? 0) - (a.downloadBps ?? 0)).slice(0, 10) };
 }
 export function responseCookie(headers: Record<string, string | string[] | undefined> | undefined, name: string): string | undefined {

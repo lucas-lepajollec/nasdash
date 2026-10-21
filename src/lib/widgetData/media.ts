@@ -1,7 +1,7 @@
 /** Server-only media settings, image membership, and fictional demo data. */
 import { createHash } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
-import { MEDIA_IMAGE_ROUTE, type MediaItem, type MediaWatched, type MediaLibraryResponse, type MediaNowPlayingResponse, type MediaRecentResponse, type MediaServer } from './contracts';
+import { MEDIA_IMAGE_ROUTE, type FollowUpItem, type MediaItem, type MediaWatched, type MediaLibraryResponse, type MediaNowPlayingResponse, type MediaRecentResponse, type MediaServer } from './contracts';
 import { serviceIdentity, ServiceError } from './services';
 
 export const MEDIA_WIDGET_TYPES = ['media-nowplaying', 'media-recent', 'media-library'] as const;
@@ -103,6 +103,14 @@ export function demoMediaNowPlaying(instance: IntegrationInstance): MediaNowPlay
     { id: 'demo-session-1', item: demoItem(0), user: 'Alex', player: 'Media Web · Living room', state: 'playing', positionMs: 2130000, method: 'direct', quality: '4K HDR', bitrateKbps: 24000 },
     { id: 'demo-session-2', item: demoItem(1), user: 'Robin', player: 'Media TV · Den', state: 'paused', positionMs: 930000, method: 'transcode', quality: '1080p', bitrateKbps: 8000 },
   ] };
+}
+export function demoMediaUpcoming(): FollowUpItem[] {
+  return ['The Weather Cartographers', 'Harbor Lights', 'Paper Satellites', 'The Copper Lighthouse', 'Northern Relay'].map((title, n) => {
+    const art = demoItem(n), dated = n < 2;
+    return { id: `demo-follow-${n}`, title, status: (['airing', 'upcoming', 'announced', 'announced', 'ended'] as const)[n],
+      ownedSeason: 2, network: 'Lantern Television', poster: art.poster, backdrop: art.backdrop,
+      ...(dated ? { at: Date.now() + (n + 1) * 86400000, season: n + 2, episode: n ? 1 : 6, episodeTitle: n ? 'A New Horizon' : 'The Tide Returns' } : {}) };
+  });
 }
 export function demoMediaHistory(): MediaWatched[] {
   const people = ['Alex', 'Robin', 'Sam'];

@@ -1,6 +1,6 @@
 /** Shared Sonarr/Radarr/Lidarr/Prowlarr API mapping. Never return upstream objects. */
 import type { IntegrationInstance } from '@/lib/types';
-import type { ArrAppStatus, ArrType, IndexersResponse, QueueItem, QueueStatus, UpcomingItem } from '@/lib/widgetData/contracts';
+import type { ArrAppStatus, ArrType, ImportedItem, IndexersResponse, QueueItem, QueueStatus, UpcomingItem } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 
 export const arrPrefix = (instance: IntegrationInstance) => instance.type === 'sonarr' || instance.type === 'radarr' ? '/api/v3' : '/api/v1';
@@ -94,6 +94,46 @@ export async function collectArrQueue(instance: IntegrationInstance) {
   const include = instance.type === 'sonarr' ? 'includeSeries=true&includeEpisode=true' : instance.type === 'radarr' ? 'includeMovie=true' : 'includeArtist=true&includeAlbum=true';
   return toArrQueue(instance, await arrRequest(instance, `/queue?page=1&pageSize=50&${include}`));
 }
+/** The *arr's own cover of a series / movie / artist by id, when the history only carries remote URLs. */
+const localCover = (instance: IntegrationInstance, id: unknown) => typeof id !== 'number' || !Number.isInteger(id) || id <= 0 ? undefined
+  // Lidarr files covers per album (`album/{id}/cover.jpg`); Sonarr and Radarr per series / movie.
+  : instance.type === 'lidarr' ? `${arrPrefix(instance)}/mediacover/album/${id}/cover.jpg` : `${arrPrefix(instance)}/mediacover/${id}/poster.jpg`;
+export function toArrRecent(instance: IntegrationInstance, value: unknown): ImportedItem[] {
+  const seen = new Map<string, ImportedItem>();
+  return list(object(value).records).map(object).sort((a, b) => (date(b.date) ?? 0) - (date(a.date) ?? 0)).flatMap(item => {
+    // Paged APIs accept integer filters. Lidarr calls event 3 trackFileImported.
+    if (![3, 'downloadFolderImported', 'trackFileImported'].includes(item.eventType as string | number)) return [];
+    const at = date(item.date);
+    if (at === undefined) return [];
+    const media = object(instance.type === 'sonarr' ? item.episode : instance.type === 'radarr' ? item.movie : item.album), parent = object(instance.type === 'sonarr' ? item.series : item.artist);
+    // Episodes of one series and tracks of one album fold into one entry: the newest, with how many.
+    const key = instance.type === 'sonarr' ? `series:${item.seriesId ?? parent.id ?? media.id}` : String(media.id ?? item.albumId ?? item.movieId ?? item.id);
+    const folded = seen.get(key);
+    if (folded) { folded.count = (folded.count ?? 1) + (instance.type === 'lidarr' ? 0 : 1); return []; }
+    const parentId = instance.type === 'sonarr' ? item.seriesId ?? parent.id : instance.type === 'radarr' ? item.movieId ?? media.id : item.albumId ?? media.id;
+    const entry: ImportedItem = { id: unique(instance, item.id), source: libraryType(instance), kind: kind(instance), title: string(media.title), subtitle: string(parent.title) || string(parent.artistName) || undefined,
+      ...(instance.type === 'sonarr' ? { season: number(media.seasonNumber), episode: number(media.episodeNumber) } : {}),
+      quality: string(object(object(item.quality).quality).name) || undefined, at, poster: art(instance, media, parent).poster ?? localCover(instance, parentId) };
+    seen.set(key, entry);
+    return [entry];
+  }).slice(0, 6);
+}
+export async function collectArrRecent(instance: IntegrationInstance): Promise<ImportedItem[]> {
+  const include = instance.type === 'sonarr' ? 'includeSeries=true&includeEpisode=true' : instance.type === 'radarr' ? 'includeMovie=true' : 'includeArtist=true&includeAlbum=true';
+  return toArrRecent(instance, await arrRequest(instance, `/history?page=1&pageSize=50&sortKey=date&sortDirection=descending&eventType=3&${include}`));
+}
+export function prowlarrActivity(history: unknown, now = Date.now()): Pick<IndexersResponse, 'hourly' | 'lastQueryAt'> {
+  const hourly = Array<number>(24).fill(0), start = now - 86400000;
+  let lastQueryAt: number | undefined;
+  for (const item of list(object(history).records).map(object)) {
+    if (![2, 3, 'indexerQuery', 'indexerRss'].includes(item.eventType as string | number)) continue;
+    const at = date(item.date);
+    if (at === undefined || at < start || at > now) continue;
+    hourly[Math.min(23, Math.floor((at - start) / 3600000))]++;
+    lastQueryAt = Math.max(lastQueryAt ?? 0, at);
+  }
+  return { hourly, ...(lastQueryAt !== undefined ? { lastQueryAt } : {}) };
+}
 export function toProwlarrIndexers(instance: IntegrationInstance, indexers: unknown, statuses: unknown, stats: unknown, now = Date.now()): IndexersResponse {
   const statusList = list(statuses).map(object), statList = array(object(stats).indexers).map(object);
   const entries = list(indexers).map(raw => {
@@ -101,14 +141,17 @@ export function toProwlarrIndexers(instance: IntegrationInstance, indexers: unkn
     const retryAt = date(status?.disabledTill);
     return { id: String(item.id), name: string(item.name), protocol: item.protocol === 'usenet' ? 'usenet' as const : 'torrent' as const, enabled: item.enable === true,
       healthy: !status || (retryAt !== undefined && retryAt <= now), ...(retryAt !== undefined ? { retryAt } : {}),
-      ...(stat ? { queries: number(stat.numberOfQueries), grabs: number(stat.numberOfGrabs), failures: number(stat.numberOfFailedQueries), averageMs: number(stat.averageResponseTime) } : {}) };
+      // Requests: searches and RSS reads alike (an *arr mostly reads RSS).
+      ...(stat ? { queries: number(stat.numberOfQueries) + number(stat.numberOfRssQueries), grabs: number(stat.numberOfGrabs), failures: number(stat.numberOfFailedQueries) + number(stat.numberOfFailedRssQueries), averageMs: number(stat.averageResponseTime) } : {}) };
   });
   return { name: instance.name, indexers: entries, totals: entries.reduce((sum, item) => ({ queries: sum.queries + (item.queries ?? 0), grabs: sum.grabs + (item.grabs ?? 0), failures: sum.failures + (item.failures ?? 0) }), { queries: 0, grabs: 0, failures: 0 }), fetchedAt: now };
 }
 export async function collectProwlarrIndexers(instance: IntegrationInstance): Promise<IndexersResponse> {
   const now = Date.now();
   const [indexers, statuses, stats] = await Promise.all(['/indexer', '/indexerstatus', `/indexerstats?startDate=${encodeURIComponent(new Date(now - 86400000).toISOString())}`].map(path => arrRequest(instance, path)));
-  return toProwlarrIndexers(instance, indexers, statuses, stats, now);
+  const result = toProwlarrIndexers(instance, indexers, statuses, stats, now);
+  try { return { ...result, ...prowlarrActivity(await arrRequest(instance, '/history?page=1&pageSize=1000&sortKey=date&sortDirection=descending'), now) }; }
+  catch { return result; /* History permissions do not affect indexer health. */ }
 }
 export async function collectArrStatus(instance: IntegrationInstance): Promise<ArrAppStatus> {
   const base = { id: instance.id, name: instance.name, type: instance.type as ArrType };

@@ -49,7 +49,7 @@
           }
         ],
         "album": {
-          "id": 301,
+          "id": 42,
           "title": "Postcards from Ember Bay",
           "releaseDate": "2026-10-24T20:00:00Z",
           "statistics": {
@@ -112,5 +112,56 @@
       "path": "/fictional/backup",
       "freeSpace": 800000000000
     }
-  ]
+  ],
+  "history": {
+    "records": [
+      {
+        "album": {
+          "id": 42,
+          "title": "Postcards from Ember Bay",
+          "releaseDate": "2026-10-24T20:00:00Z",
+          "statistics": {
+            "trackFileCount": 2
+          },
+          "artist": {
+            "artistName": "The Velvet Compasses",
+            "foreignArtistId": "fictional-artist",
+            "images": [
+              {
+                "coverType": "poster",
+                "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+              },
+              {
+                "coverType": "fanart",
+                "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+              }
+            ]
+          }
+        },
+        "artist": {
+          "artistName": "The Velvet Compasses",
+          "foreignArtistId": "fictional-artist",
+          "images": [
+            {
+              "coverType": "poster",
+              "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+            },
+            {
+              "coverType": "fanart",
+              "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+            }
+          ]
+        },
+        "quality": {
+          "quality": {
+            "name": "FLAC"
+          }
+        },
+        "id": 801,
+        "eventType": "trackFileImported",
+        "date": "2026-10-20T22:00:00Z"
+      }
+    ],
+    "totalRecords": 1
+  }
 }

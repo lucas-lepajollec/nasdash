@@ -1,6 +1,6 @@
 /** Fictional data only. Demo routes never call collectors or remote image servers. */
 import type { IntegrationInstance } from '@/lib/types';
-import type { ArrAppStatus, ArrType, DownloadClientStatus, DownloadClientType, IndexersResponse, QueueItem, UpcomingItem } from './contracts';
+import type { ArrAppStatus, ArrType, DownloadClientStatus, DownloadClientType, ImportedItem, IndexersResponse, QueueItem, UpcomingItem } from './contracts';
 
 /** Invented titles, different for each *arr so the demo reads like a real library. */
 const SERIES = [['The Weather Cartographers', 'The Glass Orchard'], ['Harbor Lights', 'Low Tide Signals'], ['The Weather Cartographers', 'Northern Relay'], ['Paper Satellites', 'Static Bloom']] as const;
@@ -38,6 +38,10 @@ export function demoArrStatus(instance: IntegrationInstance): ArrAppStatus {
   return { id: instance.id, name: instance.name, type: instance.type as ArrType, version: { sonarr: '4.0.9', radarr: '5.14.0', lidarr: '2.8.2', prowlarr: '1.24.3' }[instance.type] ?? '1.0.0', health, online: true,
     ...(instance.type === 'prowlarr' ? { indexers: 6, failingIndexers: 1 } : { queue: { sonarr: 3, radarr: 1, lidarr: 2 }[instance.type] ?? 0, missing: { sonarr: 14, radarr: 5, lidarr: 22 }[instance.type] ?? 0, freeBytes: 1_200_000_000_000 }) };
 }
+export function demoArrRecent(instance: IntegrationInstance): ImportedItem[] {
+  return demoArrUpcoming(instance, Date.now()).slice(0, 3).map((item, n) => ({ id: `import:${item.id}`, source: item.source, kind: item.kind, title: item.title,
+    subtitle: item.subtitle, season: item.season, episode: item.episode, quality: item.kind === 'album' ? 'FLAC' : '1080p', at: Date.now() - (n + 1) * 3600000, poster: item.poster }));
+}
 
 export function demoIndexers(instance: IntegrationInstance): IndexersResponse {
   const indexers = [
@@ -47,13 +51,15 @@ export function demoIndexers(instance: IntegrationInstance): IndexersResponse {
     { id: 'demo-indexer-4', name: 'Paper Satellites Index', protocol: 'usenet', enabled: true, healthy: true, queries: 37, grabs: 4, failures: 1, averageMs: 95 },
     { id: 'demo-indexer-5', name: 'Quiet Orbit Tracker', protocol: 'torrent', enabled: false, healthy: true, queries: 0, grabs: 0, failures: 0 },
   ] as IndexersResponse['indexers'];
-  return { name: instance.name, indexers, totals: { queries: 224, grabs: 31, failures: 10 }, fetchedAt: Date.now() };
+  return { name: instance.name, indexers, totals: { queries: 224, grabs: 31, failures: 10 }, hourly: Array.from({ length: 24 }, (_, n) => 3 + (n * 7) % 19), lastQueryAt: Date.now() - 120000, fetchedAt: Date.now() };
 }
 
 export function demoDownloadClient(instance: IntegrationInstance): DownloadClientStatus {
   const torrent = instance.type !== 'sabnzbd' && instance.type !== 'nzbget';
   const down = Math.round((torrent ? 8_400_000 : 23_000_000) * wave(torrent ? 0 : 2, 0.35));
   return { id: instance.id, name: instance.name, type: instance.type as DownloadClientType, downloadBps: down, ...(torrent ? { uploadBps: Math.round(1_150_000 * wave(1, 0.4)) } : {}),
+    sessionDownloaded: 48_600_000_000, ...(torrent ? { sessionUploaded: 12_400_000_000, seeding: 1 } : {}),
+    completed: ['The Glass Orchard S01E02', 'A Lantern for the Tide', 'Coastline Radio FLAC'].map((name, n) => ({ id: `demo-finished-${n}`, name, sizeBytes: (n + 1) * 840_000_000, at: Date.now() - (n + 1) * 3600000 })),
     active: torrent ? 3 : 1, paused: torrent ? 1 : 0, queued: torrent ? 0 : 4, freeBytes: torrent ? 1_200_000_000_000 : 860_000_000_000, altSpeed: false,
     items: torrent ? [
       { id: 'demo-download-1', name: 'Low Tide Signals S01E04 1080p', progress: 64, state: 'downloading', downloadBps: Math.round(down * 0.7), etaMs: 320_000, sizeBytes: 2_400_000_000 },

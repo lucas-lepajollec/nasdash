@@ -1,12 +1,20 @@
 /** Settings and source authorization shared by the *arr routes and media image proxy. */
 import { readConfig } from '@/lib/config';
 import type { IntegrationInstance } from '@/lib/types';
-import { ARR_TYPES, LIBRARY_ARR_TYPES, DOWNLOAD_CLIENT_TYPES, type UpcomingItem } from './contracts';
+import { ARR_TYPES, LIBRARY_ARR_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, type UpcomingItem } from './contracts';
 import { demoVisitorInstance, ServiceError } from './services';
 export const ARR_WIDGET_TYPES = ['media-upcoming', 'media-queue', 'media-arr', 'media-indexers', 'media-downloads'] as const;
 export type ArrWidgetType = typeof ARR_WIDGET_TYPES[number];
 export const ARR_IMAGE_WIDGET_TYPES = ['media-upcoming', 'media-queue'] as const;
 export const sourceTypes = (type: ArrWidgetType): readonly string[] => type === 'media-arr' ? ARR_TYPES : type === 'media-downloads' ? DOWNLOAD_CLIENT_TYPES : type === 'media-indexers' ? ['prowlarr'] : LIBRARY_ARR_TYPES;
+export function upcomingSource(settings: Record<string, unknown>): 'arr' | 'library' {
+  const source = settings.source ?? 'arr';
+  if (source !== 'arr' && source !== 'library' || settings.ended !== undefined && typeof settings.ended !== 'boolean' || settings.mediaId !== undefined && (typeof settings.mediaId !== 'string' || !settings.mediaId)) throw new ServiceError('widgets.error.invalidSettings', 400);
+  return source;
+}
+export function librarySource(settings: Record<string, unknown>): IntegrationInstance[] {
+  return widgetSources({ integrationId: settings.mediaId }, MEDIA_SERVER_TYPES, true);
+}
 export function settingNumber(settings: Record<string, unknown>, field: string, fallback: number, min: number, max: number): number {
   const value = settings[field] === undefined ? fallback : settings[field];
   if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) throw new ServiceError('widgets.error.invalidSettings', 400);

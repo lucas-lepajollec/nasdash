@@ -14,5 +14,26 @@
         "mb": "1024"
       }
     ]
+  },
+  "stats": {
+    "day": 12000000000
+  },
+  "history": {
+    "history": {
+      "slots": [
+        {
+          "nzo_id": "fictional-finished",
+          "name": "The Clockwork Meadow",
+          "status": "Completed",
+          "bytes": 2000000000,
+          "completed": 1792533600
+        },
+        {
+          "nzo_id": "fictional-failed",
+          "name": "Failed job",
+          "status": "Failed"
+        }
+      ]
+    }
   }
 }

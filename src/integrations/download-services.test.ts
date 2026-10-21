@@ -96,7 +96,7 @@ describe('Transmission RPC negotiation', () => {
     bytes.mockImplementation(async (_instance, _path, options) => answer({ result: 'success', arguments: (options?.json as { method: string }).method === 'session-stats' ? tr.stats : (options?.json as { method: string }).method === 'session-get' ? tr.session : tr.torrents }));
     expect((await collectTransmission({ ...instance('transmission'), settings: { url: 'http://fixture.example.com' }, secrets: {} })).items).toHaveLength(2);
     expect(bytes.mock.calls[0][2]?.headers).toEqual({});
-    expect(bytes.mock.calls[2][2]?.json).toEqual({ method: 'torrent-get', arguments: { fields: ['id', 'name', 'percentDone', 'status', 'rateDownload', 'eta', 'totalSize'] } });
+    expect(bytes.mock.calls[2][2]?.json).toEqual({ method: 'torrent-get', arguments: { fields: ['id', 'name', 'percentDone', 'status', 'rateDownload', 'eta', 'totalSize', 'doneDate'] } });
   });
 });
 
@@ -110,7 +110,7 @@ describe('Deluge, SABnzbd and NZBGet transports', () => {
   });
   it('adds the SABnzbd query key only server-side and returns only picked fields', async () => {
     bytes.mockResolvedValue(answer(sab)); const result = await collectSabnzbd(instance('sabnzbd')); await sabnzbdRequest(instance('sabnzbd'), 'version');
-    expect(bytes.mock.calls[0][1]).toBe('/api?mode=queue&output=json&apikey=fictional-key'); expect(bytes.mock.calls[1][1]).toContain('mode=version');
+    expect(bytes.mock.calls[0][1]).toBe('/api?mode=queue&output=json&apikey=fictional-key'); expect(bytes.mock.calls.at(-1)?.[1]).toContain('mode=version');
     expect(JSON.stringify(result)).not.toMatch(/fictional-key|downloads.example.com|apikey|password/);
   });
   it('sends NZBGet basic auth in a header, and rejects RPC errors', async () => {
@@ -134,5 +134,51 @@ describe('qBittorrent API key', () => {
     bytes.mockResolvedValue(answer('Forbidden', 403));
     const source = { ...instance('qbittorrent'), settings: { url: 'https://downloads.example.com', auth: 'apikey' }, secrets: { apiKey: 'wrong' } };
     await expect(qbittorrentRequest(source, '/x')).rejects.toMatchObject({ key: 'integrations.error.authentication' });
+  });
+});
+
+describe('optional download counters and completions', () => {
+  it('maps qBittorrent session counters, counts all seeds and sorts/caps completions before truncating busy items', () => {
+    const torrents = Array.from({ length: 15 }, (_, n) => ({ ...qb.torrents[1], hash: `hash-${n}`, completion_on: 1000 + n }));
+    const result = toQbittorrent(instance('qbittorrent'), qb.transfer, 0, torrents);
+    expect(result).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, seeding: 15 });
+    expect(result.items).toHaveLength(10); expect(result.completed).toHaveLength(5); expect(result.completed?.map(item => item.at)).toEqual([1014000, 1013000, 1012000, 1011000, 1010000]);
+    expect(toQbittorrent(instance('qbittorrent'), { dl_info_speed: 0 }, 0, []).sessionDownloaded).toBeUndefined();
+  });
+  it('maps Transmission session-stats and doneDate', () => {
+    expect(toTransmission(instance('transmission'), tr.stats, tr.session, tr.torrents)).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, seeding: 1,
+      completed: [{ id: '2', name: 'The Clockwork Meadow', sizeBytes: 2000000000, at: 1792533600000 }] });
+  });
+  it('maps Deluge totals and best-effort completed_time, omitting failed extras', async () => {
+    let extrasFail = false;
+    bytes.mockImplementation(async (_instance, _path, options) => {
+      const rpc = options?.json as { method: string; params: unknown[] };
+      if (rpc.method === 'auth.login') return answer({ result: true }, 200, { 'set-cookie': ['_session_id=fictional-session; Path=/'] });
+      const finished = rpc.method === 'web.update_ui' && (rpc.params[0] as string[]).includes('completed_time');
+      if (extrasFail && (finished || rpc.method === 'core.get_free_space')) throw new Error('unsupported');
+      return answer({ result: finished ? de.finished : rpc.method === 'web.update_ui' ? de.update : de.free });
+    });
+    const result = await collectDeluge(instance('deluge'));
+    expect(result).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, seeding: 0, completed: [{ id: 'fictional-finished', at: 1792533600000 }] });
+    extrasFail = true; const partial = await collectDeluge(instance('deluge')); expect(partial.items).toHaveLength(1); expect(partial.completed).toBeUndefined(); expect(partial.freeBytes).toBeUndefined();
+  });
+  it('maps SABnzbd day bytes and completed history without returning failed jobs or private fields', async () => {
+    bytes.mockImplementation(async (_instance, path) => answer(path.includes('mode=history') ? sab.history : path.includes('mode=server_stats') ? sab.stats : sab));
+    const result = await collectSabnzbd(instance('sabnzbd'));
+    expect(result).toMatchObject({ sessionDownloaded: 12000000000, completed: [{ id: 'fictional-finished', name: 'The Clockwork Meadow', sizeBytes: 2000000000, at: 1792533600000 }] });
+    expect(result.completed).toHaveLength(1); expect(bytes.mock.calls.find(([, path]) => path.includes('mode=history'))?.[1]).toContain('limit=5');
+    bytes.mockImplementation(async (_instance, path) => { if (!path.includes('mode=queue')) throw new Error('unsupported'); return answer(sab); });
+    const partial = await collectSabnzbd(instance('sabnzbd')); expect(partial.completed).toBeUndefined(); expect(partial.sessionDownloaded).toBeUndefined(); expect(partial.items).toHaveLength(1);
+  });
+  it('maps NZBGet session MB and successful history, allowing history failure', async () => {
+    let historyFails = false;
+    bytes.mockImplementation(async (_instance, _path, options) => {
+      const method = (options?.json as { method: string }).method;
+      if (method === 'history' && historyFails) throw new Error('unsupported');
+      return answer({ result: method === 'history' ? nzb.history : method === 'status' ? nzb.status : nzb.groups });
+    });
+    const result = await collectNzbget(instance('nzbget'));
+    expect(result).toMatchObject({ sessionDownloaded: 12000 * 1048576, completed: [{ id: '22', name: 'The Clockwork Meadow', sizeBytes: 2000 * 1048576, at: 1792533600000 }] });
+    expect(result.completed).toHaveLength(1); historyFails = true; const partial = await collectNzbget(instance('nzbget')); expect(partial.completed).toBeUndefined(); expect(partial.items).toHaveLength(1);
   });
 });

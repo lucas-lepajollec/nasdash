@@ -1,32 +1,26 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { BookOpen, Clapperboard, Disc3, Film, ImagePlus, Mic2, Music, Tv, Upload, X } from 'lucide-react';
+import { ImagePlus, Upload, X } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
-import type { MediaCounts, MediaLibraryResponse } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaLibrary, MediaLibraryResponse } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeDialog, CalmeField, CalmeCheckRow } from '@/components/shared/CalmeDialog';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { DataError, pick, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { DataError, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { Backdrop, Figure } from '@/components/widgets/media/visual';
 import { MediaConnectionField, MediaSetup, useMediaConnection } from '@/components/widgets/media/shared';
 
 type Count = keyof MediaCounts;
 const COUNTS: readonly Count[] = ['movies', 'series', 'episodes', 'artists', 'albums', 'tracks', 'books'];
-const ICONS: Record<Count, typeof Film> = { movies: Film, series: Tv, episodes: Clapperboard, artists: Mic2, albums: Disc3, tracks: Music, books: BookOpen };
-const LIBRARY_ICONS = { movies: Film, series: Tv, music: Music, books: BookOpen, other: Clapperboard } as const;
-/** One tile per shelf: its main total large, the others beneath, over the newest title's art. */
-const SHELVES: readonly { id: string; counts: Count[]; cover?: string }[] = [
-  { id: 'movies', counts: ['movies'], cover: 'movies' },
-  { id: 'series', counts: ['series', 'episodes'], cover: 'series' },
-  { id: 'music', counts: ['albums', 'artists', 'tracks'], cover: 'music' },
-  { id: 'books', counts: ['books'] },
-];
 
 /**
- * What a Jellyfin, Emby or Plex server holds: movies, series, episodes,
- * music, books (the ones it has, or the ones chosen), and its libraries.
+ * What a Jellyfin, Emby or Plex server holds: the totals large, then each
+ * library: the ones with pictures as a card of their newest posters (or a
+ * picture chosen for their kind), music and books as text, each with what
+ * arrived this week.
  */
 export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, onUpdateSettings }: {
   widgetId: string; settings: WidgetSettings; editMode: boolean; isVisible: boolean; onUpdateSettings: (settings: WidgetSettings) => void;
@@ -34,6 +28,7 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
   const { t, locale } = useI18n();
   const connection = useMediaConnection(settings);
   const { data, error, mutate, stale } = useWidgetData<MediaLibraryResponse>('/api/widgets/media/library', widgetId, settings, { refreshMs: 15 * 60_000, isVisible, method: 'GET', enabled: !!connection });
+  const [box, width] = useBoxWidth<HTMLDivElement>();
   const number = useMemo(() => ({ full: new Intl.NumberFormat(locale), short: new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }) }), [locale]);
   const title = t('widget.media-library.name');
   const chosen = Array.isArray(settings.counts) ? COUNTS.filter(id => (settings.counts as unknown[]).includes(id)) : [...COUNTS];
@@ -41,6 +36,11 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
   const shown = data ? chosen.filter(id => data.counts[id] !== undefined && (settings.zeros === true || (data.counts[id] ?? 0) > 0)) : [];
   const own = imagesOf(settings);
   const display = pick(settings.display, LIBRARY_DISPLAYS, 'shelves');
+  const libraries = data?.libraries ?? [];
+  const pictured = libraries.filter(library => library.kind !== 'music' && library.kind !== 'books' && (library.covers?.length || own[library.kind]));
+  const plain = libraries.filter(library => !pictured.includes(library));
+  const added = libraries.reduce((sum, library) => sum + (library.added ?? 0), 0);
+  const columns = Math.max(1, Math.min(5, Math.floor((width + 14) / 230)));
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={data ? <span className="ndc-title-note">{data.name}</span> : undefined}>
@@ -49,64 +49,86 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
           {(draft, change) => <LibrarySettings draft={draft} change={change} />}
         </WidgetSettingsButton>
       )}
-      <div className={`ndw-media-box ${stale ? 'is-stale' : ''}`}>
+      <div ref={box} className={`ndw-media-box ${stale ? 'is-stale' : ''}`}>
         {!connection ? <MediaSetup settings={settings} />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
-            : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 64 }} /></div>
+            : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 64 }} /><span className="ndw-skeleton-row" style={{ height: 140 }} /></div>
               : (
-                <>
-                  {display === 'text' ? (
-                    <div className="ndw-media-tally">
-                      {SHELVES.map(shelf => shelf.counts.filter(id => shown.includes(id))).flat().map(id => (
-                        <span key={id} className="ndw-media-tally-item" title={number.full.format(data.counts[id] ?? 0)}>
-                          <span className="ndw-media-tally-value">{number.short.format(data.counts[id] ?? 0)}</span>
-                          <span className="ndw-media-tally-label">{t(`widgets.media.count.${id}`)}</span>
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="ndw-media-shelves">
-                      {SHELVES.map((shelf, index) => {
-                        const ids = shelf.counts.filter(id => shown.includes(id));
-                        if (!ids.length) return null;
-                        const [main, ...more] = ids;
-                        const Icon = ICONS[main];
-                        // A picture chosen for the shelf, else the server's, rotating.
-                        const covers = own[shelf.id] ? [own[shelf.id]!] : data.covers?.[shelf.cover as keyof NonNullable<MediaLibraryResponse['covers']>] ?? [];
-                        return (
-                          <div key={shelf.id} className={`ndw-media-shelf is-${shelf.id} ${covers.length ? 'has-cover' : ''}`} title={ids.map(id => `${number.full.format(data.counts[id] ?? 0)} ${t(`widgets.media.count.${id}`)}`).join(' · ')}>
-                            {covers.length > 0 ? <RotatingArt urls={covers} offset={index * 4000} active={isVisible} /> : <Icon className="ndw-media-shelf-mark" aria-hidden="true" />}
-                            <span className="ndw-media-shelf-shade" aria-hidden="true" />
-                            <span className="ndw-media-shelf-head"><Icon size={14} aria-hidden="true" />{t(`widgets.media.shelf.${shelf.id}`)}</span>
-                            <span className="ndw-media-shelf-value">{number.short.format(data.counts[main] ?? 0)}<span className="ndw-media-shelf-unit">{t(`widgets.media.count.${main}`)}</span></span>
-                            {more.length > 0 && (
-                              <span className="ndw-media-shelf-more">
-                                {more.map(id => <span key={id}>{number.short.format(data.counts[id] ?? 0)} {t(`widgets.media.count.${id}`)}</span>)}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                <div className="ndw-mx-stack">
+                  <div className="ndw-mx-figures is-wrap">
+                    {shown.map(id => <Figure key={id} size="large" value={number.full.format(data.counts[id] ?? 0)} unit={t(`widgets.media.count.${id}`)} />)}
+                    {added > 0 && <span className="ndw-mx-figures-end"><span className="ndw-mx-meta">{t('widgets.media.addedWeek', { count: added })}</span></span>}
+                  </div>
+                  {display === 'shelves' && pictured.length > 0 && (
+                    <div className="ndw-mx-shelves" style={{ '--ndw-cols': Math.min(columns, pictured.length) } as React.CSSProperties}>
+                      {pictured.map((library, index) => <Shelf key={library.name} library={library} own={own[library.kind]} offset={index * 4000} active={isVisible} number={number.full} />)}
                     </div>
                   )}
-                  {settings.libraries === true && data.libraries.length > 0 && (
-                    <div className="ndw-media-library-chips">
-                      {data.libraries.map(library => {
-                        const Icon = LIBRARY_ICONS[library.kind] ?? Clapperboard;
-                        return (
-                          <span key={library.name} className="ndw-media-library-chip">
-                            <Icon size={12} aria-hidden="true" />
-                            <span>{library.name}</span>
-                            {library.count !== undefined && <span className="ndw-media-library-count">{number.short.format(library.count)}</span>}
-                          </span>
-                        );
-                      })}
+                  {(display === 'text' ? libraries : plain).length > 0 && (
+                    <div className="ndw-mx-plain" style={{ '--ndw-cols': Math.max(1, Math.min(2, Math.floor((width + 14) / 360))) } as React.CSSProperties}>
+                      {(display === 'text' ? libraries : plain).map(library => <PlainLibrary key={library.name} library={library} number={number.full} />)}
                     </div>
                   )}
-                </>
+                </div>
               )}
       </div>
     </CalmeWidget>
+  );
+}
+
+/** "2 732 episodes", "+8 this week": the details of one library. */
+function useDetail() {
+  const { t } = useI18n();
+  return (library: MediaLibrary, number: Intl.NumberFormat) => [
+    library.episodes !== undefined ? `${number.format(library.episodes)} ${t('widgets.media.count.episodes')}` : '',
+    library.added ? t('widgets.media.addedShort', { count: library.added }) : '',
+  ].filter(Boolean).join(' · ');
+}
+
+/** A library with pictures: its newest posters fanned out over a blur of the first. */
+function Shelf({ library, own, offset, active, number }: { library: MediaLibrary; own?: string; offset: number; active: boolean; number: Intl.NumberFormat }) {
+  const detail = useDetail();
+  const covers = library.covers ?? [];
+  const shift = useRotation(covers.length, offset, active);
+  const trio = covers.length ? [0, 1, 2].map(step => covers[(shift + step) % covers.length]) : [];
+  return (
+    <div className="ndw-mx-shelf">
+      <Backdrop src={own ?? trio[1] ?? trio[0]} blur={!own} />
+      {!own && trio.length > 0 && (
+        <span className="ndw-mx-fan" aria-hidden="true">
+          {(covers.length >= 3 ? trio : [trio[0]]).map((url, position) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={`${url}-${position}`} className={`is-${covers.length >= 3 ? position : 1}`} src={url} alt="" loading="lazy" decoding="async" />
+          ))}
+        </span>
+      )}
+      <span className="ndw-mx-shelf-foot">
+        <span className="ndw-media-row-text">
+          <span className="ndw-mx-title">{library.name}</span>
+          <span className="ndw-media-sub">{detail(library, number)}</span>
+        </span>
+        {library.count !== undefined && <span className="ndw-mx-shelf-count">{number.format(library.count)}</span>}
+      </span>
+    </div>
+  );
+}
+
+/** Music, books, or any library shown as text: its figures in a row. */
+function PlainLibrary({ library, number }: { library: MediaLibrary; number: Intl.NumberFormat }) {
+  const { t } = useI18n();
+  const figures: [string, number | undefined][] = library.kind === 'music'
+    ? [['artists', library.count], ['albums', library.albums], ['tracks', library.tracks]]
+    : [[library.kind === 'books' ? 'books' : library.kind === 'series' ? 'series' : 'movies', library.count], ['episodes', library.episodes]];
+  return (
+    <div className="ndw-mx-plain-item">
+      <span className="ndw-media-row-text">
+        <span className="ndw-mx-title">{library.name}</span>
+        <span className="ndw-media-sub">{library.added ? t('widgets.media.addedShort', { count: library.added }) : t('widgets.media.nothingThisWeek')}</span>
+      </span>
+      <span className="ndw-mx-figures">
+        {figures.filter(([, value]) => value !== undefined).map(([id, value]) => <Figure key={id} size="medium" label={t(`widgets.media.count.${id}`)} value={number.format(value!)} />)}
+      </span>
+    </div>
   );
 }
 
@@ -117,27 +139,18 @@ const LIBRARY_DISPLAYS = ['shelves', 'text'] as const;
 /** Each picture stays this long before the next fades in. */
 const ROTATE_MS = 12_000;
 
-/** The shelf's pictures in turn, crossfading; `offset` staggers shelves so they never change together. */
-function RotatingArt({ urls, offset, active }: { urls: string[]; offset: number; active: boolean }) {
+/** Which picture leads now: moves on every 12 s; `offset` staggers libraries so they never change together. */
+function useRotation(count: number, offset: number, active: boolean): number {
   const [index, setIndex] = useState(0);
   React.useEffect(() => {
-    if (!active || urls.length < 2) return;
+    if (!active || count < 2) return;
     let timer = window.setTimeout(function next() {
-      setIndex(value => (value + 1) % urls.length);
+      setIndex(value => value + 1);
       timer = window.setTimeout(next, ROTATE_MS);
     }, ROTATE_MS + offset);
     return () => window.clearTimeout(timer);
-  }, [active, offset, urls.length]);
-  const current = index % urls.length;
-  return (
-    <>
-      {/* The previous picture fades out under the current one; the next is already loaded. */}
-      {urls.map((url, position) => (position === current || position === (current + 1) % urls.length || position === (current - 1 + urls.length) % urls.length) && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={url} className={`ndw-media-shelf-art ${position === current ? 'is-current' : ''}`} src={url} alt="" decoding="async" />
-      ))}
-    </>
-  );
+  }, [active, offset, count]);
+  return count ? index % count : 0;
 }
 /** Uploaded pictures only (this NasDash's own files). */
 const OWN_IMAGE = /^\/api\/logos\/[A-Za-z0-9._-]+$/;
@@ -194,9 +207,6 @@ function LibrarySettings({ draft, change }: { draft: WidgetSettings; change: (pa
       </CalmeField>
       <CalmeRow label={t('widgets.media.hideZeros')} info={t('widgets.media.hideZerosHint')}>
         <CalmeSwitch label={t('widgets.media.hideZeros')} checked={draft.zeros !== true} onChange={on => change({ zeros: on ? null : true })} />
-      </CalmeRow>
-      <CalmeRow label={t('widgets.media.showLibraries')}>
-        <CalmeSwitch label={t('widgets.media.showLibraries')} checked={draft.libraries === true} onChange={on => change({ libraries: on || null })} />
       </CalmeRow>
       {picking && <ImagePicker title={t('widgets.media.chooseImage', { shelf: t(`widgets.media.shelf.${picking}`) })} current={images[picking]} onClose={() => setPicking(null)} onPick={url => { change({ images: { ...images, [picking]: url } as WidgetSettings[string] }); setPicking(null); }} />}
     </>

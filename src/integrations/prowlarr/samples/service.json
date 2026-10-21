@@ -50,5 +50,25 @@
         "averageResponseTime": 240
       }
     ]
+  },
+  "history": {
+    "records": [
+      {
+        "eventType": "indexerQuery",
+        "date": "2026-10-20T23:30:00Z"
+      },
+      {
+        "eventType": "indexerRss",
+        "date": "2026-10-20T00:30:00Z"
+      },
+      {
+        "eventType": "releaseGrabbed",
+        "date": "2026-10-20T12:00:00Z"
+      },
+      {
+        "eventType": 2,
+        "date": "2026-10-19T23:59:00Z"
+      }
+    ]
   }
 }

@@ -1,6 +1,6 @@
 import type { IntegrationInstance } from '@/lib/types';
 import { array, number, object, string, serviceBytes, assertStatus, serviceIdentity, ServiceError } from '@/lib/widgetData/services';
-import { basicHeaders, clientStatus, parseJson, percent, seconds, type DownloadState } from '../downloads/shared';
+import { basicHeaders, clientStatus, completedItems, optionalBytes, parseJson, percent, seconds, type DownloadState } from '../downloads/shared';
 const sessions = new Map<string, string>();
 export function clearTransmissionSessions() { sessions.clear(); }
 export async function transmissionRequest(instance: IntegrationInstance, method: string, args: Record<string, unknown> = {}): Promise<unknown> {
@@ -26,11 +26,13 @@ export function toTransmission(instance: IntegrationInstance, stats: unknown, se
   if (!Array.isArray(rows) || typeof info.downloadSpeed !== 'number') throw new ServiceError('widgets.error.parse');
   return clientStatus(instance, array(rows).map(raw => { const item = object(raw), progress = percent(number(item.percentDone) * 100); return { id: String(item.id), name: string(item.name), progress, state: transmissionState(item.status, progress), downloadBps: number(item.rateDownload), etaMs: seconds(item.eta), sizeBytes: number(item.totalSize) }; }),
     { downloadBps: number(info.downloadSpeed), uploadBps: number(info.uploadSpeed), altSpeed: config['alt-speed-enabled'] === true,
+      sessionDownloaded: optionalBytes(object(info.currentStats).downloadedBytes), sessionUploaded: optionalBytes(object(info.currentStats).uploadedBytes),
+      completed: completedItems(array(rows).map(object).filter(item => number(item.doneDate) > 0).map(item => ({ id: String(item.id), name: string(item.name), sizeBytes: optionalBytes(item.totalSize), at: number(item.doneDate) * 1000 }))),
       downloadLimitBps: config['alt-speed-enabled'] === true ? number(config['alt-speed-down']) * 1000 : config['speed-limit-down-enabled'] ? number(config['speed-limit-down']) * 1000 : 0,
       uploadLimitBps: config['alt-speed-enabled'] === true ? number(config['alt-speed-up']) * 1000 : config['speed-limit-up-enabled'] ? number(config['speed-limit-up']) * 1000 : 0,
       ...(typeof config['download-dir-free-space'] === 'number' ? { freeBytes: number(config['download-dir-free-space']) } : {}) });
 }
 export async function collectTransmission(instance: IntegrationInstance) {
-  const [stats, session, torrents] = await Promise.all([transmissionRequest(instance, 'session-stats'), transmissionRequest(instance, 'session-get'), transmissionRequest(instance, 'torrent-get', { fields: ['id', 'name', 'percentDone', 'status', 'rateDownload', 'eta', 'totalSize'] })]);
+  const [stats, session, torrents] = await Promise.all([transmissionRequest(instance, 'session-stats'), transmissionRequest(instance, 'session-get'), transmissionRequest(instance, 'torrent-get', { fields: ['id', 'name', 'percentDone', 'status', 'rateDownload', 'eta', 'totalSize', 'doneDate'] })]);
   return toTransmission(instance, stats, session, torrents);
 }

@@ -42,11 +42,12 @@ const LOGOS: Record<string, string> = {
   nzbget: `${ICONS}/svg/nzbget.svg`,
 };
 
-export function IntegrationLogo({ id, size = 28 }: { id: string; size?: number }) {
+/** `bare`: the logo alone, without its tile (inside widgets). */
+export function IntegrationLogo({ id, size = 28, bare }: { id: string; size?: number; bare?: boolean }) {
   const [failed, setFailed] = useState(false);
   const src = LOGOS[id];
   return (
-    <span className="ndc-int-logo" style={{ width: size, height: size }} aria-hidden="true">
+    <span className={`ndc-int-logo ${bare ? 'is-bare' : ''}`} style={{ width: size, height: size }} aria-hidden="true">
       {src && !failed
         ? <img src={src} alt="" width={Math.round(size * 0.72)} height={Math.round(size * 0.72)} loading="lazy" onError={() => setFailed(true)} />
         : id === 'lhm' ? <Cpu size={Math.round(size * 0.55)} /> : id === 'customapi' ? <Braces size={Math.round(size * 0.55)} /> : <Plug size={Math.round(size * 0.55)} />}
