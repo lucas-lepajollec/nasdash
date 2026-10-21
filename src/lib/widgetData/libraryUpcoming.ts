@@ -7,15 +7,7 @@ import { tvMazeShow, type TvMazeProvider, type TvMazeShow } from '@/integrations
 import type { FollowUpItem, MediaItem } from './contracts';
 import { array, number, object, string, serviceJson, ServiceError } from './services';
 interface Series { item: MediaItem; provider: TvMazeProvider; raw: Record<string, unknown> }
-/** Small worker pool; a failed series never discards the rest of the library. */
-async function mapBounded<T, R>(rows: T[], limit: number, load: (row: T) => Promise<R>): Promise<R[]> {
-  let cursor = 0;
-  const result: R[] = [];
-  await Promise.all(Array.from({ length: Math.min(limit, rows.length) }, async () => {
-    while (cursor < rows.length) { const i = cursor++; result[i] = await load(rows[i]); }
-  }));
-  return result;
-}
+import { mapBounded } from './concurrency';
 export function toFollowUp(item: MediaItem, show: TvMazeShow, ownedSeason?: number): FollowUpItem | undefined {
   const ended = show.status === 'Ended';
   if (!ended && !['Running', 'To Be Determined', 'In Development'].includes(show.status)) return undefined;
@@ -58,7 +50,7 @@ export async function collectLibraryUpcoming(instance: IntegrationInstance): Pro
       }
     }
   } else {
-    const data = await request('/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds,ProductionYear,ImageTags,BackdropImageTags,DateCreated&Limit=500');
+    const data = await request('/Items?IncludeItemTypes=Series&Recursive=true&Fields=ProviderIds,DateCreated&Limit=500');
     if (!Array.isArray(data.Items)) throw new ServiceError('widgets.error.parse');
     for (const raw of data.Items.slice(0, 300).map(object)) {
       const item = toJellyfinItem(instance, raw), ids = object(raw.ProviderIds);
@@ -69,7 +61,7 @@ export async function collectLibraryUpcoming(instance: IntegrationInstance): Pro
   const results = await mapBounded(shows, 4, async ({ row, show }) => {
     if (!show) return undefined;
     let ownedSeason: number | undefined;
-    if (show.status !== 'Ended' && ['Running', 'To Be Determined', 'In Development'].includes(show.status)) {
+    if (show.next && show.status !== 'Ended' && ['Running', 'To Be Determined', 'In Development'].includes(show.status)) {
       try {
         const data = await request(plex ? `/library/metadata/${encodeURIComponent(row.item.id)}/children` : `/Shows/${encodeURIComponent(row.item.id)}/Seasons`);
         const seasons = plex ? data.Metadata : data.Items;

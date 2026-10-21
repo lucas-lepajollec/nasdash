@@ -1,3 +1,4 @@
+import { mapBounded } from '@/lib/widgetData/concurrency';
 /** Catalogue orchestration never searches using library metadata or watchlist titles. */
 import { readConfig } from '@/lib/config';
 import type { CatalogHit, CatalogKind, CatalogProvider, ExternalItem, SourceFailure, WatchEntry } from '@/lib/widgetData/contracts';
@@ -40,7 +41,10 @@ export async function collectExternal(selection: ReturnType<typeof externalSetti
       case 'tmdb': if (tmdb) return getTmdb(entry, tmdb); throw new ServiceError('widgets.error.notFound');
     }
   }
-  const results = await Promise.allSettled(jobs.map(job => job.load()));
+  const results = await mapBounded(jobs, 4, async job => {
+    try { return { status: 'fulfilled' as const, value: await job.load() }; }
+    catch (reason) { return { status: 'rejected' as const, reason }; }
+  });
   const items: ExternalItem[] = [];
   for (const [i, result] of results.entries()) {
     if (result.status === 'fulfilled') items.push(...result.value);

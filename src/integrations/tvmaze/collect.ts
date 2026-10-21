@@ -1,3 +1,4 @@
+import { publicJson } from '@/lib/widgetData/publicJson';
 /** Public TVMaze requests contain provider ids only; library metadata stays local. */
 import { TtlCache } from '@/lib/widgetData/cache';
 import { date, number, object, string, ServiceError } from '@/lib/widgetData/services';
@@ -5,7 +6,8 @@ export const TVMAZE_BASE_URL = 'https://api.tvmaze.com';
 export interface TvMazeProvider { tvdb?: string; imdb?: string }
 export interface TvMazeShow { status: string; network?: string; next?: { at?: number; season: number; episode: number; title: string } }
 const lookups = new TtlCache<number | null>(86400000, 2000);
-const episodes = new TtlCache<TvMazeShow>(21600000, 2000);
+// Shows refresh in the background for a day past their 6 h: the pacing makes a cold library pass slow.
+const episodes = new TtlCache<TvMazeShow>(21600000, 2000, 0, 86400000);
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 let nextStart = 0, active = 0;
 const waiting: (() => void)[] = [];
@@ -33,8 +35,8 @@ async function send(path: string, base: string, lookup: boolean): Promise<unknow
         return match ? Number(match[1]) : null;
       }
       if (response.status !== 429 || attempt !== 0) {
-        if (!response.ok) throw new ServiceError('widgets.error.http');
-        return await response.json();
+        if (!response.ok) { await response.body?.cancel(); throw new ServiceError('widgets.error.http'); }
+        return await publicJson(response);
       }
       await response.body?.cancel();
     } finally { const resume = waiting.shift(); if (resume) resume(); else active--; }

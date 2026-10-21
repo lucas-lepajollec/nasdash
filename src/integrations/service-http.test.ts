@@ -30,12 +30,13 @@ beforeEach(() => {
   vi.spyOn(http, 'request').mockImplementation(fakeRequest as typeof http.request);
 });
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); vi.mocked(httpRequest).mockReset(); });
-it('uses httpRequest for normal JSON, including the certificate option and bounded deadline', async () => {
-  vi.mocked(httpRequest).mockResolvedValue({ ok: true, status: 200, statusText: 'OK', text: async () => '{"session":{}}' });
-  expect(await serviceJson(source, '/api/auth', { method: 'POST', json: { password: 'fake-password' } })).toEqual({ session: {} });
-  expect(httpRequest).toHaveBeenCalledWith('https://fixture.example.com/api/auth', { method: 'POST', json: { password: 'fake-password' }, allowSelfSigned: true, timeoutMs: 6000 });
+it('uses bounded, no-redirect transport for JSON bodies, including credentials', async () => {
+  expect(await serviceJson(source, '/api/auth', { method: 'POST', json: { password: 'fake-password' } })).toEqual({ ok: true });
+  expect(httpRequest).not.toHaveBeenCalled();
+  expect(sentOptions).toMatchObject({ method: 'POST', rejectUnauthorized: false });
+  expect(sentBody).toBe('{"password":"fake-password"}');
 });
-it.each(['X-FTL-SID', 'x-api-key', 'X-Emby-Token', 'X-Plex-Token', 'x-emby-token', 'x-plex-token', 'X-Transmission-Session-Id', 'cookie', 'Authorization'])('keeps %s on a transport that never follows redirects', async header => {
+it.each(['x-nd-authorization', 'X-Custom-Token', 'Accept', 'X-FTL-SID', 'x-api-key', 'X-Emby-Token', 'X-Plex-Token', 'x-emby-token', 'x-plex-token', 'X-Transmission-Session-Id', 'cookie', 'Authorization'])('keeps %s on a transport that never follows redirects', async header => {
   nextStatus = 302;
   await expect(serviceJson(source, '/api/stats/summary', { headers: { [header]: 'fictional-sid' } })).rejects.toMatchObject({ key: 'widgets.error.http', parameters: { status: 302 } });
   expect(httpRequest).not.toHaveBeenCalled();

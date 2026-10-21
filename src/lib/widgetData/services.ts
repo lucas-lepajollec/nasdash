@@ -8,7 +8,7 @@ import { readConfig } from '@/lib/config';
 import { isDemoMode } from '@/lib/demoMode';
 import { getServiceIntegration } from '@/integrations/registry';
 import type { IntegrationInstance } from '@/lib/types';
-import { httpRequest, isCertificateError, type HttpOptions } from '@/integrations/http';
+import { isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
 import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, MUSIC_SERVER_TYPES, type DnsProvider } from './contracts';
 
@@ -140,16 +140,10 @@ export async function serviceBytes(instance: IntegrationInstance, path: string, 
 }
 export async function serviceJson<T>(instance: IntegrationInstance, path: string, options: ServiceOptions = {}): Promise<T> {
   try {
-    let text: string;
-    if (options.body !== undefined || Object.keys(options.headers ?? {}).some(key => /^(authorization|cookie|x-transmission-session-id|x-ftl-sid|x-api-key|x-emby-token|x-plex-token)$/i.test(key))) {
-      const answer = await serviceBytes(instance, path, options, 2 * 1024 * 1024);
-      assertStatus(answer.status);
-      text = answer.bytes.toString('utf8');
-    } else {
-      const answer = await httpRequest(serviceUrl(instance, path), { ...options, timeoutMs: 6000, allowSelfSigned: instance.settings.allowSelfSigned === 'true' });
-      assertStatus(answer.status);
-      text = await answer.text();
-    }
+    // Saved service endpoints never redirect, irrespective of the auth header name.
+    const answer = await serviceBytes(instance, path, options, 2 * 1024 * 1024);
+    assertStatus(answer.status);
+    const text = answer.bytes.toString('utf8');
     if (!text.trim()) return {} as T;
     try { return JSON.parse(text) as T; } catch { throw new ServiceError('widgets.error.parse'); }
   } catch (error) { transportError(error); }

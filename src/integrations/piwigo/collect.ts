@@ -34,6 +34,6 @@ export function toPiwigoStats(instance: IntegrationInstance, value: unknown) {
   const data = Array.isArray(infos) ? Object.fromEntries(array(infos).map(raw => { const row = object(raw); return [String(row.name), row.value]; })) : object(infos);
   // nb_elements counts all media. Core getInfos has no video split or library bytes;
   // cache_size is a historical placeholder and must never be used as disk usage.
-  return { ...identity(instance), ...counters({ photos: data.nb_elements, albums: data.nb_categories, libraryBytes: data.library_size_bytes }) };
+  return { ...identity(instance), ...counters({ items: data.nb_elements, albums: data.nb_categories }) };
 }
 export async function collectPiwigoStats(instance: IntegrationInstance) { return toPiwigoStats(instance, await piwigoRequest(instance)); }

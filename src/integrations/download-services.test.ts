@@ -149,23 +149,33 @@ describe('optional download counters and completions', () => {
     expect(toTransmission(instance('transmission'), tr.stats, tr.session, tr.torrents)).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, seeding: 1,
       completed: [{ id: '2', name: 'The Clockwork Meadow', sizeBytes: 2000000000, at: 1792533600000 }] });
   });
-  it('maps Deluge totals and best-effort completed_time, omitting failed extras', async () => {
+  it('reads one Deluge torrent snapshot, free space from update_ui, and real session counters', async () => {
     let extrasFail = false;
     bytes.mockImplementation(async (_instance, _path, options) => {
       const rpc = options?.json as { method: string; params: unknown[] };
       if (rpc.method === 'auth.login') return answer({ result: true }, 200, { 'set-cookie': ['_session_id=fictional-session; Path=/'] });
-      const finished = rpc.method === 'web.update_ui' && (rpc.params[0] as string[]).includes('completed_time');
-      if (extrasFail && (finished || rpc.method === 'core.get_free_space')) throw new Error('unsupported');
-      return answer({ result: finished ? de.finished : rpc.method === 'web.update_ui' ? de.update : de.free });
+      if (rpc.method === 'core.get_session_status') {
+        expect(rpc.params).toEqual([['net.recv_bytes', 'net.sent_bytes']]);
+        if (extrasFail) throw new Error('unsupported');
+        return answer({ result: { 'net.recv_bytes': 12000000000, 'net.sent_bytes': 3400000000 } });
+      }
+      expect(rpc.method).toBe('web.update_ui');
+      expect(rpc.params[0]).toContain('completed_time');
+      return answer({ result: { ...de.update, stats: { download_rate: 8000000, free_space: de.free }, torrents: { ...de.update.torrents, ...de.finished.torrents } } });
     });
     const result = await collectDeluge(instance('deluge'));
-    expect(result).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, seeding: 0, completed: [{ id: 'fictional-finished', at: 1792533600000 }] });
-    extrasFail = true; const partial = await collectDeluge(instance('deluge')); expect(partial.items).toHaveLength(1); expect(partial.completed).toBeUndefined(); expect(partial.freeBytes).toBeUndefined();
+    expect(result).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, freeBytes: de.free, completed: [{ id: 'fictional-finished', at: 1792533600000 }] });
+    expect(bytes.mock.calls.filter(([, , options]) => (options?.json as { method: string }).method === 'web.update_ui')).toHaveLength(1);
+    extrasFail = true;
+    const partial = await collectDeluge(instance('deluge'));
+    expect(partial.items).toHaveLength(2); expect(partial.sessionDownloaded).toBeUndefined(); expect(partial.freeBytes).toBe(de.free);
   });
-  it('maps SABnzbd day bytes and completed history without returning failed jobs or private fields', async () => {
+  it('does not relabel SABnzbd daily bytes as session totals, and maps completed history without returning failed jobs or private fields', async () => {
     bytes.mockImplementation(async (_instance, path) => answer(path.includes('mode=history') ? sab.history : path.includes('mode=server_stats') ? sab.stats : sab));
     const result = await collectSabnzbd(instance('sabnzbd'));
-    expect(result).toMatchObject({ sessionDownloaded: 12000000000, completed: [{ id: 'fictional-finished', name: 'The Clockwork Meadow', sizeBytes: 2000000000, at: 1792533600000 }] });
+    expect(result).toMatchObject({ completed: [{ id: 'fictional-finished', name: 'The Clockwork Meadow', sizeBytes: 2000000000, at: 1792533600000 }] });
+    expect(result.sessionDownloaded).toBeUndefined();
+    expect(bytes.mock.calls.some(([, path]) => path.includes('mode=server_stats'))).toBe(false);
     expect(result.completed).toHaveLength(1); expect(bytes.mock.calls.find(([, path]) => path.includes('mode=history'))?.[1]).toContain('limit=5');
     bytes.mockImplementation(async (_instance, path) => { if (!path.includes('mode=queue')) throw new Error('unsupported'); return answer(sab); });
     const partial = await collectSabnzbd(instance('sabnzbd')); expect(partial.completed).toBeUndefined(); expect(partial.sessionDownloaded).toBeUndefined(); expect(partial.items).toHaveLength(1);
@@ -205,4 +215,20 @@ describe('native item ids and whole-client state', () => {
     expect(toTransmission(instance('transmission'), tr.stats, tr.session, tr.torrents).clientPaused).toBeUndefined();
     expect(toDeluge(instance('deluge'), de.update).clientPaused).toBeUndefined();
   });
+});
+
+it('reauthenticates Deluge once on its HTTP-200 expired-session error without replaying other failures', async () => {
+  let logins = 0, denied = false;
+  bytes.mockImplementation(async (_source, _path, options) => {
+    const method = (options?.json as { method: string }).method;
+    if (method === 'auth.login') { logins++; return answer({ result: true }, 200, { 'set-cookie': [`_session_id=fixture${logins}; Path=/`] }); }
+    if (!denied) { denied = true; return answer({ result: null, error: { code: 1, message: 'private error' } }); }
+    return answer({ result: true });
+  });
+  const { delugeRequest } = await import('./deluge/collect');
+  expect(await delugeRequest(instance('deluge'), 'core.pause_session')).toBe(true);
+  expect(logins).toBe(2);
+  bytes.mockResolvedValue(answer({ error: { code: 3, message: 'private error' } }));
+  await expect(delugeRequest(instance('deluge'), 'core.pause_session')).rejects.toMatchObject({ key: 'widgets.error.http' });
+  expect(logins).toBe(2);
 });

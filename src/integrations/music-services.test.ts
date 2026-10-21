@@ -17,7 +17,8 @@ describe('Jellyfin/Emby music', () => {
     vi.useFakeTimers(); vi.setSystemTime(new Date('2026-01-15T12:00:00Z'));
     const source = instance(type), prefix = type === 'emby' ? '/emby' : '';
     json.mockImplementation(async (_source, path) => {
-      if (path.includes('/Sessions?')) return jellyfin.sessions;
+      if ((path.includes('/Sessions?') || path.endsWith('/Sessions'))) return jellyfin.sessions;
+      if (path.includes('/Users/Query?')) return { Items: jellyfin.users, TotalRecordCount: jellyfin.users.length };
       if (path.endsWith('/Users')) return jellyfin.users;
       if (path.endsWith('/Counts')) return jellyfin.counts;
       if (path.includes('/MusicGenres?')) return jellyfin.genres;
@@ -75,7 +76,7 @@ describe('Plex music', () => {
     expect((await collectPlexMusicHistory(source))[0].playedAt).toBe(1768474800000);
     expect(await collectPlexMusicLibrary(source)).toMatchObject({ artists: 2, albums: 2, tracks: 18, weekCount: 1, week: [{id:'album-1'}], genres: [{ name: 'Ambient', count: 2 }, { name: 'Electronic', count: 1 }] });
     expect(json.mock.calls.some(([,path]) => path.includes('/video/'))).toBe(false);
-    for (const sort of ['addedAt:desc','viewCount:desc']) expect(json.mock.calls.some(([,path]) => path.includes(`/music/all?type=9&sort=${sort}`))).toBe(true);
+    for (const sort of ['addedAt:desc','viewCount:desc']) expect(json.mock.calls.some(([,path]) => path.includes(`/music/all?type=9&sort=album.${sort}`))).toBe(true);
     for (const [,path,options] of json.mock.calls) { expect(options?.headers).toEqual({ 'X-Plex-Token': 'fictional-token', Accept:'application/json' }); expect(path).not.toContain('fictional-token'); }
     expect(toPlexMusicTrack({ratingKey:'bad',type:'track',parentThumb:'https://outside.example.com/image'})?.cover).toBeUndefined();
     vi.useRealTimers();
@@ -107,4 +108,23 @@ it('uses generic music genres when /MusicGenres is unavailable and fills absent 
   });
   expect((await collectJellyfinMusicLibrary(source)).genres).toEqual([{name:'Ambient',count:7}]);
   expect(json.mock.calls.some(([,path]) => path.startsWith('/Genres?IncludeItemTypes=MusicAlbum'))).toBe(true);
+});
+
+it('bounds simultaneous session queue enrichment to four upstream reads', async () => {
+  let active = 0, peak = 0;
+  const track = { Id: 'song', Type: 'Audio', Name: 'Quiet' };
+  json.mockImplementation(async (_source, path) => {
+    if (path.includes('/Sessions?')) return Array.from({ length: 12 }, (_, n) => ({ Id: `s-${n}`, NowPlayingItem: track, NowPlayingQueue: [{ Id: 'song' }, { Id: `next-${n}` }] }));
+    active++; peak = Math.max(peak, active);
+    await new Promise(resolve => setTimeout(resolve, 1)); active--;
+    return { Items: [] };
+  });
+  expect((await collectJellyfinMusicNowPlaying(instance('jellyfin'))).sessions).toHaveLength(12);
+  expect(peak).toBe(4);
+});
+
+it('caps aggregate per-user album scans instead of multiplying the page budget by account count', async () => {
+  json.mockImplementation(async (_source, path) => path === '/Users' ? Array.from({ length: 100 }, (_, n) => ({ Id: `user-${n}` })) : { Items: [] });
+  await expect(collectJellyfinMusicTop(instance('jellyfin'), 6)).rejects.toMatchObject({ key: 'widgets.error.tooLarge' });
+  expect(json.mock.calls).toHaveLength(51); // One user list and fifty item pages.
 });

@@ -14,12 +14,13 @@ export function toImmichStats(instance: IntegrationInstance, value: unknown, adm
     }) } : {}) };
 }
 /** Best effort: at most five 1,000-item pages, never an unbounded library crawl. */
-async function recentAdded(instance: IntegrationInstance): Promise<number[]> {
+async function recentAdded(instance: IntegrationInstance): Promise<{ added: number[]; truncated: boolean }> {
   const now = new Date(), start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 29 * 86400000;
   const added = Array<number>(30).fill(0), seen = new Set<string>();
+  let cursor: string | undefined;
   for (let page = 1; page <= 5; page++) {
     const data = object(await serviceJson(instance, '/api/search/metadata', { headers: immichHeaders(instance), method: 'POST', json: {
-      createdAfter: new Date(start).toISOString(), createdBefore: now.toISOString(), size: 1000, page, order: 'desc', withExif: false,
+      createdAfter: new Date(start).toISOString(), createdBefore: now.toISOString(), size: 1000, ...(cursor ? { cursor } : { page }), order: 'desc', withExif: false,
     } })), assets = object(data.assets);
     if (!Array.isArray(assets.items)) throw new ServiceError('widgets.error.parse');
     for (const raw of array(assets.items).slice(0, 1000)) {
@@ -28,9 +29,10 @@ async function recentAdded(instance: IntegrationInstance): Promise<number[]> {
       if (id) seen.add(id);
       if (day >= 0 && day < 30) added[day]++;
     }
-    if (!assets.nextPage || array(assets.items).length < 1000) break;
+    cursor = typeof assets.nextCursor === 'string' && assets.nextCursor.length <= 4096 ? assets.nextCursor : undefined;
+    if ((!cursor && !assets.nextPage) || array(assets.items).length < 1000) return { added, truncated: false };
   }
-  return added;
+  return { added, truncated: true };
 }
 export async function collectImmichStats(instance: IntegrationInstance): Promise<PhotoStatsResponse> {
   const get = (path: string) => serviceJson(instance, path, { headers: immichHeaders(instance) });
@@ -47,12 +49,12 @@ export async function collectImmichStats(instance: IntegrationInstance): Promise
     }
   }
   const timeline = async () => {
-    try { return await get('/api/timeline/buckets?size=MONTH'); }
+    try { return await get('/api/timeline/buckets'); }
     catch (error) {
       // Current Immich chooses minimal buckets and no longer accepts `size`;
       // earlier releases require it. Both return timeBucket/count rows.
       if (!(error instanceof ServiceError) || error.parameters?.status !== 400) throw error;
-      return get('/api/timeline/buckets');
+      return get('/api/timeline/buckets?size=MONTH');
     }
   };
   const [storage, owned, shared, people, buckets, added] = await Promise.allSettled([
@@ -71,6 +73,8 @@ export async function collectImmichStats(instance: IntegrationInstance): Promise
   if (buckets.status === 'fulfilled') { const byYear = years(buckets.value, 'timeBucket', 'count'); if (byYear) result.byYear = byYear; }
   // Without statistics access, the timeline still counts everything.
   if (result.limited && result.photos === undefined && buckets.status === 'fulfilled' && Array.isArray(buckets.value)) result.items = buckets.value.reduce((sum: number, raw) => sum + (count(object(raw).count) ?? 0), 0);
-  if (added.status === 'fulfilled') result.added = added.value;
+  // A truncated histogram is not an exact daily total. `limited` is reserved
+  // for missing API permissions, so omit this optional series instead.
+  if (added.status === 'fulfilled' && !added.value.truncated) result.added = added.value.added;
   return result;
 }

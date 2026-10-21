@@ -5,7 +5,7 @@ import * as plex from '@/integrations/plex/collect';
 import * as navidrome from '@/integrations/navidrome/collect';
 import { checkAdmin } from '@/lib/auth';
 import { TtlCache } from './cache';
-import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack, MusicPlaylist } from './contracts';
+import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack, MusicPlaylist, MusicSearchResponse, MusicServer } from './contracts';
 import { mediaShowUsers } from './media';
 import { MUSIC_WIDGET_TYPES, demoMusicAudio, demoMusicTracks, demoMusicPlaylists, demoMusicSearch, knownMusicTrack, rememberMusicTrack, musicContent, musicPages, musicTopPages, musicPlaylistPrivacy, demoMusicAlbums, demoMusicLibrary, demoMusicNowPlaying, demoMusicRecent, demoMusicTop, musicCount, proxyMusicItem, type MusicWidgetType } from './music';
 import { boundedJson, queryDraft, resolveServiceWidget, serviceFailure, serviceIdentity, serviceStream, ServiceError } from './services';
@@ -16,6 +16,9 @@ const library = new TtlCache<MusicLibraryResponse>(300000);
 const top = new TtlCache<MusicTopResponse>(300000);
 const topTracks = new TtlCache<MusicTrack[]>(300000);
 const history = new TtlCache<MusicAlbum[]>(300000);
+const playlists = new TtlCache<{ server: MusicServer; name: string; fetchedAt: number; playlists: MusicPlaylist[] }>(60000);
+const trackLists = new TtlCache<MusicTrack[]>(60000);
+const searches = new TtlCache<MusicSearchResponse>(30000);
 const headers = { 'Cache-Control': 'private, no-store' };
 const jellyfinCollectors = { now: jellyfin.collectJellyfinMusicNowPlaying, recent: jellyfin.collectJellyfinMusicRecent, library: jellyfin.collectJellyfinMusicLibrary, top: jellyfin.collectJellyfinMusicTop, topTracks: jellyfin.collectJellyfinMusicTopTracks, history: jellyfin.collectJellyfinMusicHistory, playlists: jellyfin.collectJellyfinMusicPlaylists, tracks: jellyfin.collectJellyfinMusicTracks, search: jellyfin.collectJellyfinMusicSearch };
 const collectors = {
@@ -49,7 +52,7 @@ export async function musicRoute(request: NextRequest, type: MusicWidgetType) {
     if (type === 'music-playlists') {
       const count = settings.count ?? 12;
       if (typeof count !== 'number' || !Number.isInteger(count) || count < 3 || count > 40) throw new ServiceError('widgets.error.invalidSettings', 400);
-      const result = demo ? demoMusicPlaylists(instance, count) : await collect.playlists(instance, count);
+      const result = demo ? demoMusicPlaylists(instance, count) : await playlists.get(`${key}:${count}`, () => collect.playlists(instance, count));
       return NextResponse.json({ ...result, playlists: result.playlists.map(item => proxy(musicPlaylistPrivacy(item, mediaShowUsers(settings)))) }, { headers });
     }
     if (type === 'music-recent' && musicContent(settings) === 'pages') {
@@ -108,7 +111,7 @@ export async function musicResourceRoute(request: NextRequest, resource: 'tracks
     if (resource === 'search') {
       const q = url.searchParams.get('q')?.trim() ?? '';
       if (q.length < 2 || q.length > 80) throw new ServiceError('widgets.error.invalidRequest', 400);
-      const result = demo ? demoMusicSearch(instance, q) : await collect.search(instance, q);
+      const result = demo ? demoMusicSearch(instance, q) : await searches.get(JSON.stringify([serviceIdentity(instance), q]), () => collect.search(instance, q));
       return NextResponse.json({ tracks: result.tracks.slice(0, 20).map(trackProxy), albums: result.albums.slice(0, 20).map(proxy), playlists: result.playlists.slice(0, 20).map(item => proxy(musicPlaylistPrivacy(item, mediaShowUsers(settings)))) }, { headers });
     }
     const id = url.searchParams.get('id') ?? '';
@@ -116,7 +119,7 @@ export async function musicResourceRoute(request: NextRequest, resource: 'tracks
     if (resource === 'tracks') {
       const kind = url.searchParams.get('kind');
       if (kind !== 'album' && kind !== 'playlist') throw new ServiceError('widgets.error.invalidRequest', 400);
-      const tracks = demo ? demoMusicTracks() : await collect.tracks(instance, kind, id);
+      const tracks = demo ? demoMusicTracks() : await trackLists.get(JSON.stringify([serviceIdentity(instance), kind, id]), () => collect.tracks(instance, kind, id));
       return NextResponse.json({ tracks: tracks.slice(0, 300).map(trackProxy) }, { headers });
     }
     if (!knownMusicTrack(instance, widgetId!, id, preview)) throw new ServiceError('widgets.error.notFound', 404);

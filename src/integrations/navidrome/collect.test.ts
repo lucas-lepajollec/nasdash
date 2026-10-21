@@ -76,3 +76,29 @@ describe('Subsonic transport and mappings', () => {
     await expect(navidromeRequest(instance, 'ping')).rejects.toMatchObject({ key: 'widgets.error.parse' });
   });
 });
+
+it('deduplicates native logins, preserves long JWTs, and invalidates on credential changes', async () => {
+  const { clearNavidromeSessions, navidromePlayedTracks } = await import('./collect');
+  clearNavidromeSessions();
+  const token = 'a'.repeat(1024);
+  bytes.mockImplementation(async (_source, path, options) => {
+    if (path === '/auth/login') return answer({ token });
+    expect(options?.headers?.['x-nd-authorization']).toBe(`Bearer ${token}`);
+    return answer([]);
+  });
+  await Promise.all([navidromePlayedTracks(instance, 5), navidromePlayedTracks(instance, 5)]);
+  expect(bytes.mock.calls.filter(([, path]) => path === '/auth/login')).toHaveLength(1);
+  await navidromePlayedTracks({ ...instance, secrets: { password: 'rotated-fixture-password' } }, 5);
+  expect(bytes.mock.calls.filter(([, path]) => path === '/auth/login')).toHaveLength(2);
+  bytes.mockResolvedValue({ bytes: Buffer.from('bad'), status: 200, contentType: 'application/json' });
+  clearNavidromeSessions();
+  await expect(navidromePlayedTracks(instance, 5)).rejects.toMatchObject({ key: 'widgets.error.parse' });
+});
+
+it('reuses Navidrome album-list total headers instead of crawling the library for a count', async () => {
+  const serve = bytes.getMockImplementation()!;
+  bytes.mockImplementation(async (source, path, options, maxBytes) => ({ ...await serve(source, path, options, maxBytes), headers: { 'x-total-count': '120000' } }));
+  const library = await collectNavidromeLibrary(instance);
+  expect(library.albums).toBe(120000);
+  expect(bytes.mock.calls.filter(([, path]) => path.includes('getAlbumList2'))).toHaveLength(1);
+});

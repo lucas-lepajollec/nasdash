@@ -32,7 +32,22 @@ export async function customApiRequest(instance: IntegrationInstance): Promise<u
   if (authType === 'query') url.searchParams.append(authName, authValue);
   const answer = await serviceBytes({ ...instance, settings: { ...instance.settings, url: url.toString() } }, '', { method: 'GET', headers }, 1024 * 1024);
   assertStatus(answer.status);
-  try { return JSON.parse(answer.bytes.toString('utf8')); }
+  try {
+    const json: unknown = JSON.parse(answer.bytes.toString('utf8'));
+    // Echo/debug APIs can return request headers or URLs. Neither samples nor
+    // configured fields may turn the saved credential into browser data.
+    const sensitive = [...new Set([authValue, encodeURIComponent(authValue),
+      authType === 'basic' ? Buffer.from(`${authName}:${authValue}`).toString('base64') : '',
+    ].filter(Boolean))];
+    const clean = (value: unknown, depth = 0): unknown => {
+      if (typeof value === 'string') return sensitive.reduce((text, secret) => text.split(secret).join('[redacted]'), value);
+      if (value === null || typeof value !== 'object') return value;
+      if (depth >= 64) return null;
+      if (Array.isArray(value)) return value.map(item => clean(item, depth + 1));
+      return Object.fromEntries(Object.entries(value).map(([key, item]) => [clean(key) as string, clean(item, depth + 1)]));
+    };
+    return clean(json);
+  }
   catch { throw new ServiceError('widgets.error.parse'); }
 }
 

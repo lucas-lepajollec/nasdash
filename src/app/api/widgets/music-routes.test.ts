@@ -194,7 +194,8 @@ it.each(['jellyfin', 'emby', 'plex'])('dispatches all music routes and cover req
       return plexMusic.albums;
     }
     if (path.includes('IncludeItemTypes=Playlist')) return { Items: [{ Id: 'playlist', Type: 'Playlist', MediaType: 'Audio', Name: 'Quiet mornings', ImageTags: { Primary: 'tag' } }] };
-    if (path.includes('/Sessions?')) return jellyfinMusic.sessions;
+    if (path.includes('/Sessions?') || path.endsWith('/Sessions')) return jellyfinMusic.sessions;
+    if (path.includes('/Users/Query?')) return { Items: jellyfinMusic.users, TotalRecordCount: jellyfinMusic.users.length };
     if (path.endsWith('/Users')) return jellyfinMusic.users;
     if (path.endsWith('/Counts')) return jellyfinMusic.counts;
     if (path.includes('/MusicGenres?')) return jellyfinMusic.genres;

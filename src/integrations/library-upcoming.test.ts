@@ -37,7 +37,7 @@ describe('media libraries for follow-ups', () => {
       active++; peak = Math.max(peak, active); await new Promise(resolve => setTimeout(resolve, 1)); active--;
       if (path.includes('/series-3/')) throw new Error('season unavailable'); return jellyfin.seasons;
     });
-    maze.mockImplementation(async provider => { if (provider.tvdb === '1') return null; if (provider.tvdb === '2') throw new Error('unknown'); return { status: provider.tvdb === '3' ? 'Ended' : 'Running' }; });
+    maze.mockImplementation(async provider => { if (provider.tvdb === '1') return null; if (provider.tvdb === '2') throw new Error('unknown'); return { status: provider.tvdb === '3' ? 'Ended' : 'Running', ...(provider.tvdb === '3' ? {} : { next: { season: 3, episode: 1, title: 'Next' } }) }; });
     const result = await collectLibraryUpcoming(instance('jellyfin'));
     expect(maze).toHaveBeenCalledTimes(300); expect(result).toHaveLength(298); expect(peak).toBe(4);
     expect(json.mock.calls.some(([, path]) => path.includes('/Shows/series-2/'))).toBe(false);

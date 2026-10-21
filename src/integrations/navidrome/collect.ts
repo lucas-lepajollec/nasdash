@@ -2,7 +2,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
 import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack, MusicPlaylist, MusicSearchResponse } from '@/lib/widgetData/contracts';
-import { array, assertStatus, date, number, object, serviceBytes, ServiceError, string } from '@/lib/widgetData/services';
+import { array, assertStatus, date, number, object, serviceBytes, serviceIdentity, ServiceError, string } from '@/lib/widgetData/services';
+import { TtlCache } from '@/lib/widgetData/cache';
 import { musicWeek, optionalMusicNumber } from '@/lib/widgetData/music';
 
 type Endpoint = 'ping' | 'getNowPlaying' | 'getAlbumList2' | 'getScanStatus' | 'getGenres' | 'getArtists' | 'getPlayQueue' | 'getPlaylists' | 'getPlaylist' | 'getAlbum' | 'search3';
@@ -14,7 +15,7 @@ export function navidromeAuthenticatedPath(instance: IntegrationInstance, path: 
   for (const [key, value] of Object.entries({ u: instance.settings.username ?? '', t: token, s: salt, v: '1.16.1', c: 'NasDash', f: 'json' })) url.searchParams.set(key, value);
   return `${url.pathname}?${url.searchParams}`;
 }
-export async function navidromeRequest(instance: IntegrationInstance, endpoint: Endpoint, params: Record<string, string> = {}) {
+async function navidromeReply(instance: IntegrationInstance, endpoint: Endpoint, params: Record<string, string> = {}) {
   const answer = await serviceBytes(instance, navidromeAuthenticatedPath(instance, `/rest/${endpoint}?${new URLSearchParams(params)}`), {}, 2 * 1024 * 1024);
   assertStatus(answer.status);
   let value: unknown;
@@ -26,7 +27,12 @@ export async function navidromeRequest(instance: IntegrationInstance, endpoint: 
     throw new ServiceError(code === 40 || code === 50 ? 'integrations.error.authentication' : 'widgets.error.http');
   }
   if (response.status !== 'ok') throw new ServiceError('widgets.error.parse');
-  return response;
+  const count = answer.headers?.['x-total-count'];
+  const total = typeof count === 'string' && /^\d+$/.test(count) && Number.isSafeInteger(Number(count)) ? Number(count) : undefined;
+  return { response, total };
+}
+export async function navidromeRequest(instance: IntegrationInstance, endpoint: Endpoint, params: Record<string, string> = {}) {
+  return (await navidromeReply(instance, endpoint, params)).response;
 }
 /** Only a previously returned, credential-free getCoverArt path can reach this transport. */
 export function navidromeCoverBytes(instance: IntegrationInstance, path: string) {
@@ -47,30 +53,30 @@ export function toNavidromeAlbum(value: unknown): MusicAlbum | undefined {
   return { id, title: string(item.name) || string(item.title), artist: string(item.artist) || undefined, year: optionalMusicNumber(item.year),
     trackCount: optionalMusicNumber(item.songCount), cover: cover(item.coverArt), addedAt: date(item.created), playedAt: date(item.played), plays: optionalMusicNumber(item.playCount) };
 }
-async function albumList(instance: IntegrationInstance, type: 'newest' | 'frequent' | 'recent', size: number, offset = 0) {
-  const data = await navidromeRequest(instance, 'getAlbumList2', { type, size: String(size), offset: String(offset) });
+async function albumList(instance: IntegrationInstance, type: 'newest' | 'frequent' | 'recent', size: number, offset = 0, onTotal?: (total: number) => void) {
+  const { response: data, total } = await navidromeReply(instance, 'getAlbumList2', { type, size: String(size), offset: String(offset) });
+  if (total !== undefined) onTotal?.(total);
   const list = object(data.albumList2);
   if (!data.albumList2 || list.album !== undefined && !Array.isArray(list.album)) throw new ServiceError('widgets.error.parse');
   return array(list.album).map(toNavidromeAlbum).filter((album): album is MusicAlbum => !!album);
 }
 /** Navidrome's own API (its web player's) keeps when each track was played; Subsonic does not. Tokens kept an hour. */
-const nativeTokens = new Map<string, { token: string; until: number }>();
+const nativeTokens = new TtlCache<string>(3_600_000);
 async function navidromeNative(instance: IntegrationInstance, path: string): Promise<unknown> {
-  const key = `${instance.id}:${instance.settings.url}:${instance.settings.username}`;
-  let session = nativeTokens.get(key);
-  if (!session || session.until < Date.now()) {
+  const key = serviceIdentity(instance);
+  const token = await nativeTokens.get(key, async () => {
     const login = await serviceBytes(instance, '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: instance.settings.username ?? '', password: instance.secrets?.password ?? '' }) }, 65536);
-    if (login.status === 401 || login.status === 403) throw new ServiceError('integrations.error.authentication');
-    // Gonic, Airsonic and other Subsonic servers have no such API.
     if (login.status === 404 || login.status === 405) throw new ServiceError('widgets.music.error.noTrackHistory', 422);
     assertStatus(login.status);
-    const token = string(object(JSON.parse(login.bytes.toString('utf8') || '{}')).token);
-    if (!token) throw new ServiceError('widgets.music.error.noTrackHistory', 422);
-    session = { token, until: Date.now() + 3_600_000 };
-    nativeTokens.set(key, session);
-  }
-  const answer = await serviceBytes(instance, path, { headers: { 'x-nd-authorization': `Bearer ${session.token}` } }, 2 * 1024 * 1024);
-  if (answer.status === 401) { nativeTokens.delete(key); throw new ServiceError('integrations.error.authentication'); }
+    let data: unknown;
+    try { data = JSON.parse(login.bytes.toString('utf8')); } catch { throw new ServiceError('widgets.error.parse'); }
+    const value = object(data).token;
+    // JWTs may exceed the display-string helper's 512-character limit.
+    if (typeof value !== 'string' || !/^[A-Za-z0-9._-]{1,8192}$/.test(value)) throw new ServiceError('widgets.music.error.noTrackHistory', 422);
+    return value;
+  });
+  const answer = await serviceBytes(instance, path, { headers: { 'x-nd-authorization': `Bearer ${token}` } }, 2 * 1024 * 1024);
+  if (answer.status === 401 || answer.status === 403) nativeTokens.delete(key);
   assertStatus(answer.status);
   try { return JSON.parse(answer.bytes.toString('utf8')); } catch { throw new ServiceError('widgets.error.parse'); }
 }
@@ -127,9 +133,10 @@ export async function collectNavidromeNowPlaying(instance: IntegrationInstance):
   return { ...identity(instance), sessions };
 }
 export async function collectNavidromeLibrary(instance: IntegrationInstance): Promise<MusicLibraryResponse> {
+  let totalAlbums: number | undefined;
   const [scan, genresData, artistsData, week] = await Promise.all([
     navidromeRequest(instance, 'getScanStatus').catch(() => ({})), navidromeRequest(instance, 'getGenres'), navidromeRequest(instance, 'getArtists'),
-    musicWeek((offset, size) => albumList(instance, 'newest', size, offset)),
+    musicWeek((offset, size) => albumList(instance, 'newest', size, offset, total => { totalAlbums = total; })),
   ]);
   if (!artistsData.artists || !genresData.genres) throw new ServiceError('widgets.error.parse');
   const artists = array(object(artistsData.artists).index).flatMap(index => array(object(index).artist)).map(object);
@@ -139,16 +146,17 @@ export async function collectNavidromeLibrary(instance: IntegrationInstance): Pr
     return name && count !== undefined ? [{ name, count }] : [];
   }).sort((a, b) => b.count - a.count).slice(0, 8);
   const status = object(object(scan).scanStatus);
-  // The standard API has no album total. Artist album counts are not summed:
+  // Navidrome supplies x-total-count on the week read. Other Subsonic servers
+  // need the bounded unique-ID fallback. Artist album counts are not summed:
   // multi-artist releases can occur under more than one artist. Count unique IDs.
   const albums = new Set<string>();
   let complete = false;
-  for (let offset = 0; offset < 10000; offset += 500) {
+  for (let offset = 0; totalAlbums === undefined && offset < 10000; offset += 500) {
     const list = await albumList(instance, 'newest', 500, offset);
     list.forEach(album => albums.add(album.id));
     if (list.length < 500) { complete = true; break; }
   }
-  return { ...identity(instance), artists: unique.length, ...(complete ? { albums: albums.size } : {}),
+  return { ...identity(instance), artists: unique.length, ...(totalAlbums !== undefined ? { albums: totalAlbums } : complete ? { albums: albums.size } : {}),
     tracks: status.scanning === false ? optionalMusicNumber(status.count) : undefined, genres, ...week };
 }
 

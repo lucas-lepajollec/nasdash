@@ -15,7 +15,7 @@ beforeEach(() => vi.resetAllMocks());
 it.each(['jellyfin', 'emby'])('resolves ordered %s queue IDs, including repeated tracks, and remote control capability', async type => {
   const instance = source(type);
   json.mockImplementation(async (_instance, path) => {
-    if (path.includes('/Sessions?')) return [{ Id: 'session', SupportsRemoteControl: true, PlaylistItemId: 'second', NowPlayingItem: song,
+    if ((path.includes('/Sessions?') || path.endsWith('/Sessions'))) return [{ Id: 'session', SupportsRemoteControl: true, PlaylistItemId: 'second', NowPlayingItem: song,
       NowPlayingQueue: [{ Id: 'song', PlaylistItemId: 'first' }, { Id: 'song', PlaylistItemId: 'second' }, { Id: 'next2' }, { Id: 'next1' }] }];
     return { Items: [{ ...song, Id: 'next1' }, { ...song, Id: 'next2' }] };
   });
@@ -36,8 +36,9 @@ it('merges per-user Jellyfin track history by last-play date and omits never-pla
 it.each(['jellyfin', 'emby'])('maps %s playlists, album and playlist tracks, search, stream and checked control commands', async type => {
   const instance = source(type), prefix = type === 'emby' ? '/emby' : '';
   json.mockImplementation(async (_instance, path) => {
+    if (path.includes('/Users/Query?')) return { Items: [{ Id: 'alex' }], TotalRecordCount: 1 };
     if (path.endsWith('/Users')) return [{ Id: 'alex' }];
-    if (path.includes('/Sessions?')) return [{ Id: 'session', SupportsRemoteControl: true, NowPlayingItem: song }];
+    if ((path.includes('/Sessions?') || path.endsWith('/Sessions'))) return [{ Id: 'session', SupportsRemoteControl: true, NowPlayingItem: song }];
     if (path.includes('/Playing/')) return {};
     if (path.includes('IncludeItemTypes=Playlist')) return { Items: [playlist, { ...playlist, Id: 'video', MediaType: 'Video' }] };
     if (path.includes('IncludeItemTypes=MusicAlbum')) return { Items: [{ Id: 'album', Type: 'MusicAlbum', Name: 'Garden' }] };
@@ -50,10 +51,10 @@ it.each(['jellyfin', 'emby'])('maps %s playlists, album and playlist tracks, sea
   expect([search.tracks.length, search.albums.length, search.playlists.length]).toEqual([1, 1, 1]);
   expect(json.mock.calls.some(([, path]) => path.includes('searchTerm=Glass%20%26%20Garden'))).toBe(true);
   const path = await jellyfinMusicStreamPath(instance, 'song');
-  expect(path).toContain(`${prefix}/Audio/song/universal?UserId=alex`); expect(path).not.toMatch(/api_key|fictional-key/);
+  expect(path).toContain(type === 'emby' ? '/emby/Audio/song/universal.mp3?DeviceId=NasDash' : '/Audio/song/universal?UserId=alex'); expect(path).not.toMatch(/api_key|fictional-key/);
   for (const [action, command] of [['playpause', 'PlayPause'], ['next', 'NextTrack'], ['previous', 'PreviousTrack']] as const) {
     await controlJellyfinMusic(instance, 'session', action);
-    expect(json).toHaveBeenCalledWith(instance, `${prefix}/Sessions/session/Playing/${command}`, { method: 'POST', headers: { 'X-Emby-Token': 'fictional-key' } });
+    expect(json).toHaveBeenCalledWith(instance, `${prefix}/Sessions/session/Playing/${command}`, { method: 'POST', headers: { 'X-Emby-Token': 'fictional-key' }, json: { Command: command } });
   }
   await expect(controlJellyfinMusic(instance, 'unknown', 'next')).rejects.toMatchObject({ status: 403 });
 });
@@ -67,7 +68,9 @@ it('maps Plex track and album history, audio playlists, music-scoped search, ord
   expect((await collectPlexMusicRecent(instance, 12, 'albums')).albums[0]).toMatchObject({ id: 'album', title: 'Garden', playedAt: 1768474800000 });
   expect((await collectPlexMusicPlaylists(instance, 12)).playlists).toEqual([expect.objectContaining({ id: 'playlist', trackCount: 4, durationMs: 480000, cover: expect.stringContaining('%2Fplaylists%2F123%2Fcomposite%2F456') })]);
   expect(await collectPlexMusicTracks(instance, 'album', 'album')).toHaveLength(1); expect(await collectPlexMusicTracks(instance, 'playlist', 'playlist')).toHaveLength(1);
-  const search = await collectPlexMusicSearch(instance, 'Quiet'); expect([search.tracks.length, search.albums.length, search.playlists.length]).toEqual([1, 1, 1]);
+  const search = await collectPlexMusicSearch(instance, 'Quiet');
+  expect(json.mock.calls.filter(([, path]) => path.includes('title=Quiet')).map(([, path]) => path)).toEqual([expect.stringContaining('/all?title=Quiet&type=10'), expect.stringContaining('/all?title=Quiet&type=9')]);
+  expect([search.tracks.length, search.albums.length, search.playlists.length]).toEqual([1, 1, 1]);
   expect(json.mock.calls.some(([, path]) => path.includes('/video/'))).toBe(false);
   expect(await plexMusicStreamPath(instance, 'song')).toBe('/library/parts/123/456/file.flac');
   track.Media[0].Part[0].key = 'https://outside.example.com/file';

@@ -1,3 +1,4 @@
+import { mapBounded } from './concurrency';
 import { readConfig } from '@/lib/config';
 import { collectExternal } from '@/integrations/catalog/collect';
 import { NextRequest, NextResponse } from 'next/server';
@@ -17,10 +18,14 @@ import { librarySource, settingNumber, sourceTypes, upcomingKinds, upcomingSourc
 import { demoExternalUpcoming, demoArrQueue, demoArrRecent, demoArrStatus, demoArrUpcoming, demoDownloadClient, demoIndexers } from './arrDemo';
 const upcoming = new TtlCache<UpcomingItem[]>(300000);
 const status = new TtlCache<ArrAppStatus>(60000), indexers = new TtlCache<IndexersResponse>(120000);
-const recent = new TtlCache<ImportedItem[]>(60000), library = new TtlCache<FollowUpItem[]>(1800000);
+// Library follow-ups answer at once past their 30 min and refresh behind (a cold pass can take a minute).
+const recent = new TtlCache<ImportedItem[]>(60000), library = new TtlCache<FollowUpItem[]>(1800000, 200, 0, 21600000);
 const headers = { 'Cache-Control': 'private, no-store' };
 async function sources<T>(instances: IntegrationInstance[], load: (instance: IntegrationInstance) => Promise<T>) {
-  const results = await Promise.allSettled(instances.map(load));
+  const results = await mapBounded(instances, 4, async instance => {
+    try { return { status: 'fulfilled' as const, value: await load(instance) }; }
+    catch (reason) { return { status: 'rejected' as const, reason }; }
+  });
   const failures: SourceFailure[] = [], values: { instance: IntegrationInstance; value: T }[] = [];
   for (const [i, result] of results.entries()) {
     if (result.status === 'fulfilled') values.push({ instance: instances[i], value: result.value });
@@ -115,7 +120,7 @@ export async function arrRoute(request: NextRequest, type: ArrWidgetType) {
       return NextResponse.json(demo ? demoIndexers(instance) : await indexers.get(serviceIdentity(instance), () => collectProwlarrIndexers(instance)), { headers });
     }
     if (type === 'media-arr') {
-      const apps = await Promise.all(instances.map(instance => demo ? demoArrStatus(instance) : status.get(serviceIdentity(instance), () => collectArrStatus(instance))));
+      const apps = await mapBounded(instances, 4, async instance => demo ? demoArrStatus(instance) : status.get(serviceIdentity(instance), () => collectArrStatus(instance)));
       return NextResponse.json({ apps, fetchedAt }, { headers });
     }
     if (type === 'media-downloads') {
@@ -132,7 +137,7 @@ export async function arrRoute(request: NextRequest, type: ArrWidgetType) {
     })).slice(0, count);
     // The *arr refresh their queue about once a minute: the download client's own state (a few seconds old) wins, so a
     // pause or a resume shows at once and a stale "warning" does not linger over a download that runs.
-    const live = demo ? [] : await Promise.all(listed.map(({ download }) => download ? liveDownload(savedClients, download).catch(() => undefined) : undefined));
+    const live = demo ? [] : await mapBounded(listed, 4, async ({ download }) => download ? liveDownload(savedClients, download).catch(() => undefined) : undefined);
     const entries = listed.map(({ instance, item }, index) => proxyMediaItem(instance, widgetId!, withLiveState(item, live[index]), admin, imageDraft));
     const imports = history?.values.flatMap(({ instance, value }) => value.map(item => ({ instance, item }))).sort((a, b) => b.item.at - a.item.at).slice(0, 6)
       .map(({ instance, item }) => proxyMediaItem(instance, widgetId!, item, admin, imageDraft));

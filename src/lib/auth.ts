@@ -315,45 +315,22 @@ export function verifyCsrf(req: AuthRequestLike): boolean {
     return false;
   }
 
-  const hostHeader = host.split(':')[0].toLowerCase();
-  const isLocalhost = (h: string) => ['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(h.toLowerCase());
-
-  if (origin) {
+  // Host and port must match: a page served by another service on the same
+  // NAS (another port) must not act with this application's cookies. The
+  // scheme is not compared, so a TLS proxy that sends no X-Forwarded-Proto
+  // keeps working (the browser's Origin is https, the request reaches us in http).
+  const allowed = new Set([targetUrl.host.toLowerCase()]);
+  try { allowed.add(new URL(`http://${host}`).host.toLowerCase()); }
+  catch { return false; }
+  const source = origin || referer;
+  if (source) {
     try {
-      const originUrl = new URL(origin);
-      const originHost = originUrl.hostname.toLowerCase();
-      const targetHost = targetUrl.hostname.toLowerCase();
-      
-      if (originHost === targetHost || originHost === hostHeader) {
-        return true;
-      }
-      if (isLocalhost(originHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
-        return true;
-      }
-      console.warn(`CSRF attempt blocked by Origin: ${origin} vs target ${targetHost} / host ${hostHeader}`);
+      const sourceUrl = new URL(source);
+      if (!['http:', 'https:'].includes(sourceUrl.protocol) || sourceUrl.username || sourceUrl.password) return false;
+      if (allowed.has(sourceUrl.host.toLowerCase())) return true;
+      console.warn(`CSRF attempt blocked: ${sourceUrl.origin} vs ${[...allowed].join(', ')}`);
       return false;
-    } catch {
-      return false;
-    }
-  }
-
-  if (referer) {
-    try {
-      const refererUrl = new URL(referer);
-      const refererHost = refererUrl.hostname.toLowerCase();
-      const targetHost = targetUrl.hostname.toLowerCase();
-      
-      if (refererHost === targetHost || refererHost === hostHeader) {
-        return true;
-      }
-      if (isLocalhost(refererHost) && (isLocalhost(targetHost) || isLocalhost(hostHeader))) {
-        return true;
-      }
-      console.warn(`CSRF attempt blocked by Referer: ${referer} vs target ${targetHost} / host ${hostHeader}`);
-      return false;
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   }
 
   return true;

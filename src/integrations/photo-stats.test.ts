@@ -18,8 +18,8 @@ describe('provider photo stats', () => {
     expect(toImmichStats(instance('immich'), immich.statistics)).toMatchObject({ photos: 12400, videos: 380, libraryBytes: 184000000000, users: [{ name: 'Alex', photos: 7200, videos: 240, bytes: 112000000000 }, { name: 'Robin' }] });
     expect(toPhotoprismStats(instance('photoprism'), prism)).toEqual({ provider: 'photoprism', name: 'Fictional Library', photos: 12400, videos: 380, albums: 42, places: 126, people: 68, favorites: 840, fetchedAt: expect.any(Number) });
     expect(toPhotoprismStats(instance('photoprism'), { count: { photos: 0 } })).not.toHaveProperty('videos');
-    expect(toPiwigoStats(instance('piwigo'), piwigo.result)).toEqual({ provider: 'piwigo', name: 'Fictional Library', photos: 12400, albums: 42, fetchedAt: expect.any(Number) });
-    expect(toPiwigoStats(instance('piwigo'), { infos: { nb_elements: '0', library_size_bytes: '123' } })).toMatchObject({ photos: 0, libraryBytes: 123 });
+    expect(toPiwigoStats(instance('piwigo'), piwigo.result)).toEqual({ provider: 'piwigo', name: 'Fictional Library', items: 12400, albums: 42, fetchedAt: expect.any(Number) });
+    expect(toPiwigoStats(instance('piwigo'), { infos: { nb_elements: '0', library_size_bytes: '123' } })).toMatchObject({ items: 0 });
     expect(toLibrephotosStats(instance('librephotos'), libre.stats, libre.months)).toMatchObject({ photos: 12400, videos: 380, albums: 42, people: 68, byYear: [{ year: 2024, count: 1000 }, { year: 2025, count: 840 }] });
   });
   it('rejects malformed primary responses', () => {
@@ -55,20 +55,21 @@ describe('provider photo stats', () => {
     const minimal = await collectImmichStats(instance('immich'));
     expect(minimal.photos).toBe(12400); expect(minimal).not.toHaveProperty('disk'); expect(minimal).not.toHaveProperty('added'); expect(minimal).not.toHaveProperty('albums');
   });
-  it('retries current Immich timeline queries without the removed size parameter', async () => {
+  it('retries older Immich timeline queries with their required size parameter', async () => {
     mockImmich(); const base = json.getMockImplementation()!;
     json.mockImplementation(async (source, path, options) => {
-      if (path === '/api/timeline/buckets?size=MONTH') throw new ServiceError('widgets.error.http', 502, { status: 400 });
+      if (path === '/api/timeline/buckets') throw new ServiceError('widgets.error.http', 502, { status: 400 });
       return base(source, path, options);
     });
     expect((await collectImmichStats(instance('immich'))).byYear).toEqual([{ year: 2024, count: 1000 }, { year: 2025, count: 840 }]);
-    expect(json.mock.calls.some(([, path]) => path === '/api/timeline/buckets')).toBe(true);
+    expect(json.mock.calls.some(([, path]) => path === '/api/timeline/buckets?size=MONTH')).toBe(true);
   });
   it('caps Immich daily search at five pages and years at twenty', async () => {
     mockImmich(); const base = json.getMockImplementation()!;
     json.mockImplementation(async (source, path, options) => path === '/api/search/metadata' ? { assets: { items: Array.from({ length: 1000 }, (_, i) => ({ id: `${objectPage(options)}-${i}`, createdAt: new Date().toISOString() })), nextPage: 'next' } } : base(source, path, options));
     const result = await collectImmichStats(instance('immich'));
-    expect(result.added?.reduce((a, b) => a + b, 0)).toBe(5000);
+    expect(result.added).toBeUndefined();
+    expect(result.limited).toBeUndefined();
     expect(json.mock.calls.filter(([, path]) => path === '/api/search/metadata')).toHaveLength(5);
     const years = Array.from({ length: 40 }, (_, i) => ({ year: 1980 + i, count: 1 }));
     expect(toPhotoprismStats(instance('photoprism'), { count: { photos: 40 }, years }).byYear).toHaveLength(20);
@@ -81,7 +82,7 @@ describe('provider photo stats', () => {
   function piwigoLogin() { bytes.mockResolvedValue({ bytes: Buffer.from('{"stat":"ok","result":true}'), contentType: 'application/json', status: 200, headers: { 'set-cookie': ['pwg_id=fake-session; HttpOnly; Path=/'] } }); }
   it('caches Piwigo cookie login and retries an expired session once', async () => {
     piwigoLogin(); json.mockResolvedValue(piwigo);
-    expect((await collectPiwigoStats(instance('piwigo'))).photos).toBe(12400);
+    expect((await collectPiwigoStats(instance('piwigo'))).items).toBe(12400);
     await collectPiwigoStats(instance('piwigo')); expect(bytes).toHaveBeenCalledTimes(1);
     expect(bytes.mock.calls[0][1]).toContain('pwg.session.login'); expect(bytes.mock.calls[0][2]?.body).toContain('password=fake-password');
     expect(json.mock.calls[0][2]?.headers).toEqual({ Cookie: 'pwg_id=fake-session' });
@@ -121,4 +122,19 @@ describe('Immich scoped API keys', () => {
     expect(result).toMatchObject({ limited: true, items: 50, albums: 1 });
     expect(result.photos).toBeUndefined();
   });
+});
+
+it('uses Immich cursor pagination when provided, without mixing page and cursor', async () => {
+  let reads = 0;
+  json.mockImplementation(async (_source, path, options) => {
+    if (path === '/api/server/statistics') return immich.statistics;
+    if (path !== '/api/search/metadata') throw new ServiceError('widgets.error.http');
+    const query = options?.json as { cursor?: string; page?: number };
+    reads++;
+    if (reads === 1) return { assets: { items: Array.from({ length: 1000 }, (_, n) => ({ id: `p-${n}`, createdAt: new Date().toISOString() })), nextCursor: 'fixture-cursor', nextPage: null } };
+    expect(query).toMatchObject({ cursor: 'fixture-cursor' }); expect(query.page).toBeUndefined();
+    return { assets: { items: [], nextCursor: null, nextPage: null } };
+  });
+  const result = await collectImmichStats(instance('immich'));
+  expect(reads).toBe(2); expect(result.limited).toBeUndefined();
 });

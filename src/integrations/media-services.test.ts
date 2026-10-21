@@ -40,7 +40,7 @@ describe('Jellyfin and Emby', () => {
   });
   it.each(['jellyfin', 'emby'])('uses the %s prefix and headers, never URL credentials, for every endpoint', async type => {
     const source = instance(type), prefix = type === 'emby' ? '/emby' : '';
-    json.mockImplementation(async (_instance, path) => path.includes('/Sessions?') ? jellyfin.sessions : path.includes('/Items?') ? jellyfin.recent : path.endsWith('/Counts') ? jellyfin.counts : jellyfin.folders);
+    json.mockImplementation(async (_instance, path) => path.includes('/VirtualFolders/Query?') ? { Items: jellyfin.folders } : (path.includes('/Sessions?') || path.endsWith('/Sessions')) ? jellyfin.sessions : path.includes('/Items?') ? jellyfin.recent : path.endsWith('/Counts') ? jellyfin.counts : jellyfin.folders);
     expect((await collectJellyfinNowPlaying(source)).sessions).toHaveLength(3);
     const recent = await collectJellyfinRecent(source, { kinds: ['movie', 'album'], count: 4, group: false });
     expect(recent.items.map(item => item.kind)).toEqual(['movie', 'album']);
@@ -48,7 +48,7 @@ describe('Jellyfin and Emby', () => {
     expect(library.counts).toEqual({ movies: 284, series: 42, episodes: 1280, artists: 96, albums: 210, tracks: 2640, books: 8 });
     expect(library.libraries.map(entry => entry.kind)).toEqual(['movies', 'series', 'music', 'books']);
     expect(JSON.stringify(library)).not.toContain('/fictional/library');
-    expect(json.mock.calls[0][1]).toBe(`${prefix}/Sessions?ActiveWithinSeconds=960`);
+    expect(json.mock.calls[0][1]).toBe(type === 'emby' ? '/emby/Sessions' : '/Sessions?ActiveWithinSeconds=960');
     expect(json.mock.calls[1][1]).toContain('IncludeItemTypes=Movie,MusicAlbum&Limit=4&Fields=');
     for (const [, path, options] of json.mock.calls) {
       expect(path.startsWith(`${prefix}/`)).toBe(true);

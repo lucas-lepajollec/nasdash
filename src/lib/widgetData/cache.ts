@@ -4,6 +4,8 @@
  * share the request in flight, and the oldest entries go first past `max`.
  * A failed load is not cached, but a stale value may be served while
  * `staleMs` allows (the source being down should not blank a widget).
+ * With `revalidateMs`, an expired value younger than that is still answered
+ * at once while it is refreshed in the background (slow, paced sources).
  */
 
 interface Entry<T> { value?: T; storedAt: number; pending?: Promise<T> }
@@ -11,21 +13,33 @@ interface Entry<T> { value?: T; storedAt: number; pending?: Promise<T> }
 export class TtlCache<T> {
   private readonly entries = new Map<string, Entry<T>>();
 
-  constructor(private readonly ttlMs: number, private readonly max = 200, private readonly staleMs = 0) {}
+  constructor(private readonly ttlMs: number, private readonly max = 200, private readonly staleMs = 0, private readonly revalidateMs = 0) {}
 
   /** A caller may require fresher data while sharing the same identity and in-flight load. */
   async get(key: string, load: () => Promise<T>, now = Date.now(), ttlMs = this.ttlMs): Promise<T> {
     const entry = this.entries.get(key);
     if (entry?.value !== undefined && now - entry.storedAt < ttlMs) return entry.value;
+    if (entry?.value !== undefined && now - entry.storedAt < ttlMs + this.revalidateMs) {
+      // One refresh behind; every caller meanwhile gets the value in hand.
+      if (!entry.pending) this.load(key, load, ttlMs, entry).catch(() => undefined);
+      return entry.value;
+    }
     if (entry?.pending) return entry.pending;
-    const pending = load().then(value => {
+    return this.load(key, load, ttlMs, entry);
+  }
+
+  private load(key: string, load: () => Promise<T>, ttlMs: number, entry: Entry<T> | undefined): Promise<T> {
+    const pending: Promise<T> = load().then(value => {
+      // A control action or eviction may have invalidated this in-flight read.
+      if (this.entries.get(key)?.pending !== pending) return value;
       this.entries.delete(key);
       this.entries.set(key, { value, storedAt: Date.now() });
       this.trim();
       return value;
     }, error => {
       const current = this.entries.get(key);
-      if (current?.value !== undefined && Date.now() - current.storedAt < ttlMs + this.staleMs) {
+      if (current?.pending !== pending) throw error;
+      if (current?.value !== undefined && Date.now() - current.storedAt < ttlMs + Math.max(this.staleMs, this.revalidateMs)) {
         current.pending = undefined;
         return current.value;
       }
@@ -33,6 +47,7 @@ export class TtlCache<T> {
       throw error;
     });
     this.entries.set(key, { ...(entry ?? { storedAt: 0 }), pending });
+    this.trim();
     return pending;
   }
 

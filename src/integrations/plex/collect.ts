@@ -149,7 +149,7 @@ async function plexMusicSections(instance: IntegrationInstance) {
   return sections;
 }
 async function plexMusicAlbums(instance: IntegrationInstance, key: string, sort: string, count: number, machine?: string, offset = 0) {
-  const data = await request(instance, `/library/sections/${encodeURIComponent(key)}/all?type=9&sort=${sort}&X-Plex-Container-Start=${offset}&X-Plex-Container-Size=${count}`);
+  const data = await request(instance, `/library/sections/${encodeURIComponent(key)}/all?type=9&sort=album.${sort}&X-Plex-Container-Start=${offset}&X-Plex-Container-Size=${count}`);
   return array(data.Metadata).map(value => toPlexMusicAlbum(instance, value, machine)).filter((album): album is MusicAlbum => !!album);
 }
 async function plexMusicList(instance: IntegrationInstance, count: number, sort: 'addedAt:desc' | 'viewCount:desc' | 'lastViewedAt:desc') {
@@ -170,7 +170,7 @@ export async function collectPlexMusicRecent(instance: IntegrationInstance, coun
 export async function collectPlexMusicTopTracks(instance: IntegrationInstance, count: number): Promise<MusicTrack[]> {
   const tracks: MusicTrack[] = [];
   for (const section of await plexMusicSections(instance)) {
-    const data = await request(instance, `/library/sections/${encodeURIComponent(string(section.key))}/all?type=10&sort=viewCount:desc&X-Plex-Container-Start=0&X-Plex-Container-Size=${count}`);
+    const data = await request(instance, `/library/sections/${encodeURIComponent(string(section.key))}/all?type=10&sort=track.viewCount:desc&X-Plex-Container-Start=0&X-Plex-Container-Size=${count}`);
     for (const value of array(data.Metadata)) {
       const track = toPlexMusicTrack(value), plays = optionalNumber(object(value).viewCount);
       if (track && plays) tracks.push({ ...track, plays });
@@ -213,7 +213,7 @@ export async function collectPlexMusicLibrary(instance: IntegrationInstance): Pr
       let count = optionalNumber(genre.count) ?? optionalNumber(genre.leafCount);
       // Normal Plex genre directories have labels/keys but no counts. Ask for
       // an album total per genre instead of inventing zero-valued statistics.
-      if (count === undefined && genreKey && genreItems.length <= 100) {
+      if (count === undefined && genreKey && genreItems.length <= 20) {
         count = await request(instance, `/library/sections/${key}/all?type=9&genre=${encodeURIComponent(genreKey)}&X-Plex-Container-Start=0&X-Plex-Container-Size=0`)
           .then(data => optionalNumber(data.totalSize), () => undefined);
       }
@@ -249,7 +249,7 @@ export async function collectPlexMusicTracks(instance: IntegrationInstance, kind
 export async function collectPlexMusicSearch(instance: IntegrationInstance, query: string): Promise<MusicSearchResponse> {
   const sections = await plexMusicSections(instance), tracks: MusicTrack[] = [], albums: MusicAlbum[] = [];
   for (const section of sections) {
-    const read = async (type: number) => array((await request(instance, `/library/sections/${encodeURIComponent(string(section.key))}/search?query=${encodeURIComponent(query)}&type=${type}&X-Plex-Container-Size=20`)).Metadata);
+    const read = async (type: number) => array((await request(instance, `/library/sections/${encodeURIComponent(string(section.key))}/all?title=${encodeURIComponent(query)}&type=${type}&X-Plex-Container-Size=20`)).Metadata);
     const [songs, releases] = await Promise.all([read(10), read(9)]);
     tracks.push(...songs.map(toPlexMusicTrack).filter((item): item is MusicTrack => !!item));
     albums.push(...releases.map(value => toPlexMusicAlbum(instance, value)).filter((item): item is MusicAlbum => !!item));
