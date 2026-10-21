@@ -1,0 +1,37 @@
+{
+  "stats": {
+    "downloadSpeed": 8000000,
+    "uploadSpeed": 320000
+  },
+  "session": {
+    "alt-speed-enabled": true,
+    "alt-speed-down": 100,
+    "alt-speed-up": 20,
+    "speed-limit-down-enabled": true,
+    "speed-limit-down": 12000,
+    "speed-limit-up-enabled": false,
+    "download-dir-free-space": 800000000000
+  },
+  "torrents": {
+    "torrents": [
+      {
+        "id": 1,
+        "name": "The Glass Orchard",
+        "percentDone": 0.75,
+        "status": 4,
+        "rateDownload": 8000000,
+        "eta": 120,
+        "totalSize": 1000000000
+      },
+      {
+        "id": 2,
+        "name": "The Clockwork Meadow",
+        "percentDone": 1,
+        "status": 6,
+        "rateDownload": 0,
+        "eta": -1,
+        "totalSize": 2000000000
+      }
+    ]
+  }
+}

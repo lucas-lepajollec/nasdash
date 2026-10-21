@@ -33,6 +33,11 @@ import customapi from './customapi/view';
 import mediaNowPlaying from './media-nowplaying/view';
 import mediaRecent from './media-recent/view';
 import mediaLibrary from './media-library/view';
+import mediaUpcoming from './media-upcoming/view';
+import mediaQueue from './media-queue/view';
+import mediaDownloads from './media-downloads/view';
+import mediaIndexers from './media-indexers/view';
+import mediaArr from './media-arr/view';
 import rss from './rss/view';
 import markets from './markets/view';
 import dns from './dns/view';
@@ -76,6 +81,11 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'media-nowplaying': mediaNowPlaying,
   'media-recent': mediaRecent,
   'media-library': mediaLibrary,
+  'media-upcoming': mediaUpcoming,
+  'media-queue': mediaQueue,
+  'media-downloads': mediaDownloads,
+  'media-indexers': mediaIndexers,
+  'media-arr': mediaArr,
   'clock': clock,
   'calendar': calendar,
   'weather': weather,

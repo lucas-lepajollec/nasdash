@@ -35,7 +35,7 @@ it('uses httpRequest for normal JSON, including the certificate option and bound
   expect(await serviceJson(source, '/api/auth', { method: 'POST', json: { password: 'fake-password' } })).toEqual({ session: {} });
   expect(httpRequest).toHaveBeenCalledWith('https://fixture.example.com/api/auth', { method: 'POST', json: { password: 'fake-password' }, allowSelfSigned: true, timeoutMs: 6000 });
 });
-it.each(['X-FTL-SID', 'x-api-key', 'X-Emby-Token', 'X-Plex-Token', 'x-emby-token', 'x-plex-token'])('keeps %s on a transport that never follows redirects', async header => {
+it.each(['X-FTL-SID', 'x-api-key', 'X-Emby-Token', 'X-Plex-Token', 'x-emby-token', 'x-plex-token', 'X-Transmission-Session-Id', 'cookie', 'Authorization'])('keeps %s on a transport that never follows redirects', async header => {
   nextStatus = 302;
   await expect(serviceJson(source, '/api/stats/summary', { headers: { [header]: 'fictional-sid' } })).rejects.toMatchObject({ key: 'widgets.error.http', parameters: { status: 302 } });
   expect(httpRequest).not.toHaveBeenCalled();

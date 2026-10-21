@@ -1,0 +1,18 @@
+{
+  "queue": {
+    "kbpersec": "1024.5",
+    "status": "Downloading",
+    "paused": false,
+    "diskspace1": "100.5",
+    "slots": [
+      {
+        "nzo_id": "fictional-job",
+        "filename": "The Glass Orchard",
+        "percentage": "75",
+        "status": "Downloading",
+        "timeleft": "00:02:00",
+        "mb": "1024"
+      }
+    ]
+  }
+}

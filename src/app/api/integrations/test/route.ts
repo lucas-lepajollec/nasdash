@@ -1,3 +1,9 @@
+import { arrRequest } from '@/integrations/arr/collect';
+import { testQbittorrent } from '@/integrations/qbittorrent/collect';
+import { transmissionRequest } from '@/integrations/transmission/collect';
+import { delugeRequest } from '@/integrations/deluge/collect';
+import { sabnzbdRequest } from '@/integrations/sabnzbd/collect';
+import { nzbgetRequest } from '@/integrations/nzbget/collect';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
@@ -20,7 +26,7 @@ import { immichHeaders } from '@/integrations/immich/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
 import { customApiRequest } from '@/lib/widgetData/customApi';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if (([...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES] as string[]).includes(type)) {
+  if (([...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -86,6 +92,12 @@ export async function POST(request: NextRequest) {
         await serviceJson(instance, '/identity', { headers: plexHeaders(instance) });
         await serviceJson(instance, '/library/sections', { headers: plexHeaders(instance) });
       }
+      else if ((ARR_TYPES as readonly string[]).includes(type)) await arrRequest(instance, '/system/status');
+      else if (type === 'qbittorrent') await testQbittorrent(instance);
+      else if (type === 'transmission') await transmissionRequest(instance, 'session-get');
+      else if (type === 'deluge') { if (await delugeRequest(instance, 'web.connected') !== true) throw new ServiceError('widgets.error.network'); }
+      else if (type === 'sabnzbd') { const result = await sabnzbdRequest(instance, 'version'); if (!result || typeof result !== 'object' || !('version' in result)) throw new ServiceError('integrations.error.authentication'); }
+      else if (type === 'nzbget') await nzbgetRequest(instance, 'version');
       else if (type === 'customapi') await customApiRequest(instance);
       else await serviceJson(instance, '/api/v1/config', { headers: photoprismHeaders(instance) });
       return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: 1 });

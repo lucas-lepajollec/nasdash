@@ -16,10 +16,10 @@ import { MONITORING_INFO, MonitoringConnectionDialog, testConnection, type TestR
 import { ServiceConnectionDialog } from '@/components/integrations/ServiceConnectionDialog';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { DockerHostFormModal, type DockerHostDraft } from '@/components/widgets/docker/DockerViews';
-import { CUSTOM_API_TYPES, DNS_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
+import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
-export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'media' | 'photos' | 'custom';
+export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom';
 export const integrationSectionId = (section: IntegrationSection) => `settings-integrations-${section}`;
 
 type Status = TestResult | 'running' | undefined;
@@ -102,6 +102,8 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const photos = (config?.integrations ?? []).filter(instance => (PHOTO_TYPES as readonly string[]).includes(instance.type));
   const custom = (config?.integrations ?? []).filter(instance => (CUSTOM_API_TYPES as readonly string[]).includes(instance.type));
   const media = (config?.integrations ?? []).filter(instance => (MEDIA_SERVER_TYPES as readonly string[]).includes(instance.type));
+  const arr = (config?.integrations ?? []).filter(instance => (ARR_TYPES as readonly string[]).includes(instance.type));
+  const downloads = (config?.integrations ?? []).filter(instance => (DOWNLOAD_CLIENT_TYPES as readonly string[]).includes(instance.type));
   const serviceName = (type: string) => getServiceIntegration(type)?.name ?? type;
 
   // Opened from a widget or a dialog: straight to its category.
@@ -120,7 +122,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   // Each saved connection is tried once when the page opens: its state shows at a glance.
   const tested = useRef(new Set<string>());
   useEffect(() => {
-    for (const instance of [...instances, ...dns, ...media, ...photos, ...custom]) {
+    for (const instance of [...instances, ...dns, ...media, ...arr, ...downloads, ...photos, ...custom]) {
       if (tested.current.has(instance.id)) continue;
       tested.current.add(instance.id);
       void runTest(instance);
@@ -242,9 +244,9 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
         )),
       )}
 
-      {(['dns', 'media', 'photos', 'custom'] as const).map(id => {
-        const saved = { dns, media, photos, custom }[id];
-        const kinds: readonly string[] = { dns: DNS_TYPES, media: MEDIA_SERVER_TYPES, photos: PHOTO_TYPES, custom: CUSTOM_API_TYPES }[id];
+      {(['dns', 'media', 'arr', 'downloads', 'photos', 'custom'] as const).map(id => {
+        const saved = { dns, media, arr, downloads, photos, custom }[id];
+        const kinds: readonly string[] = { dns: DNS_TYPES, media: MEDIA_SERVER_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_TYPES, custom: CUSTOM_API_TYPES }[id];
         return (
           <React.Fragment key={id}>
             {section(

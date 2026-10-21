@@ -1,0 +1,17 @@
+{
+  "status": {
+    "DownloadRate": 8000000,
+    "DownloadPaused": false,
+    "FreeDiskSpaceMB": 800000,
+    "DownloadLimit": 12000000
+  },
+  "groups": [
+    {
+      "NZBID": 1,
+      "NZBName": "The Glass Orchard",
+      "FileSizeMB": 1024,
+      "RemainingSizeMB": 256,
+      "Status": "DOWNLOADING"
+    }
+  ]
+}

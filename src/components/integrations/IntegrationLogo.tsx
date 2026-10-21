@@ -31,6 +31,15 @@ const LOGOS: Record<string, string> = {
   jellyfin: `${ICONS}/svg/jellyfin.svg`,
   emby: `${ICONS}/svg/emby.svg`,
   plex: `${ICONS}/svg/plex.svg`,
+  sonarr: `${ICONS}/svg/sonarr.svg`,
+  radarr: `${ICONS}/svg/radarr.svg`,
+  lidarr: `${ICONS}/svg/lidarr.svg`,
+  prowlarr: `${ICONS}/svg/prowlarr.svg`,
+  qbittorrent: `${ICONS}/svg/qbittorrent.svg`,
+  transmission: `${ICONS}/svg/transmission.svg`,
+  deluge: `${ICONS}/svg/deluge.svg`,
+  sabnzbd: `${ICONS}/svg/sabnzbd.svg`,
+  nzbget: `${ICONS}/svg/nzbget.svg`,
 };
 
 export function IntegrationLogo({ id, size = 28 }: { id: string; size?: number }) {

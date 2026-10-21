@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { SERVICE_INTEGRATIONS, getServiceIntegration } from './registry';
 import { upsertInstance, maskInstanceSecrets, stripInstanceSecrets } from './instances';
 import { validateConfigMutationBody } from '@/lib/configEntityValidation';
-import { MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts';
+import { MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 import type { DashboardConfig } from '@/lib/types';
 
 describe('saved content service connections', () => {
-  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
+  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex', ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
     const manifest = getServiceIntegration(type)!;
     expect(SERVICE_INTEGRATIONS).toContain(manifest);
     const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : field.kind === 'select' ? field.options![0].value : 'fictional']));
@@ -51,4 +51,15 @@ it.each(MEDIA_SERVER_TYPES)('describes the exact %s media connection fields', ty
     { id: secret, kind: 'secret', required: true, label: `integrations.${type}.${secret}` },
     { id: 'allowSelfSigned', kind: 'toggle', label: 'integrations.allowSelfSigned' },
   ]);
+});
+
+
+it.each([...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('describes the exact %s credentials and URL', type => {
+  const manifest = getServiceIntegration(type)!;
+  const ports = { sonarr: 8989, radarr: 7878, lidarr: 8686, prowlarr: 9696, qbittorrent: 8080, transmission: 9091, deluge: 8112, sabnzbd: 8080, nzbget: 6789 };
+  expect(manifest.fields[0]).toEqual({ id: 'url', kind: 'text', required: true, label: `integrations.${type}.url`, placeholder: `http://${type}.example.com:${ports[type]}` });
+  const secret = (ARR_TYPES as readonly string[]).includes(type) || type === 'sabnzbd' ? 'apiKey' : 'password';
+  expect(manifest.fields.find(field => field.id === secret)).toEqual({ id: secret, kind: 'secret', label: `integrations.${type}.${secret}`, ...(type !== 'transmission' ? { required: true } : {}) });
+  expect(manifest.fields.at(-1)).toEqual({ id: 'allowSelfSigned', kind: 'toggle', label: 'integrations.allowSelfSigned' });
+  expect(manifest.fields.some(field => field.id === 'username')).toBe(['qbittorrent', 'transmission', 'nzbget'].includes(type));
 });

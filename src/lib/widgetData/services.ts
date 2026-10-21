@@ -57,7 +57,7 @@ export function resolveServiceWidget(request: Request, widgetId: unknown, type: 
  * in the server's fictional config. Its id (`<type>-<random>`) is enough to
  * answer with fixtures; nothing is ever fetched in demo mode.
  */
-function demoVisitorInstance(integrationId: unknown, types: readonly string[]): IntegrationInstance | undefined {
+export function demoVisitorInstance(integrationId: unknown, types: readonly string[]): IntegrationInstance | undefined {
   if (!isDemoMode() || typeof integrationId !== 'string') return undefined;
   const type = /^([a-z]+)-[A-Za-z0-9-]{1,40}$/.exec(integrationId)?.[1];
   if (!type || !types.includes(type)) return undefined;
@@ -106,12 +106,13 @@ export function assertStatus(status: number) {
  * no redirects. httpRequest only strips Authorization on cross-origin redirects,
  * so SID / x-api-key requests must use this stricter transport too.
  */
-export async function serviceBytes(instance: IntegrationInstance, path: string, options: HttpOptions = {}, maxBytes = 8 * 1024 * 1024): Promise<{ bytes: Buffer; contentType: string; status: number }> {
+export interface ServiceOptions extends HttpOptions { body?: string }
+export async function serviceBytes(instance: IntegrationInstance, path: string, options: ServiceOptions = {}, maxBytes = 8 * 1024 * 1024): Promise<{ bytes: Buffer; contentType: string; status: number; headers?: Record<string, string | string[] | undefined> }> {
   const url = new URL(serviceUrl(instance, path));
   // Some APIs (GitHub…) refuse requests that do not name their client.
   const headers: Record<string, string> = { 'User-Agent': 'NasDash', ...options.headers };
-  const body = options.json === undefined ? undefined : JSON.stringify(options.json);
-  if (body !== undefined) { headers['Content-Type'] = 'application/json'; headers['Content-Length'] = String(Buffer.byteLength(body)); }
+  const body = options.json === undefined ? options.body : JSON.stringify(options.json);
+  if (body !== undefined) { if (options.json !== undefined) headers['Content-Type'] = 'application/json'; headers['Content-Length'] = String(Buffer.byteLength(body)); }
   try {
     return await new Promise((resolve, reject) => {
       const req = (url.protocol === 'https:' ? https : http).request(url, {
@@ -127,7 +128,7 @@ export async function serviceBytes(instance: IntegrationInstance, path: string, 
           chunks.push(chunk);
         });
         response.on('error', reject);
-        response.on('end', () => resolve({ bytes: Buffer.concat(chunks), contentType: String(response.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase(), status }));
+        response.on('end', () => resolve({ bytes: Buffer.concat(chunks), contentType: String(response.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase(), status, headers: response.headers }));
       });
       const timer = setTimeout(() => req.destroy(new ServiceError('widgets.error.timeout', 504)), Math.min(options.timeoutMs ?? 6000, 6000));
       req.on('close', () => clearTimeout(timer));
@@ -136,10 +137,10 @@ export async function serviceBytes(instance: IntegrationInstance, path: string, 
     });
   } catch (error) { transportError(error); }
 }
-export async function serviceJson<T>(instance: IntegrationInstance, path: string, options: HttpOptions = {}): Promise<T> {
+export async function serviceJson<T>(instance: IntegrationInstance, path: string, options: ServiceOptions = {}): Promise<T> {
   try {
     let text: string;
-    if (Object.keys(options.headers ?? {}).some(key => /^(x-ftl-sid|x-api-key|x-emby-token|x-plex-token)$/i.test(key))) {
+    if (options.body !== undefined || Object.keys(options.headers ?? {}).some(key => /^(authorization|cookie|x-transmission-session-id|x-ftl-sid|x-api-key|x-emby-token|x-plex-token)$/i.test(key))) {
       const answer = await serviceBytes(instance, path, options, 2 * 1024 * 1024);
       assertStatus(answer.status);
       text = answer.bytes.toString('utf8');

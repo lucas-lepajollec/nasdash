@@ -1,0 +1,19 @@
+{
+  "update": {
+    "torrents": {
+      "fictional-hash": {
+        "name": "The Glass Orchard",
+        "progress": 75,
+        "state": "Downloading",
+        "download_payload_rate": 8000000,
+        "eta": 120,
+        "total_size": 1000000000
+      }
+    },
+    "stats": {
+      "download_rate": 8000000,
+      "upload_rate": 320000
+    }
+  },
+  "free": 800000000000
+}

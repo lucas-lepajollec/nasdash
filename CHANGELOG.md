@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- *arr and download widgets in the Media group, with Sonarr, Radarr, Lidarr, Prowlarr and qBittorrent, Transmission, Deluge, SABnzbd, NZBGet connections (Settings → Integrations): **Coming soon** (episodes, movies with their cinema/digital/physical release, albums, as an agenda by day, posters or a list), **Download queue** (progress, state and the reason of a warning, time left), **Downloads** (speeds with a live line, active/paused/waiting, free space, busiest downloads), **Indexers** (Prowlarr's last-day searches, grabs and failures, failing indexers first) and ***arr status** (version, health checks, queue, missing, free space). Several sources per widget, partial failures named; API keys and passwords stay on the server.
+
 - Media widgets, in a new Media group, for Jellyfin, Emby and Plex (Settings → Integrations → Media servers): **Now playing** (when nothing plays, what was watched lately — Jellyfin/Emby per account, Plex history — over its art; cards over the title's art with poster, player, quality, direct play or transcoding, live progress; or compact rows), **Recently added** (a scrolling row of posters, the newest one featured large, a grid or a list; movies, episodes and albums; new episodes of a series folded into one card with their number, on by default; the list in three sizes and in columns) and **Media library** (shelves for movies, series, music and books with their totals, over rotating pictures of the newest titles (in order or shuffled), none, or a picture of your own per shelf, or as plain text; zero totals hidden unless kept; the libraries). Posters and art pass through NasDash; links to the server are for administrators, account names only when a widget shows them; viewers need the Media permission.
 - Custom API widget: any JSON API saved in Settings → Integrations → Custom APIs (no key, token, header, user and password, or URL parameter), read by the server. In the widget settings, values are picked by clicking them in the API's answer, then shown as figures, gauges, a list, a table built from a list, or a single status, with formats (percent, bytes, bit rate, duration, date, time ago…), units, decimals and warning/critical colours. Only the picked values reach the browser, never the whole answer, the address or the key.
 - Technitium DNS Server as a third source of the DNS widget, next to Pi-hole and AdGuard Home: statistics of the last day, answers from cache and recursive resolution, top domains and clients, and, for a cluster, the server itself, the whole cluster or one node per widget. A token with Dashboard (view) is enough; Settings (view, modify) adds the blocking state and its pause. Proposed in #123 with a first implementation in #125 by @emile-bodin.
@@ -24,6 +26,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Media and *arr widgets read a cleared setting (`null`) as unset instead of refusing it: turning **Show who is watching** off works.
+- Posters keep a day in the browser cache instead of being fetched again at every refresh.
 - Custom API values never overflow their widget: long text wraps on two lines, web addresses become short links.
 - Requests to services now name their client (`User-Agent: NasDash`): APIs such as GitHub's refused them.
 - Widgets dim their previous answer while a changed setting loads, and posters shimmer while loading instead of flashing a placeholder.

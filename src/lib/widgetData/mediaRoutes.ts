@@ -24,7 +24,9 @@ export async function mediaRoute(request: NextRequest, type: MediaWidgetType) {
     const draft = queryDraft(url);
     const resolved = resolveServiceWidget(request, widgetId, type, draft);
     if (resolved.response) { resolved.response.headers.set('Cache-Control', headers['Cache-Control']); return resolved.response; }
-    const { instance, settings, principal } = resolved;
+    const { instance, principal } = resolved;
+    // `null` is how widget settings clear a value: the same as absent.
+    const settings = Object.fromEntries(Object.entries(resolved.settings).filter(([, value]) => value !== null));
     const admin = principal.role === 'admin';
     const imageDraft = admin && draft ? settings : undefined;
     const key = serviceIdentity(instance), demo = isDemoMode(), plex = instance.type === 'plex';

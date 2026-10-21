@@ -189,3 +189,28 @@ Add a device (or Docker host) with that address in NasDash (not in the demo,
 which never polls). To support a new integration, save one real answer of its API as a
 sample (remove private data), write the collector against it, add a fake
 server line here, then check it once against the real service.
+
+
+## *arr and download widget data
+
+`arr/collect.ts` shares Sonarr/Radarr v3 and Lidarr/Prowlarr v1 mapping;
+per-app folders contain manifests, collector entry points and fictional samples.
+`widgetData/arrRoutes.ts` resolves visible saved widgets and admin drafts, selects
+saved instance IDs of the allowed types, and fetches sources in parallel. A failed
+calendar, queue or client is listed by name and a translated error key; a failed
+status source remains in the list with `online: false`. Indexers select one Prowlarr.
+
+The server caches upcoming items for 300 seconds, queues for 10, app status for 60,
+indexers for 120 and downloads for 3. Cache and session identities hash the full
+connection configuration and credentials. Responses use `private, no-store`.
+Artwork membership includes widget/preview scope, instance identity and upstream
+path; only a selected instance can serve its listed raster images. Links are
+removed for viewers after reading the shared cache. Demo handlers use invented
+fixtures and generated local artwork without network calls.
+
+All download transports reject redirects, including login bodies, cookies,
+Transmission session headers and basic authentication. *arr keys are headers;
+SABnzbd's API requires a server-only query key that is never part of a response.
+qBittorrent caches cookie sessions and retries one 403 after login; Transmission
+negotiates its session ID with one 409 retry. Optional free-space calls do not
+prevent reporting transfer activity.

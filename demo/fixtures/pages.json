@@ -645,6 +645,51 @@
           "y": 869,
           "w": 7,
           "h": 170
+        },
+        {
+          "id": "arr-upcoming-demo",
+          "type": "media-upcoming",
+          "settings": {},
+          "x": 0,
+          "y": 1800,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "arr-queue-demo",
+          "type": "media-queue",
+          "settings": {},
+          "x": 12,
+          "y": 1800,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "arr-downloads-demo",
+          "type": "media-downloads",
+          "settings": {},
+          "x": 0,
+          "y": 2120,
+          "w": 12,
+          "h": 260
+        },
+        {
+          "id": "arr-indexers-demo",
+          "type": "media-indexers",
+          "settings": {},
+          "x": 12,
+          "y": 2120,
+          "w": 12,
+          "h": 260
+        },
+        {
+          "id": "arr-status-demo",
+          "type": "media-arr",
+          "settings": {},
+          "x": 0,
+          "y": 2380,
+          "w": 24,
+          "h": 200
         }
       ]
     },

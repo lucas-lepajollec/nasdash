@@ -1,0 +1,116 @@
+{
+  "calendar": [
+    {
+      "id": 301,
+      "title": "Postcards from Ember Bay",
+      "releaseDate": "2026-10-24T20:00:00Z",
+      "statistics": {
+        "trackFileCount": 2
+      },
+      "artist": {
+        "artistName": "The Velvet Compasses",
+        "foreignArtistId": "fictional-artist",
+        "images": [
+          {
+            "coverType": "poster",
+            "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+          },
+          {
+            "coverType": "fanart",
+            "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+          }
+        ]
+      }
+    }
+  ],
+  "queue": {
+    "records": [
+      {
+        "id": 1,
+        "title": "Postcards from Ember Bay",
+        "size": 1000000000,
+        "sizeleft": 250000000,
+        "timeleft": "1.02:03:04",
+        "status": "downloading",
+        "trackedDownloadState": "downloading",
+        "trackedDownloadStatus": "ok",
+        "quality": {
+          "quality": {
+            "name": "FLAC"
+          }
+        },
+        "protocol": "torrent",
+        "downloadClient": "Fictional downloads",
+        "statusMessages": [
+          {
+            "messages": [
+              "Unable to import /downloads/private/title.mkv until ready"
+            ]
+          }
+        ],
+        "album": {
+          "id": 301,
+          "title": "Postcards from Ember Bay",
+          "releaseDate": "2026-10-24T20:00:00Z",
+          "statistics": {
+            "trackFileCount": 2
+          },
+          "artist": {
+            "artistName": "The Velvet Compasses",
+            "foreignArtistId": "fictional-artist",
+            "images": [
+              {
+                "coverType": "poster",
+                "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+              },
+              {
+                "coverType": "fanart",
+                "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+              }
+            ]
+          }
+        },
+        "artist": {
+          "artistName": "The Velvet Compasses",
+          "foreignArtistId": "fictional-artist",
+          "images": [
+            {
+              "coverType": "poster",
+              "url": "/MediaCover/12/poster.jpg?lastWrite=123"
+            },
+            {
+              "coverType": "fanart",
+              "url": "https://art.example.com/MediaCover/12/fanart.jpg?lastWrite=123"
+            }
+          ]
+        }
+      }
+    ],
+    "totalRecords": 8
+  },
+  "status": {
+    "version": "4.0.0"
+  },
+  "health": [
+    {
+      "type": "warning",
+      "message": "A fictional indexer needs attention"
+    }
+  ],
+  "queueStatus": {
+    "totalCount": 8
+  },
+  "missing": {
+    "totalRecords": 12
+  },
+  "disks": [
+    {
+      "path": "/fictional/library",
+      "freeSpace": 1200000000000
+    },
+    {
+      "path": "/fictional/backup",
+      "freeSpace": 800000000000
+    }
+  ]
+}

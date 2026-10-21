@@ -66,27 +66,27 @@ const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 function scope(widgetId: string, draft?: Record<string, unknown>) {
   return draft ? `${widgetId}:preview:${hash(JSON.stringify(draft))}` : widgetId;
 }
-const membership = new Map<string, { path: string; kind: 'poster' | 'backdrop'; expires: number }>();
+const membership = new Map<string, { instanceId: string; path: string; kind: 'poster' | 'backdrop'; expires: number }>();
 export function knownMediaImage(instance: IntegrationInstance, widgetId: string, key: string, kind: 'poster' | 'backdrop', draft?: Record<string, unknown>): string | undefined {
   const id = `${serviceIdentity(instance)}:${scope(widgetId, draft)}:${key}`;
   const value = membership.get(id);
   if (!value || value.expires <= Date.now()) { membership.delete(id); return undefined; }
   return value.kind === kind ? value.path : undefined;
 }
-export function proxyMediaItem(instance: IntegrationInstance, widgetId: string, item: MediaItem, admin: boolean, draft?: Record<string, unknown>): MediaItem {
+export function proxyMediaItem<T extends { poster?: string; backdrop?: string; link?: string }>(instance: IntegrationInstance, widgetId: string, item: T, admin: boolean, draft?: Record<string, unknown>): T {
   const { link, poster, backdrop, ...safe } = item;
   const image = (path: string | undefined, kind: 'poster' | 'backdrop') => {
     if (!path) return undefined;
-    const key = hash(JSON.stringify([kind, path]));
+    const key = hash(JSON.stringify([serviceIdentity(instance), kind, path]));
     const id = `${serviceIdentity(instance)}:${scope(widgetId, draft)}:${key}`;
     membership.delete(id);
-    membership.set(id, { path, kind, expires: Date.now() + 86400_000 });
+    membership.set(id, { instanceId: instance.id, path, kind, expires: Date.now() + 86400_000 });
     while (membership.size > 20_000) membership.delete(membership.keys().next().value!);
     const query = new URLSearchParams({ widgetId, id: key, kind });
     if (draft) query.set('draft', JSON.stringify(draft));
     return `${MEDIA_IMAGE_ROUTE}?${query}`;
   };
-  return { ...safe, ...(admin && link ? { link } : {}), poster: image(poster, 'poster'), backdrop: image(backdrop, 'backdrop') };
+  return { ...safe, ...(admin && link ? { link } : {}), poster: image(poster, 'poster'), backdrop: image(backdrop, 'backdrop') } as T;
 }
 const identity = (instance: IntegrationInstance) => ({ server: instance.type as MediaServer, name: instance.name, fetchedAt: Date.UTC(2026, 0, 15, 12) });
 const demoItem = (n: number): MediaItem => {

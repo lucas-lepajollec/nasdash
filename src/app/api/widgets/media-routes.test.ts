@@ -68,8 +68,8 @@ describe('media data routes', () => {
     expect(collectJellyfinRecent).toHaveBeenCalledTimes(2);
   });
   it.each([
-    ['count', 3], ['count', 41], ['count', 4.5], ['count', '16'], ['count', null],
-    ['kinds', []], ['kinds', ['track']], ['kinds', ['movie', 'movie']], ['kinds', 'movie'], ['kinds', null],
+    ['count', 3], ['count', 41], ['count', 4.5], ['count', '16'],
+    ['kinds', []], ['kinds', ['track']], ['kinds', ['movie', 'movie']], ['kinds', 'movie'],
     ['integrationId', 3], ['integrationId', null], ['integrationId', ''],
   ])('rejects invalid recent %s=%j without contacting a server', async (field, value) => {
     setType('media-recent'); saved()[field] = value;
@@ -252,5 +252,14 @@ describe('recently watched when nothing plays', () => {
     vi.mocked(collectJellyfinHistory).mockRejectedValue(new ServiceError('widgets.error.http'));
     const body = await (await nowGet(get())).json();
     expect(body.history).toBeUndefined(); expect(body.recent.length).toBeGreaterThan(0);
+  });
+});
+
+describe('cleared media settings', () => {
+  it('reads null as absent: the show-users switch turned off hides names', async () => {
+    saved().showUsers = null;
+    const response = await nowGet(get());
+    expect(response.status).toBe(200);
+    expect((await response.json()).sessions[0].user).toBeUndefined();
   });
 });

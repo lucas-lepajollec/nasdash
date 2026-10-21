@@ -80,6 +80,7 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
 - Custom API connections for JSON endpoints, fetched on the server with configurable authentication; widgets receive selected values while connection addresses and credentials stay private.
+- Sonarr, Radarr and Lidarr calendars and queues, *arr health, Prowlarr indexers, and qBittorrent, Transmission, Deluge, SABnzbd and NZBGet download status. Multiple saved sources share a widget; credentials stay on the server.
 - Jellyfin, Emby and Plex connections for now playing, recent additions and library totals. Media artwork passes through NasDash; server links are administrator-only and account names follow each widget’s privacy setting.
 - A complete English, French, Spanish, German, and Italian interface with an instance-wide server preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.

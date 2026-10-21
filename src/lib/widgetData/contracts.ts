@@ -386,3 +386,149 @@ export interface MediaLibraryResponse {
  * widget listed.
  */
 export const MEDIA_IMAGE_ROUTE = '/api/widgets/media/image';
+
+/* --------------------------------------------------------- *arr & downloads */
+
+/**
+ * *arr applications (Settings → Integrations → Media servers, *arr part):
+ * `url`, `allowSelfSigned`; secret `apiKey` (sent as `X-Api-Key`, never in a URL).
+ * Sonarr/Radarr API v3, Lidarr/Prowlarr API v1.
+ */
+export const ARR_TYPES = ['sonarr', 'radarr', 'lidarr', 'prowlarr'] as const;
+export type ArrType = typeof ARR_TYPES[number];
+/** The *arr that manage a library (Prowlarr manages indexers). */
+export const LIBRARY_ARR_TYPES = ['sonarr', 'radarr', 'lidarr'] as const;
+
+/**
+ * Download clients: `url`, `allowSelfSigned`, and per type
+ * qbittorrent: `username` + secret `password` (Web UI login);
+ * transmission: `username` + secret `password` (RPC basic auth, optional);
+ * deluge: secret `password` (Web UI);
+ * sabnzbd: secret `apiKey` (SABnzbd only accepts it in the query string; the server adds it);
+ * nzbget: `username` + secret `password` (RPC basic auth).
+ */
+export const DOWNLOAD_CLIENT_TYPES = ['qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'] as const;
+export type DownloadClientType = typeof DOWNLOAD_CLIENT_TYPES[number];
+
+/** A connection that could not be read, by name (never its address or the upstream message). */
+export interface SourceFailure { id: string; name: string; error: string }
+
+/** An episode, movie or album due soon (Sonarr / Radarr / Lidarr calendars). */
+export interface UpcomingItem {
+  /** Opaque, unique across sources. */
+  id: string;
+  source: 'sonarr' | 'radarr' | 'lidarr';
+  /** Connection name. */
+  sourceName: string;
+  kind: 'episode' | 'movie' | 'album';
+  /** Episode title, movie title, album title. */
+  title: string;
+  /** Episode: its series; album: its artist. */
+  subtitle?: string;
+  season?: number;
+  episode?: number;
+  /** When it airs / is released (ms). Movies: the next of cinema, digital or physical release within the window. */
+  at: number;
+  /** Movies: which release `at` is. */
+  release?: 'cinema' | 'digital' | 'physical';
+  /** Already downloaded. */
+  hasFile: boolean;
+  /** Proxied images, like media posters: `/api/widgets/media/image?widgetId=…&id=…&kind=poster|backdrop`. */
+  poster?: string;
+  backdrop?: string;
+  /** Opens it in the *arr web UI (administrators only). */
+  link?: string;
+}
+/** GET /api/widgets/arr/upcoming?widgetId=… (settings: `integrationIds` (default: every Sonarr/Radarr/Lidarr), `days` 1–60 default 14, `kinds`). */
+export interface UpcomingResponse { items: UpcomingItem[]; failures: SourceFailure[]; fetchedAt: number }
+
+export type QueueStatus = 'downloading' | 'queued' | 'paused' | 'importing' | 'warning' | 'failed' | 'completed';
+/** An item in a *arr download queue. */
+export interface QueueItem {
+  id: string;
+  source: 'sonarr' | 'radarr' | 'lidarr';
+  sourceName: string;
+  kind: 'episode' | 'movie' | 'album';
+  title: string;
+  subtitle?: string;
+  season?: number;
+  episode?: number;
+  /** 0–100. */
+  progress: number;
+  status: QueueStatus;
+  /** Short reason for warning/failed (the *arr's own status message, cut to 160 characters, no paths). */
+  message?: string;
+  sizeBytes?: number;
+  leftBytes?: number;
+  etaMs?: number;
+  quality?: string;
+  protocol?: 'torrent' | 'usenet';
+  /** The download client's name in the *arr. */
+  client?: string;
+  poster?: string;
+}
+/** GET /api/widgets/arr/queue?widgetId=… (settings: `integrationIds`, `count` 3–50 default 10). */
+export interface QueueResponse { items: QueueItem[]; total: number; failures: SourceFailure[]; fetchedAt: number }
+
+/** One download client, now. */
+export interface DownloadClientStatus {
+  id: string;
+  name: string;
+  type: DownloadClientType;
+  /** Bytes per second. */
+  downloadBps: number;
+  uploadBps?: number;
+  active: number;
+  paused?: number;
+  queued?: number;
+  /** Speed limits when set (bytes per second; 0 = none). */
+  downloadLimitBps?: number;
+  uploadLimitBps?: number;
+  /** Alternative (slow) speed mode on (qBittorrent, Transmission). */
+  altSpeed?: boolean;
+  /** The busiest downloads, newest activity first (≤ 10). */
+  items: { id: string; name: string; progress: number; state: 'downloading' | 'seeding' | 'paused' | 'queued' | 'checking' | 'error' | 'completed'; downloadBps?: number; etaMs?: number; sizeBytes?: number }[];
+  /** Free space where the client saves, when it reports it. */
+  freeBytes?: number;
+}
+/** GET /api/widgets/downloads?widgetId=… (settings: `integrationIds` (default: every client), `items` 0–10 default 5). */
+export interface DownloadsResponse { clients: DownloadClientStatus[]; failures: SourceFailure[]; fetchedAt: number }
+
+/** A Prowlarr indexer. */
+export interface IndexerStatus {
+  id: string;
+  name: string;
+  protocol: 'torrent' | 'usenet';
+  enabled: boolean;
+  /** Not failing (Prowlarr's indexer status has no failure / disabled-until). */
+  healthy: boolean;
+  /** When Prowlarr will try a failing indexer again (ms). */
+  retryAt?: number;
+  queries?: number;
+  grabs?: number;
+  failures?: number;
+  averageMs?: number;
+}
+/** GET /api/widgets/arr/indexers?widgetId=… (a Prowlarr connection). */
+export interface IndexersResponse { name: string; indexers: IndexerStatus[]; totals: { queries: number; grabs: number; failures: number }; fetchedAt: number }
+
+/** One *arr application at a glance. */
+export interface ArrAppStatus {
+  id: string;
+  name: string;
+  type: ArrType;
+  version?: string;
+  /** The *arr's own health checks (cut to 200 characters). */
+  health: { level: 'warning' | 'error'; message: string }[];
+  queue?: number;
+  /** Monitored items missing (Sonarr episodes, Radarr movies, Lidarr albums). */
+  missing?: number;
+  /** Prowlarr: indexers enabled / failing. */
+  indexers?: number;
+  failingIndexers?: number;
+  /** Smallest free space among the root folders. */
+  freeBytes?: number;
+  online: boolean;
+}
+/** GET /api/widgets/arr/status?widgetId=… (settings: `integrationIds`, default every *arr). */
+export interface ArrStatusResponse { apps: ArrAppStatus[]; fetchedAt: number }

@@ -5,13 +5,13 @@ const state = vi.hoisted(() => ({ demo: false, admin: true, instances: [] as Int
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ integrations: state.instances }) }));
 vi.mock('@/lib/auth', () => ({ checkAdmin: () => state.admin ? null : NextResponse.json({ error: 'widgets.error.unauthorized' }, { status: 401 }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
-vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn() }));
+vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/pihole/collect', () => ({ piholeRequest: vi.fn() }));
 vi.mock('@/lib/widgetData/customApi', () => ({ customApiRequest: vi.fn() }));
 import { customApiRequest } from '@/lib/widgetData/customApi';
 import { POST } from './route';
 import { piholeRequest } from '@/integrations/pihole/collect';
-import { serviceJson, ServiceError } from '@/lib/widgetData/services';
+import { serviceJson, serviceBytes, ServiceError } from '@/lib/widgetData/services';
 const request = (body: unknown) => new NextRequest('http://nasdash.example.com/api/integrations/test', { method: 'POST', body: JSON.stringify(body) });
 const input = (type: string) => ({ type, settings: { url: 'http://service.example.com', username: 'admin' }, secrets: { password: 'fake-password', apiKey: 'fake-key', token: 'fake-token' } });
 beforeEach(() => { vi.resetAllMocks(); state.admin = true; state.demo = false; state.instances = []; });
@@ -27,10 +27,10 @@ it('refuses non-admin tests', async () => {
   state.admin = false;
   expect((await POST(request(input('immich')))).status).toBe(401); expect(serviceJson).not.toHaveBeenCalled();
 });
-it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex'])('never contacts %s in demo', async type => {
+it.each(['pihole', 'adguard', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('never contacts %s in demo', async type => {
   state.demo = true;
   expect(await (await POST(request(input(type)))).json()).toEqual({ ok: true, message: 'integrations.test.demo' });
-  expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled(); expect(customApiRequest).not.toHaveBeenCalled();
+  expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled(); expect(customApiRequest).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
 });
 it('reuses a masked saved secret only at its saved URL and with matching type', async () => {
   state.instances = [{ id: 'photo-service', type: 'immich', name: 'Fictional Photos', settings: { url: 'http://service.example.com' }, secrets: { apiKey: 'fake-saved-key' } }];
@@ -82,4 +82,32 @@ it.each(['jellyfin', 'emby', 'plex'])('authenticates the %s media connection wit
     expect(path).not.toMatch(/fake-key|fake-token/);
     expect(options?.headers).toEqual(type === 'plex' ? { 'X-Plex-Token': 'fake-token', Accept: 'application/json' } : { 'X-Emby-Token': 'fake-key' });
   }
+});
+
+
+it.each(['sonarr', 'radarr', 'lidarr', 'prowlarr'])('tests %s with its versioned system status and header key', async type => {
+  vi.mocked(serviceJson).mockResolvedValue({ version: '1.0.0' });
+  const response = await POST(request(input(type)));
+  expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  expect(serviceJson).toHaveBeenCalledWith(expect.objectContaining({ type }), `/api/${type === 'sonarr' || type === 'radarr' ? 'v3' : 'v1'}/system/status`, { headers: { 'X-Api-Key': 'fake-key' } });
+});
+
+it.each(['qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('tests %s with its authenticated version or RPC endpoint', async type => {
+  const { clearQbittorrentSessions } = await import('@/integrations/qbittorrent/collect'); clearQbittorrentSessions();
+  const { clearDelugeSessions } = await import('@/integrations/deluge/collect'); clearDelugeSessions();
+  const { clearTransmissionSessions } = await import('@/integrations/transmission/collect'); clearTransmissionSessions();
+  vi.mocked(serviceBytes).mockImplementation(async (_instance, path, options) => {
+    const method = (options?.json as { method?: string } | undefined)?.method;
+    const body = path.endsWith('/auth/login') ? 'Ok.' : path.endsWith('/app/version') ? 'v5.0.0' : method === 'session-get' ? JSON.stringify({ result: 'success', arguments: {} }) : path.startsWith('/api?') ? JSON.stringify({ version: '4.0.0' }) : JSON.stringify({ result: method === 'version' ? '1.0.0' : true, error: null });
+    return { bytes: Buffer.from(body), status: 200, contentType: 'application/json', headers: { 'set-cookie': ['SID=fictional-session; Path=/', '_session_id=fictional-session; Path=/'] } };
+  });
+  const response = await POST(request(input(type)));
+  expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  const calls = vi.mocked(serviceBytes).mock.calls;
+  if (type === 'qbittorrent') expect(calls.map(([, path]) => path)).toEqual(['/api/v2/auth/login', '/api/v2/app/version']);
+  else if (type === 'transmission') expect(calls[0][2]?.json).toMatchObject({ method: 'session-get' });
+  else if (type === 'deluge') expect(calls.map(([, , options]) => (options?.json as { method: string }).method)).toEqual(['auth.login', 'web.connected']);
+  else if (type === 'sabnzbd') expect(calls[0][1]).toBe('/api?mode=version&output=json&apikey=fake-key');
+  else expect(calls[0][2]?.json).toMatchObject({ method: 'version' });
+  expect(JSON.stringify(await (await POST(request(input(type)))).json())).not.toMatch(/fake-key|fake-password|fictional-session/);
 });
