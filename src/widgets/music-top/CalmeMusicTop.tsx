@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { MusicAlbum, MusicTopResponse, MusicTrack } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
-import { CalmeCheckRow, CalmeField } from '@/components/shared/CalmeDialog';
+import { CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, OrderedChoice, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { Cover, MusicServerField, MusicSetup, PlaybackSetting, useMusicConnection } from '@/components/widgets/music/shared';
 import { musicPlayer, PlayButton, useCanPlay } from '@/components/widgets/music/player';
 
@@ -118,7 +117,6 @@ function TopSettings({ draft, change }: { draft: WidgetSettings; change: (patch:
   const content = pick(draft.content, CONTENTS, 'albums');
   const pages = pagesOf(draft);
   const setPages = (next: Page[]) => change({ pages: next.length === PAGES.length && next.every((page, index) => page === PAGES[index]) ? null : next });
-  const move = (index: number, by: number) => { const next = [...pages]; [next[index], next[index + by]] = [next[index + by], next[index]]; setPages(next); };
   return (
     <>
       <MusicServerField draft={draft} change={change} />
@@ -127,24 +125,7 @@ function TopSettings({ draft, change }: { draft: WidgetSettings; change: (patch:
       </CalmeField>
       {content === 'pages' && (
         <CalmeField label={t('widgets.music.pages')} info={t('widgets.music.pagesHint')}>
-          <div className="ndc-dlg-stack">
-            {[...pages, ...PAGES.filter(page => !pages.includes(page))].map(page => {
-              const index = pages.indexOf(page), on = index >= 0;
-              return (
-                <div key={page} className="ndw-mx-source-row">
-                  <CalmeCheckRow checked={on} onChange={() => { if (on && pages.length === 1) return; setPages(on ? pages.filter(item => item !== page) : [...pages, page]); }}>
-                    <span className="ndc-dlg-name">{t(`widgets.music.top.${page}`)}</span>
-                  </CalmeCheckRow>
-                  {on && pages.length > 1 && (
-                    <span className="ndw-mx-order">
-                      <button type="button" className="ndc-icon-button" disabled={index === 0} onClick={() => move(index, -1)} aria-label={t('widgets.arr.sources.up')} title={t('widgets.arr.sources.up')}><ArrowUp size={13} /></button>
-                      <button type="button" className="ndc-icon-button" disabled={index === pages.length - 1} onClick={() => move(index, 1)} aria-label={t('widgets.arr.sources.down')} title={t('widgets.arr.sources.down')}><ArrowDown size={13} /></button>
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <OrderedChoice all={PAGES} value={pages} labelOf={page => t(`widgets.music.top.${page}`)} onChange={setPages} />
         </CalmeField>
       )}
       <CalmeRow label={t('widgets.music.shown')}>

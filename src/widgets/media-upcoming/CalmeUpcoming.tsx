@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, Check, Plus, Search, X } from 'lucide-react';
+import { Check, Plus, Search, X } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { LIBRARY_ARR_TYPES, MEDIA_SERVER_TYPES, type CatalogHit, type CatalogKind, type ExternalItem, type FollowUpItem, type ReleasePhase, type UpcomingItem, type UpcomingResponse, type WatchEntry } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -9,7 +9,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { CalmeField, CalmeCheckRow } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, Pager, useBoxWidth, usePage, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, OrderedChoice, pick, Pager, useBoxWidth, usePage, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { MediaPoster } from '@/components/widgets/media/shared';
 import { Hero } from '@/components/widgets/media/visual';
@@ -292,32 +292,10 @@ function UpcomingSettings({ draft, change }: { draft: WidgetSettings; change: (p
   const kinds = Array.isArray(draft.kinds) ? KINDS.filter(kind => (draft.kinds as unknown[]).includes(kind)) : [...KINDS];
   const display = pick(draft.display, DISPLAYS, 'feature');
   const setSources = (next: Source[]) => change({ sources: next.length === 1 && next[0] === 'arr' ? null : next, source: null });
-  const move = (index: number, by: number) => {
-    const next = [...sources];
-    [next[index], next[index + by]] = [next[index + by], next[index]];
-    setSources(next);
-  };
   return (
     <>
       <CalmeField label={t('widgets.arr.sources.title')} info={t('widgets.arr.sources.hint')}>
-        <div className="ndc-dlg-stack">
-          {[...sources, ...SOURCES.filter(source => !sources.includes(source))].map(source => {
-            const index = sources.indexOf(source), on = index >= 0;
-            return (
-              <div key={source} className="ndw-mx-source-row">
-                <CalmeCheckRow checked={on} onChange={() => { if (on && sources.length === 1) return; setSources(on ? sources.filter(item => item !== source) : [...sources, source]); }}>
-                  <span className="ndc-dlg-name">{t(`widgets.arr.source.${source}`)}</span>
-                </CalmeCheckRow>
-                {on && sources.length > 1 && (
-                  <span className="ndw-mx-order">
-                    <button type="button" className="ndc-icon-button" disabled={index === 0} onClick={() => move(index, -1)} aria-label={t('widgets.arr.sources.up')} title={t('widgets.arr.sources.up')}><ArrowUp size={13} /></button>
-                    <button type="button" className="ndc-icon-button" disabled={index === sources.length - 1} onClick={() => move(index, 1)} aria-label={t('widgets.arr.sources.down')} title={t('widgets.arr.sources.down')}><ArrowDown size={13} /></button>
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <OrderedChoice all={SOURCES} value={sources} labelOf={source => t(`widgets.arr.source.${source}`)} onChange={setSources} />
       </CalmeField>
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={display} options={DISPLAYS.map(value => ({ value, label: t(`widgets.arr.upcoming.${value}`) }))} onChange={value => change({ display: value === 'feature' ? null : value })} />
