@@ -80,12 +80,17 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
 - Custom API connections for JSON endpoints, fetched on the server with configurable authentication; widgets receive selected values while connection addresses and credentials stay private.
+- Sonarr, Radarr and Lidarr calendars and queues, *arr health, Prowlarr indexers, and qBittorrent, Transmission, Deluge, SABnzbd and NZBGet download status. Administrators can pause or resume an item or a whole client; demo controls stay offline. *arr disk readings come from media root folders, with only folder names returned. Multiple saved sources share a widget; credentials stay on the server.
+- Coming soon combines *arr calendars, library follow-ups, and public catalogue watchlists or discovery (TVMaze, Kitsu, optional AniList, and TMDB with a saved API key). Catalogue searches are administrator-only; public posters use allowlisted catalogue CDNs. It can follow series in a Jellyfin, Emby or Plex library through TVMaze: only provider IDs leave the server. Empty calendars show the next releases, empty queues show recent imports, downloads include available session totals and completions, and indexers include hourly search activity.
+- Music widgets for Jellyfin, Emby, Plex and Subsonic-compatible servers (Navidrome, Gonic, Airsonic): current tracks and queues, added or played albums, playlists, search, library statistics and all-time top albums. Signed-in readers with Media access can play listed tracks through a private audio proxy; administrators can control compatible Jellyfin/Emby sessions. Subsonic track history is unavailable.
 - Jellyfin, Emby and Plex connections for now playing, recent additions and library totals. Media artwork passes through NasDash; server links are administrator-only and account names follow each widget’s privacy setting.
 - A complete English, French, Spanish, German, and Italian interface with an instance-wide server preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.
 - Encrypted integration credentials, coordinated configuration writes with rollback on reported failures, and backup/restore tooling.
 
 ## Quick start
+
+Photo library statistics can use Immich, PhotoPrism, Piwigo or LibrePhotos connections in Settings → Integrations → Photos. Add the photo statistics widget to a page; available figures depend on the provider and account permissions.
 
 ### Docker Compose
 

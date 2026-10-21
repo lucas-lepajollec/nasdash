@@ -16,7 +16,9 @@ const DISPLAYS: readonly Display[] = ['posters', 'hero', 'grid', 'list'];
 type Size = 'small' | 'medium' | 'large';
 const SIZES: readonly Size[] = ['small', 'medium', 'large'];
 /** List rows: poster width per size. */
-const ROW_POSTER: Record<Size, number> = { small: 26, medium: 38, large: 56 };
+const ROW_POSTER: Record<Size, number> = { small: 28, medium: 44, large: 84 };
+/** List columns: the narrowest a column may get per size. */
+const ROW_MIN: Record<Size, number> = { small: 220, medium: 260, large: 360 };
 type Kind = 'movie' | 'episode' | 'album';
 const KINDS: readonly Kind[] = ['movie', 'episode', 'album'];
 /** Added in the last two days: a small dot. */
@@ -52,7 +54,7 @@ export default function CalmeRecent({ widgetId, settings, editMode, isVisible, o
               : items.length === 0 ? <div className="ndc-empty">{t('widgets.media.nothingNew')}</div>
                 : display === 'hero' ? <Hero items={items} width={width} now={data.fetchedAt} />
                   : display === 'grid' ? <div className="ndw-media-grid">{items.map(item => <PosterCard key={item.id} now={data.fetchedAt} item={item} width={Math.max(84, Math.min(130, width / Math.max(2, Math.round(width / 120)) - 10))} />)}</div>
-                    : display === 'list' ? <RecentList items={items} size={pick(settings.size, SIZES, 'medium')} columns={columnsOf(settings, width, 260)} />
+                    : display === 'list' ? <RecentList items={items} size={pick(settings.size, SIZES, 'medium')} columns={columnsOf(settings, width, ROW_MIN[pick(settings.size, SIZES, 'medium')])} />
                       : <PosterRow items={items} now={data.fetchedAt} />}
       </div>
     </CalmeWidget>

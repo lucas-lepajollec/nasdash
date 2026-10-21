@@ -197,6 +197,39 @@ export interface PhotosResponse {
   fetchedAt: number;
 }
 
+/**
+ * GET /api/widgets/photos/stats?widgetId=… (widget type `photos-stats`, settings `integrationId`, `showUsers`) —
+ * what a photo library holds. Every field is optional: each provider reports what it knows.
+ */
+export interface PhotoStatsResponse {
+  provider: PhotoStatsProvider;
+  name: string;
+  photos?: number;
+  videos?: number;
+  /** Photos and videos together, when the provider cannot split them (a key without statistics access). */
+  items?: number;
+  /** The key may not read the library's statistics: figures are partial. */
+  limited?: boolean;
+  albums?: number;
+  people?: number;
+  places?: number;
+  favorites?: number;
+  /** Space the library's files take. */
+  libraryBytes?: number;
+  /** The disk holding the library, when the provider reports it. */
+  disk?: { usedBytes: number; totalBytes: number };
+  /** Photos and videos per year taken, oldest first (≤ 20 years). */
+  byYear?: { year: number; count: number }[];
+  /** Items added per day over the last 30 days, oldest first (30 values). */
+  added?: number[];
+  /** Per account (names only when the widget allows them, as media widgets do). */
+  users?: { name?: string; photos: number; videos: number; bytes?: number }[];
+  fetchedAt: number;
+}
+/** Providers the stats widget reads: the photo widget's, plus libraries that only report figures well. */
+export const PHOTO_STATS_TYPES = ['immich', 'photoprism', 'piwigo', 'librephotos'] as const;
+export type PhotoStatsProvider = typeof PHOTO_STATS_TYPES[number];
+
 /* ------------------------------------------------------------ Bookmarks */
 
 /**
@@ -354,7 +387,8 @@ export interface MediaSession {
 }
 
 /** A title watched lately (account name under the same rule as sessions). */
-export interface MediaWatched { item: MediaItem; user?: string; watchedAt?: number }
+/** A title watched lately; `progress` (0–100) when the server keeps the position, 100 once watched to the end. */
+export interface MediaWatched { item: MediaItem; user?: string; watchedAt?: number; progress?: number; remainingMs?: number }
 
 /**
  * GET /api/widgets/media/now-playing?widgetId=… — when nothing plays,
@@ -371,10 +405,24 @@ export interface MediaRecentResponse { server: MediaServer; name: string; items:
 
 /** Library totals; absent when the server does not report them. */
 export interface MediaCounts { movies?: number; series?: number; episodes?: number; artists?: number; albums?: number; tracks?: number; books?: number }
+/**
+ * One library of the server: its titles (`count`: movies, series, artists or
+ * books), the details that apply to its kind, what arrived in the last 7 days
+ * and, once proxied, the posters of its newest titles (`covers`).
+ */
+export interface MediaLibrary {
+  name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other';
+  count?: number; episodes?: number; albums?: number; tracks?: number; added?: number;
+  covers?: string[];
+  /** Server-only: the newest titles, replaced by `covers` before leaving the server. */
+  art?: MediaItem[];
+  /** Server-only: a random sample of the library (up to 24), for varied covers. */
+  sample?: MediaItem[];
+}
 /** GET /api/widgets/media/library?widgetId=… */
 export interface MediaLibraryResponse {
   server: MediaServer; name: string; counts: MediaCounts;
-  libraries: { name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other'; count?: number }[];
+  libraries: MediaLibrary[];
   /** Shelf backgrounds, several per shelf for the widget to rotate (settings `cover`: newest — default —, random, none), proxied like posters. */
   covers?: { movies?: string[]; series?: string[]; music?: string[] };
   fetchedAt: number;
@@ -386,3 +434,327 @@ export interface MediaLibraryResponse {
  * widget listed.
  */
 export const MEDIA_IMAGE_ROUTE = '/api/widgets/media/image';
+
+/* --------------------------------------------------------- *arr & downloads */
+
+/**
+ * *arr applications (Settings → Integrations → Media servers, *arr part):
+ * `url`, `allowSelfSigned`; secret `apiKey` (sent as `X-Api-Key`, never in a URL).
+ * Sonarr/Radarr API v3, Lidarr/Prowlarr API v1.
+ */
+export const ARR_TYPES = ['sonarr', 'radarr', 'lidarr', 'prowlarr'] as const;
+export type ArrType = typeof ARR_TYPES[number];
+/** The *arr that manage a library (Prowlarr manages indexers). */
+export const LIBRARY_ARR_TYPES = ['sonarr', 'radarr', 'lidarr'] as const;
+
+/**
+ * Download clients: `url`, `allowSelfSigned`, and per type
+ * qbittorrent: `username` + secret `password` (Web UI login);
+ * transmission: `username` + secret `password` (RPC basic auth, optional);
+ * deluge: secret `password` (Web UI);
+ * sabnzbd: secret `apiKey` (SABnzbd only accepts it in the query string; the server adds it);
+ * nzbget: `username` + secret `password` (RPC basic auth).
+ */
+export const DOWNLOAD_CLIENT_TYPES = ['qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'] as const;
+export type DownloadClientType = typeof DOWNLOAD_CLIENT_TYPES[number];
+
+/** A connection that could not be read, by name (never its address or the upstream message). */
+export interface SourceFailure { id: string; name: string; error: string }
+
+/** An episode, movie or album due soon (Sonarr / Radarr / Lidarr calendars). */
+export interface UpcomingItem {
+  /** Opaque, unique across sources. */
+  id: string;
+  source: 'sonarr' | 'radarr' | 'lidarr';
+  /** Connection name. */
+  sourceName: string;
+  kind: 'episode' | 'movie' | 'album';
+  /** Episode title, movie title, album title. */
+  title: string;
+  /** Episode: its series; album: its artist. */
+  subtitle?: string;
+  season?: number;
+  episode?: number;
+  /** When it airs / is released (ms). Movies: the next of cinema, digital or physical release within the window. */
+  at: number;
+  /** Movies: which release `at` is. */
+  release?: 'cinema' | 'digital' | 'physical';
+  /** Already downloaded. */
+  hasFile: boolean;
+  /** Tab: `current` (an episode of a season under way, a movie released) or `announced` (premiere, new season, coming movie, album). */
+  phase?: ReleasePhase;
+  /** Proxied images, like media posters: `/api/widgets/media/image?widgetId=…&id=…&kind=poster|backdrop`. */
+  poster?: string;
+  backdrop?: string;
+  /** Opens it in the *arr web UI (administrators only). */
+  link?: string;
+}
+/**
+ * What comes next for a series of the media library (mode `library`): read
+ * from the media server, its next episode / season looked up on TVMaze.
+ */
+export interface FollowUpItem {
+  /** Opaque, unique. */
+  id: string;
+  /** The series' name in the library. */
+  title: string;
+  /** `airing`: next episode dated; `upcoming`: a new season dated; `announced`: still running, no date yet; `ended`: no more to come. */
+  status: 'airing' | 'upcoming' | 'announced' | 'ended';
+  season?: number;
+  episode?: number;
+  episodeTitle?: string;
+  /** Air date of the next episode (ms), when known. */
+  at?: number;
+  /** Broadcaster or streaming service (TVMaze). */
+  network?: string;
+  /** The last season present in the library. */
+  ownedSeason?: number;
+  phase?: ReleasePhase;
+  /** Proxied images from the media server, like media posters. */
+  poster?: string;
+  backdrop?: string;
+  /** Opens the series in the media server (administrators only). */
+  link?: string;
+}
+/**
+ * GET /api/widgets/arr/upcoming?widgetId=… — settings: `source` `arr` (default) | `library`.
+ * `arr`: `integrationIds` (default: every Sonarr/Radarr/Lidarr), `days` 1–60 default 14, `kinds`;
+ * `later`: when nothing falls in the window, the next ones after it (≤ 3, within 120 days).
+ * `library`: `mediaId` (a Jellyfin/Emby/Plex connection, default the first), `ended` (show ended series, default false);
+ * `followUps` sorted: dated first (soonest), then announced, then ended.
+ */
+/**
+ * Which tab an entry belongs to: `current` — out or airing now (an episode
+ * of a season under way, a released movie, an airing anime); `announced` —
+ * not started yet (a premiere, a new season, a coming movie), dated or not.
+ */
+export type ReleasePhase = 'current' | 'announced';
+/** Public catalogues the widget may read (no account; TMDB only with a saved TMDB connection). */
+export type CatalogProvider = 'tvmaze' | 'kitsu' | 'anilist' | 'tmdb';
+export type CatalogKind = 'series' | 'anime' | 'movie';
+/** A title followed in the widget's own list (settings `watchlist`). */
+export interface WatchEntry { provider: CatalogProvider; id: string; kind: CatalogKind; title: string }
+/** A catalogue search hit (GET /api/widgets/arr/catalog?q=…&kinds=…, administrators only). */
+export interface CatalogHit extends WatchEntry { year?: number; poster?: string; status?: string }
+/** What comes next for a title of a public catalogue. */
+export interface ExternalItem {
+  id: string;
+  provider: CatalogProvider;
+  kind: CatalogKind;
+  title: string;
+  season?: number;
+  episode?: number;
+  episodeTitle?: string;
+  /** Air / release date (ms) when known. */
+  at?: number;
+  status: 'airing' | 'upcoming' | 'announced' | 'ended';
+  phase: ReleasePhase;
+  network?: string;
+  /** Public https images from the catalogue's own CDN. */
+  poster?: string;
+  backdrop?: string;
+  /** The title's page on the catalogue (public). */
+  link?: string;
+}
+/**
+ * GET /api/widgets/arr/upcoming?widgetId=… — settings:
+ * `sources`: ordered ('arr' | 'library' | 'external')[], the order is the priority (default ['arr']; the legacy
+ * `source: 'library'` reads as ['library']).
+ * arr: `integrationIds`, `days` 1–60 default 14, `kinds`, `later` when the window is empty.
+ * library: `mediaId`, `ended`.
+ * external: `externalMode` 'watchlist' (default) | 'all'; `watchlist` WatchEntry[] (≤ 100);
+ * `catalogKinds` CatalogKind[] for 'all' (default all three; movies only with TMDB).
+ * Every entry carries its `phase`.
+ */
+export interface UpcomingResponse { items: UpcomingItem[]; later?: UpcomingItem[]; followUps?: FollowUpItem[]; external?: ExternalItem[]; failures: SourceFailure[]; fetchedAt: number }
+
+export type QueueStatus = 'downloading' | 'queued' | 'paused' | 'importing' | 'warning' | 'failed' | 'completed';
+/** An item in a *arr download queue. */
+export interface QueueItem {
+  id: string;
+  source: 'sonarr' | 'radarr' | 'lidarr';
+  sourceName: string;
+  kind: 'episode' | 'movie' | 'album';
+  title: string;
+  subtitle?: string;
+  season?: number;
+  episode?: number;
+  /** 0–100. */
+  progress: number;
+  status: QueueStatus;
+  /** Administrators may control this download through a matching saved download client. */
+  canControl?: boolean;
+  /** Short reason for warning/failed (the *arr's own status message, cut to 160 characters, no paths). */
+  message?: string;
+  sizeBytes?: number;
+  leftBytes?: number;
+  etaMs?: number;
+  quality?: string;
+  protocol?: 'torrent' | 'usenet';
+  /** The download client's name in the *arr. */
+  client?: string;
+  poster?: string;
+}
+/** A title the *arr imported lately (its history). */
+/** `count`: imports folded into this one (episodes of the same series), when more than one. */
+export interface ImportedItem { id: string; source: 'sonarr' | 'radarr' | 'lidarr'; kind: 'episode' | 'movie' | 'album'; title: string; subtitle?: string; season?: number; episode?: number; count?: number; quality?: string; at: number; poster?: string }
+/** GET /api/widgets/arr/queue?widgetId=… (settings: `integrationIds`, `count` 3–50 default 10). `recent`: the last imports (≤ 6, newest first), for the empty queue. */
+export interface QueueResponse { items: QueueItem[]; total: number; recent?: ImportedItem[]; failures: SourceFailure[]; fetchedAt: number }
+/** POST /api/widgets/arr/queue/action — administrators only; answers the refreshed QueueResponse. */
+export interface QueueActionRequest { widgetId: string; itemId: string; action: 'pause' | 'resume' }
+
+/** One download client, now. */
+export interface DownloadClientStatus {
+  id: string;
+  name: string;
+  type: DownloadClientType;
+  /** Bytes per second. */
+  downloadBps: number;
+  uploadBps?: number;
+  active: number;
+  paused?: number;
+  queued?: number;
+  /** Speed limits when set (bytes per second; 0 = none). */
+  downloadLimitBps?: number;
+  uploadLimitBps?: number;
+  /** Alternative (slow) speed mode on (qBittorrent, Transmission). */
+  altSpeed?: boolean;
+  /** The busiest downloads, newest activity first (≤ 10). */
+  items: { id: string; name: string; progress: number; state: 'downloading' | 'seeding' | 'paused' | 'queued' | 'checking' | 'error' | 'completed'; downloadBps?: number; etaMs?: number; sizeBytes?: number }[];
+  /** Free space where the client saves, when it reports it. */
+  freeBytes?: number;
+  /** Bytes received / sent since the client started (its own session totals). */
+  sessionDownloaded?: number;
+  sessionUploaded?: number;
+  /** Torrents being shared. */
+  seeding?: number;
+  /** Finished lately, newest first (≤ 5). */
+  completed?: { id: string; name: string; sizeBytes?: number; at?: number }[];
+  /** The viewer may pause and resume here (administrators, on a client that supports it). */
+  canControl?: boolean;
+  /** The whole client is paused (qBittorrent, SABnzbd, NZBGet). */
+  clientPaused?: boolean;
+}
+/**
+ * POST /api/widgets/downloads/action { widgetId, clientId, action: 'pause' | 'resume', itemId? } —
+ * administrators only; without `itemId`, the whole client. Answers the client's new status.
+ */
+export interface DownloadActionRequest { widgetId: string; clientId: string; action: 'pause' | 'resume'; itemId?: string }
+/** GET /api/widgets/downloads?widgetId=… (settings: `integrationIds` (default: every client), `items` 0–10 default 5). */
+export interface DownloadsResponse { clients: DownloadClientStatus[]; failures: SourceFailure[]; fetchedAt: number }
+
+/** A Prowlarr indexer. */
+export interface IndexerStatus {
+  id: string;
+  name: string;
+  protocol: 'torrent' | 'usenet';
+  enabled: boolean;
+  /** Not failing (Prowlarr's indexer status has no failure / disabled-until). */
+  healthy: boolean;
+  /** When Prowlarr will try a failing indexer again (ms). */
+  retryAt?: number;
+  queries?: number;
+  grabs?: number;
+  failures?: number;
+  averageMs?: number;
+}
+/** GET /api/widgets/arr/indexers?widgetId=… (a Prowlarr connection). */
+export interface IndexersResponse {
+  name: string; indexers: IndexerStatus[]; totals: { queries: number; grabs: number; failures: number };
+  /** Searches per hour over the last 24 hours, oldest first (24 values), from Prowlarr's history. */
+  hourly?: number[];
+  /** Last time Prowlarr searched (ms). */
+  lastQueryAt?: number;
+  fetchedAt: number;
+}
+
+/** One *arr application at a glance. */
+export interface ArrAppStatus {
+  id: string;
+  name: string;
+  type: ArrType;
+  version?: string;
+  /** The *arr's own health checks (cut to 200 characters). */
+  health: { level: 'warning' | 'error'; message: string }[];
+  queue?: number;
+  /** Monitored items missing (Sonarr episodes, Radarr movies, Lidarr albums). */
+  missing?: number;
+  /** Prowlarr: indexers enabled / failing. */
+  indexers?: number;
+  failingIndexers?: number;
+  /**
+   * The media root folders (where the library lives, not the app's own disk):
+   * the folder's last path segment only, its free and total space.
+   */
+  roots?: { name: string; freeBytes: number; totalBytes?: number }[];
+  online: boolean;
+}
+/** GET /api/widgets/arr/status?widgetId=… (settings: `integrationIds`, default every *arr). */
+export interface ArrStatusResponse { apps: ArrAppStatus[]; fetchedAt: number }
+
+/* ---------------------------------------------------------------- Music */
+
+/** Music servers: the video servers' music libraries, and Subsonic-compatible ones (Navidrome, Gonic, Airsonic). */
+export const MUSIC_SERVER_TYPES = ['jellyfin', 'emby', 'plex', 'navidrome'] as const;
+export type MusicServer = typeof MUSIC_SERVER_TYPES[number];
+/** Covers go through the media image proxy: `/api/widgets/media/image?widgetId=…&id=…&kind=poster`. */
+export interface MusicTrack {
+  id: string; title: string; artist?: string; album?: string; albumId?: string; durationMs?: number; cover?: string;
+  /** When it was last played (recently played tracks). */
+  playedAt?: number;
+  /** Times played (most played tracks). */
+  plays?: number;
+}
+export interface MusicPlaylist { id: string; name: string; trackCount?: number; durationMs?: number; cover?: string; owner?: string; changedAt?: number }
+export interface MusicAlbum {
+  id: string; title: string; artist?: string; year?: number; trackCount?: number; cover?: string;
+  addedAt?: number; playedAt?: number;
+  /** Times played (all time; the servers keep no per-period count). */
+  plays?: number;
+  /** Opens the album in the server (administrators only). */
+  link?: string;
+}
+/** GET /api/widgets/music/now-playing?widgetId=… (settings `integrationId`, `showUsers`). Nothing playing: `recent`, the albums played lately. */
+export interface MusicNowPlayingResponse {
+  server: MusicServer; name: string;
+  sessions: { id: string; track: MusicTrack; user?: string; player?: string; state: 'playing' | 'paused'; positionMs?: number; quality?: string; next?: MusicTrack[]; canControl?: boolean }[];
+  recent?: MusicAlbum[];
+  fetchedAt: number;
+}
+/**
+ * GET /api/widgets/music/recent?widgetId=… (settings `integrationId`, `count` 4–40 default 12,
+ * `content` 'added' (default: albums newest added first) | 'albums' (albums played lately) | 'tracks' (tracks played lately, in `tracks`)).
+ */
+/** `content: 'pages'` (`pages`: ordered subset of added | albums | tracks): `albums` added, `played` albums played, `tracks` played, each when its page is on. */
+export interface MusicRecentResponse { server: MusicServer; name: string; albums: MusicAlbum[]; played?: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }
+/** GET /api/widgets/music/playlists?widgetId=… (widget `music-playlists`, settings `integrationId`, `count` 3–40 default 12). */
+export interface MusicPlaylistsResponse { server: MusicServer; name: string; playlists: MusicPlaylist[]; fetchedAt: number }
+/** GET /api/widgets/music/tracks?widgetId=…&kind=album|playlist&id=… — the tracks to play, in order (≤ 300). Any music widget id. */
+export interface MusicTracksResponse { tracks: MusicTrack[] }
+/** GET /api/widgets/music/search?widgetId=…&q=… (2–80 chars) — any music widget id. */
+export interface MusicSearchResponse { tracks: MusicTrack[]; albums: MusicAlbum[]; playlists: MusicPlaylist[] }
+/**
+ * GET /api/widgets/music/stream?widgetId=…&id=<trackId> — the track's audio, relayed with HTTP Range
+ * support (a browser <audio> source). Signed-in users with the Media permission only (never anonymous visitors);
+ * the id must be one a music response of that widget listed (membership like covers).
+ */
+export type MusicStreamRoute = '/api/widgets/music/stream';
+/** POST /api/widgets/music/control { widgetId, sessionId, action } — administrators; Jellyfin/Emby sessions (`canControl` on the session). */
+export interface MusicControlRequest { widgetId: string; sessionId: string; action: 'playpause' | 'next' | 'previous' }
+/** GET /api/widgets/music/library?widgetId=… */
+export interface MusicLibraryResponse {
+  server: MusicServer; name: string;
+  artists?: number; albums?: number; tracks?: number;
+  /** Total duration of the tracks (ms). */
+  durationMs?: number;
+  /** Most present genres (≤ 8), by number of albums (or tracks when the server counts those). */
+  genres?: { name: string; count: number }[];
+  /** Albums added in the last 7 days (≤ 8, newest first) and how many in all. */
+  week?: MusicAlbum[]; weekCount?: number;
+  fetchedAt: number;
+}
+/**
+ * GET /api/widgets/music/top?widgetId=… (settings `integrationId`, `count` 3–20 default 6, `content` 'albums' (default) | 'tracks' | 'pages'
+ * with `pages` an ordered subset of albums | tracks): most played, all time; `tracks` when that page is on.
+ */
+export interface MusicTopResponse { server: MusicServer; name: string; albums: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }

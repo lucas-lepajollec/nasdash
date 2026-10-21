@@ -1,0 +1,13 @@
+{
+  "sessions": [
+    {"Id": "session-music", "UserName": "Alex", "Client": "Jellyfin Web", "DeviceName": "Study", "PlayState": {"IsPaused": true, "PositionTicks": 740000000}, "NowPlayingItem": {"Id": "track-1", "Type": "Audio", "Name": "The Glass Meridian", "Album": "Signals from the Garden", "AlbumId": "album-1", "Artists": ["The Paper Satellites"], "RunTimeTicks": 2340000000, "ImageTags": {"Primary": "track-image"}, "MediaStreams": [{"Type": "Audio", "Codec": "flac"}]}},
+    {"Id": "session-video", "NowPlayingItem": {"Id": "movie-1", "Name": "The Quiet Orbit", "Type": "Movie"}}
+  ],
+  "albums": {"Items": [
+    {"Id": "album-1", "Type": "MusicAlbum", "Name": "Signals from the Garden", "AlbumArtist": "The Paper Satellites", "ProductionYear": 2025, "ChildCount": 10, "ImageTags": {"Primary": "cover-1"}, "DateCreated": "2026-01-15T12:00:00Z", "UserData": {"PlayCount": 12, "LastPlayedDate": "2026-01-15T11:00:00Z"}},
+    {"Id": "album-2", "Type": "MusicAlbum", "Name": "Tidal Letters", "Artists": ["Mira Vale"], "ChildCount": 8, "DateCreated": "2026-01-01T12:00:00Z", "UserData": {"PlayCount": 4, "LastPlayedDate": "2026-01-14T11:00:00Z"}}
+  ], "TotalRecordCount": 2},
+  "counts": {"ArtistCount": 2, "AlbumCount": 2, "SongCount": 18},
+  "users": [{"Id": "alex", "Name": "Alex"}, {"Id": "robin", "Name": "Robin"}],
+  "genres": {"Items": [{"Name": "Ambient", "AlbumCount": 2}, {"Name": "Electronic", "SongCount": 10}]}
+}

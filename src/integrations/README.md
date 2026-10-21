@@ -189,3 +189,105 @@ Add a device (or Docker host) with that address in NasDash (not in the demo,
 which never polls). To support a new integration, save one real answer of its API as a
 sample (remove private data), write the collector against it, add a fake
 server line here, then check it once against the real service.
+
+
+## *arr and download widget data
+
+`arr/collect.ts` shares Sonarr/Radarr v3 and Lidarr/Prowlarr v1 mapping;
+per-app folders contain manifests, collector entry points and fictional samples.
+`widgetData/arrRoutes.ts` resolves visible saved widgets and admin drafts, selects
+saved instance IDs of the allowed types, and fetches sources in parallel. A failed
+calendar, queue or client is listed by name and a translated error key; a failed
+status source remains in the list with `online: false`. Indexers select one Prowlarr.
+
+The server caches upcoming items for 300 seconds, queues for 10, app status for 60,
+indexers for 120 and downloads for 3. Cache and session identities hash the full
+connection configuration and credentials. Responses use `private, no-store`.
+Artwork membership includes widget/preview scope, instance identity and upstream
+path; only a selected instance can serve its listed raster images. Links are
+removed for viewers after reading the shared cache. Demo handlers use invented
+fixtures and generated local artwork without network calls.
+
+All download transports reject redirects, including login bodies, cookies,
+Transmission session headers and basic authentication. *arr keys are headers;
+SABnzbd's API requires a server-only query key that is never part of a response.
+qBittorrent caches cookie sessions and retries one 403 after login; Transmission
+negotiates its session ID with one 409 retry. Optional free-space calls do not
+prevent reporting transfer activity.
+
+
+## Public release catalogues
+
+`catalog/` maps TVMaze, Kitsu, AniList and TMDB into the contracts in
+`widgetData/contracts.ts`. Upcoming settings accept ordered `sources` (`arr`,
+`library`, `external`); the legacy library source still works. Each source fails
+independently. External watchlists contain only provider/id/kind/title; titles
+are fallback display text and are never sent to a catalogue. Administrator-only
+`GET /api/widgets/arr/catalog` sends the explicit search query, validates optional
+widget membership, deduplicates anime titles and returns at most 24 hits.
+
+TVMaze uses the existing collector's global pacing and manual lookup redirect
+handling; next/previous episode links must name its exact episode endpoint.
+Other providers use fixed HTTPS API bases and reject redirects. Minimum request
+spacing is TVMaze 550 ms, Kitsu 250 ms, AniList 700 ms and TMDB 100 ms. Requests
+have 10-second timeouts and retry a 429 once after two seconds. Entries cache for
+six hours, searches ten minutes and discovery lists one hour. AniList errors,
+including GraphQL failures and HTTP 403, do not discard other catalogue results.
+
+TMDB is a registered service connection in the media category, with one required
+secret (`apiKey`) and no configurable address. JWT-shaped read tokens use bearer
+authentication; v3 keys use TMDB's server-side `api_key` query parameter. Its
+credentials never reach another catalogue or a response. Only public HTTPS
+artwork on the provider's exact CDN hosts reaches clients directly; library and
+arr art retains the scoped image proxy. Demo catalogue art is generated locally.
+
+Fictional provider samples and fetch-mocked tests live in `catalog/samples` and
+`catalog/*.test.ts`. Live Kitsu `nextRelease` availability and AniList service
+availability are not guaranteed; missing release dates remain announced.
+TMDB movie release dates use the provider's default date, without a regional
+release-date override. A released movie maps to the current (`airing`) state.
+
+## Music protocol contracts
+
+The music collectors map provider objects to the Music section in
+`src/lib/widgetData/contracts.ts`. Routes resolve saved-widget visibility on
+every request, replace covers with membership-protected image URLs, and
+register every returned track ID in a separate widget/connection/draft-scoped
+24-hour membership. Album and playlist IDs alone never grant stream access.
+Search is limited to 20 results per category; ordered album/playlist expansion
+is limited to 300 tracks. Playlist owner names follow the session-name opt-in.
+
+Subsonic `getAlbumList2` with `type=recent` is album history, not track history.
+The tracks mode returns HTTP 422 with `widgets.music.error.noTrackHistory`
+rather than claiming every track of a recent album was played. `getPlayQueue`
+is a client-saved queue: it is attached only for the configured account, a
+single unambiguous active session, and a matching current track. Clients that
+do not save queues (common with Navidrome clients) therefore have no `next`.
+Subsonic search3 does not search playlists; accessible playlist names are
+filtered locally. Plex playlist search also filters accessible playlist names
+(up to the first 1000); track/album search is scoped to music sections.
+
+Plex playback history uses numeric item type 10 (track), ordered by viewedAt;
+recent albums are deduplicated from at most 300 history tracks. Plex's next
+queue is omitted. A stream resolves the listed track's metadata and accepts
+only a local `/library/parts/…` path. Jellyfin/Emby queue IDs are resolved via
+Items and restored to queue order, using PlaylistItemId when available to
+identify repeated tracks. Per-user last-play dates are merged by latest date.
+Jellyfin/Emby stream and playlist expansion use the first account returned by
+Users, since an integration API key has no NasDash-user-to-media-user mapping.
+
+Audio transport never follows redirects. Provider authentication stays in
+headers (or the server-only Subsonic token query). The response body streams
+with backpressure and no byte cap, a six-second header deadline and a
+30-second socket inactivity timeout. Only audio MIME types and validated
+length/range headers leave the server. Browser cancellation closes upstream.
+The fictional demo generates a small PCM WAV locally and never contacts a
+provider, including for control actions.
+
+These mappings are fixture-tested; live compatibility still needs verification
+against the deployed Jellyfin/Emby versions (playlist visibility, queue fields,
+universal-audio codec/container negotiation), Plex history/part/composite paths,
+and Subsonic server/client queue support. Source references:
+[Subsonic API](https://subsonic.org/pages/api.jsp),
+[Jellyfin audio API](https://kotlin-sdk.jellyfin.org/dokka/jellyfin-api/org.jellyfin.sdk.api.operations/-audio-api/get-universal-audio-stream.html),
+[Plex Media Server API](https://developer.plex.tv/pms/).

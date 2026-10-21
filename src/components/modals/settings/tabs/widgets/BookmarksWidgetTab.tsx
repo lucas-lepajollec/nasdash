@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FolderPlus, GripVertical, Pencil, Plus, Upload, X } from 'lucide-react';
+import { ChevronRight, FolderPlus, GripVertical, Pencil, Plus, Upload, X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { BookmarkItem } from '@/lib/widgetData/contracts';
@@ -52,12 +52,17 @@ export function BookmarksWidgetTab() {
   };
 
   const byParent = indexByParent(items);
+  // Folders fold: all closed but the first, so a large library reads at a glance.
+  const [open, setOpen] = useState<Set<string> | null>(null);
+  const opened = open ?? new Set((byParent.get(undefined) ?? []).filter(item => item.kind === 'folder').slice(0, 1).map(item => item.id));
+  const toggle = (id: string) => { const next = new Set(opened); if (next.has(id)) next.delete(id); else next.add(id); setOpen(next); };
   const rows = (parentId: string | undefined, depth: number): React.ReactNode[] => (byParent.get(parentId) ?? []).flatMap(item => [
     <LibraryRow key={item.id} item={item} depth={depth}
+      folder={item.kind === 'folder' ? { open: opened.has(item.id), count: (byParent.get(item.id) ?? []).length, onToggle: () => toggle(item.id) } : undefined}
       onEdit={() => setEditing({ kind: item.kind, item })}
-      onAdd={item.kind === 'folder' ? () => setEditing({ kind: 'link', parentId: item.id }) : undefined}
+      onAdd={item.kind === 'folder' ? () => { setEditing({ kind: 'link', parentId: item.id }); if (!opened.has(item.id)) toggle(item.id); } : undefined}
       onRemove={() => remove(item)} />,
-    ...(item.kind === 'folder' ? rows(item.id, depth + 1) : []),
+    ...(item.kind === 'folder' && opened.has(item.id) ? rows(item.id, depth + 1) : []),
   ]);
 
   return (
@@ -108,16 +113,19 @@ export function BookmarksWidgetTab() {
 }
 
 /** One library row: dragged by its grip onto another row (before, after, or inside a folder). */
-function LibraryRow({ item, depth, onEdit, onAdd, onRemove }: { item: BookmarkItem; depth: number; onEdit: () => void; onAdd?: () => void; onRemove: () => void }) {
+function LibraryRow({ item, depth, folder, onEdit, onAdd, onRemove }: { item: BookmarkItem; depth: number; folder?: { open: boolean; count: number; onToggle: () => void }; onEdit: () => void; onAdd?: () => void; onRemove: () => void }) {
   const { t } = useI18n();
   const { attach, handle, dropClass } = useBookmarkDrag(item);
   return (
     <li ref={attach} className={`ndc-set-list-row ndc-bookmark-row ${dropClass}`} style={{ paddingLeft: depth * 20 }}>
       <span className="ndc-bookmark-name">
         <button type="button" className="ndc-bookmark-grip" {...handle} aria-label={t('widgets.bookmarks.move', { name: item.title })} title={t('widgets.bookmarks.move', { name: item.title })}><GripVertical size={13} /></button>
+        {folder
+          ? <button type="button" className="ndc-bookmark-fold" onClick={folder.onToggle} aria-expanded={folder.open} aria-label={item.title}><ChevronRight size={13} className={folder.open ? 'is-open' : ''} /></button>
+          : <span className="ndc-bookmark-fold" aria-hidden="true" />}
         <BookmarkIcon item={item} size={16} />
         <span className="ndc-source-text">
-          <span className="ndc-source-name">{item.title}</span>
+          <span className="ndc-source-name">{item.title}{folder && <span className="ndc-bookmark-count">{folder.count}</span>}</span>
           {item.kind === 'link' && <span className="ndc-set-list-sub ndc-source-detail">{item.description || hostOf(item.url)}</span>}
         </span>
       </span>

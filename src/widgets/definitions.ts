@@ -1,3 +1,8 @@
+import musicPlaylists from './music-playlists/definition';
+import musicTop from './music-top/definition';
+import musicLibrary from './music-library/definition';
+import musicRecent from './music-recent/definition';
+import musicNowPlaying from './music-nowplaying/definition';
 import calendar from './calendar/definition';
 import clock from './clock/definition';
 import device from './device/definition';
@@ -27,11 +32,17 @@ import tailscale from './tailscale/definition';
 import weather from './weather/definition';
 import quotes from './quotes/definition';
 import photos from './photos/definition';
+import photosStats from './photos-stats/definition';
 import bookmarks from './bookmarks/definition';
 import customapi from './customapi/definition';
 import mediaNowPlaying from './media-nowplaying/definition';
 import mediaRecent from './media-recent/definition';
 import mediaLibrary from './media-library/definition';
+import mediaUpcoming from './media-upcoming/definition';
+import mediaQueue from './media-queue/definition';
+import mediaDownloads from './media-downloads/definition';
+import mediaIndexers from './media-indexers/definition';
+import mediaArr from './media-arr/definition';
 import rss from './rss/definition';
 import markets from './markets/definition';
 import dns from './dns/definition';
@@ -52,8 +63,11 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // Network
   networkgraph, tailscale, networkTools, networkTopology, dns,
   // Content
-  mediaNowPlaying, mediaRecent, mediaLibrary,
-  rss, markets, quotes, photos, bookmarks, customapi,
+  mediaNowPlaying, mediaRecent, mediaLibrary, mediaUpcoming, mediaQueue, mediaDownloads, mediaIndexers, mediaArr,
+  // Music
+  musicNowPlaying, musicRecent, musicLibrary, musicTop, musicPlaylists,
+  // Content
+  rss, markets, quotes, photos, photosStats, bookmarks, customapi,
   // Gadgets
   clock, calendar, weather,
   // Layout

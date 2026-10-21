@@ -12,7 +12,7 @@ import { sanitizeSettings } from '@/lib/pages/validation';
  * admin may preview unsaved settings (`draft`), sanitized like saved ones.
  */
 export type WidgetLookup =
-  | { ok: true; settings: WidgetSettings; principal: AccessPrincipal; draft: boolean }
+  | { ok: true; settings: WidgetSettings; principal: AccessPrincipal; draft: boolean; widgetType?: string }
   | { ok: false; status: 400 | 401 | 404; error: string };
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -33,5 +33,5 @@ export function resolveWidgetSettings(request: NextRequest | Request, widgetId: 
     .flatMap(page => page.widgets)
     .find(candidate => candidate.id === widgetId && (typeof type === 'string' ? candidate.type === type : type.includes(candidate.type)));
   if (!widget) return { ok: false, status: 404, error: 'widgets.error.notFound' };
-  return { ok: true, settings: widget.settings ?? {}, principal, draft: false };
+  return { ok: true, settings: widget.settings ?? {}, principal, draft: false, widgetType: widget.type };
 }

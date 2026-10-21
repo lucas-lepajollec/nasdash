@@ -1,3 +1,8 @@
+import musicPlaylists from './music-playlists/view';
+import musicTop from './music-top/view';
+import musicLibrary from './music-library/view';
+import musicRecent from './music-recent/view';
+import musicNowPlaying from './music-nowplaying/view';
 import type { ComponentType } from 'react';
 import calendar from './calendar/view';
 import clock from './clock/view';
@@ -28,11 +33,17 @@ import tailscale from './tailscale/view';
 import weather from './weather/view';
 import quotes from './quotes/view';
 import photos from './photos/view';
+import photosStats from './photos-stats/view';
 import bookmarks from './bookmarks/view';
 import customapi from './customapi/view';
 import mediaNowPlaying from './media-nowplaying/view';
 import mediaRecent from './media-recent/view';
 import mediaLibrary from './media-library/view';
+import mediaUpcoming from './media-upcoming/view';
+import mediaQueue from './media-queue/view';
+import mediaDownloads from './media-downloads/view';
+import mediaIndexers from './media-indexers/view';
+import mediaArr from './media-arr/view';
 import rss from './rss/view';
 import markets from './markets/view';
 import dns from './dns/view';
@@ -71,11 +82,22 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'markets': markets,
   'quotes': quotes,
   'photos': photos,
+  'photos-stats': photosStats,
   'bookmarks': bookmarks,
   'customapi': customapi,
   'media-nowplaying': mediaNowPlaying,
   'media-recent': mediaRecent,
   'media-library': mediaLibrary,
+  'music-playlists': musicPlaylists,
+  'music-top': musicTop,
+  'music-library': musicLibrary,
+  'music-recent': musicRecent,
+  'music-nowplaying': musicNowPlaying,
+  'media-upcoming': mediaUpcoming,
+  'media-queue': mediaQueue,
+  'media-downloads': mediaDownloads,
+  'media-indexers': mediaIndexers,
+  'media-arr': mediaArr,
   'clock': clock,
   'calendar': calendar,
   'weather': weather,

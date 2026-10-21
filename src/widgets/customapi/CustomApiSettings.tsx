@@ -81,6 +81,10 @@ export function CustomApiSettings({ draft, change }: { draft: WidgetSettings; ch
   return (
     <div className="ndw-api-settings">
       <div className="ndw-api-settings-main">
+        <div className="ndw-mx-notice" role="note">
+          <span className="ndw-mx-notice-title">{t('widgets.customapi.experimental')}</span>
+          <span className="ndw-media-sub">{t('widgets.customapi.experimentalHint')}</span>
+        </div>
         <CalmeField label={t('widgets.connection')}>
           <ConnectionPicker types={CUSTOM_API_TYPES} section="custom" value={typeof draft.integrationId === 'string' ? draft.integrationId : undefined} onChange={id => change({ integrationId: id })} />
         </CalmeField>

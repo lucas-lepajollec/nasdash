@@ -16,6 +16,13 @@ export function chosenConnection(instances: IntegrationInstance[] | undefined, t
   return id === undefined || id === null ? matching[0] : matching.find(instance => instance.id === id);
 }
 
+/** The service's name beside the connection's, unless the connection is simply named after it ("Jellyfin", not "Jellyfin · Jellyfin"). */
+export function connectionDetail(instance: IntegrationInstance): string | undefined {
+  const service = getServiceIntegration(instance.type)?.name ?? instance.type;
+  return instance.name.trim().toLowerCase() === service.toLowerCase() ? undefined : service;
+}
+export const connectionLabel = (instance: IntegrationInstance) => [instance.name, connectionDetail(instance)].filter(Boolean).join(' · ');
+
 /**
  * Which saved connection a widget reads (one Pi-hole among several…).
  * Connections are added and edited only in Settings → Integrations; this
@@ -28,7 +35,6 @@ export function ConnectionPicker({ types, section, value, onChange }: { types: r
   const closeDialog = useContext(CloseWidgetDialog);
   const connections = (config?.integrations ?? []).filter(instance => types.includes(instance.type));
   const current = chosenConnection(config?.integrations, types, value);
-  const name = (type: string) => getServiceIntegration(type)?.name ?? type;
   return (
     <div className="ndw-connection">
       {connections.length > 1 ? (
@@ -36,9 +42,9 @@ export function ConnectionPicker({ types, section, value, onChange }: { types: r
           ariaLabel={t('widgets.connection')}
           value={current?.id ?? ''}
           onChange={onChange}
-          options={connections.map(instance => ({ value: instance.id, label: `${instance.name} · ${name(instance.type)}` }))}
+          options={connections.map(instance => ({ value: instance.id, label: connectionLabel(instance) }))}
         />
-      ) : <span className="ndw-connection-name">{current ? [current.name, name(current.type)].join(" · ") : t('widgets.connectionNone')}</span>}
+      ) : <span className="ndw-connection-name">{current ? connectionLabel(current) : t('widgets.connectionNone')}</span>}
       <button type="button" className="nd-btn" onClick={() => { closeDialog?.(); openIntegrations(section); }}>{t('integrations.openPage')}</button>
     </div>
   );

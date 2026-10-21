@@ -422,6 +422,17 @@
           "h": 320
         },
         {
+          "id": "photos-stats-demo",
+          "type": "photos-stats",
+          "settings": {
+            "showUsers": true
+          },
+          "x": 0,
+          "y": 739,
+          "w": 6,
+          "h": 160
+        },
+        {
           "id": "dns-demo",
           "type": "dns",
           "settings": {
@@ -436,7 +447,7 @@
             ]
           },
           "x": 0,
-          "y": 739,
+          "y": 899,
           "w": 10,
           "h": 260
         },
@@ -474,7 +485,7 @@
             ]
           },
           "x": 10,
-          "y": 739,
+          "y": 899,
           "w": 7,
           "h": 130
         },
@@ -520,7 +531,7 @@
             ]
           },
           "x": 17,
-          "y": 739,
+          "y": 899,
           "w": 7,
           "h": 200
         },
@@ -553,7 +564,7 @@
             ]
           },
           "x": 10,
-          "y": 869,
+          "y": 1029,
           "w": 7,
           "h": 170
         },
@@ -565,9 +576,9 @@
             "showUsers": true
           },
           "x": 0,
-          "y": 1040,
-          "w": 10,
-          "h": 260
+          "y": 1200,
+          "w": 12,
+          "h": 470
         },
         {
           "id": "media-recent-demo",
@@ -577,22 +588,21 @@
             "display": "hero",
             "count": 12
           },
-          "x": 10,
-          "y": 1040,
-          "w": 14,
+          "x": 0,
+          "y": 2950,
+          "w": 12,
           "h": 420
         },
         {
           "id": "media-library-demo",
           "type": "media-library",
           "settings": {
-            "integrationId": "plex-demo",
-            "libraries": true
+            "integrationId": "jellyfin-demo"
           },
-          "x": 0,
-          "y": 1300,
-          "w": 10,
-          "h": 200
+          "x": 12,
+          "y": 1200,
+          "w": 12,
+          "h": 470
         },
         {
           "id": "media-posters-demo",
@@ -603,7 +613,7 @@
             "count": 16
           },
           "x": 0,
-          "y": 1500,
+          "y": 3390,
           "w": 24,
           "h": 260
         },
@@ -642,9 +652,124 @@
             ]
           },
           "x": 17,
-          "y": 869,
+          "y": 1029,
           "w": 7,
           "h": 170
+        },
+        {
+          "id": "arr-upcoming-demo",
+          "type": "media-upcoming",
+          "settings": {},
+          "x": 0,
+          "y": 1690,
+          "w": 14,
+          "h": 500
+        },
+        {
+          "id": "arr-queue-demo",
+          "type": "media-queue",
+          "settings": {},
+          "x": 14,
+          "y": 1690,
+          "w": 10,
+          "h": 500
+        },
+        {
+          "id": "arr-downloads-demo",
+          "type": "media-downloads",
+          "settings": {},
+          "x": 0,
+          "y": 2210,
+          "w": 12,
+          "h": 470
+        },
+        {
+          "id": "arr-indexers-demo",
+          "type": "media-indexers",
+          "settings": {},
+          "x": 12,
+          "y": 2210,
+          "w": 12,
+          "h": 470
+        },
+        {
+          "id": "arr-status-demo",
+          "type": "media-arr",
+          "settings": {},
+          "x": 0,
+          "y": 2700,
+          "w": 24,
+          "h": 230
+        },
+        {
+          "id": "arr-follow-demo",
+          "type": "media-upcoming",
+          "settings": {
+            "source": "library",
+            "mediaId": "jellyfin-demo"
+          },
+          "x": 12,
+          "y": 2950,
+          "w": 12,
+          "h": 420
+        },
+        {
+          "id": "music-nowplaying-demo",
+          "type": "music-nowplaying",
+          "settings": {
+            "integrationId": "navidrome-demo",
+            "showUsers": true
+          },
+          "x": 0,
+          "y": 3674,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-library-demo",
+          "type": "music-library",
+          "settings": {
+            "integrationId": "navidrome-demo"
+          },
+          "x": 12,
+          "y": 3674,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-recent-demo",
+          "type": "music-recent",
+          "settings": {
+            "integrationId": "navidrome-demo",
+            "content": "pages"
+          },
+          "x": 0,
+          "y": 4014,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-playlists-demo",
+          "type": "music-playlists",
+          "settings": {
+            "integrationId": "navidrome-demo"
+          },
+          "x": 0,
+          "y": 4354,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-top-demo",
+          "type": "music-top",
+          "settings": {
+            "integrationId": "navidrome-demo",
+            "content": "pages"
+          },
+          "x": 12,
+          "y": 4014,
+          "w": 12,
+          "h": 320
         }
       ]
     },

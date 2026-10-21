@@ -1,3 +1,11 @@
+import { navidromeRequest } from '@/integrations/navidrome/collect';
+import { tmdbRequest } from '@/integrations/catalog/tmdb';
+import { arrRequest } from '@/integrations/arr/collect';
+import { testQbittorrent } from '@/integrations/qbittorrent/collect';
+import { transmissionRequest } from '@/integrations/transmission/collect';
+import { delugeRequest } from '@/integrations/deluge/collect';
+import { sabnzbdRequest } from '@/integrations/sabnzbd/collect';
+import { nzbgetRequest } from '@/integrations/nzbget/collect';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { readConfig } from '@/lib/config';
@@ -17,10 +25,12 @@ import { technitiumRequest } from '@/integrations/technitium/collect';
 import { jellyfinHeaders, jellyfinPrefix } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { immichHeaders } from '@/integrations/immich/collect';
+import { piwigoRequest } from '@/integrations/piwigo/collect';
+import { librephotosRequest } from '@/integrations/librephotos/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
 import { customApiRequest } from '@/lib/widgetData/customApi';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MUSIC_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +56,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if (([...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES] as string[]).includes(type)) {
+  if ((['tmdb', ...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MUSIC_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -65,7 +75,8 @@ export async function POST(request: NextRequest) {
     if (service.fields.some(field => field.required && !(field.kind === 'secret' ? secrets[field.id] : settings[field.id]))) return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
     const instance: IntegrationInstance = { id: sameType?.id ?? 'draft', type, name: sameType?.name ?? service.name, settings, secrets };
     try {
-      if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
+      if (type === 'tmdb') await tmdbRequest(instance, '/authentication');
+      else if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
       else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
       // The statistics the widget reads (Dashboard: view); a missing permission is told apart.
       else if (type === 'technitium') await technitiumRequest(instance, '/api/dashboard/stats/get', { type: 'LastHour', utc: 'true' });
@@ -81,11 +92,20 @@ export async function POST(request: NextRequest) {
           throw error;
         }
       }
+      else if (type === 'navidrome') await navidromeRequest(instance, 'ping');
       else if (type === 'jellyfin' || type === 'emby') await serviceJson(instance, `${jellyfinPrefix(instance)}/System/Info`, { headers: jellyfinHeaders(instance) });
       else if (type === 'plex') {
         await serviceJson(instance, '/identity', { headers: plexHeaders(instance) });
         await serviceJson(instance, '/library/sections', { headers: plexHeaders(instance) });
       }
+      else if ((ARR_TYPES as readonly string[]).includes(type)) await arrRequest(instance, '/system/status');
+      else if (type === 'qbittorrent') await testQbittorrent(instance);
+      else if (type === 'transmission') await transmissionRequest(instance, 'session-get');
+      else if (type === 'deluge') { if (await delugeRequest(instance, 'web.connected') !== true) throw new ServiceError('widgets.error.network'); }
+      else if (type === 'sabnzbd') { const result = await sabnzbdRequest(instance, 'version'); if (!result || typeof result !== 'object' || !('version' in result)) throw new ServiceError('integrations.error.authentication'); }
+      else if (type === 'nzbget') await nzbgetRequest(instance, 'version');
+      else if (type === 'piwigo') await piwigoRequest(instance);
+      else if (type === 'librephotos') await librephotosRequest(instance, '/api/stats/');
       else if (type === 'customapi') await customApiRequest(instance);
       else await serviceJson(instance, '/api/v1/config', { headers: photoprismHeaders(instance) });
       return NextResponse.json({ ok: true, message: 'integrations.test.ok', count: 1 });

@@ -1,0 +1,39 @@
+{
+  "lookup": {
+    "id": 42
+  },
+  "running": {
+    "id": 42,
+    "status": "Running",
+    "network": {
+      "name": "Lantern Television"
+    },
+    "_links": {
+      "nextepisode": {
+        "href": "https://api.tvmaze.com/episodes/123"
+      }
+    }
+  },
+  "episode": {
+    "season": 3,
+    "number": 1,
+    "name": "A New Horizon",
+    "airstamp": "2026-10-23T20:00:00Z",
+    "airdate": "2026-10-23"
+  },
+  "tbd": {
+    "id": 43,
+    "status": "To Be Determined",
+    "webChannel": {
+      "name": "Fictional Stream"
+    }
+  },
+  "development": {
+    "id": 44,
+    "status": "In Development"
+  },
+  "ended": {
+    "id": 45,
+    "status": "Ended"
+  }
+}

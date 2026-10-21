@@ -54,9 +54,12 @@ export default function CalmeDns({ widgetId, settings, editMode, isVisible, onUp
   const { data, error, mutate } = useWidgetData<DnsSummary>('/api/widgets/dns', widgetId, settings, { refreshMs: 15_000, isVisible, method: 'GET', enabled: !!connection });
   const title = t('widget.dns.name');
   const [ref, width] = useBoxWidth<HTMLDivElement>();
+  // Which server (and Technitium node) the figures belong to, whatever the style (issue #130).
+  const node = typeof settings.node === 'string' && settings.node ? (settings.node === 'cluster' ? t('widgets.dns.nodeCluster') : settings.node) : '';
+  const scope = connection ? [connection.name, node].filter(Boolean).join(' · ') : '';
 
   return (
-    <CalmeWidget title={title} editMode={editMode}>
+    <CalmeWidget title={title} editMode={editMode} aside={connection ? <span className="ndc-title-note">{scope}</span> : undefined}>
       {editMode && (
         <WidgetSettingsButton title={t('widgets.settingsOf', { name: title })} settings={settings} onSave={onUpdateSettings} width={620} shared={{ tab: 'widget-dns', label: t('widgets.dns.manage') }}>
           {(draft, change) => <DnsSettings draft={draft} change={change} />}

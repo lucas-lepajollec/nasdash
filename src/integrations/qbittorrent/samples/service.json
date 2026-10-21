@@ -1,0 +1,37 @@
+{
+  "transfer": {
+    "dl_info_speed": 8000000,
+    "up_info_speed": 320000,
+    "dl_rate_limit": 12000000,
+    "up_rate_limit": 0,
+    "dl_info_data": 12000000000,
+    "up_info_data": 3400000000
+  },
+  "mode": 1,
+  "torrents": [
+    {
+      "hash": "fictional-hash-1",
+      "name": "The Glass Orchard",
+      "progress": 0.75,
+      "state": "downloading",
+      "dlspeed": 8000000,
+      "eta": 120,
+      "size": 1000000000
+    },
+    {
+      "hash": "fictional-hash-2",
+      "name": "The Clockwork Meadow",
+      "progress": 1,
+      "state": "stalledUP",
+      "dlspeed": 0,
+      "eta": 8640000,
+      "size": 2000000000,
+      "completion_on": 1792533600
+    }
+  ],
+  "sync": {
+    "server_state": {
+      "free_space_on_disk": 800000000000
+    }
+  }
+}

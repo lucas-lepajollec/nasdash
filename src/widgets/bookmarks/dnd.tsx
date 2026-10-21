@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { DndContext, DragOverlay, KeyboardSensor, MouseSensor, pointerWithin, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragMoveEvent } from '@dnd-kit/core';
 import type { BookmarkItem } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -75,7 +76,11 @@ export function BookmarkDragScope({ items, enabled, onChange, overlay, children 
         }}
       >
         {children}
-        <DragOverlay dropAnimation={null}>{dragged ? <div className="ndw-bookmark-overlay">{overlay(dragged)}</div> : null}</DragOverlay>
+        {/* In the page body: inside the widget (a transformed block) the preview would drift off screen and stretch the page. */}
+        {typeof document !== 'undefined' && createPortal(
+          <DragOverlay dropAnimation={null} zIndex={1000}>{dragged ? <div className="ndw-bookmark-overlay">{overlay(dragged)}</div> : null}</DragOverlay>,
+          document.body,
+        )}
       </DndContext>
     </DragState.Provider>
   );

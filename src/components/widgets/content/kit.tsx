@@ -2,12 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
-import { ChevronLeft, ChevronRight, Pencil, Settings2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Pencil, Settings2 } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { demoFetch } from '@/lib/demoTransport';
 import { useAuth } from '@/providers/AuthProvider';
 import { useI18n } from '@/i18n/I18nProvider';
-import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
+import { CalmeCheckRow, CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider } from '@/components/modals/settings/shared/CalmeControls';
 import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
@@ -321,6 +321,57 @@ export function PagedGrid({ items, perPage, mode, minColumn, label }: {
       )}
     </div>
   );
+}
+
+/**
+ * Choices ticked and put in order (sources by priority, pages of a widget):
+ * the ticked ones first in their order with ↑ ↓, the others after; at
+ * least one stays ticked.
+ */
+export function OrderedChoice<T extends string>({ all, value, labelOf, onChange }: { all: readonly T[]; value: T[]; labelOf: (item: T) => React.ReactNode; onChange: (next: T[]) => void }) {
+  const { t } = useI18n();
+  const move = (index: number, by: number) => { const next = [...value]; [next[index], next[index + by]] = [next[index + by], next[index]]; onChange(next); };
+  return (
+    <div className="ndc-dlg-stack">
+      {[...value, ...all.filter(item => !value.includes(item))].map(item => {
+        const index = value.indexOf(item), on = index >= 0;
+        return (
+          <div key={item} className="ndw-mx-source-row">
+            <CalmeCheckRow checked={on} onChange={() => { if (on && value.length === 1) return; onChange(on ? value.filter(entry => entry !== item) : [...value, item]); }}>
+              <span className="ndc-dlg-name">{labelOf(item)}</span>
+            </CalmeCheckRow>
+            {on && value.length > 1 && (
+              <span className="ndw-mx-order">
+                <button type="button" className="ndc-icon-button" disabled={index === 0} onClick={() => move(index, -1)} aria-label={t('widgets.arr.sources.up')} title={t('widgets.arr.sources.up')}><ArrowUp size={13} /></button>
+                <button type="button" className="ndc-icon-button" disabled={index === value.length - 1} onClick={() => move(index, 1)} aria-label={t('widgets.arr.sources.down')} title={t('widgets.arr.sources.down')}><ArrowDown size={13} /></button>
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** "‹ 2 / 3 ›" under a paged list; nothing when everything fits on one page. */
+export function Pager({ page, pages, onChange }: { page: number; pages: number; onChange: (page: number) => void }) {
+  const { t } = useI18n();
+  if (pages < 2) return null;
+  return (
+    <div className="ndw-pager">
+      <button type="button" className="ndc-icon-button" disabled={page === 0} onClick={() => onChange(page - 1)} aria-label={t('widgets.grid.previous')} title={t('widgets.grid.previous')}><ChevronLeft size={14} /></button>
+      <span className="ndw-pager-count">{t('widgets.grid.page', { current: page + 1, total: pages })}</span>
+      <button type="button" className="ndc-icon-button" disabled={page === pages - 1} onClick={() => onChange(page + 1)} aria-label={t('widgets.grid.next')} title={t('widgets.grid.next')}><ChevronRight size={14} /></button>
+    </div>
+  );
+}
+
+/** A page of a list: the page shown stays within the list when it shrinks. */
+export function usePage<T>(items: T[], perPage: number): { visible: T[]; page: number; pages: number; setPage: (page: number) => void } {
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(items.length / perPage));
+  const current = Math.min(page, pages - 1);
+  return { visible: items.slice(current * perPage, current * perPage + perPage), page: current, pages, setPage };
 }
 
 /** Layout and page size of a paged grid, for a widget's dialog. */

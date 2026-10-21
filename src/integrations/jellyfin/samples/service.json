@@ -171,5 +171,34 @@
       "Name": "Paper Pages",
       "CollectionType": "books"
     }
-  ]
+  ],
+  "upcoming": {
+    "Items": [
+      {
+        "Id": "series-1",
+        "Type": "Series",
+        "Name": "Private library title",
+        "ProviderIds": {
+          "Tvdb": "12345",
+          "Imdb": "tt98765"
+        },
+        "ImageTags": {
+          "Primary": "fictional-tag"
+        },
+        "BackdropImageTags": [
+          "fictional-tag"
+        ]
+      }
+    ]
+  },
+  "seasons": {
+    "Items": [
+      {
+        "IndexNumber": 1
+      },
+      {
+        "IndexNumber": 2
+      }
+    ]
+  }
 }

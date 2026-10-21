@@ -1,0 +1,17 @@
+{
+  "ping": {"subsonic-response": {"status": "ok", "version": "1.16.1"}},
+  "getNowPlaying": {"subsonic-response": {"status": "ok", "nowPlaying": {"entry": [
+    {"id": "track-1", "title": "The Glass Meridian", "artist": "The Paper Satellites", "album": "Signals from the Garden", "duration": 234, "coverArt": "album-1", "username": "alex", "playerName": "Music Web", "minutesAgo": 0},
+    {"id": "track-3", "title": "River Static", "artist": "Mira Vale", "album": "Tidal Letters", "duration": 198, "coverArt": "album-2", "username": "robin"}
+  ]}}},
+  "newest": {"subsonic-response": {"status": "ok", "albumList2": {"album": [
+    {"id": "album-1", "name": "Signals from the Garden", "artist": "The Paper Satellites", "year": 2025, "songCount": 10, "coverArt": "album-1", "created": "2026-01-15T12:00:00Z", "played": "2026-01-15T11:00:00Z", "playCount": 24},
+    {"id": "album-2", "name": "Tidal Letters", "artist": "Mira Vale", "year": 2024, "songCount": 8, "coverArt": "album-2", "created": "2026-01-01T12:00:00Z", "played": "2026-01-14T11:00:00Z", "playCount": 12}
+  ]}}},
+  "frequent": {"subsonic-response": {"status": "ok", "albumList2": {"album": [{"id": "album-1", "name": "Signals from the Garden", "playCount": 24}]}}},
+  "recent": {"subsonic-response": {"status": "ok", "albumList2": {"album": [{"id": "album-2", "name": "Tidal Letters", "played": "2026-01-14T11:00:00Z"}]}}},
+  "getScanStatus": {"subsonic-response": {"status": "ok", "scanStatus": {"scanning": false, "count": 18}}},
+  "getGenres": {"subsonic-response": {"status": "ok", "genres": {"genre": [{"value": "Ambient", "albumCount": 2, "songCount": 18}, {"value": "Electronic", "albumCount": 1, "songCount": 10}]}}},
+  "getArtists": {"subsonic-response": {"status": "ok", "artists": {"index": [{"name": "M", "artist": [{"id": "artist-2", "name": "Mira Vale", "albumCount": 1}]}, {"name": "T", "artist": [{"id": "artist-1", "name": "The Paper Satellites", "albumCount": 1}]}]}}},
+  "getPlayQueue": {"subsonic-response": {"status": "ok", "playQueue": {"current": "track-1", "position": 74000, "entry": [{"id": "track-1", "title": "The Glass Meridian"}, {"id": "track-2", "title": "Aerial Seeds", "artist": "The Paper Satellites", "album": "Signals from the Garden", "coverArt": "album-1", "duration": 198}]}}}
+}

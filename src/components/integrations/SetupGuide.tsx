@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { monitoringInstances } from '@/integrations/sources';
 import { latestInstance } from '@/integrations/instances';
 import { useOpenSettings } from './useOpenSettings';
-import { CUSTOM_API_TYPES, DNS_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
+import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES } from '@/lib/widgetData/contracts';
 
 /**
  * What a widget shows before it can work, in the order to follow: for the
@@ -16,7 +16,7 @@ import { CUSTOM_API_TYPES, DNS_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/
  * Each step links straight to the right place; done steps are ticked.
  * Visitors who cannot change the settings are told an admin has to.
  */
-export type SetupKind = 'devices' | 'docker' | 'vpn' | 'dns' | 'photos' | 'bookmarks' | 'customapi' | 'media' | 'rss' | 'markets' | 'weather';
+export type SetupKind = 'devices' | 'docker' | 'vpn' | 'dns' | 'photos' | 'bookmarks' | 'customapi' | 'media' | 'arr' | 'prowlarr' | 'downloads' | 'rss' | 'markets' | 'weather';
 
 
 export function SetupGuide({ kind }: { kind: SetupKind }) {
@@ -37,7 +37,9 @@ export function SetupGuide({ kind }: { kind: SetupKind }) {
         : kind === 'dns'
           ? [{ done: !!latestInstance(config ?? {}, [...DNS_TYPES]), label: t('setup.dns.connect'), action: t('setup.dns.connectAction'), open: () => openIntegrations('dns') }]
           : kind === 'photos'
-            ? [{ done: !!latestInstance(config ?? {}, [...PHOTO_TYPES]), label: t('setup.photos.connect'), action: t('setup.photos.connectAction'), open: () => openIntegrations('photos') }]
+            ? [{ done: !!latestInstance(config ?? {}, [...PHOTO_STATS_TYPES]), label: t('setup.photos.connect'), action: t('setup.photos.connectAction'), open: () => openIntegrations('photos') }]
+          : kind === 'arr' || kind === 'prowlarr' || kind === 'downloads'
+            ? [{ done: !!latestInstance(config ?? {}, kind === 'arr' ? [...ARR_TYPES] : kind === 'prowlarr' ? ['prowlarr'] : [...DOWNLOAD_CLIENT_TYPES]), label: t(`setup.${kind}.connect`), action: t('setup.media.connectAction'), open: () => openIntegrations(kind === 'downloads' ? 'downloads' : 'arr') }]
           : kind === 'media'
             ? [{ done: !!latestInstance(config ?? {}, [...MEDIA_SERVER_TYPES]), label: t('setup.media.connect'), action: t('setup.media.connectAction'), open: () => openIntegrations('media') }]
           : kind === 'customapi'

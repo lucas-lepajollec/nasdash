@@ -3,11 +3,11 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useOpenSettings } from '@/components/integrations/useOpenSettings';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
-import { getServiceIntegration } from '@/integrations/registry';
+import { connectionDetail } from '@/components/widgets/content/ConnectionPicker';
 import type { IntegrationSection } from '../IntegrationsTab';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
 import { CalmeHeading, CalmeRow } from '../../shared/CalmeControls';
-import { CUSTOM_API_TYPES, DNS_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
+import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES } from '@/lib/widgetData/contracts';
 
 /**
  * Settings tab of a widget that reads service connections (DNS, photos):
@@ -33,7 +33,7 @@ export function ServiceConnectionsTab({ widget, types, section, hintKey, emptyKe
         </CalmeHeading>
         {connections.length
           ? connections.map(instance => (
-            <CalmeRow key={instance.id} label={<span className="ndc-source-logo"><IntegrationLogo id={instance.type} size={16} />{instance.name}</span>} value={getServiceIntegration(instance.type)?.name ?? instance.type} />
+            <CalmeRow key={instance.id} label={<span className="ndc-source-logo"><IntegrationLogo id={instance.type} size={16} />{instance.name}</span>} value={connectionDetail(instance) ?? ''} />
           ))
           : <p className="ndc-source-empty">{t(emptyKey)}</p>}
       </section>
@@ -42,6 +42,8 @@ export function ServiceConnectionsTab({ widget, types, section, hintKey, emptyKe
 }
 
 export const DnsWidgetTab = () => <ServiceConnectionsTab widget="dns" types={DNS_TYPES} section="dns" hintKey="settings.dns.connectionsHint" emptyKey="settings.dns.empty" />;
+export const ArrWidgetTab = () => <ServiceConnectionsTab widget="media-upcoming" types={ARR_TYPES} section="arr" hintKey="settings.arr.connectionsHint" emptyKey="settings.arr.empty" />;
+export const DownloadsWidgetTab = () => <ServiceConnectionsTab widget="media-downloads" types={DOWNLOAD_CLIENT_TYPES} section="downloads" hintKey="settings.downloads.connectionsHint" emptyKey="settings.downloads.empty" />;
 export const MediaWidgetTab = () => <ServiceConnectionsTab widget="media-nowplaying" types={MEDIA_SERVER_TYPES} section="media" hintKey="settings.media.connectionsHint" emptyKey="settings.media.empty" />;
 export const CustomApiWidgetTab = () => <ServiceConnectionsTab widget="customapi" types={CUSTOM_API_TYPES} section="custom" hintKey="settings.customapi.connectionsHint" emptyKey="settings.customapi.empty" />;
-export const PhotosWidgetTab = () => <ServiceConnectionsTab widget="photos" types={PHOTO_TYPES} section="photos" hintKey="settings.photos.connectionsHint" emptyKey="settings.photos.empty" />;
+export const PhotosWidgetTab = () => <ServiceConnectionsTab widget="photos" types={PHOTO_STATS_TYPES} section="photos" hintKey="settings.photos.connectionsHint" emptyKey="settings.photos.empty" />;

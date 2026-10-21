@@ -7,13 +7,14 @@ import { customApiDemo } from '@/lib/widgetData/customApiDemo';
 import { getServiceInstance, serviceFailure } from '@/lib/widgetData/services';
 
 export const dynamic = 'force-dynamic';
+const headers = { 'Cache-Control': 'private, no-store' };
 export async function GET(request: NextRequest) {
-  if (!isAdmin(request) && !isDemoMode()) return NextResponse.json({ error: 'widgets.error.unauthorized' }, { status: 401 });
+  if (!isAdmin(request) && !isDemoMode()) return NextResponse.json({ error: 'widgets.error.unauthorized' }, { status: 401, headers });
   try {
     const instance = getServiceInstance(new URL(request.url).searchParams.get('integrationId'), CUSTOM_API_TYPES);
-    if (!instance) return NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404 });
+    if (!instance) return NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404, headers });
     const json = isDemoMode() ? customApiDemo : await customApiRequest(instance);
     const response: CustomApiSample = { ...customApiSample(json), fetchedAt: Date.now() };
-    return NextResponse.json(response, { headers: { 'Cache-Control': 'private, no-store' } });
-  } catch (error) { return serviceFailure(error); }
+    return NextResponse.json(response, { headers });
+  } catch (error) { const response = serviceFailure(error); response.headers.set('Cache-Control', headers['Cache-Control']); return response; }
 }

@@ -30,7 +30,7 @@ export function getWidgetCatalogEntry(type: string): WidgetCatalogEntry | undefi
   return BY_TYPE.get(type);
 }
 
-export const WIDGET_GROUP_ORDER: readonly WidgetGroup[] = ['services', 'system', 'docker', 'network', 'media', 'content', 'gadgets', 'layout'];
+export const WIDGET_GROUP_ORDER: readonly WidgetGroup[] = ['services', 'system', 'docker', 'network', 'media', 'music', 'downloads', 'content', 'gadgets', 'layout'];
 
 /** Minimal bounds for per-instance settings stored on pages. */
 export const SPACER_HEIGHT = { min: 20, max: 1000, default: 120 } as const;

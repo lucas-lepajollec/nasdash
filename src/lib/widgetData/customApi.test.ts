@@ -180,3 +180,12 @@ describe('custom API settings as the widget saves them', () => {
     expect(customApiSpec({}).display).toBe('figures');
   });
 });
+
+it('redacts credentials echoed in values, property names and encoded request URLs', async () => {
+  const secret = 'fictional&secret';
+  vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from(JSON.stringify({ [secret]: secret, request: `https://example.com?token=${encodeURIComponent(secret)}`, nested: [{ auth: `Bearer ${secret}` }] })), status: 200, contentType: 'application/json' });
+  const result = await customApiRequest(source('query', 'token', secret));
+  expect(JSON.stringify(result)).not.toContain(secret);
+  expect(JSON.stringify(result)).not.toContain(encodeURIComponent(secret));
+  expect(result).toMatchObject({ '[redacted]': '[redacted]', nested: [{ auth: 'Bearer [redacted]' }] });
+});

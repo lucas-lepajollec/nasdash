@@ -8,6 +8,44 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Music playlists, album/playlist tracks, search and recently played tracks/albums, with widget-scoped audio streaming and HTTP Range support for signed-in Media readers; administrator session controls for Jellyfin/Emby, resolved next-track queues, and offline fictional playlists/search/WAV playback. Subsonic recently played tracks explicitly return an unsupported-history error.
+
+- Music widget data for Jellyfin, Emby, Plex and Subsonic-compatible servers (Navidrome, Gonic, Airsonic): current tracks, recent albums, library statistics and all-time top albums, with private cover proxies, opt-in account names and offline fictional demos.
+
+- Photo library statistics for Immich, PhotoPrism, Piwigo and LibrePhotos, with cached totals, optional storage and history, per-account names only when explicitly enabled, and offline fictional demo data. Piwigo and LibrePhotos use saved account sessions in the Photos integrations section.
+
+- Administrator-only pause/resume controls for qBittorrent, Transmission, Deluge, SABnzbd and NZBGet items or whole clients, with origin protection, fresh status after actions and offline demo simulation.
+
+- Coming soon supports ordered combinations of *arr calendars, library follow-ups and external catalogue watchlists/discovery, with current/announced phases and isolated source failures. Adds administrator-only catalogue search, optional TMDB credentials, paced cached public requests, allowlisted public artwork and offline fictional demo data.
+
+- Media and *arr widgets redrawn around the art: the next title large over its backdrop, rails of posters or wide pictures, figures in Geist, progress as lines and rings; states are words, coloured only when they need attention (no tinted badges, shadows or coloured outlines).
+- **Now playing** becomes **Recently played**: what plays now large (other sessions beneath), then what was watched lately with where it stopped and the time left, as wide pictures or a list; nothing playing, the title to resume leads.
+- **Media library**: totals large, then one card per library with its newest posters, its episodes and what arrived this week; music and books as text.
+- **Coming soon** gets a **My library** source: the next episodes and seasons of the series in a Jellyfin, Emby or Plex library, from TVMaze (only TVDB/IMDb ids leave the server; shared caches, rate limited), with what the library already has. With the *arr, a quiet window shows the next release and the days until it.
+- At rest, every widget still shows something: the queue its last imports (episodes of a series folded), the download client what it received and sent and what finished lately, Prowlarr its requests per hour.
+- Prowlarr requests count RSS reads as well as searches.
+- **Coming soon** reads up to three sources in a chosen priority — the *arr, the media library, public catalogues (TVMaze, Kitsu, AniList when it answers, TMDB with a TMDB connection) — either titles of the widget's own list, found with a search in its settings, or everything coming. Tabs **Out now** / **Announced**, a count per page with pages.
+- **Recently played**: how many titles to show (1–12), three list sizes, time left inside the picture.
+- **Media library**: covers drawn at random from the whole library (no longer the last batch added), larger, crossfading, three card sizes.
+- **\*arr status** and **Indexers** redrawn: quiet tiles with figures over their labels, one line per indexer. The queue's last imports use the queue's rows.
+- **Most played** shows albums, tracks, or both as pages (tracks: Jellyfin, Emby, Plex, Navidrome). Every music widget can turn its play buttons off (**Start music from this widget**); what already plays stays steerable from Listening. Listening's search uses NasDash's search field behind a plain magnifier, also while music plays; play buttons are plain white everywhere.
+- **Music activity** (formerly Recent albums): albums added, albums played or tracks played — or all three as pages switched from the widget, in the chosen order. Listening's search is a magnifier in its corner that opens into a bar; play buttons are calmer and no longer flicker under the cursor.
+- **Music playback** in the browser for signed-in users: play an album, a playlist or a track from any music widget; **Listening** shows it with its controls, seek and queue, searches tracks, albums and playlists to play, and steers Jellyfin/Emby players (administrators). New **Playlists** widget. **Recent albums** can show albums or tracks played lately (Navidrome through its own API). Audio is relayed through NasDash with range requests; nothing plays for anonymous visitors.
+- Widget library: a **Downloads** section (queue, download clients, indexers, *arr status) apart from Media; the custom API widget is marked **experimental**.
+- **Music** widgets (new Music group): **Listening** (the track over a blur of its cover, progress, what comes next; at rest the albums played lately), **Recent albums** (covers or list), **Music library** (artists, albums, tracks, hours, genres, albums of the week) and **Most played**. Sources: Jellyfin, Emby, Plex and a new **Navidrome** connection (Subsonic API: also Gonic, Airsonic), with token authentication kept on the server.
+- **Download queue**: pause and resume an item from the widget (administrators), through the saved download client that holds it.
+- Loading feedback: action buttons spin until the client answers; Coming soon says when it is reading the library and catalogues, and catalogue searches show they are running.
+- **\*arr status** can hide its issues; **Indexers** lists open without a rule and breathe more; **Photo stats** says which Immich key permissions are missing (administrators), years as labelled columns, the month's additions as a curve; numbers follow the interface language's grouping.
+- **Photo library stats** widget (Immich, PhotoPrism, and new **Piwigo** and **LibrePhotos** connections): photos, videos, albums, people, places, favorites, storage, photos per year taken, the last 30 days' additions and, when allowed, per account. A scoped Immich key shows what it may read, flagged as partial.
+- **Downloads**: pause and resume a download or the whole client (administrators), on qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
+- **\*arr status**: free space per media root folder (where the library lives, not the app's own disk), tiles or rows, parts to show; health checks folded into a count. **Indexers**: figures, requests per hour and the list each optional, indexers per page with pages. **Download queue**: progress under the title, share and time on the right, totals only above several titles, pages; the last imports leave out files deleted since.
+- **Media library**: the three covers change together, without repeats; cover options only in the shelves display. **Recently played**: no more light rim around the art.
+- **Coming soon**: titles without episode numbers read in words ("Airing") instead of an unfilled template; a missing backdrop uses the blurred poster; calendar posters fall back to the *arr's own covers.
+- DNS widget: the server (and Technitium node) its figures come from, in its header (#130).
+- Settings dialogs: segmented choices drawn as a block inside one frame (no more cut edges); a connection named after its service no longer reads "Jellyfin · Jellyfin".
+
+- *arr and download widgets in the Media group, with Sonarr, Radarr, Lidarr, Prowlarr and qBittorrent, Transmission, Deluge, SABnzbd, NZBGet connections (Settings → Integrations): **Coming soon** (episodes, movies with their cinema/digital/physical release, albums, as an agenda by day, posters or a list), **Download queue** (progress, state and the reason of a warning, time left), **Downloads** (speeds with a live line, active/paused/waiting, free space, busiest downloads), **Indexers** (Prowlarr's last-day searches, grabs and failures, failing indexers first) and ***arr status** (version, health checks, queue, missing, free space). Several sources per widget, partial failures named; API keys and passwords stay on the server.
+
 - Media widgets, in a new Media group, for Jellyfin, Emby and Plex (Settings → Integrations → Media servers): **Now playing** (when nothing plays, what was watched lately — Jellyfin/Emby per account, Plex history — over its art; cards over the title's art with poster, player, quality, direct play or transcoding, live progress; or compact rows), **Recently added** (a scrolling row of posters, the newest one featured large, a grid or a list; movies, episodes and albums; new episodes of a series folded into one card with their number, on by default; the list in three sizes and in columns) and **Media library** (shelves for movies, series, music and books with their totals, over rotating pictures of the newest titles (in order or shuffled), none, or a picture of your own per shelf, or as plain text; zero totals hidden unless kept; the libraries). Posters and art pass through NasDash; links to the server are for administrators, account names only when a widget shows them; viewers need the Media permission.
 - Custom API widget: any JSON API saved in Settings → Integrations → Custom APIs (no key, token, header, user and password, or URL parameter), read by the server. In the widget settings, values are picked by clicking them in the API's answer, then shown as figures, gauges, a list, a table built from a list, or a single status, with formats (percent, bytes, bit rate, duration, date, time ago…), units, decimals and warning/critical colours. Only the picked values reach the browser, never the whole answer, the address or the key.
 - Technitium DNS Server as a third source of the DNS widget, next to Pi-hole and AdGuard Home: statistics of the last day, answers from cache and recursive resolution, top domains and clients, and, for a cluster, the server itself, the whole cluster or one node per widget. A token with Dashboard (view) is enough; Settings (view, modify) adds the blocking state and its pause. Proposed in #123 with a first implementation in #125 by @emile-bodin.
@@ -24,6 +62,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- *arr space readings use media root folders instead of application disks, deduplicating volumes and returning only folder names. Queue posters fall back to local series, movie and album covers when embedded artwork has only remote URLs.
+
+- Media and *arr widgets read a cleared setting (`null`) as unset instead of refusing it: turning **Show who is watching** off works.
+- Posters keep a day in the browser cache instead of being fetched again at every refresh.
 - Custom API values never overflow their widget: long text wraps on two lines, web addresses become short links.
 - Requests to services now name their client (`User-Agent: NasDash`): APIs such as GitHub's refused them.
 - Widgets dim their previous answer while a changed setting loads, and posters shimmer while loading instead of flashing a placeholder.

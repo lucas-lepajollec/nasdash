@@ -193,5 +193,43 @@
         }
       ]
     }
+  },
+  "upcoming": {
+    "MediaContainer": {
+      "Metadata": [
+        {
+          "ratingKey": "12",
+          "type": "show",
+          "title": "Private library title",
+          "thumb": "/library/metadata/12/thumb/123",
+          "art": "/library/metadata/12/art/123",
+          "Guid": [
+            {
+              "id": "tmdb://999"
+            },
+            {
+              "id": "imdb://tt98765"
+            },
+            {
+              "id": "tvdb://12345"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "seasons": {
+    "MediaContainer": {
+      "Metadata": [
+        {
+          "index": 1,
+          "leafCount": 10
+        },
+        {
+          "index": 2,
+          "leafCount": 12
+        }
+      ]
+    }
   }
 }
