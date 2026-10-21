@@ -294,3 +294,95 @@ export interface CustomApiResponse {
  * of 200 characters, 2,000 values at most.
  */
 export interface CustomApiSample { sample: unknown; truncated: boolean; fetchedAt: number }
+
+/* ---------------------------------------------------------------- Media */
+
+/**
+ * Media servers (Settings → Integrations → Media), one saved connection per
+ * server: `url`, `allowSelfSigned`; secret `apiKey` (Jellyfin, Emby: an API
+ * key) or `token` (Plex: X-Plex-Token). The browser never gets either.
+ */
+export const MEDIA_SERVER_TYPES = ['jellyfin', 'emby', 'plex'] as const;
+export type MediaServer = typeof MEDIA_SERVER_TYPES[number];
+export type MediaKind = 'movie' | 'episode' | 'series' | 'album' | 'track' | 'video' | 'other';
+
+/** A title of a media server, as every media widget shows it. */
+export interface MediaItem {
+  /** Opaque id from the server (Jellyfin/Emby item id, Plex rating key). */
+  id: string;
+  kind: MediaKind;
+  /** Movie, episode, album or track name. */
+  title: string;
+  /** Episode: its series; track: artist · album; album: artist. */
+  subtitle?: string;
+  season?: number;
+  episode?: number;
+  year?: number;
+  /** Proxied 2:3 poster (episodes: their series' poster). `/api/widgets/media/image?widgetId=…&id=…&kind=poster` */
+  poster?: string;
+  /** Proxied 16:9 background art (episodes: their series' when they have none). */
+  backdrop?: string;
+  /** When it was added to the library (ms). */
+  addedAt?: number;
+  durationMs?: number;
+  /** A series standing for several new episodes (recently added, grouped): how many. */
+  count?: number;
+  /** Opens the title in the server's web app; administrators only (it carries the server address). */
+  link?: string;
+}
+
+export type MediaPlayState = 'playing' | 'paused' | 'buffering';
+export type MediaPlayMethod = 'direct' | 'stream' | 'transcode';
+
+/** Someone watching or listening right now. */
+export interface MediaSession {
+  /** Opaque session id. */
+  id: string;
+  item: MediaItem;
+  /** Account name: administrators, or viewers when the widget shows users. */
+  user?: string;
+  /** Player app and device ("Jellyfin Web · Firefox", "Plex for LG · Living room"). */
+  player?: string;
+  state: MediaPlayState;
+  positionMs?: number;
+  /** Direct play, direct stream (remux) or transcode. */
+  method?: MediaPlayMethod;
+  /** Source quality, short ("4K HDR", "1080p", "FLAC"). */
+  quality?: string;
+  /** Stream bit rate (kbit/s) when the server reports it. */
+  bitrateKbps?: number;
+}
+
+/** A title watched lately (account name under the same rule as sessions). */
+export interface MediaWatched { item: MediaItem; user?: string; watchedAt?: number }
+
+/**
+ * GET /api/widgets/media/now-playing?widgetId=… — when nothing plays,
+ * `history` (what was watched lately) or, when the server cannot tell,
+ * `recent` (the newest titles), for a calm idle view.
+ */
+export interface MediaNowPlayingResponse { server: MediaServer; name: string; sessions: MediaSession[]; history?: MediaWatched[]; recent?: MediaItem[]; fetchedAt: number }
+
+/**
+ * GET /api/widgets/media/recent?widgetId=… → the newest titles (settings: `kinds`: movie | episode | album,
+ * `count` 4–40, `group` (default true): new episodes of one series come as that series, with their `count`).
+ */
+export interface MediaRecentResponse { server: MediaServer; name: string; items: MediaItem[]; fetchedAt: number }
+
+/** Library totals; absent when the server does not report them. */
+export interface MediaCounts { movies?: number; series?: number; episodes?: number; artists?: number; albums?: number; tracks?: number; books?: number }
+/** GET /api/widgets/media/library?widgetId=… */
+export interface MediaLibraryResponse {
+  server: MediaServer; name: string; counts: MediaCounts;
+  libraries: { name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other'; count?: number }[];
+  /** Shelf backgrounds, several per shelf for the widget to rotate (settings `cover`: newest — default —, random, none), proxied like posters. */
+  covers?: { movies?: string[]; series?: string[]; music?: string[] };
+  fetchedAt: number;
+}
+
+/**
+ * GET /api/widgets/media/image?widgetId=…&id=…&kind=poster|backdrop → the
+ * image bytes (raster only), only for an image a media response of that
+ * widget listed.
+ */
+export const MEDIA_IMAGE_ROUTE = '/api/widgets/media/image';

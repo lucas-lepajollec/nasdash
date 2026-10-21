@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { SERVICE_INTEGRATIONS, getServiceIntegration } from './registry';
 import { upsertInstance, maskInstanceSecrets, stripInstanceSecrets } from './instances';
 import { validateConfigMutationBody } from '@/lib/configEntityValidation';
+import { MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts';
 import type { DashboardConfig } from '@/lib/types';
 
 describe('saved content service connections', () => {
-  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'customapi'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
+  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'customapi', 'jellyfin', 'emby', 'plex'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
     const manifest = getServiceIntegration(type)!;
     expect(SERVICE_INTEGRATIONS).toContain(manifest);
     const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : field.kind === 'select' ? field.options![0].value : 'fictional']));
@@ -39,4 +40,15 @@ describe('saved content service connections', () => {
     stripInstanceSecrets(config);
     expect(config.integrations?.every(instance => instance.secrets === undefined)).toBe(true);
   });
+});
+
+it.each(MEDIA_SERVER_TYPES)('describes the exact %s media connection fields', type => {
+  const manifest = getServiceIntegration(type)!;
+  const secret = type === 'plex' ? 'token' : 'apiKey';
+  expect(manifest.name).toBe(type === 'jellyfin' ? 'Jellyfin' : type === 'emby' ? 'Emby' : 'Plex');
+  expect(manifest.fields).toEqual([
+    { id: 'url', kind: 'text', required: true, label: `integrations.${type}.url`, placeholder: `http://${type}.example.com:${type === 'plex' ? 32400 : 8096}` },
+    { id: secret, kind: 'secret', required: true, label: `integrations.${type}.${secret}` },
+    { id: 'allowSelfSigned', kind: 'toggle', label: 'integrations.allowSelfSigned' },
+  ]);
 });

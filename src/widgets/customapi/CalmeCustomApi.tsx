@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CircleCheck, CircleX } from 'lucide-react';
+import { CircleCheck, CircleX, ExternalLink } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { CUSTOM_API_TYPES, type CustomApiDisplay, type CustomApiField, type CustomApiResponse, type CustomApiValue } from '@/lib/widgetData/contracts';
 import { useConfig } from '@/hooks/useConfig';
@@ -44,7 +44,7 @@ export default function CalmeCustomApi({ widgetId, settings, editMode, isVisible
   const fields = fieldsOf(settings);
   const refresh = Number(pick(String(settings.refresh), REFRESHES, '60'));
   const ready = display === 'status' ? typeof settings.okPath === 'string' && settings.okPath !== '' : fields.length > 0 && (display !== 'table' || typeof settings.listPath === 'string');
-  const { data, error, mutate, isValidating } = useWidgetData<CustomApiResponse>('/api/widgets/customapi', widgetId, settings, {
+  const { data, error, mutate, isValidating, stale } = useWidgetData<CustomApiResponse>('/api/widgets/customapi', widgetId, settings, {
     refreshMs: refresh * 1000, isVisible, method: 'GET', enabled: !!connection && ready,
   });
   const title = typeof settings.title === 'string' && settings.title.trim() ? settings.title.trim() : t('widget.customapi.name');
@@ -56,7 +56,7 @@ export default function CalmeCustomApi({ widgetId, settings, editMode, isVisible
           {(draft, change) => <CustomApiSettings draft={draft} change={change} />}
         </WidgetSettingsButton>
       )}
-      <div className="ndw-api-box">
+      <div className={`ndw-api-box ${stale ? 'is-stale' : ''}`}>
         {!connection ? (settings.integrationId ? <div className="ndc-empty ndc-empty--error">{t('widgets.dns.connectionGone')}</div> : <SetupGuide kind="customapi" />)
           : !ready ? <div className="ndc-empty">{t(user?.role === 'admin' ? 'widgets.customapi.pickHint' : 'widgets.customapi.notReady')}</div>
             : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
@@ -157,11 +157,29 @@ export function CustomApiBody({ data, display, fields, settings }: { data: Custo
 }
 
 /** A formatted value, its unit set smaller, coloured by its thresholds. */
+/** A web address in the answer: a short, clickable label instead of the whole URL. */
+function linkOf(value: CustomApiValue): { href: string; label: string } | undefined {
+  if (typeof value !== 'string' || !/^https?:\/\//i.test(value)) return undefined;
+  try {
+    const url = new URL(value);
+    const path = url.pathname.replace(/\/$/, '');
+    return { href: url.href, label: `${url.hostname.replace(/^www\./, '')}${path.length > 24 ? `${path.slice(0, 24)}…` : path}` };
+  } catch { return undefined; }
+}
+
+/** A formatted value, its unit set smaller, coloured by its thresholds; long text and addresses never overflow. */
 function Value({ field, value, format, compact }: { field: CustomApiField; value: CustomApiValue; format: ReturnType<typeof useFormat>; compact?: boolean }) {
   const shown = format(field, value);
   const tone = toneOf(field, value);
+  const link = linkOf(value);
+  // Words (not numbers) are set smaller and may wrap on two lines.
+  const text = !link && typeof value === 'string' && !/^-?[\d.,]+$/.test(shown.text) && shown.text.length > 10;
+  const className = `ndw-api-value ${compact ? 'is-compact' : ''} ${text ? 'is-text' : ''} ${link ? 'is-link' : ''} ${tone ? `is-${tone}` : ''}`;
+  if (link) {
+    return <a className={className} href={link.href} target="_blank" rel="noopener noreferrer" title={link.href}><span className="ndw-api-link-text">{link.label}</span><ExternalLink size={11} aria-hidden="true" /></a>;
+  }
   return (
-    <span className={`ndw-api-value ${compact ? 'is-compact' : ''} ${tone ? `is-${tone}` : ''}`} title={value === null ? undefined : String(value)}>
+    <span className={className} title={value === null ? undefined : String(value)}>
       {shown.text}{shown.unit && <span className="ndw-api-unit">{shown.unit}</span>}
     </span>
   );

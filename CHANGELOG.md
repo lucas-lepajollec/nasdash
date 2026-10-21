@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Media widgets, in a new Media group, for Jellyfin, Emby and Plex (Settings → Integrations → Media servers): **Now playing** (when nothing plays, what was watched lately — Jellyfin/Emby per account, Plex history — over its art; cards over the title's art with poster, player, quality, direct play or transcoding, live progress; or compact rows), **Recently added** (a scrolling row of posters, the newest one featured large, a grid or a list; movies, episodes and albums; new episodes of a series folded into one card with their number, on by default; the list in three sizes and in columns) and **Media library** (shelves for movies, series, music and books with their totals, over rotating pictures of the newest titles (in order or shuffled), none, or a picture of your own per shelf, or as plain text; zero totals hidden unless kept; the libraries). Posters and art pass through NasDash; links to the server are for administrators, account names only when a widget shows them; viewers need the Media permission.
 - Custom API widget: any JSON API saved in Settings → Integrations → Custom APIs (no key, token, header, user and password, or URL parameter), read by the server. In the widget settings, values are picked by clicking them in the API's answer, then shown as figures, gauges, a list, a table built from a list, or a single status, with formats (percent, bytes, bit rate, duration, date, time ago…), units, decimals and warning/critical colours. Only the picked values reach the browser, never the whole answer, the address or the key.
 - Technitium DNS Server as a third source of the DNS widget, next to Pi-hole and AdGuard Home: statistics of the last day, answers from cache and recursive resolution, top domains and clients, and, for a cluster, the server itself, the whole cluster or one node per widget. A token with Dashboard (view) is enough; Settings (view, modify) adds the blocking state and its pause. Proposed in #123 with a first implementation in #125 by @emile-bodin.
 - Markets: in edit mode, symbols are put in order by drag and drop in the list, bars and tiles displays.
@@ -16,12 +17,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 
+- News feeds (list and headlines), Recently added (list) and Now playing spread their rows in columns when the widget is wide: automatic, or at most 1 to 4.
 - Content widgets ask their service (Immich, Pi-hole, feeds…) only once they are first on screen, not while their page is closed; photos stop changing while the browser tab is in the background.
 - Deleting a bookmarks folder keeps what it holds by default (moved up one level); deleting everything is a second choice in the confirmation.
 - Bookmarks render from one index of the library and mount drag and drop only in edit mode; the photo mosaic layout is computed once per page.
 
 ### Fixed
 
+- Custom API values never overflow their widget: long text wraps on two lines, web addresses become short links.
+- Requests to services now name their client (`User-Agent: NasDash`): APIs such as GitHub's refused them.
+- Widgets dim their previous answer while a changed setting loads, and posters shimmer while loading instead of flashing a placeholder.
+- Edit mode: notes beside a widget's title stay at the edge until its controls show; dialogs no longer draw two lines between a list of choices and the next setting.
 - Bookmark icons show in edit mode for a widget not saved yet, and retry once when a just-added link was not saved yet.
 - Site icons (bookmarks, feeds) are sharp: the largest icon of a heavy page's head is used instead of a 16 px `favicon.ico`; icons found before are looked for again.
 - The Immich connection test only needs the reading permission the widget uses (`asset.read`), and tells a missing permission apart from a refused key.

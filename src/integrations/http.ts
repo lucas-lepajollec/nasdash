@@ -27,7 +27,7 @@ export async function httpRequest(url: string, options: HttpOptions = {}): Promi
   const timeoutMs = options.timeoutMs ?? 4000;
   const method = options.method ?? 'GET';
   const body = options.json === undefined ? undefined : JSON.stringify(options.json);
-  const headers = { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...options.headers };
+  const headers = { 'User-Agent': 'NasDash', ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...options.headers };
   const original = new URL(url);
   const deadline = Date.now() + timeoutMs;
   // The certificate exception belongs to this configured host only. Redirects

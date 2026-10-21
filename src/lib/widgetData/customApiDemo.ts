@@ -12,5 +12,7 @@ export const customApiDemo = {
   ],
   updatedAt: '2026-10-01T12:00:00.000Z',
   online: true,
+  statusPage: 'https://status.demo.invalid/lab/overview/nightly-backups',
+  note: 'All systems nominal after the nightly backup window; next maintenance on Sunday.',
   ups: { battery: 100, load: 23 },
 };
