@@ -36,7 +36,7 @@ export default function CalmeArr({ widgetId, settings, editMode, isVisible, onUp
   const issues = data?.apps.reduce((sum, app) => sum + app.health.length + (app.online ? 0 : 1), 0) ?? 0;
 
   return (
-    <CalmeWidget title={title} editMode={editMode} aside={data && issues ? <span className="ndc-title-note">{t('widgets.arr.issues', { count: issues })}</span> : undefined}>
+    <CalmeWidget title={title} editMode={editMode} aside={data && issues && parts.health ? <span className="ndc-title-note">{t('widgets.arr.issues', { count: issues })}</span> : undefined}>
       {editMode && (
         <WidgetSettingsButton title={t('widgets.settingsOf', { name: title })} settings={settings} onSave={onUpdateSettings} shared={{ tab: 'widget-arr', label: t('widgets.arr.manage') }}>
           {(draft, change) => (
@@ -67,9 +67,11 @@ export default function CalmeArr({ widgetId, settings, editMode, isVisible, onUp
 }
 
 /** How the app is: healthy, its number of issues, or offline. */
-function useAppState(app: ArrAppStatus): { tone: 'ok' | 'warn' | 'bad'; word: string } {
+function useAppState(app: ArrAppStatus, issues = true): { tone: 'ok' | 'warn' | 'bad'; word: string } {
   const { t } = useI18n();
   if (!app.online) return { tone: 'bad', word: t('widgets.arr.offlineShort') };
+  // Health checks hidden: the app reads healthy unless it is unreachable.
+  if (!issues) return { tone: 'ok', word: t('widgets.arr.healthy') };
   if (!app.health.length) return { tone: 'ok', word: t('widgets.arr.healthy') };
   return { tone: app.health.some(item => item.level === 'error') ? 'bad' : 'warn', word: t('widgets.arr.issues', { count: app.health.length }) };
 }
@@ -83,8 +85,8 @@ function useFigures(app: ArrAppStatus): [string, number | undefined, boolean][] 
 
 function AppTile({ app, parts }: { app: ArrAppStatus; parts: Parts }) {
   const { t, locale } = useI18n();
-  const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
-  const state = useAppState(app);
+  const number = useMemo(() => new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), [locale]);
+  const state = useAppState(app, parts.health);
   const figures = useFigures(app);
   return (
     <section className="ndw-mx-tile">
@@ -109,8 +111,8 @@ function AppTile({ app, parts }: { app: ArrAppStatus; parts: Parts }) {
 
 function AppRow({ app, parts }: { app: ArrAppStatus; parts: Parts }) {
   const { t, locale } = useI18n();
-  const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
-  const state = useAppState(app);
+  const number = useMemo(() => new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), [locale]);
+  const state = useAppState(app, parts.health);
   const figures = useFigures(app);
   const bytes = useByteFormat();
   const free = app.roots?.length ? Math.min(...app.roots.map(root => root.freeBytes)) : undefined;

@@ -21,7 +21,7 @@ import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SE
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
 /** Media servers, and TMDB (the movie catalogue Coming soon can read). */
-const MEDIA_SECTION_TYPES = [...MEDIA_SERVER_TYPES, 'tmdb'] as const;
+const MEDIA_SECTION_TYPES = [...MEDIA_SERVER_TYPES, 'navidrome', 'tmdb'] as const;
 export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom';
 export const integrationSectionId = (section: IntegrationSection) => `settings-integrations-${section}`;
 

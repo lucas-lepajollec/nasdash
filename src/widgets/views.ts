@@ -1,3 +1,7 @@
+import musicTop from './music-top/view';
+import musicLibrary from './music-library/view';
+import musicRecent from './music-recent/view';
+import musicNowPlaying from './music-nowplaying/view';
 import type { ComponentType } from 'react';
 import calendar from './calendar/view';
 import clock from './clock/view';
@@ -83,6 +87,10 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'media-nowplaying': mediaNowPlaying,
   'media-recent': mediaRecent,
   'media-library': mediaLibrary,
+  'music-top': musicTop,
+  'music-library': musicLibrary,
+  'music-recent': musicRecent,
+  'music-nowplaying': musicNowPlaying,
   'media-upcoming': mediaUpcoming,
   'media-queue': mediaQueue,
   'media-downloads': mediaDownloads,

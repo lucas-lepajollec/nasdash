@@ -165,7 +165,13 @@ export default function CalmeUpcoming({ widgetId, settings, editMode, isVisible,
   let body: React.ReactNode;
   if (!ready) body = sources.includes('library') && !sources.includes('arr') ? <SetupGuide kind="media" /> : <SetupGuide kind="arr" />;
   else if (error && !data) body = <DataError error={error} onRetry={() => void mutate()} />;
-  else if (!data) body = <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 150 }} />{[0, 1].map(row => <span key={row} className="ndw-skeleton-row" />)}</div>;
+  else if (!data) body = (
+    <div className="ndw-mx-stack">
+      {/* The library is read series by series: say so, the first time can take a minute. */}
+      <span className="ndw-mx-loading"><span className="nd-spinner" aria-hidden="true" />{t(sources.includes('library') ? 'widgets.arr.loadingLibrary' : 'widgets.arr.loadingSources')}</span>
+      <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 150 }} />{[0, 1].map(row => <span key={row} className="ndw-skeleton-row" />)}</div>
+    </div>
+  );
   else if (!entries.length) body = <div className="ndw-mx-empty"><span className="ndw-mx-calm">{t('widgets.arr.calm.title')}</span><span className="ndw-mx-meta">{t('widgets.arr.nothingFollowed')}</span></div>;
   else body = (
     <div className="ndw-mx-stack">
@@ -184,7 +190,7 @@ export default function CalmeUpcoming({ widgetId, settings, editMode, isVisible,
   );
 
   return (
-    <CalmeWidget title={title} editMode={editMode} aside={<FailuresNote failures={data?.failures} />}>
+    <CalmeWidget title={title} editMode={editMode} aside={stale ? <span className="ndc-title-note ndw-mx-loading"><span className="nd-spinner" aria-hidden="true" />{t('widgets.arr.updating')}</span> : <FailuresNote failures={data?.failures} />}>
       {editMode && (
         <WidgetSettingsButton title={t('widgets.settingsOf', { name: title })} settings={settings} onSave={onUpdateSettings} shared={{ tab: 'widget-arr', label: t('widgets.arr.manage') }} width={620}>
           {(draft, change) => <UpcomingSettings draft={draft} change={change} />}
@@ -410,7 +416,7 @@ function CatalogSettings({ draft, change }: { draft: WidgetSettings; change: (pa
           <form className="ndw-mx-search" onSubmit={event => { event.preventDefault(); void search(); }}>
             <Search size={14} aria-hidden="true" />
             <input className="ndc-input" value={query} onChange={event => setQuery(event.target.value)} placeholder={t('widgets.arr.catalog.searchPlaceholder')} aria-label={t('widgets.arr.catalog.search')} maxLength={80} />
-            <button type="submit" className="nd-btn" disabled={searching || query.trim().length < 2}>{t('widgets.arr.catalog.search')}</button>
+            <button type="submit" className="nd-btn" disabled={searching || query.trim().length < 2}>{searching && <span className="nd-spinner" aria-hidden="true" />}{t(searching ? 'widgets.arr.catalog.searching' : 'widgets.arr.catalog.search')}</button>
           </form>
           {failed && <p className="ndw-note ndw-down">{t('widgets.arr.catalog.failed')}</p>}
           {hits && (hits.length === 0 ? <p className="ndw-note">{t('widgets.arr.catalog.noHit')}</p> : (

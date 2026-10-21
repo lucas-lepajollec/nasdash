@@ -2,10 +2,12 @@ import { readConfig } from '@/lib/config';
 import { collectExternal } from '@/integrations/catalog/collect';
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
-import { collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers } from '@/integrations/arr/collect';
+import { collectArrUpcoming, collectArrRecent, collectArrStatus, collectProwlarrIndexers, type ArrQueueData } from '@/integrations/arr/collect';
+import { queueClientCandidates } from '@/integrations/downloads/lookup';
+import { arrQueue } from './arrQueue';
 import { downloadStatus } from './downloadStatus';
 import type { IntegrationInstance } from '@/lib/types';
-import type { UpcomingResponse, ArrAppStatus, FollowUpItem, ImportedItem, IndexersResponse, QueueItem, SourceFailure, UpcomingItem } from './contracts';
+import type { UpcomingResponse, ArrAppStatus, FollowUpItem, ImportedItem, IndexersResponse, SourceFailure, UpcomingItem } from './contracts';
 import { TtlCache } from './cache';
 import { demoMediaUpcoming, proxyMediaItem } from './media';
 import { collectLibraryUpcoming } from './libraryUpcoming';
@@ -13,7 +15,7 @@ import { resolveWidgetSettings } from './resolve';
 import { queryDraft, serviceFailure, serviceIdentity } from './services';
 import { librarySource, settingNumber, sourceTypes, upcomingKinds, upcomingSources, upcomingPhase, followUpPhase, externalSettings, validateIntegrationIds, widgetSources, type ArrWidgetType } from './arr';
 import { demoExternalUpcoming, demoArrQueue, demoArrRecent, demoArrStatus, demoArrUpcoming, demoDownloadClient, demoIndexers } from './arrDemo';
-const upcoming = new TtlCache<UpcomingItem[]>(300000), queue = new TtlCache<{ items: QueueItem[]; total: number }>(10000);
+const upcoming = new TtlCache<UpcomingItem[]>(300000);
 const status = new TtlCache<ArrAppStatus>(60000), indexers = new TtlCache<IndexersResponse>(120000);
 const recent = new TtlCache<ImportedItem[]>(60000), library = new TtlCache<FollowUpItem[]>(1800000);
 const headers = { 'Cache-Control': 'private, no-store' };
@@ -100,10 +102,14 @@ export async function arrRoute(request: NextRequest, type: ArrWidgetType) {
       const result = await sources(instances, instance => demo ? Promise.resolve(demoDownloadClient(instance)) : downloadStatus(instance));
       return NextResponse.json({ clients: result.values.map(({ value }) => ({ ...value, canControl: admin || demo, items: value.items.slice(0, items) })), failures: result.failures, fetchedAt }, { headers });
     }
-    const result = await sources(instances, instance => demo ? Promise.resolve(demoArrQueue(instance)) : queue.get(serviceIdentity(instance), () => collectArrQueue(instance)));
+    const result = await sources<ArrQueueData>(instances, instance => demo ? Promise.resolve({ ...demoArrQueue(instance), downloads: new Map() }) : arrQueue(instance));
     const total = result.values.reduce((sum, { value }) => sum + value.total, 0);
     const history = total === 0 ? await sources(result.values.map(({ instance }) => instance), instance => demo ? Promise.resolve(demoArrRecent(instance)) : recent.get(serviceIdentity(instance), () => collectArrRecent(instance))) : undefined;
-    const entries = result.values.flatMap(({ instance, value }) => value.items.map(item => ({ instance, item }))).slice(0, count).map(({ instance, item }) => proxyMediaItem(instance, widgetId!, item, admin, imageDraft));
+    const savedClients = readConfig().integrations ?? [];
+    const entries = result.values.flatMap(({ instance, value }) => value.items.map(item => {
+      const download = value.downloads.get(item.id);
+      return { instance, item: { ...item, ...((admin || demo) && (demo || download && queueClientCandidates(savedClients, download).length > 0) ? { canControl: true } : {}) } };
+    })).slice(0, count).map(({ instance, item }) => proxyMediaItem(instance, widgetId!, item, admin, imageDraft));
     const imports = history?.values.flatMap(({ instance, value }) => value.map(item => ({ instance, item }))).sort((a, b) => b.item.at - a.item.at).slice(0, 6)
       .map(({ instance, item }) => proxyMediaItem(instance, widgetId!, item, admin, imageDraft));
     return NextResponse.json({ items: entries, total, ...(imports ? { recent: imports } : {}), failures: [...result.failures, ...(history?.failures ?? [])], fetchedAt }, { headers });

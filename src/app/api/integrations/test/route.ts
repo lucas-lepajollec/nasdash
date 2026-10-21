@@ -1,3 +1,4 @@
+import { navidromeRequest } from '@/integrations/navidrome/collect';
 import { tmdbRequest } from '@/integrations/catalog/tmdb';
 import { arrRequest } from '@/integrations/arr/collect';
 import { testQbittorrent } from '@/integrations/qbittorrent/collect';
@@ -29,7 +30,7 @@ import { librephotosRequest } from '@/integrations/librephotos/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
 import { customApiRequest } from '@/lib/widgetData/customApi';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MUSIC_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if ((['tmdb', ...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
+  if ((['tmdb', ...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MUSIC_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest) {
           throw error;
         }
       }
+      else if (type === 'navidrome') await navidromeRequest(instance, 'ping');
       else if (type === 'jellyfin' || type === 'emby') await serviceJson(instance, `${jellyfinPrefix(instance)}/System/Info`, { headers: jellyfinHeaders(instance) });
       else if (type === 'plex') {
         await serviceJson(instance, '/identity', { headers: plexHeaders(instance) });

@@ -1,6 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Pause, Play } from 'lucide-react';
+import { demoFetch } from '@/lib/demoTransport';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { LIBRARY_ARR_TYPES, type ImportedItem, type QueueItem, type QueueResponse } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -39,6 +41,19 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
   const items = data?.items ?? [];
   const page = usePage(items, bounded(settings.perPage, 1, 30, 8));
   const columns = columnsOf(settings, width, 340);
+  // Pause or resume through the download client that holds the item; the button spins until it answers.
+  const [busy, setBusy] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+  const act = async (item: QueueItem) => {
+    setBusy(item.id); setFailed(null);
+    try {
+      const response = await demoFetch('/api/widgets/arr/queue/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ widgetId, itemId: item.id, action: item.status === 'paused' ? 'resume' : 'pause' }) });
+      const answer = await response.json().catch(() => null) as (QueueResponse & { error?: string }) | null;
+      if (!response.ok || !answer || !Array.isArray(answer.items)) throw new Error(answer?.error ?? 'widgets.error.network');
+      void mutate(answer, { revalidate: false });
+    } catch (cause) { setFailed(cause instanceof Error && cause.message.startsWith('widgets.') ? cause.message : 'widgets.error.network'); }
+    finally { setBusy(null); }
+  };
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={<FailuresNote failures={data?.failures} />}>
@@ -69,7 +84,8 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
                 : (
                   <div className="ndw-mx-stack">
                     {settings.summary !== false && items.length > 1 && <Summary items={items} total={data.total} />}
-                    <ColumnRows columns={columns} className="ndw-mx-queue">{page.visible.map(item => <QueueRow key={item.id} item={item} />)}</ColumnRows>
+                    {failed && <p className="ndw-note ndw-down">{t(failed)}</p>}
+                    <ColumnRows columns={columns} className="ndw-mx-queue">{page.visible.map(item => <QueueRow key={item.id} item={item} busy={busy} onAct={act} />)}</ColumnRows>
                     <Pager page={page.page} pages={page.pages} onChange={page.setPage} />
                   </div>
                 )}
@@ -97,7 +113,7 @@ function Summary({ items, total }: { items: QueueItem[]; total: number }) {
 }
 
 /** Poster, title and its line; the progress beneath; the share and time left on the right. */
-function QueueRow({ item }: { item: QueueItem }) {
+function QueueRow({ item, busy, onAct }: { item: QueueItem; busy: string | null; onAct: (item: QueueItem) => void }) {
   const { t } = useI18n();
   const bytes = useByteFormat();
   const eta = useEta();
@@ -117,6 +133,12 @@ function QueueRow({ item }: { item: QueueItem }) {
         <span className="ndw-mx-qitem-share">{done ? t('widgets.arr.done') : t('widgets.arr.percent', { value: Math.round(item.progress) })}</span>
         <span className={`ndw-mx-state ${problem ? 'is-warn' : ''}`}>{item.status === 'downloading' && item.etaMs ? eta(item.etaMs) : t(`widgets.arr.status.${item.status}`)}</span>
       </span>
+      {item.canControl && !done && (
+        <button type="button" className="ndc-icon-button ndw-mx-dl-action" disabled={busy !== null} onClick={() => onAct(item)}
+          aria-label={t(item.status === 'paused' ? 'widgets.arr.resumeOne' : 'widgets.arr.pauseOne', { name: item.title })} title={t(item.status === 'paused' ? 'widgets.arr.resumeOne' : 'widgets.arr.pauseOne', { name: item.title })}>
+          {busy === item.id ? <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" /> : item.status === 'paused' ? <Play size={12} /> : <Pause size={12} />}
+        </button>
+      )}
     </div>
   );
 }

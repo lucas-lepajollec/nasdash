@@ -27,13 +27,22 @@ export function demoArrUpcoming(instance: IntegrationInstance, start: number): U
   });
 }
 
-export function demoArrQueue(instance: IntegrationInstance): { items: QueueItem[]; total: number } {
+const demoQueuePauses = new Map<string, boolean>();
+export function demoArrQueue(instance: IntegrationInstance, action?: DownloadActionRequest['action'], itemId?: string): { items: QueueItem[]; total: number } {
   const items = demoArrUpcoming(instance, Date.now()).slice(1, 3);
+  if (action) {
+    if (!items.some(item => item.id === itemId)) throw new ServiceError('widgets.error.notFound', 404);
+    const key = JSON.stringify([serviceIdentity(instance), itemId]);
+    demoQueuePauses.delete(key); demoQueuePauses.set(key, action === 'pause');
+    while (demoQueuePauses.size > 1000) demoQueuePauses.delete(demoQueuePauses.keys().next().value!);
+  }
   const states = [{ progress: 64, status: 'downloading', etaMs: 320_000, leftBytes: 864_000_000 }, { progress: 100, status: 'importing', etaMs: 0, leftBytes: 0 }] as const;
   // One warning, on Radarr, to show how problems read.
   const warning = instance.type === 'radarr' ? { progress: 18, status: 'warning' as const, message: 'No files found are eligible for import', etaMs: undefined, leftBytes: 1_900_000_000 } : undefined;
   return { items: items.map((item, i) => ({ id: item.id, source: item.source, sourceName: item.sourceName, kind: item.kind, title: item.title, subtitle: item.subtitle, season: item.season, episode: item.episode,
-    ...(warning && i === 1 ? warning : states[i]), sizeBytes: item.kind === 'album' ? 420_000_000 : 2_400_000_000, quality: item.kind === 'album' ? 'FLAC' : '1080p', protocol: i ? 'usenet' : 'torrent', client: 'Demo downloads', poster: item.poster })), total: 2 };
+    ...(warning && i === 1 ? warning : states[i]),
+    ...(demoQueuePauses.has(JSON.stringify([serviceIdentity(instance), item.id])) ? { status: demoQueuePauses.get(JSON.stringify([serviceIdentity(instance), item.id])) ? 'paused' as const : 'downloading' as const, etaMs: undefined } : {}),
+    sizeBytes: item.kind === 'album' ? 420_000_000 : 2_400_000_000, quality: item.kind === 'album' ? 'FLAC' : '1080p', protocol: i ? 'usenet' : 'torrent', client: 'Demo downloads', poster: item.poster })), total: 2 };
 }
 
 export function demoArrStatus(instance: IntegrationInstance): ArrAppStatus {

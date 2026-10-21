@@ -27,7 +27,7 @@ it('refuses non-admin tests', async () => {
   state.admin = false;
   expect((await POST(request(input('immich')))).status).toBe(401); expect(serviceJson).not.toHaveBeenCalled();
 });
-it.each(['pihole', 'adguard', 'immich', 'photoprism', 'piwigo', 'librephotos', 'customapi', 'jellyfin', 'emby', 'plex', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('never contacts %s in demo', async type => {
+it.each(['pihole', 'adguard', 'immich', 'photoprism', 'piwigo', 'librephotos', 'customapi', 'jellyfin', 'emby', 'plex', 'navidrome', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('never contacts %s in demo', async type => {
   state.demo = true;
   expect(await (await POST(request(input(type)))).json()).toEqual({ ok: true, message: 'integrations.test.demo' });
   expect(serviceJson).not.toHaveBeenCalled(); expect(piholeRequest).not.toHaveBeenCalled(); expect(customApiRequest).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
@@ -118,4 +118,16 @@ it.each(['qbittorrent', 'transmission', 'deluge', 'sabnzbd', 'nzbget'])('tests %
   const response = await POST(request(input(type)));
   expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
   expect(vi.mocked(serviceJson).mock.calls.at(-1)?.[1]).toBe(type === 'piwigo' ? '/ws.php?format=json&method=pwg.getInfos' : '/api/stats/');
+});
+
+
+it('tests a Subsonic connection with ping and never returns URL authentication or provider errors', async () => {
+  const answer = (data: unknown) => ({ bytes: Buffer.from(JSON.stringify(data)), status: 200, contentType: 'application/json' });
+  vi.mocked(serviceBytes).mockResolvedValue(answer({ 'subsonic-response': { status: 'ok' } }));
+  expect(await (await POST(request(input('navidrome')))).json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  const query = new URL(vi.mocked(serviceBytes).mock.calls[0][1], 'http://fixture');
+  expect(query.pathname).toBe('/rest/ping'); expect(query.searchParams.get('u')).toBe('admin'); expect(query.searchParams.get('t')).toMatch(/^[a-f0-9]{32}$/);
+  vi.mocked(serviceBytes).mockResolvedValue(answer({ 'subsonic-response': { status: 'failed', error: { code: 40, message: 'fake-password ?u=admin&t=secret&s=salt' } } }));
+  const response = await POST(request(input('navidrome')));
+  expect(response.status).toBe(502); expect(await response.json()).toEqual({ ok: false, message: 'integrations.error.authentication' });
 });

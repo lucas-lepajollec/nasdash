@@ -8,7 +8,7 @@ import type { WidgetSettings } from '@/lib/pages/types';
  * it in `view.tsx`.
  */
 
-export type WidgetGroup = 'services' | 'system' | 'docker' | 'network' | 'media' | 'content' | 'gadgets' | 'layout';
+export type WidgetGroup = 'services' | 'system' | 'docker' | 'network' | 'media' | 'music' | 'content' | 'gadgets' | 'layout';
 
 export interface WidgetDefinition {
   type: string;

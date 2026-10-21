@@ -78,10 +78,18 @@ export function safeArrMessage(value: unknown, max = 160): string | undefined {
   const message = string(value).replace(/["'](?:[A-Za-z]:[\\/]|\\\\|\/)[^"'\r\n]*["']/g, '').replace(/https?:\/\/[^\s<>"']+|(?:[A-Za-z]:[\\/]|\\\\|\/)[^\s<>"']*|[^\s<>"']*[\\/][^\s<>"']+/g, '').replace(/\s+/g, ' ').trim();
   return message ? message.slice(0, max) : undefined;
 }
-export function toArrQueue(instance: IntegrationInstance, value: unknown): { items: QueueItem[]; total: number } {
+/** Server-only lookup metadata. Never include this map in a widget response. */
+export interface ArrQueueDownload { downloadId: string; protocol: 'torrent' | 'usenet'; clientName: string }
+export interface ArrQueueData { items: QueueItem[]; total: number; downloads: Map<string, ArrQueueDownload> }
+export function toArrQueue(instance: IntegrationInstance, value: unknown): ArrQueueData {
   const body = object(value), records = list(body.records);
-  return { total: typeof body.totalRecords === 'number' ? number(body.totalRecords) : records.length, items: records.map(raw => {
+  const downloads = new Map<string, ArrQueueDownload>();
+  return { downloads, total: typeof body.totalRecords === 'number' ? number(body.totalRecords) : records.length, items: records.map(raw => {
     const item = object(raw), media = object(instance.type === 'sonarr' ? item.episode : instance.type === 'radarr' ? item.movie : item.album);
+    const downloadId = typeof item.downloadId === 'number' && Number.isSafeInteger(item.downloadId) ? String(item.downloadId) : string(item.downloadId);
+    if (downloadId && downloadId.length <= 128 && (item.protocol === 'torrent' || item.protocol === 'usenet')) {
+      downloads.set(unique(instance, item.id), { downloadId, protocol: item.protocol, clientName: string(item.downloadClient) });
+    }
     const parent = object(instance.type === 'sonarr' ? item.series : item.artist), size = number(item.size), left = number(item.sizeleft);
     const message = array(item.statusMessages).map(entry => array(object(entry).messages)[0]).find(value => typeof value === 'string' && value.length);
     return { id: unique(instance, item.id), source: libraryType(instance), sourceName: instance.name, kind: kind(instance), title: string(media.title) || string(item.title),

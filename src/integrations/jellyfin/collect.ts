@@ -1,7 +1,8 @@
 /** Jellyfin and Emby share the media API; credentials always travel in headers. */
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched, MusicAlbum, MusicTrack, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicLibraryResponse } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
+import { musicWeek } from '@/lib/widgetData/music';
 import type { MediaSelection } from '@/lib/widgetData/media';
 
 export const jellyfinPrefix = (instance: IntegrationInstance) => instance.type === 'emby' ? '/emby' : '';
@@ -128,4 +129,96 @@ export async function collectJellyfinHistory(instance: IntegrationInstance, limi
   }));
   const seen = new Set<string>();
   return lists.flat().sort((a, b) => (b.watchedAt ?? 0) - (a.watchedAt ?? 0)).filter(entry => !seen.has(entry.item.id) && !!seen.add(entry.item.id)).slice(0, limit);
+}
+
+/* Music reads are separate from the historical video collectors above. */
+export function toJellyfinMusicAlbum(instance: IntegrationInstance, value: unknown): MusicAlbum | undefined {
+  const raw = object(value), item = toJellyfinItem(instance, value);
+  if (!item || item.kind !== 'album') return undefined;
+  return { id: item.id, title: item.title, artist: item.subtitle, year: item.year, cover: item.poster, link: item.link,
+    trackCount: optionalNumber(raw.ChildCount), addedAt: item.addedAt, playedAt: date(object(raw.UserData).LastPlayedDate), plays: optionalNumber(object(raw.UserData).PlayCount) };
+}
+export function toJellyfinMusicTrack(instance: IntegrationInstance, value: unknown): MusicTrack | undefined {
+  const raw = object(value), item = toJellyfinItem(instance, value);
+  if (!item || item.kind !== 'track') return undefined;
+  return { id: item.id, title: item.title, artist: array(raw.Artists).map(string).filter(Boolean).join(' · ') || string(raw.AlbumArtist) || undefined,
+    album: string(raw.Album) || undefined, durationMs: item.durationMs,
+    cover: string(raw.AlbumId) ? `${jellyfinPrefix(instance)}/Items/${encodeURIComponent(string(raw.AlbumId))}/Images/Primary?maxWidth=600&quality=90` : undefined };
+}
+export async function collectJellyfinMusicNowPlaying(instance: IntegrationInstance): Promise<MusicNowPlayingResponse> {
+  const data = await request(instance, '/Sessions?ActiveWithinSeconds=960');
+  if (!Array.isArray(data)) throw new ServiceError('widgets.error.parse');
+  const sessions: MusicNowPlayingResponse['sessions'] = data.slice(0, 100).flatMap(value => {
+    const source = object(value), raw = object(source.NowPlayingItem), track = toJellyfinMusicTrack(instance, raw);
+    if (!track) return [];
+    const play = object(source.PlayState), stream = array(raw.MediaStreams).map(object).find(stream => stream.Type === 'Audio');
+    return [{ id: string(source.Id) || track.id, track, user: string(source.UserName) || undefined,
+      player: [string(source.Client), string(source.DeviceName)].filter(Boolean).join(' · ') || undefined,
+      state: play.IsPaused === true ? 'paused' as const : 'playing' as const, positionMs: ticks(play.PositionTicks), quality: string(stream?.Codec).toUpperCase() || undefined }];
+  });
+  return { ...identity(instance), sessions };
+}
+// ProductionYear and ImageTags are ordinary DTO fields, not ItemFields enum values.
+const MUSIC_FIELDS = 'DateCreated,ChildCount';
+async function jellyfinMusicAlbums(instance: IntegrationInstance, sort: 'DateCreated' | 'PlayCount' | 'DatePlayed', limit: number, offset = 0, user?: string) {
+  const data = object(await request(instance, `${user ? `/Users/${encodeURIComponent(user)}/Items` : '/Items'}?IncludeItemTypes=MusicAlbum&Recursive=true&SortBy=${sort}&SortOrder=Descending&Limit=${limit}&StartIndex=${offset}&Fields=${MUSIC_FIELDS}&EnableUserData=true&ImageTypeLimit=1&EnableImageTypes=Primary`));
+  if (!Array.isArray(data.Items)) throw new ServiceError('widgets.error.parse');
+  return data.Items.map(value => toJellyfinMusicAlbum(instance, value)).filter((album): album is MusicAlbum => !!album);
+}
+export async function collectJellyfinMusicRecent(instance: IntegrationInstance, count: number): Promise<MusicRecentResponse> {
+  return { ...identity(instance), albums: (await jellyfinMusicAlbums(instance, 'DateCreated', count)).slice(0, count) };
+}
+async function jellyfinMusicUsers(instance: IntegrationInstance) {
+  const data = await request(instance, '/Users');
+  if (!Array.isArray(data)) throw new ServiceError('widgets.error.parse');
+  if (data.length > 100) throw new ServiceError('widgets.error.tooLarge');
+  return data.map(object).map(user => string(user.Id)).filter(Boolean);
+}
+/** Album UserData.PlayCount is per account, not a BaseItemDto property.
+ * Sum all accessible accounts, paging through positive counts so merging
+ * per-user top-N lists cannot undercount an album's other listeners. */
+export async function collectJellyfinMusicTop(instance: IntegrationInstance, count: number): Promise<MusicTopResponse> {
+  const merged = new Map<string, MusicAlbum>();
+  for (const user of await jellyfinMusicUsers(instance)) {
+    const seen = new Set<string>();
+    for (let offset = 0; ; offset += 200) {
+      if (offset >= 10000) throw new ServiceError('widgets.error.tooLarge');
+      const list = await jellyfinMusicAlbums(instance, 'PlayCount', 200, offset, user);
+      for (const album of list) if ((album.plays ?? 0) > 0 && !seen.has(album.id)) {
+        seen.add(album.id);
+        merged.set(album.id, { ...album, plays: (merged.get(album.id)?.plays ?? 0) + album.plays! });
+      }
+      if (list.length < 200 || list.some(album => !album.plays)) break;
+    }
+  }
+  return { ...identity(instance), albums: [...merged.values()].sort((a, b) => (b.plays ?? 0) - (a.plays ?? 0)).slice(0, count) };
+}
+export async function collectJellyfinMusicHistory(instance: IntegrationInstance, count = 6): Promise<MusicAlbum[]> {
+  const albums: MusicAlbum[] = [];
+  for (const user of await jellyfinMusicUsers(instance)) {
+    albums.push(...(await jellyfinMusicAlbums(instance, 'DatePlayed', count, 0, user)).filter(album => album.playedAt !== undefined));
+  }
+  const seen = new Set<string>();
+  return albums.sort((a, b) => b.playedAt! - a.playedAt!).filter(album => !seen.has(album.id) && !!seen.add(album.id)).slice(0, count);
+}
+export async function collectJellyfinMusicLibrary(instance: IntegrationInstance): Promise<MusicLibraryResponse> {
+  const [counts, week, genreData] = await Promise.all([
+    request(instance, '/Items/Counts'), musicWeek((offset, size) => jellyfinMusicAlbums(instance, 'DateCreated', size, offset)),
+    request(instance, '/MusicGenres?IncludeItemTypes=MusicAlbum&Recursive=true&Fields=ItemCounts&Limit=1000')
+      .catch(() => request(instance, '/Genres?IncludeItemTypes=MusicAlbum&Recursive=true&Fields=ItemCounts&Limit=1000')).catch(() => ({})),
+  ]);
+  const data = object(counts);
+  const genreItems = array(object(genreData).Items).map(object), genreCounts: { name: string; count: number }[] = [];
+  for (const genre of genreItems) {
+    const name = string(genre.Name);
+    if (!name) continue;
+    let count = optionalNumber(genre.AlbumCount) ?? optionalNumber(genre.SongCount);
+    // Some versions ignore Fields=ItemCounts on genre DTOs. A count-only
+    // album query is cheap; cap fan-out on unusually large genre catalogues.
+    if (count === undefined && genreItems.length <= 100) count = await total(instance, `IncludeItemTypes=MusicAlbum&Genres=${encodeURIComponent(name)}`).catch(() => undefined);
+    if (count !== undefined) genreCounts.push({ name, count });
+  }
+  const genres = genreCounts.sort((a, b) => b.count - a.count).slice(0, 8);
+  // Audio duration requires traversing the entire track library; leave it absent.
+  return { ...identity(instance), artists: optionalNumber(data.ArtistCount), albums: optionalNumber(data.AlbumCount), tracks: optionalNumber(data.SongCount), ...(genres.length ? { genres } : {}), ...week };
 }

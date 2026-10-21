@@ -12,6 +12,7 @@ vi.mock('@/lib/auth', async original => {
   return { ...auth, checkAdmin: (request: NextRequest) => auth.verifyCsrf(request) && (state.admin || state.demo) ? null : NextResponse.json({ error: 'denied' }, { status: 401 }) };
 });
 vi.mock('@/integrations/downloads/action', async original => ({ ...await original<typeof import('@/integrations/downloads/action')>(), controlDownloadClient: vi.fn() }));
+vi.mock('@/integrations/downloads/lookup', async original => ({ ...await original<typeof import('@/integrations/downloads/lookup')>(), findQueueDownload: vi.fn() }));
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
@@ -29,6 +30,8 @@ import { GET as statusGet } from './arr/status/route';
 import { GET as indexersGet } from './arr/indexers/route';
 import { GET as downloadsGet } from './downloads/route';
 import { POST as downloadAction } from './downloads/action/route';
+import { POST as queueAction } from './arr/queue/action/route';
+import { findQueueDownload } from '@/integrations/downloads/lookup';
 import { controlDownloadClient } from '@/integrations/downloads/action';
 import { GET as imageGet } from './media/image/route';
 import { collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers, toArrUpcoming, toArrQueue } from '@/integrations/arr/collect';
@@ -273,7 +276,7 @@ describe('upcoming library mode and idle data', () => {
     expect((await (await upcomingGet(get())).json()).later).toBeUndefined(); expect(collectArrUpcoming).toHaveBeenCalledTimes(3);
   });
   it('reads recent imports only for an empty queue, caches for 60 seconds and merges newest six', async () => {
-    widget().type = 'media-queue'; vi.mocked(collectArrQueue).mockResolvedValue({ items: [], total: 0 });
+    widget().type = 'media-queue'; vi.mocked(collectArrQueue).mockResolvedValue({ items: [], total: 0, downloads: new Map() });
     const result = await (await queueGet(get())).json(); expect(result.recent).toHaveLength(6); expect(result.recent[0].poster).toContain('/api/widgets/media/image?');
     expect(collectArrRecent).toHaveBeenCalledTimes(2); await queueGet(get()); expect(collectArrRecent).toHaveBeenCalledTimes(2);
     vi.setSystemTime(start + 60000); await queueGet(get()); expect(collectArrRecent).toHaveBeenCalledTimes(4);
@@ -470,5 +473,86 @@ describe('download control route', () => {
     response = await post({ ...request, action: 'resume', itemId: undefined }); const resumed = await response.json();
     expect(resumed.items.every((item: { state: string }) => item.state !== 'paused')).toBe(true);
     expect(controlDownloadClient).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
+  });
+});
+
+describe('arr queue controls', () => {
+  const hash = 'abcdef0123'.repeat(4);
+  const post = (body: unknown, headers: Record<string, string> = {}) => queueAction(new NextRequest('https://nasdash.example.com/api/widgets/arr/queue/action', { method: 'POST', headers: { origin: 'https://nasdash.example.com', 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) }));
+  const body = (extra: Record<string, unknown> = {}) => ({ widgetId: 'w', itemId: `${state.instances[0].id}:71`, action: 'pause', ...extra });
+  beforeEach(() => {
+    widget().type = 'media-queue';
+    vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, { records: [{ id: 71, title: 'Fictional download', protocol: 'torrent', downloadClient: 'qBittorrent', downloadId: hash.toUpperCase(), status: 'downloading' }] }));
+    vi.mocked(findQueueDownload).mockImplementation(async () => ({ instance: state.instances[3], itemId: hash }));
+  });
+  it('keeps download ids server-side and sets eligibility after the shared cache without client requests', async () => {
+    const admin = await (await queueGet(get())).json();
+    expect(admin.items[0].canControl).toBe(true);
+    expect(JSON.stringify(admin)).not.toMatch(new RegExp(`${hash}|${hash.toUpperCase()}|downloadId|downloads`));
+    state.admin = false;
+    const viewer = await (await queueGet(get())).json();
+    expect(viewer.items.every((item: { canControl?: boolean }) => item.canControl === undefined)).toBe(true);
+    state.admin = true; state.instances = state.instances.filter(instance => instance.type !== 'qbittorrent');
+    expect((await (await queueGet(get())).json()).items[0].canControl).toBeUndefined();
+    expect(findQueueDownload).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled();
+  });
+  it.each(['pause', 'resume'] as const)('controls the native id and refreshes both arr and download caches after %s', async action => {
+    // Warm both caches first, including another widget's download status.
+    widget().type = 'media-downloads'; await downloadsGet(get()); widget().type = 'media-queue';
+    await queueGet(get());
+    vi.mocked(controlDownloadClient).mockImplementation(async () => {
+      vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, { records: [{ id: 71, downloadId: hash, protocol: 'torrent', status: action === 'pause' ? 'paused' : 'downloading' }] }));
+    });
+    const response = await post(body({ action })), result = await response.json();
+    expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(result.items[0]).toMatchObject({ id: body().itemId, status: action === 'pause' ? 'paused' : 'downloading', canControl: true });
+    expect(controlDownloadClient).toHaveBeenCalledWith(state.instances[3], action, hash);
+    expect(findQueueDownload).toHaveBeenCalledWith(state.instances, { downloadId: hash.toUpperCase(), protocol: 'torrent', clientName: 'qBittorrent' });
+    expect(collectArrQueue).toHaveBeenCalledTimes(4);
+    widget().type = 'media-downloads'; await downloadsGet(get());
+    expect(vi.mocked(collectDownloadClient).mock.calls.filter(([instance]) => instance.id === state.instances[3].id)).toHaveLength(2);
+  });
+  it('denies viewers, unauthenticated callers, and foreign origins before fetching', async () => {
+    state.admin = false; expect((await post(body())).status).toBe(403);
+    state.admin = true; state.authenticated = false; expect((await post(body())).status).toBe(403);
+    state.authenticated = true;
+    for (const demo of [false, true]) {
+      state.demo = demo;
+      expect((await post(body(), { origin: 'https://foreign.example.com' })).status).toBe(403);
+      expect((await post(body(), { 'sec-fetch-site': 'cross-site' })).status).toBe(403);
+    }
+    expect(collectArrQueue).not.toHaveBeenCalled(); expect(controlDownloadClient).not.toHaveBeenCalled();
+  });
+  it.each([{ action: 'delete' }, { action: null }, { itemId: 71 }, { itemId: '' }, { itemId: 'x'.repeat(257) }, { widgetId: '!' }])('rejects malformed requests %j', async extra => {
+    expect((await post(body(extra))).status).toBe(400);
+    expect(collectArrQueue).not.toHaveBeenCalled(); expect(controlDownloadClient).not.toHaveBeenCalled();
+  });
+  it('requires the saved widget type and source; rejects stale and arbitrary queue ids', async () => {
+    expect((await post(body({ widgetId: 'absent' }))).status).toBe(404);
+    widget().type = 'media-downloads'; expect((await post(body())).status).toBe(404); widget().type = 'media-queue';
+    widget().settings.integrationIds = [state.instances[1].id]; expect((await post(body())).status).toBe(404);
+    widget().settings = {}; expect((await post(body({ itemId: `${state.instances[0].id}:72` }))).status).toBe(404);
+    expect(controlDownloadClient).not.toHaveBeenCalled(); expect(findQueueDownload).not.toHaveBeenCalled();
+  });
+  it('returns the clear missing-client error without controlling anything', async () => {
+    vi.mocked(findQueueDownload).mockRejectedValue(new ServiceError('widgets.error.noDownloadClient', 404));
+    let response = await post(body()); expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'widgets.error.noDownloadClient' });
+    const instance = source('sonarr'); state.instances = [instance];
+    vi.mocked(collectArrQueue).mockImplementation(async source => toArrQueue(source, { records: [{ id: 71 }] }));
+    response = await post(body()); expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'widgets.error.noDownloadClient' });
+    expect(controlDownloadClient).not.toHaveBeenCalled();
+  });
+  it('simulates demo pause and resume, persists to GET, and makes no network requests', async () => {
+    state.demo = true; state.admin = false;
+    const initial = await (await queueGet(get())).json(), itemId = initial.items[0].id;
+    expect(initial.items[0].canControl).toBe(true);
+    let response = await post(body({ itemId }));
+    expect(response.status).toBe(200); expect((await response.json()).items[0].status).toBe('paused');
+    expect((await (await queueGet(get())).json()).items[0].status).toBe('paused');
+    response = await post(body({ itemId, action: 'resume' }));
+    expect(response.status).toBe(200); expect((await response.json()).items[0].status).toBe('downloading');
+    for (const collector of [collectArrQueue, collectDownloadClient, controlDownloadClient, findQueueDownload, serviceBytes]) expect(collector).not.toHaveBeenCalled();
   });
 });

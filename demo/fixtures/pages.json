@@ -424,7 +424,9 @@
         {
           "id": "photos-stats-demo",
           "type": "photos-stats",
-          "settings": { "showUsers": true },
+          "settings": {
+            "showUsers": true
+          },
           "x": 0,
           "y": 739,
           "w": 6,
@@ -710,6 +712,51 @@
           "y": 2950,
           "w": 12,
           "h": 420
+        },
+        {
+          "id": "music-nowplaying-demo",
+          "type": "music-nowplaying",
+          "settings": {
+            "integrationId": "navidrome-demo",
+            "showUsers": true
+          },
+          "x": 0,
+          "y": 3674,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-library-demo",
+          "type": "music-library",
+          "settings": {
+            "integrationId": "navidrome-demo"
+          },
+          "x": 12,
+          "y": 3674,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-recent-demo",
+          "type": "music-recent",
+          "settings": {
+            "integrationId": "navidrome-demo"
+          },
+          "x": 0,
+          "y": 4014,
+          "w": 12,
+          "h": 320
+        },
+        {
+          "id": "music-top-demo",
+          "type": "music-top",
+          "settings": {
+            "integrationId": "navidrome-demo"
+          },
+          "x": 12,
+          "y": 4014,
+          "w": 12,
+          "h": 320
         }
       ]
     },

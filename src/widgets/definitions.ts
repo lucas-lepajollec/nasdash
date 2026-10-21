@@ -1,3 +1,7 @@
+import musicTop from './music-top/definition';
+import musicLibrary from './music-library/definition';
+import musicRecent from './music-recent/definition';
+import musicNowPlaying from './music-nowplaying/definition';
 import calendar from './calendar/definition';
 import clock from './clock/definition';
 import device from './device/definition';
@@ -59,6 +63,9 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   networkgraph, tailscale, networkTools, networkTopology, dns,
   // Content
   mediaNowPlaying, mediaRecent, mediaLibrary, mediaUpcoming, mediaQueue, mediaDownloads, mediaIndexers, mediaArr,
+  // Music
+  musicNowPlaying, musicRecent, musicLibrary, musicTop,
+  // Content
   rss, markets, quotes, photos, photosStats, bookmarks, customapi,
   // Gadgets
   clock, calendar, weather,

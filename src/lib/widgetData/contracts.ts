@@ -582,6 +582,8 @@ export interface QueueItem {
   /** 0–100. */
   progress: number;
   status: QueueStatus;
+  /** Administrators may control this download through a matching saved download client. */
+  canControl?: boolean;
   /** Short reason for warning/failed (the *arr's own status message, cut to 160 characters, no paths). */
   message?: string;
   sizeBytes?: number;
@@ -598,6 +600,8 @@ export interface QueueItem {
 export interface ImportedItem { id: string; source: 'sonarr' | 'radarr' | 'lidarr'; kind: 'episode' | 'movie' | 'album'; title: string; subtitle?: string; season?: number; episode?: number; count?: number; quality?: string; at: number; poster?: string }
 /** GET /api/widgets/arr/queue?widgetId=… (settings: `integrationIds`, `count` 3–50 default 10). `recent`: the last imports (≤ 6, newest first), for the empty queue. */
 export interface QueueResponse { items: QueueItem[]; total: number; recent?: ImportedItem[]; failures: SourceFailure[]; fetchedAt: number }
+/** POST /api/widgets/arr/queue/action — administrators only; answers the refreshed QueueResponse. */
+export interface QueueActionRequest { widgetId: string; itemId: string; action: 'pause' | 'resume' }
 
 /** One download client, now. */
 export interface DownloadClientStatus {
@@ -687,3 +691,42 @@ export interface ArrAppStatus {
 }
 /** GET /api/widgets/arr/status?widgetId=… (settings: `integrationIds`, default every *arr). */
 export interface ArrStatusResponse { apps: ArrAppStatus[]; fetchedAt: number }
+
+/* ---------------------------------------------------------------- Music */
+
+/** Music servers: the video servers' music libraries, and Subsonic-compatible ones (Navidrome, Gonic, Airsonic). */
+export const MUSIC_SERVER_TYPES = ['jellyfin', 'emby', 'plex', 'navidrome'] as const;
+export type MusicServer = typeof MUSIC_SERVER_TYPES[number];
+/** Covers go through the media image proxy: `/api/widgets/media/image?widgetId=…&id=…&kind=poster`. */
+export interface MusicTrack { id: string; title: string; artist?: string; album?: string; durationMs?: number; cover?: string }
+export interface MusicAlbum {
+  id: string; title: string; artist?: string; year?: number; trackCount?: number; cover?: string;
+  addedAt?: number; playedAt?: number;
+  /** Times played (all time; the servers keep no per-period count). */
+  plays?: number;
+  /** Opens the album in the server (administrators only). */
+  link?: string;
+}
+/** GET /api/widgets/music/now-playing?widgetId=… (settings `integrationId`, `showUsers`). Nothing playing: `recent`, the albums played lately. */
+export interface MusicNowPlayingResponse {
+  server: MusicServer; name: string;
+  sessions: { id: string; track: MusicTrack; user?: string; player?: string; state: 'playing' | 'paused'; positionMs?: number; quality?: string; next?: MusicTrack[] }[];
+  recent?: MusicAlbum[];
+  fetchedAt: number;
+}
+/** GET /api/widgets/music/recent?widgetId=… (settings `integrationId`, `count` 4–40 default 12): albums newest added first. */
+export interface MusicRecentResponse { server: MusicServer; name: string; albums: MusicAlbum[]; fetchedAt: number }
+/** GET /api/widgets/music/library?widgetId=… */
+export interface MusicLibraryResponse {
+  server: MusicServer; name: string;
+  artists?: number; albums?: number; tracks?: number;
+  /** Total duration of the tracks (ms). */
+  durationMs?: number;
+  /** Most present genres (≤ 8), by number of albums (or tracks when the server counts those). */
+  genres?: { name: string; count: number }[];
+  /** Albums added in the last 7 days (≤ 8, newest first) and how many in all. */
+  week?: MusicAlbum[]; weekCount?: number;
+  fetchedAt: number;
+}
+/** GET /api/widgets/music/top?widgetId=… (settings `integrationId`, `count` 3–20 default 6): most played albums, all time. */
+export interface MusicTopResponse { server: MusicServer; name: string; albums: MusicAlbum[]; fetchedAt: number }

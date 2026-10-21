@@ -12,7 +12,8 @@ import { DataError, useWidgetData, WidgetSettingsButton } from '@/components/wid
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { useByteFormat } from '@/components/widgets/media/arr';
-import { Bars, Stat, Track } from '@/components/widgets/media/visual';
+import { AreaChart, Stat, Track } from '@/components/widgets/media/visual';
+import { useAuth } from '@/providers/AuthProvider';
 
 const PARTS = ['figures', 'storage', 'years', 'added', 'users'] as const;
 type Part = typeof PARTS[number];
@@ -28,6 +29,7 @@ export default function CalmePhotoStats({ widgetId, settings, editMode, isVisibl
 }) {
   const { t, locale } = useI18n();
   const { config } = useConfig();
+  const { user } = useAuth();
   const connection = chosenConnection(config?.integrations, PHOTO_STATS_TYPES, settings.integrationId);
   const { data, error, mutate, stale } = useWidgetData<PhotoStatsResponse>('/api/widgets/photos/stats', widgetId, settings, { refreshMs: 10 * 60_000, isVisible, method: 'GET', enabled: !!connection });
   const number = useMemo(() => new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }), [locale]);
@@ -66,7 +68,13 @@ export default function CalmePhotoStats({ widgetId, settings, editMode, isVisibl
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 56 }} /><span className="ndw-skeleton-row" style={{ height: 80 }} /></div>
               : (
                 <div className="ndw-mx-stack">
-                  {data.limited && <span className="ndw-media-sub" title={t('widgets.photoStats.limitedHint')}>{t('widgets.photoStats.limited')}</span>}
+                  {data.limited && user?.role === 'admin' && (
+                    // Only an administrator can act on it: what to give the key, said plainly.
+                    <div className="ndw-mx-notice">
+                      <span className="ndw-mx-notice-title">{t('widgets.photoStats.limited')}</span>
+                      <span className="ndw-media-sub">{t('widgets.photoStats.limitedHint')}</span>
+                    </div>
+                  )}
                   {show('figures') && figures.length > 0 && (
                     <div className="ndw-mx-statrow">
                       {figures.map(([key, value]) => <Stat key={key} value={number.format(value!)} label={t(`widgets.photoStats.${key}`)} tone={value ? undefined : 'muted'} />)}
@@ -84,20 +92,14 @@ export default function CalmePhotoStats({ widgetId, settings, editMode, isVisibl
                       {data.disk && data.disk.totalBytes > 0 && <Track value={data.disk.usedBytes / data.disk.totalBytes * 100} tone={data.disk.usedBytes / data.disk.totalBytes > 0.9 ? 'warn' : 'muted'} />}
                     </div>
                   )}
-                  {show('years') && years.length > 1 && (
-                    <div className="ndw-mx-section">
-                      <span className="ndw-mx-label">{t('widgets.photoStats.years')}</span>
-                      <Bars values={years.map(year => year.count)} height={48} />
-                      <span className="ndw-mx-axis"><span>{years[0].year}</span><span>{years[years.length - 1].year}</span></span>
-                    </div>
-                  )}
+                  {show('years') && years.length > 1 && <Years years={years} />}
                   {show('added') && data.added && data.added.some(Boolean) && (
                     <div className="ndw-mx-section">
                       <span className="ndw-mx-root-head">
                         <span className="ndw-mx-label">{t('widgets.photoStats.added')}</span>
                         <span className="ndw-media-time">{t('widgets.photoStats.addedTotal', { count: number.format(data.added.reduce((sum, value) => sum + value, 0)) })}</span>
                       </span>
-                      <Bars values={data.added} height={32} />
+                      <AreaChart values={data.added} height={56} />
                     </div>
                   )}
                   {show('users') && (data.users?.length ?? 0) > 1 && (
@@ -117,5 +119,29 @@ export default function CalmePhotoStats({ widgetId, settings, editMode, isVisibl
               )}
       </div>
     </CalmeWidget>
+  );
+}
+
+/** Years as labelled columns: the last ten, and everything before in one "Earlier" column. */
+function Years({ years }: { years: NonNullable<PhotoStatsResponse['byYear']> }) {
+  const { t, locale } = useI18n();
+  const number = useMemo(() => new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }), [locale]);
+  const last = years[years.length - 1].year;
+  const earlier = years.filter(year => year.year <= last - 10).reduce((sum, year) => sum + year.count, 0);
+  const columns = [...(earlier ? [{ label: t('widgets.photoStats.earlier'), count: earlier }] : []), ...years.filter(year => year.year > last - 10).map(year => ({ label: String(year.year), count: year.count }))];
+  const max = Math.max(1, ...columns.map(column => column.count));
+  return (
+    <div className="ndw-mx-section">
+      <span className="ndw-mx-label">{t('widgets.photoStats.years')}</span>
+      <div className="ndw-mx-years">
+        {columns.map(column => (
+          <span key={column.label} className="ndw-mx-year" title={[column.label, number.format(column.count)].join(' · ')}>
+            <span className="ndw-mx-year-count">{number.format(column.count)}</span>
+            <span className="ndw-mx-year-bar"><span style={{ height: `${Math.max(4, column.count / max * 100)}%` }} /></span>
+            <span className="ndw-mx-year-label">{column.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

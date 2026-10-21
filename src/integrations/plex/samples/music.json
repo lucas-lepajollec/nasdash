@@ -1,0 +1,13 @@
+{
+  "identity": {"MediaContainer": {"machineIdentifier": "fictional-music-machine"}},
+  "sections": {"MediaContainer": {"Directory": [{"key": "music", "type": "artist", "title": "Music"}, {"key": "video", "type": "movie", "title": "Cinema"}]}},
+  "sessions": {"MediaContainer": {"Metadata": [
+    {"ratingKey": "track-1", "type": "track", "title": "The Glass Meridian", "parentTitle": "Signals from the Garden", "grandparentTitle": "The Paper Satellites", "parentThumb": "/library/metadata/album-1/thumb/1", "thumb": "/library/metadata/track-1/thumb/1", "duration": 234000, "viewOffset": 74000, "User": {"title": "Alex"}, "Player": {"state": "paused", "product": "Plexamp", "title": "Study"}, "Session": {"id": "music-session"}, "Media": [{"audioCodec": "flac"}]},
+    {"ratingKey": "movie-1", "type": "movie", "title": "The Quiet Orbit"}
+  ]}},
+  "albums": {"MediaContainer": {"Metadata": [
+    {"ratingKey": "album-1", "type": "album", "title": "Signals from the Garden", "parentTitle": "The Paper Satellites", "thumb": "/library/metadata/album-1/thumb/1", "year": 2025, "leafCount": 10, "addedAt": 1768478400, "lastViewedAt": 1768474800, "viewCount": 24},
+    {"ratingKey": "album-2", "type": "album", "title": "Tidal Letters", "parentTitle": "Mira Vale", "leafCount": 8, "addedAt": 1767268800, "lastViewedAt": 1768388400, "viewCount": 8}
+  ]}},
+  "genres": {"MediaContainer": {"Directory": [{"key": "1", "title": "Ambient", "count": 2}, {"key": "2", "title": "Electronic", "count": 1}]}}
+}

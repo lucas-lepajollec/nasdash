@@ -81,7 +81,7 @@ export default function CalmeDownloads({ widgetId, settings, editMode, isVisible
                       {client.canControl && (
                         <button type="button" className="ndc-icon-button" disabled={busy !== null} onClick={() => void act(client.id, client.clientPaused ? 'resume' : 'pause')}
                           aria-label={t(client.clientPaused ? 'widgets.arr.resumeAll' : 'widgets.arr.pauseAll')} title={t(client.clientPaused ? 'widgets.arr.resumeAll' : 'widgets.arr.pauseAll')}>
-                          {client.clientPaused ? <Play size={13} /> : <Pause size={13} />}
+                          {busy === client.id ? <span className="nd-spinner" style={{ width: 12, height: 12 }} aria-hidden="true" /> : client.clientPaused ? <Play size={13} /> : <Pause size={13} />}
                         </button>
                       )}
                     </header>

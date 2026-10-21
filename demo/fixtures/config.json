@@ -247,6 +247,7 @@
     { "id": "prowlarr-demo", "type": "prowlarr", "name": "Prowlarr", "settings": { "url": "https://prowlarr.demo.invalid", "allowSelfSigned": "false" } },
     { "id": "qbittorrent-demo", "type": "qbittorrent", "name": "qBittorrent", "settings": { "url": "https://qbittorrent.demo.invalid", "allowSelfSigned": "false" } },
     { "id": "sabnzbd-demo", "type": "sabnzbd", "name": "SABnzbd", "settings": { "url": "https://sabnzbd.demo.invalid", "allowSelfSigned": "false" } },
+    { "id": "navidrome-demo", "type": "navidrome", "name": "Navidrome · Atlas NAS", "settings": { "url": "https://music.demo.invalid", "username": "demo-listener", "allowSelfSigned": "false" } },
     { "id": "jellyfin-demo", "type": "jellyfin", "name": "Jellyfin · Atlas NAS", "settings": { "url": "https://jellyfin.demo.invalid", "allowSelfSigned": "false" } },
     { "id": "plex-demo", "type": "plex", "name": "Plex · Atlas NAS", "settings": { "url": "https://plex.demo.invalid", "allowSelfSigned": "false" } },
     {

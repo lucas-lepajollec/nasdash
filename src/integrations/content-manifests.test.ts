@@ -6,7 +6,7 @@ import { MEDIA_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widg
 import type { DashboardConfig } from '@/lib/types';
 
 describe('saved content service connections', () => {
-  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'piwigo', 'librephotos', 'customapi', 'jellyfin', 'emby', 'plex', ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
+  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'piwigo', 'librephotos', 'customapi', 'jellyfin', 'emby', 'plex', 'navidrome', ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
     const manifest = getServiceIntegration(type)!;
     expect(SERVICE_INTEGRATIONS).toContain(manifest);
     const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : field.kind === 'select' ? field.options![0].value : 'fictional']));
@@ -65,4 +65,12 @@ it.each([...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('describes the exact %s creden
   if (type === 'qbittorrent') expect(manifest.fields.find(field => field.id === 'apiKey')).toEqual({ id: 'apiKey', kind: 'secret', label: 'integrations.qbittorrent.apiKey', required: true, showWhen: { field: 'auth', values: ['apikey'] } });
   expect(manifest.fields.at(-1)).toEqual({ id: 'allowSelfSigned', kind: 'toggle', label: 'integrations.allowSelfSigned' });
   expect(manifest.fields.some(field => field.id === 'username')).toBe(['qbittorrent', 'transmission', 'nzbget'].includes(type));
+});
+
+it('registers Subsonic accounts in media with a write-only password', () => {
+  const manifest = getServiceIntegration('navidrome')!;
+  expect(manifest.section).toBe('media');
+  expect(manifest.fields.map(({ id, kind, required }) => ({ id, kind, required }))).toEqual([
+    {id:'url',kind:'text',required:true}, {id:'username',kind:'text',required:true}, {id:'password',kind:'secret',required:true}, {id:'allowSelfSigned',kind:'toggle',required:undefined},
+  ]);
 });

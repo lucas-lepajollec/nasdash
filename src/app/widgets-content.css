@@ -1101,3 +1101,52 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-mx-stat.is-warn .ndw-mx-stat-value { color: var(--nd-yellow); }
 
 .ndw-mx-dl-action { flex-shrink: 0; width: 26px; height: 26px; }
+
+/* Lines: the separator above the first row (of each column) is clipped, so a list never opens on a rule. */
+.ndw-mx-lines { clip-path: inset(1px 0 0 0); margin-top: -1px; }
+.ndw-mx-line { padding: 11px 0; }
+/* Indexers and *arr status breathe a little more between their parts. */
+.ndw-media-box > .ndw-mx-stack:has(> .ndw-mx-statrow) { gap: 22px; }
+.ndw-mx-statrow { padding: 2px 0; }
+
+/* Photo stats: years as labelled columns, a plain notice for administrators. */
+.ndw-mx-years { display: flex; align-items: stretch; gap: 6px; height: 110px; }
+.ndw-mx-year { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; min-width: 0; }
+.ndw-mx-year-count { color: var(--nd-text-muted); font-size: 0.58rem; white-space: nowrap; }
+.ndw-mx-year-bar { display: flex; align-items: flex-end; flex: 1; width: 100%; }
+.ndw-mx-year-bar > span { width: 100%; border-radius: 3px 3px 1px 1px; background: color-mix(in srgb, var(--nd-text) 22%, transparent); }
+.ndw-mx-year:last-child .ndw-mx-year-bar > span { background: var(--nd-accent); }
+.ndw-mx-year-label { overflow: hidden; color: var(--nd-text-dimmed); font-size: 0.58rem; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.ndw-mx-notice { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 8px; background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
+.ndw-mx-notice > .ndw-media-sub { white-space: normal; line-height: 1.45; }
+.ndw-mx-notice-title { color: var(--nd-text); font-size: 0.74rem; }
+
+.ndw-mx-loading { display: inline-flex; align-items: center; gap: 8px; color: var(--nd-text-muted); font-size: 0.72rem; }
+.ndw-mx-loading .nd-spinner { width: 12px; height: 12px; }
+
+/* ---------- Music: square covers, the playing track over a blur of its cover ---------- */
+.ndw-music-cover .ndw-media-poster { width: 100% !important; border-radius: 8px; }
+.ndw-mx-rail-sub.is-quiet { color: var(--nd-text-dimmed); }
+.ndw-music-now { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 14px; min-width: 0; padding: 8px 0; }
+.ndw-music-now.is-large { gap: 22px; padding: 20px; overflow: hidden; border-radius: 12px; clip-path: inset(0 round 12px); background: rgb(10 11 13); isolation: isolate; }
+.ndw-music-now.is-large > .ndw-mx-backdrop { z-index: -1; filter: blur(36px) saturate(1.2) brightness(0.38); }
+.ndw-music-now .ndw-media-poster { border-radius: 8px; }
+.ndw-music-now-text { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.ndw-music-now.is-large .ndw-mx-meta { color: rgb(255 255 255 / 0.8); }
+.ndw-music-now.is-large .ndw-mx-meta.is-quiet, .ndw-music-now.is-large .ndw-media-time { color: rgb(255 255 255 / 0.6); }
+.ndw-music-now.is-large .ndw-mx-track { background: rgb(255 255 255 / 0.18); }
+.ndw-music-next { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid rgb(255 255 255 / 0.1); }
+.ndw-music-next .ndw-mx-label { color: rgb(255 255 255 / 0.6); }
+.ndw-music-next-row { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.ndw-music-next-rank { width: 14px; color: rgb(255 255 255 / 0.4); font-size: 0.68rem; }
+.ndw-music-next-title { flex: 1; min-width: 0; overflow: hidden; color: #fff; font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.84rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-music-genres { display: flex; flex-direction: column; gap: 9px; }
+.ndw-music-genre { display: grid; grid-template-columns: minmax(80px, 30%) minmax(0, 1fr) 42px; align-items: center; gap: 12px; }
+.ndw-music-genre-name { overflow: hidden; color: var(--nd-text); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-music-genre-bar { height: 5px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--nd-text) 8%, transparent); }
+.ndw-music-genre-bar > span { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--nd-text) 30%, transparent); }
+.ndw-music-genre-bar.is-first > span { background: var(--nd-accent); }
+.ndw-music-genre > .ndw-media-time { text-align: right; }
+.ndw-music-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.ndw-music-rank { width: 22px; flex-shrink: 0; color: var(--nd-text-dimmed); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.05rem; font-weight: 600; text-align: right; }
+.ndw-music-toprow { border-top: 1px solid var(--nd-card-border); }
