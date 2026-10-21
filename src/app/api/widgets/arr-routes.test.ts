@@ -485,7 +485,7 @@ describe('arr queue controls', () => {
     vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, { records: [{ id: 71, title: 'Fictional download', protocol: 'torrent', downloadClient: 'qBittorrent', downloadId: hash.toUpperCase(), status: 'downloading' }] }));
     vi.mocked(findQueueDownload).mockImplementation(async () => ({ instance: state.instances[3], itemId: hash }));
   });
-  it('keeps download ids server-side and sets eligibility after the shared cache without client requests', async () => {
+  it('keeps download ids server-side and sets eligibility; reads only the shared client status, never looks up or controls', async () => {
     const admin = await (await queueGet(get())).json();
     expect(admin.items[0].canControl).toBe(true);
     expect(JSON.stringify(admin)).not.toMatch(new RegExp(`${hash}|${hash.toUpperCase()}|downloadId|downloads`));
@@ -494,7 +494,8 @@ describe('arr queue controls', () => {
     expect(viewer.items.every((item: { canControl?: boolean }) => item.canControl === undefined)).toBe(true);
     state.admin = true; state.instances = state.instances.filter(instance => instance.type !== 'qbittorrent');
     expect((await (await queueGet(get())).json()).items[0].canControl).toBeUndefined();
-    expect(findQueueDownload).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled();
+    // The live state comes from the client's status (shared, cached seconds): never an id lookup or an action.
+    expect(findQueueDownload).not.toHaveBeenCalled(); expect(controlDownloadClient).not.toHaveBeenCalled();
   });
   it.each(['pause', 'resume'] as const)('controls the native id and refreshes both arr and download caches after %s', async action => {
     // Warm both caches first, including another widget's download status.
