@@ -13,9 +13,10 @@ export class TtlCache<T> {
 
   constructor(private readonly ttlMs: number, private readonly max = 200, private readonly staleMs = 0) {}
 
-  async get(key: string, load: () => Promise<T>, now = Date.now()): Promise<T> {
+  /** A caller may require fresher data while sharing the same identity and in-flight load. */
+  async get(key: string, load: () => Promise<T>, now = Date.now(), ttlMs = this.ttlMs): Promise<T> {
     const entry = this.entries.get(key);
-    if (entry?.value !== undefined && now - entry.storedAt < this.ttlMs) return entry.value;
+    if (entry?.value !== undefined && now - entry.storedAt < ttlMs) return entry.value;
     if (entry?.pending) return entry.pending;
     const pending = load().then(value => {
       this.entries.delete(key);
@@ -24,7 +25,7 @@ export class TtlCache<T> {
       return value;
     }, error => {
       const current = this.entries.get(key);
-      if (current?.value !== undefined && Date.now() - current.storedAt < this.ttlMs + this.staleMs) {
+      if (current?.value !== undefined && Date.now() - current.storedAt < ttlMs + this.staleMs) {
         current.pending = undefined;
         return current.value;
       }

@@ -79,6 +79,7 @@ Theme, layout, and visual profiles are first-class product surfaces, not a singl
 - Docker containers, logs, images, volumes, and guarded actions through Portainer, Dockhand, an optional socket proxy, or a Docker-compatible API/socket. Search, filter and sort resource lists, paginate them, inspect tags and linked containers, and confirm selected unused resources before removal. Page selection stays in the table header on desktop and mobile; usage counts sit beside Refresh.
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
+- Custom API connections for JSON endpoints, fetched on the server with configurable authentication; widgets receive selected values while connection addresses and credentials stay private.
 - A complete English, French, Spanish, German, and Italian interface with an instance-wide server preference.
 - Public or private access mode, local admin/viewer accounts, and viewer allowlists.
 - Encrypted integration credentials, coordinated configuration writes with rollback on reported failures, and backup/restore tooling.

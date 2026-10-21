@@ -28,6 +28,7 @@ import weather from './weather/definition';
 import quotes from './quotes/definition';
 import photos from './photos/definition';
 import bookmarks from './bookmarks/definition';
+import customapi from './customapi/definition';
 import rss from './rss/definition';
 import markets from './markets/definition';
 import dns from './dns/definition';
@@ -48,7 +49,7 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // Network
   networkgraph, tailscale, networkTools, networkTopology, dns,
   // Content
-  rss, markets, quotes, photos, bookmarks,
+  rss, markets, quotes, photos, bookmarks, customapi,
   // Gadgets
   clock, calendar, weather,
   // Layout

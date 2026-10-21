@@ -9,7 +9,7 @@ import { getServiceIntegration } from '@/integrations/registry';
 import type { IntegrationInstance } from '@/lib/types';
 import { httpRequest, isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
-import { DNS_TYPES, PHOTO_TYPES, type DnsProvider } from './contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, type DnsProvider } from './contracts';
 
 export class ServiceError extends Error {
   constructor(readonly key: string, readonly status = 502, readonly parameters?: Record<string, string | number>) {
@@ -25,8 +25,9 @@ export function serviceFailure(error: unknown): NextResponse {
 export function serviceUrl(instance: IntegrationInstance, path = ''): string {
   try {
     const base = new URL(instance.settings.url);
-    if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password || base.search || base.hash) throw new Error();
-    return `${base.toString().replace(/\/$/, '')}${path}`;
+    if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password || (base.search && instance.type !== 'customapi') || base.hash) throw new Error();
+    // Custom APIs use the exact saved endpoint, including trailing slash and query.
+    return `${instance.type === 'customapi' ? base.toString() : base.toString().replace(/\/$/, '')}${path}`;
   } catch { throw new ServiceError('integrations.error.invalidUrl'); }
 }
 /** No secret appears in the cache key; credential/config changes also invalidate memory. */
@@ -42,10 +43,10 @@ export function getServiceInstance(integrationId: unknown, types: readonly strin
   const matching = (readConfig().integrations ?? []).filter(instance => types.includes(instance.type));
   return integrationId === undefined || integrationId === null ? matching[0] : matching.find(instance => instance.id === integrationId);
 }
-export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos', draft?: unknown) {
+export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos' | 'customapi', draft?: unknown) {
   const lookup = resolveWidgetSettings(request, widgetId, type, draft);
   if (!lookup.ok) return { response: NextResponse.json({ error: lookup.error }, { status: lookup.status }) };
-  const types: readonly string[] = type === 'dns' ? DNS_TYPES : PHOTO_TYPES;
+  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'photos' ? PHOTO_TYPES : CUSTOM_API_TYPES;
   const instance = getServiceInstance(lookup.settings.integrationId, types) ?? demoVisitorInstance(lookup.settings.integrationId, types);
   if (!instance) return { response: NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404 }) };
   return { instance, settings: lookup.settings, principal: lookup.principal };

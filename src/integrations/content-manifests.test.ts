@@ -4,11 +4,11 @@ import { upsertInstance, maskInstanceSecrets, stripInstanceSecrets } from './ins
 import { validateConfigMutationBody } from '@/lib/configEntityValidation';
 import type { DashboardConfig } from '@/lib/types';
 
-describe('saved DNS/photo connections', () => {
-  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
+describe('saved content service connections', () => {
+  it.each(['pihole', 'adguard', 'technitium', 'immich', 'photoprism', 'customapi'])('registers %s, accepts its fields, and keeps secrets out of settings', type => {
     const manifest = getServiceIntegration(type)!;
     expect(SERVICE_INTEGRATIONS).toContain(manifest);
-    const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : 'fictional']));
+    const settings = Object.fromEntries(manifest.fields.filter(field => field.kind !== 'secret').map(field => [field.id, field.kind === 'toggle' ? 'true' : field.kind === 'select' ? field.options![0].value : 'fictional']));
     const secrets = Object.fromEntries(manifest.fields.filter(field => field.kind === 'secret').map(field => [field.id, 'fake-secret']));
     expect(() => validateConfigMutationBody({ integration: { id: `${type}-fictional`, type, settings, secrets } }, 'integration', 'POST')).not.toThrow();
     const secret = manifest.fields.find(field => field.kind === 'secret')!.id;
@@ -17,6 +17,14 @@ describe('saved DNS/photo connections', () => {
   it('requires a toggle string and rejects arbitrary truthy inputs', () => {
     for (const allowSelfSigned of [true, 1, 'yes']) expect(() => validateConfigMutationBody({ integration: { type: 'pihole', settings: { allowSelfSigned } } }, 'integration', 'POST')).toThrow();
     expect(() => validateConfigMutationBody({ integration: { type: 'pihole', settings: { allowSelfSigned: 'false' } } }, 'integration', 'POST')).not.toThrow();
+  });
+  it('accepts every select option and empty values, rejecting other inputs', () => {
+    for (const authType of ['', 'none', 'bearer', 'header', 'basic', 'query']) {
+      expect(() => validateConfigMutationBody({ integration: { type: 'customapi', settings: { authType } } }, 'integration', 'POST')).not.toThrow();
+    }
+    for (const authType of ['invalid', true, 1]) {
+      expect(() => validateConfigMutationBody({ integration: { type: 'customapi', settings: { authType } } }, 'integration', 'POST')).toThrow();
+    }
   });
   it('saves and edits several Pi-holes by explicit ID, with standard secret masking', () => {
     const config: Pick<DashboardConfig, 'integrations'> = { integrations: [] };

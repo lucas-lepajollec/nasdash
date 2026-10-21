@@ -29,6 +29,7 @@ import weather from './weather/view';
 import quotes from './quotes/view';
 import photos from './photos/view';
 import bookmarks from './bookmarks/view';
+import customapi from './customapi/view';
 import rss from './rss/view';
 import markets from './markets/view';
 import dns from './dns/view';
@@ -68,6 +69,7 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'quotes': quotes,
   'photos': photos,
   'bookmarks': bookmarks,
+  'customapi': customapi,
   'clock': clock,
   'calendar': calendar,
   'weather': weather,
