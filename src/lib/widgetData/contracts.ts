@@ -698,7 +698,12 @@ export interface ArrStatusResponse { apps: ArrAppStatus[]; fetchedAt: number }
 export const MUSIC_SERVER_TYPES = ['jellyfin', 'emby', 'plex', 'navidrome'] as const;
 export type MusicServer = typeof MUSIC_SERVER_TYPES[number];
 /** Covers go through the media image proxy: `/api/widgets/media/image?widgetId=…&id=…&kind=poster`. */
-export interface MusicTrack { id: string; title: string; artist?: string; album?: string; durationMs?: number; cover?: string }
+export interface MusicTrack {
+  id: string; title: string; artist?: string; album?: string; albumId?: string; durationMs?: number; cover?: string;
+  /** When it was last played (recently played tracks). */
+  playedAt?: number;
+}
+export interface MusicPlaylist { id: string; name: string; trackCount?: number; durationMs?: number; cover?: string; owner?: string; changedAt?: number }
 export interface MusicAlbum {
   id: string; title: string; artist?: string; year?: number; trackCount?: number; cover?: string;
   addedAt?: number; playedAt?: number;
@@ -710,12 +715,29 @@ export interface MusicAlbum {
 /** GET /api/widgets/music/now-playing?widgetId=… (settings `integrationId`, `showUsers`). Nothing playing: `recent`, the albums played lately. */
 export interface MusicNowPlayingResponse {
   server: MusicServer; name: string;
-  sessions: { id: string; track: MusicTrack; user?: string; player?: string; state: 'playing' | 'paused'; positionMs?: number; quality?: string; next?: MusicTrack[] }[];
+  sessions: { id: string; track: MusicTrack; user?: string; player?: string; state: 'playing' | 'paused'; positionMs?: number; quality?: string; next?: MusicTrack[]; canControl?: boolean }[];
   recent?: MusicAlbum[];
   fetchedAt: number;
 }
-/** GET /api/widgets/music/recent?widgetId=… (settings `integrationId`, `count` 4–40 default 12): albums newest added first. */
-export interface MusicRecentResponse { server: MusicServer; name: string; albums: MusicAlbum[]; fetchedAt: number }
+/**
+ * GET /api/widgets/music/recent?widgetId=… (settings `integrationId`, `count` 4–40 default 12,
+ * `content` 'added' (default: albums newest added first) | 'albums' (albums played lately) | 'tracks' (tracks played lately, in `tracks`)).
+ */
+export interface MusicRecentResponse { server: MusicServer; name: string; albums: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }
+/** GET /api/widgets/music/playlists?widgetId=… (widget `music-playlists`, settings `integrationId`, `count` 3–40 default 12). */
+export interface MusicPlaylistsResponse { server: MusicServer; name: string; playlists: MusicPlaylist[]; fetchedAt: number }
+/** GET /api/widgets/music/tracks?widgetId=…&kind=album|playlist&id=… — the tracks to play, in order (≤ 300). Any music widget id. */
+export interface MusicTracksResponse { tracks: MusicTrack[] }
+/** GET /api/widgets/music/search?widgetId=…&q=… (2–80 chars) — any music widget id. */
+export interface MusicSearchResponse { tracks: MusicTrack[]; albums: MusicAlbum[]; playlists: MusicPlaylist[] }
+/**
+ * GET /api/widgets/music/stream?widgetId=…&id=<trackId> — the track's audio, relayed with HTTP Range
+ * support (a browser <audio> source). Signed-in users with the Media permission only (never anonymous visitors);
+ * the id must be one a music response of that widget listed (membership like covers).
+ */
+export type MusicStreamRoute = '/api/widgets/music/stream';
+/** POST /api/widgets/music/control { widgetId, sessionId, action } — administrators; Jellyfin/Emby sessions (`canControl` on the session). */
+export interface MusicControlRequest { widgetId: string; sessionId: string; action: 'playpause' | 'next' | 'previous' }
 /** GET /api/widgets/music/library?widgetId=… */
 export interface MusicLibraryResponse {
   server: MusicServer; name: string;

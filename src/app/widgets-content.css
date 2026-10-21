@@ -1148,5 +1148,29 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-music-genre-bar.is-first > span { background: var(--nd-accent); }
 .ndw-music-genre > .ndw-media-time { text-align: right; }
 .ndw-music-strip { display: flex; flex-wrap: wrap; gap: 8px; }
-.ndw-music-rank { width: 22px; flex-shrink: 0; color: var(--nd-text-dimmed); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.05rem; font-weight: 600; text-align: right; }
+.ndw-music-rank { min-width: 1ch; flex-shrink: 0; color: var(--nd-text-dimmed); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ndw-music-toprow { gap: 12px; }
 .ndw-music-toprow { border-top: 1px solid var(--nd-card-border); }
+
+/* Music playback: round play buttons, controls, a clickable progress, playlists that open. */
+.ndw-music-play { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; padding: 0; border: 1px solid var(--nd-card-hover-border); border-radius: 50%; color: var(--nd-text); background: color-mix(in srgb, var(--nd-card-bg) 80%, transparent); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+.ndw-music-play:hover, .ndw-music-play.is-on { color: var(--nd-bg); background: var(--nd-text); border-color: var(--nd-text); }
+.ndw-music-play.is-large { width: 40px; height: 40px; }
+.ndw-music-play .nd-spinner { width: 12px; height: 12px; }
+.ndw-music-cover { position: relative; display: block; }
+.ndw-music-cover-play { position: absolute; right: 8px; bottom: 8px; opacity: 0; transition: opacity 0.15s ease; }
+.ndw-mx-rail-item:hover .ndw-music-cover-play, .ndw-music-cover-play:focus-within, .ndw-music-cover-play:has(.is-on) { opacity: 1; }
+@media (hover: none) { .ndw-music-cover-play { opacity: 1; } }
+.ndw-music-controls { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.ndw-music-now.is-large .ndw-music-controls .ndc-icon-button { color: rgb(255 255 255 / 0.8); }
+.ndw-music-seek { flex: 1; padding: 6px 0; border: none; background: none; cursor: pointer; }
+.ndw-music-seek > .ndw-mx-track { width: 100%; }
+button.ndw-music-next-row { width: 100%; padding: 2px 0; border: none; background: none; font: inherit; text-align: left; cursor: pointer; }
+button.ndw-music-next-row:hover .ndw-music-next-title { color: var(--nd-accent); }
+.ndw-music-playlist-head { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 0; border: none; color: inherit; background: none; font: inherit; text-align: left; cursor: pointer; }
+.ndw-music-chevron { flex-shrink: 0; color: var(--nd-text-muted); transition: transform 0.15s ease; }
+.ndw-music-chevron.is-open { transform: rotate(180deg); }
+.ndw-music-playlist > .ndw-mx-qrow { border-top: 1px solid var(--nd-card-border); }
+.ndw-music-tracklist { display: flex; flex-direction: column; margin: 0 0 8px; padding: 0 0 0 58px; list-style: none; }
+.ndw-music-tracklist > li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 0; }
+.ndw-music-tracklist .ndw-music-next-rank { color: var(--nd-text-dimmed); }

@@ -9,6 +9,7 @@ import { CalmeField } from '@/components/shared/CalmeDialog';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { MediaPoster } from '@/components/widgets/media/shared';
+import { musicPlayer, PlayButton, useCanPlay } from './player';
 
 /** The music server a widget reads: its choice, else the first saved one (Jellyfin, Emby, Plex, Navidrome). */
 export function useMusicConnection(settings: WidgetSettings) {
@@ -35,11 +36,16 @@ export function Cover({ id, title, cover, size }: { id: string; title: string; c
   return <MediaPoster item={{ id, kind: 'album', title, poster: cover }} width={size} />;
 }
 
-/** An album as a cover with its title, artist and one more line beneath. */
-export function AlbumCard({ album, line }: { album: MusicAlbum; line?: string }) {
+/** An album as a cover with its title, artist and one more line beneath; a play button over the cover for signed-in users. */
+export function AlbumCard({ album, line, widgetId }: { album: MusicAlbum; line?: string; widgetId?: string }) {
+  const { t } = useI18n();
+  const canPlay = useCanPlay();
   const body = (
     <>
-      <span className="ndw-music-cover"><Cover id={album.id} title={album.title} cover={album.cover} size={240} /></span>
+      <span className="ndw-music-cover">
+        <Cover id={album.id} title={album.title} cover={album.cover} size={240} />
+        {canPlay && widgetId && <span className="ndw-music-cover-play"><PlayButton size="large" label={t('widgets.music.playOne', { name: album.title })} playingKey={`album:${album.id}`} onPlay={() => void musicPlayer.playCollection(widgetId, 'album', album.id)} /></span>}
+      </span>
       <span className="ndw-mx-rail-title">{album.title}</span>
       {album.artist && <span className="ndw-mx-rail-sub">{album.artist}</span>}
       {line && <span className="ndw-mx-rail-sub is-quiet">{line}</span>}

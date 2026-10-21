@@ -60,6 +60,7 @@ describe('Plex music', () => {
     json.mockImplementation(async (_source, path) => {
       if (path === '/') return plex.identity;
       if (path === '/status/sessions') return plex.sessions;
+      if (path.startsWith('/status/sessions/history/all')) return { MediaContainer: { Metadata: [{ ratingKey: 'track-1', type: 'track', title: 'The Glass Meridian', parentTitle: 'Signals from the Garden', parentRatingKey: 'album-1', viewedAt: 1768474800 }] } };
       if (path === '/library/sections') return plex.sections;
       if (path.includes('/genre?')) return plex.genres;
       if (path.includes('Size=0')) return { MediaContainer: { totalSize: path.includes('type=10') ? 18 : 2 } };
@@ -74,7 +75,7 @@ describe('Plex music', () => {
     expect((await collectPlexMusicHistory(source))[0].playedAt).toBe(1768474800000);
     expect(await collectPlexMusicLibrary(source)).toMatchObject({ artists: 2, albums: 2, tracks: 18, weekCount: 1, week: [{id:'album-1'}], genres: [{ name: 'Ambient', count: 2 }, { name: 'Electronic', count: 1 }] });
     expect(json.mock.calls.some(([,path]) => path.includes('/video/'))).toBe(false);
-    for (const sort of ['addedAt:desc','viewCount:desc','lastViewedAt:desc']) expect(json.mock.calls.some(([,path]) => path.includes(`/music/all?type=9&sort=${sort}`))).toBe(true);
+    for (const sort of ['addedAt:desc','viewCount:desc']) expect(json.mock.calls.some(([,path]) => path.includes(`/music/all?type=9&sort=${sort}`))).toBe(true);
     for (const [,path,options] of json.mock.calls) { expect(options?.headers).toEqual({ 'X-Plex-Token': 'fictional-token', Accept:'application/json' }); expect(path).not.toContain('fictional-token'); }
     expect(toPlexMusicTrack({ratingKey:'bad',type:'track',parentThumb:'https://outside.example.com/image'})?.cover).toBeUndefined();
     vi.useRealTimers();

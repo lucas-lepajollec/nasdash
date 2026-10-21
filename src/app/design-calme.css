@@ -3873,3 +3873,6 @@ button.ndc-bookmark-fold:hover { color: var(--nd-text); background: color-mix(in
 .ndc-bookmark-fold svg { transition: transform 0.15s ease; }
 .ndc-bookmark-fold svg.is-open { transform: rotate(90deg); }
 .ndc-bookmark-count { margin-left: 8px; color: var(--nd-text-dimmed); font-size: 0.7rem; }
+
+/* A widget still being shaped: a quiet word beside its name. */
+.nd-page-library-badge { margin-left: 8px; padding: 1px 6px; border: 1px solid var(--nd-card-hover-border); border-radius: 4px; color: var(--nd-text-muted); font-size: 0.62rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 2px; }

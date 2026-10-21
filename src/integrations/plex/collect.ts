@@ -1,5 +1,5 @@
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaSession, MediaWatched, MusicAlbum, MusicTrack, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicLibraryResponse } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaSession, MediaWatched, MusicAlbum, MusicTrack, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicLibraryResponse, MusicPlaylist, MusicSearchResponse } from '@/lib/widgetData/contracts';
 import { array, number, object, string, serviceIdentity, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 import { TtlCache } from '@/lib/widgetData/cache';
 import { musicWeek } from '@/lib/widgetData/music';
@@ -113,7 +113,11 @@ export async function collectPlexHistory(instance: IntegrationInstance, limit = 
 }
 
 /* Dedicated music collectors; video session/recent behaviour stays unchanged. */
-const musicImage = (value: unknown) => imagePath(value, 'poster')?.replace('width=320&height=480', 'width=600&height=600');
+const musicImage = (value: unknown) => {
+  const path = string(value);
+  if (/^\/playlists\/[A-Za-z0-9_-]+\/composite(?:\/[A-Za-z0-9_-]+)*$/.test(path)) return `/photo/:/transcode?width=600&height=600&minSize=1&upscale=1&url=${encodeURIComponent(path)}`;
+  return imagePath(value, 'poster')?.replace('width=320&height=480', 'width=600&height=600');
+};
 export function toPlexMusicAlbum(instance: IntegrationInstance, value: unknown, machine?: string): MusicAlbum | undefined {
   const raw = object(value), item = toPlexItem(instance, value, machine);
   if (!item || item.kind !== 'album') return undefined;
@@ -123,7 +127,8 @@ export function toPlexMusicAlbum(instance: IntegrationInstance, value: unknown, 
 export function toPlexMusicTrack(value: unknown): MusicTrack | undefined {
   const item = object(value), id = string(item.ratingKey);
   if (!id || item.type !== 'track') return undefined;
-  return { id, title: string(item.title), artist: string(item.grandparentTitle) || undefined, album: string(item.parentTitle) || undefined,
+  return { id, title: string(item.title), artist: string(item.grandparentTitle) || undefined, album: string(item.parentTitle) || undefined, albumId: string(item.parentRatingKey) || undefined,
+    playedAt: optionalNumber(item.viewedAt ?? item.lastViewedAt) === undefined ? undefined : number(item.viewedAt ?? item.lastViewedAt) * 1000,
     durationMs: optionalNumber(item.duration), cover: musicImage(item.parentThumb) };
 }
 export async function collectPlexMusicNowPlaying(instance: IntegrationInstance): Promise<MusicNowPlayingResponse> {
@@ -156,13 +161,20 @@ async function plexMusicList(instance: IntegrationInstance, count: number, sort:
   return albums.filter(album => field === 'addedAt' || (album[field] ?? 0) > 0).sort((a, b) => (b[field] ?? 0) - (a[field] ?? 0))
     .filter(album => !seen.has(album.id) && !!seen.add(album.id)).slice(0, count);
 }
-export async function collectPlexMusicRecent(instance: IntegrationInstance, count: number): Promise<MusicRecentResponse> {
+export async function collectPlexMusicRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): Promise<MusicRecentResponse> {
+  if (content === 'albums') return { ...identity(instance), albums: await collectPlexMusicHistory(instance, count) };
+  if (content === 'tracks') return { ...identity(instance), albums: [], tracks: await plexMusicTrackHistory(instance, count) };
   return { ...identity(instance), albums: await plexMusicList(instance, count, 'addedAt:desc') };
 }
 export async function collectPlexMusicTop(instance: IntegrationInstance, count: number): Promise<MusicTopResponse> {
   return { ...identity(instance), albums: await plexMusicList(instance, count, 'viewCount:desc') };
 }
-export function collectPlexMusicHistory(instance: IntegrationInstance, count = 6) { return plexMusicList(instance, count, 'lastViewedAt:desc'); }
+export async function collectPlexMusicHistory(instance: IntegrationInstance, count = 6) {
+  const tracks = await plexMusicTrackHistory(instance, Math.min(300, count * 10));
+  const albums = new Map<string, MusicAlbum>();
+  for (const track of tracks) if (track.albumId && !albums.has(track.albumId)) albums.set(track.albumId, { id: track.albumId, title: track.album ?? '', artist: track.artist, cover: track.cover, playedAt: track.playedAt });
+  return [...albums.values()].slice(0, count);
+}
 export async function collectPlexMusicLibrary(instance: IntegrationInstance): Promise<MusicLibraryResponse> {
   const [sections, machine] = await Promise.all([plexMusicSections(instance), machineId(instance)]);
   const counts: { artists?: number; albums?: number; tracks?: number } = {}, genreCounts = new Map<string, number>();
@@ -199,4 +211,45 @@ export async function collectPlexMusicLibrary(instance: IntegrationInstance): Pr
   for (const field of Object.keys(complete) as (keyof typeof counts)[]) { if (!complete[field]) delete counts[field]; else counts[field] ??= 0; }
   const genres = [...genreCounts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 8);
   return { ...identity(instance), ...counts, ...(genres.length ? { genres } : {}), week: week.sort((a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0)).slice(0, 8), ...(weekCount === undefined ? {} : { weekCount }) };
+}
+
+async function plexMusicTrackHistory(instance: IntegrationInstance, count: number) {
+  // Plex uses numeric library type 10 for tracks (the DTO type is "track").
+  const data = await request(instance, `/status/sessions/history/all?type=10&sort=viewedAt:desc&X-Plex-Container-Start=0&X-Plex-Container-Size=${count}`);
+  const seen = new Set<string>();
+  return array(data.Metadata).map(toPlexMusicTrack).filter((item): item is MusicTrack => !!item && item.playedAt !== undefined)
+    .sort((a, b) => b.playedAt! - a.playedAt!).filter(item => !seen.has(item.id) && !!seen.add(item.id)).slice(0, count);
+}
+export function toPlexMusicPlaylist(value: unknown): MusicPlaylist | undefined {
+  const item = object(value), id = string(item.ratingKey);
+  if (!id || item.type !== 'playlist' || item.playlistType !== 'audio') return undefined;
+  return { id, name: string(item.title), trackCount: optionalNumber(item.leafCount), durationMs: optionalNumber(item.duration), cover: musicImage(item.composite || item.thumb),
+    changedAt: optionalNumber(item.updatedAt) === undefined ? undefined : number(item.updatedAt) * 1000 };
+}
+export async function collectPlexMusicPlaylists(instance: IntegrationInstance, count: number) {
+  const data = await request(instance, `/playlists?playlistType=audio&X-Plex-Container-Start=0&X-Plex-Container-Size=${count}`);
+  return { ...identity(instance), playlists: array(data.Metadata).map(toPlexMusicPlaylist).filter((item): item is MusicPlaylist => !!item).slice(0, count) };
+}
+export async function collectPlexMusicTracks(instance: IntegrationInstance, kind: 'album' | 'playlist', id: string) {
+  const data = await request(instance, `${kind === 'album' ? `/library/metadata/${encodeURIComponent(id)}/children` : `/playlists/${encodeURIComponent(id)}/items`}?X-Plex-Container-Start=0&X-Plex-Container-Size=300`);
+  return array(data.Metadata).map(toPlexMusicTrack).filter((item): item is MusicTrack => !!item).slice(0, 300);
+}
+export async function collectPlexMusicSearch(instance: IntegrationInstance, query: string): Promise<MusicSearchResponse> {
+  const sections = await plexMusicSections(instance), tracks: MusicTrack[] = [], albums: MusicAlbum[] = [];
+  for (const section of sections) {
+    const read = async (type: number) => array((await request(instance, `/library/sections/${encodeURIComponent(string(section.key))}/search?query=${encodeURIComponent(query)}&type=${type}&X-Plex-Container-Size=20`)).Metadata);
+    const [songs, releases] = await Promise.all([read(10), read(9)]);
+    tracks.push(...songs.map(toPlexMusicTrack).filter((item): item is MusicTrack => !!item));
+    albums.push(...releases.map(value => toPlexMusicAlbum(instance, value)).filter((item): item is MusicAlbum => !!item));
+  }
+  const lists = await collectPlexMusicPlaylists(instance, 1000);
+  return { tracks: tracks.slice(0, 20), albums: albums.slice(0, 20), playlists: lists.playlists.filter(item => item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).slice(0, 20) };
+}
+export async function plexMusicStreamPath(instance: IntegrationInstance, id: string) {
+  const data = await request(instance, `/library/metadata/${encodeURIComponent(id)}`);
+  const track = array(data.Metadata).map(object).find(item => item.ratingKey === id && item.type === 'track');
+  const part = string(object(array(object(array(track?.Media)[0]).Part)[0]).key);
+  // No provider URL/query, arbitrary endpoint, or redirects can enter transport.
+  if (!/^\/library\/parts\/[A-Za-z0-9/_%. -]+$/.test(part) || part.includes('..') || /%2[ef]/i.test(part)) throw new ServiceError('widgets.error.notFound', 404);
+  return part;
 }

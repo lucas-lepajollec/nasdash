@@ -8,7 +8,7 @@ import type { WidgetSettings } from '@/lib/pages/types';
  * it in `view.tsx`.
  */
 
-export type WidgetGroup = 'services' | 'system' | 'docker' | 'network' | 'media' | 'music' | 'content' | 'gadgets' | 'layout';
+export type WidgetGroup = 'services' | 'system' | 'docker' | 'network' | 'media' | 'music' | 'downloads' | 'content' | 'gadgets' | 'layout';
 
 export interface WidgetDefinition {
   type: string;
@@ -34,6 +34,8 @@ export interface WidgetDefinition {
    * Server routes still enforce their own checks on every request.
    */
   access: { permission: string } | { requirement: ReadAccessRequirement } | null;
+  /** Still being shaped: the library and its settings say so. */
+  experimental?: boolean;
   /** Settings modal section that configures shared options of this type. */
   settingsTab?: string;
   /** Widgets of the same link group share page-level state (active host…). */

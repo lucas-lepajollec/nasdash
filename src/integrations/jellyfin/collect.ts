@@ -1,6 +1,6 @@
 /** Jellyfin and Emby share the media API; credentials always travel in headers. */
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched, MusicAlbum, MusicTrack, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicLibraryResponse } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched, MusicAlbum, MusicTrack, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicLibraryResponse, MusicPlaylist, MusicSearchResponse, MusicControlRequest } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 import { musicWeek } from '@/lib/widgetData/music';
 import type { MediaSelection } from '@/lib/widgetData/media';
@@ -48,7 +48,7 @@ export function toJellyfinSessions(instance: IntegrationInstance, value: unknown
     }];
   });
 }
-const request = (instance: IntegrationInstance, path: string) => serviceJson<unknown>(instance, `${jellyfinPrefix(instance)}${path}`, { headers: jellyfinHeaders(instance) });
+const request = (instance: IntegrationInstance, path: string, options: { method?: 'POST' } = {}) => serviceJson<unknown>(instance, `${jellyfinPrefix(instance)}${path}`, { ...options, headers: jellyfinHeaders(instance) });
 const identity = (instance: IntegrationInstance) => ({ server: instance.type as MediaServer, name: instance.name, fetchedAt: Date.now() });
 export async function collectJellyfinNowPlaying(instance: IntegrationInstance): Promise<MediaNowPlayingResponse> {
   return { ...identity(instance), sessions: toJellyfinSessions(instance, await request(instance, '/Sessions?ActiveWithinSeconds=960')) };
@@ -142,30 +142,58 @@ export function toJellyfinMusicTrack(instance: IntegrationInstance, value: unkno
   const raw = object(value), item = toJellyfinItem(instance, value);
   if (!item || item.kind !== 'track') return undefined;
   return { id: item.id, title: item.title, artist: array(raw.Artists).map(string).filter(Boolean).join(' · ') || string(raw.AlbumArtist) || undefined,
-    album: string(raw.Album) || undefined, durationMs: item.durationMs,
+    album: string(raw.Album) || undefined, albumId: string(raw.AlbumId) || undefined, playedAt: date(object(raw.UserData).LastPlayedDate), durationMs: item.durationMs,
     cover: string(raw.AlbumId) ? `${jellyfinPrefix(instance)}/Items/${encodeURIComponent(string(raw.AlbumId))}/Images/Primary?maxWidth=600&quality=90` : undefined };
 }
 export async function collectJellyfinMusicNowPlaying(instance: IntegrationInstance): Promise<MusicNowPlayingResponse> {
   const data = await request(instance, '/Sessions?ActiveWithinSeconds=960');
   if (!Array.isArray(data)) throw new ServiceError('widgets.error.parse');
-  const sessions: MusicNowPlayingResponse['sessions'] = data.slice(0, 100).flatMap(value => {
+  const sessions: MusicNowPlayingResponse['sessions'] = (await Promise.all(data.slice(0, 100).map(async value => {
     const source = object(value), raw = object(source.NowPlayingItem), track = toJellyfinMusicTrack(instance, raw);
     if (!track) return [];
     const play = object(source.PlayState), stream = array(raw.MediaStreams).map(object).find(stream => stream.Type === 'Audio');
-    return [{ id: string(source.Id) || track.id, track, user: string(source.UserName) || undefined,
+    let next: MusicTrack[] = [];
+    const queue = array(source.NowPlayingQueue).map(object);
+    // PlaylistItemId disambiguates repeated tracks in a session queue.
+    const at = string(source.PlaylistItemId) ? queue.findIndex(item => item.PlaylistItemId === source.PlaylistItemId) : queue.findIndex(item => item.Id === track.id);
+    const ids = at < 0 ? [] : queue.slice(at + 1, at + 6).map(item => string(item.Id)).filter(Boolean);
+    if (ids.length) {
+      try {
+        const items = object(await request(instance, `/Items?Ids=${encodeURIComponent(ids.join(','))}&IncludeItemTypes=Audio&Fields=MediaSources&Limit=5`));
+        const mapped = new Map(array(items.Items).map(value => toJellyfinMusicTrack(instance, value)).filter((item): item is MusicTrack => !!item).map(item => [item.id, item]));
+        next = ids.flatMap(id => mapped.get(id) ? [mapped.get(id)!] : []);
+      } catch { /* Queue enrichment must not hide the active track. */ }
+    }
+    return [{ id: string(source.Id) || track.id, track, canControl: source.SupportsRemoteControl === true,
+      ...(next.length ? { next } : {}), user: string(source.UserName) || undefined,
       player: [string(source.Client), string(source.DeviceName)].filter(Boolean).join(' · ') || undefined,
       state: play.IsPaused === true ? 'paused' as const : 'playing' as const, positionMs: ticks(play.PositionTicks), quality: string(stream?.Codec).toUpperCase() || undefined }];
-  });
+  }))).flat();
   return { ...identity(instance), sessions };
 }
 // ProductionYear and ImageTags are ordinary DTO fields, not ItemFields enum values.
 const MUSIC_FIELDS = 'DateCreated,ChildCount';
+function musicItems(data: unknown) {
+  const items = object(data).Items;
+  if (!Array.isArray(items)) throw new ServiceError('widgets.error.parse');
+  return items;
+}
 async function jellyfinMusicAlbums(instance: IntegrationInstance, sort: 'DateCreated' | 'PlayCount' | 'DatePlayed', limit: number, offset = 0, user?: string) {
   const data = object(await request(instance, `${user ? `/Users/${encodeURIComponent(user)}/Items` : '/Items'}?IncludeItemTypes=MusicAlbum&Recursive=true&SortBy=${sort}&SortOrder=Descending&Limit=${limit}&StartIndex=${offset}&Fields=${MUSIC_FIELDS}&EnableUserData=true&ImageTypeLimit=1&EnableImageTypes=Primary`));
   if (!Array.isArray(data.Items)) throw new ServiceError('widgets.error.parse');
   return data.Items.map(value => toJellyfinMusicAlbum(instance, value)).filter((album): album is MusicAlbum => !!album);
 }
-export async function collectJellyfinMusicRecent(instance: IntegrationInstance, count: number): Promise<MusicRecentResponse> {
+export async function collectJellyfinMusicRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): Promise<MusicRecentResponse> {
+  if (content === 'albums') return { ...identity(instance), albums: await collectJellyfinMusicHistory(instance, count) };
+  if (content === 'tracks') {
+    const tracks: MusicTrack[] = [];
+    for (const user of await jellyfinMusicUsers(instance)) {
+      const data = object(await request(instance, `/Users/${encodeURIComponent(user)}/Items?IncludeItemTypes=Audio&Recursive=true&SortBy=DatePlayed&SortOrder=Descending&EnableUserData=true&Limit=${count}`));
+      tracks.push(...musicItems(data).map(value => toJellyfinMusicTrack(instance, value)).filter((item): item is MusicTrack => !!item && item.playedAt !== undefined));
+    }
+    const seen = new Set<string>();
+    return { ...identity(instance), albums: [], tracks: tracks.sort((a, b) => b.playedAt! - a.playedAt!).filter(item => !seen.has(item.id) && !!seen.add(item.id)).slice(0, count) };
+  }
   return { ...identity(instance), albums: (await jellyfinMusicAlbums(instance, 'DateCreated', count)).slice(0, count) };
 }
 async function jellyfinMusicUsers(instance: IntegrationInstance) {
@@ -221,4 +249,41 @@ export async function collectJellyfinMusicLibrary(instance: IntegrationInstance)
   const genres = genreCounts.sort((a, b) => b.count - a.count).slice(0, 8);
   // Audio duration requires traversing the entire track library; leave it absent.
   return { ...identity(instance), artists: optionalNumber(data.ArtistCount), albums: optionalNumber(data.AlbumCount), tracks: optionalNumber(data.SongCount), ...(genres.length ? { genres } : {}), ...week };
+}
+
+export function toJellyfinMusicPlaylist(instance: IntegrationInstance, value: unknown): MusicPlaylist | undefined {
+  const raw = object(value), id = string(raw.Id);
+  if (!id || raw.Type !== 'Playlist' || raw.MediaType && raw.MediaType !== 'Audio') return undefined;
+  return { id, name: string(raw.Name), trackCount: optionalNumber(raw.ChildCount), durationMs: ticks(raw.RunTimeTicks), changedAt: date(raw.DateLastSaved),
+    cover: object(raw.ImageTags).Primary ? `${jellyfinPrefix(instance)}/Items/${encodeURIComponent(id)}/Images/Primary?maxWidth=600&quality=90` : undefined };
+}
+export async function collectJellyfinMusicPlaylists(instance: IntegrationInstance, count: number) {
+  const data = object(await request(instance, `/Items?IncludeItemTypes=Playlist&MediaTypes=Audio&Recursive=true&Fields=ChildCount&Limit=${count}`));
+  return { ...identity(instance), playlists: musicItems(data).map(value => toJellyfinMusicPlaylist(instance, value)).filter((item): item is MusicPlaylist => !!item).slice(0, count) };
+}
+export async function collectJellyfinMusicTracks(instance: IntegrationInstance, kind: 'album' | 'playlist', id: string) {
+  const user = (await jellyfinMusicUsers(instance))[0];
+  const params = new URLSearchParams({ IncludeItemTypes: 'Audio', Recursive: 'true', Limit: '300', ...(user ? { UserId: user } : {}) });
+  if (kind === 'album') { params.set('ParentId', id); params.set('SortBy', 'ParentIndexNumber,IndexNumber'); params.set('SortOrder', 'Ascending'); }
+  const data = object(await request(instance, `${kind === 'album' ? '/Items' : `/Playlists/${encodeURIComponent(id)}/Items`}?${params}`));
+  return musicItems(data).map(value => toJellyfinMusicTrack(instance, value)).filter((item): item is MusicTrack => !!item).slice(0, 300);
+}
+export async function collectJellyfinMusicSearch(instance: IntegrationInstance, query: string): Promise<MusicSearchResponse> {
+  // Separate bounded queries give each category its own 20-result allowance.
+  const read = async (type: string) => musicItems(await request(instance, `/Items?searchTerm=${encodeURIComponent(query)}&IncludeItemTypes=${type}&MediaTypes=Audio&Recursive=true&Fields=ChildCount&Limit=20`));
+  const [tracks, albums, playlists] = await Promise.all([read('Audio'), read('MusicAlbum'), read('Playlist')]);
+  return { tracks: tracks.map(value => toJellyfinMusicTrack(instance, value)).filter((item): item is MusicTrack => !!item).slice(0, 20),
+    albums: albums.map(value => toJellyfinMusicAlbum(instance, value)).filter((item): item is MusicAlbum => !!item).slice(0, 20),
+    playlists: playlists.map(value => toJellyfinMusicPlaylist(instance, value)).filter((item): item is MusicPlaylist => !!item).slice(0, 20) };
+}
+export async function jellyfinMusicStreamPath(instance: IntegrationInstance, id: string) {
+  const user = (await jellyfinMusicUsers(instance))[0];
+  if (!user) throw new ServiceError('widgets.error.notFound', 404);
+  return `${jellyfinPrefix(instance)}/Audio/${encodeURIComponent(id)}/universal?${new URLSearchParams({ UserId: user, Container: 'mp3,flac,aac,m4a,ogg,opus', AudioCodec: 'aac', TranscodingContainer: 'mp3' })}`;
+}
+export async function controlJellyfinMusic(instance: IntegrationInstance, sessionId: string, action: MusicControlRequest['action']) {
+  const current = await collectJellyfinMusicNowPlaying(instance);
+  if (!current.sessions.some(session => session.id === sessionId && session.canControl)) throw new ServiceError('widgets.music.error.controlUnavailable', 403);
+  const commands = { playpause: 'PlayPause', next: 'NextTrack', previous: 'PreviousTrack' };
+  await request(instance, `/Sessions/${encodeURIComponent(sessionId)}/Playing/${commands[action]}`, { method: 'POST' });
 }

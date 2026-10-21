@@ -1,3 +1,4 @@
+import musicPlaylists from './music-playlists/view';
 import musicTop from './music-top/view';
 import musicLibrary from './music-library/view';
 import musicRecent from './music-recent/view';
@@ -87,6 +88,7 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'media-nowplaying': mediaNowPlaying,
   'media-recent': mediaRecent,
   'media-library': mediaLibrary,
+  'music-playlists': musicPlaylists,
   'music-top': musicTop,
   'music-library': musicLibrary,
   'music-recent': musicRecent,

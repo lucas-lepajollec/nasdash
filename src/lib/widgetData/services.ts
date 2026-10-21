@@ -1,6 +1,7 @@
 /** Server-only transport and instance helpers for saved LAN services. */
 import http from 'node:http';
 import https from 'node:https';
+import { Readable } from 'node:stream';
 import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { readConfig } from '@/lib/config';
@@ -43,10 +44,10 @@ export function getServiceInstance(integrationId: unknown, types: readonly strin
   const matching = (readConfig().integrations ?? []).filter(instance => types.includes(instance.type));
   return integrationId === undefined || integrationId === null ? matching[0] : matching.find(instance => instance.id === integrationId);
 }
-export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos' | 'photos-stats' | 'customapi' | 'media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | readonly ('media-nowplaying' | 'media-recent' | 'media-library')[], draft?: unknown) {
+export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos' | 'photos-stats' | 'customapi' | 'media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | 'music-playlists' | readonly ('media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | 'music-playlists')[], draft?: unknown) {
   const lookup = resolveWidgetSettings(request, widgetId, type, draft);
   if (!lookup.ok) return { response: NextResponse.json({ error: lookup.error }, { status: lookup.status }) };
-  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'photos' ? PHOTO_TYPES : type === 'photos-stats' ? PHOTO_STATS_TYPES : type === 'customapi' ? CUSTOM_API_TYPES : typeof type === 'string' && type.startsWith('music-') ? MUSIC_SERVER_TYPES : MEDIA_SERVER_TYPES;
+  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'photos' ? PHOTO_TYPES : type === 'photos-stats' ? PHOTO_STATS_TYPES : type === 'customapi' ? CUSTOM_API_TYPES : (typeof type === 'string' ? type.startsWith('music-') : type.every(value => value.startsWith('music-'))) ? MUSIC_SERVER_TYPES : MEDIA_SERVER_TYPES;
   if ((types === MEDIA_SERVER_TYPES && lookup.settings.integrationId !== undefined || types === MUSIC_SERVER_TYPES && lookup.settings.integrationId != null || types === PHOTO_STATS_TYPES && lookup.settings.integrationId != null) && (typeof lookup.settings.integrationId !== 'string' || !lookup.settings.integrationId)) throw new ServiceError('widgets.error.invalidSettings', 400);
   const instance = getServiceInstance(lookup.settings.integrationId, types) ?? demoVisitorInstance(lookup.settings.integrationId, types);
   if (!instance) return { response: NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404 }) };
@@ -255,4 +256,51 @@ export function demoLandscape(id: string): string {
   const sun = 120 + n % (w - 240);
   const horizon = h * 0.62;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="s" x2="0" y2="1"><stop stop-color="${sky}"/><stop offset="1" stop-color="${glow}"/></linearGradient></defs><path fill="url(#s)" d="M0 0h${w}v${h}H0z"/><circle fill="#fff7e0" opacity=".85" cx="${sun}" cy="${h * 0.24}" r="${w * 0.06}"/><path fill="${far}" opacity=".85" d="M0 ${horizon}L${w * 0.22} ${horizon - h * 0.22}L${w * 0.45} ${horizon - h * 0.06}L${w * 0.7} ${horizon - h * 0.28}L${w} ${horizon - h * 0.1}V${h}H0z"/><path fill="${near}" d="M0 ${horizon + h * 0.12}Q${w * 0.3} ${horizon - h * 0.02} ${w * 0.55} ${horizon + h * 0.1}T${w} ${horizon + h * 0.06}V${h}H0z"/></svg>`;
+}
+
+/** Audio transport: no redirects or size cap, six seconds for headers and
+ * thirty seconds of socket inactivity thereafter. Web-stream cancellation
+ * closes the upstream socket. Only allowlisted audio headers cross the proxy. */
+export async function serviceStream(instance: IntegrationInstance, path: string, headers: Record<string, string>, signal?: AbortSignal): Promise<Response> {
+  const url = new URL(serviceUrl(instance, path));
+  try {
+    return await new Promise<Response>((resolve, reject) => {
+      const req = (url.protocol === 'https:' ? https : http).request(url, {
+        headers: { 'User-Agent': 'NasDash', ...headers }, rejectUnauthorized: instance.settings.allowSelfSigned !== 'true',
+      });
+      const timer = setTimeout(() => req.destroy(new ServiceError('widgets.error.timeout', 504)), 6000);
+      const abort = () => req.destroy(new ServiceError('widgets.error.timeout', 504));
+      signal?.addEventListener('abort', abort, { once: true });
+      req.on('close', () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); });
+      req.on('error', reject);
+      req.setTimeout(30000, () => req.destroy(new ServiceError('widgets.error.timeout', 504)));
+      req.on('response', response => {
+        clearTimeout(timer);
+        try {
+          const status = response.statusCode ?? 502;
+          const safe = new Headers({ 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+          if (status === 416) {
+            const range = String(response.headers['content-range'] ?? '');
+            if (/^bytes \*\/\d+$/.test(range)) safe.set('Content-Range', range);
+            response.destroy(); resolve(new Response(null, { status, headers: safe })); return;
+          }
+          assertStatus(status);
+          if (status !== 200 && status !== 206) throw new ServiceError('widgets.error.parse');
+          const type = String(response.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();
+          if (!/^audio\/[a-z0-9.+-]+$/.test(type)) throw new ServiceError('widgets.error.parse');
+          safe.set('Content-Type', type);
+          const length = String(response.headers['content-length'] ?? ''), range = String(response.headers['content-range'] ?? '');
+          if (/^\d+$/.test(length)) safe.set('Content-Length', length);
+          if (response.headers['accept-ranges'] === 'bytes') safe.set('Accept-Ranges', 'bytes');
+          if (status === 206) {
+            if (!/^bytes \d+-\d+\/(?:\d+|\*)$/.test(range)) throw new ServiceError('widgets.error.parse');
+            safe.set('Content-Range', range); safe.set('Accept-Ranges', 'bytes');
+          }
+          resolve(new Response(Readable.toWeb(response) as ReadableStream<Uint8Array>, { status, headers: safe }));
+        } catch (error) { response.destroy(); reject(error); }
+      });
+      if (signal?.aborted) abort();
+      else req.end();
+    });
+  } catch (error) { transportError(error); }
 }

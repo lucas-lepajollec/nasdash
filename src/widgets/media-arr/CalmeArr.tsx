@@ -85,7 +85,7 @@ function useFigures(app: ArrAppStatus): [string, number | undefined, boolean][] 
 
 function AppTile({ app, parts }: { app: ArrAppStatus; parts: Parts }) {
   const { t, locale } = useI18n();
-  const number = useMemo(() => new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), [locale]);
+  const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const state = useAppState(app, parts.health);
   const figures = useFigures(app);
   return (
@@ -111,7 +111,7 @@ function AppTile({ app, parts }: { app: ArrAppStatus; parts: Parts }) {
 
 function AppRow({ app, parts }: { app: ArrAppStatus; parts: Parts }) {
   const { t, locale } = useI18n();
-  const number = useMemo(() => new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), [locale]);
+  const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const state = useAppState(app, parts.health);
   const figures = useFigures(app);
   const bytes = useByteFormat();

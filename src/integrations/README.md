@@ -246,3 +246,48 @@ Fictional provider samples and fetch-mocked tests live in `catalog/samples` and
 availability are not guaranteed; missing release dates remain announced.
 TMDB movie release dates use the provider's default date, without a regional
 release-date override. A released movie maps to the current (`airing`) state.
+
+## Music protocol contracts
+
+The music collectors map provider objects to the Music section in
+`src/lib/widgetData/contracts.ts`. Routes resolve saved-widget visibility on
+every request, replace covers with membership-protected image URLs, and
+register every returned track ID in a separate widget/connection/draft-scoped
+24-hour membership. Album and playlist IDs alone never grant stream access.
+Search is limited to 20 results per category; ordered album/playlist expansion
+is limited to 300 tracks. Playlist owner names follow the session-name opt-in.
+
+Subsonic `getAlbumList2` with `type=recent` is album history, not track history.
+The tracks mode returns HTTP 422 with `widgets.music.error.noTrackHistory`
+rather than claiming every track of a recent album was played. `getPlayQueue`
+is a client-saved queue: it is attached only for the configured account, a
+single unambiguous active session, and a matching current track. Clients that
+do not save queues (common with Navidrome clients) therefore have no `next`.
+Subsonic search3 does not search playlists; accessible playlist names are
+filtered locally. Plex playlist search also filters accessible playlist names
+(up to the first 1000); track/album search is scoped to music sections.
+
+Plex playback history uses numeric item type 10 (track), ordered by viewedAt;
+recent albums are deduplicated from at most 300 history tracks. Plex's next
+queue is omitted. A stream resolves the listed track's metadata and accepts
+only a local `/library/parts/…` path. Jellyfin/Emby queue IDs are resolved via
+Items and restored to queue order, using PlaylistItemId when available to
+identify repeated tracks. Per-user last-play dates are merged by latest date.
+Jellyfin/Emby stream and playlist expansion use the first account returned by
+Users, since an integration API key has no NasDash-user-to-media-user mapping.
+
+Audio transport never follows redirects. Provider authentication stays in
+headers (or the server-only Subsonic token query). The response body streams
+with backpressure and no byte cap, a six-second header deadline and a
+30-second socket inactivity timeout. Only audio MIME types and validated
+length/range headers leave the server. Browser cancellation closes upstream.
+The fictional demo generates a small PCM WAV locally and never contacts a
+provider, including for control actions.
+
+These mappings are fixture-tested; live compatibility still needs verification
+against the deployed Jellyfin/Emby versions (playlist visibility, queue fields,
+universal-audio codec/container negotiation), Plex history/part/composite paths,
+and Subsonic server/client queue support. Source references:
+[Subsonic API](https://subsonic.org/pages/api.jsp),
+[Jellyfin audio API](https://kotlin-sdk.jellyfin.org/dokka/jellyfin-api/org.jellyfin.sdk.api.operations/-audio-api/get-universal-audio-stream.html),
+[Plex Media Server API](https://developer.plex.tv/pms/).

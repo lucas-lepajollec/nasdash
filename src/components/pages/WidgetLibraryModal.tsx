@@ -156,7 +156,7 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
                     <button key={entry.type} type="button" className="nd-page-library-card" disabled={!!problem} onClick={() => add(entry)}>
                       <span className="nd-page-library-card-icon"><Emoji emoji={entry.icon} /></span>
                       <span className="nd-page-library-card-text">
-                        <strong>{t(entry.nameKey)}</strong>
+                        <strong>{t(entry.nameKey)}{entry.experimental && <span className="nd-page-library-badge">{t('pages.library.experimental')}</span>}</strong>
                         <span>{problem ?? t(entry.descriptionKey)}</span>
                       </span>
                     </button>

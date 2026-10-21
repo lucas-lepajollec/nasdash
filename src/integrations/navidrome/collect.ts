@@ -1,13 +1,13 @@
 /** Subsonic-compatible servers. Authenticated URLs exist only inside the transport. */
 import { createHash, randomBytes } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
-import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack } from '@/lib/widgetData/contracts';
+import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicTopResponse, MusicTrack, MusicPlaylist, MusicSearchResponse } from '@/lib/widgetData/contracts';
 import { array, assertStatus, date, number, object, serviceBytes, ServiceError, string } from '@/lib/widgetData/services';
 import { musicWeek, optionalMusicNumber } from '@/lib/widgetData/music';
 
-type Endpoint = 'ping' | 'getNowPlaying' | 'getAlbumList2' | 'getScanStatus' | 'getGenres' | 'getArtists' | 'getPlayQueue';
+type Endpoint = 'ping' | 'getNowPlaying' | 'getAlbumList2' | 'getScanStatus' | 'getGenres' | 'getArtists' | 'getPlayQueue' | 'getPlaylists' | 'getPlaylist' | 'getAlbum' | 'search3';
 /** Never put this path in membership, a response or an error. No redirects, including same-origin ones. */
-function authenticatedPath(instance: IntegrationInstance, path: string) {
+export function navidromeAuthenticatedPath(instance: IntegrationInstance, path: string) {
   const url = new URL(path, 'http://subsonic.invalid');
   const salt = randomBytes(16).toString('hex');
   const token = createHash('md5').update((instance.secrets?.password ?? '') + salt).digest('hex');
@@ -15,7 +15,7 @@ function authenticatedPath(instance: IntegrationInstance, path: string) {
   return `${url.pathname}?${url.searchParams}`;
 }
 export async function navidromeRequest(instance: IntegrationInstance, endpoint: Endpoint, params: Record<string, string> = {}) {
-  const answer = await serviceBytes(instance, authenticatedPath(instance, `/rest/${endpoint}?${new URLSearchParams(params)}`), {}, 2 * 1024 * 1024);
+  const answer = await serviceBytes(instance, navidromeAuthenticatedPath(instance, `/rest/${endpoint}?${new URLSearchParams(params)}`), {}, 2 * 1024 * 1024);
   assertStatus(answer.status);
   let value: unknown;
   try { value = JSON.parse(answer.bytes.toString('utf8')); } catch { throw new ServiceError('widgets.error.parse'); }
@@ -31,14 +31,14 @@ export async function navidromeRequest(instance: IntegrationInstance, endpoint: 
 /** Only a previously returned, credential-free getCoverArt path can reach this transport. */
 export function navidromeCoverBytes(instance: IntegrationInstance, path: string) {
   if (!/^\/rest\/getCoverArt\?id=[^&]+&size=600$/.test(path)) throw new ServiceError('widgets.error.notFound', 404);
-  return serviceBytes(instance, authenticatedPath(instance, path), {}, 8 * 1024 * 1024);
+  return serviceBytes(instance, navidromeAuthenticatedPath(instance, path), {}, 8 * 1024 * 1024);
 }
 const cover = (id: unknown) => string(id) ? `/rest/getCoverArt?${new URLSearchParams({ id: string(id), size: '600' })}` : undefined;
 const identity = (instance: IntegrationInstance) => ({ server: 'navidrome' as const, name: instance.name, fetchedAt: Date.now() });
 export function toNavidromeTrack(value: unknown): MusicTrack | undefined {
   const item = object(value), id = string(item.id);
   if (!id) return undefined;
-  return { id, title: string(item.title), artist: string(item.artist) || undefined, album: string(item.album) || undefined,
+  return { id, title: string(item.title), artist: string(item.artist) || undefined, album: string(item.album) || undefined, albumId: string(item.albumId) || undefined, playedAt: date(item.played),
     durationMs: optionalMusicNumber(item.duration) === undefined ? undefined : number(item.duration) * 1000, cover: cover(item.coverArt) };
 }
 export function toNavidromeAlbum(value: unknown): MusicAlbum | undefined {
@@ -53,8 +53,43 @@ async function albumList(instance: IntegrationInstance, type: 'newest' | 'freque
   if (!data.albumList2 || list.album !== undefined && !Array.isArray(list.album)) throw new ServiceError('widgets.error.parse');
   return array(list.album).map(toNavidromeAlbum).filter((album): album is MusicAlbum => !!album);
 }
-export async function collectNavidromeRecent(instance: IntegrationInstance, count: number): Promise<MusicRecentResponse> {
-  return { ...identity(instance), albums: await albumList(instance, 'newest', count) };
+/** Navidrome's own API (its web player's) keeps when each track was played; Subsonic does not. Tokens kept an hour. */
+const nativeTokens = new Map<string, { token: string; until: number }>();
+async function navidromeNative(instance: IntegrationInstance, path: string): Promise<unknown> {
+  const key = `${instance.id}:${instance.settings.url}:${instance.settings.username}`;
+  let session = nativeTokens.get(key);
+  if (!session || session.until < Date.now()) {
+    const login = await serviceBytes(instance, '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: instance.settings.username ?? '', password: instance.secrets?.password ?? '' }) }, 65536);
+    if (login.status === 401 || login.status === 403) throw new ServiceError('integrations.error.authentication');
+    // Gonic, Airsonic and other Subsonic servers have no such API.
+    if (login.status === 404 || login.status === 405) throw new ServiceError('widgets.music.error.noTrackHistory', 422);
+    assertStatus(login.status);
+    const token = string(object(JSON.parse(login.bytes.toString('utf8') || '{}')).token);
+    if (!token) throw new ServiceError('widgets.music.error.noTrackHistory', 422);
+    session = { token, until: Date.now() + 3_600_000 };
+    nativeTokens.set(key, session);
+  }
+  const answer = await serviceBytes(instance, path, { headers: { 'x-nd-authorization': `Bearer ${session.token}` } }, 2 * 1024 * 1024);
+  if (answer.status === 401) { nativeTokens.delete(key); throw new ServiceError('integrations.error.authentication'); }
+  assertStatus(answer.status);
+  try { return JSON.parse(answer.bytes.toString('utf8')); } catch { throw new ServiceError('widgets.error.parse'); }
+}
+/** Tracks played lately, newest first (Navidrome only). */
+export async function navidromePlayedTracks(instance: IntegrationInstance, count: number): Promise<MusicTrack[]> {
+  const data = await navidromeNative(instance, `/api/song?${new URLSearchParams({ _start: '0', _end: String(count), _sort: 'play_date', _order: 'DESC' })}`);
+  if (!Array.isArray(data)) throw new ServiceError('widgets.error.parse');
+  return data.map(object).filter(item => date(item.playDate) !== undefined).map(item => ({
+    id: string(item.id), title: string(item.title), artist: string(item.artist) || undefined, album: string(item.album) || undefined, albumId: string(item.albumId) || undefined,
+    durationMs: optionalMusicNumber(item.duration) === undefined ? undefined : number(item.duration) * 1000, playedAt: date(item.playDate), cover: cover(item.albumId || item.id),
+  })).filter(track => !!track.id);
+}
+/** Forget native sessions (tests). */
+export function clearNavidromeSessions() { nativeTokens.clear(); }
+export async function collectNavidromeRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): Promise<MusicRecentResponse> {
+  // Subsonic exposes recent albums, not track history. Expanding those albums
+  // would mislabel unplayed tracks as played, so report the unsupported mode.
+  if (content === 'tracks') return { ...identity(instance), albums: [], tracks: await navidromePlayedTracks(instance, count) };
+  return { ...identity(instance), albums: await albumList(instance, content === 'albums' ? 'recent' : 'newest', count) };
 }
 export async function collectNavidromeTop(instance: IntegrationInstance, count: number): Promise<MusicTopResponse> {
   return { ...identity(instance), albums: await albumList(instance, 'frequent', count) };
@@ -106,4 +141,34 @@ export async function collectNavidromeLibrary(instance: IntegrationInstance): Pr
   }
   return { ...identity(instance), artists: unique.length, ...(complete ? { albums: albums.size } : {}),
     tracks: status.scanning === false ? optionalMusicNumber(status.count) : undefined, genres, ...week };
+}
+
+export function toNavidromePlaylist(value: unknown): MusicPlaylist | undefined {
+  const item = object(value), id = string(item.id);
+  if (!id) return undefined;
+  return { id, name: string(item.name), trackCount: optionalMusicNumber(item.songCount),
+    durationMs: optionalMusicNumber(item.duration) === undefined ? undefined : number(item.duration) * 1000,
+    owner: string(item.owner) || undefined, changedAt: date(item.changed), cover: cover(item.coverArt) };
+}
+/** Empty lists may omit entries, but a missing endpoint envelope is malformed. */
+function musicEntries(data: Record<string, unknown>, envelope: string, field: string) {
+  const container = object(data[envelope]), entries = container[field];
+  if (!data[envelope] || entries !== undefined && !Array.isArray(entries)) throw new ServiceError('widgets.error.parse');
+  return array(entries);
+}
+export async function collectNavidromePlaylists(instance: IntegrationInstance, count: number) {
+  const data = await navidromeRequest(instance, 'getPlaylists');
+  return { ...identity(instance), playlists: musicEntries(data, 'playlists', 'playlist').map(toNavidromePlaylist).filter((item): item is MusicPlaylist => !!item).slice(0, count) };
+}
+export async function collectNavidromeTracks(instance: IntegrationInstance, kind: 'album' | 'playlist', id: string) {
+  const data = await navidromeRequest(instance, kind === 'album' ? 'getAlbum' : 'getPlaylist', { id });
+  return musicEntries(data, kind, kind === 'album' ? 'song' : 'entry').slice(0, 300).map(toNavidromeTrack).filter((item): item is MusicTrack => !!item);
+}
+export async function collectNavidromeSearch(instance: IntegrationInstance, query: string): Promise<MusicSearchResponse> {
+  const [data, lists] = await Promise.all([navidromeRequest(instance, 'search3', { query, artistCount: '0', albumCount: '20', songCount: '20' }), collectNavidromePlaylists(instance, 1000)]);
+  const songs = musicEntries(data, 'searchResult3', 'song'), albums = musicEntries(data, 'searchResult3', 'album');
+  // search3 has no playlist results; search the accessible playlist names locally.
+  return { tracks: songs.map(toNavidromeTrack).filter((item): item is MusicTrack => !!item).slice(0, 20),
+    albums: albums.map(toNavidromeAlbum).filter((item): item is MusicAlbum => !!item).slice(0, 20),
+    playlists: lists.playlists.filter(item => item.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).slice(0, 20) };
 }

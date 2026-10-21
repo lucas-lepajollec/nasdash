@@ -1,7 +1,7 @@
 import { defineWidget } from '../define';
 
 export default defineWidget({
-  type: 'media-arr', group: 'media', icon: '🧭',
+  type: 'media-arr', group: 'downloads', icon: '🧭',
   nameKey: 'widget.media-arr.name', descriptionKey: 'widget.media-arr.description',
   // Part of the media stack: viewers need the Media permission.
   access: { permission: 'media' }, settingsTab: 'widget-arr',

@@ -8,6 +8,7 @@ import { CalmeRow, CalmeSlider } from '@/components/modals/settings/shared/Calme
 import { CalmeWidget } from '../calme';
 import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { Cover, MusicServerField, MusicSetup, useMusicConnection } from '@/components/widgets/music/shared';
+import { musicPlayer, PlayButton, useCanPlay } from '@/components/widgets/music/player';
 
 /** The albums played most (all time: the servers keep no count per period), ranked. */
 export default function CalmeMusicTop({ widgetId, settings = {}, editMode, isVisible, onUpdateSettings }: {
@@ -17,9 +18,10 @@ export default function CalmeMusicTop({ widgetId, settings = {}, editMode, isVis
   const connection = useMusicConnection(settings);
   const { data, error, mutate, stale } = useWidgetData<MusicTopResponse>('/api/widgets/music/top', widgetId, settings, { refreshMs: 15 * 60_000, isVisible, method: 'GET', enabled: !!connection });
   const [box, width] = useBoxWidth<HTMLDivElement>();
-  const number = useMemo(() => new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), [locale]);
+  const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const title = t('widget.music-top.name');
   const albums = data?.albums ?? [];
+  const canPlay = useCanPlay();
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={data ? <span className="ndc-title-note">{data.name}</span> : undefined}>
@@ -52,6 +54,7 @@ export default function CalmeMusicTop({ widgetId, settings = {}, editMode, isVis
                             <span className="ndw-media-title">{album.title}</span>
                             {album.artist && <span className="ndw-media-sub">{album.artist}</span>}
                           </span>
+                          {canPlay && <PlayButton label={t('widgets.music.playOne', { name: album.title })} playingKey={`album:${album.id}`} onPlay={() => void musicPlayer.playCollection(widgetId, 'album', album.id)} />}
                           {album.plays !== undefined && (
                             <span className="ndw-mx-end">
                               <span className="ndw-mx-when">{number.format(album.plays)}</span>

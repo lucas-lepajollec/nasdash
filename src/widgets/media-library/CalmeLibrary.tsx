@@ -29,7 +29,7 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
   const connection = useMediaConnection(settings);
   const { data, error, mutate, stale } = useWidgetData<MediaLibraryResponse>('/api/widgets/media/library', widgetId, settings, { refreshMs: 15 * 60_000, isVisible, method: 'GET', enabled: !!connection });
   const [box, width] = useBoxWidth<HTMLDivElement>();
-  const number = useMemo(() => ({ full: new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), short: new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }) }), [locale]);
+  const number = useMemo(() => ({ full: new Intl.NumberFormat(locale), short: new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }) }), [locale]);
   const title = t('widget.media-library.name');
   const chosen = Array.isArray(settings.counts) ? COUNTS.filter(id => (settings.counts as unknown[]).includes(id)) : [...COUNTS];
   // Zero totals hidden unless the widget keeps them.

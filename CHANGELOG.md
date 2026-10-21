@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Music playlists, album/playlist tracks, search and recently played tracks/albums, with widget-scoped audio streaming and HTTP Range support for signed-in Media readers; administrator session controls for Jellyfin/Emby, resolved next-track queues, and offline fictional playlists/search/WAV playback. Subsonic recently played tracks explicitly return an unsupported-history error.
+
 - Music widget data for Jellyfin, Emby, Plex and Subsonic-compatible servers (Navidrome, Gonic, Airsonic): current tracks, recent albums, library statistics and all-time top albums, with private cover proxies, opt-in account names and offline fictional demos.
 
 - Photo library statistics for Immich, PhotoPrism, Piwigo and LibrePhotos, with cached totals, optional storage and history, per-account names only when explicitly enabled, and offline fictional demo data. Piwigo and LibrePhotos use saved account sessions in the Photos integrations section.
@@ -26,10 +28,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Recently played**: how many titles to show (1–12), three list sizes, time left inside the picture.
 - **Media library**: covers drawn at random from the whole library (no longer the last batch added), larger, crossfading, three card sizes.
 - **\*arr status** and **Indexers** redrawn: quiet tiles with figures over their labels, one line per indexer. The queue's last imports use the queue's rows.
+- **Music playback** in the browser for signed-in users: play an album, a playlist or a track from any music widget; **Listening** shows it with its controls, seek and queue, searches tracks, albums and playlists to play, and steers Jellyfin/Emby players (administrators). New **Playlists** widget. **Recent albums** can show albums or tracks played lately (Navidrome through its own API). Audio is relayed through NasDash with range requests; nothing plays for anonymous visitors.
+- Widget library: a **Downloads** section (queue, download clients, indexers, *arr status) apart from Media; the custom API widget is marked **experimental**.
 - **Music** widgets (new Music group): **Listening** (the track over a blur of its cover, progress, what comes next; at rest the albums played lately), **Recent albums** (covers or list), **Music library** (artists, albums, tracks, hours, genres, albums of the week) and **Most played**. Sources: Jellyfin, Emby, Plex and a new **Navidrome** connection (Subsonic API: also Gonic, Airsonic), with token authentication kept on the server.
 - **Download queue**: pause and resume an item from the widget (administrators), through the saved download client that holds it.
 - Loading feedback: action buttons spin until the client answers; Coming soon says when it is reading the library and catalogues, and catalogue searches show they are running.
-- **\*arr status** can hide its issues; **Indexers** lists open without a rule and breathe more; **Photo stats** says which Immich key permissions are missing (administrators), years as labelled columns, the month's additions as a curve; numbers group digits from five (2919, 12,345).
+- **\*arr status** can hide its issues; **Indexers** lists open without a rule and breathe more; **Photo stats** says which Immich key permissions are missing (administrators), years as labelled columns, the month's additions as a curve; numbers follow the interface language's grouping.
 - **Photo library stats** widget (Immich, PhotoPrism, and new **Piwigo** and **LibrePhotos** connections): photos, videos, albums, people, places, favorites, storage, photos per year taken, the last 30 days' additions and, when allowed, per account. A scoped Immich key shows what it may read, flagged as partial.
 - **Downloads**: pause and resume a download or the whole client (administrators), on qBittorrent, Transmission, Deluge, SABnzbd and NZBGet.
 - **\*arr status**: free space per media root folder (where the library lives, not the app's own disk), tiles or rows, parts to show; health checks folded into a count. **Indexers**: figures, requests per hour and the list each optional, indexers per page with pages. **Download queue**: progress under the title, share and time on the right, totals only above several titles, pages; the last imports leave out files deleted since.

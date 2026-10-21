@@ -748,6 +748,12 @@
           "h": 320
         },
         {
+          "id": "music-playlists-demo",
+          "type": "music-playlists",
+          "settings": { "integrationId": "navidrome-demo" },
+          "x": 0, "y": 4354, "w": 12, "h": 320
+        },
+        {
           "id": "music-top-demo",
           "type": "music-top",
           "settings": {

@@ -1,3 +1,4 @@
+import musicPlaylists from './music-playlists/definition';
 import musicTop from './music-top/definition';
 import musicLibrary from './music-library/definition';
 import musicRecent from './music-recent/definition';
@@ -64,7 +65,7 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // Content
   mediaNowPlaying, mediaRecent, mediaLibrary, mediaUpcoming, mediaQueue, mediaDownloads, mediaIndexers, mediaArr,
   // Music
-  musicNowPlaying, musicRecent, musicLibrary, musicTop,
+  musicNowPlaying, musicRecent, musicLibrary, musicTop, musicPlaylists,
   // Content
   rss, markets, quotes, photos, photosStats, bookmarks, customapi,
   // Gadgets

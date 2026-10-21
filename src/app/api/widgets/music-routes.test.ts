@@ -12,13 +12,14 @@ vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: [], allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
 vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceBytes: vi.fn(), serviceJson: vi.fn() }));
-vi.mock('@/integrations/navidrome/collect', async original => ({ ...await original<typeof import('@/integrations/navidrome/collect')>(), collectNavidromeNowPlaying: vi.fn(), collectNavidromeRecent: vi.fn(), collectNavidromeLibrary: vi.fn(), collectNavidromeTop: vi.fn(), collectNavidromeHistory: vi.fn() }));
+vi.mock('@/integrations/navidrome/collect', async original => ({ ...await original<typeof import('@/integrations/navidrome/collect')>(), collectNavidromeNowPlaying: vi.fn(), collectNavidromeRecent: vi.fn(), collectNavidromeLibrary: vi.fn(), collectNavidromeTop: vi.fn(), collectNavidromeHistory: vi.fn(), collectNavidromePlaylists: vi.fn() }));
 import { GET as nowGet } from './music/now-playing/route';
 import { GET as recentGet } from './music/recent/route';
 import { GET as libraryGet } from './music/library/route';
+import { GET as playlistsGet } from './music/playlists/route';
 import { GET as topGet } from './music/top/route';
 import { GET as imageGet } from './media/image/route';
-import { collectNavidromeHistory, collectNavidromeLibrary, collectNavidromeNowPlaying, collectNavidromeRecent, collectNavidromeTop } from '@/integrations/navidrome/collect';
+import { collectNavidromePlaylists, collectNavidromeHistory, collectNavidromeLibrary, collectNavidromeNowPlaying, collectNavidromeRecent, collectNavidromeTop } from '@/integrations/navidrome/collect';
 import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { serviceBytes, serviceJson } from '@/lib/widgetData/services';
 import { NO_ACCESS } from '@/lib/permissions';
@@ -27,7 +28,7 @@ const get = (query = 'widgetId=w') => new NextRequest(`https://nasdash.example.c
 const image = (path: string) => new NextRequest(new URL(path, 'https://nasdash.example.com'));
 const saved = () => state.pages[0].widgets[0].settings;
 const setType = (type: string) => { state.pages[0].widgets[0].type = type; };
-const routes = [nowGet, recentGet, libraryGet, topGet];
+const routes = [nowGet, recentGet, libraryGet, topGet, playlistsGet];
 let serial = 0;
 let album: MusicAlbum;
 let playing: MusicNowPlayingResponse;
@@ -42,6 +43,7 @@ beforeEach(() => {
   vi.mocked(collectNavidromeTop).mockResolvedValue({ server: 'navidrome', name: 'Fictional Music', albums: [album], fetchedAt: 1 });
   vi.mocked(collectNavidromeLibrary).mockResolvedValue({ server: 'navidrome', name: 'Fictional Music', albums: 210, week: [album], weekCount: 1, fetchedAt: 1 });
   vi.mocked(collectNavidromeHistory).mockResolvedValue([album]);
+  vi.mocked(collectNavidromePlaylists).mockResolvedValue({ server: 'navidrome', name: 'Fictional Music', playlists: [{ id: 'playlist', name: 'Quiet mornings', cover: album.cover }], fetchedAt: 1 });
   vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from('fictional-raster'), contentType: 'image/webp', status: 200 });
 });
 
@@ -82,7 +84,7 @@ describe('music routes and privacy', () => {
   it.each([['music-recent', recentGet, 12], ['music-top', topGet, 6]] as const)('treats null settings as absent for %s', async (type, route, count) => {
     setType(type); saved().integrationId = null; saved().count = null;
     expect((await route(get())).status).toBe(200);
-    expect(type === 'music-top' ? collectNavidromeTop : collectNavidromeRecent).toHaveBeenCalledWith(state.instances[0], count);
+    expect(type === 'music-top' ? collectNavidromeTop : collectNavidromeRecent).toHaveBeenCalledWith(state.instances[0], count, ...(type === 'music-top' ? [] : ['added']));
   });
   it.each([['count', 3], ['count', 41], ['count', '12'], ['count', 4.5], ['integrationId', 4], ['integrationId', '']])('rejects invalid recent %s=%s', async (field, value) => {
     setType('music-recent'); saved()[field as string] = value;
@@ -125,7 +127,7 @@ describe('music routes and privacy', () => {
 describe('music cover membership', () => {
   it.each(MUSIC_WIDGET_TYPES)('serves only covers returned to that exact %s widget', async type => {
     setType(type); const route = routes[MUSIC_WIDGET_TYPES.indexOf(type)], result = await (await route(get())).json();
-    const cover = type === 'music-nowplaying' ? result.sessions[0].track.cover : type === 'music-library' ? result.week[0].cover : result.albums[0].cover;
+    const cover = type === 'music-nowplaying' ? result.sessions[0].track.cover : type === 'music-library' ? result.week[0].cover : type === 'music-playlists' ? result.playlists[0].cover : result.albums[0].cover;
     const response = await imageGet(image(cover)); expect(response.status).toBe(200); expect(response.headers.get('content-type')).toBe('image/webp');
     const query = new URL(vi.mocked(serviceBytes).mock.calls[0][1], 'http://fixture').searchParams;
     expect(query.get('id')).toBe('album'); expect(query.get('u')).toBe('alex'); expect(query.get('t')).toMatch(/^[a-f0-9]{32}$/); expect(query.get('size')).toBe('600');
@@ -160,7 +162,7 @@ describe('offline demos and week boundaries', () => {
     state.demo = true; setType(type);
     const result = await (await routes[MUSIC_WIDGET_TYPES.indexOf(type)](get())).json();
     expect(result.server).toBe('navidrome');
-    const cover = type === 'music-nowplaying' ? result.sessions[0].track.cover : type === 'music-library' ? result.week[0].cover : result.albums[0].cover;
+    const cover = type === 'music-nowplaying' ? result.sessions[0].track.cover : type === 'music-library' ? result.week[0].cover : type === 'music-playlists' ? result.playlists[0].cover : result.albums[0].cover;
     expect((await imageGet(image(cover))).headers.get('content-type')).toBe('image/svg+xml');
     for (const collect of [collectNavidromeNowPlaying, collectNavidromeRecent, collectNavidromeLibrary, collectNavidromeTop, serviceJson, serviceBytes]) expect(collect).not.toHaveBeenCalled();
   });
@@ -186,10 +188,12 @@ it.each(['jellyfin', 'emby', 'plex'])('dispatches all music routes and cover req
       if (path === '/') return plexMusic.identity;
       if (path === '/status/sessions') return plexMusic.sessions;
       if (path === '/library/sections') return plexMusic.sections;
+      if (path.startsWith('/playlists?')) return { MediaContainer: { Metadata: [{ ratingKey: 'playlist', type: 'playlist', playlistType: 'audio', title: 'Quiet mornings', thumb: '/library/metadata/album-1/thumb/1' }] } };
       if (path.includes('/genre?')) return plexMusic.genres;
       if (path.includes('Size=0')) return { MediaContainer:{totalSize:2} };
       return plexMusic.albums;
     }
+    if (path.includes('IncludeItemTypes=Playlist')) return { Items: [{ Id: 'playlist', Type: 'Playlist', MediaType: 'Audio', Name: 'Quiet mornings', ImageTags: { Primary: 'tag' } }] };
     if (path.includes('/Sessions?')) return jellyfinMusic.sessions;
     if (path.endsWith('/Users')) return jellyfinMusic.users;
     if (path.endsWith('/Counts')) return jellyfinMusic.counts;
@@ -200,7 +204,7 @@ it.each(['jellyfin', 'emby', 'plex'])('dispatches all music routes and cover req
     setType(widgetType); const response = await routes[index](get()); expect(response.status).toBe(200);
     const result = await response.json(); expect(result.server).toBe(type);
     if (widgetType !== 'music-library') {
-      const cover = index === 0 ? result.sessions[0].track.cover : result.albums[0].cover;
+      const cover = index === 0 ? result.sessions[0].track.cover : widgetType === 'music-playlists' ? result.playlists[0].cover : result.albums[0].cover;
       expect((await imageGet(image(cover))).status).toBe(200);
     }
   }

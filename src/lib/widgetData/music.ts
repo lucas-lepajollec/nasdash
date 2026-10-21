@@ -1,10 +1,11 @@
 /** Shared music validation, image membership and offline fictional data. */
+import { createHash } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
-import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicServer, MusicTopResponse, MusicTrack } from './contracts';
+import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicServer, MusicTopResponse, MusicTrack, MusicPlaylist, MusicSearchResponse } from './contracts';
 import { proxyMediaItem } from './media';
-import { ServiceError } from './services';
+import { serviceIdentity, ServiceError } from './services';
 
-export const MUSIC_WIDGET_TYPES = ['music-nowplaying', 'music-recent', 'music-library', 'music-top'] as const;
+export const MUSIC_WIDGET_TYPES = ['music-nowplaying', 'music-recent', 'music-library', 'music-top', 'music-playlists'] as const;
 export type MusicWidgetType = typeof MUSIC_WIDGET_TYPES[number];
 export const optionalMusicNumber = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
 export function musicCount(settings: Record<string, unknown>, top = false) {
@@ -12,7 +13,12 @@ export function musicCount(settings: Record<string, unknown>, top = false) {
   if (typeof count !== 'number' || !Number.isInteger(count) || count < (top ? 3 : 4) || count > (top ? 20 : 40)) throw new ServiceError('widgets.error.invalidSettings', 400);
   return count;
 }
-export function proxyMusicItem<T extends MusicAlbum | MusicTrack>(instance: IntegrationInstance, widgetId: string, value: T, admin: boolean, draft?: Record<string, unknown>): T {
+/** Playlist owners follow the same opt-in account-name policy as sessions. */
+export function musicPlaylistPrivacy(item: MusicPlaylist, showUsers: boolean): MusicPlaylist {
+  const { owner, ...safe } = item;
+  return { ...safe, ...(showUsers && owner ? { owner } : {}) };
+}
+export function proxyMusicItem<T extends MusicAlbum | MusicTrack | MusicPlaylist>(instance: IntegrationInstance, widgetId: string, value: T, admin: boolean, draft?: Record<string, unknown>): T {
   const { cover, ...item } = value;
   const { poster, ...safe } = proxyMediaItem(instance, widgetId, { ...item, poster: cover }, admin, draft);
   return { ...safe, ...(poster ? { cover: poster } : {}) } as unknown as T;
@@ -37,11 +43,55 @@ export const demoMusicAlbums = (count: number): MusicAlbum[] => Array.from({ len
 }));
 export function demoMusicNowPlaying(instance: IntegrationInstance): MusicNowPlayingResponse {
   return { ...identity(instance), sessions: [{ id: 'demo-music-session', user: 'Alex', player: 'Music Web · Study', state: 'playing', positionMs: 74000, quality: 'FLAC',
-    track: { id: 'demo-track', title: 'The Glass Meridian', artist: artists[0], album: titles[0], durationMs: 234000, cover: 'demo:music:0' },
+    canControl: instance.type === 'jellyfin' || instance.type === 'emby',
+    track: { id: 'demo-track', albumId: 'demo-music-0', title: 'The Glass Meridian', artist: artists[0], album: titles[0], durationMs: 234000, cover: 'demo:music:0' },
     next: [{ id: 'demo-next', title: 'Aerial Seeds', artist: artists[0], album: titles[0], durationMs: 198000, cover: 'demo:music:0' }] }] };
 }
-export function demoMusicRecent(instance: IntegrationInstance, count: number): MusicRecentResponse { return { ...identity(instance), albums: demoMusicAlbums(count) }; }
+export function demoMusicRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): MusicRecentResponse { return { ...identity(instance), albums: content === 'tracks' ? [] : demoMusicAlbums(count), ...(content === 'tracks' ? { tracks: demoMusicTracks(count) } : {}) }; }
 export function demoMusicTop(instance: IntegrationInstance, count: number): MusicTopResponse { return { ...identity(instance), albums: demoMusicAlbums(count) }; }
 export function demoMusicLibrary(instance: IntegrationInstance): MusicLibraryResponse {
   return { ...identity(instance), artists: 96, albums: 210, tracks: 2640, durationMs: 601920000, genres: [{ name: 'Ambient', count: 72 }, { name: 'Jazz', count: 46 }, { name: 'Electronic', count: 39 }], week: demoMusicAlbums(7), weekCount: 7 };
+}
+
+const tracks = new Map<string, number>();
+function trackScope(instance: IntegrationInstance, widgetId: string, id: string, draft?: Record<string, unknown>) {
+  return JSON.stringify([serviceIdentity(instance), widgetId, draft ? createHash('sha256').update(JSON.stringify(draft)).digest('hex') : '', id]);
+}
+export function rememberMusicTrack(instance: IntegrationInstance, widgetId: string, id: string, draft?: Record<string, unknown>) {
+  const key = trackScope(instance, widgetId, id, draft);
+  tracks.delete(key); tracks.set(key, Date.now() + 86400000);
+  while (tracks.size > 20000) tracks.delete(tracks.keys().next().value!);
+}
+export function knownMusicTrack(instance: IntegrationInstance, widgetId: string, id: string, draft?: Record<string, unknown>) {
+  const key = trackScope(instance, widgetId, id, draft), until = tracks.get(key);
+  if (!until || until <= Date.now()) { tracks.delete(key); return false; }
+  return true;
+}
+export function musicContent(settings: Record<string, unknown>): 'added' | 'albums' | 'tracks' {
+  const content = settings.content ?? 'added';
+  if (content !== 'added' && content !== 'albums' && content !== 'tracks') throw new ServiceError('widgets.error.invalidSettings', 400);
+  return content;
+}
+export const demoMusicTracks = (count = 8): MusicTrack[] => Array.from({ length: count }, (_, n) => ({ id: `demo-song-${n}`, title: ['The Glass Meridian', 'Aerial Seeds', 'Soft Geometry', 'Moonlit Maps'][n % 4], artist: artists[n % 4], album: titles[n % 6], albumId: `demo-music-${n % 6}`, durationMs: 198000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, cover: `demo:music:${n % 6}` }));
+export const demoMusicPlaylists = (instance: IntegrationInstance, count: number) => ({ ...identity(instance), playlists: Array.from({ length: Math.min(count, 4) }, (_, n): MusicPlaylist => ({ id: `demo-playlist-${n}`, name: ['Quiet mornings', 'Night signals', 'Garden radio', 'Copper evenings'][n], trackCount: 8, durationMs: 1584000, cover: `demo:music:${n}`, owner: 'Alex' })) });
+export function demoMusicSearch(instance: IntegrationInstance, query: string): MusicSearchResponse {
+  const matches = (value: string) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
+  return { tracks: demoMusicTracks(20).filter(item => matches([item.title, item.artist, item.album].join(' '))), albums: demoMusicAlbums(20).filter(item => matches([item.title, item.artist].join(' '))), playlists: demoMusicPlaylists(instance, 4).playlists.filter(item => matches(item.name)) };
+}
+/** 250 ms of generated mono PCM silence: no network or shipped media file. */
+export function demoMusicAudio(range: string | null): Response {
+  const wav = Buffer.alloc(44 + 4000);
+  wav.write('RIFF', 0); wav.writeUInt32LE(wav.length - 8, 4); wav.write('WAVEfmt ', 8); wav.writeUInt32LE(16, 16); wav.writeUInt16LE(1, 20); wav.writeUInt16LE(1, 22); wav.writeUInt32LE(8000, 24); wav.writeUInt32LE(16000, 28); wav.writeUInt16LE(2, 32); wav.writeUInt16LE(16, 34); wav.write('data', 36); wav.writeUInt32LE(4000, 40);
+  const headers = new Headers({ 'Cache-Control': 'private, no-store', 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'X-Content-Type-Options': 'nosniff' });
+  let start = 0, end = wav.length - 1;
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match || !match[1] && !match[2]) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${wav.length}`, 'Cache-Control': 'private, no-store' } });
+    start = match[1] ? Number(match[1]) : Math.max(0, wav.length - Number(match[2]));
+    end = match[1] && match[2] ? Math.min(end, Number(match[2])) : end;
+    if (start > end || !Number.isSafeInteger(start) || !Number.isSafeInteger(end)) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${wav.length}`, 'Cache-Control': 'private, no-store' } });
+    headers.set('Content-Range', `bytes ${start}-${end}/${wav.length}`);
+  }
+  const data = new Uint8Array(wav.subarray(start, end + 1)); headers.set('Content-Length', String(data.length));
+  return new Response(data, { status: range ? 206 : 200, headers });
 }

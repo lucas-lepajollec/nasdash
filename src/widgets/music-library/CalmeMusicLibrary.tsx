@@ -19,7 +19,7 @@ export default function CalmeMusicLibrary({ widgetId, settings = {}, editMode, i
   const { t, locale } = useI18n();
   const connection = useMusicConnection(settings);
   const { data, error, mutate, stale } = useWidgetData<MusicLibraryResponse>('/api/widgets/music/library', widgetId, settings, { refreshMs: 15 * 60_000, isVisible, method: 'GET', enabled: !!connection });
-  const number = useMemo(() => new Intl.NumberFormat(locale, { useGrouping: 'min2' } as Intl.NumberFormatOptions), [locale]);
+  const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const title = t('widget.music-library.name');
   const show = (part: typeof PARTS[number]) => settings[part] !== false;
   const genres = data?.genres ?? [];
