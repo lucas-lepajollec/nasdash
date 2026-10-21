@@ -24,6 +24,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Custom API values never overflow their widget: long text wraps on two lines, web addresses become short links.
 - Requests to services now name their client (`User-Agent: NasDash`): APIs such as GitHub's refused them.
 - Widgets dim their previous answer while a changed setting loads, and posters shimmer while loading instead of flashing a placeholder.
 - Edit mode: notes beside a widget's title stay at the edge until its controls show; dialogs no longer draw two lines between a list of choices and the next setting.

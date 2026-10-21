@@ -606,6 +606,45 @@
           "y": 1500,
           "w": 24,
           "h": 260
+        },
+        {
+          "id": "api-notes-demo",
+          "type": "customapi",
+          "settings": {
+            "integrationId": "customapi-demo",
+            "title": "Lab notes",
+            "display": "list",
+            "refresh": 300,
+            "fields": [
+              {
+                "id": "n-server",
+                "path": "server.name",
+                "label": "Server",
+                "format": "text"
+              },
+              {
+                "id": "n-note",
+                "path": "note",
+                "label": "Note",
+                "format": "text"
+              },
+              {
+                "id": "n-page",
+                "path": "statusPage",
+                "label": "Status page"
+              },
+              {
+                "id": "n-updated",
+                "path": "updatedAt",
+                "label": "Updated",
+                "format": "relative"
+              }
+            ]
+          },
+          "x": 17,
+          "y": 869,
+          "w": 7,
+          "h": 170
         }
       ]
     },
