@@ -106,14 +106,26 @@ export function demoMediaNowPlaying(instance: IntegrationInstance): MediaNowPlay
 }
 export function demoMediaHistory(): MediaWatched[] {
   const people = ['Alex', 'Robin', 'Sam'];
-  return Array.from({ length: 6 }, (_, n) => ({ item: demoItem(n * 2), user: people[n % people.length], watchedAt: Date.UTC(2026, 0, 15, 11) - n * 5_400_000 }));
+  // Some finished, some to resume.
+  const progress = [42, 100, 81, 100, 100, 18];
+  return Array.from({ length: 6 }, (_, n) => {
+    const item = demoItem(n * 2), done = progress[n] === 100;
+    return { item, user: people[n % people.length], watchedAt: Date.UTC(2026, 0, 15, 11) - n * 5_400_000, progress: progress[n],
+      ...(!done && item.durationMs ? { remainingMs: Math.round(item.durationMs * (100 - progress[n]) / 100) } : {}) };
+  });
 }
 export function demoMediaRecent(instance: IntegrationInstance, selection: MediaSelection): MediaRecentResponse {
   return { ...identity(instance), items: Array.from({ length: 120 }, (_, n) => demoItem(n)).filter(item => selection.kinds.some(kind => kind === item.kind)).slice(0, fetchCount(selection)) };
 }
 export function demoMediaLibrary(instance: IntegrationInstance): MediaLibraryResponse {
   return { ...identity(instance), counts: { movies: 284, series: 42, episodes: 1280, artists: 96, albums: 210, tracks: 2640 },
-    libraries: [{ name: 'Evening Cinema', kind: 'movies', count: 284 }, { name: 'Stories by the Harbor', kind: 'series', count: 42 }, { name: 'Paper Satellites Radio', kind: 'music', count: 96 }] };
+    libraries: [
+      { name: 'Evening Cinema', kind: 'movies', count: 248, added: 5, art: [1, 5, 9, 13].map(n => demoItem(n)) },
+      { name: 'Stories by the Harbor', kind: 'series', count: 30, episodes: 860, added: 6, art: [0, 4, 8, 12].map(n => demoItem(n)) },
+      { name: 'Animated Evenings', kind: 'movies', count: 36, added: 0, art: [3, 7, 11, 15].map(n => demoItem(n)) },
+      { name: 'Little Lantern Shows', kind: 'series', count: 12, episodes: 420, added: 3, art: [2, 6, 10, 14].map(n => demoItem(n)) },
+      { name: 'Paper Satellites Radio', kind: 'music', count: 96, albums: 210, tracks: 2640, added: 4 },
+    ] };
 }
 /** Title-free, deterministic local artwork; untrusted text is never interpolated into SVG. */
 export function demoMediaArt(id: string, kind: 'poster' | 'backdrop'): string {

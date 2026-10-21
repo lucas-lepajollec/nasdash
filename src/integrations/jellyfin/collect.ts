@@ -1,6 +1,6 @@
 /** Jellyfin and Emby share the media API; credentials always travel in headers. */
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaServer, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 import type { MediaSelection } from '@/lib/widgetData/media';
 
@@ -60,6 +60,30 @@ export async function collectJellyfinRecent(instance: IntegrationInstance, selec
   const items = data.Items.slice(0, selection.count).map(value => toJellyfinItem(instance, value)).filter((item): item is MediaItem => !!item && selection.kinds.some(kind => kind === item.kind));
   return { ...identity(instance), items };
 }
+const ITEM_FIELDS = 'DateCreated,ProductionYear,SeriesId,SeriesPrimaryImageTag,ParentBackdropItemId,ParentBackdropImageTags,BackdropImageTags,ImageTags';
+const total = async (instance: IntegrationInstance, query: string) => optionalNumber(object(await request(instance, `/Items?${query}&Recursive=true&Limit=0`)).TotalRecordCount);
+
+/** Counts, recent arrivals and newest posters of one library (folder). */
+async function jellyfinLibrary(instance: IntegrationInstance, folder: Record<string, unknown>, kind: MediaLibrary['kind']): Promise<MediaLibrary> {
+  const name = string(folder.Name), id = string(folder.ItemId);
+  if (!id) return { name, kind };
+  const parent = `ParentId=${encodeURIComponent(id)}`, since = Date.now() - 7 * 86_400_000;
+  const main = { movies: 'Movie', series: 'Series', music: 'MusicArtist', books: 'Book,AudioBook', other: 'Movie,Series,Video,MusicAlbum,Book' }[kind];
+  const newestTypes = kind === 'series' ? 'Episode' : kind === 'music' ? 'MusicAlbum' : main;
+  const [count, episodes, albums, tracks, added, newest] = await Promise.all([
+    kind === 'music' ? optionalNumber(object(await request(instance, `/Artists?${parent}&Limit=0`)).TotalRecordCount) : total(instance, `${parent}&IncludeItemTypes=${main}`),
+    kind === 'series' ? total(instance, `${parent}&IncludeItemTypes=Episode`) : undefined,
+    kind === 'music' ? total(instance, `${parent}&IncludeItemTypes=MusicAlbum`) : undefined,
+    kind === 'music' ? total(instance, `${parent}&IncludeItemTypes=Audio`) : undefined,
+    // Jellyfin has no "created after" filter: count the newest ones (at most 200) by date.
+    request(instance, `/Items?${parent}&Recursive=true&SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=${newestTypes}&Limit=200&Fields=DateCreated&EnableImages=false`)
+      .then(data => array(object(data).Items).filter(value => (date(object(value).DateCreated) ?? 0) >= since).length, () => undefined),
+    // Series libraries show their series' posters, newest episode first.
+    request(instance, `/Items?${parent}&Recursive=true&SortBy=${kind === 'series' ? 'DateLastContentAdded' : 'DateCreated'}&SortOrder=Descending&IncludeItemTypes=${kind === 'series' ? 'Series' : newestTypes}&Limit=8&Fields=${ITEM_FIELDS}&ImageTypeLimit=1&EnableImageTypes=Primary,Backdrop`).catch(() => ({})),
+  ]);
+  const art = array(object(newest).Items).map(value => toJellyfinItem(instance, value)).filter((item): item is MediaItem => !!item?.poster);
+  return { name, kind, count, episodes, albums, tracks, added, ...(art.length ? { art } : {}) };
+}
 export async function collectJellyfinLibrary(instance: IntegrationInstance): Promise<MediaLibraryResponse> {
   const [totals, folders] = await Promise.all([request(instance, '/Items/Counts'), request(instance, '/Library/VirtualFolders')]);
   if (!Array.isArray(folders) || !totals || typeof totals !== 'object' || Array.isArray(totals)) throw new ServiceError('widgets.error.parse');
@@ -69,8 +93,14 @@ export async function collectJellyfinLibrary(instance: IntegrationInstance): Pro
     const value = optionalNumber(object(totals)[field]);
     if (value !== undefined) counts[key as keyof MediaCounts] = value;
   }
-  const libraryKinds = new Map<string, MediaLibraryResponse['libraries'][number]['kind']>([['movies', 'movies'], ['tvshows', 'series'], ['music', 'music'], ['books', 'books']]);
-  return { ...identity(instance), counts, libraries: folders.slice(0, 100).map(object).map(folder => ({ name: string(folder.Name), kind: libraryKinds.get(string(folder.CollectionType)) ?? 'other' })) };
+  const libraryKinds = new Map<string, MediaLibrary['kind']>([['movies', 'movies'], ['tvshows', 'series'], ['music', 'music'], ['books', 'books']]);
+  const libraries: MediaLibrary[] = [];
+  // A few libraries at a time; one that cannot be read keeps its name.
+  for (const folder of folders.slice(0, 30).map(object).filter(folder => string(folder.CollectionType) !== 'boxsets' && string(folder.CollectionType) !== 'playlists')) {
+    const kind = libraryKinds.get(string(folder.CollectionType)) ?? 'other';
+    libraries.push(await jellyfinLibrary(instance, folder, kind).catch(() => ({ name: string(folder.Name), kind })));
+  }
+  return { ...identity(instance), counts, libraries };
 }
 
 /**
@@ -79,14 +109,17 @@ export async function collectJellyfinLibrary(instance: IntegrationInstance): Pro
  */
 export async function collectJellyfinHistory(instance: IntegrationInstance, limit = 8): Promise<MediaWatched[]> {
   const users = array(await request(instance, '/Users')).slice(0, 10).map(object).filter(user => string(user.Id));
-  const fields = 'DateCreated,ProductionYear,SeriesId,SeriesPrimaryImageTag,ParentBackdropItemId,ParentBackdropImageTags,BackdropImageTags,ImageTags';
+  const fields = ITEM_FIELDS;
   const lists = await Promise.all(users.map(async user => {
     try {
       const data = object(await request(instance, `/Users/${encodeURIComponent(string(user.Id))}/Items?SortBy=DatePlayed&SortOrder=Descending&Recursive=true&IncludeItemTypes=Movie,Episode&Limit=${limit}&Fields=${fields}&EnableUserData=true&ImageTypeLimit=1&EnableImageTypes=Primary,Backdrop,Thumb`));
       return array(data.Items).flatMap(value => {
-        const watchedAt = date(object(object(value).UserData).LastPlayedDate);
+        const data = object(object(value).UserData), watchedAt = date(data.LastPlayedDate);
         const item = toJellyfinItem(instance, value);
-        return item && watchedAt ? [{ item, user: string(user.Name) || undefined, watchedAt }] : [];
+        if (!item || !watchedAt) return [];
+        // A finished title reads 100; a started one, its position.
+        const position = ticks(data.PlaybackPositionTicks), progress = data.Played === true && !position ? 100 : position && item.durationMs ? Math.min(99, Math.round(position / item.durationMs * 100)) : undefined;
+        return [{ item, user: string(user.Name) || undefined, watchedAt, progress, remainingMs: position && item.durationMs && progress !== 100 ? Math.max(0, item.durationMs - position) : undefined }];
       });
     } catch { return []; /* One account that cannot be read does not hide the others. */ }
   }));

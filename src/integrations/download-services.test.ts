@@ -121,3 +121,18 @@ describe('Deluge, SABnzbd and NZBGet transports', () => {
     await expect(collectNzbget(instance('nzbget'))).rejects.toMatchObject({ key: 'widgets.error.http' });
   });
 });
+
+describe('qBittorrent API key', () => {
+  it('sends the key as a bearer header and never logs in', async () => {
+    bytes.mockResolvedValue(answer({ dl_info_speed: 0 }));
+    const source = { ...instance('qbittorrent'), settings: { url: 'https://downloads.example.com', auth: 'apikey' }, secrets: { apiKey: 'fictional-key' } };
+    await qbittorrentRequest(source, '/api/v2/transfer/info');
+    expect(bytes).toHaveBeenCalledTimes(1);
+    expect(bytes).toHaveBeenCalledWith(source, '/api/v2/transfer/info', { headers: { Authorization: 'Bearer fictional-key' } }, 2 * 1024 * 1024);
+  });
+  it('reads a refused key as an authentication error', async () => {
+    bytes.mockResolvedValue(answer('Forbidden', 403));
+    const source = { ...instance('qbittorrent'), settings: { url: 'https://downloads.example.com', auth: 'apikey' }, secrets: { apiKey: 'wrong' } };
+    await expect(qbittorrentRequest(source, '/x')).rejects.toMatchObject({ key: 'integrations.error.authentication' });
+  });
+});

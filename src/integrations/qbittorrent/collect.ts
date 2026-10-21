@@ -22,6 +22,13 @@ async function login(instance: IntegrationInstance): Promise<Session> {
   try { return await request; } finally { logins.delete(key); }
 }
 async function qbittorrentResponse(instance: IntegrationInstance, path: string) {
+  if (instance.settings.auth === 'apikey') {
+    // An API key replaces the cookie login (qBittorrent 5.2+).
+    const answer = await serviceBytes(instance, path, { headers: { Authorization: `Bearer ${instance.secrets?.apiKey ?? ''}` } }, 2 * 1024 * 1024);
+    if (answer.status === 401 || answer.status === 403) throw new ServiceError('integrations.error.authentication');
+    assertStatus(answer.status);
+    return answer;
+  }
   const session = await login(instance);
   const send = async (cookie: string) => {
     const answer = await serviceBytes(instance, path, { headers: { Cookie: cookie } }, 2 * 1024 * 1024);

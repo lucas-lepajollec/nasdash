@@ -36,14 +36,15 @@ export async function mediaRoute(request: NextRequest, type: MediaWidgetType) {
       const showUsers = mediaShowUsers(settings);
       const result = demo ? demoMediaNowPlaying(instance) : await nowPlaying.get(key, () => plex ? collectPlexNowPlaying(instance) : collectJellyfinNowPlaying(instance));
       const sessions = result.sessions.map(({ user, item: media, ...session }) => ({ ...session, item: item(media), ...(user && showUsers ? { user } : {}) }));
-      // Nothing playing: what was watched lately, else the newest titles (best effort).
+      // What was watched lately, under what plays now; when the server cannot tell, the newest titles (best effort).
       let watched: MediaWatched[] | undefined, idle: MediaItem[] | undefined;
-      if (!sessions.length) {
-        try {
-          const entries = demo ? demoMediaHistory() : await history.get(key, () => plex ? collectPlexHistory(instance) : collectJellyfinHistory(instance));
-          watched = entries.map(({ user, item: media, ...entry }) => ({ ...entry, item: item(media), ...(user && showUsers ? { user } : {}) }));
-        } catch { /* The server may not tell; fall back to the newest titles. */ }
-        if (!watched?.length) {
+      try {
+        const playing = new Set(result.sessions.map(session => session.item.id));
+        const entries = demo ? demoMediaHistory() : await history.get(key, () => plex ? collectPlexHistory(instance, 12) : collectJellyfinHistory(instance, 12));
+        watched = entries.filter(entry => !playing.has(entry.item.id)).map(({ user, item: media, ...entry }) => ({ ...entry, item: item(media), ...(user && showUsers ? { user } : {}) }));
+      } catch { /* The server may not tell; fall back to the newest titles. */ }
+      {
+        if (!watched?.length && !sessions.length) {
           try { idle = groupRecent((await newest(instance, { kinds: ['movie', 'episode'], count: 8, group: true }, key, demo, plex)).items, 6).map(item); }
           catch { /* The idle view does without. */ }
         }
@@ -76,7 +77,12 @@ export async function mediaRoute(request: NextRequest, type: MediaWidgetType) {
       const [movies, series, music] = await Promise.all([pick('movie'), pick('episode'), pick('album')]);
       covers = { ...(movies ? { movies } : {}), ...(series ? { series } : {}), ...(music ? { music } : {}) };
     }
-    return NextResponse.json({ ...result, ...(covers ? { covers } : {}) }, { headers });
+    // Each library's own posters (newest first, or shuffled), proxied like any title.
+    const libraries = result.libraries.map(({ art, ...entry }) => {
+      const urls = mode === 'none' || !art ? [] : (mode === 'random' ? [...art].sort(() => Math.random() - 0.5) : art).map(media => item(media).poster).filter((url): url is string => !!url);
+      return urls.length ? { ...entry, covers: urls } : entry;
+    });
+    return NextResponse.json({ ...result, libraries, ...(covers ? { covers } : {}) }, { headers });
   } catch (error) {
     const response = serviceFailure(error);
     response.headers.set('Cache-Control', headers['Cache-Control']);

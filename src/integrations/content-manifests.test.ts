@@ -59,7 +59,10 @@ it.each([...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES])('describes the exact %s creden
   const ports = { sonarr: 8989, radarr: 7878, lidarr: 8686, prowlarr: 9696, qbittorrent: 8080, transmission: 9091, deluge: 8112, sabnzbd: 8080, nzbget: 6789 };
   expect(manifest.fields[0]).toEqual({ id: 'url', kind: 'text', required: true, label: `integrations.${type}.url`, placeholder: `http://${type}.example.com:${ports[type]}` });
   const secret = (ARR_TYPES as readonly string[]).includes(type) || type === 'sabnzbd' ? 'apiKey' : 'password';
-  expect(manifest.fields.find(field => field.id === secret)).toEqual({ id: secret, kind: 'secret', label: `integrations.${type}.${secret}`, ...(type !== 'transmission' ? { required: true } : {}) });
+  // qBittorrent shows its password or its API key depending on the chosen sign-in.
+  const login = type === 'qbittorrent' ? { showWhen: { field: 'auth', values: ['', 'login'] } } : {};
+  expect(manifest.fields.find(field => field.id === secret)).toEqual({ id: secret, kind: 'secret', label: `integrations.${type}.${secret}`, ...(type !== 'transmission' ? { required: true } : {}), ...login });
+  if (type === 'qbittorrent') expect(manifest.fields.find(field => field.id === 'apiKey')).toEqual({ id: 'apiKey', kind: 'secret', label: 'integrations.qbittorrent.apiKey', required: true, showWhen: { field: 'auth', values: ['apikey'] } });
   expect(manifest.fields.at(-1)).toEqual({ id: 'allowSelfSigned', kind: 'toggle', label: 'integrations.allowSelfSigned' });
   expect(manifest.fields.some(field => field.id === 'username')).toBe(['qbittorrent', 'transmission', 'nzbget'].includes(type));
 });

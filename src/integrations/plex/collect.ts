@@ -1,5 +1,5 @@
 import type { IntegrationInstance } from '@/lib/types';
-import type { MediaCounts, MediaItem, MediaKind, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
+import type { MediaCounts, MediaItem, MediaKind, MediaLibrary, MediaLibraryResponse, MediaNowPlayingResponse, MediaRecentResponse, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
 import { array, number, object, string, serviceIdentity, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
 import { TtlCache } from '@/lib/widgetData/cache';
 import type { MediaSelection } from '@/lib/widgetData/media';
@@ -63,24 +63,31 @@ export async function collectPlexRecent(instance: IntegrationInstance, selection
   return { ...identity(instance), items };
 }
 export async function collectPlexLibrary(instance: IntegrationInstance): Promise<MediaLibraryResponse> {
-  const sections = array((await request(instance, '/library/sections')).Directory).slice(0, 100).map(object);
-  const counts: MediaCounts = {}, libraries: MediaLibraryResponse['libraries'] = [];
+  const [data, machine] = await Promise.all([request(instance, '/library/sections'), machineId(instance)]);
+  const sections = array(data.Directory).slice(0, 30).map(object);
+  const counts: MediaCounts = {}, libraries: MediaLibrary[] = [];
+  const week = Math.floor(Date.now() / 1000) - 7 * 86400;
   // Sequential sections bound concurrent work even for servers with many libraries.
   for (const section of sections) {
     const key = string(section.key), type = string(section.type);
     if (!/^[A-Za-z0-9_-]+$/.test(key)) continue;
     const total = async (filter = '') => optionalNumber((await request(instance, `/library/sections/${encodeURIComponent(key)}/all?X-Plex-Container-Start=0&X-Plex-Container-Size=0${filter}`)).totalSize);
-    const count = await total();
     const add = (field: keyof MediaCounts, value: number | undefined) => { if (value !== undefined) counts[field] = (counts[field] ?? 0) + value; };
-    const kind = type === 'movie' ? 'movies' : type === 'show' ? 'series' : type === 'artist' ? 'music' : 'other';
-    libraries.push({ name: string(section.title), kind, count });
-    if (type === 'movie') add('movies', count);
-    if (type === 'show') { add('series', count); add('episodes', await total('&type=4')); }
-    if (type === 'artist') {
-      add('artists', count);
-      const [albums, tracks] = await Promise.all([total('&type=9'), total('&type=10')]);
-      add('albums', albums); add('tracks', tracks);
-    }
+    const kind: MediaLibrary['kind'] = type === 'movie' ? 'movies' : type === 'show' ? 'series' : type === 'artist' ? 'music' : 'other';
+    try {
+      // Plex lists what arrived lately per section; episodes for shows, albums for music.
+      const recentType = type === 'show' ? 4 : type === 'artist' ? 9 : undefined;
+      const [count, episodes, albums, tracks, added, recent] = await Promise.all([
+        total(), type === 'show' ? total('&type=4') : undefined, type === 'artist' ? total('&type=9') : undefined, type === 'artist' ? total('&type=10') : undefined,
+        total(`${recentType ? `&type=${recentType}` : ''}&addedAt%3E%3E=${week}`),
+        request(instance, `/library/sections/${encodeURIComponent(key)}/all?sort=addedAt:desc&X-Plex-Container-Start=0&X-Plex-Container-Size=8`).catch(() => ({})),
+      ]);
+      if (type === 'movie') add('movies', count);
+      if (type === 'show') { add('series', count); add('episodes', episodes); }
+      if (type === 'artist') { add('artists', count); add('albums', albums); add('tracks', tracks); }
+      const art = array(object(recent).Metadata).map(value => toPlexItem(instance, value, machine)).filter((item): item is MediaItem => !!item?.poster);
+      libraries.push({ name: string(section.title), kind, count, episodes, albums, tracks, added, ...(art.length ? { art } : {}) });
+    } catch { libraries.push({ name: string(section.title), kind }); /* One section that cannot be read keeps its name. */ }
   }
   return { ...identity(instance), counts, libraries };
 }

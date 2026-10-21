@@ -354,7 +354,8 @@ export interface MediaSession {
 }
 
 /** A title watched lately (account name under the same rule as sessions). */
-export interface MediaWatched { item: MediaItem; user?: string; watchedAt?: number }
+/** A title watched lately; `progress` (0–100) when the server keeps the position, 100 once watched to the end. */
+export interface MediaWatched { item: MediaItem; user?: string; watchedAt?: number; progress?: number; remainingMs?: number }
 
 /**
  * GET /api/widgets/media/now-playing?widgetId=… — when nothing plays,
@@ -371,10 +372,22 @@ export interface MediaRecentResponse { server: MediaServer; name: string; items:
 
 /** Library totals; absent when the server does not report them. */
 export interface MediaCounts { movies?: number; series?: number; episodes?: number; artists?: number; albums?: number; tracks?: number; books?: number }
+/**
+ * One library of the server: its titles (`count`: movies, series, artists or
+ * books), the details that apply to its kind, what arrived in the last 7 days
+ * and, once proxied, the posters of its newest titles (`covers`).
+ */
+export interface MediaLibrary {
+  name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other';
+  count?: number; episodes?: number; albums?: number; tracks?: number; added?: number;
+  covers?: string[];
+  /** Server-only: the newest titles, replaced by `covers` before leaving the server. */
+  art?: MediaItem[];
+}
 /** GET /api/widgets/media/library?widgetId=… */
 export interface MediaLibraryResponse {
   server: MediaServer; name: string; counts: MediaCounts;
-  libraries: { name: string; kind: 'movies' | 'series' | 'music' | 'books' | 'other'; count?: number }[];
+  libraries: MediaLibrary[];
   /** Shelf backgrounds, several per shelf for the widget to rotate (settings `cover`: newest — default —, random, none), proxied like posters. */
   covers?: { movies?: string[]; series?: string[]; music?: string[] };
   fetchedAt: number;

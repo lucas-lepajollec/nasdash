@@ -815,9 +815,14 @@ a.ndw-media-title:hover { text-decoration: underline; }
 .ndw-media-list.is-small .ndw-media-row { padding: 5px 2px; }
 .ndw-media-list.is-small .ndw-media-title { font-size: 0.76rem; }
 .ndw-media-list.is-small .ndw-media-sub { font-size: 0.64rem; }
-.ndw-media-list.is-large .ndw-media-row { gap: 14px; padding: 10px 2px; }
-.ndw-media-list.is-large .ndw-media-title { font-size: 0.92rem; }
-.ndw-media-list.is-large .ndw-media-sub { font-size: 0.74rem; }
+.ndw-media-list.is-medium .ndw-media-row { gap: 12px; padding: 8px 2px; }
+.ndw-media-list.is-medium .ndw-media-title { font-size: 0.84rem; }
+/* Large: a real poster, two lines of detail. */
+.ndw-media-list.is-large .ndw-media-row { gap: 18px; padding: 12px 2px; }
+.ndw-media-list.is-large .ndw-media-row-text { gap: 6px; }
+.ndw-media-list.is-large .ndw-media-title { font-size: 1.02rem; font-weight: 500; }
+.ndw-media-list.is-large .ndw-media-sub { font-size: 0.8rem; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ndw-media-list.is-large .ndw-media-time { font-size: 0.74rem; align-self: flex-start; padding-top: 3px; }
 
 /* Featured: the newest title large over its art. */
 .ndw-media-hero-wrap { display: flex; flex-direction: column; gap: 12px; }

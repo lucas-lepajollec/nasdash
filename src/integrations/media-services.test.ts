@@ -99,8 +99,11 @@ describe('Plex', () => {
     const result = await collectPlexLibrary(instance('plex'));
     expect(result.counts).toEqual({ movies: 284, series: 42, episodes: 1280, artists: 96, albums: 210, tracks: 2640 });
     expect(result.libraries.map(entry => [entry.kind, entry.count])).toEqual([['movies', 284], ['series', 42], ['music', 96]]);
-    expect(json.mock.calls).toHaveLength(7);
-    expect(json.mock.calls.slice(1).every(([, path]) => path.includes('X-Plex-Container-Start=0&X-Plex-Container-Size=0'))).toBe(true);
+    // Totals never page through titles; only the newest few per section are read.
+    const reads = json.mock.calls.map(([, path]) => path).filter(path => path.includes('/all?'));
+    expect(reads.every(path => path.includes('X-Plex-Container-Size=0') || path.includes('sort=addedAt:desc') && path.includes('X-Plex-Container-Size=8'))).toBe(true);
+    expect(reads.filter(path => path.includes('addedAt%3E%3E='))).toHaveLength(3);
+    expect(JSON.stringify(result)).not.toContain('/library/');
   });
 });
 
@@ -133,5 +136,14 @@ describe('Jellyfin play history', () => {
     const watched = await collectJellyfinHistory(source);
     expect(watched.map(({ item, user }) => [item.id, user])).toEqual([['b', 'Robin'], ['a', 'Alex']]);
     expect(vi.mocked(serviceJson).mock.calls.every(([, path, options]) => !String(path).includes('fictional-secret') && (options?.headers as Record<string, string>)['X-Emby-Token'] === 'fictional-secret')).toBe(true);
+  });  it('reads how far each title was watched', async () => {
+    const { collectJellyfinHistory } = await import('./jellyfin/collect');
+    const hour = 36_000_000_000; // ticks
+    vi.mocked(serviceJson).mockImplementation(async (_instance, path) => path === '/Users' ? [{ Id: 'u1', Name: 'Alex' }] : { Items: [
+      { Id: 'half', Type: 'Movie', Name: 'Half', RunTimeTicks: 2 * hour, UserData: { LastPlayedDate: '2026-01-10T10:00:00Z', PlaybackPositionTicks: hour } },
+      { Id: 'done', Type: 'Movie', Name: 'Done', RunTimeTicks: 2 * hour, UserData: { LastPlayedDate: '2026-01-09T10:00:00Z', Played: true, PlaybackPositionTicks: 0 } },
+    ] });
+    const watched = await collectJellyfinHistory(instance('jellyfin'));
+    expect(watched.map(({ progress, remainingMs }) => [progress, remainingMs])).toEqual([[50, 3_600_000], [100, undefined]]);
   });
 });
