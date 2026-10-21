@@ -3345,3 +3345,19 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
 .lh-demo-theme:hover { border-color: rgba(255, 255, 255, 0.3); }
 .lh-demo-theme[aria-checked="true"] { border-color: rgba(95, 211, 230, 0.7); background: rgba(95, 211, 230, 0.1); }
 .lh-demo-theme-swatch { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2); flex-shrink: 0; }
+
+/* The shared loading spinner (actions, searches, widgets): a ring in the text colour, its top in the accent.
+   Sized by its users when they need to; 14 px otherwise. */
+.nd-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 2px solid color-mix(in srgb, var(--nd-text) 18%, transparent);
+  border-top-color: var(--nd-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+@media (prefers-reduced-motion: reduce) { .nd-spinner { animation-duration: 2.4s; } }

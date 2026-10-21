@@ -2,12 +2,12 @@ import { readConfig } from '@/lib/config';
 import { collectExternal } from '@/integrations/catalog/collect';
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
-import { collectArrUpcoming, collectArrRecent, collectArrStatus, collectProwlarrIndexers, type ArrQueueData } from '@/integrations/arr/collect';
+import { collectArrUpcoming, collectArrRecent, collectArrStatus, collectProwlarrIndexers, type ArrQueueData, type ArrQueueDownload } from '@/integrations/arr/collect';
 import { queueClientCandidates } from '@/integrations/downloads/lookup';
 import { arrQueue } from './arrQueue';
 import { downloadStatus } from './downloadStatus';
 import type { IntegrationInstance } from '@/lib/types';
-import type { UpcomingResponse, ArrAppStatus, FollowUpItem, ImportedItem, IndexersResponse, SourceFailure, UpcomingItem } from './contracts';
+import type { UpcomingResponse, ArrAppStatus, DownloadClientStatus, FollowUpItem, ImportedItem, IndexersResponse, QueueItem, SourceFailure, UpcomingItem } from './contracts';
 import { TtlCache } from './cache';
 import { demoMediaUpcoming, proxyMediaItem } from './media';
 import { collectLibraryUpcoming } from './libraryUpcoming';
@@ -27,6 +27,26 @@ async function sources<T>(instances: IntegrationInstance[], load: (instance: Int
     else { const body = await serviceFailure(result.reason).json(); failures.push({ id: instances[i].id, name: instances[i].name, error: body.error }); }
   }
   return { values, failures };
+}
+/** The download as its client reports it now (status cached a few seconds), for a queue item; torrents by hash, Usenet by id. */
+async function liveDownload(saved: IntegrationInstance[], download: ArrQueueDownload): Promise<DownloadClientStatus['items'][number] | undefined> {
+  const id = download.protocol === 'torrent' ? download.downloadId.toLowerCase() : download.downloadId;
+  for (const instance of queueClientCandidates(saved, download).slice(0, 4)) {
+    // Transmission lists numeric ids, not hashes: its items cannot be matched here.
+    if (instance.type === 'transmission') continue;
+    const status = await downloadStatus(instance).catch(() => undefined);
+    const found = status?.items.find(item => item.id.toLowerCase() === id.toLowerCase());
+    if (found) return found;
+  }
+  return undefined;
+}
+export function withLiveState(item: QueueItem, live: DownloadClientStatus['items'][number] | undefined): QueueItem {
+  if (!live) return item;
+  const status: QueueItem['status'] | undefined = live.state === 'paused' ? 'paused' : live.state === 'downloading' ? 'downloading' : live.state === 'queued' ? 'queued' : undefined;
+  return { ...item, progress: live.progress, ...(live.etaMs !== undefined ? { etaMs: live.etaMs } : {}),
+    ...(live.sizeBytes ? { leftBytes: Math.max(0, Math.round(live.sizeBytes * (1 - live.progress / 100))) } : {}),
+    // A running or paused download is no longer the warning the *arr last saw.
+    ...(status ? { status, message: undefined } : {}) };
 }
 export async function arrRoute(request: NextRequest, type: ArrWidgetType) {
   try {
@@ -106,10 +126,14 @@ export async function arrRoute(request: NextRequest, type: ArrWidgetType) {
     const total = result.values.reduce((sum, { value }) => sum + value.total, 0);
     const history = total === 0 ? await sources(result.values.map(({ instance }) => instance), instance => demo ? Promise.resolve(demoArrRecent(instance)) : recent.get(serviceIdentity(instance), () => collectArrRecent(instance))) : undefined;
     const savedClients = readConfig().integrations ?? [];
-    const entries = result.values.flatMap(({ instance, value }) => value.items.map(item => {
+    const listed = result.values.flatMap(({ instance, value }) => value.items.map(item => {
       const download = value.downloads.get(item.id);
-      return { instance, item: { ...item, ...((admin || demo) && (demo || download && queueClientCandidates(savedClients, download).length > 0) ? { canControl: true } : {}) } };
-    })).slice(0, count).map(({ instance, item }) => proxyMediaItem(instance, widgetId!, item, admin, imageDraft));
+      return { instance, download, item: { ...item, ...((admin || demo) && (demo || download && queueClientCandidates(savedClients, download).length > 0) ? { canControl: true } : {}) } };
+    })).slice(0, count);
+    // The *arr refresh their queue about once a minute: the download client's own state (a few seconds old) wins, so a
+    // pause or a resume shows at once and a stale "warning" does not linger over a download that runs.
+    const live = demo ? [] : await Promise.all(listed.map(({ download }) => download ? liveDownload(savedClients, download).catch(() => undefined) : undefined));
+    const entries = listed.map(({ instance, item }, index) => proxyMediaItem(instance, widgetId!, withLiveState(item, live[index]), admin, imageDraft));
     const imports = history?.values.flatMap(({ instance, value }) => value.map(item => ({ instance, item }))).sort((a, b) => b.item.at - a.item.at).slice(0, 6)
       .map(({ instance, item }) => proxyMediaItem(instance, widgetId!, item, admin, imageDraft));
     return NextResponse.json({ items: entries, total, ...(imports ? { recent: imports } : {}), failures: [...result.failures, ...(history?.failures ?? [])], fetchedAt }, { headers });
