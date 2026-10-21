@@ -11,13 +11,14 @@ let nextStart = 0, active = 0;
 const waiting: (() => void)[] = [];
 /** Shared across widgets: at most six calls, spaced below TVMaze's 20 / 10 s limit. */
 async function request(path: string, base: string): Promise<Record<string, unknown> | null> {
-  return send(path, base, false) as Promise<Record<string, unknown> | null>;
+  const value = await tvMazeJson(path, base);
+  return value === null ? null : object(value);
 }
 /**
  * One paced call. `lookup`: TVMaze answers a lookup with a redirect to the
  * show (`301 Location: …/shows/{id}`); only that id is read, nothing is followed.
  */
-async function send(path: string, base: string, lookup: boolean): Promise<Record<string, unknown> | number | null> {
+async function send(path: string, base: string, lookup: boolean): Promise<unknown> {
   for (let attempt = 0; attempt < 2; attempt++) {
     if (active >= 6) await new Promise<void>(resolve => waiting.push(resolve));
     else active++;
@@ -33,7 +34,7 @@ async function send(path: string, base: string, lookup: boolean): Promise<Record
       }
       if (response.status !== 429 || attempt !== 0) {
         if (!response.ok) throw new ServiceError('widgets.error.http');
-        return object(await response.json());
+        return await response.json();
       }
       await response.body?.cancel();
     } finally { const resume = waiting.shift(); if (resume) resume(); else active--; }
@@ -41,6 +42,7 @@ async function send(path: string, base: string, lookup: boolean): Promise<Record
   }
   throw new ServiceError('widgets.error.http');
 }
+export function tvMazeJson(path: string, base = TVMAZE_BASE_URL): Promise<unknown> { return send(path, base, false); }
 /** Optional base allows fixture tests to replace the public endpoint; callers use the constant. */
 export async function tvMazeShow(provider: TvMazeProvider, base = TVMAZE_BASE_URL): Promise<TvMazeShow | null> {
   const tvdb = /^\d{1,12}$/.test(provider.tvdb ?? '') ? provider.tvdb : undefined;
@@ -50,7 +52,7 @@ export async function tvMazeShow(provider: TvMazeProvider, base = TVMAZE_BASE_UR
   const id = await lookups.get(key, async () => {
     const show = await send(`/lookup/shows?${tvdb ? `thetvdb=${tvdb}` : `imdb=${imdb}`}`, base, true);
     if (typeof show === 'number') return show > 0 ? show : null;
-    return show && typeof show.id === 'number' && Number.isInteger(show.id) && show.id > 0 ? show.id : null;
+    return show && typeof object(show).id === 'number' && Number.isInteger(object(show).id) && Number(object(show).id) > 0 ? Number(object(show).id) : null;
   });
   if (id === null) return null;
   return episodes.get(key, async () => {

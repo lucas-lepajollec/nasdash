@@ -8,12 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- Coming soon supports ordered combinations of *arr calendars, library follow-ups and external catalogue watchlists/discovery, with current/announced phases and isolated source failures. Adds administrator-only catalogue search, optional TMDB credentials, paced cached public requests, allowlisted public artwork and offline fictional demo data.
+
 - Media and *arr widgets redrawn around the art: the next title large over its backdrop, rails of posters or wide pictures, figures in Geist, progress as lines and rings; states are words, coloured only when they need attention (no tinted badges, shadows or coloured outlines).
 - **Now playing** becomes **Recently played**: what plays now large (other sessions beneath), then what was watched lately with where it stopped and the time left, as wide pictures or a list; nothing playing, the title to resume leads.
 - **Media library**: totals large, then one card per library with its newest posters, its episodes and what arrived this week; music and books as text.
 - **Coming soon** gets a **My library** source: the next episodes and seasons of the series in a Jellyfin, Emby or Plex library, from TVMaze (only TVDB/IMDb ids leave the server; shared caches, rate limited), with what the library already has. With the *arr, a quiet window shows the next release and the days until it.
 - At rest, every widget still shows something: the queue its last imports (episodes of a series folded), the download client what it received and sent and what finished lately, Prowlarr its requests per hour.
 - Prowlarr requests count RSS reads as well as searches.
+- **Coming soon** reads up to three sources in a chosen priority — the *arr, the media library, public catalogues (TVMaze, Kitsu, AniList when it answers, TMDB with a TMDB connection) — either titles of the widget's own list, found with a search in its settings, or everything coming. Tabs **Out now** / **Announced**, a count per page with pages.
+- **Recently played**: how many titles to show (1–12), three list sizes, time left inside the picture.
+- **Media library**: covers drawn at random from the whole library (no longer the last batch added), larger, crossfading, three card sizes.
+- **\*arr status** and **Indexers** redrawn: quiet tiles with figures over their labels, one line per indexer. The queue's last imports use the queue's rows.
+- Settings dialogs: segmented choices drawn as a block inside one frame (no more cut edges); a connection named after its service no longer reads "Jellyfin · Jellyfin".
 
 - *arr and download widgets in the Media group, with Sonarr, Radarr, Lidarr, Prowlarr and qBittorrent, Transmission, Deluge, SABnzbd, NZBGet connections (Settings → Integrations): **Coming soon** (episodes, movies with their cinema/digital/physical release, albums, as an agenda by day, posters or a list), **Download queue** (progress, state and the reason of a warning, time left), **Downloads** (speeds with a live line, active/paused/waiting, free space, busiest downloads), **Indexers** (Prowlarr's last-day searches, grabs and failures, failing indexers first) and ***arr status** (version, health checks, queue, missing, free space). Several sources per widget, partial failures named; API keys and passwords stay on the server.
 

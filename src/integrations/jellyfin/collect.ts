@@ -70,7 +70,7 @@ async function jellyfinLibrary(instance: IntegrationInstance, folder: Record<str
   const parent = `ParentId=${encodeURIComponent(id)}`, since = Date.now() - 7 * 86_400_000;
   const main = { movies: 'Movie', series: 'Series', music: 'MusicArtist', books: 'Book,AudioBook', other: 'Movie,Series,Video,MusicAlbum,Book' }[kind];
   const newestTypes = kind === 'series' ? 'Episode' : kind === 'music' ? 'MusicAlbum' : main;
-  const [count, episodes, albums, tracks, added, newest] = await Promise.all([
+  const [count, episodes, albums, tracks, added, newest, random] = await Promise.all([
     kind === 'music' ? optionalNumber(object(await request(instance, `/Artists?${parent}&Limit=0`)).TotalRecordCount) : total(instance, `${parent}&IncludeItemTypes=${main}`),
     kind === 'series' ? total(instance, `${parent}&IncludeItemTypes=Episode`) : undefined,
     kind === 'music' ? total(instance, `${parent}&IncludeItemTypes=MusicAlbum`) : undefined,
@@ -80,9 +80,12 @@ async function jellyfinLibrary(instance: IntegrationInstance, folder: Record<str
       .then(data => array(object(data).Items).filter(value => (date(object(value).DateCreated) ?? 0) >= since).length, () => undefined),
     // Series libraries show their series' posters, newest episode first.
     request(instance, `/Items?${parent}&Recursive=true&SortBy=${kind === 'series' ? 'DateLastContentAdded' : 'DateCreated'}&SortOrder=Descending&IncludeItemTypes=${kind === 'series' ? 'Series' : newestTypes}&Limit=8&Fields=${ITEM_FIELDS}&ImageTypeLimit=1&EnableImageTypes=Primary,Backdrop`).catch(() => ({})),
+    // Any titles of the library, so covers vary beyond the latest batch added together.
+    request(instance, `/Items?${parent}&Recursive=true&SortBy=Random&IncludeItemTypes=${kind === 'series' ? 'Series' : newestTypes}&Limit=24&Fields=${ITEM_FIELDS}&ImageTypeLimit=1&EnableImageTypes=Primary,Backdrop`).catch(() => ({})),
   ]);
-  const art = array(object(newest).Items).map(value => toJellyfinItem(instance, value)).filter((item): item is MediaItem => !!item?.poster);
-  return { name, kind, count, episodes, albums, tracks, added, ...(art.length ? { art } : {}) };
+  const posters = (data: unknown) => array(object(data).Items).map(value => toJellyfinItem(instance, value)).filter((item): item is MediaItem => !!item?.poster);
+  const art = posters(newest), sample = posters(random);
+  return { name, kind, count, episodes, albums, tracks, added, ...(art.length ? { art } : {}), ...(sample.length ? { sample } : {}) };
 }
 export async function collectJellyfinLibrary(instance: IntegrationInstance): Promise<MediaLibraryResponse> {
   const [totals, folders] = await Promise.all([request(instance, '/Items/Counts'), request(instance, '/Library/VirtualFolders')]);

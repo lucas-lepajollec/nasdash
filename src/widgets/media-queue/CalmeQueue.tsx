@@ -56,7 +56,7 @@ export default function CalmeQueue({ widgetId, settings, editMode, isVisible, on
         {!connections.length ? <ArrSetup kind="arr" />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true">{[0, 1, 2].map(row => <span key={row} className="ndw-skeleton-row" />)}</div>
-              : items.length === 0 ? <Arrived recent={data.recent ?? []} width={width} />
+              : items.length === 0 ? <Arrived recent={data.recent ?? []} width={width} columns={columnsOf(settings, width, 320)} />
                 : (
                   <div className="ndw-mx-stack">
                     <Summary items={items} total={data.total} />
@@ -113,12 +113,11 @@ function QueueRow({ item }: { item: QueueItem }) {
   );
 }
 
-/** Nothing to fetch: the last titles that arrived, as posters. */
-function Arrived({ recent, width }: { recent: ImportedItem[]; width: number }) {
+/** Nothing to fetch: the last titles that arrived, in the same rows as the queue. */
+function Arrived({ recent, width, columns }: { recent: ImportedItem[]; width: number; columns: number }) {
   const { t } = useI18n();
   const relative = useRelativeTime();
   const code = useCode();
-  const columns = Math.max(3, Math.min(6, Math.floor((width + 12) / 112)));
   return (
     <div className="ndw-mx-stack">
       <div className="ndw-mx-empty">
@@ -126,14 +125,25 @@ function Arrived({ recent, width }: { recent: ImportedItem[]; width: number }) {
         <span className="ndw-mx-meta">{t('widgets.arr.queueEmpty')}</span>
       </div>
       {recent.length > 0 && (
-        <div className="ndw-mx-rail" style={{ '--ndw-cols': columns } as React.CSSProperties}>
-          {recent.slice(0, columns).map(item => (
-            <span key={item.id} className="ndw-mx-rail-item" title={item.title}>
-              <span className="ndw-mx-rail-art"><MediaPoster item={posterOf(item)} width={200} frame /></span>
-              <span className="ndw-mx-rail-title">{item.kind === 'episode' && item.subtitle ? item.subtitle : item.title}</span>
-              <span className="ndw-mx-rail-sub">{[item.count && item.count > 1 ? t('widgets.media.newEpisodes', { count: item.count }) : code(item), relative(item.at)].filter(Boolean).join(' · ')}</span>
-            </span>
-          ))}
+        <div className="ndw-mx-section">
+          <span className="ndw-mx-label">{t('widgets.arr.lastImports')}</span>
+          <ColumnRows columns={width ? columns : 1}>
+            {recent.map(item => (
+              <div key={item.id} className="ndw-mx-qrow">
+                <MediaPoster item={posterOf(item)} width={40} />
+                <span className="ndw-mx-qrow-text">
+                  <span className="ndw-mx-qrow-head">
+                    <span className="ndw-media-title">{item.kind === 'episode' && item.subtitle ? item.subtitle : item.title}</span>
+                    <span className="ndw-mx-state">{t('widgets.arr.imported')}</span>
+                  </span>
+                  <span className="ndw-mx-qrow-foot">
+                    <span className="ndw-media-sub">{[item.count && item.count > 1 ? t('widgets.media.newEpisodes', { count: item.count }) : code(item), item.kind === 'album' ? item.subtitle : '', item.quality].filter(Boolean).join(' · ')}</span>
+                    <span className="ndw-media-time">{relative(item.at)}</span>
+                  </span>
+                </span>
+              </div>
+            ))}
+          </ColumnRows>
         </div>
       )}
     </div>

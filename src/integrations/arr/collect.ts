@@ -1,4 +1,5 @@
 /** Shared Sonarr/Radarr/Lidarr/Prowlarr API mapping. Never return upstream objects. */
+import { upcomingPhase } from '@/lib/widgetData/arr';
 import type { IntegrationInstance } from '@/lib/types';
 import type { ArrAppStatus, ArrType, ImportedItem, IndexersResponse, QueueItem, QueueStatus, UpcomingItem } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, serviceJson, serviceUrl, ServiceError } from '@/lib/widgetData/services';
@@ -40,7 +41,7 @@ export function toArrUpcoming(instance: IntegrationInstance, value: unknown, sta
     if (at === undefined || at < start || at > end || (instance.type === 'radarr' && !release)) return [];
     const slug = instance.type === 'sonarr' ? parent.titleSlug : instance.type === 'radarr' ? item.tmdbId ?? item.titleSlug : parent.foreignArtistId;
     const segment = instance.type === 'sonarr' ? 'series' : instance.type === 'radarr' ? 'movie' : 'artist';
-    return [{ id: unique(instance, item.id), source: libraryType(instance), sourceName: instance.name, kind: kind(instance), title: string(item.title),
+    return [{ phase: upcomingPhase({ kind: kind(instance), episode: number(item.episodeNumber), release: release?.release }), id: unique(instance, item.id), source: libraryType(instance), sourceName: instance.name, kind: kind(instance), title: string(item.title),
       subtitle: string(parent.title) || string(parent.artistName) || undefined,
       ...(instance.type === 'sonarr' ? { season: number(item.seasonNumber), episode: number(item.episodeNumber) } : {}),
       at, ...(release ? { release: release.release } : {}), hasFile: item.hasFile === true || number(object(item.statistics).trackFileCount) > 0,

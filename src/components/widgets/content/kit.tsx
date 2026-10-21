@@ -323,6 +323,27 @@ export function PagedGrid({ items, perPage, mode, minColumn, label }: {
   );
 }
 
+/** "‹ 2 / 3 ›" under a paged list; nothing when everything fits on one page. */
+export function Pager({ page, pages, onChange }: { page: number; pages: number; onChange: (page: number) => void }) {
+  const { t } = useI18n();
+  if (pages < 2) return null;
+  return (
+    <div className="ndw-pager">
+      <button type="button" className="ndc-icon-button" disabled={page === 0} onClick={() => onChange(page - 1)} aria-label={t('widgets.grid.previous')} title={t('widgets.grid.previous')}><ChevronLeft size={14} /></button>
+      <span className="ndw-pager-count">{t('widgets.grid.page', { current: page + 1, total: pages })}</span>
+      <button type="button" className="ndc-icon-button" disabled={page === pages - 1} onClick={() => onChange(page + 1)} aria-label={t('widgets.grid.next')} title={t('widgets.grid.next')}><ChevronRight size={14} /></button>
+    </div>
+  );
+}
+
+/** A page of a list: the page shown stays within the list when it shrinks. */
+export function usePage<T>(items: T[], perPage: number): { visible: T[]; page: number; pages: number; setPage: (page: number) => void } {
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(items.length / perPage));
+  const current = Math.min(page, pages - 1);
+  return { visible: items.slice(current * perPage, current * perPage + perPage), page: current, pages, setPage };
+}
+
 /** Layout and page size of a paged grid, for a widget's dialog. */
 export function PagedGridSettings({ draft, change }: { draft: WidgetSettings; change: (patch: WidgetSettings) => void }) {
   const { t } = useI18n();

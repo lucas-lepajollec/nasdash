@@ -866,7 +866,8 @@ a.ndw-media-hero:hover .ndw-media-hero-art { transform: scale(1.03); }
 .ndw-mx-backdrop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; }
 .ndw-mx-backdrop.is-loaded { opacity: 1; }
 .ndw-mx-backdrop.is-blurred { inset: -10%; width: 120%; height: 120%; filter: blur(22px) saturate(1.15) brightness(0.6); }
-.ndw-mx-hero { position: relative; display: flex; align-items: flex-end; min-height: 190px; overflow: hidden; border-radius: 12px; color: inherit; text-decoration: none; background: color-mix(in srgb, var(--nd-text) 5%, var(--nd-card-bg)); isolation: isolate; }
+/* clip-path rather than overflow + radius: a scaled or fading picture never leaves light corners. */
+.ndw-mx-hero { position: relative; display: flex; align-items: flex-end; min-height: 190px; overflow: hidden; border-radius: 12px; clip-path: inset(0 round 12px); color: inherit; text-decoration: none; background: rgb(10 11 13); isolation: isolate; }
 .ndw-mx-hero.is-medium { min-height: 150px; }
 .ndw-mx-hero > .ndw-mx-backdrop { z-index: -2; transition: opacity 0.5s ease, transform 0.8s ease; }
 a.ndw-mx-hero:hover > .ndw-mx-backdrop { transform: scale(1.025); }
@@ -916,7 +917,7 @@ a.ndw-mx-hero:hover > .ndw-mx-backdrop { transform: scale(1.025); }
 .ndw-mx-figure.is-bad .ndw-mx-figure-value { color: var(--nd-red); }
 .ndw-mx-figure-unit { color: var(--nd-text-muted); font-size: 0.7rem; }
 .ndw-mx-summary { display: flex; align-items: center; gap: 20px; min-width: 0; flex-wrap: wrap; }
-.ndw-mx-summary-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ndw-mx-summary-main { display: flex; flex-direction: column; gap: 6px; flex: 1 1 140px; min-width: 0; }
 .ndw-mx-summary-text { display: flex; flex-direction: column; gap: 4px; margin-left: auto; align-items: flex-end; color: var(--nd-text-muted); font-size: 0.72rem; }
 
 /* Rails: posters (2:3) or wide pictures (16:9) in columns, a title and a line beneath. */
@@ -929,8 +930,10 @@ a.ndw-mx-hero:hover > .ndw-mx-backdrop { transform: scale(1.025); }
 .ndw-mx-rail-title { overflow: hidden; color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.8rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .ndw-mx-rail-sub { overflow: hidden; margin-top: -3px; color: var(--nd-text-muted); font-size: 0.64rem; text-overflow: ellipsis; white-space: nowrap; }
 a.ndw-mx-rail-item:hover .ndw-mx-rail-title { color: var(--nd-accent); }
-.ndw-mx-thumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; background: color-mix(in srgb, var(--nd-text) 6%, var(--nd-card-bg)); }
-.ndw-mx-thumb-track { position: absolute; right: 8px; bottom: 8px; left: 8px; }
+.ndw-mx-thumb { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; clip-path: inset(0 round 10px); background: color-mix(in srgb, var(--nd-text) 6%, var(--nd-card-bg)); }
+.ndw-mx-thumb-foot { position: absolute; right: 8px; bottom: 8px; left: 8px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+.ndw-mx-thumb-foot > .ndw-mx-track { align-self: stretch; }
+.ndw-mx-thumb-time { padding: 2px 5px; border-radius: 4px; color: #fff; background: rgb(10 11 13 / 0.72); font-size: 0.6rem; font-variant-numeric: tabular-nums; }
 .ndw-mx-thumb .ndw-mx-track { background: rgb(255 255 255 / 0.25); }
 
 /* Rows: queue, other sessions, watched list. */
@@ -979,13 +982,21 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 
 /* Library: a card per library with pictures, its newest posters fanned over a blur. */
 .ndw-mx-shelves { display: grid; grid-template-columns: repeat(var(--ndw-cols, 3), minmax(0, 1fr)); gap: 12px; }
-.ndw-mx-shelf { position: relative; display: flex; align-items: flex-end; height: 200px; overflow: hidden; border-radius: 12px; background: color-mix(in srgb, var(--nd-text) 5%, var(--nd-card-bg)); isolation: isolate; }
+.ndw-mx-shelf { position: relative; display: flex; align-items: flex-end; height: var(--ndw-shelf-h, 200px); overflow: hidden; border-radius: 12px; clip-path: inset(0 round 12px); background: rgb(10 11 13); isolation: isolate; }
 .ndw-mx-shelf > .ndw-mx-backdrop { z-index: -2; }
-.ndw-mx-fan { position: absolute; top: 18px; right: 0; left: 0; z-index: -1; display: flex; justify-content: center; }
-.ndw-mx-fan img { width: 70px; aspect-ratio: 2 / 3; border-radius: 6px; object-fit: cover; transition: opacity 0.6s ease; }
-.ndw-mx-fan img.is-0 { transform: rotate(-8deg) translateX(28px); opacity: 0.8; }
-.ndw-mx-fan img.is-1 { position: relative; z-index: 1; width: 80px; transform: translateY(-6px); }
-.ndw-mx-fan img.is-2 { transform: rotate(8deg) translateX(-28px); opacity: 0.8; }
+/* Three sizes; the fan grows with the card. Pictures crossfade: the new set fades in over the old. */
+.ndw-mx-shelves.is-small { --ndw-shelf-h: 160px; --ndw-fan: 74px; }
+.ndw-mx-shelves.is-medium { --ndw-shelf-h: 210px; --ndw-fan: 100px; }
+.ndw-mx-shelves.is-large { --ndw-shelf-h: 280px; --ndw-fan: 136px; }
+.ndw-mx-fan { position: absolute; top: calc(var(--ndw-shelf-h, 210px) * 0.08); right: 0; left: 0; z-index: -1; height: calc(var(--ndw-fan, 100px) * 1.5); }
+.ndw-mx-fan-set { position: absolute; inset: 0; display: flex; justify-content: center; opacity: 0; transition: opacity 1.2s ease; }
+.ndw-mx-fan-set.is-loaded, .ndw-mx-fan-set.is-under { opacity: 1; }
+.ndw-mx-fan-set img { width: calc(var(--ndw-fan, 100px) * 0.86); aspect-ratio: 2 / 3; align-self: flex-start; border-radius: 6px; object-fit: cover; }
+.ndw-mx-fan-set img.is-0 { transform: rotate(-8deg) translateX(calc(var(--ndw-fan, 100px) * 0.4)); opacity: 0.8; }
+.ndw-mx-fan-set img.is-1 { position: relative; z-index: 1; width: var(--ndw-fan, 100px); transform: translateY(-6px); }
+.ndw-mx-fan-set img.is-2 { transform: rotate(8deg) translateX(calc(var(--ndw-fan, 100px) * -0.4)); opacity: 0.8; }
+.ndw-mx-shelf > .ndw-mx-backdrop { transition: opacity 1.4s ease; }
+.ndw-mx-shelf > .ndw-mx-backdrop.is-under { opacity: 1; }
 .ndw-mx-shelf-foot { display: flex; align-items: flex-end; gap: 10px; width: 100%; padding: 30px 14px 12px; box-sizing: border-box; background: linear-gradient(0deg, rgb(10 11 13 / 0.92), rgb(10 11 13 / 0.6) 65%, transparent); }
 .ndw-mx-shelf-foot .ndw-mx-title { color: #fff; }
 .ndw-mx-shelf-foot .ndw-media-sub { color: rgb(255 255 255 / 0.72); }
@@ -994,3 +1005,50 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-mx-plain-item { display: flex; align-items: center; gap: 20px; min-width: 0; padding: 12px 0; border-top: 1px solid var(--nd-card-border); }
 .ndw-mx-plain-item > .ndw-media-row-text { flex: 1; min-width: 150px; }
 .ndw-mx-plain-item .ndw-mx-figures { gap: 20px; }
+
+/* Watched list in its three sizes, like Recently added. */
+.ndw-media-list.is-small .ndw-mx-qrow { gap: 10px; padding: 4px 0; }
+.ndw-media-list.is-small .ndw-mx-qrow .ndw-media-title { font-size: 0.76rem; }
+.ndw-media-list.is-large .ndw-mx-qrow { gap: 18px; padding: 10px 0; }
+.ndw-media-list.is-large .ndw-mx-qrow .ndw-media-title { font-size: 1.02rem; }
+.ndw-media-list.is-large .ndw-mx-qrow .ndw-media-sub { font-size: 0.8rem; }
+
+/* Tiles (*arr status) and lines (indexers): a quiet surface, no outline; figures over their labels. */
+.ndw-mx-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.ndw-mx-tile { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px 18px; border-radius: 12px; background: color-mix(in srgb, var(--nd-text) 3.5%, transparent); }
+.ndw-mx-tile-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ndw-mx-tile-head > .ndw-media-row-text { flex: 1; }
+.ndw-mx-tile-name { overflow: hidden; color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.98rem; font-weight: 600; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-mx-tile-stats { display: flex; gap: 28px; min-width: 0; }
+.ndw-mx-tile-stats.is-end { margin-left: auto; gap: 24px; }
+.ndw-mx-tile-foot { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--nd-card-border); }
+.ndw-mx-stat { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ndw-mx-stat-value { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.6rem; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+.ndw-mx-stat-label { color: var(--nd-text-muted); font-size: 0.64rem; white-space: nowrap; }
+.ndw-mx-stat.is-muted .ndw-mx-stat-value { color: var(--nd-text-dimmed); }
+.ndw-mx-stat.is-bad .ndw-mx-stat-value { color: var(--nd-red); }
+.ndw-mx-ring-figure { position: relative; display: inline-flex; flex-shrink: 0; }
+.ndw-mx-ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
+.ndw-mx-ring-text > span { color: var(--nd-text-dimmed); font-size: 0.72rem; font-weight: 500; }
+.ndw-mx-lines { column-gap: 28px; row-gap: 0; }
+.ndw-mx-line { display: flex; align-items: baseline; gap: 12px; min-width: 0; padding: 9px 0; border-top: 1px solid var(--nd-card-border); }
+.ndw-mx-line-name { flex: 1; min-width: 0; overflow: hidden; color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.84rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-mx-line-end { flex-shrink: 0; color: var(--nd-text-muted); font-size: 0.68rem; white-space: nowrap; }
+.ndw-mx-line.is-off { opacity: 0.5; }
+
+/* Coming soon: tabs inside the widget, sources in priority order, catalogue search. */
+.ndw-mx-tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--nd-card-border); }
+.ndw-mx-tabs > button { display: inline-flex; align-items: baseline; gap: 6px; margin-bottom: -1px; padding: 0 0 8px; border: none; border-bottom: 2px solid transparent; color: var(--nd-text-muted); background: none; font: inherit; font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.84rem; font-weight: 500; cursor: pointer; }
+.ndw-mx-tabs > button > span { color: var(--nd-text-dimmed); font-family: var(--font-geist-mono), monospace; font-size: 0.68rem; }
+.ndw-mx-tabs > button:hover { color: var(--nd-text); }
+.ndw-mx-tabs > button.is-on { border-bottom-color: var(--nd-accent); color: var(--nd-text); }
+.ndw-mx-source-row { display: flex; align-items: center; gap: 8px; }
+.ndw-mx-source-row > :first-child { flex: 1; min-width: 0; }
+.ndw-mx-order { display: inline-flex; gap: 2px; }
+.ndw-mx-settings-head { margin: 10px 0 0; padding-top: 14px; border-top: 1px solid var(--nd-card-border); color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.86rem; font-weight: 600; }
+.ndw-mx-search { display: flex; align-items: center; gap: 8px; color: var(--nd-text-muted); }
+.ndw-mx-search > .ndc-input { flex: 1; min-width: 0; }
+.ndw-mx-hits { display: flex; flex-direction: column; max-height: 260px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.ndw-mx-hits > li { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 7px 0; border-top: 1px solid var(--nd-card-border); }
+.ndw-mx-hits > li:first-child { border-top: none; }
+.ndw-mx-hits .ndw-media-row-text { flex: 1; }

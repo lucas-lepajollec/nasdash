@@ -5,14 +5,18 @@ import type { WidgetSettings } from '@/lib/pages/types';
 import type { MediaItem, MediaNowPlayingResponse, MediaSession, MediaWatched } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
-import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { clock, MediaConnectionField, MediaPoster, MediaSetup, useMediaConnection } from '@/components/widgets/media/shared';
 import { Backdrop, Hero, Track } from '@/components/widgets/media/visual';
 
 type History = 'rail' | 'list' | 'none';
 const HISTORIES: readonly History[] = ['rail', 'list', 'none'];
+type Size = 'small' | 'medium' | 'large';
+const SIZES: readonly Size[] = ['small', 'medium', 'large'];
+/** List rows: poster width per size, as in Recently added. */
+const ROW_POSTER: Record<Size, number> = { small: 28, medium: 40, large: 72 };
 
 /** The clock of the page: playing sessions move on between two refreshes. */
 function useNow(active: boolean): number {
@@ -50,6 +54,7 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
   const { t } = useI18n();
   const connection = useMediaConnection(settings);
   const history = pick(settings.history, HISTORIES, 'rail');
+  const count = bounded(settings.count, 1, 12, 6), size = pick(settings.size, SIZES, 'medium');
   const { data, error, mutate, stale } = useWidgetData<MediaNowPlayingResponse>('/api/widgets/media/now-playing', widgetId, settings, { refreshMs: 10_000, isVisible, method: 'GET', enabled: !!connection });
   const [box, width] = useBoxWidth<HTMLDivElement>();
   const sessions = data?.sessions ?? [];
@@ -71,7 +76,19 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
               <CalmeField label={t('widgets.media.watched')}>
                 <CalmeSegmented label={t('widgets.media.watched')} value={pick(draft.history, HISTORIES, 'rail')} options={HISTORIES.map(value => ({ value, label: t(`widgets.media.history.${value}`) }))} onChange={value => change({ history: value === 'rail' ? null : value })} />
               </CalmeField>
-              {pick(draft.history, HISTORIES, 'rail') === 'list' && <ColumnsSetting draft={draft} change={change} />}
+              {pick(draft.history, HISTORIES, 'rail') !== 'none' && (
+                <CalmeRow label={t('widgets.media.count')}>
+                  <CalmeSlider label={t('widgets.media.count')} value={bounded(draft.count, 1, 12, 6)} min={1} max={12} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
+                </CalmeRow>
+              )}
+              {pick(draft.history, HISTORIES, 'rail') === 'list' && (
+                <>
+                  <CalmeField label={t('widgets.media.size')}>
+                    <CalmeSegmented label={t('widgets.media.size')} value={pick(draft.size, SIZES, 'medium')} options={SIZES.map(value => ({ value, label: t(`widgets.media.size.${value}`) }))} onChange={value => change({ size: value === 'medium' ? null : value })} />
+                  </CalmeField>
+                  <ColumnsSetting draft={draft} change={change} />
+                </>
+              )}
               <CalmeRow label={t('widgets.media.showUsers')} info={t('widgets.media.showUsersHint')}>
                 <CalmeSwitch label={t('widgets.media.showUsers')} checked={draft.showUsers === true} onChange={on => change({ showUsers: on || null })} />
               </CalmeRow>
@@ -93,14 +110,14 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
                     <div className="ndw-mx-section">
                       <span className="ndw-mx-label">{t('widgets.media.continue')}</span>
                       {history === 'list'
-                        ? <ColumnRows columns={columnsOf(settings, width, 280)}>{rest.slice(0, 8).map(entry => <WatchedRow key={entry.item.id} entry={entry} />)}</ColumnRows>
-                        : <WatchedRail entries={rest} width={width} />}
+                        ? <ColumnRows columns={columnsOf(settings, width, size === 'large' ? 360 : 280)} className={`ndw-media-list is-${size}`}>{rest.slice(0, count).map(entry => <WatchedRow key={entry.item.id} entry={entry} size={size} />)}</ColumnRows>
+                        : <WatchedRail entries={rest.slice(0, count)} width={width} />}
                     </div>
                   )}
                   {history !== 'none' && !watched.length && (data.recent?.length ?? 0) > 0 && (
                     <div className="ndw-mx-section">
                       <span className="ndw-mx-label">{t('widgets.media.latest')}</span>
-                      <WatchedRail entries={data.recent!.map(item => ({ item }))} width={width} />
+                      <WatchedRail entries={data.recent!.slice(0, count).map(item => ({ item }))} width={width} />
                     </div>
                   )}
                 </div>
@@ -166,7 +183,7 @@ function Resume({ entry }: { entry: MediaWatched }) {
     <Hero href={item.link} backdrop={item.backdrop} poster={<MediaPoster item={item} width={84} eager />}>
       <span className="ndw-mx-eyebrow is-accent">{t(partial ? 'widgets.media.resume' : 'widgets.media.lastWatched')}</span>
       <span className="ndw-mx-display">{name(item)}</span>
-      <span className="ndw-mx-meta">{[code(item), partial && entry.remainingMs ? t('widgets.media.remaining', { time: clock(entry.remainingMs) }) : ''].filter(Boolean).join(' · ')}</span>
+      <span className="ndw-mx-meta">{code(item)}</span>
       {partial && <span className="ndw-mx-progress is-short"><Track value={entry.progress!} /></span>}
       <span className="ndw-mx-meta is-quiet">{[t('widgets.media.idle'), entry.watchedAt ? relative(entry.watchedAt) : '', entry.user].filter(Boolean).join(' · ')}</span>
     </Hero>
@@ -176,8 +193,7 @@ function Resume({ entry }: { entry: MediaWatched }) {
 /** "12 min left", "watched", or nothing when the server does not tell. */
 function useStatus() {
   const { t } = useI18n();
-  return (entry: MediaWatched) => entry.progress === undefined ? '' : entry.progress >= 100 ? t('widgets.media.finished')
-    : entry.remainingMs ? t('widgets.media.remaining', { time: clock(entry.remainingMs) }) : `${Math.round(entry.progress)} %`;
+  return (entry: MediaWatched) => entry.progress !== undefined && entry.progress >= 100 ? t('widgets.media.finished') : '';
 }
 
 /** Wide pictures with the progress along their foot, like "continue watching". */
@@ -193,7 +209,12 @@ function WatchedRail({ entries, width }: { entries: MediaWatched[]; width: numbe
           <>
             <span className="ndw-mx-thumb">
               <Backdrop src={item.backdrop ?? item.poster} blur={!item.backdrop} />
-              {entry.progress !== undefined && <span className="ndw-mx-thumb-track"><Track thin value={entry.progress} tone={entry.progress >= 100 ? 'done' : undefined} /></span>}
+              {entry.progress !== undefined && (
+                <span className="ndw-mx-thumb-foot">
+                  {entry.progress < 100 && entry.remainingMs ? <span className="ndw-mx-thumb-time">{clock(entry.remainingMs)}</span> : null}
+                  <Track thin value={entry.progress} tone={entry.progress >= 100 ? 'done' : undefined} />
+                </span>
+              )}
             </span>
             <span className="ndw-mx-rail-title">{name(item)}</span>
             <span className="ndw-mx-rail-sub">{[code(item), status(entry)].filter(Boolean).join(' · ')}</span>
@@ -208,23 +229,21 @@ function WatchedRail({ entries, width }: { entries: MediaWatched[]; width: numbe
 }
 
 /** The list form, like Recently added, with the progress beneath. */
-function WatchedRow({ entry }: { entry: MediaWatched }) {
+function WatchedRow({ entry, size }: { entry: MediaWatched; size: Size }) {
   const relative = useRelativeTime();
   const { name, code } = useNames();
   const status = useStatus();
   const { item } = entry;
   const body = (
     <>
-      <MediaPoster item={item} width={40} />
+      <MediaPoster item={item} width={ROW_POSTER[size]} />
       <span className="ndw-mx-qrow-text">
         <span className="ndw-mx-qrow-head">
           <span className="ndw-media-title">{name(item)}</span>
           {entry.watchedAt && <span className="ndw-media-time">{relative(entry.watchedAt)}</span>}
         </span>
-        <span className="ndw-media-sub">{[code(item), entry.user].filter(Boolean).join(' · ')}</span>
-        {entry.progress !== undefined && (entry.progress >= 100
-          ? <span className="ndw-media-sub ndw-mx-done">{status(entry)}</span>
-          : <span className="ndw-mx-progress"><Track thin value={entry.progress} /><span className="ndw-media-time">{status(entry)}</span></span>)}
+        <span className="ndw-media-sub">{[code(item), entry.user, status(entry)].filter(Boolean).join(' · ')}</span>
+        {entry.progress !== undefined && entry.progress < 100 && <Track thin value={entry.progress} />}
       </span>
     </>
   );

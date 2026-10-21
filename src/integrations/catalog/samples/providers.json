@@ -1,0 +1,9 @@
+{
+  "tvmaze": {"id":42,"name":"The Cloud Observatory","status":"Running","type":"Scripted","premiered":"2025-01-01","image":{"original":"https://static.tvmaze.com/uploads/images/original_untouched/1/1.jpg"},"network":{"name":"Lantern Television"},"_links":{"nextepisode":{"href":"https://api.tvmaze.com/episodes/123"},"previousepisode":{"href":"https://api.tvmaze.com/episodes/122"}}},
+  "next": {"season":3,"number":2,"name":"Paper Skies","airstamp":"2026-10-23T20:00:00Z"},
+  "previous": {"season":3,"number":1},
+  "kitsu": {"id":"77","attributes":{"canonicalTitle":"Lanterns Beyond the Lake","slug":"lanterns-beyond-the-lake","status":"current","startDate":"2026-10-01","nextRelease":"2026-10-24T21:00:00Z","episodeCount":12,"subtype":"TV","posterImage":{"medium":"https://media.kitsu.app/anime/poster_images/77/medium.jpg"},"coverImage":{"original":"https://media.kitsu.io/anime/cover_images/77/original.jpg"}}},
+  "anilist": {"id":88,"title":{"english":"Lanterns Beyond the Lake","romaji":"Lake Lanterns"},"status":"RELEASING","startDate":{"year":2026,"month":10,"day":1},"nextAiringEpisode":{"episode":3,"airingAt":1792864800},"coverImage":{"extraLarge":"https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/88.jpg"},"bannerImage":"https://s4.anilist.co/file/anilistcdn/media/anime/banner/88.jpg","siteUrl":"https://anilist.co/anime/88"},
+  "movie": {"id":99,"title":"The Clockwork Aurora","release_date":"2026-11-01","status":"In Production","poster_path":"/fictional.jpg","backdrop_path":"/fictional-backdrop.jpg"},
+  "tv": {"id":100,"name":"The Silver Tram","status":"Returning Series","next_episode_to_air":{"season_number":2,"episode_number":4,"name":"The Station","air_date":"2026-10-25"},"last_episode_to_air":{"season_number":2,"episode_number":3},"networks":[{"name":"Lantern Television"}],"poster_path":"/fictional-tv.jpg"}
+}

@@ -1727,18 +1727,23 @@ body[data-design="calme"] .ndc-settings .nd-settings-content h4 { font-weight: 5
 .ndc-set-row-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ndc-set-row--stacked .ndc-set-row-control { flex-wrap: wrap; }
 
+/* One frame, the chosen option a block inside it: no separators or shared edges that a
+   fractional pixel could cut, whatever the dialog width. */
 .ndc-seg {
   display: inline-flex;
+  gap: 2px;
+  padding: 2px;
   border: 1px solid var(--nd-card-hover-border);
-  border-radius: 6px;
-  overflow: hidden;
+  border-radius: 8px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .ndc-seg > button {
-  height: 30px;
-  padding: 0 13px;
+  height: 28px;
+  padding: 0 12px;
   border: none;
+  border-radius: 5px;
   background: transparent;
   color: var(--nd-text-muted);
   font: inherit;
@@ -1747,7 +1752,6 @@ body[data-design="calme"] .ndc-settings .nd-settings-content h4 { font-weight: 5
   cursor: pointer;
 }
 
-.ndc-seg > button + button { border-left: 1px solid var(--nd-card-hover-border); }
 .ndc-seg > button:hover { color: var(--nd-text); }
 .ndc-seg > button.is-on { background: var(--nd-subcard-bg); color: var(--nd-text); }
 
@@ -2586,7 +2590,7 @@ body[data-outlines="off"] .nd-header .nd-header-actions div[style*="backdrop-fil
 
 body[data-outlines="off"] .nd-container-card--selected { box-shadow: inset 2px 0 0 var(--nd-accent) !important; }
 
-body[data-outlines="off"] .ndc-seg > button + button { border-left-color: transparent; }
+body[data-outlines="off"] .ndc-seg { border-color: transparent; background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
 body[data-outlines="off"] .nd-host-btn--active,
 body[data-outlines="off"] .ndc-chip[aria-pressed="true"],
 body[data-outlines="off"] .ndc-icon-choices .ndc-icon-pick[aria-checked="true"] { background: color-mix(in srgb, var(--nd-accent) 14%, transparent) !important; }

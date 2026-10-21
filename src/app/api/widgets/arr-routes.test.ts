@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import type { DashboardConfig, IntegrationInstance } from '@/lib/types';
-import type { Page, PagesDocument } from '@/lib/pages/types';
+import type { Page, PagesDocument, WidgetSettings } from '@/lib/pages/types';
 import type { AccessPrincipal } from '@/lib/access';
 import { ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
 import sonarr from '@/integrations/sonarr/samples/service.json';
@@ -15,6 +15,9 @@ vi.mock('@/lib/widgetData/services', async original => ({ ...await original<type
 vi.mock('@/integrations/arr/collect', async original => ({ ...await original<typeof import('@/integrations/arr/collect')>(), collectArrUpcoming: vi.fn(), collectArrQueue: vi.fn(), collectArrRecent: vi.fn(), collectArrStatus: vi.fn(), collectProwlarrIndexers: vi.fn() }));
 vi.mock('@/lib/widgetData/libraryUpcoming', () => ({ collectLibraryUpcoming: vi.fn() }));
 vi.mock('@/integrations/downloads/collect', () => ({ collectDownloadClient: vi.fn() }));
+vi.mock('@/integrations/catalog/collect', () => ({ collectExternal: vi.fn(), searchCatalog: vi.fn() }));
+import { collectExternal, searchCatalog } from '@/integrations/catalog/collect';
+import { GET as catalogGet } from './arr/catalog/route';
 import { GET as upcomingGet } from './arr/upcoming/route';
 import { GET as queueGet } from './arr/queue/route';
 import { GET as statusGet } from './arr/status/route';
@@ -46,6 +49,8 @@ beforeEach(() => {
   vi.mocked(collectArrStatus).mockImplementation(async instance => demoArrStatus(instance));
   vi.mocked(collectProwlarrIndexers).mockImplementation(async instance => demoIndexers(instance));
   vi.mocked(collectDownloadClient).mockImplementation(async instance => demoDownloadClient(instance));
+  vi.mocked(collectExternal).mockResolvedValue({ external: [{ id: 'kitsu:77', provider: 'kitsu', kind: 'anime', title: 'The Cloud Observatory', status: 'airing', phase: 'current', poster: 'https://media.kitsu.app/art.jpg' }], failures: [] });
+  vi.mocked(searchCatalog).mockResolvedValue([{ provider: 'tvmaze', id: '42', kind: 'series', title: 'The Cloud Observatory' }]);
   vi.mocked(serviceBytes).mockResolvedValue({ bytes: Buffer.from('fictional-raster'), contentType: 'image/webp', status: 200 });
 });
 afterEach(() => vi.useRealTimers());
@@ -104,8 +109,8 @@ describe('*arr and download data routes', () => {
     state.authenticated = false; expect((await upcomingGet(get())).status).toBe(401); state.authenticated = true;
     expect((await upcomingGet(get('widgetId=absent'))).status).toBe(404);
     widget().type = 'media-queue'; expect((await upcomingGet(get())).status).toBe(404); widget().type = 'media-upcoming';
-    widget().settings.integrationIds = [state.instances[2].id]; expect((await upcomingGet(get())).status).toBe(404);
-    widget().settings.integrationIds = ['absent']; expect((await upcomingGet(get())).status).toBe(404);
+    widget().settings.integrationIds = [state.instances[2].id]; expect((await (await upcomingGet(get())).json()).failures).toMatchObject([{ id: state.instances[2].id, error: 'widgets.error.notFound' }]);
+    widget().settings.integrationIds = ['absent']; expect((await (await upcomingGet(get())).json()).failures).toMatchObject([{ id: 'absent', error: 'widgets.error.notFound' }]);
     widget().settings = {}; state.admin = false; widget().hidden = true; expect((await upcomingGet(get())).status).toBe(404);
     widget().hidden = false; state.allowedTabs = ['docker']; expect((await upcomingGet(get())).status).toBe(404);
     expect(collectArrUpcoming).not.toHaveBeenCalled();
@@ -211,6 +216,8 @@ describe('cleared settings', () => {
     widget().type = 'media-downloads';
     widget().settings = { integrationIds: null, items: null, chart: null };
     vi.mocked(collectDownloadClient).mockImplementation(async instance => demoDownloadClient(instance));
+  vi.mocked(collectExternal).mockResolvedValue({ external: [{ id: 'kitsu:77', provider: 'kitsu', kind: 'anime', title: 'The Cloud Observatory', status: 'airing', phase: 'current', poster: 'https://media.kitsu.app/art.jpg' }], failures: [] });
+  vi.mocked(searchCatalog).mockResolvedValue([{ provider: 'tvmaze', id: '42', kind: 'series', title: 'The Cloud Observatory' }]);
     const response = await downloadsGet(get());
     expect(response.status).toBe(200);
     expect((await response.json()).clients.length).toBeGreaterThan(0);
@@ -232,8 +239,8 @@ describe('upcoming library mode and idle data', () => {
     server.secrets = { apiKey: 'changed' }; await upcomingGet(get()); expect(collectLibraryUpcoming).toHaveBeenCalledTimes(3);
   });
   it('requires a saved media source, distinguishes missing servers and isolates failures', async () => {
-    widget().settings = { source: 'library' }; expect((await upcomingGet(get())).status).toBe(404);
-    const server = source('plex'); state.instances.push(server); widget().settings.mediaId = state.instances[0].id; expect((await upcomingGet(get())).status).toBe(404);
+    widget().settings = { source: 'library' }; expect((await (await upcomingGet(get())).json()).failures).toMatchObject([{ id: 'library', error: 'widgets.error.notFound' }]);
+    const server = source('plex'); state.instances.push(server); widget().settings.mediaId = state.instances[0].id; expect((await (await upcomingGet(get())).json()).failures).toMatchObject([{ id: state.instances[0].id, error: 'widgets.error.notFound' }]);
     widget().settings.mediaId = server.id; vi.mocked(collectLibraryUpcoming).mockRejectedValue(new Error('https://private.example.com?token=secret'));
     const result = await (await upcomingGet(get())).json(); expect(result.failures).toEqual([{ id: server.id, name: server.name, error: 'widgets.error.network' }]); expect(result.followUps).toEqual([]);
   });
@@ -281,5 +288,71 @@ describe('upcoming library mode and idle data', () => {
     state.demo = true; state.instances = [source('lidarr')]; widget().settings = { days: 1, kinds: ['album'] };
     const result = await (await upcomingGet(get())).json(); expect(result.items).toEqual([]); expect(result.later).toHaveLength(3);
     expect(result.later[0].poster).toContain('/api/widgets/media/image?'); expect(collectArrUpcoming).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('combined upcoming catalogues', () => {
+  it('reads all requested sources and preserves successful results when one fails', async () => {
+    const server = source('plex'); state.instances.push(server);
+    widget().settings = { sources: ['external', 'library', 'arr'], mediaId: server.id, watchlist: [{ provider: 'kitsu', id: '77', kind: 'anime', title: 'Followed title' }] };
+    vi.mocked(collectLibraryUpcoming).mockRejectedValue(new Error('private-url-and-token'));
+    const response = await upcomingGet(get()), body = await response.json();
+    expect(response.status).toBe(200); expect(body.items).toHaveLength(2); expect(body.followUps).toEqual([]); expect(body.external).toHaveLength(1);
+    expect(body.external[0].poster).toBe('https://media.kitsu.app/art.jpg'); expect(body.failures).toEqual([{ id: server.id, name: server.name, error: 'widgets.error.network' }]);
+    expect(body.items.every((item: { phase?: string }) => ['current', 'announced'].includes(item.phase!))).toBe(true);
+    expect(collectExternal).toHaveBeenCalledWith({ mode: 'watchlist', watchlist: widget().settings.watchlist, kinds: ['series', 'anime', 'movie'] }, false);
+  });
+  it('omits unrequested collections and preserves a surviving arr connection after another was removed', async () => {
+    widget().settings = { sources: ['arr'], integrationIds: ['removed', state.instances[0].id] };
+    const body = await (await upcomingGet(get())).json(); expect(body.items).toHaveLength(1); expect(body.failures).toMatchObject([{ id: 'removed' }]);
+    expect(body).not.toHaveProperty('followUps'); expect(body).not.toHaveProperty('external'); expect(collectExternal).not.toHaveBeenCalled();
+    widget().settings = { sources: ['external'] }; const external = await (await upcomingGet(get())).json();
+    expect(external.items).toEqual([]); expect(external).not.toHaveProperty('later'); expect(external).not.toHaveProperty('followUps'); expect(collectLibraryUpcoming).not.toHaveBeenCalled();
+  });
+  it('authorizes images from both arr and library in saved and draft combined settings', async () => {
+    const server = source('jellyfin'); state.instances.push(server); widget().settings = { sources: ['arr', 'library'], mediaId: server.id };
+    const body = await (await upcomingGet(get())).json();
+    expect((await imageGet(image(body.items[0].poster))).status).toBe(200); expect((await imageGet(image(body.followUps[0].poster))).status).toBe(200);
+    expect(vi.mocked(serviceBytes).mock.calls.at(-1)?.[0]).toBe(server);
+    widget().settings.sources = ['arr']; expect((await imageGet(image(body.followUps[0].poster))).status).toBe(404);
+    const draft = encodeURIComponent(JSON.stringify({ sources: ['external', 'library', 'arr'], mediaId: server.id }));
+    const preview = await (await upcomingGet(get(`widgetId=w&draft=${draft}`))).json();
+    expect((await imageGet(image(preview.followUps[0].poster))).status).toBe(200); expect((await imageGet(image(preview.items[0].poster))).status).toBe(200);
+  });
+  it.each<WidgetSettings>([
+    { sources: [] }, { sources: ['arr', 'arr'] }, { sources: ['other'] }, { externalMode: 'other' }, { catalogKinds: [] },
+    { watchlist: [{ provider: 'tvmaze', kind: 'series', id: '1&token=secret', title: 'Title' }] }, { watchlist: false }, { integrationIds: ['a', 'a'] },
+  ])('rejects all invalid settings before fetching %j', async settings => {
+    widget().settings = { sources: ['external', 'arr', 'library'], ...settings };
+    expect((await upcomingGet(get())).status).toBe(400);
+    expect(collectArrUpcoming).not.toHaveBeenCalled(); expect(collectLibraryUpcoming).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
+  });
+  it('treats null catalogue settings as absent and provides offline fictional demo items', async () => {
+    state.demo = true; widget().settings = { sources: ['external'], externalMode: null, watchlist: null, catalogKinds: null };
+    const body = await (await upcomingGet(get())).json(); expect(body.external.length).toBeGreaterThan(2);
+    expect(body.external.every((item: { phase: string; poster: string }) => !!item.phase && item.poster.startsWith('data:image/svg+xml,'))).toBe(true);
+    expect(JSON.stringify(body)).not.toMatch(/https?:|Private fallback/); expect(collectExternal).not.toHaveBeenCalled();
+    widget().settings.ended = true; expect((await (await upcomingGet(get())).json()).external.some((item: { status: string }) => item.status === 'ended')).toBe(true);
+  });
+});
+
+describe('admin catalogue search route', () => {
+  const search = (params = 'q=cloud&kinds=series,anime,movie') => new NextRequest(`https://nasdash.example.com/api/widgets/arr/catalog?${params}`);
+  it('denies viewers and unauthenticated callers even in public mode', async () => {
+    state.admin = false; expect((await catalogGet(search())).status).toBe(403);
+    state.authenticated = false; expect((await catalogGet(search())).status).toBe(403); expect(searchCatalog).not.toHaveBeenCalled();
+  });
+  it.each(['q=a', 'q=', `q=${'a'.repeat(81)}`, 'q=cloud&kinds=', 'q=cloud&kinds=anime,anime', 'q=cloud&kinds=other'])('validates query %s', async query => {
+    expect((await catalogGet(search(query))).status).toBe(400); expect(searchCatalog).not.toHaveBeenCalled();
+  });
+  it('returns a bare hits array, private no-store, and enforces optional widget permissions', async () => {
+    const response = await catalogGet(search('q=cloud&kinds=series&widgetId=w')); expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(await response.json()).toMatchObject([{ provider: 'tvmaze' }]); expect(searchCatalog).toHaveBeenCalledWith('cloud', ['series']);
+    expect((await catalogGet(search('q=cloud&widgetId=absent'))).status).toBe(404); expect((await catalogGet(search('q=cloud&widgetId=!'))).status).toBe(400);
+  });
+  it('returns fictional demo hits without contacting any catalogue', async () => {
+    state.demo = true; const response = await catalogGet(search('q=cloud&kinds=movie'));
+    expect(await response.json()).toMatchObject([{ title: 'The Clockwork Aurora', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
   });
 });

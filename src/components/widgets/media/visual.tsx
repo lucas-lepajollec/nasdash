@@ -105,3 +105,13 @@ export function Bars({ values, height = 32 }: { values: number[]; height?: numbe
     </span>
   );
 }
+
+/** A figure over its label (tiles and summaries). */
+export function Stat({ value, label, tone }: { value: React.ReactNode; label: string; tone?: 'muted' | 'bad' | 'warn' }) {
+  return (
+    <span className={`ndw-mx-stat ${tone ? `is-${tone}` : ''}`}>
+      <span className="ndw-mx-stat-value">{value}</span>
+      <span className="ndw-mx-stat-label">{label}</span>
+    </span>
+  );
+}

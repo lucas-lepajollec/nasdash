@@ -1,3 +1,4 @@
+import { tmdbRequest } from '@/integrations/catalog/tmdb';
 import { arrRequest } from '@/integrations/arr/collect';
 import { testQbittorrent } from '@/integrations/qbittorrent/collect';
 import { transmissionRequest } from '@/integrations/transmission/collect';
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if (([...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
+  if ((['tmdb', ...DNS_TYPES, ...PHOTO_TYPES, ...CUSTOM_API_TYPES, ...MEDIA_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
     if (service.fields.some(field => field.required && !(field.kind === 'secret' ? secrets[field.id] : settings[field.id]))) return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
     const instance: IntegrationInstance = { id: sameType?.id ?? 'draft', type, name: sameType?.name ?? service.name, settings, secrets };
     try {
-      if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
+      if (type === 'tmdb') await tmdbRequest(instance, '/authentication');
+      else if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
       else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
       // The statistics the widget reads (Dashboard: view); a missing permission is told apart.
       else if (type === 'technitium') await technitiumRequest(instance, '/api/dashboard/stats/get', { type: 'LastHour', utc: 'true' });

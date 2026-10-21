@@ -101,7 +101,9 @@ describe('Plex', () => {
     expect(result.libraries.map(entry => [entry.kind, entry.count])).toEqual([['movies', 284], ['series', 42], ['music', 96]]);
     // Totals never page through titles; only the newest few per section are read.
     const reads = json.mock.calls.map(([, path]) => path).filter(path => path.includes('/all?'));
-    expect(reads.every(path => path.includes('X-Plex-Container-Size=0') || path.includes('sort=addedAt:desc') && path.includes('X-Plex-Container-Size=8'))).toBe(true);
+    expect(reads.every(path => path.includes('X-Plex-Container-Size=0') || path.includes('sort=addedAt:desc') && path.includes('X-Plex-Container-Size=8') || /X-Plex-Container-Start=\d+&X-Plex-Container-Size=24$/.test(path))).toBe(true);
+    // A random window per section feeds varied covers.
+    expect(reads.filter(path => path.endsWith('X-Plex-Container-Size=24'))).toHaveLength(3);
     expect(reads.filter(path => path.includes('addedAt%3E%3E='))).toHaveLength(3);
     expect(JSON.stringify(result)).not.toContain('/library/');
   });

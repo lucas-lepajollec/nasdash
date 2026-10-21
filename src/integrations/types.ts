@@ -186,6 +186,8 @@ export interface ServiceField {
 
 /** Browser-safe description of a service integration (one saved connection per instance). */
 export interface ServiceIntegrationManifest {
+  /** Settings category for catalogue connections, which are not media servers. */
+  section?: 'media';
   id: string;
   name: string;
   fields: readonly ServiceField[];

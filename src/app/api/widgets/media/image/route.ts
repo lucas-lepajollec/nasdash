@@ -4,7 +4,7 @@ import { jellyfinHeaders } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { arrHeaders } from '@/integrations/arr/collect';
 import { demoMediaArt, knownMediaImage, MEDIA_WIDGET_TYPES } from '@/lib/widgetData/media';
-import { ARR_IMAGE_WIDGET_TYPES, librarySource, upcomingSource, widgetSources } from '@/lib/widgetData/arr';
+import { ARR_IMAGE_WIDGET_TYPES, librarySource, upcomingSources, validateIntegrationIds, widgetSources } from '@/lib/widgetData/arr';
 import { LIBRARY_ARR_TYPES, MEDIA_SERVER_TYPES } from '@/lib/widgetData/contracts';
 import { resolveWidgetSettings } from '@/lib/widgetData/resolve';
 import { assertStatus, queryDraft, serviceBytes, serviceFailure, ServiceError } from '@/lib/widgetData/services';
@@ -26,8 +26,18 @@ export async function GET(request: NextRequest) {
     // no saved type; membership in that exact preview still gates every image.
     const isArr = widgetType ? ARR_IMAGE_WIDGET_TYPES.some(type => type === widgetType) : settings.integrationIds !== undefined;
     let instances;
-    if ((widgetType === 'media-upcoming' || !widgetType && settings.source === 'library') && upcomingSource(settings) === 'library') instances = librarySource(settings);
-    else if (widgetType || settings.integrationId !== undefined || settings.integrationIds !== undefined) instances = widgetSources(settings, isArr ? LIBRARY_ARR_TYPES : MEDIA_SERVER_TYPES, !isArr);
+    if (widgetType === 'media-upcoming' || !widgetType && (settings.sources !== undefined || settings.source === 'library')) {
+      const requested = upcomingSources(settings);
+      validateIntegrationIds(settings);
+      instances = [];
+      if (requested.includes('arr')) {
+        const ids = settings.integrationIds as string[] | undefined;
+        for (const selected of ids === undefined ? [settings] : ids.map(id => ({ integrationIds: [id] }))) {
+          try { instances.push(...widgetSources(selected, LIBRARY_ARR_TYPES)); } catch { /* A removed source cannot invalidate art from another one. */ }
+        }
+      }
+      if (requested.includes('library')) { try { instances.push(...librarySource(settings)); } catch { /* Missing media connection. */ } }
+    } else if (widgetType || settings.integrationId !== undefined || settings.integrationIds !== undefined) instances = widgetSources(settings, isArr ? LIBRARY_ARR_TYPES : MEDIA_SERVER_TYPES, !isArr);
     else instances = [...widgetSources(settings, LIBRARY_ARR_TYPES), ...widgetSources(settings, MEDIA_SERVER_TYPES)];
     const imageDraft = principal.role === 'admin' && resolved.draft ? settings : undefined;
     const match = instances.map(instance => ({ instance, path: knownMediaImage(instance, widgetId!, id, kind, imageDraft) })).find(value => value.path);

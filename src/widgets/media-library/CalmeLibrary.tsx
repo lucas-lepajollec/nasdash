@@ -40,7 +40,7 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
   const pictured = libraries.filter(library => library.kind !== 'music' && library.kind !== 'books' && (library.covers?.length || own[library.kind]));
   const plain = libraries.filter(library => !pictured.includes(library));
   const added = libraries.reduce((sum, library) => sum + (library.added ?? 0), 0);
-  const columns = Math.max(1, Math.min(5, Math.floor((width + 14) / 230)));
+  const columns = Math.max(1, Math.min(6, Math.floor((width + 14) / { small: 180, medium: 230, large: 300 }[pick(settings.shelf, SHELF_SIZES, 'medium')])));
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={data ? <span className="ndc-title-note">{data.name}</span> : undefined}>
@@ -60,7 +60,7 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
                     {added > 0 && <span className="ndw-mx-figures-end"><span className="ndw-mx-meta">{t('widgets.media.addedWeek', { count: added })}</span></span>}
                   </div>
                   {display === 'shelves' && pictured.length > 0 && (
-                    <div className="ndw-mx-shelves" style={{ '--ndw-cols': Math.min(columns, pictured.length) } as React.CSSProperties}>
+                    <div className={`ndw-mx-shelves is-${pick(settings.shelf, SHELF_SIZES, 'medium')}`} style={{ '--ndw-cols': Math.min(columns, pictured.length) } as React.CSSProperties}>
                       {pictured.map((library, index) => <Shelf key={library.name} library={library} own={own[library.kind]} offset={index * 4000} active={isVisible} number={number.full} />)}
                     </div>
                   )}
@@ -85,21 +85,33 @@ function useDetail() {
   ].filter(Boolean).join(' · ');
 }
 
-/** A library with pictures: its newest posters fanned out over a blur of the first. */
+/** A library with pictures: three of its posters fanned out over a blur of the middle one, crossfading as they turn. */
 function Shelf({ library, own, offset, active, number }: { library: MediaLibrary; own?: string; offset: number; active: boolean; number: Intl.NumberFormat }) {
   const detail = useDetail();
   const covers = library.covers ?? [];
   const shift = useRotation(covers.length, offset, active);
-  const trio = covers.length ? [0, 1, 2].map(step => covers[(shift + step) % covers.length]) : [];
+  const trioAt = (at: number) => covers.length >= 3 ? [0, 1, 2].map(step => covers[(at + step) % covers.length]) : covers.slice(0, 1);
+  // The previous trio stays beneath while the new one fades in over it.
+  const [layers, setLayers] = useState<{ shift: number; previous?: number }>({ shift });
+  if (layers.shift !== shift) setLayers({ shift, previous: layers.shift });
+  const trio = trioAt(shift), before = layers.previous === undefined ? undefined : trioAt(layers.previous);
+  const middle = (list: string[]) => list[list.length === 3 ? 1 : 0];
+  React.useEffect(() => {
+    // Warm the next pictures so the next turn fades instead of popping.
+    if (covers.length > 3) for (const url of trioAt(shift + 1)) { const image = new Image(); image.src = url; }
+  });
   return (
     <div className="ndw-mx-shelf">
-      <Backdrop src={own ?? trio[1] ?? trio[0]} blur={!own} />
+      {own ? <Backdrop src={own} /> : (
+        <>
+          {before && <Backdrop key={`b-${layers.previous}`} src={middle(before)} blur className="is-under" />}
+          {trio.length > 0 && <Backdrop key={`b-${shift}`} src={middle(trio)} blur />}
+        </>
+      )}
       {!own && trio.length > 0 && (
         <span className="ndw-mx-fan" aria-hidden="true">
-          {(covers.length >= 3 ? trio : [trio[0]]).map((url, position) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={`${url}-${position}`} className={`is-${covers.length >= 3 ? position : 1}`} src={url} alt="" loading="lazy" decoding="async" />
-          ))}
+          {before && <Fan key={`f-${layers.previous}`} urls={before} under />}
+          <Fan key={`f-${shift}`} urls={trio} />
         </span>
       )}
       <span className="ndw-mx-shelf-foot">
@@ -110,6 +122,19 @@ function Shelf({ library, own, offset, active, number }: { library: MediaLibrary
         {library.count !== undefined && <span className="ndw-mx-shelf-count">{number.format(library.count)}</span>}
       </span>
     </div>
+  );
+}
+
+/** One fanned trio; faded in once its pictures have loaded. */
+function Fan({ urls, under }: { urls: string[]; under?: boolean }) {
+  const [loaded, setLoaded] = useState(0);
+  return (
+    <span className={`ndw-mx-fan-set ${under ? 'is-under' : ''} ${loaded >= urls.length ? 'is-loaded' : ''}`}>
+      {urls.map((url, position) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={`${url}-${position}`} className={`is-${urls.length === 3 ? position : 1}`} src={url} alt="" decoding="async" onLoad={() => setLoaded(value => value + 1)} onError={() => setLoaded(value => value + 1)} />
+      ))}
+    </span>
   );
 }
 
@@ -134,7 +159,8 @@ function PlainLibrary({ library, number }: { library: MediaLibrary; number: Intl
 
 type ShelfId = 'movies' | 'series' | 'music' | 'books';
 const SHELF_IDS: readonly ShelfId[] = ['movies', 'series', 'music', 'books'];
-const COVERS = ['newest', 'random', 'none'] as const;
+const COVERS = ['random', 'newest', 'none'] as const;
+const SHELF_SIZES = ['small', 'medium', 'large'] as const;
 const LIBRARY_DISPLAYS = ['shelves', 'text'] as const;
 /** Each picture stays this long before the next fades in. */
 const ROTATE_MS = 12_000;
@@ -174,7 +200,10 @@ function LibrarySettings({ draft, change }: { draft: WidgetSettings; change: (pa
         <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, LIBRARY_DISPLAYS, 'shelves')} options={LIBRARY_DISPLAYS.map(value => ({ value, label: t(`widgets.media.library.${value}`) }))} onChange={value => change({ display: value === 'shelves' ? null : value })} />
       </CalmeField>
       <CalmeField label={t('widgets.media.cover')} info={t('widgets.media.coverHint')}>
-        <CalmeSegmented label={t('widgets.media.cover')} value={pick(draft.cover, COVERS, 'newest')} options={COVERS.map(value => ({ value, label: t(`widgets.media.cover.${value}`) }))} onChange={value => change({ cover: value === 'newest' ? null : value })} />
+        <CalmeSegmented label={t('widgets.media.cover')} value={pick(draft.cover, COVERS, 'random')} options={COVERS.map(value => ({ value, label: t(`widgets.media.cover.${value}`) }))} onChange={value => change({ cover: value === 'random' ? null : value })} />
+      </CalmeField>
+      <CalmeField label={t('widgets.media.shelfSize')}>
+        <CalmeSegmented label={t('widgets.media.shelfSize')} value={pick(draft.shelf, SHELF_SIZES, 'medium')} options={SHELF_SIZES.map(value => ({ value, label: t(`widgets.media.size.${value}`) }))} onChange={value => change({ shelf: value === 'medium' ? null : value })} />
       </CalmeField>
       <CalmeField label={t('widgets.media.ownImages')} info={t('widgets.media.ownImagesHint')}>
         <div className="ndw-media-shelf-picks">

@@ -3,7 +3,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useOpenSettings } from '@/components/integrations/useOpenSettings';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
-import { getServiceIntegration } from '@/integrations/registry';
+import { connectionDetail } from '@/components/widgets/content/ConnectionPicker';
 import type { IntegrationSection } from '../IntegrationsTab';
 import { WidgetPlacementNote } from '../../shared/WidgetPlacementNote';
 import { CalmeHeading, CalmeRow } from '../../shared/CalmeControls';
@@ -33,7 +33,7 @@ export function ServiceConnectionsTab({ widget, types, section, hintKey, emptyKe
         </CalmeHeading>
         {connections.length
           ? connections.map(instance => (
-            <CalmeRow key={instance.id} label={<span className="ndc-source-logo"><IntegrationLogo id={instance.type} size={16} />{instance.name}</span>} value={getServiceIntegration(instance.type)?.name ?? instance.type} />
+            <CalmeRow key={instance.id} label={<span className="ndc-source-logo"><IntegrationLogo id={instance.type} size={16} />{instance.name}</span>} value={connectionDetail(instance) ?? ''} />
           ))
           : <p className="ndc-source-empty">{t(emptyKey)}</p>}
       </section>

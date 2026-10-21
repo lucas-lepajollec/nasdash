@@ -11,7 +11,7 @@ import { CalmeWidget } from '../calme';
 import { ColumnRows, columnsOf, ColumnsSetting, DataError, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { ArrSetup } from '@/components/widgets/media/arr';
-import { Bars, Figure, Ring } from '@/components/widgets/media/visual';
+import { Bars, Ring, Stat } from '@/components/widgets/media/visual';
 
 const PROWLARR = ['prowlarr'] as const;
 /** Working indexers listed before the rest is summed up. */
@@ -66,14 +66,16 @@ export default function CalmeIndexers({ widgetId, settings, editMode, isVisible,
               : (
                 <div className="ndw-mx-stack">
                   <div className="ndw-mx-summary">
-                    <Ring value={enabled ? (enabled - failing) / enabled * 100 : 0} size={58} stroke={4} label={t('widgets.arr.working', { count: enabled - failing, total: enabled })} />
-                    <span className="ndw-mx-summary-main">
-                      {failing ? <span className="ndw-mx-figure-line"><span className="ndw-mx-figure-value">{enabled - failing}</span><span className="ndw-mx-figure-unit">/ {enabled} {t('widgets.arr.operational')}</span></span>
-                        : <span className="ndw-mx-calm">{t('widgets.arr.allWorking')}</span>}
-                      <span className="ndw-mx-meta">{failing ? t('widgets.arr.failing', { count: failing }) : [t('widgets.arr.indexerCount', { count: enabled }), data.lastQueryAt ? t('widgets.arr.lastSearch', { when: relative(data.lastQueryAt) }) : ''].filter(Boolean).join(' · ')}</span>
+                    <span className="ndw-mx-ring-figure">
+                      <Ring value={enabled ? (enabled - failing) / enabled * 100 : 0} size={64} stroke={3.5} label={t('widgets.arr.working', { count: enabled - failing, total: enabled })} />
+                      <span className="ndw-mx-ring-text">{enabled - failing}<span>/{enabled}</span></span>
                     </span>
-                    <span className="ndw-mx-figures-end is-row">
-                      {(['queries', 'grabs', 'failures'] as const).map(key => <Figure key={key} size="medium" label={t(`widgets.arr.totals.${key}`)} value={number.format(data.totals[key])} tone={key === 'failures' && data.totals.failures ? 'bad' : undefined} />)}
+                    <span className="ndw-mx-summary-main">
+                      <span className="ndw-mx-tile-name">{failing ? t('widgets.arr.failing', { count: failing }) : t('widgets.arr.allWorking')}</span>
+                      <span className="ndw-media-sub">{[t('widgets.arr.indexerCount', { count: enabled }), data.lastQueryAt ? t('widgets.arr.lastSearch', { when: relative(data.lastQueryAt) }) : ''].filter(Boolean).join(' · ')}</span>
+                    </span>
+                    <span className="ndw-mx-tile-stats is-end">
+                      {(['queries', 'grabs', 'failures'] as const).map(key => <Stat key={key} value={number.format(data.totals[key])} label={t(`widgets.arr.totals.${key}`)} tone={!data.totals[key] ? 'muted' : key === 'failures' ? 'bad' : undefined} />)}
                     </span>
                   </div>
                   {data.hourly && data.hourly.some(Boolean) && (
@@ -83,26 +85,23 @@ export default function CalmeIndexers({ widgetId, settings, editMode, isVisible,
                     </div>
                   )}
                   {indexers.length === 0 ? <div className="ndc-empty">{t('widgets.arr.noIndexer')}</div> : (
-                    <ColumnRows columns={columnsOf(settings, width, 220)} className="ndw-mx-indexers">
+                    <ColumnRows columns={columnsOf(settings, width, 300)} className="ndw-mx-lines">
                       {indexers.map(indexer => {
                         const down = indexer.enabled && !indexer.healthy;
                         return (
-                          <div key={indexer.id} className={`ndw-mx-indexer ${!indexer.enabled ? 'is-off' : ''}`}>
-                            <span className="ndw-mx-indexer-head">
-                              <span className="ndw-media-title">{indexer.name}</span>
-                              <span className="ndw-media-time">{t(`widgets.arr.protocol.${indexer.protocol}`)}</span>
-                            </span>
-                            <span className={`ndw-media-sub ${down ? 'ndw-down' : ''}`}>
+                          <div key={indexer.id} className={`ndw-mx-line ${!indexer.enabled ? 'is-off' : ''}`}>
+                            <span className="ndw-mx-line-name">{indexer.name}</span>
+                            <span className={`ndw-mx-line-end ${down ? 'ndw-down' : ''}`}>
                               {!indexer.enabled ? t('widgets.arr.disabled')
                                 : down ? (indexer.retryAt ? t('widgets.arr.retry', { when: relative(indexer.retryAt) }) : t('widgets.arr.failingNow'))
-                                  : [indexer.queries !== undefined ? t('widgets.arr.queries', { count: indexer.queries }) : '', indexer.grabs ? t('widgets.arr.grabs', { count: indexer.grabs }) : '', indexer.averageMs ? `${Math.round(indexer.averageMs)} ms` : ''].filter(Boolean).join(' · ')}
+                                  : [indexer.queries !== undefined ? t('widgets.arr.queries', { count: number.format(indexer.queries) }) : '', indexer.averageMs ? `${Math.round(indexer.averageMs)} ms` : ''].filter(Boolean).join(' · ')}
                             </span>
                           </div>
                         );
                       })}
                     </ColumnRows>
                   )}
-                  {hidden > 0 && <span className="ndw-mx-meta">{t('widgets.arr.othersWorking', { count: hidden })}</span>}
+                  {hidden > 0 && <span className="ndw-media-sub">{t('widgets.arr.othersWorking', { count: hidden })}</span>}
                 </div>
               )}
       </div>

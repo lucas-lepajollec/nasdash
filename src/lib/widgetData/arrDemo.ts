@@ -1,6 +1,8 @@
+import { demoMediaArt } from './media';
 /** Fictional data only. Demo routes never call collectors or remote image servers. */
+import { upcomingPhase } from './arr';
 import type { IntegrationInstance } from '@/lib/types';
-import type { ArrAppStatus, ArrType, DownloadClientStatus, DownloadClientType, ImportedItem, IndexersResponse, QueueItem, UpcomingItem } from './contracts';
+import type { CatalogHit, CatalogKind, ExternalItem, ArrAppStatus, ArrType, DownloadClientStatus, DownloadClientType, ImportedItem, IndexersResponse, QueueItem, UpcomingItem } from './contracts';
 
 /** Invented titles, different for each *arr so the demo reads like a real library. */
 const SERIES = [['The Weather Cartographers', 'The Glass Orchard'], ['Harbor Lights', 'Low Tide Signals'], ['The Weather Cartographers', 'Northern Relay'], ['Paper Satellites', 'Static Bloom']] as const;
@@ -18,9 +20,9 @@ export function demoArrUpcoming(instance: IntegrationInstance, start: number): U
       // Spread over the coming days at different hours.
       at: start + (kind === 'episode' ? i * 30 + 6 : kind === 'movie' ? i * 52 + 20 : i * 44 + 30) * 3_600_000,
       hasFile: kind === 'episode' && i === 0, poster: `demo:poster:${instance.id}:${i}`, backdrop: `demo:backdrop:${instance.id}:${i}` } as const;
-    if (kind === 'episode') return { ...base, title: SERIES[i][1], subtitle: SERIES[i][0], season: 1 + (i % 2), episode: 3 + i };
-    if (kind === 'movie') return { ...base, title: MOVIES[i], release: RELEASES[i] };
-    return { ...base, title: ALBUMS[i][1], subtitle: ALBUMS[i][0] };
+    if (kind === 'episode') return { ...base, phase: upcomingPhase({ kind, episode: 3 + i }), title: SERIES[i][1], subtitle: SERIES[i][0], season: 1 + (i % 2), episode: 3 + i };
+    if (kind === 'movie') return { ...base, phase: upcomingPhase({ kind, release: RELEASES[i] }), title: MOVIES[i], release: RELEASES[i] };
+    return { ...base, phase: 'announced', title: ALBUMS[i][1], subtitle: ALBUMS[i][0] };
   });
 }
 
@@ -70,4 +72,18 @@ export function demoDownloadClient(instance: IntegrationInstance): DownloadClien
       { id: 'demo-download-5', name: 'Postcards.from.Ember.Bay.1080p', progress: 82, state: 'downloading', downloadBps: down, etaMs: 140_000, sizeBytes: 9_200_000_000 },
       { id: 'demo-download-6', name: 'Glass.Weather.FLAC', progress: 0, state: 'queued', sizeBytes: 610_000_000 },
     ] };
+}
+
+/** Demo catalogue art uses the existing local media artwork, never a public CDN. */
+export function demoExternalUpcoming(): ExternalItem[] {
+  return ['The Cloud Observatory', 'Lanterns Beyond the Lake', 'A Small Constellation', 'The Silver Tram', 'The Last Paper Moon'].map((title, n) => ({
+    id: `demo-external-${n}`, provider: n % 2 ? 'kitsu' : 'tvmaze', kind: n % 2 ? 'anime' : 'series', title,
+    status: (['airing', 'upcoming', 'announced', 'upcoming', 'ended'] as const)[n], phase: n === 0 ? 'current' : 'announced',
+    ...(n < 2 || n === 3 ? { at: Date.now() + (n + 1) * 86400000, season: 2, episode: n === 0 ? 4 : 1 } : {}),
+    poster: `data:image/svg+xml,${encodeURIComponent(demoMediaArt(`demo:poster:external:${n}`, 'poster'))}`, backdrop: `data:image/svg+xml,${encodeURIComponent(demoMediaArt(`demo:backdrop:external:${n}`, 'backdrop'))}`,
+  }));
+}
+export function demoCatalogHits(kinds: CatalogKind[]): CatalogHit[] {
+  return [...demoExternalUpcoming().map(({ provider, kind, title, status, poster }, n) => ({ provider, kind, title, status, poster, id: `demo-${n}` })),
+    { provider: 'tmdb' as const, kind: 'movie' as const, title: 'The Clockwork Aurora', id: 'demo-movie', status: 'Planned' }].filter(hit => kinds.includes(hit.kind));
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { connectionDetail } from '@/components/widgets/content/ConnectionPicker';
 import { getServiceIntegration } from '@/integrations/registry';
 import { demoFetch } from '@/lib/demoTransport';
 
@@ -19,6 +20,8 @@ import { DockerHostFormModal, type DockerHostDraft } from '@/components/widgets/
 import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_TYPES } from '@/lib/widgetData/contracts';
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
+/** Media servers, and TMDB (the movie catalogue Coming soon can read). */
+const MEDIA_SECTION_TYPES = [...MEDIA_SERVER_TYPES, 'tmdb'] as const;
 export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom';
 export const integrationSectionId = (section: IntegrationSection) => `settings-integrations-${section}`;
 
@@ -101,7 +104,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const dns = (config?.integrations ?? []).filter(instance => (DNS_TYPES as readonly string[]).includes(instance.type));
   const photos = (config?.integrations ?? []).filter(instance => (PHOTO_TYPES as readonly string[]).includes(instance.type));
   const custom = (config?.integrations ?? []).filter(instance => (CUSTOM_API_TYPES as readonly string[]).includes(instance.type));
-  const media = (config?.integrations ?? []).filter(instance => (MEDIA_SERVER_TYPES as readonly string[]).includes(instance.type));
+  const media = (config?.integrations ?? []).filter(instance => (MEDIA_SECTION_TYPES as readonly string[]).includes(instance.type));
   const arr = (config?.integrations ?? []).filter(instance => (ARR_TYPES as readonly string[]).includes(instance.type));
   const downloads = (config?.integrations ?? []).filter(instance => (DOWNLOAD_CLIENT_TYPES as readonly string[]).includes(instance.type));
   const serviceName = (type: string) => getServiceIntegration(type)?.name ?? type;
@@ -246,7 +249,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
 
       {(['dns', 'media', 'arr', 'downloads', 'photos', 'custom'] as const).map(id => {
         const saved = { dns, media, arr, downloads, photos, custom }[id];
-        const kinds: readonly string[] = { dns: DNS_TYPES, media: MEDIA_SERVER_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_TYPES, custom: CUSTOM_API_TYPES }[id];
+        const kinds: readonly string[] = { dns: DNS_TYPES, media: MEDIA_SECTION_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_TYPES, custom: CUSTOM_API_TYPES }[id];
         return (
           <React.Fragment key={id}>
             {section(
@@ -256,7 +259,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
                   key={instance.id}
                   logo={instance.type}
                   name={instance.name}
-                  details={[serviceName(instance.type), address(instance.settings.url)].filter(Boolean).join(' · ')}
+                  details={[connectionDetail(instance), address(instance.settings.url)].filter(Boolean).join(' · ')}
                   status={tests[instance.id]}
                   onTest={() => void runTest(instance)}
                   onEdit={() => setService({ type: instance.type, instance })}

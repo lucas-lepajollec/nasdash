@@ -383,6 +383,8 @@ export interface MediaLibrary {
   covers?: string[];
   /** Server-only: the newest titles, replaced by `covers` before leaving the server. */
   art?: MediaItem[];
+  /** Server-only: a random sample of the library (up to 24), for varied covers. */
+  sample?: MediaItem[];
 }
 /** GET /api/widgets/media/library?widgetId=… */
 export interface MediaLibraryResponse {
@@ -446,6 +448,8 @@ export interface UpcomingItem {
   release?: 'cinema' | 'digital' | 'physical';
   /** Already downloaded. */
   hasFile: boolean;
+  /** Tab: `current` (an episode of a season under way, a movie released) or `announced` (premiere, new season, coming movie, album). */
+  phase?: ReleasePhase;
   /** Proxied images, like media posters: `/api/widgets/media/image?widgetId=…&id=…&kind=poster|backdrop`. */
   poster?: string;
   backdrop?: string;
@@ -472,6 +476,7 @@ export interface FollowUpItem {
   network?: string;
   /** The last season present in the library. */
   ownedSeason?: number;
+  phase?: ReleasePhase;
   /** Proxied images from the media server, like media posters. */
   poster?: string;
   backdrop?: string;
@@ -485,7 +490,50 @@ export interface FollowUpItem {
  * `library`: `mediaId` (a Jellyfin/Emby/Plex connection, default the first), `ended` (show ended series, default false);
  * `followUps` sorted: dated first (soonest), then announced, then ended.
  */
-export interface UpcomingResponse { items: UpcomingItem[]; later?: UpcomingItem[]; followUps?: FollowUpItem[]; failures: SourceFailure[]; fetchedAt: number }
+/**
+ * Which tab an entry belongs to: `current` — out or airing now (an episode
+ * of a season under way, a released movie, an airing anime); `announced` —
+ * not started yet (a premiere, a new season, a coming movie), dated or not.
+ */
+export type ReleasePhase = 'current' | 'announced';
+/** Public catalogues the widget may read (no account; TMDB only with a saved TMDB connection). */
+export type CatalogProvider = 'tvmaze' | 'kitsu' | 'anilist' | 'tmdb';
+export type CatalogKind = 'series' | 'anime' | 'movie';
+/** A title followed in the widget's own list (settings `watchlist`). */
+export interface WatchEntry { provider: CatalogProvider; id: string; kind: CatalogKind; title: string }
+/** A catalogue search hit (GET /api/widgets/arr/catalog?q=…&kinds=…, administrators only). */
+export interface CatalogHit extends WatchEntry { year?: number; poster?: string; status?: string }
+/** What comes next for a title of a public catalogue. */
+export interface ExternalItem {
+  id: string;
+  provider: CatalogProvider;
+  kind: CatalogKind;
+  title: string;
+  season?: number;
+  episode?: number;
+  episodeTitle?: string;
+  /** Air / release date (ms) when known. */
+  at?: number;
+  status: 'airing' | 'upcoming' | 'announced' | 'ended';
+  phase: ReleasePhase;
+  network?: string;
+  /** Public https images from the catalogue's own CDN. */
+  poster?: string;
+  backdrop?: string;
+  /** The title's page on the catalogue (public). */
+  link?: string;
+}
+/**
+ * GET /api/widgets/arr/upcoming?widgetId=… — settings:
+ * `sources`: ordered ('arr' | 'library' | 'external')[], the order is the priority (default ['arr']; the legacy
+ * `source: 'library'` reads as ['library']).
+ * arr: `integrationIds`, `days` 1–60 default 14, `kinds`, `later` when the window is empty.
+ * library: `mediaId`, `ended`.
+ * external: `externalMode` 'watchlist' (default) | 'all'; `watchlist` WatchEntry[] (≤ 100);
+ * `catalogKinds` CatalogKind[] for 'all' (default all three; movies only with TMDB).
+ * Every entry carries its `phase`.
+ */
+export interface UpcomingResponse { items: UpcomingItem[]; later?: UpcomingItem[]; followUps?: FollowUpItem[]; external?: ExternalItem[]; failures: SourceFailure[]; fetchedAt: number }
 
 export type QueueStatus = 'downloading' | 'queued' | 'paused' | 'importing' | 'warning' | 'failed' | 'completed';
 /** An item in a *arr download queue. */

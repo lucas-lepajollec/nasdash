@@ -78,8 +78,9 @@ export async function mediaRoute(request: NextRequest, type: MediaWidgetType) {
       covers = { ...(movies ? { movies } : {}), ...(series ? { series } : {}), ...(music ? { music } : {}) };
     }
     // Each library's own posters (newest first, or shuffled), proxied like any title.
-    const libraries = result.libraries.map(({ art, ...entry }) => {
-      const urls = mode === 'none' || !art ? [] : (mode === 'random' ? [...art].sort(() => Math.random() - 0.5) : art).map(media => item(media).poster).filter((url): url is string => !!url);
+    const libraries = result.libraries.map(({ art, sample, ...entry }) => {
+      const pool = mode === 'random' ? [...(sample?.length ? sample : art ?? [])].sort(() => Math.random() - 0.5) : art;
+      const urls = mode === 'none' || !pool ? [] : pool.map(media => item(media).poster).filter((url): url is string => !!url);
       return urls.length ? { ...entry, covers: urls } : entry;
     });
     return NextResponse.json({ ...result, libraries, ...(covers ? { covers } : {}) }, { headers });

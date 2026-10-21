@@ -1,4 +1,5 @@
 /** Library series and provider ids remain server-only until mapped to follow-ups. */
+import { followUpPhase } from './arr';
 import type { IntegrationInstance } from '@/lib/types';
 import { jellyfinHeaders, jellyfinPrefix, toJellyfinItem } from '@/integrations/jellyfin/collect';
 import { plexHeaders, toPlexItem } from '@/integrations/plex/collect';
@@ -19,8 +20,9 @@ export function toFollowUp(item: MediaItem, show: TvMazeShow, ownedSeason?: numb
   const ended = show.status === 'Ended';
   if (!ended && !['Running', 'To Be Determined', 'In Development'].includes(show.status)) return undefined;
   const next = ended ? undefined : show.next;
-  return { id: item.id, title: item.title, poster: item.poster, backdrop: item.backdrop, link: item.link, network: show.network, ownedSeason,
-    status: ended ? 'ended' : next?.at !== undefined ? next.season > (ownedSeason ?? 0) ? 'upcoming' : 'airing' : 'announced',
+  const status = ended ? 'ended' : next?.at !== undefined ? next.season > (ownedSeason ?? 0) ? 'upcoming' : 'airing' : 'announced';
+  return { phase: followUpPhase({ status, episode: next?.episode }), id: item.id, title: item.title, poster: item.poster, backdrop: item.backdrop, link: item.link, network: show.network, ownedSeason,
+    status,
     ...(next ? { at: next.at, season: next.season, episode: next.episode, episodeTitle: next.title } : {}) };
 }
 export function sortFollowUps(items: FollowUpItem[]): FollowUpItem[] {

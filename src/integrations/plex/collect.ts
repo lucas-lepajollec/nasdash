@@ -85,8 +85,12 @@ export async function collectPlexLibrary(instance: IntegrationInstance): Promise
       if (type === 'movie') add('movies', count);
       if (type === 'show') { add('series', count); add('episodes', episodes); }
       if (type === 'artist') { add('artists', count); add('albums', albums); add('tracks', tracks); }
-      const art = array(object(recent).Metadata).map(value => toPlexItem(instance, value, machine)).filter((item): item is MediaItem => !!item?.poster);
-      libraries.push({ name: string(section.title), kind, count, episodes, albums, tracks, added, ...(art.length ? { art } : {}) });
+      const posters = (data: unknown) => array(object(data).Metadata).map(value => toPlexItem(instance, value, machine)).filter((item): item is MediaItem => !!item?.poster);
+      // A random window of the section, so covers vary beyond the latest batch.
+      const offset = Math.floor(Math.random() * Math.max(0, (count ?? 0) - 24));
+      const random = await request(instance, `/library/sections/${encodeURIComponent(key)}/all?X-Plex-Container-Start=${offset}&X-Plex-Container-Size=24`).catch(() => ({}));
+      const art = posters(recent), sample = posters(random);
+      libraries.push({ name: string(section.title), kind, count, episodes, albums, tracks, added, ...(art.length ? { art } : {}), ...(sample.length ? { sample } : {}) });
     } catch { libraries.push({ name: string(section.title), kind }); /* One section that cannot be read keeps its name. */ }
   }
   return { ...identity(instance), counts, libraries };

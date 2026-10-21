@@ -214,3 +214,35 @@ SABnzbd's API requires a server-only query key that is never part of a response.
 qBittorrent caches cookie sessions and retries one 403 after login; Transmission
 negotiates its session ID with one 409 retry. Optional free-space calls do not
 prevent reporting transfer activity.
+
+
+## Public release catalogues
+
+`catalog/` maps TVMaze, Kitsu, AniList and TMDB into the contracts in
+`widgetData/contracts.ts`. Upcoming settings accept ordered `sources` (`arr`,
+`library`, `external`); the legacy library source still works. Each source fails
+independently. External watchlists contain only provider/id/kind/title; titles
+are fallback display text and are never sent to a catalogue. Administrator-only
+`GET /api/widgets/arr/catalog` sends the explicit search query, validates optional
+widget membership, deduplicates anime titles and returns at most 24 hits.
+
+TVMaze uses the existing collector's global pacing and manual lookup redirect
+handling; next/previous episode links must name its exact episode endpoint.
+Other providers use fixed HTTPS API bases and reject redirects. Minimum request
+spacing is TVMaze 550 ms, Kitsu 250 ms, AniList 700 ms and TMDB 100 ms. Requests
+have 10-second timeouts and retry a 429 once after two seconds. Entries cache for
+six hours, searches ten minutes and discovery lists one hour. AniList errors,
+including GraphQL failures and HTTP 403, do not discard other catalogue results.
+
+TMDB is a registered service connection in the media category, with one required
+secret (`apiKey`) and no configurable address. JWT-shaped read tokens use bearer
+authentication; v3 keys use TMDB's server-side `api_key` query parameter. Its
+credentials never reach another catalogue or a response. Only public HTTPS
+artwork on the provider's exact CDN hosts reaches clients directly; library and
+arr art retains the scoped image proxy. Demo catalogue art is generated locally.
+
+Fictional provider samples and fetch-mocked tests live in `catalog/samples` and
+`catalog/*.test.ts`. Live Kitsu `nextRelease` availability and AniList service
+availability are not guaranteed; missing release dates remain announced.
+TMDB movie release dates use the provider's default date, without a regional
+release-date override. A released movie maps to the current (`airing`) state.

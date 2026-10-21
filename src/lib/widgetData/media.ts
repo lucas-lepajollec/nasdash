@@ -1,4 +1,5 @@
 /** Server-only media settings, image membership, and fictional demo data. */
+import { followUpPhase } from './arr';
 import { createHash } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
 import { MEDIA_IMAGE_ROUTE, type FollowUpItem, type MediaItem, type MediaWatched, type MediaLibraryResponse, type MediaNowPlayingResponse, type MediaRecentResponse, type MediaServer } from './contracts';
@@ -52,7 +53,7 @@ export function groupRecent(items: MediaItem[], count: number): MediaItem[] {
 
 /** Library shelves' backgrounds: the newest title of each kind, one at random among the newest, or none. */
 export function coverMode(settings: Record<string, unknown>): 'newest' | 'random' | 'none' {
-  const mode = settings.cover ?? 'newest';
+  const mode = settings.cover ?? 'random';
   if (mode !== 'newest' && mode !== 'random' && mode !== 'none') throw new ServiceError('widgets.error.invalidSettings', 400);
   return mode;
 }
@@ -108,7 +109,7 @@ export function demoMediaUpcoming(): FollowUpItem[] {
   return ['The Weather Cartographers', 'Harbor Lights', 'Paper Satellites', 'The Copper Lighthouse', 'Northern Relay'].map((title, n) => {
     const art = demoItem(n), dated = n < 2;
     return { id: `demo-follow-${n}`, title, status: (['airing', 'upcoming', 'announced', 'announced', 'ended'] as const)[n],
-      ownedSeason: 2, network: 'Lantern Television', poster: art.poster, backdrop: art.backdrop,
+      phase: followUpPhase({ status: (['airing', 'upcoming', 'announced', 'announced', 'ended'] as const)[n], episode: n ? 1 : 6 }), ownedSeason: 2, network: 'Lantern Television', poster: art.poster, backdrop: art.backdrop,
       ...(dated ? { at: Date.now() + (n + 1) * 86400000, season: n + 2, episode: n ? 1 : 6, episodeTitle: n ? 'A New Horizon' : 'The Tide Returns' } : {}) };
   });
 }

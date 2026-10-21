@@ -9,7 +9,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
 import { SetupGuide, type SetupKind } from '@/components/integrations/SetupGuide';
 import { SourceChoice } from '@/components/widgets/content/kit';
-import { getServiceIntegration } from '@/integrations/registry';
+import { connectionDetail } from '@/components/widgets/content/ConnectionPicker';
 
 /** Saved connections of these types, in the order they were added. */
 export function useConnections(types: readonly string[]): IntegrationInstance[] {
@@ -30,7 +30,7 @@ export function SourcesField({ connections, draft, change }: { connections: Inte
     <CalmeField label={t('widgets.arr.sources')}>
       <SourceChoice
         label={t('widgets.arr.sources')}
-        items={connections.map(instance => ({ id: instance.id, name: instance.name, detail: getServiceIntegration(instance.type)?.name }))}
+        items={connections.map(instance => ({ id: instance.id, name: instance.name, detail: connectionDetail(instance) }))}
         value={draft.integrationIds}
         onChange={ids => change({ integrationIds: ids })}
       />
