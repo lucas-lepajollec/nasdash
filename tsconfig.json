@@ -40,7 +40,9 @@
     ".next-capture/types/**/*.ts",
     ".next-capture/dev/types/**/*.ts",
     ".next-real-test/types/**/*.ts",
-    ".next-real-test/dev/types/**/*.ts"
+    ".next-real-test/dev/types/**/*.ts",
+    ".next-test/types/**/*.ts",
+    ".next-test/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

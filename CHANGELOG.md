@@ -12,6 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Header menu in edit mode: drag pages into order, rename a page in place (pencil on hover, or a double click) and create a new page with the **+** at the end, without opening settings.
 - **Recently added** in the featured display: the titles below scroll with arrows when there are more than fit, or show as a grid (**Below**: row or grid).
 
+### Changed
+
+- **Coming soon** is marked **experimental** in the widget library: its sources and matching are still being refined.
+
 ### Fixed
 
 - **Recently added**: the featured display showed only the titles that fit (the row could not be scrolled with a mouse); the featured title counts as one of the chosen number.
