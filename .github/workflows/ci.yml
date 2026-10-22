@@ -12,11 +12,13 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Three independent jobs run side by side: the slowest (browser tests) sets the
+# wall time instead of the sum of all of them.
 jobs:
-  application:
-    name: Tests and production build
+  checks:
+    name: Static checks and unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -45,11 +47,50 @@ jobs:
           npm run check:audit-policy
           npm run audit:dependencies
 
+  application:
+    name: Production build and browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Next.js reuses compiled modules between builds; the key moves with the
+      # sources, older caches still serve as a starting point.
+      - name: Restore Next.js build cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'next.config.*', 'tsconfig.json') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
       - name: Build application
         run: npm run build
 
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            npx playwright install-deps chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
 
       - name: Run isolated browser tests
         run: npm run test:e2e
@@ -73,6 +114,22 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # The branch ruleset requires "Tests and production build": this gate carries
+  # that name and passes only when both test jobs succeeded (a skipped or
+  # cancelled job must not count as a pass).
+  gate:
+    name: Tests and production build
+    needs: [checks, application]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require both test jobs
+        run: |
+          echo "checks=${{ needs.checks.result }} application=${{ needs.application.result }}"
+          test "${{ needs.checks.result }}" = success
+          test "${{ needs.application.result }}" = success
+
   container:
     name: Docker image
     runs-on: ubuntu-latest
@@ -81,8 +138,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      # Layers (npm ci above all) come from the GitHub Actions cache when the
+      # lockfile did not change.
       - name: Build local image
-        run: docker build --tag nasdash:ci .
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          load: true
+          tags: nasdash:ci
+          cache-from: type=gha,scope=ci-amd64
+          cache-to: type=gha,scope=ci-amd64,mode=max
 
       - name: Smoke-test fresh install and persistent upgrade
         run: npm run test:container -- nasdash:ci
