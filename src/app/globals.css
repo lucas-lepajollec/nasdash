@@ -3414,7 +3414,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
 .nd-header-tab-link.is-active { border-bottom-color: var(--nd-accent); color: var(--nd-text); }
 .nd-header-tab.is-sortable .nd-header-tab-link { cursor: inherit; }
 .nd-header-tab-icon { display: flex; align-items: center; }
-.nd-header-tab-name { font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+.nd-header-tab-name { font-size: 0.8rem; font-weight: 500; }
 .nd-header-tab-link.is-active .nd-header-tab-name { font-weight: 600; }
 .nd-header-tab-rename {
   position: absolute;

@@ -112,7 +112,7 @@ export default function Header(props: HeaderProps) {
     if ((!isMobile && hideHeaderMenu) || !props.tabs) return null;
     return (
       <HeaderPageTabs tabs={props.tabs} start={startIndex} end={endIndex} activeTab={props.activeTab} onSwitch={props.onSwitchTab}
-        editing={props.editMode && !isMobile} showIcons={!!config?.settings?.showHeaderMenuIcons}
+        editing={props.editMode && !isMobile} showIcons={!!config?.settings?.showHeaderMenuIcons} tabIcons={config?.settings?.tabIcons}
         flushFirst={startIndex === 0 && layoutDesktop?.left === 'menu' && layoutDesktop?.splitMenuAround === 'none'}
         last={endIndex >= props.tabs.length} />
     );
