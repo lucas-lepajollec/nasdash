@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-22
+
+### Upgrading from 0.3.0
+
+- Back up the data directory, then pull and recreate NasDash with the same data mount; no data migration. Saved pages, widgets and settings are kept; the new **Below** choice of Recently added starts as a row, as before.
+- To roll back, recreate the recorded `0.3.0` image with the same data mount; it ignores the new setting.
+
 ### Added
 
 - Widget library: pick several widgets, then add them together; they are placed one after the other without overlapping.
@@ -477,7 +484,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.5...v0.3.0
 [0.2.5]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.3...v0.2.4
