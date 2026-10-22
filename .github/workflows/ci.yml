@@ -53,6 +53,12 @@ jobs:
     name: Production build and browser tests (${{ matrix.part }})
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    # Chromium and its system libraries come preinstalled: no apt step, whose
+    # mirror speed varies from seconds to minutes. Keep the tag in step with
+    # @playwright/test (the next step covers a mismatch).
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -95,19 +101,12 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Restore Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Playwright Chromium
+      - name: Match the Playwright browser to the installed version
         run: |
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-            npx playwright install-deps chromium
-          else
-            npx playwright install --with-deps chromium
+          installed=$(node -p "require('@playwright/test/package.json').version")
+          if [ "$installed" != "1.63.0" ]; then
+            echo "::warning::@playwright/test $installed differs from the CI image (1.63.0): downloading its Chromium. Update the image tag."
+            npx playwright install chromium
           fi
 
       - name: Run isolated browser tests
