@@ -1,5 +1,12 @@
 name: Publish Docker image
 
+# One build per commit. On main: the multi-platform image is built once and
+# pushed under its commit tag (sha-<commit>), both platforms are smoke-tested
+# from the registry, and `latest` moves to it only once the commit's own CI
+# (unit, build and browser tests) has passed. On a release tag: the commit was
+# already built and verified on main, so the version tags point to that same
+# image (no rebuild) and the GitHub release is published.
+
 on:
   push:
     branches: [main]
@@ -18,70 +25,9 @@ env:
   IMAGE_NAME: lucas-lepajollec/nasdash
 
 jobs:
-  verify:
-    name: Verify release candidate
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Validate source
-        run: |
-          npm ci
-          npm run check:version
-          npm test
-          npm run build
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Run production browser tests
-        run: npm run test:e2e
-        env:
-          NASDASH_E2E_SERVER_MODE: production
-
-      - name: Upload Playwright diagnostics
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: playwright-release-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: ignore
-          retention-days: 14
-
-      - name: Build release-candidate image
-        run: docker build --pull --tag nasdash:release-candidate .
-
-      - name: Smoke-test fresh install and persistent upgrade
-        run: npm run test:container -- nasdash:release-candidate
-
-      # The app is built natively for every platform (see the Dockerfile):
-      # check that the arm64 image assembled from it really starts.
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
-
-      - name: Build and smoke-test the arm64 image
-        run: |
-          docker buildx build --platform linux/arm64 --load --tag nasdash:release-candidate-arm64 .
-          npm run test:container -- nasdash:release-candidate-arm64
-        env:
-          NASDASH_SMOKE_TIMEOUT_MS: "240000"
-
-  publish:
-    name: Publish image
-    needs: verify
+  image:
+    name: Build and push commit image
+    if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -110,9 +56,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=sha-,format=long
 
       - name: Build and push image
@@ -129,9 +72,135 @@ jobs:
           provenance: mode=max
           sbom: true
 
+  smoke:
+    name: Smoke-test ${{ matrix.platform }} image
+    needs: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [amd64, arm64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up QEMU
+        if: matrix.platform == 'arm64'
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The very image that was pushed, for this platform: fresh install,
+      # persistence, recovery and first start.
+      - name: Smoke-test fresh install and persistent upgrade
+        run: |
+          docker pull --platform linux/${{ matrix.platform }} "$IMAGE"
+          npm run test:container -- "$IMAGE"
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          DOCKER_DEFAULT_PLATFORM: linux/${{ matrix.platform }}
+          NASDASH_SMOKE_TIMEOUT_MS: ${{ matrix.platform == 'arm64' && '240000' || '' }}
+
+  promote:
+    name: Publish image
+    needs: smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+      actions: read
+    steps:
+      # `latest` only ever names a commit whose own CI passed.
+      - name: Wait for this commit's CI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 30); do
+            run=$(gh run list --workflow ci.yml --commit "$SHA" --event push --json databaseId --jq '.[0].databaseId')
+            [ -n "$run" ] && break
+            sleep 10
+          done
+          [ -n "$run" ] || { echo "No CI run found for $SHA"; exit 1; }
+          gh run watch "$run" --exit-status --interval 15 > /dev/null
+          echo "CI $run passed for $SHA"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # A registry-side copy of the verified index (both platforms, SBOM and
+      # provenance): nothing is rebuilt.
+      - name: Point latest to the verified image
+        if: github.ref == 'refs/heads/main'
+        run: docker buildx imagetools create --tag "$BASE:latest" "$BASE:sha-${{ github.sha }}"
+        env:
+          BASE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+  release-image:
+    name: Tag release image
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+      actions: read
+    steps:
+      # A release tag names a commit of main: wait for that commit's main
+      # pipeline (build, smoke tests, CI) to have published it.
+      - name: Wait for the commit's verified image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          for attempt in $(seq 1 30); do
+            run=$(gh run list --workflow docker.yml --branch main --commit "$SHA" --json databaseId --jq '.[0].databaseId')
+            [ -n "$run" ] && break
+            sleep 10
+          done
+          [ -n "$run" ] || { echo "The tagged commit $SHA has no main image pipeline: tag a commit of main."; exit 1; }
+          gh run watch "$run" --exit-status --interval 15 > /dev/null
+          echo "Main image pipeline $run passed for $SHA"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add the version tags to the verified image
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          docker buildx imagetools create --tag "$BASE:$version" --tag "$BASE:${version%.*}" "$BASE:sha-$GITHUB_SHA"
+        env:
+          BASE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
   release:
     name: Publish GitHub release
-    needs: publish
+    needs: release-image
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 5
