@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-22
+
+### Upgrading from 0.3.1
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.3.1` image.
+
 ### Fixed
 
 - Much less CPU in the browser on pages with media widgets: poster loading sweeps no longer run forever on posters out of view (a page of media widgets went from about 14 % of a CPU core to under 1 % at rest, measured). Loading sweeps, rain, snow and the status pulse now animate with `transform`/opacity only, which the GPU handles without repainting.
@@ -488,7 +494,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.5...v0.3.0
 [0.2.5]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.4...v0.2.5
