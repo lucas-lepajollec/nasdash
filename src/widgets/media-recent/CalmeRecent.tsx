@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { MediaItem, MediaRecentResponse } from '@/lib/widgetData/contracts';
@@ -19,6 +19,8 @@ const SIZES: readonly Size[] = ['small', 'medium', 'large'];
 const ROW_POSTER: Record<Size, number> = { small: 28, medium: 44, large: 84 };
 /** List columns: the narrowest a column may get per size. */
 const ROW_MIN: Record<Size, number> = { small: 220, medium: 260, large: 360 };
+/** Under the featured title: the next ones in a row with arrows, or as a grid. */
+const RESTS = ['row', 'grid'] as const;
 type Kind = 'movie' | 'episode' | 'album';
 const KINDS: readonly Kind[] = ['movie', 'episode', 'album'];
 /** Added in the last two days: a small dot. */
@@ -52,8 +54,8 @@ export default function CalmeRecent({ widgetId, settings, editMode, isVisible, o
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 170 }} /></div>
               : items.length === 0 ? <div className="ndc-empty">{t('widgets.media.nothingNew')}</div>
-                : display === 'hero' ? <Hero items={items} width={width} now={data.fetchedAt} />
-                  : display === 'grid' ? <div className="ndw-media-grid">{items.map(item => <PosterCard key={item.id} now={data.fetchedAt} item={item} width={Math.max(84, Math.min(130, width / Math.max(2, Math.round(width / 120)) - 10))} />)}</div>
+                : display === 'hero' ? <Hero items={items} width={width} now={data.fetchedAt} rest={pick(settings.rest, RESTS, 'row')} />
+                  : display === 'grid' ? <PosterGrid items={items} width={width} now={data.fetchedAt} />
                     : display === 'list' ? <RecentList items={items} size={pick(settings.size, SIZES, 'medium')} columns={columnsOf(settings, width, ROW_MIN[pick(settings.size, SIZES, 'medium')])} />
                       : <PosterRow items={items} now={data.fetchedAt} />}
       </div>
@@ -83,22 +85,40 @@ function PosterCard({ item, width, now }: { item: MediaItem; width: number; now:
     : <span className="ndw-media-tile" style={{ width }} title={label}>{body}</span>;
 }
 
-/** Posters in one row; arrows scroll it by a screenful. */
-function PosterRow({ items, now }: { items: MediaItem[]; now: number }) {
+/** Posters as a grid, as many per line as fit. */
+function PosterGrid({ items, width, now, poster = 120 }: { items: MediaItem[]; width: number; now: number; poster?: number }) {
+  return <div className="ndw-media-grid">{items.map(item => <PosterCard key={item.id} now={now} item={item} width={Math.max(76, Math.min(poster + 10, width / Math.max(2, Math.round(width / poster)) - 10))} />)}</div>;
+}
+
+/** Posters in one row; arrows, shown only when there is more that way, scroll it by a screenful. */
+function PosterRow({ items, now, width = 112, small = false }: { items: MediaItem[]; now: number; width?: number; small?: boolean }) {
   const { t } = useI18n();
   const row = useRef<HTMLDivElement>(null);
+  const [ends, setEnds] = useState({ start: true, end: true });
+  const measure = useCallback(() => {
+    const el = row.current;
+    if (el) setEnds({ start: el.scrollLeft <= 2, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 2 });
+  }, []);
+  useEffect(() => {
+    const el = row.current;
+    if (!el) return;
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [measure, items.length]);
   const scroll = (step: 1 | -1) => row.current?.scrollBy({ left: step * row.current.clientWidth * 0.85, behavior: 'smooth' });
   return (
     <div className="ndw-media-row-wrap">
-      <div ref={row} className="ndw-media-poster-row">{items.map(item => <PosterCard key={item.id} item={item} width={112} now={now} />)}</div>
-      <button type="button" className="ndw-media-scroll is-prev" onClick={() => scroll(-1)} aria-label={t('widgets.grid.previous')}><ChevronLeft size={16} /></button>
-      <button type="button" className="ndw-media-scroll is-next" onClick={() => scroll(1)} aria-label={t('widgets.grid.next')}><ChevronRight size={16} /></button>
+      <div ref={row} className={`ndw-media-poster-row ${small ? 'is-small' : ''}`} onScroll={measure}>{items.map(item => <PosterCard key={item.id} item={item} width={width} now={now} />)}</div>
+      {!ends.start && <button type="button" className="ndw-media-scroll is-prev" onClick={() => scroll(-1)} aria-label={t('widgets.grid.previous')}><ChevronLeft size={16} /></button>}
+      {!ends.end && <button type="button" className="ndw-media-scroll is-next" onClick={() => scroll(1)} aria-label={t('widgets.grid.next')}><ChevronRight size={16} /></button>}
     </div>
   );
 }
 
 /** The newest title large over its art, the next ones as small posters beneath. */
-function Hero({ items, width, now }: { items: MediaItem[]; width: number; now: number }) {
+function Hero({ items, width, now, rest: restDisplay }: { items: MediaItem[]; width: number; now: number; rest: typeof RESTS[number] }) {
   const { t } = useI18n();
   const line = useMediaLine();
   const relative = useRelativeTime();
@@ -128,7 +148,7 @@ function Hero({ items, width, now }: { items: MediaItem[]; width: number; now: n
       {first.link
         ? <a className="ndw-media-hero" style={{ height }} href={first.link} target="_blank" rel="noopener noreferrer">{inner}</a>
         : <div className="ndw-media-hero" style={{ height }}>{inner}</div>}
-      {rest.length > 0 && <div className="ndw-media-poster-row is-small">{rest.map(item => <PosterCard key={item.id} item={item} width={84} now={now} />)}</div>}
+      {rest.length > 0 && (restDisplay === 'grid' ? <PosterGrid items={rest} width={width} now={now} poster={94} /> : <PosterRow items={rest} now={now} width={84} small />)}
     </div>
   );
 }
@@ -166,6 +186,11 @@ function RecentSettings({ draft, change }: { draft: WidgetSettings; change: (pat
       <CalmeField label={t('widgets.display')}>
         <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, DISPLAYS, 'posters')} options={DISPLAYS.map(value => ({ value, label: t(`widgets.media.recent.${value}`) }))} onChange={value => change({ display: value })} />
       </CalmeField>
+      {pick(draft.display, DISPLAYS, 'posters') === 'hero' && (
+        <CalmeField label={t('widgets.media.recent.rest')}>
+          <CalmeSegmented label={t('widgets.media.recent.rest')} value={pick(draft.rest, RESTS, 'row')} options={RESTS.map(value => ({ value, label: t(`widgets.media.recent.rest.${value}`) }))} onChange={value => change({ rest: value === 'row' ? null : value })} />
+        </CalmeField>
+      )}
       {pick(draft.display, DISPLAYS, 'posters') === 'list' && (
         <>
           <CalmeField label={t('widgets.media.size')}>
@@ -191,7 +216,7 @@ function RecentSettings({ draft, change }: { draft: WidgetSettings; change: (pat
           <CalmeSwitch label={t('widgets.media.group')} checked={draft.group !== false} onChange={on => change({ group: on ? null : false })} />
         </CalmeRow>
       )}
-      <CalmeRow label={t('widgets.media.count')}>
+      <CalmeRow label={t('widgets.media.count')} info={pick(draft.display, DISPLAYS, 'posters') === 'hero' ? t('widgets.media.countHeroHint') : undefined}>
         <CalmeSlider label={t('widgets.media.count')} value={bounded(draft.count, 4, 40, 16)} min={4} max={40} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
       </CalmeRow>
     </>

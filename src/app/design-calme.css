@@ -86,7 +86,8 @@ body[data-design="calme"] .nd-header-menu {
   gap: 20px !important;
 }
 
-body[data-design="calme"] .nd-btn-menu-link span {
+body[data-design="calme"] .nd-btn-menu-link span,
+body[data-design="calme"] .nd-header-tab-input {
   font-size: 0.86rem !important;
   font-weight: 500 !important;
 }

@@ -60,16 +60,21 @@ function Playlist({ playlist, widgetId, canPlay }: { playlist: MusicPlaylist; wi
   const relative = useRelativeTime();
   const [open, setOpen] = useState(false);
   const [tracks, setTracks] = useState<MusicTrack[] | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const toggle = async () => {
     const next = !open;
     setOpen(next);
     if (!next || tracks) return;
     setLoading(true);
+    setFailed(null);
     try {
       const response = await demoFetch(`/api/widgets/music/tracks?${new URLSearchParams({ widgetId, kind: 'playlist', id: playlist.id })}`);
-      setTracks(response.ok ? (await response.json() as MusicTracksResponse).tracks : []);
-    } catch { setTracks([]); }
+      const answer = await response.json().catch(() => null) as (MusicTracksResponse & { error?: string }) | null;
+      // A refused or failed read says so, instead of looking like an empty playlist; opening again retries.
+      if (!response.ok || !answer?.tracks) { setFailed(answer?.error?.startsWith('widgets.') ? answer.error : 'widgets.error.network'); setOpen(false); return; }
+      setTracks(answer.tracks);
+    } catch { setFailed('widgets.error.network'); setOpen(false); }
     finally { setLoading(false); }
   };
   const key = `playlist:${playlist.id}`;
@@ -86,6 +91,7 @@ function Playlist({ playlist, widgetId, canPlay }: { playlist: MusicPlaylist; wi
         </button>
         {canPlay && <PlayButton label={t('widgets.music.playOne', { name: playlist.name })} playingKey={key} onPlay={() => tracks?.length ? musicPlayer.playTracks(widgetId, tracks, 0, key) : void musicPlayer.playCollection(widgetId, 'playlist', playlist.id)} />}
       </div>
+      {failed && !open && <p className="ndw-music-tracklist-error">{t(failed)}</p>}
       {open && tracks && (
         <ol className="ndw-music-tracklist">
           {tracks.length === 0 ? <li className="ndw-media-sub">{t('widgets.music.error.empty')}</li> : tracks.slice(0, 50).map((track, index) => (
