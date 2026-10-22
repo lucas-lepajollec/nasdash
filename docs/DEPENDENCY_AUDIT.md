@@ -13,8 +13,9 @@ The exception applies only to this advisory and its known development dependency
 chain (`braces`, `micromatch`, `fast-glob`, `@next/eslint-plugin-next`,
 `eslint-config-next`). Every affected lockfile node must be marked development-only;
 another advisory, production inclusion, unresolved audit output or a different
-dependency chain fails the gate. It expires automatically at **24 October 2026,
-00:00 UTC**. The production audit has no exception.
+dependency chain fails the gate. It expires automatically at **23 November 2026,
+00:00 UTC** (extended once from 24 October 2026 with the owner's approval on
+22 October 2026: still no upstream fix, still development-only). The production audit has no exception.
 
 Remove the exception after an upstream fix is available. Do not extend its deadline
 without a new explicit approval. The policy tests cover expiry, production inclusion,

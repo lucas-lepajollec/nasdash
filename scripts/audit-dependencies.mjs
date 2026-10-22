@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 // Lucas approved this one development-only exception on 2026-10-10.
-export const exceptionExpiresAt = '2026-10-24T00:00:00.000Z';
+export const exceptionExpiresAt = '2026-11-23T00:00:00.000Z';
 const advisoryUrl = 'https://github.com/advisories/GHSA-vfj7-8cjw-p6xm';
 const exceptionPackages = new Set([
   'braces', 'micromatch', 'fast-glob', '@next/eslint-plugin-next', 'eslint-config-next',
