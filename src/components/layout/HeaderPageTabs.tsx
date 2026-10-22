@@ -16,10 +16,36 @@ import { Emoji } from '../shared/Emoji';
  * `tabs` is the whole ordered list; `start`/`end` the part shown here (the
  * menu can be split around the title).
  */
-export function HeaderPageTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, editing, showIcons, flushFirst, last }: {
+type TabsProps = {
   tabs: TabDef[]; start?: number; end?: number; activeTab?: TabId; onSwitch?: (id: TabId) => void; editing: boolean;
-  showIcons: boolean; flushFirst: boolean; last: boolean;
-}) {
+  showIcons: boolean; flushFirst: boolean; last: boolean; tabIcons?: Record<string, string>;
+};
+
+export function HeaderPageTabs(props: TabsProps) {
+  // Out of edit mode the menu reads nothing more than its props: no page or settings subscription.
+  return props.editing ? <EditableTabs {...props} /> : <PlainTabs {...props} />;
+}
+
+function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, showIcons, flushFirst, tabIcons }: TabsProps) {
+  const { t } = useI18n();
+  return (
+    <nav className="nd-header-menu" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      {tabs.slice(start, end).map((tab, index) => {
+        const isActive = tab.id === activeTab;
+        const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
+        return (
+          <button key={tab.id} type="button" aria-current={isActive ? 'page' : undefined} onClick={() => onSwitch?.(tab.id)}
+            className={`nd-btn-menu-link nd-header-tab-link ${isActive ? 'is-active' : ''} ${index === 0 && flushFirst ? 'is-flush' : ''}`}>
+            {icon && <span className="nd-header-tab-icon"><Emoji emoji={icon} /></span>}
+            <span className="nd-header-tab-name">{t(tab.name)}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, editing, showIcons, flushFirst, last }: TabsProps) {
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { pages, createPage, updatePageDetails } = usePages();
@@ -46,14 +72,14 @@ export function HeaderPageTabs({ tabs, start = 0, end = tabs.length, activeTab, 
 
   return (
     <nav className={`nd-header-menu ${editing ? 'is-editing' : ''}`}>
-      <SortableList ids={shown.map(tab => tab.id)} enabled={editing} layout="row" onMove={move}>
+      <Sortable editing={editing} ids={shown.map(tab => tab.id)} onMove={move}>
         {shown.map((tab, index) => {
           const isActive = tab.id === activeTab;
           const icon = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
           const label = t(tab.name);
           const canRename = editing && pages.some(page => page.id === tab.id);
           return (
-            <SortableItem key={tab.id} id={tab.id} className="nd-header-tab">
+            <Item key={tab.id} editing={editing} id={tab.id}>
               {renaming === tab.id
                 ? <RenameField initial={label} onDone={value => rename(tab.id, value, label)} onCancel={() => setRenaming(null)} />
                 : (
@@ -72,10 +98,10 @@ export function HeaderPageTabs({ tabs, start = 0, end = tabs.length, activeTab, 
                     )}
                   </>
                 )}
-            </SortableItem>
+            </Item>
           );
         })}
-      </SortableList>
+      </Sortable>
       {editing && last && (
         <button type="button" className="nd-header-tab-add" onClick={() => void create()} disabled={busy}
           aria-label={t('pages.header.newPage')} title={t('pages.header.newPage')}>
@@ -84,6 +110,14 @@ export function HeaderPageTabs({ tabs, start = 0, end = tabs.length, activeTab, 
       )}
     </nav>
   );
+}
+
+/** Drag and drop exists only while editing: out of edit mode the menu is plain buttons, with nothing listening. */
+function Sortable({ editing, ids, onMove, children }: { editing: boolean; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
+  return editing ? <SortableList ids={ids} enabled layout="row" onMove={onMove}>{children}</SortableList> : <>{children}</>;
+}
+function Item({ editing, id, children }: { editing: boolean; id: string; children: React.ReactNode }) {
+  return editing ? <SortableItem id={id} className="nd-header-tab">{children}</SortableItem> : <div className="nd-header-tab">{children}</div>;
 }
 
 /** The page name, edited in place: Enter or leaving the field saves it, Escape keeps the old one. */
