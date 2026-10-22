@@ -47,10 +47,25 @@ jobs:
           npm run check:audit-policy
           npm run audit:dependencies
 
+  # Browser tests run one at a time inside a job (they share one data
+  # directory), so they are split across jobs; each builds from the cache.
   application:
-    name: Production build and browser tests
+    name: Production build and browser tests (${{ matrix.part }})
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - part: 1 of 2
+            args: --shard=1/2
+            demo: 'false'
+          - part: 2 of 2
+            args: --shard=2/2
+            demo: 'false'
+          - part: demo
+            args: --grep @demo
+            demo: 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -93,21 +108,16 @@ jobs:
           fi
 
       - name: Run isolated browser tests
-        run: npm run test:e2e
+        run: npm run test:e2e -- ${{ matrix.args }}
         env:
           NASDASH_E2E_SERVER_MODE: production
-
-      - name: Run isolated demo calendar browser tests
-        run: npm run test:e2e -- --grep '@demo'
-        env:
-          NASDASH_E2E_SERVER_MODE: production
-          NASDASH_DEMO_MODE: 'true'
+          NASDASH_DEMO_MODE: ${{ matrix.demo }}
 
       - name: Upload Playwright diagnostics
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: playwright-ci-${{ github.run_id }}-${{ github.run_attempt }}
+          name: playwright-ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}
           path: |
             playwright-report/
             test-results/
