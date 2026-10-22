@@ -563,16 +563,15 @@ body {
   flex-shrink: 0;
 }
 
+/* Opacity and scale only (the glow stays put): the compositor runs it without repainting. */
 @keyframes nd-pulse-dot {
   0%, 100% {
     opacity: 1;
     transform: scale(1);
-    box-shadow: 0 0 6px var(--nd-green);
   }
   50% {
     opacity: 0.4;
     transform: scale(0.9);
-    box-shadow: 0 0 2px var(--nd-green);
   }
 }
 

@@ -178,10 +178,13 @@
 
 /* Loading placeholders: the widget keeps its shape while its data arrives. */
 .ndw-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
-.ndw-skeleton-row { display: block; height: 30px; border-radius: 5px; background: linear-gradient(90deg, var(--nd-subcard-bg), color-mix(in srgb, var(--nd-subcard-bg) 40%, var(--nd-card-bg)), var(--nd-subcard-bg)); background-size: 200% 100%; animation: ndw-shimmer 1.4s ease-in-out infinite; }
+/* Loading sweeps move a layer with `transform`: the compositor runs them, with no style recalculation or repaint
+   on the main thread (animating background-position kept a CPU busy, worst with dozens of lazy posters). */
+.ndw-skeleton-row { position: relative; display: block; height: 30px; overflow: hidden; border-radius: 5px; background: var(--nd-subcard-bg); }
+.ndw-skeleton-row::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--nd-card-bg) 55%, transparent), transparent); transform: translateX(-100%); animation: ndw-sweep 1.4s ease-in-out infinite; }
 .ndw-skeleton--cards { flex-direction: row; }
 .ndw-skeleton--cards .ndw-skeleton-row { flex: 1; height: 150px; }
-@keyframes ndw-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes ndw-sweep { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) { .ndw-skeleton-row { animation: none; } }
 
 /* A small accent dot: new since the last visit. */
@@ -742,9 +745,11 @@ a.ndw-media-title:hover { text-decoration: underline; }
 .ndw-media-poster .ndw-media-poster-cover { top: 50%; bottom: auto; height: auto; aspect-ratio: 1; transform: translateY(-50%); box-shadow: 0 6px 18px rgb(0 0 0 / 0.4); }
 .ndw-media-poster-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: rgb(255 255 255 / 0.55); font-size: 0.72rem; font-weight: 600; }
 .ndw-media-poster.is-loaded .ndw-media-poster-fallback, .ndw-media-poster.is-loaded .ndw-media-poster-loading { visibility: hidden; }
-.ndw-media-poster-loading { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.07) 50%, transparent 80%) 0 0 / 220% 100%; animation: ndw-shimmer 1.4s ease-in-out infinite; }
+.ndw-media-poster-loading { position: absolute; inset: 0; overflow: hidden; }
+/* A few sweeps only: a lazy poster out of view (deep in a row that scrolls) does not load until reached, and
+   dozens of endless sweeps cost about a tenth of a CPU core for nothing (measured). */
+.ndw-media-poster-loading::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.07) 50%, transparent 80%); transform: translateX(-100%); animation: ndw-sweep 1.4s ease-in-out 3; }
 .ndw-media-poster:has(.ndw-media-poster-loading) { background: color-mix(in srgb, var(--nd-text) 7%, var(--nd-card-bg)); }
-@keyframes ndw-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 /* A setting changed: the previous answer dims until the new one arrives. */
 .ndw-media-box.is-stale > *, .ndw-api-box.is-stale > * { opacity: 0.4; transition: opacity 0.2s ease; pointer-events: none; }
 
@@ -809,7 +814,7 @@ a.ndw-media-hero:hover .ndw-media-hero-art { transform: scale(1.03); }
 
 /* Library: shelves over the newest title's art. */
 /* No picture: the kind's icon large and faint, so the shelf still reads as one. */
-@media (prefers-reduced-motion: reduce) { .ndw-media-poster-loading { animation: none; } .ndw-media-poster img, .ndw-media-tile .ndw-media-poster, .ndw-media-hero-art, .ndw-media-progress > span { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ndw-media-poster-loading::after, .ndw-skeleton-row::after { animation: none; } .ndw-media-poster img, .ndw-media-tile .ndw-media-poster, .ndw-media-hero-art, .ndw-media-progress > span { transition: none; } }
 
 /* List widgets in columns once stretched (feeds, recently added…). */
 .ndw-columns-clip { overflow: hidden; min-width: 0; }
