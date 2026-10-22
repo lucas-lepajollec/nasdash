@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Widget library: pick several widgets, then add them together; they are placed one after the other without overlapping.
+- Header menu in edit mode: drag pages into order, rename a page in place (pencil on hover, or a double click) and create a new page with the **+** at the end, without opening settings.
+- **Recently added** in the featured display: the titles below scroll with arrows when there are more than fit, or show as a grid (**Below**: row or grid).
+
+### Changed
+
+- **Coming soon** is marked **experimental** in the widget library: its sources and matching are still being refined.
+
+### Fixed
+
+- **Recently added**: the featured display showed only the titles that fit (the row could not be scrolled with a mouse); the featured title counts as one of the chosen number.
+- **Playlists** (Jellyfin, Emby): opening a playlist now reads it as an account allowed to (its owner or one it is shared with) instead of the first account, which the server could refuse; a refused read says so instead of looking empty.
+- **Photo library stats** and the other figure rows (*arr status, queue, indexers, music library) adapt to narrow widgets: no stray separator when figures wrap, storage and totals wrap instead of being cut, per-account figures go under the name.
+
 ## [0.3.0] - 2026-10-22
 
 ### Upgrading from 0.2.5

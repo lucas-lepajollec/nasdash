@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, X } from 'lucide-react';
+import { Check, Plus, Search, X } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -12,22 +12,29 @@ import { usePages } from '@/providers/PagesProvider';
 import { Emoji } from '../shared/Emoji';
 import { useVisibleCategories } from '@/hooks/useVisibleCategories';
 import { useWidgetName, type LibraryTarget } from './PageView';
+import type { WidgetSettings } from '@/lib/pages/types';
 
 /**
- * The widget library: one searchable list. Clicking a widget adds it at the
- * first free spot of the page, then shows it.
+ * The widget library: one searchable list. Clicking widgets selects them;
+ * "Add" places them all at the first free spots of the page, then shows
+ * them. Showing a hidden widget or creating a category acts at once.
  */
 
-/** Scrolls to a freshly added widget and highlights it briefly. */
-function reveal(widgetId: string) {
+/** Scrolls to freshly added widgets (the first one) and highlights them briefly. */
+function reveal(...widgetIds: string[]) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    const node = document.querySelector<HTMLElement>(`[data-widget-id="${widgetId}"]`);
-    if (!node) return;
-    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    node.classList.add('nd-page-widget--new');
-    setTimeout(() => node.classList.remove('nd-page-widget--new'), 1600);
+    widgetIds.forEach((widgetId, index) => {
+      const node = document.querySelector<HTMLElement>(`[data-widget-id="${widgetId}"]`);
+      if (!node) return;
+      if (index === 0) node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      node.classList.add('nd-page-widget--new');
+      setTimeout(() => node.classList.remove('nd-page-widget--new'), 1600);
+    });
   }));
 }
+
+/** A widget chosen in the library, waiting for "Add". */
+interface Pick { key: string; entry: WidgetCatalogEntry; settings: WidgetSettings }
 
 export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget; onClose: () => void }) {
   const { t } = useI18n();
@@ -36,6 +43,7 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
   const dialogRef = useDialogAccessibility(onClose);
   const page = getPage(target.pageId);
   const [query, setQuery] = useState('');
+  const [picked, setPicked] = useState<Pick[]>([]);
   const widgetName = useWidgetName();
   const visibleCategories = useVisibleCategories();
   const pagesDocument = useMemo(() => ({ pages: pages.map(candidate => getPage(candidate.id) ?? candidate) }), [getPage, pages]);
@@ -44,12 +52,24 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
   const normalized = query.trim().toLocaleLowerCase();
   const matches = (text: string) => !normalized || text.toLocaleLowerCase().includes(normalized);
 
-  const add = (entry: WidgetCatalogEntry, settings = {}) => {
-    if (placementProblem(pagesDocument, page, entry.type)) return;
-    const widget = newWidgetInstance(entry.type, settings, page);
-    applyToPage(page.id, current => insertWidget(current, widget));
+  const isPicked = (key: string) => picked.some(item => item.key === key);
+  const toggle = (key: string, entry: WidgetCatalogEntry, settings: WidgetSettings = {}) => {
+    setPicked(current => current.some(item => item.key === key) ? current.filter(item => item.key !== key) : [...current, { key, entry, settings }]);
+  };
+
+  /** Places every picked widget, one after the other, each at the first spot still free. */
+  const addPicked = () => {
+    const ids: string[] = [];
+    let next = page;
+    for (const { entry, settings } of picked) {
+      if (placementProblem(pagesDocument, next, entry.type)) continue;
+      const widget = newWidgetInstance(entry.type, settings, next);
+      next = insertWidget(next, widget);
+      ids.push(widget.id);
+    }
+    if (ids.length) applyToPage(page.id, current => ids.reduce((result, id) => insertWidget(result, next.widgets.find(widget => widget.id === id)!), current));
     onClose();
-    reveal(widget.id);
+    reveal(...ids);
   };
 
   /** Shows a hidden widget again, at the first free spot. */
@@ -69,6 +89,9 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
   const unavailable = (entry: WidgetCatalogEntry) => (
     placementProblem(pagesDocument, page, entry.type) ? t('pages.library.alreadyPlaced') : null
   );
+  /** A widget allowed once can be picked once: a second one of its kind waits until the first is unpicked. */
+  const blocked = (key: string, entry: WidgetCatalogEntry) => !isPicked(key) && (!!unavailable(entry)
+    || (entry.maxInstances !== undefined && picked.some(item => item.entry.type === entry.type)));
 
 
   const categoryEntry = WIDGET_CATALOG.find(entry => entry.type === 'service-category')!;
@@ -120,8 +143,9 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
               <h3>{t('pages.library.categoriesTitle')}</h3>
               <div className="nd-page-library-grid">
                 {categories.map(category => (
-                  <button key={category.id} type="button" className="nd-page-library-card" disabled={!!unavailable(categoryEntry)} onClick={() => add(categoryEntry, { categoryId: category.id })}>
+                  <button key={category.id} type="button" className={`nd-page-library-card ${isPicked(`category:${category.id}`) ? 'is-picked' : ''}`} aria-pressed={isPicked(`category:${category.id}`)} disabled={blocked(`category:${category.id}`, categoryEntry)} onClick={() => toggle(`category:${category.id}`, categoryEntry, { categoryId: category.id })}>
                     <span className="nd-page-library-card-icon"><Emoji emoji={category.emoji} /></span>
+                    {isPicked(`category:${category.id}`) && <span className="nd-page-library-check" aria-hidden="true"><Check size={12} /></span>}
                     <span className="nd-page-library-card-text">
                       <strong>{t(category.title)}{category.isSecret && <span className="ndc-tag" style={{ marginLeft: 6 }}>{t('pages.library.secret')}</span>}</strong>
                       <span>{onThisPage.has(category.id) ? t('pages.library.onThisPage') : t('pages.library.serviceCount', { count: category.services.length })}</span>
@@ -153,8 +177,9 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
                 {entries.map(entry => {
                   const problem = unavailable(entry);
                   return (
-                    <button key={entry.type} type="button" className="nd-page-library-card" disabled={!!problem} onClick={() => add(entry)}>
+                    <button key={entry.type} type="button" className={`nd-page-library-card ${isPicked(entry.type) ? 'is-picked' : ''}`} aria-pressed={isPicked(entry.type)} disabled={blocked(entry.type, entry)} onClick={() => toggle(entry.type, entry)}>
                       <span className="nd-page-library-card-icon"><Emoji emoji={entry.icon} /></span>
+                      {isPicked(entry.type) && <span className="nd-page-library-check" aria-hidden="true"><Check size={12} /></span>}
                       <span className="nd-page-library-card-text">
                         <strong>{t(entry.nameKey)}{entry.experimental && <span className="nd-page-library-badge">{t('pages.library.experimental')}</span>}</strong>
                         <span>{problem ?? t(entry.descriptionKey)}</span>
@@ -170,6 +195,12 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
             <p className="nd-page-library-empty">{t('pages.library.noResult')}</p>
           )}
         </div>
+
+        <footer className="nd-page-library-footer">
+          <span className="nd-page-library-footer-text">{picked.length ? t('pages.library.picked', { count: picked.length }) : t('pages.library.pickHint')}</span>
+          {picked.length > 0 && <button type="button" className="nd-btn" onClick={() => setPicked([])}>{t('pages.library.clear')}</button>}
+          <button type="button" className="nd-btn nd-btn-accent" disabled={!picked.length} onClick={addPicked}>{picked.length > 1 ? t('pages.library.addMany', { count: picked.length }) : t('pages.library.add')}</button>
+        </footer>
       </div>
     </div>,
     document.body,

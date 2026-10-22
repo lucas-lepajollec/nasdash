@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { DndContext, closestCenter, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, horizontalListSortingStrategy, rectSortingStrategy, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useI18n } from '@/i18n/I18nProvider';
 
@@ -14,7 +14,7 @@ const Enabled = React.createContext(false);
  * its widget. `onMove` gets the dragged id and the one it was dropped on.
  */
 export function SortableList({ ids, enabled, layout = 'list', onMove, children }: {
-  ids: string[]; enabled: boolean; layout?: 'list' | 'grid'; onMove: (active: string, over: string) => void; children: React.ReactNode;
+  ids: string[]; enabled: boolean; layout?: 'list' | 'grid' | 'row'; onMove: (active: string, over: string) => void; children: React.ReactNode;
 }) {
   const { t } = useI18n();
   const sensors = useSensors(
@@ -25,7 +25,7 @@ export function SortableList({ ids, enabled, layout = 'list', onMove, children }
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} accessibility={{ screenReaderInstructions: { draggable: t('widgets.list.dragInstructions') } }}
       onDragEnd={({ active, over }) => { if (enabled && over && active.id !== over.id) onMove(String(active.id), String(over.id)); }}>
-      <SortableContext items={ids} strategy={layout === 'grid' ? rectSortingStrategy : verticalListSortingStrategy} disabled={!enabled}>
+      <SortableContext items={ids} strategy={layout === 'grid' ? rectSortingStrategy : layout === 'row' ? horizontalListSortingStrategy : verticalListSortingStrategy} disabled={!enabled}>
         <Enabled.Provider value={enabled}>{children}</Enabled.Provider>
       </SortableContext>
     </DndContext>

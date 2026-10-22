@@ -118,3 +118,19 @@ it('reads the tracks played most through Navidrome\'s own API', async () => {
   expect(await collectNavidromeTopTracks(source('navidrome'), 6)).toEqual([expect.objectContaining({ id: 's1', plays: 9 })]);
   expect(String(bytes.mock.calls.at(-1)![1])).toContain('_sort=play_count');
 });
+it('reads a Jellyfin playlist as an account allowed to: owner found after a refusal, remembered next time', async () => {
+  const { ServiceError } = await import('@/lib/widgetData/services');
+  const instance = { ...source('jellyfin'), id: 'playback-owner' };
+  json.mockImplementation(async (_instance, path) => {
+    if (path === '/Users') return [{ Id: 'first' }, { Id: 'owner' }];
+    if (path.includes('/Playlists/') && !path.includes('UserId=owner')) throw new ServiceError('widgets.error.http', 502, { status: 403 });
+    return { Items: [song] };
+  });
+  expect(await collectJellyfinMusicTracks(instance, 'playlist', 'shared')).toHaveLength(1);
+  json.mockClear();
+  expect(await collectJellyfinMusicTracks(instance, 'playlist', 'shared')).toHaveLength(1);
+  expect(json.mock.calls.filter(([, path]) => path.includes('/Playlists/')).map(([, path]) => path.includes('UserId=owner'))).toEqual([true]);
+  // Nobody may read it: the refusal comes through instead of an empty list.
+  json.mockImplementation(async (_instance, path) => { if (path === '/Users') return [{ Id: 'first' }]; throw new ServiceError('widgets.error.http', 502, { status: 403 }); });
+  await expect(collectJellyfinMusicTracks(instance, 'playlist', 'private')).rejects.toThrow();
+});

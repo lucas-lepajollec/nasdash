@@ -310,12 +310,33 @@ export async function collectJellyfinMusicPlaylists(instance: IntegrationInstanc
   const data = object(await request(instance, `/Items?IncludeItemTypes=Playlist&MediaTypes=Audio&Recursive=true&Fields=ChildCount&Limit=${count}`));
   return { ...identity(instance), playlists: musicItems(data).map(value => toJellyfinMusicPlaylist(instance, value)).filter((item): item is MusicPlaylist => !!item).slice(0, count) };
 }
+// Which account opened a playlist last: a playlist belongs to its owner (and whom it is shared with).
+const playlistUsers = new Map<string, string>();
 export async function collectJellyfinMusicTracks(instance: IntegrationInstance, kind: 'album' | 'playlist', id: string) {
-  const user = (await jellyfinMusicUsers(instance))[0];
-  const params = new URLSearchParams({ IncludeItemTypes: 'Audio', Recursive: 'true', Limit: '300', ...(user ? { UserId: user } : {}) });
-  if (kind === 'album') { params.set('ParentId', id); params.set('SortBy', 'ParentIndexNumber,IndexNumber'); params.set('SortOrder', 'Ascending'); }
-  const data = object(await request(instance, `${kind === 'album' ? '/Items' : `/Playlists/${encodeURIComponent(id)}/Items`}?${params}`));
-  return musicItems(data).map(value => toJellyfinMusicTrack(instance, value)).filter((item): item is MusicTrack => !!item).slice(0, 300);
+  const users = await jellyfinMusicUsers(instance);
+  const read = async (user: string | undefined) => {
+    const params = new URLSearchParams({ IncludeItemTypes: 'Audio', Recursive: 'true', Limit: '300', ...(user ? { UserId: user } : {}) });
+    if (kind === 'album') { params.set('ParentId', id); params.set('SortBy', 'ParentIndexNumber,IndexNumber'); params.set('SortOrder', 'Ascending'); }
+    const data = object(await request(instance, `${kind === 'album' ? '/Items' : `/Playlists/${encodeURIComponent(id)}/Items`}?${params}`));
+    return musicItems(data).map(value => toJellyfinMusicTrack(instance, value)).filter((item): item is MusicTrack => !!item).slice(0, 300);
+  };
+  if (kind === 'album') return read(users[0]);
+  // A playlist answers only its owner and the accounts it is shared with: try the accounts
+  // (the one that worked last first) until one may read it, at most ten.
+  const key = `${instance.id}:${id}`, known = playlistUsers.get(key);
+  const order = [...(known && users.includes(known) ? [known] : []), ...users.filter(user => user !== known)].slice(0, 10);
+  let failure: unknown;
+  for (const user of order.length ? order : [undefined]) {
+    try {
+      const tracks = await read(user);
+      if (user) { playlistUsers.delete(key); playlistUsers.set(key, user); if (playlistUsers.size > 500) playlistUsers.delete(playlistUsers.keys().next().value!); }
+      return tracks;
+    } catch (error) {
+      if (!(error instanceof ServiceError) || ![401, 403, 404].includes(Number(error.parameters?.status))) throw error;
+      failure = error;
+    }
+  }
+  throw failure;
 }
 export async function collectJellyfinMusicSearch(instance: IntegrationInstance, query: string): Promise<MusicSearchResponse> {
   // Separate bounded queries give each category its own 20-result allowance.

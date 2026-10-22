@@ -6,6 +6,7 @@ import { TabId, TabDef } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { HeaderElementDesktop, HeaderElementMobile } from '@/lib/types';
 import { Emoji } from '../shared/Emoji';
+import { HeaderPageTabs } from './HeaderPageTabs';
 import { useI18n } from '@/i18n/I18nProvider';
 
 interface HeaderProps {
@@ -109,42 +110,11 @@ export default function Header(props: HeaderProps) {
 
   const MenuElement = ({ startIndex = 0, endIndex = props.tabs?.length || 0, isMobile }: { startIndex?: number, endIndex?: number, isMobile?: boolean }) => {
     if ((!isMobile && hideHeaderMenu) || !props.tabs) return null;
-    const tabsToRender = props.tabs.slice(startIndex, endIndex);
-    
     return (
-      <nav className="nd-header-menu" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        {tabsToRender.map((tab, index) => {
-          const isActive = tab.id === props.activeTab;
-          const showIcons = config?.settings?.showHeaderMenuIcons;
-          const iconVal = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
-          const isFirstInHeader = index === 0 && startIndex === 0 && layoutDesktop?.left === 'menu' && layoutDesktop?.splitMenuAround === 'none';
-          return (
-            <button
-              key={tab.id}
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => props.onSwitchTab?.(tab.id)}
-              className="nd-btn-menu-link"
-              style={{
-                padding: isFirstInHeader ? '6px 12px 6px 0' : '6px 12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'transparent',
-                border: 'none',
-                borderBottom: isActive ? '2px solid var(--nd-accent)' : '2px solid transparent',
-                borderRadius: 0,
-                cursor: 'pointer',
-                transition: 'border-color 0.2s, color 0.2s',
-                color: isActive ? 'var(--nd-text)' : 'var(--nd-text-muted)',
-                marginBottom: '-2px' // Compense la bordure du bas pour ne pas décaler le layout
-              }}
-            >
-              {iconVal && <span style={{ display: 'flex', alignItems: 'center' }}><Emoji emoji={iconVal} /></span>}
-              <span style={{ fontSize: '0.8rem', fontWeight: isActive ? 600 : 500 }}>{t(tab.name)}</span>
-            </button>
-          )
-        })}
-      </nav>
+      <HeaderPageTabs tabs={props.tabs} start={startIndex} end={endIndex} activeTab={props.activeTab} onSwitch={props.onSwitchTab}
+        editing={props.editMode && !isMobile} showIcons={!!config?.settings?.showHeaderMenuIcons}
+        flushFirst={startIndex === 0 && layoutDesktop?.left === 'menu' && layoutDesktop?.splitMenuAround === 'none'}
+        last={endIndex >= props.tabs.length} />
     );
   };
 
