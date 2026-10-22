@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Much less CPU in the browser on pages with media widgets: poster loading sweeps no longer run forever on posters out of view (a page of media widgets went from about 14 % of a CPU core to under 1 % at rest, measured). Loading sweeps, rain, snow and the status pulse now animate with `transform`/opacity only, which the GPU handles without repainting.
+
 ## [0.3.1] - 2026-10-22
 
 ### Upgrading from 0.3.0
