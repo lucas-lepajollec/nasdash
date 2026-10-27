@@ -11,7 +11,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 import { ConnectionFields, fieldDefaults, type FieldValues } from '@/components/integrations/ConnectionFields';
-import { testConnection } from '@/components/integrations/MonitoringConnectionDialog';
+import { testConnection, type TestResult } from '@/components/integrations/MonitoringConnectionDialog';
 import { useOpenSettings } from '@/components/integrations/useOpenSettings';
 
 interface DeviceFormModalProps {
@@ -49,6 +49,8 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const [targets, setTargets] = useState<SourceTarget[] | null>(null);
   const [targetsError, setTargetsError] = useState('');
   const [loadingTargets, setLoadingTargets] = useState(false);
+  const [metricTest, setMetricTest] = useState<{ key: string; result: TestResult } | null>(null);
+  const [testingMetrics, setTestingMetrics] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -83,6 +85,17 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   const targetKey = (target: SourceTarget) => keyOf(target.values);
   const currentKey = keyOf(values);
   const pickedTarget = targets?.find(target => targetKey(target) === currentKey);
+  const metricTestKey = `${sourceId}:${currentKey}`;
+  const currentTest = metricTest?.key === metricTestKey ? metricTest.result : null;
+  const testMetrics = async () => {
+    if (!source) return;
+    setTestingMetrics(true);
+    setMetricTest(null);
+    const machineValues = Object.fromEntries(fields.map(field => [field.id, values[field.id] ?? '']).filter(([, value]) => value));
+    const result = await testConnection({ type: source.type, id: source.id, values: machineValues });
+    setMetricTest({ key: metricTestKey, result });
+    setTestingMetrics(false);
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -184,6 +197,14 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
           )}
           {source && fields.length > 0 && (!server || !targets?.length) && (
             <ConnectionFields fields={fields} values={values} onChange={(id, value) => setValues(current => ({ ...current, [id]: value }))} editing={!!device} showSensitive={showSensitive} />
+          )}
+          {source?.type === 'proxmox' && (
+            <>
+              <button type="button" className="nd-btn" disabled={testingMetrics || !values.nodeName} onClick={() => void testMetrics()}>
+                {testingMetrics ? <Loader2 size={14} className="nd-spin" /> : t('integrations.proxmox.testMetrics')}
+              </button>
+              {currentTest && <p className="ndc-dialog-hint" role="status">{t(currentTest.message, { count: currentTest.count ?? 0, ...currentTest.messageParameters })}</p>}
+            </>
           )}
           {saveError && <p className="ndc-dialog-hint" style={{ color: 'var(--nd-red)' }}>{saveError}</p>}
         </form>

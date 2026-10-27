@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Security
+
+- Update Next.js to 16.4.3 to address the image optimization, Server Actions and cache advisories (GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r, GHSA-673q-mjm6-r5xr). Update the vulnerable transitive Zod dependency to 4.6.7; production and development dependency audits pass.
+
+### Fixed
+
+- Proxmox devices can test the selected node or VM/LXC metrics directly, independently of machine discovery. A denied metrics request now explains the required `Sys.Audit` or `VM.Audit` permission and the API token's separate permissions (#142). Storage access remains optional; granting remote permissions is still an operator action.
+
 ## [0.3.2] - 2026-10-22
 
 ### Upgrading from 0.3.1
