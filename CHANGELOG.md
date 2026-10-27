@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-27
+
+### Upgrading from 0.3.2
+
+- Back up the data directory, then pull and recreate NasDash with the same data mount. No data migration is required; accounts, integrations and saved pages are preserved.
+- A Proxmox HTTP 403 still requires the appropriate read permissions on the Proxmox user and API token. Use **Test metrics** on the selected machine to check them.
+- Rolling back to the recorded `0.3.2` image preserves the data format but restores the older dependencies, including the security advisories fixed below.
+
 ### Security
 
 - Update Next.js to 16.4.3 to address the image optimization, Server Actions and cache advisories (GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r, GHSA-673q-mjm6-r5xr). Update the vulnerable transitive Zod dependency to 4.6.7; production and development dependency audits pass.
@@ -502,7 +510,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.2.5...v0.3.0
