@@ -114,6 +114,12 @@ export const collectProxmox: DeviceCollector = async (connection, context) => {
   try {
     data = await request<ProxmoxResponse>(connection.url, connection.token, connection.allowSelfSigned === true);
   } catch (error) {
+    // Listing /nodes only proves discovery works. Reading metrics requires
+    // Sys.Audit (node) or VM.Audit (guest), including the token's own ACLs.
+    if (error instanceof MonitoringHttpError && error.status === 403) {
+      const guest = /\/(?:qemu|lxc)\/\d+\/status\/current$/.test(new URL(connection.url).pathname);
+      throw new CollectError(guest ? 'integrations.proxmox.guestPermission' : 'integrations.proxmox.nodePermission', error);
+    }
     throw collectorFailure('Proxmox', error);
   }
 
