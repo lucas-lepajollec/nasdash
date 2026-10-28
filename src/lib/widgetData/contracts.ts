@@ -230,6 +230,89 @@ export interface PhotoStatsResponse {
 export const PHOTO_STATS_TYPES = ['immich', 'photoprism', 'piwigo', 'librephotos'] as const;
 export type PhotoStatsProvider = typeof PHOTO_STATS_TYPES[number];
 
+/* ------------------------------------------------------------ UPS */
+
+export const UPS_TYPES = ['nut', 'apcupsd'] as const;
+export type UpsProvider = typeof UPS_TYPES[number];
+/** GET /api/widgets/ups?widgetId=… (settings: `integrationId`, `ups`: the UPS name on a NUT server, default its first). */
+export interface UpsSummary {
+  provider: UpsProvider;
+  /** Connection name (`config.integrations[].name`). */
+  name: string;
+  /** The UPS read on that server (NUT name, apcupsd UPSNAME). */
+  ups?: string;
+  /** Every UPS a NUT server offers, for the widget's choice. */
+  devices?: string[];
+  /** The name the server's administrator gave the UPS (NUT `desc`), often clearer than what the unit reports. */
+  description?: string;
+  model?: string;
+  manufacturer?: string;
+  /** Where the load is powered from now. */
+  power: 'mains' | 'battery' | 'unknown';
+  /** Status flags the UPS reports. */
+  lowBattery?: boolean;
+  charging?: boolean;
+  replaceBattery?: boolean;
+  overload?: boolean;
+  /** The server lost the UPS (cable, driver): the figures are not current. */
+  offline?: boolean;
+  batteryPercent?: number;
+  /** The UPS's own estimate at the present load. */
+  runtimeSeconds?: number;
+  /**
+   * Where the monitoring software shuts the machines down: battery charge (%) or runtime left (s), whichever comes
+   * first (NUT battery.charge.low / battery.runtime.low, apcupsd MBATTCHG / MINTIMEL).
+   */
+  shutdownPercent?: number;
+  shutdownRuntimeSeconds?: number;
+  loadPercent?: number;
+  loadWatts?: number;
+  /** Rated real power (W). */
+  nominalWatts?: number;
+  inputVoltage?: number;
+  outputVoltage?: number;
+  batteryVoltage?: number;
+  inputFrequency?: number;
+  temperatureC?: number;
+  /** apcupsd: the last switch to battery (its reason), how many since start, seconds on battery now. */
+  lastTransfer?: string;
+  transfers?: number;
+  onBatterySeconds?: number;
+  fetchedAt: number;
+}
+
+/* ------------------------------------------------------------ VPN tunnel */
+
+export const VPN_TUNNEL_TYPES = ['gluetun'] as const;
+export type VpnTunnelProvider = typeof VPN_TUNNEL_TYPES[number];
+/**
+ * GET /api/widgets/vpn?widgetId=… (settings: `integrationId`); POST { widgetId, action: 'restart' } —
+ * administrators, answers the new summary.
+ */
+export interface VpnTunnelSummary {
+  provider: VpnTunnelProvider;
+  /** Connection name (`config.integrations[].name`). */
+  name: string;
+  /** The tunnel's state as the gateway reports it; anything else is `unknown`. */
+  status: 'running' | 'starting' | 'stopping' | 'stopped' | 'crashed' | 'unknown';
+  /** Where traffic leaves the tunnel, while it runs. */
+  publicIp?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  /** The network that owns the exit address (usually the VPN provider's host). */
+  organization?: string;
+  /** Ports the VPN provider forwards to the gateway. */
+  forwardedPorts?: number[];
+  /** The viewer may restart the tunnel (administrators). */
+  canControl?: boolean;
+  /** Containers whose traffic goes through this gateway (from the saved Docker hosts; viewers with Docker access). */
+  services?: { name: string; running: boolean }[];
+  /** Containers tied to a previous gateway container, without network until they are recreated. */
+  detached?: string[];
+  fetchedAt: number;
+}
+
 /* ------------------------------------------------------------ Bookmarks */
 
 /**
@@ -619,7 +702,7 @@ export interface DownloadClientStatus {
   uploadLimitBps?: number;
   /** Alternative (slow) speed mode on (qBittorrent, Transmission). */
   altSpeed?: boolean;
-  /** The busiest downloads, newest activity first (≤ 10). */
+  /** Downloads, running first, then paused or waiting, then seeding; widget responses send at most 10. */
   items: { id: string; name: string; progress: number; state: 'downloading' | 'seeding' | 'paused' | 'queued' | 'checking' | 'error' | 'completed'; downloadBps?: number; etaMs?: number; sizeBytes?: number }[];
   /** Free space where the client saves, when it reports it. */
   freeBytes?: number;
@@ -632,7 +715,7 @@ export interface DownloadClientStatus {
   completed?: { id: string; name: string; sizeBytes?: number; at?: number }[];
   /** The viewer may pause and resume here (administrators, on a client that supports it). */
   canControl?: boolean;
-  /** The whole client is paused (qBittorrent, SABnzbd, NZBGet). */
+  /** The whole client is paused: its own pause (qBittorrent session, SABnzbd, NZBGet), or every torrent stopped. */
   clientPaused?: boolean;
 }
 /**

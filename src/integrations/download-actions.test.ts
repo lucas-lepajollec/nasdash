@@ -14,12 +14,28 @@ const answer = (value: unknown, status = 200, headers?: Record<string, string | 
 beforeEach(() => { vi.resetAllMocks(); clearQbittorrentSessions(); clearTransmissionSessions(); clearDelugeSessions(); });
 
 describe('download action transports', () => {
-  it.each(['pause', 'resume'] as const)('sends qBittorrent %s as a POST form, with API-key authentication and all hashes when omitted', async action => {
+  it.each(['pause', 'resume'] as const)('sends qBittorrent %s for one torrent as a POST form with API-key authentication', async action => {
     bytes.mockResolvedValue(answer(''));
-    for (const itemId of [hash, undefined]) {
-      await controlDownloadClient(source('qbittorrent'), action, itemId);
-      expect(bytes).toHaveBeenLastCalledWith(source('qbittorrent'), `/api/v2/torrents/${action === 'pause' ? 'stop' : 'start'}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: 'Bearer fictional-key' }, body: `hashes=${itemId ?? 'all'}` }, 2 * 1024 * 1024);
-    }
+    await controlDownloadClient(source('qbittorrent'), action, hash);
+    expect(bytes).toHaveBeenLastCalledWith(source('qbittorrent'), `/api/v2/torrents/${action === 'pause' ? 'stop' : 'start'}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: 'Bearer fictional-key' }, body: `hashes=${hash}` }, 2 * 1024 * 1024);
+  });
+  it('pauses the whole qBittorrent session when it can, and stops every torrent on older releases', async () => {
+    bytes.mockResolvedValue(answer('', 204));
+    await controlDownloadClient(source('qbittorrent'), 'pause');
+    expect(bytes.mock.calls.map(([, path, options]) => [path, options?.body])).toEqual([['/api/v2/transfer/pauseSession', '']]);
+    bytes.mockReset().mockImplementation(async (_instance, path) => answer('', path.includes('/transfer/') || path.endsWith('/stop') ? 404 : 200));
+    await controlDownloadClient(source('qbittorrent'), 'pause');
+    expect(bytes.mock.calls.map(([, path, options]) => [path, options?.body])).toEqual([['/api/v2/transfer/pauseSession', ''], ['/api/v2/torrents/stop', 'hashes=all'], ['/api/v2/torrents/pause', 'hashes=all']]);
+  });
+  it.each([
+    ['a paused session', [{ state: 'stalledDL' }, { state: 'stoppedDL' }], false],
+    ['every torrent stopped', [{ state: 'stoppedDL' }, { state: 'stoppedUP' }], true],
+    ['v4 torrents all paused', [{ state: 'pausedDL' }], true],
+  ])('resumes qBittorrent after %s', async (_label, torrents, startsAll) => {
+    bytes.mockImplementation(async (_instance, path) => path.endsWith('/torrents/info') ? answer(torrents) : answer('', path.includes('/transfer/') ? 204 : 200));
+    await controlDownloadClient(source('qbittorrent'), 'resume');
+    expect(bytes.mock.calls.map(([, path]) => path)).toEqual(['/api/v2/transfer/resumeSession', '/api/v2/torrents/info', ...(startsAll ? ['/api/v2/torrents/start'] : [])]);
+    if (startsAll) expect(bytes.mock.calls.at(-1)?.[2]?.body).toBe('hashes=all');
   });
   it.each(['pause', 'resume'] as const)('falls back to qBittorrent v4 %s only on 404 and reuses the login session', async action => {
     const instance = source('qbittorrent'); instance.settings.auth = 'password';
@@ -51,12 +67,19 @@ describe('download action transports', () => {
       expect(bytes.mock.calls.at(-1)?.[2]).toMatchObject({ method: 'POST', headers: { 'X-Transmission-Session-Id': 'fictional-session' }, json: { method: action === 'pause' ? 'torrent-stop' : 'torrent-start', arguments: itemId ? { ids: [71] } : {} } });
     }
   });
-  it.each(['pause', 'resume'] as const)('sends Deluge %s with a list of torrent hashes or a whole-session command', async action => {
-    bytes.mockImplementation(async (_instance, _path, options) => (options?.json as { method: string }).method === 'auth.login' ? answer({ result: true }, 200, { 'set-cookie': ['_session_id=fictional-session; Path=/'] }) : answer({ result: null, error: null }));
-    for (const itemId of [hash, undefined]) {
-      await controlDownloadClient(source('deluge'), action, itemId);
-      expect(bytes.mock.calls.at(-1)?.[2]).toEqual({ method: 'POST', headers: { Cookie: '_session_id=fictional-session' }, json: { method: `core.${action}_${itemId ? 'torrent' : 'session'}`, params: itemId ? [[hash]] : [], id: 1 } });
-    }
+  it.each(['pause', 'resume'] as const)('sends Deluge %s with a list of torrent hashes, every torrent for the whole client', async action => {
+    const other = 'b'.repeat(40);
+    bytes.mockImplementation(async (_instance, _path, options) => {
+      const method = (options?.json as { method: string }).method;
+      return method === 'auth.login' ? answer({ result: true }, 200, { 'set-cookie': ['_session_id=fictional-session; Path=/'] })
+        : answer({ result: method === 'core.get_session_state' ? [hash, other, 'not-a-hash'] : null, error: null });
+    });
+    await controlDownloadClient(source('deluge'), action, hash);
+    expect(bytes.mock.calls.at(-1)?.[2]).toEqual({ method: 'POST', headers: { Cookie: '_session_id=fictional-session' }, json: { method: `core.${action}_torrent`, params: [[hash]], id: 1 } });
+    bytes.mockClear();
+    await controlDownloadClient(source('deluge'), action);
+    const calls = bytes.mock.calls.map(([, , options]) => options?.json as { method: string; params: unknown[] });
+    expect(calls.map(({ method, params }) => [method, params])).toEqual([['core.get_session_state', []], ...(action === 'resume' ? [['core.resume_session', []]] : []), [`core.${action}_torrent`, [[hash, other]]]]);
   });
   it.each(['pause', 'resume'] as const)('sends SABnzbd %s with queue/item parameters or a whole-client mode', async action => {
     bytes.mockResolvedValue(answer({ status: true }));

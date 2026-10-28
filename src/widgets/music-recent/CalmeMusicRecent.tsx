@@ -65,7 +65,7 @@ export default function CalmeMusicRecent({ widgetId, settings = {}, editMode, is
                     </div>
                   )}
                   {page === 'tracks'
-                    ? <Tracks tracks={list('tracks') ?? []} widgetId={widgetId} columns={columnsOf(settings, width, 300)} canPlay={canPlay} />
+                    ? <Tracks tracks={list('tracks') ?? []} widgetId={widgetId} display={pick(settings.display, DISPLAYS, 'grid')} width={width} columns={columnsOf(settings, width, 300)} canPlay={canPlay} />
                     : <Albums albums={list(page) ?? []} played={page === 'albums'} widgetId={widgetId} display={pick(settings.display, DISPLAYS, 'grid')} width={width} columns={columnsOf(settings, width, 300)} canPlay={canPlay} />}
                 </div>
               )}
@@ -100,10 +100,26 @@ function Albums({ albums, played, widgetId, display, width, columns, canPlay }: 
   );
 }
 
-function Tracks({ tracks, widgetId, columns, canPlay }: { tracks: MusicTrack[]; widgetId: string; columns: number; canPlay: boolean }) {
+function Tracks({ tracks, widgetId, display, width, columns, canPlay }: { tracks: MusicTrack[]; widgetId: string; display: typeof DISPLAYS[number]; width: number; columns: number; canPlay: boolean }) {
   const { t } = useI18n();
   const relative = useRelativeTime();
   if (!tracks.length) return <div className="ndw-mx-empty"><span className="ndw-mx-calm">{t('widgets.music.noPlays')}</span></div>;
+  // Covers, like the albums: the track's album art, its title, artist and when it played.
+  if (display === 'grid') return (
+    <div className="ndw-mx-rail" style={{ '--ndw-cols': Math.max(2, Math.min(8, Math.floor((width + 14) / 124))) } as React.CSSProperties}>
+      {tracks.map((track, index) => (
+        <span key={`${track.id}-${index}`} className="ndw-mx-rail-item" title={[track.title, track.artist].filter(Boolean).join(' · ')}>
+          <span className="ndw-music-cover">
+            <Cover id={`t-${track.id}-${index}`} title={track.album ?? track.title} cover={track.cover} size={240} />
+            {canPlay && <span className="ndw-music-cover-play"><PlayButton size="large" label={t('widgets.music.playOne', { name: track.title })} playingKey={`recent:${track.id}`} onPlay={() => musicPlayer.playTracks(widgetId, tracks, index, `recent:${track.id}`)} /></span>}
+          </span>
+          <span className="ndw-mx-rail-title">{track.title}</span>
+          {track.artist && <span className="ndw-mx-rail-sub">{track.artist}</span>}
+          {track.playedAt && <span className="ndw-mx-rail-sub is-quiet">{relative(track.playedAt)}</span>}
+        </span>
+      ))}
+    </div>
+  );
   return (
     <ColumnRows columns={columns} className="ndw-mx-lines">
       {tracks.map((track, index) => (
@@ -136,11 +152,9 @@ function RecentSettings({ draft, change }: { draft: WidgetSettings; change: (pat
           <OrderedChoice all={PAGES} value={pages} labelOf={page => t(`widgets.music.content.${page}`)} onChange={setPages} />
         </CalmeField>
       )}
-      {content !== 'tracks' && (
-        <CalmeField label={t('widgets.display')}>
-          <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, DISPLAYS, 'grid')} options={DISPLAYS.map(value => ({ value, label: t(`widgets.music.display.${value}`) }))} onChange={value => change({ display: value === 'grid' ? null : value })} />
-        </CalmeField>
-      )}
+      <CalmeField label={t('widgets.display')}>
+        <CalmeSegmented label={t('widgets.display')} value={pick(draft.display, DISPLAYS, 'grid')} options={DISPLAYS.map(value => ({ value, label: t(`widgets.music.display.${value}`) }))} onChange={value => change({ display: value === 'grid' ? null : value })} />
+      </CalmeField>
       <CalmeRow label={t('widgets.music.shown')}>
         <CalmeSlider label={t('widgets.music.shown')} value={bounded(draft.count, 4, 40, 12)} min={4} max={40} step={1} onChange={value => change({ count: value })} onCommit={value => change({ count: value })} format={String} />
       </CalmeRow>

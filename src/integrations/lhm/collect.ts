@@ -22,6 +22,12 @@ function find(node: LhmNode, match: (candidate: LhmNode) => boolean): LhmNode | 
   return null;
 }
 
+function findAll(node: LhmNode, match: (candidate: LhmNode) => boolean, found: LhmNode[] = []): LhmNode[] {
+  if (match(node)) found.push(node);
+  for (const child of node.Children ?? []) findAll(child, match, found);
+  return found;
+}
+
 /** `"42,5 %"` → 42.5 */
 function number(value: string | undefined): number {
   return Number.parseFloat((value ?? '').replace(',', '.'));
@@ -60,12 +66,15 @@ export function lhmMetrics(data: LhmNode): Metric[] {
       }
     }
 
+    // Intel integrated graphics have no "GPU Core" load, only one per Direct3D engine (3D, Video Decode…): the
+    // busiest engine is the GPU's use, as Windows' Task Manager shows it (video decode while a server transcodes).
     const gpuLoad = find(hw, node => node.Text === 'GPU Core' && isPercent(node));
-    if (gpuLoad) {
+    const engines = cpuLoad || gpuLoad ? [] : findAll(hw, node => Boolean(node.Text?.startsWith('D3D ')) && isPercent(node)).map(node => number(node.Value)).filter(Number.isFinite);
+    if (gpuLoad || engines.length) {
       const name = (hw.Text ?? 'GPU').replace('NVIDIA ', '').replace('AMD ', '');
       const temp = find(hw, node => node.Text === 'GPU Core' && isCelsius(node))
         ?? find(hw, node => Boolean(node.Text?.startsWith('GPU')) && isCelsius(node));
-      gpus.push({ key: `gpu.usage:${name}`, kind: 'gpu', name, percent: number(gpuLoad.Value), ...(temp ? { temperatureC: number(temp.Value) } : {}) });
+      gpus.push({ key: `gpu.usage:${name}`, kind: 'gpu', name, percent: gpuLoad ? number(gpuLoad.Value) : Math.max(...engines), ...(temp ? { temperatureC: number(temp.Value) } : {}) });
     }
 
     const diskLoad = find(hw, node => node.Text === 'Used Space' && isPercent(node));

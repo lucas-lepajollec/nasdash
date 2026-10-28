@@ -22,6 +22,9 @@ import type { IntegrationInstance } from '@/lib/types';
 import { piholeRequest } from '@/integrations/pihole/collect';
 import { adguardHeaders } from '@/integrations/adguard/collect';
 import { technitiumRequest } from '@/integrations/technitium/collect';
+import { gluetunRequest } from '@/integrations/gluetun/collect';
+import { nutDevices } from '@/integrations/nut/collect';
+import { collectApcupsd } from '@/integrations/apcupsd/collect';
 import { jellyfinHeaders, jellyfinPrefix } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { immichHeaders } from '@/integrations/immich/collect';
@@ -30,7 +33,7 @@ import { librephotosRequest } from '@/integrations/librephotos/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
 import { customApiRequest } from '@/lib/widgetData/customApi';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MUSIC_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES } from '@/lib/widgetData/contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MUSIC_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
   const config = readConfig();
   const saved = typeof body.id === 'string' ? config.integrations?.find(instance => instance.id === body.id) : undefined;
   const type = text(body.type, 64) || saved?.type || '';
-  if ((['tmdb', ...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MUSIC_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
+  if ((['tmdb', ...VPN_TUNNEL_TYPES, ...UPS_TYPES, ...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MUSIC_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] as string[]).includes(type)) {
     const service = getServiceIntegration(type)!;
     if (isDemoMode()) return NextResponse.json({ ok: true, message: 'integrations.test.demo' });
     const sameType = saved?.type === type ? saved : undefined;
@@ -79,6 +82,11 @@ export async function POST(request: NextRequest) {
       else if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
       else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
       // The statistics the widget reads (Dashboard: view); a missing permission is told apart.
+      // The route the widget always reads; a key whose role leaves it out fails here.
+      else if (type === 'gluetun') await gluetunRequest(instance, '/v1/vpn/status');
+      // A NUT server that answers but serves no UPS is not usable yet.
+      else if (type === 'nut') { if (!(await nutDevices(instance)).length) throw new ServiceError('widgets.ups.error.noUps', 404); }
+      else if (type === 'apcupsd') await collectApcupsd(instance);
       else if (type === 'technitium') await technitiumRequest(instance, '/api/dashboard/stats/get', { type: 'LastHour', utc: 'true' });
       // One random photo: authenticates the key with the permission the widget
       // needs (asset.read), so a key limited to reading still passes. A public

@@ -125,6 +125,8 @@ function Client({ client, samples, chart, count, busy, onAct }: { client: Downlo
     client.seeding ? t('widgets.arr.seeding', { count: client.seeding }) : '',
   ].filter(Boolean);
   const items = client.items.filter(item => item.state !== 'seeding' && item.state !== 'completed').slice(0, count);
+  // A paused SABnzbd or NZBGet queue holds every item: only the client's own button can start them again.
+  const itemControl = client.canControl && !(client.clientPaused && (client.type === 'sabnzbd' || client.type === 'nzbget'));
   return (
     <>
       <div className="ndw-mx-figures">
@@ -161,7 +163,7 @@ function Client({ client, samples, chart, count, busy, onAct }: { client: Downlo
                 <span className="ndw-media-sub">{[item.sizeBytes ? bytes.size(item.sizeBytes) : '', item.downloadBps ? `${bytes.speed(item.downloadBps).value} ${bytes.speed(item.downloadBps).unit}` : '', `${Math.round(item.progress)} %`].filter(Boolean).join(' · ')}</span>
               </span>
               <span className="ndw-media-time">{item.state === 'downloading' ? eta(item.etaMs) : t(`widgets.arr.state.${item.state}`)}</span>
-              {client.canControl && (
+              {itemControl && (
                 <button type="button" className="ndc-icon-button ndw-mx-dl-action" disabled={busy !== null} onClick={() => onAct(item.state === 'paused' ? 'resume' : 'pause', item.id)}
                   aria-label={t(item.state === 'paused' ? 'widgets.arr.resumeOne' : 'widgets.arr.pauseOne', { name: item.name })} title={t(item.state === 'paused' ? 'widgets.arr.resumeOne' : 'widgets.arr.pauseOne', { name: item.name })}>
                   {busy === item.id ? <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" /> : item.state === 'paused' ? <Play size={12} /> : <Pause size={12} />}

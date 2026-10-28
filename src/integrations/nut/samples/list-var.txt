@@ -1,0 +1,13 @@
+BEGIN LIST VAR rack
+VAR rack battery.charge "87"
+VAR rack battery.runtime "2520"
+VAR rack battery.voltage "13.5"
+VAR rack device.mfr "CPS"
+VAR rack device.model "VP800ELCD"
+VAR rack input.voltage "231.0"
+VAR rack output.voltage "230.0"
+VAR rack ups.load "18"
+VAR rack ups.realpower.nominal "480"
+VAR rack ups.status "OL CHRG"
+VAR rack ups.test.result "No test initiated"
+END LIST VAR rack

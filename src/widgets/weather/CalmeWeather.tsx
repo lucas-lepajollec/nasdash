@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { CalmeWidget } from '../calme';
 import CalmeWeatherIcon from './CalmeWeatherIcon';
-import { skyOf, timeOfDay, useWeather, weatherLabelKey } from './useWeather';
+import { rainOf, skyOf, timeOfDay, useWeather, weatherLabelKey } from './useWeather';
 
 /**
  * Calme weather. Styles (Settings → Weather): "minimal" = temperature and sky,
@@ -56,7 +56,7 @@ export default function CalmeWeather({ editMode, isVisible = true }: { editMode?
       editMode={editMode}
       aside={loading ? <span className="nd-spinner" style={{ width: 10, height: 10 }} /> : stale ? <span className="ndc-stale-dot" title={t('weather.stale')} aria-label={t('weather.stale')} /> : undefined}
     >
-      <div className="ndc-weather" data-sky={sky} data-time={moment} data-style={style}>
+      <div className="ndc-weather" data-sky={sky} data-rain={rainOf(weather.current.weather_code)} data-time={moment} data-style={style}>
         <div className="ndc-weather-scene" aria-hidden="true">
           <span className="ndc-scene-light" />
           <span className="ndc-scene-stars" />

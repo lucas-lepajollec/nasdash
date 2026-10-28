@@ -8,6 +8,11 @@ vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/pihole/collect', () => ({ piholeRequest: vi.fn() }));
 vi.mock('@/lib/widgetData/customApi', () => ({ customApiRequest: vi.fn() }));
+vi.mock('@/integrations/nut/collect', () => ({ nutDevices: vi.fn() }));
+vi.mock('@/integrations/apcupsd/collect', () => ({ collectApcupsd: vi.fn() }));
+import { nutDevices } from '@/integrations/nut/collect';
+import { collectApcupsd } from '@/integrations/apcupsd/collect';
+import { SERVICE_INTEGRATIONS } from '@/integrations/registry';
 import { customApiRequest } from '@/lib/widgetData/customApi';
 import { POST } from './route';
 import { piholeRequest } from '@/integrations/pihole/collect';
@@ -130,4 +135,22 @@ it('tests a Subsonic connection with ping and never returns URL authentication o
   vi.mocked(serviceBytes).mockResolvedValue(answer({ 'subsonic-response': { status: 'failed', error: { code: 40, message: 'fake-password ?u=admin&t=secret&s=salt' } } }));
   const response = await POST(request(input('navidrome')));
   expect(response.status).toBe(502); expect(await response.json()).toEqual({ ok: false, message: 'integrations.error.authentication' });
+});
+
+// Each service integration has its own test: none may fall through to the monitoring branch ("unknown").
+it.each(SERVICE_INTEGRATIONS.map(item => item.id).filter(id => id !== 'tailscale' && id !== 'headscale'))('offers a connection test for %s', async type => {
+  state.demo = true;
+  expect(await (await POST(request(input(type)))).json()).toEqual({ ok: true, message: 'integrations.test.demo' });
+});
+it('tests Gluetun on the status route, NUT on its UPS list and apcupsd on its status', async () => {
+  vi.mocked(serviceJson).mockResolvedValue({ status: 'running' });
+  expect((await (await POST(request(input('gluetun')))).json()).ok).toBe(true);
+  expect(vi.mocked(serviceJson).mock.calls[0][1]).toBe('/v1/vpn/status');
+  vi.mocked(nutDevices).mockResolvedValue([]);
+  const nut = { type: 'nut', settings: { host: 'nas.example.com' } };
+  expect(await (await POST(request(nut))).json()).toMatchObject({ ok: false, message: 'widgets.ups.error.noUps' });
+  vi.mocked(nutDevices).mockResolvedValue(['rack']);
+  expect((await (await POST(request(nut))).json()).ok).toBe(true);
+  vi.mocked(collectApcupsd).mockResolvedValue({ provider: 'apcupsd', name: 'x', power: 'mains', fetchedAt: 1 });
+  expect((await (await POST(request({ type: 'apcupsd', settings: { host: 'nas.example.com' } }))).json()).ok).toBe(true);
 });

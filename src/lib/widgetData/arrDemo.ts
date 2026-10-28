@@ -87,7 +87,7 @@ export function demoDownloadClient(instance: IntegrationInstance, action?: Downl
     active: items.filter(item => item.state === 'downloading' || item.state === 'seeding').length, paused: paused.items.size,
     queued: items.filter(item => item.state === 'queued').length,
     ...(base.seeding !== undefined ? { seeding: items.filter(item => item.state === 'seeding').length } : {}),
-    ...(['qbittorrent', 'sabnzbd', 'nzbget'].includes(instance.type) ? { clientPaused: paused.whole } : {}) };
+    clientPaused: paused.whole };
 }
 
 function baseDemoDownloadClient(instance: IntegrationInstance): DownloadClientStatus {

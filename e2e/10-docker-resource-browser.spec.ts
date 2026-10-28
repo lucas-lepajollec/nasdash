@@ -232,14 +232,16 @@ test('header selection works for images and volumes, including mobile and protec
       await expect(title.locator(':scope > svg')).toHaveCount(0);
       await expect(explorer.locator('.nd-docker-resource-hint')).toHaveCount(0);
       const info = title.getByRole('img');
-      await info.focus();
+      // Reached with the keyboard, as a person would: a focus left by a click does not open the bubble.
+      const reachInfo = async () => { await info.focus(); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Tab'); };
+      await reachInfo();
       await expect(page.locator('.ndc-info-bubble')).toContainText('Resources linked to running or stopped containers cannot be deleted here.');
       await page.keyboard.press('Tab');
       await expect(page.locator('.ndc-info-bubble')).toHaveCount(0);
       for (const width of [1440, 390, 320]) {
         await page.setViewportSize({ width, height: 900 });
         await expect(all).toBeVisible();
-        await info.focus();
+        await reachInfo();
         await expect.poll(() => page.locator('.ndc-info-bubble').evaluate(element => {
           const box = element.getBoundingClientRect();
           return box.left >= 0 && box.right <= innerWidth + 1 && box.top >= 0 && box.bottom <= innerHeight + 1;

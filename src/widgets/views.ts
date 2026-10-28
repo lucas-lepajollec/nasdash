@@ -47,6 +47,8 @@ import mediaArr from './media-arr/view';
 import rss from './rss/view';
 import markets from './markets/view';
 import dns from './dns/view';
+import vpn from './vpn/view';
+import ups from './ups/view';
 import type { WidgetViewProps } from './types';
 
 /**
@@ -78,6 +80,8 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'network-tools': networkTools,
   'network-topology': networkTopology,
   'dns': dns,
+  'vpn': vpn,
+  'ups': ups,
   'rss': rss,
   'markets': markets,
   'quotes': quotes,

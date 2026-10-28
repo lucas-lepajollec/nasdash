@@ -1,0 +1,4 @@
+BEGIN LIST UPS
+UPS rack "Fictional Rack UPS"
+UPS spare "Description unavailable"
+END LIST UPS

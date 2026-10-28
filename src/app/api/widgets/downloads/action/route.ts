@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { isDemoMode } from '@/lib/demoMode';
 import { resolveWidgetSettings } from '@/lib/widgetData/resolve';
-import { sourceTypes, widgetSources } from '@/lib/widgetData/arr';
+import { settingNumber, sourceTypes, widgetSources } from '@/lib/widgetData/arr';
 import { demoDownloadClient } from '@/lib/widgetData/arrDemo';
 import { downloadStatus, invalidateDownloadStatus } from '@/lib/widgetData/downloadStatus';
 import { boundedJson, ServiceError, serviceFailure } from '@/lib/widgetData/services';
@@ -31,6 +31,6 @@ export async function POST(request: NextRequest) {
     finally { invalidateDownloadStatus(instance); }
     // A revision prevents an older GET in flight from restoring pre-action status.
     const status = await downloadStatus(instance);
-    return NextResponse.json({ ...status, canControl: true }, { headers });
+    return NextResponse.json({ ...status, canControl: true, items: status.items.slice(0, settingNumber(settings, 'items', 5, 0, 10)) }, { headers });
   } catch (error) { const response = serviceFailure(error); response.headers.set('Cache-Control', headers['Cache-Control']); return response; }
 }

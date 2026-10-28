@@ -21,10 +21,13 @@ export function WeatherWidgetTab() {
   const [weatherSearchQuery, setWeatherSearchQuery] = useState('');
   const [weatherSearchResults, setWeatherSearchResults] = useState<WeatherSearchResult[]>([]);
   const [isSearchingWeather, setIsSearchingWeather] = useState(false);
+  // The last search that found nothing: said plainly instead of an empty list.
+  const [noResultFor, setNoResultFor] = useState<string | null>(null);
 
   const searchWeatherCity = async () => {
     if (!weatherSearchQuery.trim()) return;
     setIsSearchingWeather(true);
+    setNoResultFor(null);
     try {
       if (demoMode) {
         const sampleCities: WeatherSearchResult[] = [
@@ -34,16 +37,20 @@ export function WeatherWidgetTab() {
           { name: 'Tokyo', country: 'Japon', latitude: 35.6762, longitude: 139.6503 },
         ];
         const query = weatherSearchQuery.trim().toLocaleLowerCase(locale);
-        setWeatherSearchResults(sampleCities.filter(city => city.name.toLocaleLowerCase(locale).includes(query)));
+        const found = sampleCities.filter(city => city.name.toLocaleLowerCase(locale).includes(query));
+        setWeatherSearchResults(found);
+        if (!found.length) setNoResultFor(weatherSearchQuery.trim());
         return;
       }
       const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(weatherSearchQuery)}&count=5&language=${language}&format=json`);
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json() as { results?: WeatherSearchResult[] };
       setWeatherSearchResults(data.results || []);
+      if (!data.results?.length) setNoResultFor(weatherSearchQuery.trim());
     } catch (e) {
       console.error(e);
       setWeatherSearchResults([]);
+      setNoResultFor(weatherSearchQuery.trim());
     } finally {
       setIsSearchingWeather(false);
     }
@@ -52,7 +59,8 @@ export function WeatherWidgetTab() {
   const selectWeatherCity = async (city: WeatherSearchResult) => {
     const newId = Math.random().toString(36).substring(2, 9);
     const loc = { id: newId, lat: city.latitude, lon: city.longitude, name: city.name };
-    const currentLocations = config?.settings?.weatherLocations || [];
+    // A copy: the loaded configuration must not change before the server accepts the new list.
+    const currentLocations = [...(config?.settings?.weatherLocations || [])];
     
     // Migrate old single location if present and list is empty
     if (currentLocations.length === 0 && config?.settings?.weatherLocation) {
@@ -113,6 +121,9 @@ export function WeatherWidgetTab() {
             {isSearchingWeather ? '…' : t("Chercher")}
           </button>
         </div>
+        {noResultFor && (
+          <p className="ndc-dialog-hint" role="status">{demoMode ? t('weather.noCityDemo', { query: noResultFor }) : t('weather.noCity', { query: noResultFor })}</p>
+        )}
         {weatherSearchResults.length > 0 && (
           <div className="ndc-set-list" style={{ marginTop: 6 }}>
             {weatherSearchResults.map((city, idx) => (

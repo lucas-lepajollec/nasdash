@@ -15,7 +15,7 @@ export interface HttpAnswer {
 }
 
 export interface HttpOptions {
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST' | 'PUT';
   headers?: Record<string, string>;
   /** Sent as JSON (`Content-Type: application/json`). */
   json?: unknown;
@@ -32,7 +32,7 @@ export async function httpRequest(url: string, options: HttpOptions = {}): Promi
   const deadline = Date.now() + timeoutMs;
   // The certificate exception belongs to this configured host only. Redirects
   // must not export credentials or silently downgrade HTTPS to HTTP.
-  async function visit(current: URL, requestMethod: 'GET' | 'POST', requestBody: string | undefined, requestHeaders: Record<string, string>, redirects: number): Promise<HttpAnswer> {
+  async function visit(current: URL, requestMethod: 'GET' | 'POST' | 'PUT', requestBody: string | undefined, requestHeaders: Record<string, string>, redirects: number): Promise<HttpAnswer> {
     if (!['http:', 'https:'].includes(current.protocol)) throw new Error('Unsupported redirect protocol');
     const remaining = deadline - Date.now();
     if (remaining <= 0) throw new Error('Timeout');

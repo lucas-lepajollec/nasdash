@@ -10,7 +10,7 @@ import { getServiceIntegration } from '@/integrations/registry';
 import type { IntegrationInstance } from '@/lib/types';
 import { isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
-import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, MUSIC_SERVER_TYPES, type DnsProvider } from './contracts';
+import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, MUSIC_SERVER_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES, type DnsProvider, type UpsSummary, type VpnTunnelSummary } from './contracts';
 
 export class ServiceError extends Error {
   constructor(readonly key: string, readonly status = 502, readonly parameters?: Record<string, string | number>) {
@@ -44,10 +44,10 @@ export function getServiceInstance(integrationId: unknown, types: readonly strin
   const matching = (readConfig().integrations ?? []).filter(instance => types.includes(instance.type));
   return integrationId === undefined || integrationId === null ? matching[0] : matching.find(instance => instance.id === integrationId);
 }
-export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'photos' | 'photos-stats' | 'customapi' | 'media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | 'music-playlists' | readonly ('media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | 'music-playlists')[], draft?: unknown) {
+export function resolveServiceWidget(request: Request, widgetId: unknown, type: 'dns' | 'vpn' | 'ups' | 'photos' | 'photos-stats' | 'customapi' | 'media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | 'music-playlists' | readonly ('media-nowplaying' | 'media-recent' | 'media-library' | 'music-nowplaying' | 'music-recent' | 'music-library' | 'music-top' | 'music-playlists')[], draft?: unknown) {
   const lookup = resolveWidgetSettings(request, widgetId, type, draft);
   if (!lookup.ok) return { response: NextResponse.json({ error: lookup.error }, { status: lookup.status }) };
-  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'photos' ? PHOTO_TYPES : type === 'photos-stats' ? PHOTO_STATS_TYPES : type === 'customapi' ? CUSTOM_API_TYPES : (typeof type === 'string' ? type.startsWith('music-') : type.every(value => value.startsWith('music-'))) ? MUSIC_SERVER_TYPES : MEDIA_SERVER_TYPES;
+  const types: readonly string[] = type === 'dns' ? DNS_TYPES : type === 'vpn' ? VPN_TUNNEL_TYPES : type === 'ups' ? UPS_TYPES : type === 'photos' ? PHOTO_TYPES : type === 'photos-stats' ? PHOTO_STATS_TYPES : type === 'customapi' ? CUSTOM_API_TYPES : (typeof type === 'string' ? type.startsWith('music-') : type.every(value => value.startsWith('music-'))) ? MUSIC_SERVER_TYPES : MEDIA_SERVER_TYPES;
   if ((types === MEDIA_SERVER_TYPES && lookup.settings.integrationId !== undefined || types === MUSIC_SERVER_TYPES && lookup.settings.integrationId != null || types === PHOTO_STATS_TYPES && lookup.settings.integrationId != null) && (typeof lookup.settings.integrationId !== 'string' || !lookup.settings.integrationId)) throw new ServiceError('widgets.error.invalidSettings', 400);
   const instance = getServiceInstance(lookup.settings.integrationId, types) ?? demoVisitorInstance(lookup.settings.integrationId, types);
   if (!instance) return { response: NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404 }) };
@@ -207,6 +207,24 @@ export function knownInstancePhoto(instance: IntegrationInstance, id: string): {
 }
 
 /** Fictional service demos deliberately contain no provider URLs or secrets. */
+/** Public demo: a fictional tunnel (documentation addresses only); a restart passes through `starting`. */
+const demoRestarts = new Map<string, number>();
+export function demoVpn(instance: IntegrationInstance, restart = false): VpnTunnelSummary {
+  const key = serviceIdentity(instance), now = Date.now();
+  if (restart) { demoRestarts.delete(key); demoRestarts.set(key, now); while (demoRestarts.size > 200) demoRestarts.delete(demoRestarts.keys().next().value!); }
+  const starting = now - (demoRestarts.get(key) ?? 0) < 4000;
+  return { provider: 'gluetun', name: instance.name, status: starting ? 'starting' : 'running',
+    ...(starting ? {} : { publicIp: '198.51.100.24', country: 'Netherlands', region: 'North Holland', city: 'Amsterdam', organization: 'Fictional Transit B.V.' }),
+    forwardedPorts: [51413], services: [{ name: 'flaresolverr', running: true }, { name: 'prowlarr', running: true }, { name: 'qbittorrent', running: true }], fetchedAt: now };
+}
+/** Public demo: a fictional UPS on mains; its battery and load drift slowly so the widget looks alive. */
+export function demoUps(instance: IntegrationInstance): UpsSummary {
+  const minute = Math.floor(Date.now() / 60_000), load = 21 + (minute % 7);
+  return { provider: instance.type === 'apcupsd' ? 'apcupsd' : 'nut', name: instance.name, ups: 'ups', ...(instance.type === 'nut' ? { devices: ['ups'] } : {}),
+    model: 'Back-UPS 900', manufacturer: 'Fictional Power', power: 'mains', charging: true, batteryPercent: 96 + (minute % 4), runtimeSeconds: 2940 - load * 30, shutdownPercent: 20, shutdownRuntimeSeconds: 300,
+    loadPercent: load, loadWatts: Math.round(load * 4.8), nominalWatts: 480, inputVoltage: 230 + (minute % 3), outputVoltage: 230, batteryVoltage: 13.6, inputFrequency: 50,
+    ...(instance.type === 'apcupsd' ? { lastTransfer: 'Low line voltage', transfers: 2 } : {}), fetchedAt: Date.now() };
+}
 export function demoDns(instance: IntegrationInstance, blocking = true, durationSeconds?: number): import('./contracts').DnsSummary {
   const now = Date.UTC(2026, 0, 15, 12);
   return { provider: instance.type as DnsProvider, name: instance.name, blocking,

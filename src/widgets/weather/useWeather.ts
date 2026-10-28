@@ -172,6 +172,16 @@ export function skyOf(code: number): Sky {
   return 'cloudy';
 }
 
+/** How hard it rains (WMO codes): drizzle and light showers, steady rain, downpours and storms. */
+export function rainOf(code: number): 'light' | 'moderate' | 'heavy' | undefined {
+  const sky = skyOf(code);
+  if (sky === 'storm') return 'heavy';
+  if (sky !== 'rain') return undefined;
+  if ((code >= 51 && code <= 57) || code === 61 || code === 80) return 'light';
+  if (code === 65 || code === 67 || code === 82) return 'heavy';
+  return 'moderate';
+}
+
 /** Day, night, or the hour around sunrise and sunset, at the location. */
 export function timeOfDay(weather: WeatherData): TimeOfDay {
   const minutes = (iso?: string) => {

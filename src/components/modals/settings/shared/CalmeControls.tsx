@@ -42,21 +42,41 @@ export function CalmeInfo({ text }: { text: string }) {
     setPlace({ left, top, below });
   }, []);
   const open = place !== null;
+  const hide = useCallback(() => setPlace(null), []);
+  // Shown while the pointer is over the ⓘ or the keyboard is on it: never by a focus a click left behind (it came
+  // back with the window and kept the bubble on screen), nor after the pointer left without a mouseleave (scrolling
+  // under a still pointer, a layout change).
+  const wanted = useCallback(() => {
+    const element = anchor.current;
+    return !!element && (element.matches(':hover') || element.matches(':focus-visible'));
+  }, []);
   useEffect(() => {
     if (!open) return;
     // Focus can scroll the anchor after its event, especially on WebKit.
     const frame = window.requestAnimationFrame(show);
-    window.addEventListener('scroll', show, true);
+    const follow = () => { if (wanted()) show(); else hide(); };
+    const away = (event: Event) => { if (!anchor.current?.contains(event.target as Node) && !anchor.current?.matches(':focus-visible')) hide(); };
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') hide(); };
+    window.addEventListener('scroll', follow, true);
     window.addEventListener('resize', show);
+    window.addEventListener('blur', hide);
+    document.addEventListener('pointermove', away, true);
+    document.addEventListener('pointerdown', away, true);
+    document.addEventListener('keydown', escape);
+    document.addEventListener('visibilitychange', hide);
     return () => {
       window.cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', show, true);
+      window.removeEventListener('scroll', follow, true);
       window.removeEventListener('resize', show);
+      window.removeEventListener('blur', hide);
+      document.removeEventListener('pointermove', away, true);
+      document.removeEventListener('pointerdown', away, true);
+      document.removeEventListener('keydown', escape);
+      document.removeEventListener('visibilitychange', hide);
     };
-  }, [open, show]);
-  const hide = () => setPlace(null);
+  }, [open, show, hide, wanted]);
   return (
-    <span ref={anchor} className="ndc-info" tabIndex={0} role="img" aria-label={text} onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+    <span ref={anchor} className="ndc-info" tabIndex={0} role="img" aria-label={text} onMouseEnter={show} onMouseLeave={hide} onFocus={() => { if (anchor.current?.matches(':focus-visible')) show(); }} onBlur={hide}>
       <Info size={13} aria-hidden="true" />
       {place && typeof document !== 'undefined' && createPortal(
         <span
