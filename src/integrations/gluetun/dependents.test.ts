@@ -3,7 +3,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import { tunnelServices, type TunnelContainer } from './dependents';
 
 const instance = (url = 'http://nas.example.com:8000'): IntegrationInstance => ({ id: 'g', type: 'gluetun', name: 'Gluetun', settings: { url }, secrets: {} });
-const project = { 'com.docker.compose.project': 'media-stack' };
+const project = { 'com.docker.compose.project': 'downloads' };
 const container = (id: string, name: string, extra: Partial<TunnelContainer> = {}): TunnelContainer => ({ Id: id, Names: [`/${name}`], State: 'running', Labels: { ...project, 'com.docker.compose.service': name }, ...extra });
 
 describe('services behind Gluetun', () => {

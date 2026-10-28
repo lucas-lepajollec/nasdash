@@ -149,7 +149,7 @@ it('tests Gluetun on the status route, NUT on its UPS list and apcupsd on its st
   vi.mocked(nutDevices).mockResolvedValue([]);
   const nut = { type: 'nut', settings: { host: 'nas.example.com' } };
   expect(await (await POST(request(nut))).json()).toMatchObject({ ok: false, message: 'widgets.ups.error.noUps' });
-  vi.mocked(nutDevices).mockResolvedValue(['epyc']);
+  vi.mocked(nutDevices).mockResolvedValue(['rack']);
   expect((await (await POST(request(nut))).json()).ok).toBe(true);
   vi.mocked(collectApcupsd).mockResolvedValue({ provider: 'apcupsd', name: 'x', power: 'mains', fetchedAt: 1 });
   expect((await (await POST(request({ type: 'apcupsd', settings: { host: 'nas.example.com' } }))).json()).ok).toBe(true);

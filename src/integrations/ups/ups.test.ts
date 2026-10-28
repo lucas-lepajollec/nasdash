@@ -23,11 +23,11 @@ const frame = (text: string) => { const body = Buffer.from(text); return Buffer.
 
 describe('NUT', () => {
   it('maps upsd variables: power source, charge, runtime, load in watts and line voltage', () => {
-    const summary = toNut(instance('nut', 3493), 'epyc', nutVariables(sample('nut/samples/list-var.txt').split('\n')), nutUpsNames(sample('nut/samples/list-ups.txt').split('\n')));
-    expect(summary).toMatchObject({ provider: 'nut', ups: 'epyc', devices: ['epyc', 'spare'], power: 'mains', charging: true, model: 'VP800ELCD', manufacturer: 'CPS',
+    const summary = toNut(instance('nut', 3493), 'rack', nutVariables(sample('nut/samples/list-var.txt').split('\n')), nutUpsNames(sample('nut/samples/list-ups.txt').split('\n')));
+    expect(summary).toMatchObject({ provider: 'nut', ups: 'rack', devices: ['rack', 'spare'], power: 'mains', charging: true, model: 'VP800ELCD', manufacturer: 'CPS',
       batteryPercent: 87, runtimeSeconds: 2520, loadPercent: 18, loadWatts: 86, nominalWatts: 480, inputVoltage: 231, outputVoltage: 230, batteryVoltage: 13.5 });
     expect(summary).not.toHaveProperty('lowBattery');
-    expect(nutUps(sample('nut/samples/list-ups.txt').split('\n'))).toEqual([{ name: 'epyc', description: 'Fictional EPYC ION' }, { name: 'spare', description: '' }]);
+    expect(nutUps(sample('nut/samples/list-ups.txt').split('\n'))).toEqual([{ name: 'rack', description: 'Fictional Rack UPS' }, { name: 'spare', description: '' }]);
     expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OB LB RB OVER', 'ups.realpower': '120', 'ups.load': '40' })).toMatchObject({ power: 'battery', lowBattery: true, replaceBattery: true, overload: true, loadWatts: 120 });
     expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OFF' })).toMatchObject({ power: 'unknown', offline: true });
     // A CyberPower register read as volts.
@@ -42,10 +42,10 @@ describe('NUT', () => {
       if (!request.endsWith('LOGOUT\n')) return;
       requests.push(request);
       const ups = /LIST VAR (\S+)/.exec(request)?.[1];
-      socket.end(`${!ups ? sample('nut/samples/list-ups.txt') : ups === 'epyc' ? sample('nut/samples/list-var.txt') : 'ERR UNKNOWN-UPS\n'}OK Goodbye\n`);
+      socket.end(`${!ups ? sample('nut/samples/list-ups.txt') : ups === 'rack' ? sample('nut/samples/list-var.txt') : 'ERR UNKNOWN-UPS\n'}OK Goodbye\n`);
     });
-    expect(await collectNut(instance('nut', port))).toMatchObject({ ups: 'epyc', description: 'Fictional EPYC ION', batteryPercent: 87 });
-    expect(requests).toEqual(['LIST UPS\nLOGOUT\n', 'LIST VAR epyc\nLOGOUT\n']);
+    expect(await collectNut(instance('nut', port))).toMatchObject({ ups: 'rack', description: 'Fictional Rack UPS', batteryPercent: 87 });
+    expect(requests).toEqual(['LIST UPS\nLOGOUT\n', 'LIST VAR rack\nLOGOUT\n']);
     await expect(collectNut(instance('nut', port), 'gone')).rejects.toMatchObject({ key: 'widgets.ups.error.unknownUps' });
     await expect(collectNut(instance('nut', port), 'bad name\nFSD')).rejects.toMatchObject({ key: 'widgets.error.invalidSettings' });
   });
@@ -53,8 +53,8 @@ describe('NUT', () => {
     let answer = 'ERR ACCESS-DENIED\n';
     const port = await serve((request, socket) => { if (request.endsWith('LOGOUT\n')) socket.end(`${answer}OK Goodbye\n`); });
     await expect(collectNut(instance('nut', port))).rejects.toMatchObject({ key: 'widgets.ups.error.denied' });
-    answer = 'UPS epyc ""\n';
-    const second = await serve((request, socket) => { if (request.endsWith('LOGOUT\n')) socket.end(`${request.startsWith('LIST UPS') ? 'UPS epyc ""\n' : 'ERR DATA-STALE\n'}OK Goodbye\n`); });
+    answer = 'UPS rack ""\n';
+    const second = await serve((request, socket) => { if (request.endsWith('LOGOUT\n')) socket.end(`${request.startsWith('LIST UPS') ? 'UPS rack ""\n' : 'ERR DATA-STALE\n'}OK Goodbye\n`); });
     await expect(collectNut(instance('nut', second))).rejects.toMatchObject({ key: 'widgets.ups.error.stale' });
   });
 });

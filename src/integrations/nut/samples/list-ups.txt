@@ -1,4 +1,4 @@
 BEGIN LIST UPS
-UPS epyc "Fictional EPYC ION"
+UPS rack "Fictional Rack UPS"
 UPS spare "Description unavailable"
 END LIST UPS
