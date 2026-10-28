@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { IntegrationInstance } from '@/lib/types';
-import { collectNut, nutUpsNames, nutVariables, toNut } from '../nut/collect';
+import { collectNut, nutUps, nutUpsNames, nutVariables, toNut } from '../nut/collect';
 import { apcFields, apcRecords, collectApcupsd, toApcupsd } from '../apcupsd/collect';
 import { tcpTarget } from './socket';
 
@@ -26,6 +26,7 @@ describe('NUT', () => {
     expect(summary).toMatchObject({ provider: 'nut', ups: 'epyc', devices: ['epyc', 'spare'], power: 'mains', charging: true, model: 'VP800ELCD', manufacturer: 'CPS',
       batteryPercent: 87, runtimeSeconds: 2520, loadPercent: 18, loadWatts: 86, nominalWatts: 480, inputVoltage: 231, outputVoltage: 230, batteryVoltage: 13.5 });
     expect(summary).not.toHaveProperty('lowBattery');
+    expect(nutUps(sample('nut/samples/list-ups.txt').split('\n'))).toEqual([{ name: 'epyc', description: 'Fictional EPYC ION' }, { name: 'spare', description: '' }]);
     expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OB LB RB OVER', 'ups.realpower': '120', 'ups.load': '40' })).toMatchObject({ power: 'battery', lowBattery: true, replaceBattery: true, overload: true, loadWatts: 120 });
     expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OFF' })).toMatchObject({ power: 'unknown', offline: true });
     expect(nutVariables(['VAR u device.model "Back \\"Pro\\" \\\\ 900"'])['device.model']).toBe('Back "Pro" \\ 900');
@@ -39,7 +40,7 @@ describe('NUT', () => {
       const ups = /LIST VAR (\S+)/.exec(request)?.[1];
       socket.end(`${!ups ? sample('nut/samples/list-ups.txt') : ups === 'epyc' ? sample('nut/samples/list-var.txt') : 'ERR UNKNOWN-UPS\n'}OK Goodbye\n`);
     });
-    expect(await collectNut(instance('nut', port))).toMatchObject({ ups: 'epyc', batteryPercent: 87 });
+    expect(await collectNut(instance('nut', port))).toMatchObject({ ups: 'epyc', description: 'Fictional EPYC ION', batteryPercent: 87 });
     expect(requests).toEqual(['LIST UPS\nLOGOUT\n', 'LIST VAR epyc\nLOGOUT\n']);
     await expect(collectNut(instance('nut', port), 'gone')).rejects.toMatchObject({ key: 'widgets.ups.error.unknownUps' });
     await expect(collectNut(instance('nut', port), 'bad name\nFSD')).rejects.toMatchObject({ key: 'widgets.error.invalidSettings' });

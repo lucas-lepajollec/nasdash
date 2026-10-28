@@ -79,7 +79,7 @@ function Ups({ data }: { data: UpsSummary }) {
     <div className="ndw-ups">
       <span className={`ndw-ups-state ${tone}`}>
         <Icon size={13} aria-hidden="true" />
-        <span className="ndw-ups-name" title={[data.manufacturer, data.model].filter(Boolean).join(' ') || undefined}>{data.model ?? data.ups ?? data.name}</span>
+        <span className="ndw-ups-name" title={[data.manufacturer, data.model].filter(Boolean).join(' ') || undefined}>{data.description ?? data.model ?? data.ups ?? data.name}</span>
         <span className="ndw-ups-word">{t(`widgets.ups.state.${state}`)}</span>
       </span>
       {battery !== undefined && (

@@ -243,6 +243,8 @@ export interface UpsSummary {
   ups?: string;
   /** Every UPS a NUT server offers, for the widget's choice. */
   devices?: string[];
+  /** The name the server's administrator gave the UPS (NUT `desc`), often clearer than what the unit reports. */
+  description?: string;
   model?: string;
   manufacturer?: string;
   /** Where the load is powered from now. */

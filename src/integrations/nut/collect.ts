@@ -24,10 +24,15 @@ export function nutError(code: string): ServiceError {
   return new ServiceError('widgets.error.http', 502);
 }
 
-/** `UPS name "description"` lines of LIST UPS. */
-export function nutUpsNames(lines: string[]): string[] {
-  return lines.map(line => /^UPS (\S+) /.exec(line)?.[1]).filter((name): name is string => !!name && NAME.test(name));
+/** `UPS name "description"` lines of LIST UPS, with their description (empty when none was set). */
+export function nutUps(lines: string[]): { name: string; description: string }[] {
+  return lines.flatMap(line => {
+    const match = /^UPS (\S+) "((?:[^"\\]|\\.)*)"$/.exec(line);
+    const description = match?.[2].replace(/\\(.)/g, '$1').trim() ?? '';
+    return match && NAME.test(match[1]) ? [{ name: match[1], description: description === 'Description unavailable' ? '' : description.slice(0, 80) }] : [];
+  });
 }
+export const nutUpsNames = (lines: string[]) => nutUps(lines).map(ups => ups.name);
 /** `VAR ups key "value"` lines of LIST VAR, unescaped. */
 export function nutVariables(lines: string[]): Record<string, string> {
   const vars: Record<string, string> = {};
@@ -42,7 +47,7 @@ const num = (value: string | undefined) => { const n = value === undefined || !v
 const text = (value: string | undefined) => value?.trim() ? value.trim().slice(0, 80) : undefined;
 const defined = <T extends object>(value: T) => Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as Partial<T>;
 
-export function toNut(instance: IntegrationInstance, ups: string, vars: Record<string, string>, devices: string[] = []): UpsSummary {
+export function toNut(instance: IntegrationInstance, ups: string, vars: Record<string, string>, devices: string[] = [], description?: string): UpsSummary {
   if (!vars['ups.status'] && vars['battery.charge'] === undefined) throw new ServiceError('widgets.error.parse');
   const flags = new Set((vars['ups.status'] ?? '').toUpperCase().split(/\s+/).filter(Boolean));
   const load = num(vars['ups.load']), nominal = num(vars['ups.realpower.nominal']);
@@ -50,6 +55,7 @@ export function toNut(instance: IntegrationInstance, ups: string, vars: Record<s
     provider: 'nut', name: instance.name, ups, ...(devices.length > 1 ? { devices } : {}),
     power: flags.has('OB') ? 'battery' : flags.has('OL') ? 'mains' : 'unknown',
     ...defined({
+      description: text(description),
       model: text(vars['device.model'] ?? vars['ups.model']), manufacturer: text(vars['device.mfr'] ?? vars['ups.mfr']),
       lowBattery: flags.has('LB') || undefined, charging: flags.has('CHRG') || undefined, replaceBattery: flags.has('RB') || undefined,
       overload: flags.has('OVER') || undefined, offline: flags.has('OFF') || undefined,
@@ -70,8 +76,8 @@ export async function nutDevices(instance: IntegrationInstance): Promise<string[
 /** `ups`: the widget's choice; without one, the server's first UPS. */
 export async function collectNut(instance: IntegrationInstance, ups?: string): Promise<UpsSummary> {
   if (ups !== undefined && !NAME.test(ups)) throw new ServiceError('widgets.error.invalidSettings', 400);
-  const devices = await nutDevices(instance);
-  const name = ups ?? devices[0];
-  if (!name) throw new ServiceError('widgets.ups.error.noUps', 404);
-  return toNut(instance, name, nutVariables(await conversation(instance, [`LIST VAR ${name}`])), devices);
+  const devices = nutUps(await conversation(instance, ['LIST UPS']));
+  const chosen = devices.find(device => device.name === (ups ?? devices[0]?.name));
+  if (!chosen) throw new ServiceError(ups ? 'widgets.ups.error.unknownUps' : 'widgets.ups.error.noUps', 404);
+  return toNut(instance, chosen.name, nutVariables(await conversation(instance, [`LIST VAR ${chosen.name}`])), devices.map(device => device.name), chosen.description);
 }
