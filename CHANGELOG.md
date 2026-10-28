@@ -6,13 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-10-28
+
+### Upgrading from 0.3.3
+
+- Back up the data directory, then pull and recreate NasDash with the same data mount. No data migration is required; accounts, integrations and saved pages are preserved.
+- The new VPN and UPS widgets need a connection under **Settings → Integrations** (VPN tunnel, UPS). Gluetun's control server must be published with an API key whose role reads the VPN status, public IP and port forwarding; a NUT or apcupsd server must allow NasDash's address. See the documentation pages *Gluetun (VPN)* and *UPS (NUT, apcupsd)*.
+- Recreating a Gluetun container leaves the containers that use its network without network until they are recreated too; the VPN widget now names them.
+- Rolling back to the recorded `0.3.3` image preserves the data format; saved VPN and UPS connections and widgets are then ignored.
+
 ### Added
 
-- UPS and VPN widgets stay readable at their narrowest: figures wrap instead of overlapping, the state goes under the name, a value keeps its unit and an address is never cut. An implausible UPS output voltage (some CyberPower units report a raw register through NUT) is left out.
-- UPS widget display options: a full or compact style, and each part can be hidden (battery bar, runtime, automatic shutdown, load, line voltage, power events); optional details show output and battery voltage, line frequency and temperature.
-- VPN widget: the containers that go through Gluetun (`network_mode: service:gluetun`), read from the saved Docker hosts for viewers who may read containers, and a warning naming those left without network after Gluetun was recreated, until they are recreated too.
-- UPS widget, for units read through Network UPS Tools (Synology, QNAP, TrueNAS, Unraid, Proxmox, Linux or a NUT container; thousands of USB models, including those without any display) or apcupsd: on mains or on battery, battery charge and runtime, load in watts, line voltage, time on battery, the last switch to battery, and plain warnings for a battery to replace, an overload or a lost UPS. Connect it under **Settings → Integrations → UPS** with the server's address; reading is read-only and needs no account. A NUT server with several UPS lets each widget choose one.
-- VPN widget for Gluetun: whether the tunnel holds, the city and country where traffic leaves it, the public address, the exit network and the forwarded port; administrators can restart the tunnel after a confirmation. Connect Gluetun's control server under **Settings → Integrations → VPN tunnel** with an API key, a username and password, or no authentication. NasDash only reads the VPN status, public IP and port forwarding routes, never Gluetun's settings route, which contains private keys. The address and the port can be hidden per widget; viewers need the VPN widget permission.
+- VPN widget for Gluetun: whether the tunnel holds, the city and country where traffic leaves it, the public address, the exit network and the forwarded port; administrators can restart the tunnel after a confirmation. Connect Gluetun's control server under **Settings → Integrations → VPN tunnel** with an API key, a username and password, or no authentication. NasDash only reads the VPN status, public IP and port forwarding routes, never Gluetun's settings route, which contains private keys. The address and the port can be hidden per widget; viewers need the VPN widget permission. It lists the containers that go through Gluetun (`network_mode: service:gluetun`), read from the saved Docker hosts for viewers who may read containers, and names those left without network after Gluetun was recreated, until they are recreated too. When Gluetun could not look up the exit address again after a restart, the tunnel shows as connected with the address said to be unknown.
+- UPS widget, for units read through Network UPS Tools (Synology, QNAP, TrueNAS, Unraid, Proxmox, Linux or a NUT container; thousands of USB models, including those without any display) or apcupsd: on mains or on battery, battery charge and runtime, load in watts, line voltage, the estimated time before the automatic shutdown (from the server's thresholds), time on battery, the last switch to battery, and plain warnings for a battery to replace, an overload or a lost UPS. Connect it under **Settings → Integrations → UPS** with the server's address; reading is read-only and needs no account. A NUT server with several UPS lets each widget choose one. It has a full or a compact style; each part can be hidden (battery bar, runtime, automatic shutdown, load, line voltage, power events); optional details show output and battery voltage, line frequency and temperature. Both widgets stay readable at their narrowest width. An implausible UPS output voltage (some CyberPower units report a raw register through NUT) is left out.
 
 ### Changed
 
@@ -23,13 +29,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Downloads: a paused download no longer drops out of the widget behind seeding torrents, so it can be resumed from the Downloads widget and the queue keeps showing its real state.
 - Downloads: after **Pause all**, the button offers **Resume all** for every torrent client. qBittorrent 5.2+ pauses its session (each torrent keeps its state); Transmission and Deluge stop each torrent; torrents already stopped are started again by **Resume all**. Per-item buttons are hidden while a whole SABnzbd or NZBGet queue is paused, since they could not resume it.
 - qBittorrent 5.2+ with a username and password connects again (new login answer and session cookie name).
-- Weather settings: a city search that finds nothing now says so (in the demo, which cities it offers) instead of showing an empty list.
-- Integrations: the connection test works for Gluetun, NUT and apcupsd (it answered "Unknown monitoring integration").
-- VPN widget: a running tunnel whose exit address Gluetun could not look up again (after a restart) shows as connected, with the address said to be unknown, instead of connecting indefinitely.
+- LibreHardwareMonitor: Intel integrated graphics now appear (usage of the busiest engine, such as video decoding while a media server transcodes, and temperature when reported). Glances: Intel graphics named after their chip are recognised as integrated graphics.
 - Info bubbles (ⓘ) no longer stay on screen after the pointer has left: a focus left by a click, coming back with the window, no longer reopens them, and scrolling under a still pointer or tapping elsewhere closes them. The keyboard still opens them; Escape closes them.
 - Music activity: in covers mode, played tracks are shown as covers like the albums, and the display choice is offered for every content.
 - Now playing: the search button sits in the card's corner and the first line of text keeps clear of it on narrow widgets and phones.
-- LibreHardwareMonitor: Intel integrated graphics now appear (usage of the busiest engine, such as video decoding while a media server transcodes, and temperature when reported). Glances: Intel graphics named after their chip are recognised as integrated graphics.
+- Weather settings: a city search that finds nothing now says so (in the demo, which cities it offers) instead of showing an empty list.
 
 ## [0.3.3] - 2026-10-27
 
@@ -535,7 +539,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.0...v0.3.1
