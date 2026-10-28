@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Proxmox: **Test and list the machines** no longer offers, and adds a second time, a node already added from the device editor (#142). A denied metrics request now also says where Proxmox grants the API token its own permission.
+
 ## [0.3.4] - 2026-10-28
 
 ### Upgrading from 0.3.3

@@ -18,6 +18,17 @@ export const isMonitoringType = (type: string | undefined) => !!type && selectab
 
 export const connectionFields = (manifest: DeviceIntegrationManifest): ConnectionField[] => manifest.fields.filter(field => field.scope !== 'machine');
 export const machineFields = (manifest: DeviceIntegrationManifest): ConnectionField[] => manifest.fields.filter(field => field.scope === 'machine');
+/**
+ * One machine of a server, whatever the order or the leftover defaults of its saved values: empty values, unknown
+ * fields and a field hidden by an empty one (a VM type without a VM id) do not count. A node saved from the device
+ * editor (`nodeName` and the default `vmType`) is the same machine as the node the server lists (`nodeName`).
+ */
+export function machineKey(fields: readonly ConnectionField[], values: Record<string, string | undefined>): string {
+  return JSON.stringify(Object.fromEntries(Object.entries(values).filter(([key, value]) => {
+    const field = fields.find(item => item.id === key);
+    return !!value && !!field && (!field.showWhen || !!values[field.showWhen]);
+  }).sort(([a], [b]) => a.localeCompare(b))));
+}
 
 /** Saved monitoring connections, in the order of the catalogue. */
 export function monitoringInstances(config: Pick<DashboardConfig, 'integrations'> | null | undefined): IntegrationInstance[] {

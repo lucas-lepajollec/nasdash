@@ -3,7 +3,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import type { Device } from '@/lib/types';
 import type { SourceTarget } from '@/integrations/types';
 import { getDeviceIntegration } from '@/integrations/registry';
-import { machineFields, monitoringInstances, SERVER_SOURCES } from '@/integrations/sources';
+import { machineFields, machineKey, monitoringInstances, SERVER_SOURCES } from '@/integrations/sources';
 import ConfirmModal from './ConfirmModal';
 import CustomSelect from '@/components/shared/CustomSelect';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
@@ -79,9 +79,7 @@ export default function DeviceFormModal({ device, onClose, onSave, onDelete, sho
   };
 
   // A machine is its values; a VM type only counts with a VM id.
-  const keyOf = (entries: Record<string, string | undefined>) => JSON.stringify(Object.fromEntries(
-    Object.entries(entries).filter(([key, value]) => value && fields.some(field => field.id === key) && (key !== 'vmType' || entries.vmid)).sort(([a], [b]) => a.localeCompare(b)),
-  ));
+  const keyOf = (entries: Record<string, string | undefined>) => machineKey(fields, entries);
   const targetKey = (target: SourceTarget) => keyOf(target.values);
   const currentKey = keyOf(values);
   const pickedTarget = targets?.find(target => targetKey(target) === currentKey);
