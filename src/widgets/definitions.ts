@@ -47,6 +47,7 @@ import rss from './rss/definition';
 import markets from './markets/definition';
 import dns from './dns/definition';
 import vpn from './vpn/definition';
+import ups from './ups/definition';
 import type { WidgetDefinition } from './define';
 
 /**
@@ -62,7 +63,7 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // Docker
   dockercontainers, dockeractions, dockerHosts, dockerSummary, dockerContainerList, dockerExplorer,
   // Network
-  networkgraph, tailscale, networkTools, networkTopology, dns, vpn,
+  networkgraph, tailscale, networkTools, networkTopology, dns, vpn, ups,
   // Content
   mediaNowPlaying, mediaRecent, mediaLibrary, mediaUpcoming, mediaQueue, mediaDownloads, mediaIndexers, mediaArr,
   // Music

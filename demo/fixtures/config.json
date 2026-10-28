@@ -367,6 +367,15 @@
         "url": "http://gluetun.demo.invalid:8000",
         "auth": "apikey"
       }
+    },
+    {
+      "id": "nut-demo",
+      "type": "nut",
+      "name": "NAS UPS",
+      "settings": {
+        "host": "nas.demo.invalid",
+        "port": "3493"
+      }
     }
   ],
   "devices": [

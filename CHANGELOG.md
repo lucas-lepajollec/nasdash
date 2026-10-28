@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- UPS widget, for units read through Network UPS Tools (Synology, QNAP, TrueNAS, Unraid, Proxmox, Linux or a NUT container; thousands of USB models, including those without any display) or apcupsd: on mains or on battery, battery charge and runtime, load in watts, line voltage, time on battery, the last switch to battery, and plain warnings for a battery to replace, an overload or a lost UPS. Connect it under **Settings → Integrations → UPS** with the server's address; reading is read-only and needs no account. A NUT server with several UPS lets each widget choose one.
 - VPN widget for Gluetun: whether the tunnel holds, the city and country where traffic leaves it, the public address, the exit network and the forwarded port; administrators can restart the tunnel after a confirmation. Connect Gluetun's control server under **Settings → Integrations → VPN tunnel** with an API key, a username and password, or no authentication. NasDash only reads the VPN status, public IP and port forwarding routes, never Gluetun's settings route, which contains private keys. The address and the port can be hidden per widget; viewers need the VPN widget permission.
 
 ### Changed

@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { monitoringInstances } from '@/integrations/sources';
 import { latestInstance } from '@/integrations/instances';
 import { useOpenSettings } from './useOpenSettings';
-import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
+import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 
 /**
  * What a widget shows before it can work, in the order to follow: for the
@@ -16,7 +16,7 @@ import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SE
  * Each step links straight to the right place; done steps are ticked.
  * Visitors who cannot change the settings are told an admin has to.
  */
-export type SetupKind = 'devices' | 'docker' | 'vpn' | 'tunnel' | 'dns' | 'photos' | 'bookmarks' | 'customapi' | 'media' | 'arr' | 'prowlarr' | 'downloads' | 'rss' | 'markets' | 'weather';
+export type SetupKind = 'devices' | 'docker' | 'vpn' | 'tunnel' | 'ups' | 'dns' | 'photos' | 'bookmarks' | 'customapi' | 'media' | 'arr' | 'prowlarr' | 'downloads' | 'rss' | 'markets' | 'weather';
 
 
 export function SetupGuide({ kind }: { kind: SetupKind }) {
@@ -36,6 +36,8 @@ export function SetupGuide({ kind }: { kind: SetupKind }) {
         ? [{ done: !!latestInstance(config ?? {}, ['tailscale', 'headscale']), label: t('setup.vpn.connect'), action: t('setup.vpn.connectAction'), open: () => openIntegrations('vpn') }]
         : kind === 'tunnel'
           ? [{ done: !!latestInstance(config ?? {}, [...VPN_TUNNEL_TYPES]), label: t('setup.tunnel.connect'), action: t('setup.tunnel.connectAction'), open: () => openIntegrations('tunnel') }]
+        : kind === 'ups'
+          ? [{ done: !!latestInstance(config ?? {}, [...UPS_TYPES]), label: t('setup.ups.connect'), action: t('setup.ups.connectAction'), open: () => openIntegrations('power') }]
         : kind === 'dns'
           ? [{ done: !!latestInstance(config ?? {}, [...DNS_TYPES]), label: t('setup.dns.connect'), action: t('setup.dns.connectAction'), open: () => openIntegrations('dns') }]
           : kind === 'photos'

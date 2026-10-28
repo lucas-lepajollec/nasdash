@@ -230,6 +230,48 @@ export interface PhotoStatsResponse {
 export const PHOTO_STATS_TYPES = ['immich', 'photoprism', 'piwigo', 'librephotos'] as const;
 export type PhotoStatsProvider = typeof PHOTO_STATS_TYPES[number];
 
+/* ------------------------------------------------------------ UPS */
+
+export const UPS_TYPES = ['nut', 'apcupsd'] as const;
+export type UpsProvider = typeof UPS_TYPES[number];
+/** GET /api/widgets/ups?widgetId=… (settings: `integrationId`, `ups`: the UPS name on a NUT server, default its first). */
+export interface UpsSummary {
+  provider: UpsProvider;
+  /** Connection name (`config.integrations[].name`). */
+  name: string;
+  /** The UPS read on that server (NUT name, apcupsd UPSNAME). */
+  ups?: string;
+  /** Every UPS a NUT server offers, for the widget's choice. */
+  devices?: string[];
+  model?: string;
+  manufacturer?: string;
+  /** Where the load is powered from now. */
+  power: 'mains' | 'battery' | 'unknown';
+  /** Status flags the UPS reports. */
+  lowBattery?: boolean;
+  charging?: boolean;
+  replaceBattery?: boolean;
+  overload?: boolean;
+  /** The server lost the UPS (cable, driver): the figures are not current. */
+  offline?: boolean;
+  batteryPercent?: number;
+  runtimeSeconds?: number;
+  loadPercent?: number;
+  loadWatts?: number;
+  /** Rated real power (W). */
+  nominalWatts?: number;
+  inputVoltage?: number;
+  outputVoltage?: number;
+  batteryVoltage?: number;
+  inputFrequency?: number;
+  temperatureC?: number;
+  /** apcupsd: the last switch to battery (its reason), how many since start, seconds on battery now. */
+  lastTransfer?: string;
+  transfers?: number;
+  onBatterySeconds?: number;
+  fetchedAt: number;
+}
+
 /* ------------------------------------------------------------ VPN tunnel */
 
 export const VPN_TUNNEL_TYPES = ['gluetun'] as const;

@@ -463,6 +463,17 @@
           }
         },
         {
+          "id": "ups-demo",
+          "type": "ups",
+          "x": 12,
+          "y": 739,
+          "w": 6,
+          "h": 160,
+          "settings": {
+            "integrationId": "nut-demo"
+          }
+        },
+        {
           "id": "api-speed-demo",
           "type": "customapi",
           "settings": {

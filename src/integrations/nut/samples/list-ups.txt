@@ -1,0 +1,4 @@
+BEGIN LIST UPS
+UPS epyc "Fictional EPYC ION"
+UPS spare "Description unavailable"
+END LIST UPS
