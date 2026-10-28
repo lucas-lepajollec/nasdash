@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-10-28
+
+### Upgrading from 0.3.4
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.3.4` image.
+- A Proxmox node that **Test and list the machines** added a second time can be removed from the device list; it is no longer offered again.
+
 ### Fixed
 
 - Proxmox: **Test and list the machines** no longer offers, and adds a second time, a node already added from the device editor (#142). A denied metrics request now also says where Proxmox grants the API token its own permission.
@@ -543,7 +550,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.1...v0.3.2
