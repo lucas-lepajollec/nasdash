@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
+- UPS and VPN widgets stay readable at their narrowest: figures wrap instead of overlapping, the state goes under the name, a value keeps its unit and an address is never cut. An implausible UPS output voltage (some CyberPower units report a raw register through NUT) is left out.
 - UPS widget display options: a full or compact style, and each part can be hidden (battery bar, runtime, automatic shutdown, load, line voltage, power events); optional details show output and battery voltage, line frequency and temperature.
 - VPN widget: the containers that go through Gluetun (`network_mode: service:gluetun`), read from the saved Docker hosts for viewers who may read containers, and a warning naming those left without network after Gluetun was recreated, until they are recreated too.
 - UPS widget, for units read through Network UPS Tools (Synology, QNAP, TrueNAS, Unraid, Proxmox, Linux or a NUT container; thousands of USB models, including those without any display) or apcupsd: on mains or on battery, battery charge and runtime, load in watts, line voltage, time on battery, the last switch to battery, and plain warnings for a battery to replace, an overload or a lost UPS. Connect it under **Settings → Integrations → UPS** with the server's address; reading is read-only and needs no account. A NUT server with several UPS lets each widget choose one.

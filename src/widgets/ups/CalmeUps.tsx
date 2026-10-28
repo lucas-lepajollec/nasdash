@@ -143,7 +143,8 @@ function Ups({ data, settings }: { data: UpsSummary; settings: WidgetSettings })
       {stateLine}
       {battery !== undefined && (
         <div className="ndw-ups-hero">
-          <div className="ndw-mx-figures">
+          {/* Narrow widgets: the runtime and the shutdown go under the charge instead of over it. */}
+          <div className="ndw-mx-figures is-wrap">
             <Figure size="xl" label={t('widgets.ups.battery')} value={number(battery)} unit="%" tone={state === 'low' ? 'bad' : undefined} />
             {show('runtime') && data.runtimeSeconds !== undefined && data.runtimeSeconds > 0 && <Figure size="medium" tone="muted" label={t('widgets.ups.runtime')} value={eta(data.runtimeSeconds * 1000)} />}
             {/* On battery it is a countdown; on mains, what an outage would leave before the machines stop. */}
@@ -155,10 +156,10 @@ function Ups({ data, settings }: { data: UpsSummary; settings: WidgetSettings })
       {((show('load') && data.loadPercent !== undefined) || (show('input') && data.inputVoltage !== undefined) || details.length > 0) && (
         <div className="ndw-mx-statrow">
           {!show('load') ? null : data.loadWatts !== undefined
-            ? <Stat value={`${number(data.loadWatts)} W`} label={data.loadPercent !== undefined ? t('widgets.ups.loadShare', { percent: number(data.loadPercent) }) : t('widgets.ups.load')} />
-            : data.loadPercent !== undefined && <Stat value={`${number(data.loadPercent)} %`} label={t('widgets.ups.load')} />}
-          {show('input') && data.inputVoltage !== undefined && <Stat value={`${number(data.inputVoltage)} V`} label={t('widgets.ups.input')} tone={data.power === 'battery' ? 'muted' : undefined} />}
-          {details.map(([key, value, unit, digits]) => <Stat key={key} value={`${number(value!, digits)} ${unit}`} label={t(`widgets.ups.detail.${key}`)} />)}
+            ? <Stat value={`${number(data.loadWatts)}\u00a0W`} label={data.loadPercent !== undefined ? t('widgets.ups.loadShare', { percent: number(data.loadPercent) }) : t('widgets.ups.load')} />
+            : data.loadPercent !== undefined && <Stat value={`${number(data.loadPercent)}\u00a0%`} label={t('widgets.ups.load')} />}
+          {show('input') && data.inputVoltage !== undefined && <Stat value={`${number(data.inputVoltage)}\u00a0V`} label={t('widgets.ups.input')} tone={data.power === 'battery' ? 'muted' : undefined} />}
+          {details.map(([key, value, unit, digits]) => <Stat key={key} value={`${number(value!, digits)}\u00a0${unit}`} label={t(`widgets.ups.detail.${key}`)} />)}
         </div>
       )}
       {notes.map(note => <span key={note.text} className={`ndw-media-sub ${note.bad ? 'ndw-ups-bad' : ''}`}>{note.text}</span>)}

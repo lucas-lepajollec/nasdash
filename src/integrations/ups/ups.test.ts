@@ -30,6 +30,9 @@ describe('NUT', () => {
     expect(nutUps(sample('nut/samples/list-ups.txt').split('\n'))).toEqual([{ name: 'epyc', description: 'Fictional EPYC ION' }, { name: 'spare', description: '' }]);
     expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OB LB RB OVER', 'ups.realpower': '120', 'ups.load': '40' })).toMatchObject({ power: 'battery', lowBattery: true, replaceBattery: true, overload: true, loadWatts: 120 });
     expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OFF' })).toMatchObject({ power: 'unknown', offline: true });
+    // A CyberPower register read as volts.
+    expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OL', 'output.voltage': '3.0', 'input.voltage': '233' })).not.toHaveProperty('outputVoltage');
+    expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OL', 'output.voltage': '120.0' }).outputVoltage).toBe(120);
     expect(nutVariables(['VAR u device.model "Back \\"Pro\\" \\\\ 900"'])['device.model']).toBe('Back "Pro" \\ 900');
     expect(() => toNut(instance('nut', 1), 'u', {})).toThrow();
   });

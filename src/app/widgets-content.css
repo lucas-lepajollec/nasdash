@@ -371,6 +371,15 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 /* An address is long: smaller than other figures, and never cut. */
 .ndw-vpn-ip { font-size: 0.68em; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .ndw-vpn-org { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A narrow widget: the state under the name, and the address on its own line, never cut inside. */
+.ndw-vpn { container-type: inline-size; }
+@container (max-width: 260px) {
+  .ndw-vpn-state { flex-wrap: wrap; row-gap: 2px; white-space: normal; }
+  .ndw-vpn-word { flex-basis: 100%; padding-left: 21px; }
+  .ndw-vpn .ndw-mx-statrow { grid-template-columns: 1fr; }
+  .ndw-vpn .ndw-mx-statrow > .ndw-mx-stat { border-left: none; }
+  .ndw-vpn-ip { overflow-wrap: normal; white-space: nowrap; }
+}
 .ndw-vpn-services { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-top: 12px; border-top: 1px solid var(--nd-card-border); }
 .ndw-vpn-service-list { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--nd-text); font-size: 0.74rem; }
 .ndw-vpn-service-list > .is-off { color: var(--nd-text-dimmed); text-decoration: line-through; }
@@ -387,6 +396,12 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-ups-hero { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .ndw-ups-bad { color: var(--nd-red); }
 .ndw-ups.is-compact { gap: 8px; }
+/* A narrow widget: the state word goes under the UPS's name instead of squeezing it. */
+.ndw-ups { container-type: inline-size; }
+@container (max-width: 260px) {
+  .ndw-ups-state { flex-wrap: wrap; row-gap: 2px; white-space: normal; }
+  .ndw-ups-word { flex-basis: 100%; padding-left: 21px; }
+}
 .ndw-ups-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
 .ndw-ups-big { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.6rem; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
 .ndw-ups-big > small { margin-left: 2px; color: var(--nd-text-muted); font-size: 0.5em; font-weight: 500; }

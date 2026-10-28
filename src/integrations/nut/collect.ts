@@ -45,6 +45,9 @@ export function nutVariables(lines: string[]): Record<string, string> {
 
 const num = (value: string | undefined) => { const n = value === undefined || !value.trim() ? NaN : Number(value); return Number.isFinite(n) ? n : undefined; };
 const text = (value: string | undefined) => value?.trim() ? value.trim().slice(0, 80) : undefined;
+/** Some units report a raw register as `output.voltage` (CyberPower via usbhid-ups: 3 V for 233 V): no UPS outputs
+ * less than 50 V AC, so such a value is left out rather than shown. */
+const outputVolts = (value: number | undefined) => value !== undefined && value >= 50 ? value : undefined;
 const defined = <T extends object>(value: T) => Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as Partial<T>;
 
 export function toNut(instance: IntegrationInstance, ups: string, vars: Record<string, string>, devices: string[] = [], description?: string): UpsSummary {
@@ -63,7 +66,7 @@ export function toNut(instance: IntegrationInstance, ups: string, vars: Record<s
       shutdownPercent: num(vars['battery.charge.low']), shutdownRuntimeSeconds: num(vars['battery.runtime.low']),
       // The UPS's own measure, else its share of the rated power.
       loadWatts: num(vars['ups.realpower']) ?? (load !== undefined && nominal ? Math.round(load * nominal / 100) : undefined),
-      nominalWatts: nominal, inputVoltage: num(vars['input.voltage']), outputVoltage: num(vars['output.voltage']),
+      nominalWatts: nominal, inputVoltage: num(vars['input.voltage']), outputVoltage: outputVolts(num(vars['output.voltage'])),
       batteryVoltage: num(vars['battery.voltage']), inputFrequency: num(vars['input.frequency']),
       temperatureC: num(vars['ups.temperature'] ?? vars['battery.temperature']),
     }),
