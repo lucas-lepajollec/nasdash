@@ -6,7 +6,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import type { SourceTarget } from '@/integrations/types';
 import { getDeviceIntegration } from '@/integrations/registry';
 import { MASKED_SECRET } from '@/integrations/instances';
-import { connectionFields, SERVER_SOURCES } from '@/integrations/sources';
+import { connectionFields, machineFields, machineKey, SERVER_SOURCES } from '@/integrations/sources';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeCheckRow, CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
@@ -72,8 +72,10 @@ export function MonitoringConnectionDialog({ type, instance, onClose, showSensit
 
   const settings = { ip: values.ip ?? '', port: values.port ?? '', username: values.username ?? '', allowSelfSigned: values.allowSelfSigned === 'true' ? 'true' : '' };
   const targetKey = (target: SourceTarget) => JSON.stringify(target.values);
-  // Machines of this server already added, to leave them out of the list.
-  const known = new Set((config?.devices ?? []).filter(device => instance && device.source?.integrationId === instance.id).map(device => JSON.stringify(device.source?.values ?? {})));
+  // Machines of this server already added, to leave them out of the list. Compared as machines, not as saved text:
+  // a node added from the device editor also keeps the default VM type, and must not be offered (and added) twice.
+  const machine = machineFields(manifest);
+  const known = new Set((config?.devices ?? []).filter(device => instance && device.source?.integrationId === instance.id).map(device => machineKey(machine, device.source?.values ?? {})));
 
   const runTest = async () => {
     setTesting(true);
@@ -109,7 +111,7 @@ export function MonitoringConnectionDialog({ type, instance, onClose, showSensit
     }
   };
 
-  const offered = (test?.targets ?? []).filter(target => !known.has(JSON.stringify(target.values)));
+  const offered = (test?.targets ?? []).filter(target => !known.has(machineKey(machine, target.values)));
 
   return (
     <DialogPortal onClose={onClose}>

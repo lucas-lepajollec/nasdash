@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DashboardConfig } from '@/lib/types';
-import { devicesUsing, migrateDeviceConnections, monitoringInstances, resolveDeviceConnection } from './sources';
+import { devicesUsing, machineFields, machineKey, migrateDeviceConnections, monitoringInstances, resolveDeviceConnection } from './sources';
+import { getDeviceIntegration } from './registry';
 
 const plain = (value: string) => value;
 const sealed = (value: string) => `enc(${value})`;
@@ -49,5 +50,20 @@ describe('monitoring sources', () => {
     expect(vm.connection).toMatchObject({ url: 'https://192.0.2.7:8006/api2/json/nodes/pve/qemu/101/status/current', token: 'root@pam!nd=uuid', vmid: '101' });
     // A removed connection leaves the device without a source.
     expect(resolveDeviceConnection({ id: 'x', name: 'X', host: '', icon: '', source: { integrationId: 'gone' } }, data)).toBeNull();
+  });
+});
+
+describe('machine identity', () => {
+  const fields = machineFields(getDeviceIntegration('proxmox')!);
+  it('treats a node saved from the device editor and the node the server lists as one machine', () => {
+    // The editor keeps the default VM type even without a VM id (#142: the node was offered and added a second time).
+    expect(machineKey(fields, { vmType: 'qemu', nodeName: 'pve' })).toBe(machineKey(fields, { nodeName: 'pve' }));
+    expect(machineKey(fields, { nodeName: 'pve', vmid: '', vmType: 'qemu' })).toBe(machineKey(fields, { nodeName: 'pve' }));
+  });
+  it('keeps guests and their type apart, whatever the order', () => {
+    expect(machineKey(fields, { vmType: 'lxc', vmid: '104', nodeName: 'pve' })).toBe(machineKey(fields, { nodeName: 'pve', vmid: '104', vmType: 'lxc' }));
+    expect(machineKey(fields, { nodeName: 'pve', vmid: '104', vmType: 'lxc' })).not.toBe(machineKey(fields, { nodeName: 'pve', vmid: '104', vmType: 'qemu' }));
+    expect(machineKey(fields, { nodeName: 'pve', vmid: '104' })).not.toBe(machineKey(fields, { nodeName: 'pve' }));
+    expect(machineKey(fields, { nodeName: 'pve', unknown: 'x' })).toBe(machineKey(fields, { nodeName: 'pve' }));
   });
 });
