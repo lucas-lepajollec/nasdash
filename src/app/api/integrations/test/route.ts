@@ -22,6 +22,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import { piholeRequest } from '@/integrations/pihole/collect';
 import { adguardHeaders } from '@/integrations/adguard/collect';
 import { technitiumRequest } from '@/integrations/technitium/collect';
+import { gluetunRequest } from '@/integrations/gluetun/collect';
 import { jellyfinHeaders, jellyfinPrefix } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { immichHeaders } from '@/integrations/immich/collect';
@@ -79,6 +80,8 @@ export async function POST(request: NextRequest) {
       else if (type === 'pihole') await piholeRequest(instance, '/api/stats/summary');
       else if (type === 'adguard') await serviceJson(instance, '/control/status', { headers: adguardHeaders(instance) });
       // The statistics the widget reads (Dashboard: view); a missing permission is told apart.
+      // The route the widget always reads; a key whose role leaves it out fails here.
+      else if (type === 'gluetun') await gluetunRequest(instance, '/v1/vpn/status');
       else if (type === 'technitium') await technitiumRequest(instance, '/api/dashboard/stats/get', { type: 'LastHour', utc: 'true' });
       // One random photo: authenticates the key with the permission the widget
       // needs (asset.read), so a key limited to reading still passes. A public

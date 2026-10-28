@@ -230,6 +230,34 @@ export interface PhotoStatsResponse {
 export const PHOTO_STATS_TYPES = ['immich', 'photoprism', 'piwigo', 'librephotos'] as const;
 export type PhotoStatsProvider = typeof PHOTO_STATS_TYPES[number];
 
+/* ------------------------------------------------------------ VPN tunnel */
+
+export const VPN_TUNNEL_TYPES = ['gluetun'] as const;
+export type VpnTunnelProvider = typeof VPN_TUNNEL_TYPES[number];
+/**
+ * GET /api/widgets/vpn?widgetId=… (settings: `integrationId`); POST { widgetId, action: 'restart' } —
+ * administrators, answers the new summary.
+ */
+export interface VpnTunnelSummary {
+  provider: VpnTunnelProvider;
+  /** Connection name (`config.integrations[].name`). */
+  name: string;
+  /** The tunnel's state as the gateway reports it; anything else is `unknown`. */
+  status: 'running' | 'starting' | 'stopping' | 'stopped' | 'crashed' | 'unknown';
+  /** Where traffic leaves the tunnel, while it runs. */
+  publicIp?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  /** The network that owns the exit address (usually the VPN provider's host). */
+  organization?: string;
+  /** Ports the VPN provider forwards to the gateway. */
+  forwardedPorts?: number[];
+  /** The viewer may restart the tunnel (administrators). */
+  canControl?: boolean;
+  fetchedAt: number;
+}
+
 /* ------------------------------------------------------------ Bookmarks */
 
 /**

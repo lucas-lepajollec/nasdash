@@ -16,6 +16,7 @@ import { customapiManifest } from './customapi/manifest';
 import { piholeManifest } from './pihole/manifest';
 import { adguardManifest } from './adguard/manifest';
 import { technitiumManifest } from './technitium/manifest';
+import { gluetunManifest } from './gluetun/manifest';
 import { immichManifest } from './immich/manifest';
 import { piwigoManifest } from './piwigo/manifest';
 import { librephotosManifest } from './librephotos/manifest';
@@ -73,7 +74,7 @@ export const DEVICE_INTEGRATION_IDS = DEVICE_INTEGRATIONS.map(integration => int
  * widgets, instead of a device to monitor. Adding one: `<id>/manifest.ts`
  * (fields), server code reading it, then list the manifest here.
  */
-export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tmdbManifest, tailscaleManifest, headscaleManifest, piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest, piwigoManifest, librephotosManifest, customapiManifest, jellyfinManifest, embyManifest, plexManifest, navidromeManifest, sonarrManifest, radarrManifest, lidarrManifest, prowlarrManifest, qbittorrentManifest, transmissionManifest, delugeManifest, sabnzbdManifest, nzbgetManifest];
+export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tmdbManifest, tailscaleManifest, headscaleManifest, gluetunManifest, piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest, piwigoManifest, librephotosManifest, customapiManifest, jellyfinManifest, embyManifest, plexManifest, navidromeManifest, sonarrManifest, radarrManifest, lidarrManifest, prowlarrManifest, qbittorrentManifest, transmissionManifest, delugeManifest, sabnzbdManifest, nzbgetManifest];
 
 export function getServiceIntegration(id: string | undefined): ServiceIntegrationManifest | undefined {
   return SERVICE_INTEGRATIONS.find(integration => integration.id === id);

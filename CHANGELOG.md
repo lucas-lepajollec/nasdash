@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- VPN widget for Gluetun: whether the tunnel holds, the city and country where traffic leaves it, the public address, the exit network and the forwarded port; administrators can restart the tunnel after a confirmation. Connect Gluetun's control server under **Settings → Integrations → VPN tunnel** with an API key, a username and password, or no authentication. NasDash only reads the VPN status, public IP and port forwarding routes, never Gluetun's settings route, which contains private keys. The address and the port can be hidden per widget; viewers need the VPN widget permission.
+
 ### Changed
 
 - The weather widget's rain falls as separate drops on two depths instead of a sliding stripe pattern, and follows how hard it rains: drizzle and light showers, steady rain, downpours and storms.

@@ -17,12 +17,12 @@ import { MONITORING_INFO, MonitoringConnectionDialog, testConnection, type TestR
 import { ServiceConnectionDialog } from '@/components/integrations/ServiceConnectionDialog';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { DockerHostFormModal, type DockerHostDraft } from '@/components/widgets/docker/DockerViews';
-import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES } from '@/lib/widgetData/contracts';
+import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
 /** Media servers, and TMDB (the movie catalogue Coming soon can read). */
 const MEDIA_SECTION_TYPES = [...MEDIA_SERVER_TYPES, 'navidrome', 'tmdb'] as const;
-export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom';
+export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'tunnel' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom';
 export const integrationSectionId = (section: IntegrationSection) => `settings-integrations-${section}`;
 
 type Status = TestResult | 'running' | undefined;
@@ -102,6 +102,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const hosts = config?.dockerHosts ?? [];
   const mesh = (config?.integrations ?? []).filter(instance => instance.type === 'tailscale' || instance.type === 'headscale');
   const dns = (config?.integrations ?? []).filter(instance => (DNS_TYPES as readonly string[]).includes(instance.type));
+  const tunnel = (config?.integrations ?? []).filter(instance => (VPN_TUNNEL_TYPES as readonly string[]).includes(instance.type));
   const photos = (config?.integrations ?? []).filter(instance => (PHOTO_STATS_TYPES as readonly string[]).includes(instance.type));
   const custom = (config?.integrations ?? []).filter(instance => (CUSTOM_API_TYPES as readonly string[]).includes(instance.type));
   const media = (config?.integrations ?? []).filter(instance => (MEDIA_SECTION_TYPES as readonly string[]).includes(instance.type));
@@ -125,7 +126,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   // Each saved connection is tried once when the page opens: its state shows at a glance.
   const tested = useRef(new Set<string>());
   useEffect(() => {
-    for (const instance of [...instances, ...dns, ...media, ...arr, ...downloads, ...photos, ...custom]) {
+    for (const instance of [...instances, ...tunnel, ...dns, ...media, ...arr, ...downloads, ...photos, ...custom]) {
       if (tested.current.has(instance.id)) continue;
       tested.current.add(instance.id);
       void runTest(instance);
@@ -247,9 +248,9 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
         )),
       )}
 
-      {(['dns', 'media', 'arr', 'downloads', 'photos', 'custom'] as const).map(id => {
-        const saved = { dns, media, arr, downloads, photos, custom }[id];
-        const kinds: readonly string[] = { dns: DNS_TYPES, media: MEDIA_SECTION_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_STATS_TYPES, custom: CUSTOM_API_TYPES }[id];
+      {(['tunnel', 'dns', 'media', 'arr', 'downloads', 'photos', 'custom'] as const).map(id => {
+        const saved = { tunnel, dns, media, arr, downloads, photos, custom }[id];
+        const kinds: readonly string[] = { tunnel: VPN_TUNNEL_TYPES, dns: DNS_TYPES, media: MEDIA_SECTION_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_STATS_TYPES, custom: CUSTOM_API_TYPES }[id];
         return (
           <React.Fragment key={id}>
             {section(

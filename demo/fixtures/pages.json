@@ -452,6 +452,17 @@
           "h": 260
         },
         {
+          "id": "vpn-demo",
+          "type": "vpn",
+          "x": 6,
+          "y": 739,
+          "w": 6,
+          "h": 160,
+          "settings": {
+            "integrationId": "gluetun-demo"
+          }
+        },
+        {
           "id": "api-speed-demo",
           "type": "customapi",
           "settings": {

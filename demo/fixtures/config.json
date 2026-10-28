@@ -358,6 +358,15 @@
         "url": "https://dns.demo.invalid",
         "allowSelfSigned": "false"
       }
+    },
+    {
+      "id": "gluetun-demo",
+      "type": "gluetun",
+      "name": "Gluetun",
+      "settings": {
+        "url": "http://gluetun.demo.invalid:8000",
+        "auth": "apikey"
+      }
     }
   ],
   "devices": [
