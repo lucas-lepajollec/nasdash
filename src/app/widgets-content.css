@@ -386,6 +386,11 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-ups-state.is-bad > svg, .ndw-ups-state.is-bad .ndw-ups-word { color: var(--nd-red); }
 .ndw-ups-hero { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .ndw-ups-bad { color: var(--nd-red); }
+.ndw-ups.is-compact { gap: 8px; }
+.ndw-ups-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
+.ndw-ups-big { color: var(--nd-text); font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.6rem; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+.ndw-ups-big > small { margin-left: 2px; color: var(--nd-text-muted); font-size: 0.5em; font-weight: 500; }
+.ndw-ups-big.is-bad { color: var(--nd-red); }
 
 /* ---------- DNS (Pi-hole, AdGuard Home) ---------- */
 .ndw-dns-box { min-width: 0; }

@@ -7,13 +7,19 @@ import { UPS_TYPES, type UpsSummary } from '@/lib/widgetData/contracts';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
-import { CalmeRow, CalmeSegmented } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { DataError, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { DataError, pick, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { useEta } from '@/components/widgets/media/arr';
 import { Figure, Stat, Track } from '@/components/widgets/media/visual';
+
+const STYLES = ['full', 'compact'] as const;
+/** Parts that can be hidden (shown by default), then the details (hidden by default). */
+const PARTS = ['bar', 'runtime', 'shutdown', 'load', 'input', 'events'] as const;
+type Part = typeof PARTS[number] | 'details';
+const shown = (settings: WidgetSettings, part: Part) => part === 'details' ? settings.details === true : settings[part] !== false;
 
 /**
  * A UPS read through NUT or apcupsd, for the many units that show nothing by
@@ -46,6 +52,21 @@ export default function CalmeUps({ widgetId, settings, editMode, isVisible, onUp
                   <CalmeSegmented label={t('widgets.ups.device')} value={typeof draft.ups === 'string' ? draft.ups : data!.devices![0]} options={data!.devices!.map(name => ({ value: name, label: name }))} onChange={name => change({ ups: name === data!.devices![0] ? null : name })} />
                 </CalmeRow>
               )}
+              <CalmeField label={t('widgets.display')}>
+                <CalmeSegmented label={t('widgets.display')} value={pick(draft.style, STYLES, 'full')} options={STYLES.map(value => ({ value, label: t(`widgets.ups.style.${value}`) }))} onChange={value => change({ style: value === 'full' ? null : value })} />
+              </CalmeField>
+              {pick(draft.style, STYLES, 'full') === 'full' && (
+                <>
+                  {PARTS.map(part => (
+                    <CalmeRow key={part} label={t(`widgets.ups.part.${part}`)}>
+                      <CalmeSwitch label={t(`widgets.ups.part.${part}`)} checked={draft[part] !== false} onChange={on => change({ [part]: on ? null : false })} />
+                    </CalmeRow>
+                  ))}
+                  <CalmeRow label={t('widgets.ups.part.details')} info={t('widgets.ups.part.detailsHint')}>
+                    <CalmeSwitch label={t('widgets.ups.part.details')} checked={draft.details === true} onChange={on => change({ details: on || null })} />
+                  </CalmeRow>
+                </>
+              )}
             </>
           )}
         </WidgetSettingsButton>
@@ -54,7 +75,7 @@ export default function CalmeUps({ widgetId, settings, editMode, isVisible, onUp
         {!connection ? <SetupGuide kind="ups" />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 52 }} /><span className="ndw-skeleton-row" style={{ height: 36 }} /></div>
-              : <Ups data={data} />}
+              : <Ups data={data} settings={settings} />}
       </div>
     </CalmeWidget>
   );
@@ -74,7 +95,7 @@ export function untilShutdown(data: UpsSummary): number | undefined {
   return limits.length ? Math.max(0, Math.round(Math.min(...limits))) : undefined;
 }
 
-function Ups({ data }: { data: UpsSummary }) {
+function Ups({ data, settings }: { data: UpsSummary; settings: WidgetSettings }) {
   const { t, locale } = useI18n();
   const eta = useEta();
   const number = (value: number, digits = 0) => new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(value);
@@ -83,37 +104,61 @@ function Ups({ data }: { data: UpsSummary }) {
   const tone = state === 'low' ? 'is-bad' : state === 'battery' || state === 'offline' ? 'is-warn' : '';
   const Icon = state === 'low' ? BatteryWarning : state === 'battery' ? Unplug : state === 'charging' ? BatteryCharging : PlugZap;
   const battery = data.batteryPercent;
-  const shutdown = untilShutdown(data);
+  const compact = pick(settings.style, STYLES, 'full') === 'compact';
+  const show = (part: Part) => !compact && shown(settings, part);
+  const shutdown = show('shutdown') || compact ? untilShutdown(data) : undefined;
   const notes = [
     data.replaceBattery ? { text: t('widgets.ups.replaceBattery'), bad: true } : undefined,
     data.overload ? { text: t('widgets.ups.overload'), bad: true } : undefined,
-    data.power === 'battery' && data.onBatterySeconds ? { text: t('widgets.ups.onBatteryFor', { duration: eta(data.onBatterySeconds * 1000) }) } : undefined,
-    data.lastTransfer ? { text: t('widgets.ups.lastTransfer', { reason: data.lastTransfer }) } : undefined,
+    show('events') && data.power === 'battery' && data.onBatterySeconds ? { text: t('widgets.ups.onBatteryFor', { duration: eta(data.onBatterySeconds * 1000) }) } : undefined,
+    show('events') && data.lastTransfer ? { text: t('widgets.ups.lastTransfer', { reason: data.lastTransfer }) } : undefined,
   ].filter((note): note is { text: string; bad?: boolean } => !!note);
+  const details = show('details') ? ([
+    ['output', data.outputVoltage, 'V', 0], ['batteryVoltage', data.batteryVoltage, 'V', 1], ['frequency', data.inputFrequency, 'Hz', 1], ['temperature', data.temperatureC, '°C', 0],
+  ] as const).filter(([, value]) => value !== undefined) : [];
+  const stateLine = (
+    <span className={`ndw-ups-state ${tone}`}>
+      <Icon size={13} aria-hidden="true" />
+      <span className="ndw-ups-name" title={[data.manufacturer, data.model].filter(Boolean).join(' ') || undefined}>{data.description ?? data.model ?? data.ups ?? data.name}</span>
+      <span className="ndw-ups-word">{t(`widgets.ups.state.${state}`)}</span>
+    </span>
+  );
+  // One line: the state, then the battery and what it leaves; the warnings stay.
+  if (compact) return (
+    <div className="ndw-ups is-compact">
+      {stateLine}
+      <span className="ndw-ups-line">
+        {battery !== undefined && <span className={`ndw-ups-big ${state === 'low' ? 'is-bad' : ''}`}>{number(battery)}<small>%</small></span>}
+        <span className="ndw-media-sub">{[
+          data.runtimeSeconds ? eta(data.runtimeSeconds * 1000) : '',
+          shutdown !== undefined ? `${t(data.power === 'battery' ? 'widgets.ups.shutdownIn' : 'widgets.ups.shutdownAfter')} ~${eta(Math.max(60, shutdown) * 1000)}` : '',
+          data.loadWatts !== undefined ? `${number(data.loadWatts)} W` : '',
+        ].filter(Boolean).join(' · ')}</span>
+      </span>
+      {notes.map(note => <span key={note.text} className={`ndw-media-sub ${note.bad ? 'ndw-ups-bad' : ''}`}>{note.text}</span>)}
+    </div>
+  );
   return (
     <div className="ndw-ups">
-      <span className={`ndw-ups-state ${tone}`}>
-        <Icon size={13} aria-hidden="true" />
-        <span className="ndw-ups-name" title={[data.manufacturer, data.model].filter(Boolean).join(' ') || undefined}>{data.description ?? data.model ?? data.ups ?? data.name}</span>
-        <span className="ndw-ups-word">{t(`widgets.ups.state.${state}`)}</span>
-      </span>
+      {stateLine}
       {battery !== undefined && (
         <div className="ndw-ups-hero">
           <div className="ndw-mx-figures">
             <Figure size="xl" label={t('widgets.ups.battery')} value={number(battery)} unit="%" tone={state === 'low' ? 'bad' : undefined} />
-            {data.runtimeSeconds !== undefined && data.runtimeSeconds > 0 && <Figure size="medium" tone="muted" label={t('widgets.ups.runtime')} value={eta(data.runtimeSeconds * 1000)} />}
+            {show('runtime') && data.runtimeSeconds !== undefined && data.runtimeSeconds > 0 && <Figure size="medium" tone="muted" label={t('widgets.ups.runtime')} value={eta(data.runtimeSeconds * 1000)} />}
             {/* On battery it is a countdown; on mains, what an outage would leave before the machines stop. */}
             {shutdown !== undefined && <Figure size="medium" tone={data.power === 'battery' ? undefined : 'muted'} label={t(data.power === 'battery' ? 'widgets.ups.shutdownIn' : 'widgets.ups.shutdownAfter')} value={shutdown < 60 ? t('widgets.arr.eta.soon') : `~${eta(shutdown * 1000)}`} />}
           </div>
-          <Track value={battery} tone={state === 'low' ? 'bad' : state === 'battery' ? 'warn' : undefined} />
+          {show('bar') && <Track value={battery} tone={state === 'low' ? 'bad' : state === 'battery' ? 'warn' : undefined} />}
         </div>
       )}
-      {(data.loadPercent !== undefined || data.inputVoltage !== undefined) && (
+      {((show('load') && data.loadPercent !== undefined) || (show('input') && data.inputVoltage !== undefined) || details.length > 0) && (
         <div className="ndw-mx-statrow">
-          {data.loadWatts !== undefined
+          {!show('load') ? null : data.loadWatts !== undefined
             ? <Stat value={`${number(data.loadWatts)} W`} label={data.loadPercent !== undefined ? t('widgets.ups.loadShare', { percent: number(data.loadPercent) }) : t('widgets.ups.load')} />
             : data.loadPercent !== undefined && <Stat value={`${number(data.loadPercent)} %`} label={t('widgets.ups.load')} />}
-          {data.inputVoltage !== undefined && <Stat value={`${number(data.inputVoltage)} V`} label={t('widgets.ups.input')} tone={data.power === 'battery' ? 'muted' : undefined} />}
+          {show('input') && data.inputVoltage !== undefined && <Stat value={`${number(data.inputVoltage)} V`} label={t('widgets.ups.input')} tone={data.power === 'battery' ? 'muted' : undefined} />}
+          {details.map(([key, value, unit, digits]) => <Stat key={key} value={`${number(value!, digits)} ${unit}`} label={t(`widgets.ups.detail.${key}`)} />)}
         </div>
       )}
       {notes.map(note => <span key={note.text} className={`ndw-media-sub ${note.bad ? 'ndw-ups-bad' : ''}`}>{note.text}</span>)}
