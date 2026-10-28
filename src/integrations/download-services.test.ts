@@ -62,6 +62,16 @@ describe('qBittorrent cookie login', () => {
     expect(bytes.mock.calls.filter(([, path]) => path.endsWith('/auth/login'))).toHaveLength(2);
     for (const [, path, options] of bytes.mock.calls) { expect(path).not.toMatch(/fictional-password|fictional-session|fictional-user/); if (!path.endsWith('/auth/login')) expect(options?.headers).toEqual({ Cookie: 'SID=fictional-session' }); }
   });
+  it('accepts the qBittorrent 5.2+ login (204, numbered base64 cookie) and still rejects a refusal', async () => {
+    bytes.mockImplementation(async (_instance, path) => path.endsWith('/auth/login') ? answer('', 204, { 'set-cookie': ['QBT_SID_8080=fict/ional+Sess; HttpOnly; SameSite=Lax; path=/'] }) : answer(qb.transfer));
+    await qbittorrentRequest(instance('qbittorrent'), '/api/v2/transfer/info');
+    expect(bytes.mock.calls.at(-1)?.[2]?.headers).toEqual({ Cookie: 'QBT_SID_8080=fict/ional+Sess' });
+    clearQbittorrentSessions();
+    bytes.mockReset().mockResolvedValue(answer('Fails.', 200, { 'set-cookie': ['QBT_SID_8080=x; path=/'] }));
+    await expect(qbittorrentRequest(instance('qbittorrent'), '/api/v2/transfer/info')).rejects.toMatchObject({ key: 'integrations.error.authentication' });
+    bytes.mockReset().mockResolvedValue(answer('', 204, { 'set-cookie': ['OTHER=x; path=/'] }));
+    await expect(qbittorrentRequest(instance('qbittorrent'), '/api/v2/transfer/info')).rejects.toMatchObject({ key: 'integrations.error.authentication' });
+  });
   it('relogs in once on 403 and propagates a second failure', async () => {
     let logins = 0, requests = 0;
     bytes.mockImplementation(async (_instance, path) => path.endsWith('/auth/login') ? answer('Ok.', 200, { 'set-cookie': [`SID=session-${++logins}; Path=/`] }) : answer({}, ++requests === 1 ? 403 : 200));
@@ -138,11 +148,11 @@ describe('qBittorrent API key', () => {
 });
 
 describe('optional download counters and completions', () => {
-  it('maps qBittorrent session counters, counts all seeds and sorts/caps completions before truncating busy items', () => {
+  it('maps qBittorrent session counters, counts all seeds, keeps every item and sorts/caps completions', () => {
     const torrents = Array.from({ length: 15 }, (_, n) => ({ ...qb.torrents[1], hash: `hash-${n}`, completion_on: 1000 + n }));
     const result = toQbittorrent(instance('qbittorrent'), qb.transfer, 0, torrents);
     expect(result).toMatchObject({ sessionDownloaded: 12000000000, sessionUploaded: 3400000000, seeding: 15 });
-    expect(result.items).toHaveLength(10); expect(result.completed).toHaveLength(5); expect(result.completed?.map(item => item.at)).toEqual([1014000, 1013000, 1012000, 1011000, 1010000]);
+    expect(result.items).toHaveLength(15); expect(result.completed).toHaveLength(5); expect(result.completed?.map(item => item.at)).toEqual([1014000, 1013000, 1012000, 1011000, 1010000]);
     expect(toQbittorrent(instance('qbittorrent'), { dl_info_speed: 0 }, 0, []).sessionDownloaded).toBeUndefined();
   });
   it('maps Transmission session-stats and doneDate', () => {
@@ -203,6 +213,18 @@ describe('native item ids and whole-client state', () => {
     expect(toNzbget(instance('nzbget'), nzb.status, [{ NZBID: 71, ID: 'private' }]).items[0].id).toBe('71');
     expect(toNzbget(instance('nzbget'), nzb.status, [], [{ ID: 'private', Status: 'SUCCESS/ALL' }]).completed).toEqual([]);
   });
+  it('keeps paused downloads ahead of seeding torrents, and reads a torrent client with every torrent stopped as paused', () => {
+    const seeds = Array.from({ length: 12 }, (_, n) => ({ ...qb.torrents[0], hash: `seed-${n}`, state: 'stalledUP', dlspeed: 0 }));
+    const stopped = { ...qb.torrents[0], hash: 'stopped', state: 'stoppedDL', dlspeed: 0 }, running = { ...qb.torrents[0], hash: 'running', state: 'downloading', dlspeed: 5 };
+    const result = toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [...seeds, stopped, running], { server_state: { session_state: false } });
+    expect(result.items.slice(0, 2).map(item => item.id)).toEqual(['running', 'stopped']);
+    expect(result.clientPaused).toBe(false);
+    const all = [...seeds, stopped].map(item => ({ ...item, state: 'stoppedUP' }));
+    expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, all, { server_state: { session_state: false } }).clientPaused).toBe(true);
+    expect(toTransmission(instance('transmission'), tr.stats, tr.session, { torrents: tr.torrents.torrents.map(item => ({ ...item, status: 0 })) }).clientPaused).toBe(true);
+    expect(toDeluge(instance('deluge'), { torrents: { ['c'.repeat(40)]: { state: 'Paused' } } }).clientPaused).toBe(true);
+    expect(toSabnzbd(instance('sabnzbd'), { queue: { slots: [{ nzo_id: 'SABnzbd_1', status: 'Paused' }] } }).clientPaused).toBeUndefined();
+  });
   it('only reports global pauses when explicitly available, including false', () => {
     for (const paused of [true, false]) {
       expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [], { server_state: { session_state: paused } }).clientPaused).toBe(paused);
@@ -210,7 +232,7 @@ describe('native item ids and whole-client state', () => {
       expect(toSabnzbd(instance('sabnzbd'), { queue: { ...sab.queue, paused } }).clientPaused).toBe(paused);
       expect(toNzbget(instance('nzbget'), { ...nzb.status, DownloadPaused: paused }, []).clientPaused).toBe(paused);
     }
-    expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [{ ...qb.torrents[0], state: 'pausedDL' }]).clientPaused).toBeUndefined();
+    expect(toQbittorrent(instance('qbittorrent'), qb.transfer, 0, [{ ...qb.torrents[0], state: 'pausedDL' }, { ...qb.torrents[0], hash: 'other', state: 'downloading' }]).clientPaused).toBeUndefined();
     expect(toSabnzbd(instance('sabnzbd'), { queue: { slots: [], status: 'Paused' } }).clientPaused).toBeUndefined();
     expect(toTransmission(instance('transmission'), tr.stats, tr.session, tr.torrents).clientPaused).toBeUndefined();
     expect(toDeluge(instance('deluge'), de.update).clientPaused).toBeUndefined();

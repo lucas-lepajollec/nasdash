@@ -469,7 +469,7 @@ describe('download control route', () => {
     response = await post({ ...request, action: 'resume' }); expect((await response.json()).items[0].state).toBe('downloading');
     response = await post({ ...request, itemId: undefined }); const paused = await response.json();
     expect(paused.downloadBps).toBe(0); expect(paused.items.every((item: { state: string }) => item.state === 'paused')).toBe(true);
-    if (['qbittorrent', 'sabnzbd', 'nzbget'].includes(type)) expect(paused.clientPaused).toBe(true); else expect(paused.clientPaused).toBeUndefined();
+    expect(paused.clientPaused).toBe(true);
     response = await post({ ...request, action: 'resume', itemId: undefined }); const resumed = await response.json();
     expect(resumed.items.every((item: { state: string }) => item.state !== 'paused')).toBe(true);
     expect(controlDownloadClient).not.toHaveBeenCalled(); expect(collectDownloadClient).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();

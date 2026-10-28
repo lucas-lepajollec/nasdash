@@ -11,8 +11,9 @@ async function login(instance: IntegrationInstance): Promise<Session> {
   const request = (async () => {
     const answer = await serviceBytes(instance, '/api/v2/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ username: instance.settings.username ?? '', password: instance.secrets?.password ?? '' }).toString() }, 65536);
     assertStatus(answer.status);
-    const cookie = responseCookie(answer.headers, 'SID');
-    if (answer.bytes.toString('utf8').trim() !== 'Ok.' || !cookie) throw new ServiceError('integrations.error.authentication');
+    // 4.x and 5.0/5.1 answer "Ok." with an `SID` cookie; 5.2+ answers 204 with `QBT_SID_<port>`. "Fails." is a refusal.
+    const cookie = responseCookie(answer.headers, /^(?:SID|QBT_SID_\d{1,5})$/), body = answer.bytes.toString('utf8').trim();
+    if (body !== 'Ok.' && !(answer.status === 204 && !body) || !cookie) throw new ServiceError('integrations.error.authentication');
     const result = { cookie, expires: Date.now() + 1800000 };
     sessions.delete(key); sessions.set(key, result);
     while (sessions.size > 200) sessions.delete(sessions.keys().next().value!);

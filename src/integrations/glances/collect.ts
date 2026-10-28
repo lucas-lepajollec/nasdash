@@ -11,7 +11,7 @@ interface GlancesResponse {
   cpu?: { total?: number };
   mem?: { percent?: number; total?: number };
   fs?: { mnt_point: string; size: number; percent: number; device_name?: string }[];
-  gpu?: { name?: string; proc?: number; temperature?: number }[];
+  gpu?: { gpu_id?: string; name?: string; proc?: number; temperature?: number }[];
   /** v4+: `bytes_*_rate_per_sec`; v2/v3: `rx` / `tx` bytes since the previous update. */
   network?: {
     interface_name?: string;
@@ -84,8 +84,11 @@ export function glancesMetrics(data: GlancesResponse): Metric[] {
   if (Array.isArray(data.gpu)) {
     for (const gpu of data.gpu) {
       if (!gpu || typeof gpu !== 'object' || typeof gpu.proc !== 'number' || !Number.isFinite(gpu.proc)) continue;
+      // Recent Glances may name Intel graphics after their chip (`AlderLake-S GT1`): say it is Intel, so it reads as
+      // integrated graphics. The key keeps the reported name, as before.
+      const intel = typeof gpu.gpu_id === 'string' && gpu.gpu_id.startsWith('intel') && !/intel/i.test(gpu.name ?? '');
       metrics.push({
-        key: `gpu.usage:${gpu.name ?? metrics.length}`, kind: 'gpu', name: gpu.name || 'GPU', percent: gpu.proc,
+        key: `gpu.usage:${gpu.name ?? metrics.length}`, kind: 'gpu', name: intel ? `Intel ${gpu.name || 'GPU'}` : gpu.name || 'GPU', percent: gpu.proc,
         ...(typeof gpu.temperature === 'number' && Number.isFinite(gpu.temperature) ? { temperatureC: gpu.temperature } : {}),
       });
     }

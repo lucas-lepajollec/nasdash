@@ -44,6 +44,14 @@ describe('Glances CPU temperatures', () => {
       { key: 'memory.usage', kind: 'memory', percent: 38 },
     ]);
   });
+
+  it('names Intel graphics reported under their chip name as Intel, keeping the key', () => {
+    expect(glancesMetrics({ gpu: [{ gpu_id: 'intel0', name: 'AlderLake-S GT1', proc: 20 }, { gpu_id: 'intel1', name: 'Intel GPU', proc: 3 }, { gpu_id: 'nvidia0', name: 'RTX 4070', proc: 50 }, { gpu_id: 'intel2', name: 'UHD 770' }] })).toEqual([
+      { key: 'gpu.usage:AlderLake-S GT1', kind: 'gpu', name: 'Intel AlderLake-S GT1', percent: 20 },
+      { key: 'gpu.usage:Intel GPU', kind: 'gpu', name: 'Intel GPU', percent: 3 },
+      { key: 'gpu.usage:RTX 4070', kind: 'gpu', name: 'RTX 4070', percent: 50 },
+    ]);
+  });
 });
 
 

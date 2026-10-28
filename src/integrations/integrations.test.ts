@@ -96,6 +96,24 @@ describe('metrics', () => {
       ['GeForce RTX 3080', 'GeForce RTX 3080', '10%', '45°C', ''],
     ]);
   });
+
+  it('reads Intel integrated graphics from LHM, which only reports Direct3D engine loads', () => {
+    const group = (Text: string, Children: { Text: string; Value: string }[]) => ({ Text, Children });
+    const tree = { Children: [{ Children: [
+      { Text: 'Intel Core i7-12700', Children: [group('Load', [{ Text: 'CPU Total', Value: '12,0 %' }]), group('Temperatures', [{ Text: 'CPU Package', Value: '48,0 °C' }])] },
+      { Text: 'Intel(R) UHD Graphics 770', Children: [
+        group('Load', [{ Text: 'D3D 3D', Value: '4,0 %' }, { Text: 'D3D Video Decode', Value: '37,5 %' }, { Text: 'D3D Copy', Value: '0,0 %' }]),
+        group('Temperatures', [{ Text: 'GPU Core', Value: '51,0 °C' }]),
+        group('Data', [{ Text: 'D3D Shared Memory Used', Value: '512,0 MB' }]),
+      ] },
+      { Text: 'NVIDIA GeForce RTX 4070', Children: [group('Load', [{ Text: 'GPU Core', Value: '61,0 %' }, { Text: 'D3D 3D', Value: '90,0 %' }])] },
+    ] }] };
+    expect(lhmMetrics(tree).filter(metric => metric.kind !== 'cpu')).toEqual([
+      { key: 'gpu.usage:Intel(R) UHD Graphics 770', kind: 'gpu', name: 'Intel(R) UHD Graphics 770', percent: 37.5, temperatureC: 51 },
+      { key: 'gpu.usage:GeForce RTX 4070', kind: 'gpu', name: 'GeForce RTX 4070', percent: 61 },
+    ]);
+    expect(lhmMetrics(tree).filter(metric => metric.kind === 'cpu')).toHaveLength(1);
+  });
 });
 
 describe('polling', () => {

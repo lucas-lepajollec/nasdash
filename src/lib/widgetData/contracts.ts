@@ -619,7 +619,7 @@ export interface DownloadClientStatus {
   uploadLimitBps?: number;
   /** Alternative (slow) speed mode on (qBittorrent, Transmission). */
   altSpeed?: boolean;
-  /** The busiest downloads, newest activity first (≤ 10). */
+  /** Downloads, running first, then paused or waiting, then seeding; widget responses send at most 10. */
   items: { id: string; name: string; progress: number; state: 'downloading' | 'seeding' | 'paused' | 'queued' | 'checking' | 'error' | 'completed'; downloadBps?: number; etaMs?: number; sizeBytes?: number }[];
   /** Free space where the client saves, when it reports it. */
   freeBytes?: number;
@@ -632,7 +632,7 @@ export interface DownloadClientStatus {
   completed?: { id: string; name: string; sizeBytes?: number; at?: number }[];
   /** The viewer may pause and resume here (administrators, on a client that supports it). */
   canControl?: boolean;
-  /** The whole client is paused (qBittorrent, SABnzbd, NZBGet). */
+  /** The whole client is paused: its own pause (qBittorrent session, SABnzbd, NZBGet), or every torrent stopped. */
   clientPaused?: boolean;
 }
 /**

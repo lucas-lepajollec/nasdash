@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- The weather widget's rain falls as separate drops on two depths instead of a sliding stripe pattern, and follows how hard it rains: drizzle and light showers, steady rain, downpours and storms.
+
+### Fixed
+
+- Downloads: a paused download no longer drops out of the widget behind seeding torrents, so it can be resumed from the Downloads widget and the queue keeps showing its real state.
+- Downloads: after **Pause all**, the button offers **Resume all** for every torrent client. qBittorrent 5.2+ pauses its session (each torrent keeps its state); Transmission and Deluge stop each torrent; torrents already stopped are started again by **Resume all**. Per-item buttons are hidden while a whole SABnzbd or NZBGet queue is paused, since they could not resume it.
+- qBittorrent 5.2+ with a username and password connects again (new login answer and session cookie name).
+- LibreHardwareMonitor: Intel integrated graphics now appear (usage of the busiest engine, such as video decoding while a media server transcodes, and temperature when reported). Glances: Intel graphics named after their chip are recognised as integrated graphics.
+
 ## [0.3.3] - 2026-10-27
 
 ### Upgrading from 0.3.2
