@@ -22,6 +22,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Downloads: after **Pause all**, the button offers **Resume all** for every torrent client. qBittorrent 5.2+ pauses its session (each torrent keeps its state); Transmission and Deluge stop each torrent; torrents already stopped are started again by **Resume all**. Per-item buttons are hidden while a whole SABnzbd or NZBGet queue is paused, since they could not resume it.
 - qBittorrent 5.2+ with a username and password connects again (new login answer and session cookie name).
 - Weather settings: a city search that finds nothing now says so (in the demo, which cities it offers) instead of showing an empty list.
+- Integrations: the connection test works for Gluetun, NUT and apcupsd (it answered "Unknown monitoring integration").
+- VPN widget: a running tunnel whose exit address Gluetun could not look up again (after a restart) shows as connected, with the address said to be unknown, instead of connecting indefinitely.
 - Info bubbles (ⓘ) no longer stay on screen after the pointer has left: a focus left by a click, coming back with the window, no longer reopens them, and scrolling under a still pointer or tapping elsewhere closes them. The keyboard still opens them; Escape closes them.
 - Music activity: in covers mode, played tracks are shown as covers like the albums, and the display choice is offered for every content.
 - Now playing: the search button sits in the card's corner and the first line of text keeps clear of it on narrow widgets and phones.

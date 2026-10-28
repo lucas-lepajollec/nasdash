@@ -87,8 +87,9 @@ export default function CalmeVpn({ widgetId, settings, editMode, isVisible, onUp
 
 function Tunnel({ data, address, port, services, action }: { data: VpnTunnelSummary; address: boolean; port: boolean; services: boolean; action?: React.ReactNode }) {
   const { t } = useI18n();
-  // Running but with no exit address yet: Gluetun is still checking the connection.
-  const state = data.status === 'running' && !data.publicIp ? 'connecting' : data.status === 'running' ? 'connected' : data.status;
+  // Gluetun forgets the exit address when the tunnel stops and asks for it once when it is up again: that lookup can
+  // fail (the IP service limits requests) while the tunnel works. Running is connected; the address is said apart.
+  const state = data.status === 'running' ? 'connected' : data.status;
   const down = state === 'stopped' || state === 'crashed' || state === 'unknown';
   const place = data.city ?? data.region ?? data.country;
   const ports = port ? data.forwardedPorts ?? [] : [];
@@ -103,7 +104,8 @@ function Tunnel({ data, address, port, services, action }: { data: VpnTunnelSumm
         </span>
         {action}
       </div>
-      {state === 'connected' && (
+      {state === 'connected' && !data.publicIp && <span className="ndw-media-sub">{t('widgets.vpn.noAddress')}</span>}
+      {state === 'connected' && data.publicIp && (
         <>
           {place && (
             <span className="ndw-vpn-place">
