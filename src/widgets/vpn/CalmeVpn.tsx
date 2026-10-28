@@ -65,6 +65,9 @@ export default function CalmeVpn({ widgetId, settings, editMode, isVisible, onUp
               <CalmeRow label={t('widgets.vpn.showPort')}>
                 <CalmeSwitch label={t('widgets.vpn.showPort')} checked={draft.port !== false} onChange={on => change({ port: on ? null : false })} />
               </CalmeRow>
+              <CalmeRow label={t('widgets.vpn.showServices')} info={t('widgets.vpn.showServicesHint')}>
+                <CalmeSwitch label={t('widgets.vpn.showServices')} checked={draft.services !== false} onChange={on => change({ services: on ? null : false })} />
+              </CalmeRow>
             </>
           )}
         </WidgetSettingsButton>
@@ -73,7 +76,7 @@ export default function CalmeVpn({ widgetId, settings, editMode, isVisible, onUp
         {!connection ? <SetupGuide kind="tunnel" />
           : error && !data ? <DataError error={error} onRetry={() => void mutate()} />
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 40 }} /><span className="ndw-skeleton-row" style={{ height: 36 }} /></div>
-              : <Tunnel data={data} address={settings.address !== false} port={settings.port !== false} action={action} />}
+              : <Tunnel data={data} address={settings.address !== false} port={settings.port !== false} services={settings.services !== false} action={action} />}
         {failed && <p className="ndw-note ndw-down" role="alert">{t(failed)}</p>}
       </div>
       <ConfirmModal isOpen={confirm} onClose={() => setConfirm(false)} onConfirm={() => { setConfirm(false); void restart(); }}
@@ -82,7 +85,7 @@ export default function CalmeVpn({ widgetId, settings, editMode, isVisible, onUp
   );
 }
 
-function Tunnel({ data, address, port, action }: { data: VpnTunnelSummary; address: boolean; port: boolean; action?: React.ReactNode }) {
+function Tunnel({ data, address, port, services, action }: { data: VpnTunnelSummary; address: boolean; port: boolean; services: boolean; action?: React.ReactNode }) {
   const { t } = useI18n();
   // Running but with no exit address yet: Gluetun is still checking the connection.
   const state = data.status === 'running' && !data.publicIp ? 'connecting' : data.status === 'running' ? 'connected' : data.status;
@@ -117,6 +120,16 @@ function Tunnel({ data, address, port, action }: { data: VpnTunnelSummary; addre
           {data.organization && <span className="ndw-media-sub ndw-vpn-org" title={data.organization}>{data.organization}</span>}
         </>
       )}
+      {services && (data.services?.length ?? 0) > 0 && (
+        <div className="ndw-vpn-services">
+          <span className="ndw-mx-label">{t('widgets.vpn.services')}</span>
+          <span className="ndw-vpn-service-list">
+            {data.services!.map(service => <span key={service.name} className={service.running ? '' : 'is-off'} title={service.running ? undefined : t('widgets.vpn.serviceStopped')}>{service.name}</span>)}
+          </span>
+        </div>
+      )}
+      {/* Said even when the list is hidden: these services have no network at all. */}
+      {(data.detached?.length ?? 0) > 0 && <p className="ndw-note ndw-vpn-detached" role="alert">{t('widgets.vpn.detached', { names: data.detached!.join(', ') })}</p>}
     </div>
   );
 }

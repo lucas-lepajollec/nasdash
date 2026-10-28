@@ -215,7 +215,7 @@ export function demoVpn(instance: IntegrationInstance, restart = false): VpnTunn
   const starting = now - (demoRestarts.get(key) ?? 0) < 4000;
   return { provider: 'gluetun', name: instance.name, status: starting ? 'starting' : 'running',
     ...(starting ? {} : { publicIp: '198.51.100.24', country: 'Netherlands', region: 'North Holland', city: 'Amsterdam', organization: 'Fictional Transit B.V.' }),
-    forwardedPorts: [51413], fetchedAt: now };
+    forwardedPorts: [51413], services: [{ name: 'flaresolverr', running: true }, { name: 'prowlarr', running: true }, { name: 'qbittorrent', running: true }], fetchedAt: now };
 }
 /** Public demo: a fictional UPS on mains; its battery and load drift slowly so the widget looks alive. */
 export function demoUps(instance: IntegrationInstance): UpsSummary {

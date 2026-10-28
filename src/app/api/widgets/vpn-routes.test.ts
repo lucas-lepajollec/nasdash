@@ -1,15 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import type { IntegrationInstance } from '@/lib/types';
-const state = vi.hoisted(() => ({ demo: false, admin: true, settings: { integrationId: 'gluetun-one' } as Record<string, unknown>, instances: [] as IntegrationInstance[], visible: true }));
-vi.mock('@/lib/config', () => ({ readConfig: () => ({ integrations: state.instances }) }));
+const state = vi.hoisted(() => ({ hosts: [] as unknown[], demo: false, admin: true, settings: { integrationId: 'gluetun-one' } as Record<string, unknown>, instances: [] as IntegrationInstance[], visible: true }));
+vi.mock('@/lib/config', () => ({ readConfig: () => ({ integrations: state.instances, dockerHosts: state.hosts }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/auth', () => ({ checkAdmin: () => state.admin ? null : NextResponse.json({ error: 'widgets.error.unauthorized' }, { status: 401 }), isAdmin: () => state.admin }));
 vi.mock('@/lib/widgetData/resolve', () => ({ resolveWidgetSettings: vi.fn((_req, _id, _type, draft) => state.visible ? { ok: true, settings: state.admin && draft ? draft : state.settings, principal: { role: state.admin ? 'admin' : 'viewer' } } : { ok: false, status: 404, error: 'widgets.error.notFound' }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/gluetun/collect', () => ({ collectGluetun: vi.fn(), restartGluetun: vi.fn() }));
+vi.mock('@/integrations/gluetun/dependents', async original => ({ ...await original<typeof import('@/integrations/gluetun/dependents')>(), tunnelContainers: vi.fn() }));
 import { GET, POST } from './vpn/route';
 import { collectGluetun, restartGluetun } from '@/integrations/gluetun/collect';
+import { tunnelContainers } from '@/integrations/gluetun/dependents';
 import { serviceBytes, serviceJson, ServiceError } from '@/lib/widgetData/services';
 
 const instance = (id: string, type: string): IntegrationInstance => ({ id, type, name: `Fictional ${id}`, settings: { url: 'http://fixture.example.com:8000' }, secrets: { apiKey: 'fake-key' } });
@@ -19,7 +21,7 @@ const summary = (status: 'running' | 'stopped' = 'running') => ({ provider: 'glu
 let widget = 0;
 beforeEach(() => {
   vi.resetAllMocks();
-  state.demo = false; state.admin = true; state.visible = true;
+  state.demo = false; state.admin = true; state.visible = true; state.hosts = [];
   state.instances = [instance('gluetun-one', 'gluetun'), instance('gluetun-two', 'gluetun'), instance('dns-one', 'pihole')];
   // Each test reads a fresh connection identity, out of the route's cache.
   state.instances[0].settings.url = `http://fixture-${++widget}.example.com:8000`;
@@ -57,6 +59,19 @@ describe('VPN tunnel route', () => {
     expect(restartGluetun).toHaveBeenCalledWith(state.instances[0]);
     expect(await response.json()).toMatchObject({ status: 'stopped', canControl: true });
     expect(collectGluetun).toHaveBeenCalledTimes(2);
+  });
+  it('adds the containers behind the tunnel for administrators, and never fails the widget over Docker', async () => {
+    vi.mocked(collectGluetun).mockResolvedValue(summary());
+    state.hosts = [{ id: 'h', name: 'NAS', icon: '', type: 'socket', url: '', socketPath: '/var/run/docker.sock' }];
+    vi.mocked(tunnelContainers).mockResolvedValue([
+      { Id: 'g1', Names: ['/gluetun'], Image: 'qmcgaw/gluetun', State: 'running' },
+      { Id: 'q1', Names: ['/qbittorrent'], State: 'running', HostConfig: { NetworkMode: 'container:g1' } },
+    ]);
+    expect(await (await GET(get())).json()).toMatchObject({ status: 'running', services: [{ name: 'qbittorrent', running: true }], detached: [] });
+    state.instances[0].settings.url = `http://fixture-${++widget}.example.com:8000`;
+    vi.mocked(tunnelContainers).mockRejectedValue(new Error('docker down'));
+    const failed = await (await GET(get())).json();
+    expect(failed.status).toBe('running'); expect(failed).not.toHaveProperty('services');
   });
   it('returns provider errors with a private cache header', async () => {
     vi.mocked(collectGluetun).mockRejectedValue(new ServiceError('integrations.error.authentication', 502, { status: 401 }));

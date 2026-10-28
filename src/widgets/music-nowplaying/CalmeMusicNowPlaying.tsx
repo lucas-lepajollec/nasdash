@@ -223,7 +223,7 @@ function MusicSearch({ widgetId }: { widgetId: string }) {
   };
   const empty = result && !result.tracks.length && !result.albums.length && !result.playlists.length;
   if (!open) return (
-    <button type="button" className="ndw-music-search-toggle" onClick={() => setOpen(true)} aria-label={t('widgets.music.search')} title={t('widgets.music.search')}><Search size={18} /></button>
+    <button type="button" className="ndw-music-search-toggle" onClick={() => setOpen(true)} aria-label={t('widgets.music.search')} title={t('widgets.music.search')}><Search size={15} /></button>
   );
   return (
     <div className="ndw-mx-section">

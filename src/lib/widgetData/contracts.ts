@@ -306,6 +306,10 @@ export interface VpnTunnelSummary {
   forwardedPorts?: number[];
   /** The viewer may restart the tunnel (administrators). */
   canControl?: boolean;
+  /** Containers whose traffic goes through this gateway (from the saved Docker hosts; viewers with Docker access). */
+  services?: { name: string; running: boolean }[];
+  /** Containers tied to a previous gateway container, without network until they are recreated. */
+  detached?: string[];
   fetchedAt: number;
 }
 

@@ -371,6 +371,10 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 /* An address is long: smaller than other figures, and never cut. */
 .ndw-vpn-ip { font-size: 0.68em; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 .ndw-vpn-org { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-vpn-services { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-top: 12px; border-top: 1px solid var(--nd-card-border); }
+.ndw-vpn-service-list { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--nd-text); font-size: 0.74rem; }
+.ndw-vpn-service-list > .is-off { color: var(--nd-text-dimmed); text-decoration: line-through; }
+.ndw-vpn-detached { margin: 0; color: var(--nd-yellow); }
 
 /* ---------- UPS (NUT, apcupsd): a state line, the battery, then load and line ---------- */
 .ndw-ups { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
@@ -1168,7 +1172,9 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-music-play svg { pointer-events: none; }
 .ndw-music-cover-play .ndw-music-play.is-large { width: 38px; height: 38px; }
 .ndw-media-box:has(> .ndw-mx-stack > .ndw-music-search-toggle) { position: relative; }
-.ndw-music-search-toggle { position: absolute; top: 14px; right: 14px; z-index: 3; display: inline-flex; padding: 6px; border: none; color: rgb(255 255 255 / 0.7); background: none; cursor: pointer; transition: color 0.15s ease; }
+/* In the corner, and the first line of text keeps clear of it (a narrow card wrapped its eyebrow under it). */
+.ndw-music-search-toggle { position: absolute; top: 4px; right: 4px; z-index: 3; display: inline-flex; padding: 6px; border: none; color: rgb(255 255 255 / 0.7); background: none; cursor: pointer; transition: color 0.15s ease; }
+.ndw-mx-stack:has(> .ndw-music-search-toggle) > .ndw-music-now:first-of-type .ndw-mx-eyebrow { padding-right: 22px; }
 .ndw-music-search-toggle:hover { color: #fff; }
 .ndw-mx-stack:not(:has(> .ndw-music-now.is-large:nth-child(2))) > .ndw-music-search-toggle { color: var(--nd-text-muted); }
 .ndw-music-searchbar { max-width: none !important; width: 100%; }
