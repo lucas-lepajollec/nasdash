@@ -221,7 +221,7 @@ export function demoVpn(instance: IntegrationInstance, restart = false): VpnTunn
 export function demoUps(instance: IntegrationInstance): UpsSummary {
   const minute = Math.floor(Date.now() / 60_000), load = 21 + (minute % 7);
   return { provider: instance.type === 'apcupsd' ? 'apcupsd' : 'nut', name: instance.name, ups: 'ups', ...(instance.type === 'nut' ? { devices: ['ups'] } : {}),
-    model: 'Back-UPS 900', manufacturer: 'Fictional Power', power: 'mains', charging: true, batteryPercent: 96 + (minute % 4), runtimeSeconds: 2940 - load * 30,
+    model: 'Back-UPS 900', manufacturer: 'Fictional Power', power: 'mains', charging: true, batteryPercent: 96 + (minute % 4), runtimeSeconds: 2940 - load * 30, shutdownPercent: 20, shutdownRuntimeSeconds: 300,
     loadPercent: load, loadWatts: Math.round(load * 4.8), nominalWatts: 480, inputVoltage: 230 + (minute % 3), outputVoltage: 230, batteryVoltage: 13.6, inputFrequency: 50,
     ...(instance.type === 'apcupsd' ? { lastTransfer: 'Low line voltage', transfers: 2 } : {}), fetchedAt: Date.now() };
 }

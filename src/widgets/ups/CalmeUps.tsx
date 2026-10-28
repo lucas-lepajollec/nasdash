@@ -60,6 +60,20 @@ export default function CalmeUps({ widgetId, settings, editMode, isVisible, onUp
   );
 }
 
+/**
+ * Seconds before the monitoring software shuts the machines down, at the present load: the runtime left above its
+ * runtime threshold, or the share of it above the charge threshold (a linear discharge), whichever comes first.
+ */
+export function untilShutdown(data: UpsSummary): number | undefined {
+  const { runtimeSeconds: runtime, batteryPercent: charge, shutdownRuntimeSeconds: lowRuntime, shutdownPercent: lowCharge } = data;
+  if (runtime === undefined || runtime <= 0) return undefined;
+  const limits = [
+    lowRuntime !== undefined && lowRuntime > 0 ? runtime - lowRuntime : undefined,
+    lowCharge !== undefined && lowCharge > 0 && charge !== undefined && charge > 0 ? runtime * (charge - lowCharge) / charge : undefined,
+  ].filter((value): value is number => value !== undefined);
+  return limits.length ? Math.max(0, Math.round(Math.min(...limits))) : undefined;
+}
+
 function Ups({ data }: { data: UpsSummary }) {
   const { t, locale } = useI18n();
   const eta = useEta();
@@ -69,6 +83,7 @@ function Ups({ data }: { data: UpsSummary }) {
   const tone = state === 'low' ? 'is-bad' : state === 'battery' || state === 'offline' ? 'is-warn' : '';
   const Icon = state === 'low' ? BatteryWarning : state === 'battery' ? Unplug : state === 'charging' ? BatteryCharging : PlugZap;
   const battery = data.batteryPercent;
+  const shutdown = untilShutdown(data);
   const notes = [
     data.replaceBattery ? { text: t('widgets.ups.replaceBattery'), bad: true } : undefined,
     data.overload ? { text: t('widgets.ups.overload'), bad: true } : undefined,
@@ -87,6 +102,8 @@ function Ups({ data }: { data: UpsSummary }) {
           <div className="ndw-mx-figures">
             <Figure size="xl" label={t('widgets.ups.battery')} value={number(battery)} unit="%" tone={state === 'low' ? 'bad' : undefined} />
             {data.runtimeSeconds !== undefined && data.runtimeSeconds > 0 && <Figure size="medium" tone="muted" label={t('widgets.ups.runtime')} value={eta(data.runtimeSeconds * 1000)} />}
+            {/* On battery it is a countdown; on mains, what an outage would leave before the machines stop. */}
+            {shutdown !== undefined && <Figure size="medium" tone={data.power === 'battery' ? undefined : 'muted'} label={t(data.power === 'battery' ? 'widgets.ups.shutdownIn' : 'widgets.ups.shutdownAfter')} value={shutdown < 60 ? t('widgets.arr.eta.soon') : `~${eta(shutdown * 1000)}`} />}
           </div>
           <Track value={battery} tone={state === 'low' ? 'bad' : state === 'battery' ? 'warn' : undefined} />
         </div>

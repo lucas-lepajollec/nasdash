@@ -6,6 +6,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import { collectNut, nutUps, nutUpsNames, nutVariables, toNut } from '../nut/collect';
 import { apcFields, apcRecords, collectApcupsd, toApcupsd } from '../apcupsd/collect';
 import { tcpTarget } from './socket';
+import { untilShutdown } from '@/widgets/ups/CalmeUps';
 
 const sample = (file: string) => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 const instance = (type: string, port: number | string, host = '127.0.0.1'): IntegrationInstance => ({ id: `${type}-1`, type, name: 'Fictional UPS', settings: { host, port: String(port) }, secrets: {} });
@@ -78,6 +79,22 @@ describe('apcupsd', () => {
   it('fails cleanly on a closed port', async () => {
     const port = await serve(() => undefined); servers.splice(0).forEach(server => server.close());
     await expect(collectApcupsd(instance('apcupsd', port))).rejects.toMatchObject({ key: 'widgets.error.network' });
+  });
+});
+
+describe('time before the automatic shutdown', () => {
+  it('takes whichever threshold comes first, at the present load', () => {
+    const base = { provider: 'nut' as const, name: 'x', power: 'battery' as const, fetchedAt: 1 };
+    // 37 min at 100 %: 35 % of charge is reached after ~24 min, 5 min of runtime after 32 min.
+    expect(untilShutdown({ ...base, runtimeSeconds: 2220, batteryPercent: 100, shutdownPercent: 35, shutdownRuntimeSeconds: 300 })).toBe(1443);
+    expect(untilShutdown({ ...base, runtimeSeconds: 2220, batteryPercent: 100, shutdownRuntimeSeconds: 300 })).toBe(1920);
+    expect(untilShutdown({ ...base, runtimeSeconds: 200, batteryPercent: 30, shutdownPercent: 35, shutdownRuntimeSeconds: 300 })).toBe(0);
+    expect(untilShutdown({ ...base, runtimeSeconds: 2220, batteryPercent: 100 })).toBeUndefined();
+    expect(untilShutdown({ ...base, batteryPercent: 100, shutdownPercent: 35 })).toBeUndefined();
+  });
+  it('reads the thresholds from NUT and apcupsd', () => {
+    expect(toNut(instance('nut', 1), 'u', { 'ups.status': 'OL', 'battery.charge.low': '35', 'battery.runtime.low': '300' })).toMatchObject({ shutdownPercent: 35, shutdownRuntimeSeconds: 300 });
+    expect(toApcupsd(instance('apcupsd', 1), { STATUS: 'ONLINE', MBATTCHG: '5 Percent', MINTIMEL: '3 Minutes' })).toMatchObject({ shutdownPercent: 5, shutdownRuntimeSeconds: 180 });
   });
 });
 

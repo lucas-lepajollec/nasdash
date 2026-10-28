@@ -257,7 +257,14 @@ export interface UpsSummary {
   /** The server lost the UPS (cable, driver): the figures are not current. */
   offline?: boolean;
   batteryPercent?: number;
+  /** The UPS's own estimate at the present load. */
   runtimeSeconds?: number;
+  /**
+   * Where the monitoring software shuts the machines down: battery charge (%) or runtime left (s), whichever comes
+   * first (NUT battery.charge.low / battery.runtime.low, apcupsd MBATTCHG / MINTIMEL).
+   */
+  shutdownPercent?: number;
+  shutdownRuntimeSeconds?: number;
   loadPercent?: number;
   loadWatts?: number;
   /** Rated real power (W). */

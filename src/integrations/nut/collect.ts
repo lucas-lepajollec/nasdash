@@ -60,6 +60,7 @@ export function toNut(instance: IntegrationInstance, ups: string, vars: Record<s
       lowBattery: flags.has('LB') || undefined, charging: flags.has('CHRG') || undefined, replaceBattery: flags.has('RB') || undefined,
       overload: flags.has('OVER') || undefined, offline: flags.has('OFF') || undefined,
       batteryPercent: num(vars['battery.charge']), runtimeSeconds: num(vars['battery.runtime']), loadPercent: load,
+      shutdownPercent: num(vars['battery.charge.low']), shutdownRuntimeSeconds: num(vars['battery.runtime.low']),
       // The UPS's own measure, else its share of the rated power.
       loadWatts: num(vars['ups.realpower']) ?? (load !== undefined && nominal ? Math.round(load * nominal / 100) : undefined),
       nominalWatts: nominal, inputVoltage: num(vars['input.voltage']), outputVoltage: num(vars['output.voltage']),
