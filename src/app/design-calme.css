@@ -3380,10 +3380,10 @@ body[data-design="calme"] .nd-header :is(.nd-btn, .nd-search input) {
 }
 
 /* Widgets grow with their content (no page-level inner scroll), so long
-   lists cap themselves: the Docker container list shows about seven rows and
-   scrolls inside. Guarded by e2e/critical-paths.spec.ts. */
+   lists cap themselves: the Docker container list shows seven rows (or its
+   setting) and scrolls inside. Guarded by e2e/critical-paths.spec.ts. */
 .nd-docker-container-list-scroll {
-  /* One row is about 80 px (73.6 px + 6 px gap): 7 rows = 560 px. */
+  /* Until the cards are measured (exact height of N cards): about 80 px a row. */
   max-height: calc(var(--nd-list-rows, 7) * 80px);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -3863,8 +3863,8 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .ndc-welcome-actions { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .ndc-welcome-note { margin-top: 2px; color: var(--nd-text-dimmed); font-size: 0.64rem; }
 .ndc-topology-welcome { position: absolute; inset: 0; z-index: 1; padding: 16px; pointer-events: none; }
-/* Map edit tools: a quiet row at the top left, matching the zoom tools on the right. */
-.ndc-map-edit { position: absolute; top: 12px; left: 12px; z-index: 3; display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100% - 190px); }
+/* Map edit tools: a quiet row above the map, which moves down for it instead of hiding under it. */
+.ndc-map-edit { position: relative; z-index: 3; display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
 .ndc-generate-note { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; color: var(--nd-text-muted); font-size: 0.74rem; line-height: 1.5; }
 .ndc-generate-note span { color: var(--nd-text-dimmed); font-size: 0.68rem; }
 .ndc-generate-note.is-empty { color: var(--nd-yellow); }

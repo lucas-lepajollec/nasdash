@@ -111,8 +111,10 @@ test('uploaded wallpaper delete confirmation follows all five interface language
       await expect(page.locator('html')).toHaveAttribute('lang', language);
       await page.locator('.nd-header-desktop [data-settings-trigger="true"]').click();
       await page.locator('.nd-settings-sidebar').getByRole('button', { name: media, exact: true }).click();
-      await page.locator('.ndc-wallpaper').first().hover();
-      await page.locator('.ndc-wallpaper-remove').first().click();
+      // The drawn wallpapers come first and cannot be deleted: hover the uploaded one.
+      const wallpaper = page.locator('.ndc-wallpaper', { has: page.locator('.ndc-wallpaper-remove') }).first();
+      await wallpaper.hover();
+      await wallpaper.locator('.ndc-wallpaper-remove').click();
       const confirmation = page.locator('.ndc-confirm');
       await expect(confirmation.getByRole('button', { name: deletion, exact: true })).toBeVisible();
       if (language !== 'fr') await expect(confirmation.getByRole('button', { name: 'Supprimer', exact: true })).toHaveCount(0);

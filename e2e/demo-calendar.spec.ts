@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 
 const languages = [
-  ['en', 'Continue', 'Edit', 'Edit event', 'Save', 'Delete'],
-  ['fr', 'Continuer', 'Modifier', 'Modifier l’événement', 'Enregistrer', 'Supprimer'],
-  ['es', 'Continuar', 'Editar', 'Editar evento', 'Guardar', 'Eliminar'],
-  ['de', 'Weiter', 'Bearbeiten', 'Termin bearbeiten', 'Speichern', 'Löschen'],
-  ['it', 'Continua', 'Modifica', 'Modifica evento', 'Salva', 'Elimina'],
+  ['en', 'Explore on my own', 'Edit', 'Edit event', 'Save', 'Delete'],
+  ['fr', 'Explorer seul', 'Modifier', 'Modifier l’événement', 'Enregistrer', 'Supprimer'],
+  ['es', 'Explorar por mi cuenta', 'Editar', 'Editar evento', 'Guardar', 'Eliminar'],
+  ['de', 'Selbst entdecken', 'Bearbeiten', 'Termin bearbeiten', 'Speichern', 'Löschen'],
+  ['it', 'Esplora da solo', 'Modifica', 'Modifica evento', 'Salva', 'Elimina'],
 ];
 
 for (const [language, proceed, edit, editTitle, save, remove] of languages) {

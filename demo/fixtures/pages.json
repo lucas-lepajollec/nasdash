@@ -6,25 +6,25 @@
       "name": "Home",
       "icon": "lucide:House",
       "description": "Services & monitoring",
-      "revision": 1,
+      "revision": 7,
       "widgets": [
         {
           "id": "home-clock",
           "type": "clock",
           "settings": {},
           "x": 0,
-          "y": 0,
+          "y": 43,
           "w": 6,
-          "h": 41
+          "h": 45
         },
         {
           "id": "home-weather",
           "type": "weather",
           "settings": {},
           "x": 0,
-          "y": 41,
+          "y": 88,
           "w": 6,
-          "h": 87
+          "h": 91
         },
         {
           "id": "home-devices",
@@ -67,36 +67,27 @@
             ]
           },
           "x": 6,
-          "y": 0,
-          "w": 12,
-          "h": 56
-        },
-        {
-          "id": "home-docker-summary",
-          "type": "docker-summary",
-          "settings": {},
-          "x": 6,
-          "y": 56,
-          "w": 12,
-          "h": 33
+          "y": 43,
+          "w": 4,
+          "h": 130
         },
         {
           "id": "home-quotes",
           "type": "quotes",
           "settings": {},
-          "x": 6,
-          "y": 89,
-          "w": 12,
+          "x": 0,
+          "y": 0,
+          "w": 16,
           "h": 43
         },
         {
           "id": "home-calendar",
           "type": "calendar",
           "settings": {},
-          "x": 18,
+          "x": 16,
           "y": 0,
-          "w": 6,
-          "h": 135
+          "w": 8,
+          "h": 83
         },
         {
           "id": "home-cat-media",
@@ -104,10 +95,10 @@
           "settings": {
             "categoryId": "category-media"
           },
-          "x": 0,
-          "y": 135,
-          "w": 6,
-          "h": 91
+          "x": 16,
+          "y": 83,
+          "w": 8,
+          "h": 70
         },
         {
           "id": "home-cat-infrastructure",
@@ -115,23 +106,50 @@
           "settings": {
             "categoryId": "category-infrastructure"
           },
-          "x": 6,
-          "y": 135,
+          "x": 10,
+          "y": 43,
           "w": 6,
-          "h": 91
+          "h": 94
         },
         {
-          "id": "home-nowplaying",
-          "type": "media-nowplaying",
+          "id": "w-i8nhrw68qub",
+          "type": "ups",
+          "settings": {},
+          "x": 16,
+          "y": 153,
+          "w": 8,
+          "h": 66
+        },
+        {
+          "id": "w-w49vlhe7qkn",
+          "type": "music-nowplaying",
           "settings": {
-            "integrationId": "jellyfin-demo",
-            "showUsers": true,
-            "history": "none"
+            "integrationId": "navidrome-demo"
           },
-          "x": 12,
-          "y": 135,
-          "w": 12,
-          "h": 91
+          "x": 10,
+          "y": 137,
+          "w": 6,
+          "h": 82
+        },
+        {
+          "id": "w-32cgyhj9h4n",
+          "type": "bookmarks",
+          "settings": {
+            "display": "icons"
+          },
+          "x": 6,
+          "y": 173,
+          "w": 4,
+          "h": 40
+        },
+        {
+          "id": "w-xf3947cntb",
+          "type": "networkgraph",
+          "settings": {},
+          "x": 0,
+          "y": 179,
+          "w": 6,
+          "h": 63
         }
       ]
     },
@@ -140,7 +158,7 @@
       "name": "Services",
       "icon": "lucide:LayoutGrid",
       "description": "Every self-hosted service",
-      "revision": 1,
+      "revision": 2,
       "widgets": [
         {
           "id": "services-media",
@@ -151,7 +169,7 @@
           "x": 0,
           "y": 0,
           "w": 6,
-          "h": 91
+          "h": 70
         },
         {
           "id": "services-infra",
@@ -162,7 +180,7 @@
           "x": 6,
           "y": 0,
           "w": 6,
-          "h": 91
+          "h": 94
         },
         {
           "id": "services-auto",
@@ -173,7 +191,7 @@
           "x": 12,
           "y": 0,
           "w": 6,
-          "h": 105
+          "h": 79
         },
         {
           "id": "services-quickstats",
@@ -182,7 +200,7 @@
           "x": 18,
           "y": 0,
           "w": 6,
-          "h": 38
+          "h": 42
         },
         {
           "id": "services-notes",
@@ -219,9 +237,9 @@
             ]
           },
           "x": 18,
-          "y": 38,
+          "y": 42,
           "w": 6,
-          "h": 55
+          "h": 59
         },
         {
           "id": "services-library",
@@ -230,9 +248,9 @@
             "categoryId": "category-library-automation"
           },
           "x": 0,
-          "y": 105,
+          "y": 70,
           "w": 6,
-          "h": 87
+          "h": 90
         },
         {
           "id": "services-network",
@@ -241,9 +259,9 @@
             "categoryId": "category-network"
           },
           "x": 6,
-          "y": 105,
+          "y": 94,
           "w": 6,
-          "h": 79
+          "h": 82
         },
         {
           "id": "services-bookmarks",
@@ -252,27 +270,27 @@
             "display": "tree"
           },
           "x": 12,
-          "y": 105,
-          "w": 12,
-          "h": 42
-        },
-        {
-          "id": "services-ports",
-          "type": "service-ports",
-          "settings": {},
-          "x": 12,
-          "y": 147,
-          "w": 12,
-          "h": 34
+          "y": 79,
+          "w": 6,
+          "h": 46
         },
         {
           "id": "services-spacer",
           "type": "spacer",
           "settings": {},
           "x": 0,
-          "y": 192,
+          "y": 210,
           "w": 24,
-          "h": 10
+          "h": 30
+        },
+        {
+          "id": "services-ports",
+          "type": "service-ports",
+          "settings": {},
+          "x": 0,
+          "y": 176,
+          "w": 24,
+          "h": 34
         }
       ]
     },
@@ -281,7 +299,7 @@
       "name": "Machines",
       "icon": "lucide:Server",
       "description": "Every machine, its measures and its history",
-      "revision": 1,
+      "revision": 3,
       "widgets": [
         {
           "id": "machines-fleet",
@@ -289,41 +307,106 @@
           "settings": {},
           "x": 0,
           "y": 0,
-          "w": 8,
-          "h": 133
+          "w": 6,
+          "h": 154
         },
         {
           "id": "machines-orion",
           "type": "device",
           "settings": {
-            "deviceId": "demo-device-2"
+            "deviceId": "demo-device-2",
+            "metrics": {
+              "cpu": {
+                "shown": true,
+                "display": "ring",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "memory": {
+                "shown": true,
+                "display": "ring",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "gpu": {
+                "shown": true,
+                "display": "ring",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "temperature": {
+                "shown": true,
+                "display": "value",
+                "color": null,
+                "danger": 80,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "gpuTemperature": {
+                "shown": true,
+                "display": "value",
+                "color": null,
+                "danger": 80,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "load": {
+                "shown": true,
+                "display": "value",
+                "color": null,
+                "danger": 1,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "network": {
+                "shown": false,
+                "display": "value",
+                "color": null,
+                "danger": null,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "disk": {
+                "shown": true,
+                "display": "bar",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "history": {
+                "shown": true,
+                "display": "chart",
+                "color": null,
+                "danger": null,
+                "chartStyle": null,
+                "chartSize": null
+              }
+            },
+            "display": "bar",
+            "perMetricDisplay": false,
+            "dangerColor": null,
+            "dangerOff": null,
+            "chartStyle": "area",
+            "chartSize": "medium",
+            "deviceColors": {},
+            "facets": [],
+            "valueParts": [
+              "percent",
+              "total"
+            ],
+            "valueFormat": null
           },
-          "x": 8,
+          "x": 6,
           "y": 0,
-          "w": 8,
-          "h": 146
-        },
-        {
-          "id": "machines-nova",
-          "type": "device",
-          "settings": {
-            "deviceId": "demo-device-4"
-          },
-          "x": 16,
-          "y": 0,
-          "w": 8,
-          "h": 163
-        },
-        {
-          "id": "machines-chart",
-          "type": "device-chart",
-          "settings": {
-            "deviceId": "demo-device-1"
-          },
-          "x": 0,
-          "y": 163,
-          "w": 12,
-          "h": 64
+          "w": 6,
+          "h": 173
         },
         {
           "id": "machines-cpu",
@@ -334,18 +417,106 @@
             "range": "1h"
           },
           "x": 12,
-          "y": 163,
+          "y": 0,
           "w": 6,
-          "h": 69
+          "h": 73
         },
         {
           "id": "machines-memory",
           "type": "metric-memory",
-          "settings": {},
+          "settings": {
+            "metrics": {
+              "cpu": {
+                "shown": false,
+                "display": "bar",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "memory": {
+                "shown": true,
+                "display": "ring",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "gpu": {
+                "shown": false,
+                "display": "bar",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "temperature": {
+                "shown": false,
+                "display": "bar",
+                "color": null,
+                "danger": 80,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "gpuTemperature": {
+                "shown": false,
+                "display": "bar",
+                "color": null,
+                "danger": 80,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "load": {
+                "shown": false,
+                "display": "bar",
+                "color": null,
+                "danger": 1,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "network": {
+                "shown": false,
+                "display": "value",
+                "color": null,
+                "danger": null,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "disk": {
+                "shown": false,
+                "display": "bar",
+                "color": null,
+                "danger": 90,
+                "chartStyle": null,
+                "chartSize": null
+              },
+              "history": {
+                "shown": false,
+                "display": "chart",
+                "color": null,
+                "danger": null,
+                "chartStyle": null,
+                "chartSize": null
+              }
+            },
+            "display": "ring",
+            "perMetricDisplay": false,
+            "dangerColor": null,
+            "dangerOff": null,
+            "chartStyle": "line",
+            "chartSize": "medium",
+            "deviceColors": {},
+            "facets": [],
+            "valueParts": [
+              "percent",
+              "total"
+            ],
+            "valueFormat": null
+          },
           "x": 18,
-          "y": 163,
+          "y": 0,
           "w": 6,
-          "h": 66
+          "h": 84
         },
         {
           "id": "machines-network",
@@ -354,57 +525,37 @@
             "display": "chart",
             "chartStyle": "line"
           },
-          "x": 0,
-          "y": 232,
+          "x": 6,
+          "y": 173,
           "w": 12,
-          "h": 69
-        },
-        {
-          "id": "machines-load",
-          "type": "metric-load",
-          "settings": {},
-          "x": 12,
-          "y": 232,
-          "w": 6,
-          "h": 71
+          "h": 68
         },
         {
           "id": "machines-temperature",
           "type": "metric-temperature",
           "settings": {},
-          "x": 18,
-          "y": 232,
+          "x": 12,
+          "y": 73,
           "w": 6,
-          "h": 43
+          "h": 46
         },
         {
           "id": "machines-gpu",
           "type": "metric-gpu",
           "settings": {},
-          "x": 18,
-          "y": 275,
+          "x": 12,
+          "y": 119,
           "w": 6,
-          "h": 46
+          "h": 50
         },
         {
           "id": "machines-storage",
           "type": "storage",
           "settings": {},
-          "x": 0,
-          "y": 321,
-          "w": 12,
-          "h": 96
-        },
-        {
-          "id": "machines-ups",
-          "type": "ups",
-          "settings": {
-            "integrationId": "nut-demo"
-          },
-          "x": 12,
-          "y": 321,
+          "x": 18,
+          "y": 84,
           "w": 6,
-          "h": 62
+          "h": 99
         },
         {
           "id": "machines-ups-api",
@@ -434,10 +585,10 @@
               }
             ]
           },
-          "x": 12,
-          "y": 383,
+          "x": 18,
+          "y": 183,
           "w": 6,
-          "h": 42
+          "h": 46
         },
         {
           "id": "machines-disks",
@@ -480,10 +631,19 @@
               }
             ]
           },
-          "x": 18,
-          "y": 321,
+          "x": 0,
+          "y": 154,
           "w": 6,
-          "h": 79
+          "h": 59
+        },
+        {
+          "id": "machines-load",
+          "type": "metric-load",
+          "settings": {},
+          "x": 0,
+          "y": 241,
+          "w": 8,
+          "h": 71
         }
       ]
     },
@@ -492,43 +652,36 @@
       "name": "Docker",
       "icon": "lucide:Container",
       "description": "Containers, images and volumes",
-      "revision": 1,
+      "revision": 5,
       "widgets": [
-        {
-          "id": "docker-summary",
-          "type": "docker-summary",
-          "settings": {},
-          "x": 0,
-          "y": 0,
-          "w": 24,
-          "h": 33
-        },
         {
           "id": "docker-hosts",
           "type": "docker-hosts",
           "settings": {},
           "x": 0,
-          "y": 33,
+          "y": 0,
           "w": 6,
-          "h": 26
+          "h": 30
         },
         {
           "id": "docker-container-list",
           "type": "docker-container-list",
-          "settings": {},
+          "settings": {
+            "visibleRows": 8
+          },
           "x": 0,
-          "y": 59,
+          "y": 30,
           "w": 6,
-          "h": 156
+          "h": 167
         },
         {
           "id": "docker-explorer",
           "type": "docker-explorer",
           "settings": {},
           "x": 6,
-          "y": 33,
+          "y": 0,
           "w": 18,
-          "h": 160
+          "h": 170
         },
         {
           "id": "docker-containers",
@@ -537,19 +690,19 @@
             "autoScroll": true,
             "itemsPerPage": 4
           },
-          "x": 0,
-          "y": 215,
+          "x": 12,
+          "y": 170,
           "w": 12,
-          "h": 71
+          "h": 75
         },
         {
           "id": "docker-actions",
           "type": "dockeractions",
           "settings": {},
-          "x": 12,
-          "y": 215,
-          "w": 12,
-          "h": 31
+          "x": 6,
+          "y": 170,
+          "w": 6,
+          "h": 48
         }
       ]
     },
@@ -558,7 +711,7 @@
       "name": "Network",
       "icon": "lucide:Network",
       "description": "Map, DNS, VPN and network tools",
-      "revision": 1,
+      "revision": 3,
       "widgets": [
         {
           "id": "network-dns",
@@ -577,7 +730,7 @@
           "x": 0,
           "y": 0,
           "w": 8,
-          "h": 82
+          "h": 78
         },
         {
           "id": "network-dns-adguard",
@@ -586,9 +739,9 @@
             "integrationId": "adguard-demo"
           },
           "x": 0,
-          "y": 82,
+          "y": 78,
           "w": 8,
-          "h": 69
+          "h": 78
         },
         {
           "id": "network-speed",
@@ -623,10 +776,10 @@
               }
             ]
           },
-          "x": 0,
-          "y": 151,
-          "w": 8,
-          "h": 31
+          "x": 20,
+          "y": 0,
+          "w": 4,
+          "h": 50
         },
         {
           "id": "network-tools",
@@ -635,7 +788,7 @@
           "x": 8,
           "y": 0,
           "w": 8,
-          "h": 175
+          "h": 195
         },
         {
           "id": "network-vpn",
@@ -645,35 +798,35 @@
           },
           "x": 16,
           "y": 0,
-          "w": 8,
-          "h": 58
+          "w": 4,
+          "h": 96
         },
         {
           "id": "network-graph",
           "type": "networkgraph",
           "settings": {},
           "x": 16,
-          "y": 58,
+          "y": 133,
           "w": 8,
-          "h": 62
+          "h": 63
         },
         {
           "id": "network-tailscale",
           "type": "tailscale",
           "settings": {},
-          "x": 16,
-          "y": 120,
+          "x": 0,
+          "y": 156,
           "w": 8,
-          "h": 44
+          "h": 48
         },
         {
           "id": "network-topology",
           "type": "network-topology",
           "settings": {},
           "x": 0,
-          "y": 182,
+          "y": 204,
           "w": 24,
-          "h": 229
+          "h": 458
         }
       ]
     },
@@ -682,20 +835,66 @@
       "name": "Media",
       "icon": "lucide:Clapperboard",
       "description": "Films, series and photos",
-      "revision": 1,
+      "revision": 2,
       "widgets": [
         {
-          "id": "media-hero",
-          "type": "media-recent",
+          "id": "media-nowplaying",
+          "type": "media-nowplaying",
           "settings": {
             "integrationId": "jellyfin-demo",
-            "display": "hero",
-            "count": 12
+            "showUsers": true
           },
           "x": 0,
           "y": 0,
           "w": 16,
-          "h": 140
+          "h": 145
+        },
+        {
+          "id": "media-library",
+          "type": "media-library",
+          "settings": {
+            "integrationId": "jellyfin-demo"
+          },
+          "x": 16,
+          "y": 0,
+          "w": 8,
+          "h": 174
+        },
+        {
+          "id": "media-photos",
+          "type": "photos",
+          "settings": {
+            "display": "mosaic",
+            "mode": "random",
+            "count": 12
+          },
+          "x": 0,
+          "y": 145,
+          "w": 16,
+          "h": 85
+        },
+        {
+          "id": "media-follow",
+          "type": "media-upcoming",
+          "settings": {
+            "source": "library",
+            "mediaId": "jellyfin-demo"
+          },
+          "x": 16,
+          "y": 174,
+          "w": 8,
+          "h": 82
+        },
+        {
+          "id": "media-photos-stats",
+          "type": "photos-stats",
+          "settings": {
+            "showUsers": true
+          },
+          "x": 0,
+          "y": 230,
+          "w": 16,
+          "h": 146
         },
         {
           "id": "media-posters",
@@ -706,84 +905,9 @@
             "count": 16
           },
           "x": 0,
-          "y": 140,
-          "w": 16,
-          "h": 77
-        },
-        {
-          "id": "media-nowplaying",
-          "type": "media-nowplaying",
-          "settings": {
-            "integrationId": "jellyfin-demo",
-            "showUsers": true
-          },
-          "x": 16,
-          "y": 0,
-          "w": 8,
-          "h": 186
-        },
-        {
-          "id": "media-library",
-          "type": "media-library",
-          "settings": {
-            "integrationId": "jellyfin-demo"
-          },
-          "x": 0,
-          "y": 217,
-          "w": 8,
-          "h": 178
-        },
-        {
-          "id": "media-photos",
-          "type": "photos",
-          "settings": {
-            "display": "slideshow",
-            "mode": "random",
-            "count": 12
-          },
-          "x": 8,
-          "y": 217,
-          "w": 16,
-          "h": 122
-        },
-        {
-          "id": "media-follow",
-          "type": "media-upcoming",
-          "settings": {
-            "source": "library",
-            "mediaId": "jellyfin-demo"
-          },
-          "x": 8,
-          "y": 339,
-          "w": 16,
-          "h": 78
-        },
-        {
-          "id": "media-photos-stats",
-          "type": "photos-stats",
-          "settings": {
-            "showUsers": true
-          },
-          "x": 0,
-          "y": 417,
-          "w": 8,
-          "h": 143
-        },
-        {
-          "id": "media-photos-grid",
-          "type": "photos",
-          "settings": {
-            "display": "mosaic",
-            "mode": "recent",
-            "count": 24,
-            "perPage": 7,
-            "auto": false,
-            "integrationId": "photoprism-demo"
-          },
-          "x": 8,
-          "y": 417,
-          "w": 16,
-          "h": 117
+          "y": 376,
+          "w": 24,
+          "h": 76
         }
       ]
     },
@@ -792,52 +916,43 @@
       "name": "Downloads",
       "icon": "lucide:Download",
       "description": "Queue, clients and indexers",
-      "revision": 1,
+      "revision": 3,
       "widgets": [
         {
           "id": "downloads-arr",
           "type": "media-arr",
           "settings": {},
-          "x": 0,
+          "x": 4,
           "y": 0,
-          "w": 24,
-          "h": 85
+          "w": 8,
+          "h": 150
         },
         {
           "id": "downloads-queue",
           "type": "media-queue",
           "settings": {},
-          "x": 0,
-          "y": 85,
-          "w": 14,
-          "h": 96
+          "x": 12,
+          "y": 0,
+          "w": 12,
+          "h": 100
         },
         {
           "id": "downloads-clients",
           "type": "media-downloads",
           "settings": {},
-          "x": 14,
-          "y": 85,
-          "w": 10,
-          "h": 93
+          "x": 12,
+          "y": 100,
+          "w": 12,
+          "h": 119
         },
         {
           "id": "downloads-indexers",
           "type": "media-indexers",
           "settings": {},
           "x": 0,
-          "y": 181,
-          "w": 10,
-          "h": 116
-        },
-        {
-          "id": "downloads-upcoming",
-          "type": "media-upcoming",
-          "settings": {},
-          "x": 10,
-          "y": 181,
-          "w": 14,
-          "h": 139
+          "y": 0,
+          "w": 4,
+          "h": 142
         }
       ]
     },
@@ -846,7 +961,7 @@
       "name": "Music",
       "icon": "lucide:Music",
       "description": "What plays and what is played the most",
-      "revision": 1,
+      "revision": 2,
       "widgets": [
         {
           "id": "music-nowplaying",
@@ -858,7 +973,7 @@
           "x": 0,
           "y": 0,
           "w": 16,
-          "h": 89
+          "h": 93
         },
         {
           "id": "music-library",
@@ -867,9 +982,9 @@
             "integrationId": "navidrome-demo"
           },
           "x": 0,
-          "y": 89,
-          "w": 16,
-          "h": 86
+          "y": 93,
+          "w": 8,
+          "h": 90
         },
         {
           "id": "music-playlists",
@@ -877,10 +992,10 @@
           "settings": {
             "integrationId": "navidrome-demo"
           },
-          "x": 0,
-          "y": 175,
-          "w": 16,
-          "h": 81
+          "x": 8,
+          "y": 93,
+          "w": 8,
+          "h": 84
         },
         {
           "id": "music-recent",
@@ -892,7 +1007,7 @@
           "x": 16,
           "y": 0,
           "w": 8,
-          "h": 247
+          "h": 186
         },
         {
           "id": "music-top",
@@ -902,9 +1017,9 @@
             "content": "pages"
           },
           "x": 0,
-          "y": 256,
+          "y": 186,
           "w": 24,
-          "h": 122
+          "h": 65
         }
       ]
     },
@@ -913,20 +1028,20 @@
       "name": "Feeds",
       "icon": "lucide:Newspaper",
       "description": "News, markets and the lab agenda",
-      "revision": 1,
+      "revision": 2,
       "widgets": [
         {
           "id": "feeds-rss",
           "type": "rss",
           "settings": {
-            "display": "cards",
+            "display": "magazine",
             "limit": 6,
             "images": true
           },
           "x": 0,
           "y": 0,
           "w": 12,
-          "h": 134
+          "h": 114
         },
         {
           "id": "feeds-markets",
@@ -934,28 +1049,8 @@
           "settings": {},
           "x": 12,
           "y": 0,
-          "w": 6,
-          "h": 86
-        },
-        {
-          "id": "feeds-quotes",
-          "type": "quotes",
-          "settings": {
-            "style": "modern"
-          },
-          "x": 12,
-          "y": 86,
-          "w": 6,
-          "h": 54
-        },
-        {
-          "id": "feeds-calendar",
-          "type": "calendar",
-          "settings": {},
-          "x": 18,
-          "y": 0,
-          "w": 6,
-          "h": 126
+          "w": 12,
+          "h": 90
         }
       ]
     }

@@ -29,6 +29,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- The container list shows exactly the number of rows chosen in its settings; the next container no longer peeks out at the bottom.
+- In edit mode, Network tools no longer shows a second title above its own; its refresh button joins the widget's controls.
+- The network map's edit tools sit above the map instead of covering its top.
 - Several Gluetun, NUT and apcupsd connections can be saved; adding one no longer replaces the previous one.
 
 ## [0.3.5] - 2026-10-28

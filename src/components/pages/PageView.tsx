@@ -653,9 +653,9 @@ const SETTLE_MS = 60;
 /** …or at most this long after the page became visible. */
 const SETTLE_MAX_MS = 300;
 
-/** Widgets without a title of their own get one in edit mode, like the others. */
+/** Widgets without a title of their own get one in edit mode, like the others. Network tools has its section titles. */
 const UNTITLED_TYPES = new Set([
-  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-tools', 'network-topology', 'spacer',
+  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-topology', 'spacer',
 ]);
 /** Widgets that have their own title in the Calme style. */
 const CALME_TITLED_TYPES = new Set(['docker-summary']);

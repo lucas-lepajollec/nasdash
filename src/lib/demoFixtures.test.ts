@@ -109,7 +109,7 @@ describe('public demo fixtures', () => {
     expect(createRollingDemoCalendar()).toEqual(createRollingDemoCalendar(new Date(reference)));
   });
 
-  it('ships valid themed demo pages that show every widget type', () => {
+  it('ships valid themed demo pages that show every widget of the library', () => {
     const document = validatePagesDocument(JSON.parse(fs.readFileSync(path.join(fixturesDirectory, 'pages.json'), 'utf8')));
     const config = JSON.parse(fs.readFileSync(path.join(fixturesDirectory, 'config.json'), 'utf8')) as { devices: Array<{ id: string }>; settings: { tabOrder: string[] } };
     const deviceIds = new Set(config.devices.map(device => device.id));
@@ -117,7 +117,9 @@ describe('public demo fixtures', () => {
       if (typeof widget.settings.deviceId === 'string') expect(deviceIds.has(widget.settings.deviceId)).toBe(true);
     }
     const shown = new Set(document.pages.flatMap(page => page.widgets.map(widget => widget.type)));
-    expect(WIDGET_CATALOG.map(entry => entry.type).filter(type => !shown.has(type))).toEqual([]);
+    // Internal widgets (kept for old pages, not offered any more) stay out of the demo.
+    expect(WIDGET_CATALOG.filter(entry => !entry.internal).map(entry => entry.type).filter(type => !shown.has(type))).toEqual([]);
+    expect(WIDGET_CATALOG.filter(entry => entry.internal && entry.group !== 'layout' && shown.has(entry.type)).map(entry => entry.type)).toEqual([]);
     expect(config.settings.tabOrder).toEqual(document.pages.map(page => page.id));
     // Widget access rules name these page ids.
     expect(document.pages.map(page => page.id)).toEqual(expect.arrayContaining(['dashboard', 'docker', 'networks']));
