@@ -51,16 +51,18 @@ if (targets.landing) {
   const readmePath = path.join(targets.landing, 'README.md');
   const readme = await fs.readFile(readmePath, 'utf8');
   await fs.writeFile(readmePath, readme.replace(/nasdash-demo-home(?:-[a-f0-9]{12})?\.jpg/g, publicFilename));
-  // The gallery of themed pages: fixed names, the content hash in the query string of the page.
+  // The gallery of themed pages, named after their content so a new capture is never served from cache.
   const screens = path.join(publicDir, 'screens');
+  await fs.rm(screens, { recursive: true, force: true });
   await fs.mkdir(screens, { recursive: true });
   const gallery = {};
-  for (const name of ['home', 'media', 'machines', 'docker', 'networks', 'music', 'downloads', 'guide-appearance']) {
-    const file = name.startsWith('guide') ? `nasdash-${name}.jpg` : `nasdash-demo-${name}.jpg`;
+  for (const name of ['media', 'machines', 'docker', 'networks', 'music', 'downloads']) {
+    const file = `nasdash-demo-${name}.jpg`;
     const shot = manifest.shots.find(item => item.file === file);
     if (!shot) throw new Error(`Missing gallery capture: ${file}`);
-    await fs.writeFile(path.join(screens, `${name}.jpg`), buffers.get(file));
-    gallery[name] = { src: `/screens/${name}.jpg?v=${shot.sha256.slice(0, 12)}`, width: shot.width, height: shot.height };
+    const published = `${name}-${shot.sha256.slice(0, 12)}.jpg`;
+    await fs.writeFile(path.join(screens, published), buffers.get(file));
+    gallery[name] = { src: `/screens/${published}`, width: shot.width, height: shot.height };
   }
   await fs.writeFile(path.join(targets.landing, 'src', 'lib', 'screens.json'), `${JSON.stringify(gallery, null, 2)}\n`);
   console.log('[NASDASH] Synced landing hero, gallery, social previews and legacy PNG.');
