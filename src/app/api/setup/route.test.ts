@@ -12,11 +12,11 @@ beforeEach(() => { state.admin = true; state.demo = false; state.settings = {}; 
 
 describe('setup route', () => {
   it('tells anyone whether the installation is new, and only a bundled wallpaper', async () => {
-    state.settings = { setupPending: true, backgroundImage: '/wallpapers/starry-lake.jpg', mode: 'light', uiLanguage: 'fr', title: 'Private title' };
-    expect(await (await GET()).json()).toEqual({ pending: true, wallpaper: '/wallpapers/starry-lake.jpg', mode: 'light', language: 'fr' });
+    state.settings = { setupPending: true, backgroundImage: '/wallpapers/nasdash-mist.jpg', mode: 'light', uiLanguage: 'fr', title: 'Private title', cardOpacity: 0.7, surfaceBlur: 12, wallpaperDim: 0.3 };
+    expect(await (await GET()).json()).toEqual({ pending: true, wallpaper: '/wallpapers/nasdash-mist.jpg', mode: 'light', language: 'fr', glass: { opacity: 0.7, blur: 12, dim: 0.3 } });
     // An uploaded image may be personal: the sign-in screen keeps the default.
     state.settings = { backgroundImage: '/api/logos/holiday.jpg' };
-    expect(await (await GET()).json()).toMatchObject({ pending: false, wallpaper: '/wallpapers/aurora-lake.jpg', mode: 'dark' });
+    expect(await (await GET()).json()).toMatchObject({ pending: false, wallpaper: '/wallpapers/nasdash-aurora.jpg', mode: 'dark' });
     state.settings = { setupPending: true }; state.demo = true;
     expect((await (await GET()).json()).pending).toBe(false);
   });

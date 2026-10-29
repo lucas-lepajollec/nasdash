@@ -1,0 +1,53 @@
+/* ---------- Dashboard tour: the page darkens, one button stays lit, a bubble points at it ---------- */
+/* Above the header and the edit bar (10050), below dialogs. */
+.nd-tour { position: fixed; inset: 0; z-index: 20000; }
+.nd-tour-blocker { position: absolute; inset: 0; }
+/* The lit button: a hole in the shade, drawn by the spot's own shadow. */
+.nd-tour-spot {
+  position: fixed;
+  border-radius: calc(var(--nd-card-radius, 6px) + 4px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--nd-accent) 55%, transparent), 0 0 0 200vmax rgb(4 6 10 / 0.66);
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+.nd-tour-spot.is-hidden { top: 50%; left: 50%; width: 0; height: 0; box-shadow: 0 0 0 200vmax rgb(4 6 10 / 0.66); }
+body.light .nd-tour-spot { box-shadow: 0 0 0 1px color-mix(in srgb, var(--nd-accent) 55%, transparent), 0 0 0 200vmax rgb(15 23 42 / 0.45); }
+body.light .nd-tour-spot.is-hidden { box-shadow: 0 0 0 200vmax rgb(15 23 42 / 0.45); }
+
+/* The bubble: NasDash's own popover surface, text and buttons. */
+.nd-tour-bubble {
+  position: fixed;
+  width: min(320px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px 16px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--nd-card-hover-border);
+  background: var(--nd-bg-surface);
+  box-shadow: var(--nd-dropdown-shadow);
+  color: var(--nd-text);
+  transition: top 0.25s ease, left 0.25s ease;
+}
+.nd-tour-bubble::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--nd-tour-arrow) - 6px);
+  width: 11px;
+  height: 11px;
+  background: var(--nd-bg-surface);
+  border: 1px solid var(--nd-card-hover-border);
+  transform: rotate(45deg);
+}
+.nd-tour-bubble.is-below::before { top: -7px; border-right: none; border-bottom: none; }
+.nd-tour-bubble.is-above::before { bottom: -7px; border-left: none; border-top: none; }
+.nd-tour-bubble.is-none::before { display: none; }
+.nd-tour-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.nd-tour-count { font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.nd-tour-skip { font-size: 0.72rem; }
+.nd-tour-title { margin: 0 0 6px; font-family: var(--font-geist), system-ui, sans-serif; font-size: 1rem; font-weight: 500; letter-spacing: -0.01em; }
+.nd-tour-text { margin: 0; font-size: 0.76rem; line-height: 1.55; color: var(--nd-text-muted); }
+.nd-tour-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+.nd-tour-actions .nd-btn { height: 32px; padding: 0 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nd-tour-spot, .nd-tour-bubble { transition: none; }
+}

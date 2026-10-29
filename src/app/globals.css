@@ -2564,35 +2564,36 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   gap: 12px;
 }
 
-/* An empty page: one quiet card in the middle, with the way to fill it (administrators). */
-.nd-page-empty {
-  max-width: 400px;
-  margin: 12vh auto 0;
-  padding: 30px 28px;
+/* An empty page: for administrators, the slot where the first widget will go (dashed, like a free place
+   of the grid); for everyone else, one quiet line. */
+.nd-page-empty-slot {
+  width: min(100%, 460px);
+  min-height: 170px;
+  margin: 10vh auto 0;
+  padding: 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   text-align: center;
+  font: inherit;
   color: var(--nd-text-muted);
-  font-size: 0.85rem;
+  cursor: pointer;
   border-radius: var(--nd-card-radius, 12px);
-  border: 1px solid var(--nd-card-border);
-  background: var(--nd-card-bg);
-  -webkit-backdrop-filter: blur(var(--nd-surface-blur, 0px));
-  backdrop-filter: blur(var(--nd-surface-blur, 0px));
+  border: 1px dashed var(--nd-card-hover-border);
+  background: rgba(var(--nd-card-bg-rgb), 0.28);
+  -webkit-backdrop-filter: blur(var(--nd-surface-blur, 0px)) saturate(160%);
+  backdrop-filter: blur(var(--nd-surface-blur, 0px)) saturate(160%);
+  transition: border-color var(--nd-transition), color var(--nd-transition), background var(--nd-transition);
 }
-.nd-page-empty p { margin: 0; }
-.nd-page-empty-icon { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--nd-accent); background: var(--nd-accent-glow); }
-.nd-page-empty-title { color: var(--nd-text); font-size: 1rem; font-weight: 600; }
-
-.nd-page-empty-hint {
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: var(--nd-text-muted);
-}
-.nd-page-empty-add { margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; }
+.nd-page-empty-slot:hover, .nd-page-empty-slot:focus-visible { border-color: var(--nd-accent-dim); background: rgba(var(--nd-card-bg-rgb), 0.42); outline: none; }
+.nd-page-empty-plus { width: 32px; height: 32px; margin-bottom: 4px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--nd-card-hover-border); color: var(--nd-text-muted); transition: inherit; }
+.nd-page-empty-slot:hover .nd-page-empty-plus, .nd-page-empty-slot:focus-visible .nd-page-empty-plus { border-color: var(--nd-accent-dim); color: var(--nd-accent); }
+.nd-page-empty-title { color: var(--nd-text); font-size: 0.86rem; font-weight: 500; }
+.nd-page-empty-hint { max-width: 34ch; font-size: 0.74rem; line-height: 1.55; color: var(--nd-text-dimmed); }
+.nd-page-empty-viewer { margin: 14vh 0 0; text-align: center; font-size: 0.8rem; color: var(--nd-text-muted); }
 
 .nd-page-narrow-note {
   margin: 0 0 12px;

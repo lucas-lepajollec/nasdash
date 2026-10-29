@@ -1,186 +1,108 @@
-/* ---------- Sign-in, first start and first-run guide: a wallpaper and one frosted card ---------- */
-.ndw-welcome {
+/* ---------- Sign-in, first start and first-run guide ----------
+   The wallpaper and its veil, then NasDash's own surfaces, text, buttons and fields: the same tokens as the
+   dashboard and its settings, so arriving on the dashboard changes the content, not the look. */
+.ndw {
   position: relative;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 88px 16px 56px;
+  padding: 92px 16px 56px;
   box-sizing: border-box;
   overflow: hidden;
-  color: #eef0f3;
-  background: #0d1016;
-  font-family: var(--font-geist), system-ui, sans-serif;
+  color: var(--nd-text);
+  background: var(--nd-bg);
 }
-.ndw-welcome-wallpaper { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-/* A light veil so the card reads on any photo. */
-.ndw-welcome::after { content: ''; position: absolute; inset: 0; background: rgb(8 10 14 / 0.28); pointer-events: none; }
-.ndw-welcome > :not(.ndw-welcome-wallpaper) { position: relative; z-index: 1; }
-.ndw-welcome-brand { position: absolute !important; top: 26px; left: 32px; display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
-.ndw-welcome-clock { position: absolute !important; top: 22px; right: 32px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.ndw-welcome-time { font-size: 28px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
-.ndw-welcome-date { font: 400 12px/1 var(--font-geist-mono), monospace; color: #c3c8d1; }
+.ndw-wallpaper { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ndw::after { content: ''; position: absolute; inset: 0; background: var(--nd-wallpaper-veil); pointer-events: none; }
+.ndw > :not(.ndw-wallpaper) { position: relative; z-index: 1; }
+.ndw-brand { position: absolute !important; top: 26px; left: 32px; font-size: 0.86rem; font-weight: 500; letter-spacing: 0.01em; }
+.ndw-clock { position: absolute !important; top: 20px; right: 32px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.ndw-clock-time { font-family: var(--font-geist), system-ui, sans-serif; font-size: 2.1rem; font-weight: 300; letter-spacing: -0.045em; line-height: 0.95; font-variant-numeric: tabular-nums; }
+.ndw-clock-date { font-size: 0.72rem; color: var(--nd-text-muted); }
 
-.ndw-welcome-card {
-  width: 100%;
-  max-width: 360px;
+/* The glass: the dashboard's card colour at its opacity, the same blur, light hairlines. */
+.ndw-surface {
   box-sizing: border-box;
-  padding: 32px;
-  border-radius: 18px;
-  background: rgb(22 27 37 / 0.62);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  background: rgba(var(--nd-card-bg-rgb), var(--ndw-opacity, 0.6));
+  border: 1px solid rgb(255 255 255 / 0.09);
+  border-radius: 8px;
+  -webkit-backdrop-filter: blur(var(--ndw-blur, 24px)) saturate(160%);
+  backdrop-filter: blur(var(--ndw-blur, 24px)) saturate(160%);
 }
-.ndw-welcome-card.is-wide { max-width: 440px; }
-.ndw-welcome-head { display: flex; flex-direction: column; gap: 6px; }
-.ndw-welcome-eyebrow { font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #8be6f0; }
-.ndw-welcome-title { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
-.ndw-welcome-lead { margin: 0; font-size: 13.5px; line-height: 1.55; color: #c3c8d1; }
-.ndw-welcome-field { display: flex; flex-direction: column; gap: 8px; }
-.ndw-welcome-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.ndw-welcome-label { font: 500 11px/1 var(--font-geist-mono), monospace; letter-spacing: 0.1em; text-transform: uppercase; color: #a7adb8; }
-.ndw-welcome-input {
-  box-sizing: border-box;
-  width: 100%;
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  background: rgb(10 12 16 / 0.55);
-  color: #eef0f3;
-  font: 400 14px/1 var(--font-geist), system-ui, sans-serif;
-  outline: none;
-  transition: border-color 0.15s ease;
-}
-.ndw-welcome-input:focus-visible { border-color: rgb(139 230 240 / 0.7); }
-.ndw-welcome-input.is-code { font: 500 15px/1 var(--font-geist-mono), monospace; letter-spacing: 0.08em; text-transform: uppercase; }
-.ndw-welcome-submit {
-  height: 44px;
-  border: none;
-  border-radius: 10px;
-  background: #eef0f3;
-  color: #11151c;
-  font: 600 14px/1 var(--font-geist), system-ui, sans-serif;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: opacity 0.15s ease;
-}
-.ndw-welcome-submit:disabled { opacity: 0.6; cursor: default; }
-.ndw-welcome-link { padding: 0; border: none; background: none; color: #8be6f0; font: 400 12px/1 var(--font-geist), system-ui, sans-serif; cursor: pointer; }
-.ndw-welcome-link:hover { color: #c4f2f7; }
-.ndw-welcome-note { margin: 0; padding: 12px 14px; border-radius: 10px; font-size: 12.5px; line-height: 1.5; }
-.ndw-welcome-note.is-error { background: rgb(239 68 68 / 0.14); color: #fca5a5; }
-.ndw-welcome-note.is-ok { background: rgb(16 185 129 / 0.14); color: #6ee7b7; }
-.ndw-welcome-note.is-quiet { background: rgb(0 0 0 / 0.28); color: #c3c8d1; }
-.ndw-welcome-help { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; background: rgb(0 0 0 / 0.28); border: 1px solid rgb(255 255 255 / 0.07); }
-.ndw-welcome-help-title { font-size: 12.5px; font-weight: 500; color: #dfe3e9; }
-.ndw-welcome-command { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.ndw-welcome-command code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 12px/1.4 var(--font-geist-mono), monospace; color: #c3c8d1; }
-.ndw-welcome-icon-button { flex: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid rgb(255 255 255 / 0.12); background: transparent; color: #dfe3e9; cursor: pointer; }
-.ndw-welcome-small { margin: 0; font-size: 12px; line-height: 1.5; color: #a7adb8; }
-.ndw-welcome-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgb(0 0 0 / 0.15); border-top-color: #11151c; animation: spin 0.6s linear infinite; }
+body.light .ndw-surface { border-color: rgb(255 255 255 / 0.6); }
 
-@media (max-width: 560px) {
-  .ndw-welcome { padding: 76px 16px 32px; }
-  .ndw-welcome-brand { left: 16px; top: 20px; }
-  .ndw-welcome-clock { display: none; }
-  .ndw-welcome-card { padding: 24px; }
-}
-@media (prefers-reduced-motion: reduce) { .ndw-welcome-spinner { animation: none; } }
+/* Sign-in card: the settings' heading (crumb, title, description), then the fields. */
+.ndw-card { width: 100%; max-width: 380px; padding: 28px 28px 26px; display: flex; flex-direction: column; gap: 18px; }
+.ndw-card.is-wide { max-width: 440px; }
+.ndw-card .ndc-settings-title { margin-top: 4px; }
+.ndw-field { display: flex; flex-direction: column; gap: 7px; }
+.ndw-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ndw-label { font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.ndw .nd-input { height: 38px; font-size: 0.82rem; }
+.ndw .nd-input.is-code { font-size: 0.92rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.ndw .nd-btn.is-block { width: 100%; height: 38px; font-size: 0.78rem; }
+.ndw-note { margin: 0; padding: 10px 12px; border-radius: 6px; font-size: 0.74rem; line-height: 1.5; }
+.ndw-note.is-error { background: color-mix(in srgb, var(--nd-red) 14%, transparent); color: var(--nd-red); }
+.ndw-note.is-ok { background: color-mix(in srgb, var(--nd-green) 14%, transparent); color: var(--nd-green); }
+.ndw-help { display: flex; flex-direction: column; gap: 9px; padding: 12px 13px; border-radius: 6px; background: rgb(0 0 0 / 0.22); border: 1px solid var(--nd-card-border); }
+body.light .ndw-help { background: rgb(255 255 255 / 0.45); }
+.ndw-help-title { font-size: 0.74rem; color: var(--nd-text); }
+.ndw-command { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ndw-command code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.72rem; color: var(--nd-text-muted); }
+.ndw-small { margin: 0; font-size: 0.7rem; line-height: 1.5; color: var(--nd-text-dimmed); }
+.ndw-spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgb(0 0 0 / 0.2); border-top-color: currentColor; animation: spin 0.6s linear infinite; }
 
-/* ---------- First-run guide: the steps on the left, one step at a time on the right ---------- */
-.ndw-guide {
-  width: 100%;
-  max-width: 980px;
-  min-height: 600px;
-  display: flex;
-  border-radius: 20px;
-  overflow: hidden;
-  background: rgb(20 25 35 / 0.72);
-  border: 1px solid rgb(255 255 255 / 0.1);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-}
-.ndw-guide-steps { width: 250px; flex: none; box-sizing: border-box; padding: 28px 20px; border-right: 1px solid rgb(255 255 255 / 0.07); }
-.ndw-guide-brand { display: flex; align-items: center; gap: 10px; margin: 0 6px 22px; font-size: 14px; font-weight: 600; }
-.ndw-guide-steps ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
-.ndw-guide-steps li { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; }
-.ndw-guide-steps li.is-now { background: rgb(255 255 255 / 0.06); }
-.ndw-guide-badge { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 600; border: 1px solid rgb(255 255 255 / 0.18); color: #a7adb8; }
-.ndw-guide-steps li.is-now .ndw-guide-badge { border-color: transparent; background: #eef0f3; color: #11151c; }
-.ndw-guide-steps li.is-done .ndw-guide-badge { border-color: transparent; background: rgb(139 230 240 / 0.16); color: #8be6f0; }
-.ndw-guide-step-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.ndw-guide-step-name { font-size: 13.5px; font-weight: 500; color: #a7adb8; }
-.ndw-guide-steps li.is-now .ndw-guide-step-name, .ndw-guide-steps li.is-done .ndw-guide-step-name { color: #eef0f3; }
-.ndw-guide-step-hint { font-size: 11.5px; line-height: 1.3; color: #8d94a0; }
+/* ---------- First-run guide: laid out like Settings (steps on the left, one step on the right) ---------- */
+.ndw-guide { width: 100%; max-width: 1000px; height: min(680px, calc(100dvh - 140px)); min-height: 520px; display: flex; overflow: hidden; }
+.ndw-guide .ndc-settings-nav { width: 232px; flex: none; box-sizing: border-box; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--nd-card-border); }
+.ndw-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.ndw-step { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 5px; font-size: 0.8rem; color: var(--nd-text-dimmed); }
+.ndw-step.is-now { background: var(--nd-subcard-bg); color: var(--nd-text); }
+.ndw-step.is-done { color: var(--nd-text-muted); }
+.ndw-step-mark { width: 18px; flex: none; font-size: 0.7rem; text-align: center; color: inherit; }
+.ndw-step.is-done .ndw-step-mark { color: var(--nd-accent); }
+.ndw-guide-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ndw-guide-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 26px 34px 20px; }
+.ndw-guide-scroll .ndc-settings-head { margin-bottom: 18px; padding-right: 0; }
+.ndw-guide-content { display: flex; flex-direction: column; gap: 22px; }
+.ndw-guide-fields { display: grid; gap: 14px; max-width: 380px; }
+.ndw-guide-actions { display: flex; align-items: center; gap: 8px; padding: 14px 34px; border-top: 1px solid var(--nd-card-border); }
+.ndw-guide-actions .ndw-spacer { flex: 1; min-width: 0; margin-right: 10px; font-size: 0.72rem; color: var(--nd-text-dimmed); text-align: right; }
+.ndw-guide-actions .nd-btn { height: 34px; padding: 0 14px; font-size: 0.76rem; }
 
-.ndw-guide-body { flex: 1; min-width: 0; box-sizing: border-box; padding: 28px 32px 22px; display: flex; flex-direction: column; gap: 14px; }
-.ndw-welcome-eyebrow.is-quiet { color: #a7adb8; }
-.ndw-guide-content { flex: 1; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
-.ndw-guide-content .ndw-welcome-lead { max-width: 560px; }
-.ndw-guide-fields { display: grid; gap: 14px; max-width: 420px; }
-.ndw-guide-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.ndw-guide-fieldset { margin: 0; padding: 0; border: none; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.ndw-guide-segmented { display: flex; height: 44px; padding: 3px; box-sizing: border-box; border-radius: 10px; background: rgb(10 12 16 / 0.55); border: 1px solid rgb(255 255 255 / 0.12); }
-.ndw-guide-segmented button { flex: 1; border: none; border-radius: 7px; background: transparent; color: #a7adb8; font: 500 13px/1 var(--font-geist), system-ui, sans-serif; cursor: pointer; }
-.ndw-guide-segmented button.is-on { background: rgb(255 255 255 / 0.1); color: #eef0f3; }
-.ndw-guide-wallpapers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
-.ndw-guide-wallpapers button { position: relative; padding: 0; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; border: 2px solid transparent; background: none; cursor: pointer; }
-.ndw-guide-wallpapers button.is-on { border-color: #8be6f0; }
-.ndw-guide-wallpapers img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Integrations: one row per family (like the rows of Settings → Integrations), its tiles under it. */
+.ndw-families { display: flex; flex-direction: column; gap: 8px; }
+.ndw-family { border: 1px solid var(--nd-card-border); border-radius: 6px; background: rgb(0 0 0 / 0.12); }
+body.light .ndw-family { background: rgb(255 255 255 / 0.4); }
+.ndw-family-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: none; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ndw-family-icon { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 6px; background: var(--nd-icon-bg); color: var(--nd-text-muted); }
+.ndw-family-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ndw-family-name { font-size: 0.82rem; color: var(--nd-text); }
+.ndw-family-hint { font-size: 0.7rem; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-family-state { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; color: var(--nd-text-dimmed); }
+.ndw-family-state.is-on { color: var(--nd-green); }
+.ndw-family-state.is-on::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ndw-family .ndc-int-tiles { padding: 0 13px 13px; }
 
-.ndw-guide-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
-.ndw-guide-family { display: flex; flex-direction: column; border-radius: 12px; border: 1px solid rgb(255 255 255 / 0.09); background: rgb(255 255 255 / 0.03); min-width: 0; }
-.ndw-guide-family.is-open { grid-column: 1 / -1; border-color: rgb(255 255 255 / 0.16); }
-.ndw-guide-tile { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border: none; background: none; color: inherit; text-align: left; cursor: pointer; min-width: 0; font: inherit; }
-.ndw-guide-tile-icon { width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: rgb(255 255 255 / 0.07); color: #c3c8d1; }
-.ndw-guide-tile-text { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
-.ndw-guide-tile-name { font-size: 14px; font-weight: 500; color: #eef0f3; }
-.ndw-guide-tile-hint { font-size: 12px; line-height: 1.35; color: #a7adb8; }
-.ndw-guide-tile-state { flex: none; padding: 7px 11px; border-radius: 8px; border: 1px solid rgb(255 255 255 / 0.12); font-size: 12px; font-weight: 500; color: #dfe3e9; white-space: nowrap; }
-.ndw-guide-tile-state.is-on { border-color: transparent; padding-inline: 0; color: #8be6f0; }
-.ndw-guide-kinds { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 14px; }
-.ndw-guide-kind { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px; border: 1px solid rgb(255 255 255 / 0.12); background: rgb(10 12 16 / 0.4); color: #eef0f3; font: 500 13px/1 var(--font-geist), system-ui, sans-serif; cursor: pointer; }
-.ndw-guide-kind:hover { border-color: rgb(139 230 240 / 0.5); }
-
-.ndw-guide-group { display: flex; flex-direction: column; gap: 10px; }
-.ndw-guide-group-name { font-size: 12.5px; font-weight: 500; color: #c3c8d1; }
-.ndw-guide-widgets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.ndw-guide-widget { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 11px; border: 1px solid rgb(255 255 255 / 0.09); background: rgb(255 255 255 / 0.03); font-size: 13px; font-weight: 500; cursor: pointer; min-width: 0; }
-.ndw-guide-widget.is-on { border-color: rgb(139 230 240 / 0.4); background: rgb(139 230 240 / 0.07); }
-.ndw-guide-widget input { width: 16px; height: 16px; margin: 0; flex: none; accent-color: #8be6f0; }
-.ndw-guide-widget span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.ndw-guide-choices { display: grid; gap: 10px; max-width: 560px; }
-.ndw-guide-choice { display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgb(255 255 255 / 0.1); background: rgb(255 255 255 / 0.03); text-align: left; color: inherit; font: inherit; cursor: pointer; }
-.ndw-guide-choice.is-on { border-color: rgb(139 230 240 / 0.5); background: rgb(139 230 240 / 0.07); }
-
-.ndw-guide-actions { margin-top: auto; display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid rgb(255 255 255 / 0.07); }
-.ndw-guide-spacer { flex: 1; min-width: 0; text-align: right; }
-.ndw-guide-primary { height: 40px; padding: 0 20px; font-size: 13.5px; }
-.ndw-guide-secondary, .ndw-guide-quiet { height: 40px; padding: 0 16px; border-radius: 10px; font: 500 13.5px/1 var(--font-geist), system-ui, sans-serif; cursor: pointer; }
-.ndw-guide-secondary { border: 1px solid rgb(255 255 255 / 0.12); background: transparent; color: #dfe3e9; }
-.ndw-guide-quiet { border: none; background: transparent; color: #a7adb8; }
+/* Widgets: the cards of the widget library. */
+.ndw .nd-page-library-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 
 @media (max-width: 860px) {
-  .ndw-guide { flex-direction: column; min-height: 0; }
-  .ndw-guide-steps { width: auto; padding: 18px 16px 10px; border-right: none; border-bottom: 1px solid rgb(255 255 255 / 0.07); }
-  .ndw-guide-steps ol { flex-direction: row; overflow-x: auto; }
-  .ndw-guide-step-hint { display: none; }
-  .ndw-guide-body { padding: 20px 18px 18px; }
-  .ndw-guide-tiles, .ndw-guide-row { grid-template-columns: 1fr; }
-  .ndw-guide-widgets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ndw-guide-wallpapers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ndw-guide { flex-direction: column; height: auto; min-height: 0; }
+  .ndw-guide .ndc-settings-nav { width: auto; padding: 10px 12px; border-right: none; border-bottom: 1px solid var(--nd-card-border); }
+  .ndw-steps { flex-direction: row; overflow-x: auto; }
+  .ndw-step:not(.is-now) .ndw-step-name { display: none; }
+  .ndw-guide-scroll { padding: 20px 18px 16px; overflow: visible; }
+  .ndw-guide-actions { padding: 12px 18px; flex-wrap: wrap; }
 }
-@media (max-width: 480px) {
-  .ndw-guide-steps li:not(.is-now) .ndw-guide-step-text { display: none; }
-  .ndw-guide-widgets { grid-template-columns: 1fr; }
-  .ndw-guide-actions { flex-wrap: wrap; }
+@media (max-width: 560px) {
+  .ndw { padding: 72px 12px 24px; }
+  .ndw-brand { left: 18px; top: 22px; }
+  .ndw-clock { right: 18px; top: 16px; }
+  .ndw-clock-time { font-size: 1.5rem; }
+  .ndw-clock-date { display: none; }
+  .ndw-card { padding: 22px 20px; }
+  .ndw-guide-actions .ndw-spacer { display: none; }
 }
+@media (prefers-reduced-motion: reduce) { .ndw-spinner { animation: none; } }

@@ -43,9 +43,9 @@
     "hideDock": true,
     "customCss": "",
     "enablePerfMonitor": false,
-    "backgroundImage": "/wallpapers/aurora-lake.jpg",
+    "backgroundImage": "/wallpapers/nasdash-aurora.jpg",
     "borderRadius": 12,
-    "cardOpacity": 0.55,
+    "cardOpacity": 0.6,
     "globalFont": "Outfit",
     "titleMobile": "",
     "titleLogo": "",
@@ -208,8 +208,8 @@
       }
     },
     "setupPending": true,
-    "surfaceBlur": 18,
-    "onboardingDismissed": true
+    "surfaceBlur": 24,
+    "wallpaperDim": 0.15
   },
   "devices": [],
   "dockerHosts": [],

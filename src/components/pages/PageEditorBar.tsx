@@ -54,7 +54,7 @@ export function PageEditorBar({ onAddWidget }: { onAddWidget: () => void }) {
             <Redo2 size={15} />
           </button>
         </div>
-        <button type="button" className="nd-btn nd-page-editor-add" onClick={onAddWidget} disabled={saving}>
+        <button type="button" data-tour="add-widget" className="nd-btn nd-page-editor-add" onClick={onAddWidget} disabled={saving}>
           <Plus size={14} /> <span>{t('pages.editor.addWidget')}</span>
         </button>
         <div className="nd-page-editor-group">

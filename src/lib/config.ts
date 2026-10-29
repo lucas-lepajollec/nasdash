@@ -21,7 +21,7 @@ const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const SERVICES_PATH = path.join(DATA_DIR, 'services.json');
 /** Settings of config.example.json that describe a new installation only, never backfilled into an existing one. */
 export const FRESH_INSTALL_SETTINGS: ReadonlySet<string> = new Set([
-  'setupPending', 'securityMode', 'title', 'tabOrder', 'tabIcons', 'backgroundImage', 'cardOpacity', 'surfaceBlur', 'emojiTheme', 'onboardingDismissed',
+  'setupPending', 'securityMode', 'title', 'tabOrder', 'tabIcons', 'backgroundImage', 'cardOpacity', 'surfaceBlur', 'wallpaperDim', 'emojiTheme',
 ]);
 const TOPOLOGY_PATH = path.join(DATA_DIR, 'topology.json');
 const CALENDAR_PATH = path.join(DATA_DIR, 'calendar.json');

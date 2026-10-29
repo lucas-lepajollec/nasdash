@@ -38,12 +38,13 @@ describe('supplied installation defaults', () => {
     const { readPagesDocument } = await import('./pages/store');
     const config = readConfig();
     const pages = readPagesDocument();
-    expect(config.settings).toMatchObject({ uiLanguage: 'en', securityMode: 'private', setupPending: true, backgroundImage: '/wallpapers/aurora-lake.jpg', emojiTheme: 'lucide' });
+    expect(config.settings).toMatchObject({ uiLanguage: 'en', securityMode: 'private', setupPending: true, backgroundImage: '/wallpapers/nasdash-aurora.jpg', emojiTheme: 'lucide' });
     expect(config.settings.surfaceBlur).toBeGreaterThan(0);
     expect(config.devices).toEqual([]);
     expect(config.dockerHosts).toEqual([]);
     expect(config.categories).toEqual([]);
-    expect(pages.pages).toEqual([expect.objectContaining({ id: 'dashboard', name: 'Home', widgets: [] })]);
+    expect(pages.pages).toEqual([expect.objectContaining({ id: 'dashboard', name: 'Home' })]);
+    expect(pages.pages[0].widgets.map(widget => widget.type)).toEqual(['clock', 'weather']);
     expect(read('topology').nodes).toEqual([]);
     expect(read('services')).toEqual([]);
   });
@@ -51,10 +52,10 @@ describe('supplied installation defaults', () => {
   it('never adds the new-installation defaults to an upgraded configuration that lacks them', async () => {
     // An installation from before 0.4: no guide flag, no blur, no privacy mode or icon set ever saved.
     const { settings } = JSON.parse(fs.readFileSync(path.join(directory, 'config.example.json'), 'utf8'));
-    for (const key of ['setupPending', 'securityMode', 'surfaceBlur', 'emojiTheme', 'onboardingDismissed', 'backgroundImage', 'title', 'tabOrder', 'tabIcons', 'cardOpacity']) delete settings[key];
+    for (const key of ['setupPending', 'securityMode', 'surfaceBlur', 'emojiTheme', 'wallpaperDim', 'backgroundImage', 'title', 'tabOrder', 'tabIcons', 'cardOpacity']) delete settings[key];
     write('config', { version: 1, settings, categories: [], devices: [] });
     const config = (await import('./config')).readConfig();
-    for (const key of ['setupPending', 'securityMode', 'surfaceBlur', 'emojiTheme', 'onboardingDismissed', 'backgroundImage']) expect(config.settings, key).not.toHaveProperty(key);
+    for (const key of ['setupPending', 'securityMode', 'surfaceBlur', 'emojiTheme', 'wallpaperDim', 'backgroundImage']) expect(config.settings, key).not.toHaveProperty(key);
     expect(read('config').settings).not.toHaveProperty('setupPending');
   });
 

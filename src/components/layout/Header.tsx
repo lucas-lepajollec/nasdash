@@ -83,7 +83,7 @@ export default function Header(props: HeaderProps) {
   const SearchElement = ({ isMobile }: { isMobile?: boolean }) => {
     if (!isMobile && hideHeaderSearch) return null;
     return (
-      <div className="nd-search">
+      <div className="nd-search" data-tour="search">
         <Search size={13} className="nd-search-icon" />
         <input
           type="text"
@@ -146,6 +146,7 @@ export default function Header(props: HeaderProps) {
     return (
       <div className="nd-header-actions nd-desktop-actions pr-2 md:pr-0" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button
+          data-tour="privacy"
           className={`nd-btn ${!props.secretMode ? 'nd-btn-active' : ''}`}
           onClick={props.onToggleSecret}
           title={props.secretMode ? t("Masquer les infos") : t("Afficher les infos")}
@@ -155,13 +156,14 @@ export default function Header(props: HeaderProps) {
         {user?.role === 'admin' && (
           <>
             <button
+              data-tour="edit"
               className={`nd-btn ${props.editMode ? 'nd-btn-active' : ''}`}
               onClick={props.onToggleEdit}
               title={t("Mode édition")}
             >
               <Pencil size={14} />
             </button>
-            <button data-settings-trigger="true" className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title={t("Paramètres globaux")}>
+            <button data-settings-trigger="true" data-tour="settings" className="nd-btn" onClick={(event) => props.onOpenSettings(event.currentTarget)} title={t("Paramètres globaux")}>
               <Settings size={14} />
             </button>
           </>
@@ -261,6 +263,7 @@ export default function Header(props: HeaderProps) {
                 justifyContent: 'flex-end' 
               }}>
                 <button
+                  data-tour="menu"
                   className={`nd-btn ${mobileMenuOpen ? 'nd-btn-active' : ''}`}
                   aria-label={mobileMenuOpen ? t("Fermer le menu") : t("Ouvrir le menu")}
                   aria-expanded={mobileMenuOpen}

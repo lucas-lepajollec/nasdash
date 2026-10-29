@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { applySoftEdges } from '@/lib/appearance';
+import { applySoftEdges, applyWallpaperDim } from '@/lib/appearance';
 import { Plus, X } from 'lucide-react';
 import type { AppearanceProfile } from '@/lib/types';
 import { useConfig } from '@/hooks/useConfig';
@@ -165,6 +165,9 @@ function Appearance(props: CalmeAppearanceProps) {
         <CalmeRow label={t('settings.calme.blur')} info={t('settings.calme.blurHint')}>
           <BlurSlider />
         </CalmeRow>
+        <CalmeRow label={t('settings.calme.veil')} info={t('settings.calme.veilHint')}>
+          <WallpaperDimSlider />
+        </CalmeRow>
         <CalmeRow label={t('settings.calme.softEdges')} info={t('settings.calme.softEdgesHint')}>
           <SoftEdgesSlider />
         </CalmeRow>
@@ -259,6 +262,26 @@ function BlurSlider() {
       onChange={preview}
       onCommit={async next => { await updateConfig({ surfaceBlur: next }); setValue(null); }}
       format={next => (next === 0 ? t('settings.calme.off') : `${next} px`)}
+    />
+  );
+}
+
+/** Veil over the wallpaper: moves live, saved on release. */
+function WallpaperDimSlider() {
+  const { t } = useI18n();
+  const { config, updateConfig } = useConfig();
+  const [value, setValue] = useState<number | null>(null);
+  const shown = value ?? config?.settings?.wallpaperDim ?? 0;
+  return (
+    <CalmeSlider
+      label={t('settings.calme.veil')}
+      value={shown}
+      min={0}
+      max={0.6}
+      step={0.05}
+      onChange={next => { setValue(next); applyWallpaperDim(next); }}
+      onCommit={async next => { await updateConfig({ wallpaperDim: next }); setValue(null); }}
+      format={next => (next === 0 ? t('settings.calme.off') : `${Math.round(next * 100)} %`)}
     />
   );
 }

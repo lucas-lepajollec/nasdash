@@ -10,7 +10,7 @@ const headers = { 'Cache-Control': 'no-store' };
 
 /**
  * GET: what the sign-in and first-start screens need before anyone is signed in — whether this installation is new,
- * and how to dress the screen (bundled wallpaper, light or dark, language). Nothing else about the dashboard.
+ * and how to dress the screen (bundled wallpaper, light or dark, language, the surfaces' glass). Nothing else.
  */
 export async function GET() {
   const settings = readConfig().settings ?? {};
@@ -21,6 +21,12 @@ export async function GET() {
     wallpaper,
     mode: settings.mode === 'light' ? 'light' : 'dark',
     language: settings.uiLanguage ?? null,
+    // The look of the dashboard's surfaces, so signing in looks like what follows.
+    glass: {
+      opacity: typeof settings.cardOpacity === 'number' && settings.cardOpacity < 1 ? settings.cardOpacity : 0.6,
+      blur: typeof settings.surfaceBlur === 'number' && settings.surfaceBlur > 0 ? settings.surfaceBlur : 24,
+      dim: typeof settings.wallpaperDim === 'number' ? settings.wallpaperDim : 0.15,
+    },
   }, { headers });
 }
 

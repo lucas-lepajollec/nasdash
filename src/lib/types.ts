@@ -419,6 +419,8 @@ export interface DashboardConfig {
     hideOutlines?: boolean;
     /** Background blur (px) behind widgets, dialogs and settings. */
     surfaceBlur?: number;
+    /** Veil over the wallpaper (0–0.8): darkens it in dark mode, lightens it in light mode. */
+    wallpaperDim?: number;
     /** Soft edges (px): surfaces fade into the page instead of ending on a hard line. */
     softEdges?: number;
     emojiTheme?: string;

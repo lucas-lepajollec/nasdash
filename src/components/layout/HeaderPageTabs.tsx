@@ -29,7 +29,7 @@ export function HeaderPageTabs(props: TabsProps) {
 function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, showIcons, flushFirst, tabIcons }: TabsProps) {
   const { t } = useI18n();
   return (
-    <nav className="nd-header-menu" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <nav data-tour="pages" className="nd-header-menu" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
       {tabs.slice(start, end).map((tab, index) => {
         const isActive = tab.id === activeTab;
         const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
@@ -71,7 +71,7 @@ function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch,
   };
 
   return (
-    <nav className={`nd-header-menu ${editing ? 'is-editing' : ''}`}>
+    <nav data-tour="pages" className={`nd-header-menu ${editing ? 'is-editing' : ''}`}>
       <Sortable editing={editing} ids={shown.map(tab => tab.id)} onMove={move}>
         {shown.map((tab, index) => {
           const isActive = tab.id === activeTab;

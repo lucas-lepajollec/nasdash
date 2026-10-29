@@ -432,6 +432,7 @@ async function handlePUT(req: NextRequest) {
     if (body.borderRadius !== undefined) config.settings.borderRadius = body.borderRadius;
     if (body.cardOpacity !== undefined) config.settings.cardOpacity = body.cardOpacity;
     if (body.surfaceBlur !== undefined) config.settings.surfaceBlur = body.surfaceBlur;
+    if (body.wallpaperDim !== undefined) config.settings.wallpaperDim = body.wallpaperDim;
     if (body.softEdges !== undefined) config.settings.softEdges = body.softEdges;
     if (body.onboardingDismissed !== undefined) config.settings.onboardingDismissed = body.onboardingDismissed;
     if (body.tasks !== undefined) config.settings.tasks = { ...(config.settings.tasks ?? {}), ...body.tasks };

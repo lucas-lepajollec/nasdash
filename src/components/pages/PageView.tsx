@@ -18,13 +18,12 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { LayoutGrid, List, Plus, Settings2, SquareStack, X } from 'lucide-react';
+import { List, Plus, Settings2, SquareStack, X } from 'lucide-react';
 import { WidgetTitleContext } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
-import { GettingStarted } from './GettingStarted';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
@@ -165,22 +164,14 @@ export function PageView(props: PageViewProps) {
     <DockerWorkspaceProvider enabled={isVisible && hasDocker} summaryOnPage={page.widgets.some(widget => !widget.hidden && widget.type === 'docker-summary')}>
       <DndContext sensors={sensors} collisionDetection={innerCollision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setInnerDrag(null)}>
         <div className={`nd-page ${editMode ? 'nd-page--editing' : ''}`} data-page-id={page.id}>
-          {page.id === 'dashboard' && !editMode && <GettingStarted />}
-          {shown.length === 0 && (
-            <div className="nd-page-empty">
-              <span className="nd-page-empty-icon" aria-hidden="true"><LayoutGrid size={20} /></span>
-              <p className="nd-page-empty-title">{t('pages.empty.title')}</p>
-              {user?.role === 'admin' ? (
-                <>
-                  <p className="nd-page-empty-hint">{t('pages.empty.lead')}</p>
-                  {/* Outside edit mode too: the button enters it and opens the widget library at once. */}
-                  <button type="button" className="nd-btn nd-btn-accent nd-page-empty-add" onClick={() => { if (!editMode) startEditing(); props.onOpenLibrary({ pageId: page.id }); }}>
-                    <Plus size={14} /> {t('pages.column.addWidget')}
-                  </button>
-                </>
-              ) : <p className="nd-page-empty-hint">{t('pages.empty.viewer')}</p>}
-            </div>
-          )}
+          {shown.length === 0 && (user?.role === 'admin' ? (
+            // Where the first widget will go: the whole slot enters edit mode and opens the widget library.
+            <button type="button" className="nd-page-empty-slot" onClick={() => { if (!editMode) startEditing(); props.onOpenLibrary({ pageId: page.id }); }}>
+              <span className="nd-page-empty-plus" aria-hidden="true"><Plus size={16} /></span>
+              <span className="nd-page-empty-title">{t('pages.column.addWidget')}</span>
+              <span className="nd-page-empty-hint">{t('pages.empty.lead')}</span>
+            </button>
+          ) : <p className="nd-page-empty-viewer">{t('pages.empty.viewer')}</p>)}
           <PageGrid {...props} page={page} widgets={shown} editMode={editMode} edit={edit} />
         </div>
         <DragOverlay>

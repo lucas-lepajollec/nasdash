@@ -21,6 +21,7 @@ import { WidgetLibraryModal } from '@/components/pages/WidgetLibraryModal';
 import { usePages } from '@/providers/PagesProvider';
 import { PageFooter } from '@/components/layout/PageFooter';
 import { insertWidget, newWidgetInstance, removeWidget } from '@/lib/pages/operations';
+import { ProductTour } from '@/components/welcome/ProductTour';
 
 export default function Shell() {
   const { t } = useI18n();
@@ -36,7 +37,7 @@ export default function Shell() {
     user
   } = useConfig();
 
-  const { pages, editing, startEditing, finishEditing, getPage, applyToPage, applyToPages, loadError: pagesError } = usePages();
+  const { pages, editing, startEditing, finishEditing, cancelEditing, getPage, applyToPage, applyToPages, loadError: pagesError } = usePages();
   const editMode = user?.role === 'admin' && editing;
 
   // A new installation's administrator goes through the first-run guide first (it can be skipped there).
@@ -44,6 +45,24 @@ export default function Shell() {
   useEffect(() => {
     if (setupPending) window.location.replace('/setup');
   }, [setupPending]);
+  // The dashboard tour: once after the first-run guide (`/?tour`), again from Settings → Help.
+  const [touring, setTouring] = useState(false);
+  const isAdmin = user?.role === 'admin' && !user.isAnonymous;
+  const pagesReady = pages.length > 0;
+  useEffect(() => {
+    if (!isAdmin || !pagesReady || setupPending) return;
+    const url = new URL(window.location.href);
+    let timer = 0;
+    if (url.searchParams.has('tour')) {
+      url.searchParams.delete('tour');
+      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      // Once the widgets are drawn, so the bubbles find them.
+      timer = window.setTimeout(() => setTouring(true), 700);
+    }
+    const start = () => setTouring(true);
+    window.addEventListener('nasdash:tour', start);
+    return () => { window.clearTimeout(timer); window.removeEventListener('nasdash:tour', start); };
+  }, [isAdmin, pagesReady, setupPending]);
   const [libraryTarget, setLibraryTarget] = useState<LibraryTarget | null>(null);
   // Pages are mounted on first visit, then kept mounted to preserve their state.
   const [visitedPages, setVisitedPages] = useState<string[]>([]);
@@ -191,6 +210,8 @@ export default function Shell() {
         </div>
         <PageFooter showSecretSections={showSecretSections} onToggleSecretSections={() => setShowSecretSections(prev => !prev)} />
       </div>
+
+      {touring && <ProductTour onEnterEdit={startEditing} onLeaveEdit={cancelEditing} onClose={() => setTouring(false)} />}
 
       {settingsModal.open && user?.role === 'admin' && (
         <SettingsModal showSensitive={showSensitive} onClose={() => {
