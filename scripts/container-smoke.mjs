@@ -78,10 +78,14 @@ async function verifyEnglishInstall(session) {
   };
   const config = await get('/api/config');
   assert.equal(config.settings.uiLanguage, 'en');
-  assert.deepEqual(config.devices.map(device => device.name), ['Main Server', 'Hypervisor']);
-  assert.deepEqual(config.categories.flatMap(category => category.services.map(service => service.name)), ['Example Service 1', 'Example Service 2']);
+  // A new installation: private, waiting for its first-run guide, no sample infrastructure.
+  assert.equal(config.settings.securityMode, 'private');
+  assert.equal(config.settings.setupPending, true);
+  assert.deepEqual(config.devices, []);
+  assert.deepEqual(config.categories.flatMap(category => category.services.map(service => service.name)), []);
   const document = await get('/api/pages');
-  assert.deepEqual(document.pages.map(page => page.name), ['Home', 'Docker', 'Networks', 'Widgets', 'Calendar']);
+  assert.deepEqual(document.pages.map(page => page.name), ['Home']);
+  assert.deepEqual(document.pages[0].widgets.map(widget => widget.type), ['clock', 'weather']);
 }
 
 function customizeAndHash(name) {
@@ -92,8 +96,7 @@ function customizeAndHash(name) {
       const value = JSON.parse(fs.readFileSync(file, 'utf8'));
       update(value); fs.writeFileSync(file, JSON.stringify(value, null, 2));
     };
-    change('config', value => { value.settings.title = 'Le labo de Camille'; value.devices[0].name = 'Serveur personnalisé'; });
-    change('services', value => { value[0].services[0].name = 'Mon application'; });
+    change('config', value => { value.settings.title = 'Le labo de Camille'; });
     change('pages', value => { value.pages[0].name = 'Mon tableau'; });
     const hash = crypto.createHash('sha256');
     for (const name of ['config','services','topology','calendar','custom_tabs','pages']) hash.update(fs.readFileSync('/app/data/' + name + '.json'));

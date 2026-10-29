@@ -46,7 +46,7 @@
     "react-dom": "19.3.0",
     "recharts": "^3.10.1",
     "swr": "^2.5.1",
-    "systeminformation": "^5.33.15",
+    "systeminformation": "^5.33.18",
     "uuid": "13.0.2"
   },
   "devDependencies": {
