@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
 import { runDemoWorkspace, type DemoWorkspace } from '@/lib/demoSession';
+import { recordDemoAuthoring } from '@/lib/demoAuthoring';
 import { readJsonObject, readEnum, readString, isJsonObject, RequestValidationError } from '@/lib/requestValidation';
 import * as config from '@/app/api/config/route';
 import * as pages from '@/app/api/pages/route';
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
       const response = await handler(innerRequest, { params: Promise.resolve(params) });
       return { status: response.status, body: await response.json() };
     });
+    if (method !== 'GET' && answer.result.status < 400) recordDemoAuthoring(answer.workspace);
     return NextResponse.json(answer, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     if (error instanceof RequestValidationError) return NextResponse.json({ error: error.message }, { status: error.status });

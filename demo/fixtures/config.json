@@ -46,7 +46,7 @@
       "right": "title",
       "splitMenuAround": "none"
     },
-    "headerLayoutMobile": { "left": "title", "center": "search" },
+    "headerLayoutMobile": { "left": "search", "center": "none" },
     "showHeaderMenuIcons": false,
     "showPingDetails": false,
     "pingIndicatorMode": "all",
