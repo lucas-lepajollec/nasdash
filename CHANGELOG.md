@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-29
+
+### Upgrading from 0.3.5
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Existing installations keep their settings, security mode, accounts and pages, and do not enter the first-run guide. Roll back by recreating the recorded `0.3.5` image.
+- Only new installations start private, ask for the setup code printed once in the container logs, and open the guide.
+
 ### Added
 
 - First start: a new installation opens on a sign-in screen asking for the **setup code** the container prints once (`Setup code: XXXX-XXXX-XXXX`), then a five-step guide: your administrator password, language and look (light or dark, wallpaper), integrations, the widgets of Home, and access (private or open to read). The guide can be skipped once the password is set; `NASDASH_ADMIN_PASSWORD` still sets the first password instead of the code.
@@ -578,7 +585,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.2...v0.3.3
