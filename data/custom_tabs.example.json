@@ -1,37 +1,4 @@
 {
-  "tabs": [
-    {
-      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
-      "name": "Calendar",
-      "icon": "lucide:Calendar",
-      "description": "Custom tab",
-      "isCustom": true
-    }
-  ],
-  "layouts": {
-    "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": {
-      "id": "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2",
-      "rows": [
-        {
-          "id": "97765567-ec25-4a10-86e7-65d439060925",
-          "type": "1-col",
-          "columns": [
-            {
-              "id": "ac3b34e6-7a7b-4349-90d6-9902c4003c33",
-              "width": "100%",
-              "content": null,
-              "widgets": [
-                {
-                  "type": "clock"
-                },
-                {
-                  "type": "calendar"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  }
+  "tabs": [],
+  "layouts": {}
 }

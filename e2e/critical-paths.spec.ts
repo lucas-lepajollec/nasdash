@@ -79,7 +79,14 @@ test.describe.serial('critical self-hosted paths', () => {
     // inner scroll, or dozens of containers stretch the page.
     const containerList = page.locator('.nd-docker-container-list-scroll').first();
     await expect(containerList).toBeVisible();
-    expect(await containerList.evaluate(el => [getComputedStyle(el).overflowY, getComputedStyle(el).maxHeight])).toEqual(['auto', '560px']);
+    expect(await containerList.evaluate(el => getComputedStyle(el).overflowY)).toBe('auto');
+    // Exactly seven cards are visible: the eighth starts below the list's edge.
+    await expect.poll(() => containerList.evaluate(el => {
+      const cards = el.querySelectorAll('.nd-container-card');
+      if (cards.length < 8) return true;
+      const bottom = el.getBoundingClientRect().bottom;
+      return cards[6].getBoundingClientRect().bottom <= bottom && cards[7].getBoundingClientRect().top >= bottom - 6;
+    })).toBe(true);
   });
 
   test('admin login through the UI persists a normal settings update', async ({ page }) => {

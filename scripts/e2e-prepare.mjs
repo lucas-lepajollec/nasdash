@@ -4,7 +4,9 @@ import path from 'node:path';
 const projectDirectory = process.cwd();
 const e2eDirectory = path.resolve(projectDirectory, '.e2e');
 const dataDirectory = path.join(e2eDirectory, 'data');
-const sourceDataDirectory = path.join(projectDirectory, 'data');
+// An installation already in use (the 0.3.5 examples), not a new one: the suite
+// tests the dashboard, not the first-run guide.
+const sourceDataDirectory = path.join(projectDirectory, 'e2e', 'fixtures', 'data');
 
 if (path.dirname(dataDirectory) !== e2eDirectory) {
   throw new Error('Refusing to prepare an E2E data directory outside .e2e.');

@@ -9,7 +9,7 @@ import { isDemoMode } from '../demoMode';
 import { getDemoSessionPages, setDemoSessionPages } from '../demoSession';
 import { canViewWidget, type WidgetViewer } from '../widgets/catalog';
 import { migrateLegacyPages, sectionedPageToGrid, type SectionedPage } from './legacy-migration';
-import { resolveOverlaps } from './operations';
+import { insertWidget, newWidgetInstance, resolveOverlaps } from './operations';
 import { PAGES_SCHEMA_VERSION, type Page, type PagesDocument } from './types';
 import { validatePagesDocument } from './validation';
 
@@ -41,8 +41,18 @@ function clone<T>(value: T): T {
 
 function buildFromLegacy(): PagesDocument {
   const config = readConfig();
+  // A new installation starts from one empty Home page: the first-run guide (or the empty page's button) fills it.
+  if (config.settings?.setupPending) return { schemaVersion: PAGES_SCHEMA_VERSION, pages: [freshHomePage()] };
   const customTabs = readCustomTabs();
   return migrateLegacyPages({ config, categories: config.categories || [], customTabs });
+}
+
+/** Widgets a new installation's Home starts with, so the page is never blank on arrival. */
+export const FRESH_HOME_WIDGETS = ['clock', 'weather'] as const;
+
+export function freshHomePage(): Page {
+  const empty: Page = { id: 'dashboard', name: 'Home', icon: 'lucide:House', revision: 0, widgets: [] };
+  return FRESH_HOME_WIDGETS.reduce((page, type) => insertWidget(page, newWidgetInstance(type, {}, page)), empty);
 }
 
 /**

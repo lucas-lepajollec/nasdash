@@ -4,10 +4,12 @@ import { resetDemoTransport } from '@/lib/demoTransport';
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CircleHelp, RotateCcw, ShieldCheck } from 'lucide-react';
+import { CircleHelp, MousePointerClick, RotateCcw, ShieldCheck, Timer } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useConfig } from '@/hooks/useConfig';
 import { LIGHT_THEMES } from '@/lib/themes';
+import { requestProductTour } from '@/components/welcome/ProductTour';
+import '../../app/demo.css';
 
 const INTRO_KEY = 'lh-demo-intro-seen';
 /** Themes offered in the demo introduction, each with its preview colours. */
@@ -32,6 +34,10 @@ function readIntroSeen() {
   }
 }
 
+/**
+ * The public demo's welcome: what NasDash is, what is safe to try, a theme to
+ * try, then the dashboard tour or free exploration. A small chip reopens it.
+ */
 export default function DemoExperience() {
   const { t, language } = useI18n();
   const { config, updateConfig } = useConfig();
@@ -68,6 +74,11 @@ export default function DemoExperience() {
     setGuideOpen(false);
   };
 
+  const startTour = () => {
+    closeGuide();
+    window.setTimeout(requestProductTour, 250);
+  };
+
   const resetDemo = async () => {
     try {
       sessionStorage.removeItem(INTRO_KEY);
@@ -80,33 +91,25 @@ export default function DemoExperience() {
     window.location.reload();
   };
 
-  const cards = [
-    { title: t('demo.try'), text: t('demo.tryBody') },
-    { title: t('demo.sim'), text: t('demo.simBody') },
-    { title: t('demo.never'), text: t('demo.neverBody') },
+  const points = [
+    { icon: MousePointerClick, text: t('demo.point.edit') },
+    { icon: ShieldCheck, text: t('demo.point.safe') },
+    { icon: Timer, text: t('demo.point.reset') },
   ];
 
   if (!mounted) return null;
 
   return createPortal(
     <>
-      <div className={`lh-demo-chip${isGuideOpen ? ' is-hidden' : ''}`}>
-        <div className="lh-demo-chip-inner">
-          <button type="button" onClick={() => setGuideOpen(true)} className="lh-demo-chip-open" aria-label={t('demo.info')}>
-            <span>{t('demo.chip')}</span>
-            <CircleHelp size={14} aria-hidden="true" />
-          </button>
-          <span className="lh-demo-chip-sep" aria-hidden="true" />
-          <button
-            type="button"
-            onClick={() => { void resetDemo(); }}
-            className="lh-demo-chip-reset"
-            aria-label={t('demo.resetAria')}
-            title={t('demo.reset')}
-          >
-            <RotateCcw size={14} aria-hidden="true" />
-          </button>
-        </div>
+      <div className={`nd-demo-chip${isGuideOpen ? ' is-hidden' : ''}`}>
+        <button type="button" onClick={() => setGuideOpen(true)} className="nd-demo-chip-open" aria-label={t('demo.info')}>
+          <span>{t('demo.chip')}</span>
+          <CircleHelp size={14} aria-hidden="true" />
+        </button>
+        <span className="nd-demo-chip-sep" aria-hidden="true" />
+        <button type="button" onClick={() => { void resetDemo(); }} className="nd-demo-chip-reset" aria-label={t('demo.resetAria')} title={t('demo.reset')}>
+          <RotateCcw size={14} aria-hidden="true" />
+        </button>
       </div>
 
       <p className="sr-only" aria-live="polite">{announcement}</p>
@@ -121,60 +124,49 @@ export default function DemoExperience() {
           closeGuide();
         }}
         onClose={closeGuide}
-        aria-labelledby="lh-demo-title"
-        aria-describedby="lh-demo-body"
-        className="lh-demo-dialog"
+        aria-labelledby="nd-demo-title"
+        aria-describedby="nd-demo-body"
+        className="nd-demo-dialog"
       >
-        <div className="lh-demo-inner">
-          <div className="lh-demo-pill">
-            <ShieldCheck size={13} aria-hidden="true" />
-            {t('demo.public')}
+        <div className="nd-demo-inner">
+          <div className="nd-demo-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a small static SVG */}
+            <img src="/logo.svg" alt="" width={18} height={18} />
+            NasDash
+            <span className="nd-demo-badge">{t('demo.public')}</span>
           </div>
 
-          <h2 ref={titleRef} id="lh-demo-title" tabIndex={-1} className="lh-demo-title">
-            {t('demo.title')}
-          </h2>
-          <p id="lh-demo-body" className="lh-demo-body">
-            {t('demo.body')}
-          </p>
+          <h2 ref={titleRef} id="nd-demo-title" tabIndex={-1} className="nd-demo-title">{t('demo.welcome.title')}</h2>
+          <p id="nd-demo-body" className="nd-demo-lead">{t('demo.welcome.lead')}</p>
 
-          <div className="lh-demo-cards">
-            {cards.map((card) => (
-              <div key={card.title} className="lh-demo-card">
-                <h3>{card.title}</h3>
-                <p>{card.text}</p>
-              </div>
+          <ul className="nd-demo-points">
+            {points.map(({ icon: Icon, text }) => (
+              <li key={text}><Icon size={15} aria-hidden="true" />{text}</li>
             ))}
-          </div>
+          </ul>
 
-          <div className="lh-demo-themes">
-            <h3>{t('demo.themes')}</h3>
-            <div className="lh-demo-theme-list" role="radiogroup" aria-label={t('demo.themes')}>
+          <div className="nd-demo-themes">
+            <span className="nd-demo-label">{t('demo.themes')}</span>
+            <div className="nd-demo-theme-list" role="radiogroup" aria-label={t('demo.themes')}>
               {DEMO_THEMES.map(theme => (
-                <button key={theme.key} type="button" role="radio" aria-checked={currentTheme === theme.key} className="lh-demo-theme" onClick={() => tryTheme(theme.key)}>
-                  <span className="lh-demo-theme-swatch" style={{ background: theme.swatch }} aria-hidden="true" />
+                <button key={theme.key} type="button" role="radio" aria-checked={currentTheme === theme.key} className="nd-demo-theme" onClick={() => tryTheme(theme.key)}>
+                  <span className="nd-demo-theme-swatch" style={{ background: theme.swatch }} aria-hidden="true" />
                   {theme.name}
                 </button>
               ))}
             </div>
           </div>
 
-          <p className="lh-demo-limits">{t('demo.limits')}</p>
-
-          <nav className="lh-demo-links" aria-label={t('demo.public')}>
-            <a href={`${LINKS.site}${language === 'en' ? '' : `/${language}`}`} target="_blank" rel="noreferrer">{t('demo.site')}</a>
-            <a href={`${LINKS.docs}/${language}/docs`} target="_blank" rel="noreferrer">{t('demo.docs')}</a>
-            <a href={LINKS.source} target="_blank" rel="noreferrer">{t('demo.source')}</a>
-          </nav>
-
-          <div className="lh-demo-actions">
-            <button type="button" onClick={() => { void resetDemo(); }} className="lh-demo-reset">
-              <RotateCcw size={15} aria-hidden="true" />
-              {t('demo.reset')}
-            </button>
-            <button type="button" onClick={closeGuide} className="lh-demo-continue">
-              {t('demo.continue')}
-            </button>
+          <div className="nd-demo-footer">
+            <nav className="nd-demo-links" aria-label={t('demo.public')}>
+              <a className="ndc-text-button" href={`${LINKS.site}${language === 'en' ? '' : `/${language}`}`} target="_blank" rel="noreferrer">{t('demo.site')}</a>
+              <a className="ndc-text-button" href={`${LINKS.docs}/${language}/docs`} target="_blank" rel="noreferrer">{t('demo.docs')}</a>
+              <a className="ndc-text-button" href={LINKS.source} target="_blank" rel="noreferrer">{t('demo.source')}</a>
+            </nav>
+            <div className="nd-demo-actions">
+              <button type="button" className="nd-btn" onClick={closeGuide}>{t('demo.explore')}</button>
+              <button type="button" className="nd-btn nd-btn-accent" onClick={startTour}>{t('demo.tour')}</button>
+            </div>
           </div>
         </div>
       </dialog>

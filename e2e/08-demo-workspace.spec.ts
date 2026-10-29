@@ -9,7 +9,7 @@ test('@demo edits survive reloads and alternating workers while reset restores t
     await route.fulfill({ response });
   });
   await page.goto('/?lang=en');
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Explore on my own', exact: true }).click();
   const calendar = page.locator('.ndc-calendar:visible').first();
   await calendar.locator('.ndc-cal-event').first().click();
   await page.locator('.ndc-dialog').getByRole('button', { name: 'Edit', exact: true }).click();
@@ -21,6 +21,6 @@ test('@demo edits survive reloads and alternating workers while reset restores t
   await expect(calendar).toContainText('Portable demo event');
   if (secondWorker) expect(requests).toBeGreaterThan(2);
   await page.getByRole('button', { name: 'Reset the demo', exact: true }).click();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Explore on my own', exact: true }).click();
   await expect(calendar).not.toContainText('Portable demo event');
 });

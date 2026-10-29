@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Copy, Check } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { normalizeSetupCode, WelcomeShell, useSetupStatus } from '@/components/welcome/WelcomeShell';
+import '../welcome.css';
 
 export default function LoginPage() {
   return (
@@ -24,6 +27,10 @@ function LoginFallback() {
   );
 }
 
+// The documented offline recovery: NasDash stopped, so its account cache cannot overwrite the new password.
+const RESET_COMMAND = 'docker compose stop nasdash && docker compose run --rm --no-deps --entrypoint node nasdash scripts/reset-password.mjs admin && docker compose up -d nasdash';
+const SETUP_COMMAND = 'docker compose logs nasdash | grep "Setup code"';
+
 function LoginForm() {
   const { t } = useI18n();
   const [username, setUsername] = useState('');
@@ -31,6 +38,8 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [forgotten, setForgotten] = useState(false);
+  const setup = useSetupStatus();
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedRedirect = searchParams.get('redirect');
@@ -41,7 +50,7 @@ function LoginForm() {
     ? requestedRedirect
     : '/';
 
-  // Vérifier si déjà connecté au montage
+  // Already signed in: straight to the requested page.
   useEffect(() => {
     async function checkSession() {
       try {
@@ -59,10 +68,17 @@ function LoginForm() {
     checkSession();
   }, [router, redirectTo]);
 
+  const signIn = async (name: string, secret: string) => fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: name, password: secret }),
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-      setError(t("Veuillez remplir tous les champs."));
+    const firstStart = setup?.pending === true;
+    if ((!firstStart && !username) || !password) {
+      setError(t('Veuillez remplir tous les champs.'));
       return;
     }
 
@@ -70,20 +86,24 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
+      let res: Response;
+      if (firstStart) {
+        // The setup code is the administrator's first password. A password chosen through NASDASH_ADMIN_PASSWORD is
+        // tried as typed; a code is also tried in its canonical form (upper case, with dashes).
+        res = await signIn('admin', password.trim());
+        const code = normalizeSetupCode(password);
+        if (res.status === 401 && code !== password.trim()) res = await signIn('admin', code);
+      } else {
+        res = await signIn(username, password);
+      }
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error ? t(data.error) : t('login.authFailed'));
+        throw new Error(firstStart && res.status === 401 ? t('welcome.code.wrong') : data.error ? t(data.error) : t('login.authFailed'));
       }
 
-      // Recharger pour que le ConfigProvider récupère la session
-      window.location.href = redirectTo;
+      // A full reload lets the providers pick the session up.
+      window.location.href = firstStart ? '/setup' : redirectTo;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('login.unexpectedError'));
     } finally {
@@ -91,206 +111,88 @@ function LoginForm() {
     }
   };
 
-  if (checkingSession) {
+  if (checkingSession || !setup) return <LoginFallback />;
+
+  const submit = (label: string) => (
+    <button type="submit" className="nd-btn nd-btn-accent is-block" disabled={loading}>
+      {loading ? <span className="ndw-spinner" aria-hidden="true" /> : label}
+    </button>
+  );
+
+  if (setup.pending) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--nd-bg)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              width: 36, height: 36, borderRadius: '50%',
-              border: '3px solid var(--nd-card-border)',
-              borderTopColor: 'var(--nd-accent)',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
-          <span style={{ fontSize: '0.75rem', color: 'var(--nd-text-muted)' }}>{t("Vérification de la session...")}</span>
-        </div>
-      </div>
+      <WelcomeShell wallpaper={setup.wallpaper} mode={setup.mode} glass={setup.glass}>
+        <form className="ndw-surface ndw-card is-wide" onSubmit={handleSubmit} noValidate>
+          <div>
+            <span className="ndc-settings-crumb">{t('welcome.code.eyebrow')}</span>
+            <h1 className="ndc-settings-title">{t('welcome.code.title')}</h1>
+            <p className="ndc-settings-desc">{t('welcome.code.lead')}</p>
+          </div>
+          {error && <p className="ndw-alert is-error" role="alert">{error}</p>}
+          <div className="ndw-field">
+            <label className="ndw-label" htmlFor="setup-code">{t('welcome.code.label')}</label>
+            <input id="setup-code" className="nd-input is-code" value={password} onChange={event => setPassword(event.target.value)}
+              placeholder={t('welcome.code.placeholder')} autoComplete="one-time-code" autoCapitalize="characters" spellCheck={false} disabled={loading} autoFocus />
+          </div>
+          <div className="ndw-help">
+            <span className="ndw-help-title">{t('welcome.code.where')}</span>
+            <CopyCommand command={SETUP_COMMAND} />
+            <p className="ndw-small">{t('welcome.code.whereHint')}</p>
+          </div>
+          {submit(t('welcome.continue'))}
+        </form>
+      </WelcomeShell>
     );
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
-      position: 'relative',
-      overflow: 'hidden',
-      backgroundColor: 'var(--nd-bg)',
-      backgroundImage: 'var(--nd-bg-gradient)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    }}>
-      {/* Halo lumineux décoratif en arrière-plan */}
-      <div style={{
-        position: 'absolute',
-        width: '400px',
-        height: '400px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(var(--nd-accent-rgb, 0, 168, 204), 0.15) 0%, rgba(0,0,0,0) 70%)',
-        top: '20%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 0,
-        pointerEvents: 'none',
-      }} />
-
-      <div style={{
-        width: '100%',
-        maxWidth: '400px',
-        padding: '32px',
-        background: 'var(--nd-card-bg, rgba(20, 20, 20, 0.6))',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--nd-card-border)',
-        borderRadius: 'var(--nd-card-radius, 12px)',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
-        zIndex: 1,
-        transition: 'all 0.3s ease',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <h1 style={{
-            fontSize: '1.8rem',
-            fontWeight: 800,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            color: 'var(--nd-text)',
-            marginBottom: '8px',
-            fontFamily: 'var(--font-outfit), sans-serif',
-            background: 'linear-gradient(90deg, var(--nd-text) 0%, var(--nd-accent) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>
-            NasDash
-          </h1>
-          <p style={{ fontSize: '0.78rem', color: 'var(--nd-text-muted)' }}>
-            {t("Accès sécurisé à votre tableau de bord")}
-          </p>
+    <WelcomeShell wallpaper={setup.wallpaper} mode={setup.mode} glass={setup.glass}>
+      <form className="ndw-surface ndw-card" onSubmit={handleSubmit} noValidate>
+        <div>
+          <span className="ndc-settings-crumb">nasdash</span>
+          <h1 className="ndc-settings-title">{t('welcome.signIn.title')}</h1>
+          <p className="ndc-settings-desc">{t('welcome.signIn.lead')}</p>
         </div>
-
-        {notice && (
-          <div role="status" style={{
-            padding: '12px',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.25)',
-            borderRadius: '6px',
-            color: 'var(--nd-green, #10b981)',
-            fontSize: '0.75rem',
-            marginBottom: '20px',
-            textAlign: 'center',
-          }}>
-            {notice}
+        {notice && <p className="ndw-alert is-ok" role="status">{notice}</p>}
+        {error && <p className="ndw-alert is-error" role="alert">{error}</p>}
+        <div className="ndw-field">
+          <label className="ndw-label" htmlFor="login-username">{t('welcome.signIn.username')}</label>
+          <input id="login-username" className="nd-input" value={username} onChange={e => setUsername(e.target.value)}
+            autoComplete="username" autoCapitalize="none" spellCheck={false} disabled={loading} autoFocus />
+        </div>
+        <div className="ndw-field">
+          <div className="ndw-label-row">
+            <label className="ndw-label" htmlFor="login-password">{t('Mot de passe')}</label>
+            <button type="button" className="ndc-text-button" aria-expanded={forgotten} onClick={() => setForgotten(open => !open)}>{t('welcome.signIn.forgotten')}</button>
+          </div>
+          <input id="login-password" type="password" className="nd-input" value={password} onChange={e => setPassword(e.target.value)}
+            autoComplete="current-password" disabled={loading} />
+        </div>
+        {forgotten && (
+          <div className="ndw-help">
+            <span className="ndw-help-title">{t('welcome.signIn.resetTitle')}</span>
+            <CopyCommand command={RESET_COMMAND} />
+            <p className="ndw-small">{t('welcome.signIn.resetHint')}</p>
           </div>
         )}
+        {submit(t('Se connecter'))}
+      </form>
+    </WelcomeShell>
+  );
+}
 
-        {error && (
-          <div style={{
-            padding: '12px',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            borderRadius: '6px',
-            color: 'var(--nd-red, #ef4444)',
-            fontSize: '0.75rem',
-            marginBottom: '20px',
-            textAlign: 'center',
-          }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label htmlFor="login-username" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {t("Nom d&apos;utilisateur")}
-            </label>
-            <input
-              id="login-username"
-              type="text"
-              className="nd-input"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder={t("Ex: admin")}
-              disabled={loading}
-              autoFocus
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                fontSize: '0.85rem',
-                borderRadius: '6px',
-                background: 'rgba(0, 0, 0, 0.25)',
-                border: '1px solid var(--nd-card-border)',
-                color: 'var(--nd-text)',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label htmlFor="login-password" style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--nd-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              {t("Mot de passe")}
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              className="nd-input"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                fontSize: '0.85rem',
-                borderRadius: '6px',
-                background: 'rgba(0, 0, 0, 0.25)',
-                border: '1px solid var(--nd-card-border)',
-                color: 'var(--nd-text)',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-              }}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="nd-btn accent"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              borderRadius: '6px',
-              background: 'var(--nd-accent)',
-              border: 'none',
-              color: '#000000',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              marginTop: '10px',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            {loading ? (
-              <div
-                style={{
-                  width: 14, height: 14, borderRadius: '50%',
-                  border: '2px solid rgba(0,0,0,0.1)',
-                  borderTopColor: '#000000',
-                  animation: 'spin 0.6s linear infinite',
-                }}
-              />
-            ) : t("Se connecter")}
-          </button>
-        </form>
-      </div>
+function CopyCommand({ command }: { command: string }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(command); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch { /* The command stays selectable. */ }
+  };
+  return (
+    <div className="ndw-command">
+      <code>{command}</code>
+      <button type="button" className="ndc-icon-button" onClick={() => void copy()} aria-label={t('welcome.copyCommand')} title={t('welcome.copyCommand')}>
+        {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+      </button>
     </div>
   );
 }

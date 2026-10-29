@@ -24,7 +24,6 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
-import { GettingStarted } from './GettingStarted';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
@@ -110,7 +109,7 @@ export function useWidgetName() {
 export function PageView(props: PageViewProps) {
   const { pageId, isVisible } = props;
   const { t } = useI18n();
-  const { getPage, editing, applyToPage } = usePages();
+  const { getPage, editing, applyToPage, startEditing } = usePages();
   const { user, config, saveCategories, reorderDevices } = useConfig();
   const page = getPage(pageId);
   const editMode = editing && user?.role === 'admin';
@@ -165,17 +164,14 @@ export function PageView(props: PageViewProps) {
     <DockerWorkspaceProvider enabled={isVisible && hasDocker} summaryOnPage={page.widgets.some(widget => !widget.hidden && widget.type === 'docker-summary')}>
       <DndContext sensors={sensors} collisionDetection={innerCollision} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setInnerDrag(null)}>
         <div className={`nd-page ${editMode ? 'nd-page--editing' : ''}`} data-page-id={page.id}>
-          {page.id === 'dashboard' && !editMode && <GettingStarted />}
-          {shown.length === 0 && (
-            <div className="nd-page-empty">
-              <p>{t('pages.empty.title')}</p>
-              {editMode ? (
-                <button type="button" className="nd-btn nd-btn-accent" onClick={() => props.onOpenLibrary({ pageId: page.id })}>
-                  <Plus size={14} /> {t('pages.column.addWidget')}
-                </button>
-              ) : user?.role === 'admin' && <p className="nd-page-empty-hint">{t('pages.empty.hint')}</p>}
-            </div>
-          )}
+          {shown.length === 0 && (user?.role === 'admin' ? (
+            // Where the first widget will go: the whole slot enters edit mode and opens the widget library.
+            <button type="button" className="nd-page-empty-slot" onClick={() => { if (!editMode) startEditing(); props.onOpenLibrary({ pageId: page.id }); }}>
+              <span className="nd-page-empty-plus" aria-hidden="true"><Plus size={16} /></span>
+              <span className="nd-page-empty-title">{t('pages.column.addWidget')}</span>
+              <span className="nd-page-empty-hint">{t('pages.empty.lead')}</span>
+            </button>
+          ) : <p className="nd-page-empty-viewer">{t('pages.empty.viewer')}</p>)}
           <PageGrid {...props} page={page} widgets={shown} editMode={editMode} edit={edit} />
         </div>
         <DragOverlay>
@@ -657,9 +653,9 @@ const SETTLE_MS = 60;
 /** …or at most this long after the page became visible. */
 const SETTLE_MAX_MS = 300;
 
-/** Widgets without a title of their own get one in edit mode, like the others. */
+/** Widgets without a title of their own get one in edit mode, like the others. Network tools has its section titles. */
 const UNTITLED_TYPES = new Set([
-  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-tools', 'network-topology', 'spacer',
+  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-topology', 'spacer',
 ]);
 /** Widgets that have their own title in the Calme style. */
 const CALME_TITLED_TYPES = new Set(['docker-summary']);

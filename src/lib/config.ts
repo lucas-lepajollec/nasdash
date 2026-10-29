@@ -19,6 +19,10 @@ function hasLegacyIntegrationSettings(config: { settings?: object }): boolean {
 const DATA_DIR = getDataDirectory();
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const SERVICES_PATH = path.join(DATA_DIR, 'services.json');
+/** Settings of config.example.json that describe a new installation only, never backfilled into an existing one. */
+export const FRESH_INSTALL_SETTINGS: ReadonlySet<string> = new Set([
+  'setupPending', 'securityMode', 'title', 'tabOrder', 'tabIcons', 'backgroundImage', 'cardOpacity', 'surfaceBlur', 'wallpaperDim', 'emojiTheme',
+]);
 const TOPOLOGY_PATH = path.join(DATA_DIR, 'topology.json');
 const CALENDAR_PATH = path.join(DATA_DIR, 'calendar.json');
 const LOGOS_DIR = path.join(DATA_DIR, 'logos');
@@ -140,7 +144,10 @@ export function readConfig(): DashboardConfig {
           const exampleData = fs.readFileSync(examplePath, 'utf-8');
           configData = JSON.parse(exampleData) as MutableDashboardConfig;
           if (configFileInvalid || globalAny.__cachedConfig || fs.existsSync(SERVICES_PATH)) {
-            configData.settings = { ...configData.settings, securityMode: 'private' } as DashboardConfig['settings'];
+            // A configuration rebuilt on an existing installation: private, and never the new-installation guide.
+            const { setupPending: _setupPending, ...kept } = configData.settings as DashboardConfig['settings'];
+            void _setupPending;
+            configData.settings = { ...kept, securityMode: 'private' } as DashboardConfig['settings'];
           }
           if (canPersistRecoveredConfig) {
             safeWriteFileSync(CONFIG_PATH, JSON.stringify(configData, null, 2), 'utf-8');
@@ -255,6 +262,9 @@ export function readConfig(): DashboardConfig {
           const exampleSettings = exampleData.settings as Record<string, unknown>;
           
           for (const [key, value] of Object.entries(exampleSettings)) {
+            // The new-installation defaults stay with new installations: an upgraded one keeps its own behaviour
+            // (no guide, its privacy mode, its look) when it never saved these settings.
+            if (FRESH_INSTALL_SETTINGS.has(key)) continue;
             if (settingsRecord[key] === undefined) {
               settingsRecord[key] = value;
               settingsChanged = true;

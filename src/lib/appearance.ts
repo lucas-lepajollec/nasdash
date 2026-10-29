@@ -8,3 +8,9 @@ export function applySoftEdges(px: number) {
     document.body.removeAttribute('data-soft-edges');
   }
 }
+
+/** Veil over the wallpaper from Appearance (0–0.8). */
+export function applyWallpaperDim(amount: number) {
+  if (amount > 0) document.body.style.setProperty('--nd-wallpaper-dim', String(amount));
+  else document.body.style.removeProperty('--nd-wallpaper-dim');
+}

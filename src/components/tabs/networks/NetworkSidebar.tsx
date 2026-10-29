@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ShieldAlert, CheckCircle, AlertTriangle, RefreshCw, HelpCircle, Network } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 
 import { buildPortInventory, type PortEntry } from './portInventory';
 
@@ -236,15 +237,20 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
           <div className="nd-section-title" style={{ marginBottom: 10 }}>
             <Network size={12} style={{ color: 'var(--nd-accent)' }} />
             <span>{t("Ports du Réseau")}</span>
-            <button 
-              className="nd-action-icon" 
-              onClick={fetchDockerPorts} 
-              disabled={loadingDocker}
-              title={t("Rafraîchir")}
-              style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}
-            >
-              <RefreshCw size={11} className={loadingDocker ? 'nd-spin' : ''} style={{ color: 'var(--nd-text-muted)' }} />
-            </button>
+            {/* In edit mode this joins the widget's controls, on this same line. */}
+            <span style={{ marginLeft: 'auto', display: 'inline-flex' }}>
+              <WidgetHeaderActions>
+                <button
+                  className="nd-action-icon"
+                  onClick={fetchDockerPorts}
+                  disabled={loadingDocker}
+                  title={t("Rafraîchir")}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}
+                >
+                  <RefreshCw size={11} className={loadingDocker ? 'nd-spin' : ''} style={{ color: 'var(--nd-text-muted)' }} />
+                </button>
+              </WidgetHeaderActions>
+            </span>
           </div>
   
           {/* Search */}

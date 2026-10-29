@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { applySoftEdges } from '@/lib/appearance';
+import { applySoftEdges, applyWallpaperDim } from '@/lib/appearance';
 import { DashboardConfig, Category, Service, Device, DockerActionConfig, DockerHost, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
 import { isCustomCssSafeMode, sanitizeCustomCss } from '@/lib/sanitizeCss';
 import { AuthContext } from './AuthProvider';
@@ -225,6 +225,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
 
     applySoftEdges(config.settings?.softEdges ?? 0);
+    applyWallpaperDim(config.settings?.wallpaperDim ?? 0);
 
     // Accent colour chosen in Appearance; otherwise the theme's own accent.
     const accent = config.settings?.accentColor;
@@ -644,7 +645,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           height: bgStyle.height,
           zIndex: -1,
           backgroundColor: 'var(--nd-bg)',
-          backgroundImage: activeBgUrl ? `url("${activeBgUrl}")` : 'var(--nd-bg-gradient)',
+          // The veil of Appearance sits between the wallpaper and the cards (dark in dark mode, light in light mode).
+          backgroundImage: activeBgUrl ? `linear-gradient(var(--nd-wallpaper-veil), var(--nd-wallpaper-veil)), url("${activeBgUrl}")` : 'var(--nd-bg-gradient)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

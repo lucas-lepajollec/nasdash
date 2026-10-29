@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { ArrowUpRight, BookOpen, Bug, LifeBuoy, ListChecks, Plug, Rocket, Shield, Wrench } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Bug, LifeBuoy, MousePointerClick, Plug, Rocket, Shield, Wrench } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
-import { startingSteps } from '@/components/pages/GettingStarted';
+import { requestProductTour } from '@/components/welcome/ProductTour';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { UiLanguage } from '@/i18n/messages';
 import { CalmeHeading } from '../shared/CalmeControls';
@@ -29,23 +29,21 @@ const TOPICS = [
 /** Help: the main topics of the documentation, and where to report a problem. */
 export function HelpTab() {
   const { t, language } = useI18n();
-  const { config, updateConfig, setSettingsModal } = useConfig();
-  const steps = startingSteps(config);
-  const done = steps.filter(step => step.done).length;
+  const { setSettingsModal } = useConfig();
   return (
     <div className="ndc-set-page">
       <section className="ndc-set-block">
-        <CalmeHeading>{t('start.title')}</CalmeHeading>
+        <CalmeHeading>{t('tour.help.title')}</CalmeHeading>
         <div className="ndc-help-grid">
           <button
             type="button"
             className="ndc-help-card"
-            onClick={() => { void updateConfig({ onboardingDismissed: false }); setSettingsModal({ open: false }); }}
+            onClick={() => { setSettingsModal({ open: false }); window.setTimeout(requestProductTour, 250); }}
           >
-            <span className="ndc-help-icon"><ListChecks size={16} /></span>
+            <span className="ndc-help-icon"><MousePointerClick size={16} /></span>
             <span className="ndc-help-text">
-              <span className="ndc-help-title">{t('start.showAgain')}</span>
-              <span className="ndc-help-desc">{t('start.progress', { done, total: steps.length })}</span>
+              <span className="ndc-help-title">{t('tour.help.replay')}</span>
+              <span className="ndc-help-desc">{t('tour.help.replayHint')}</span>
             </span>
           </button>
         </div>

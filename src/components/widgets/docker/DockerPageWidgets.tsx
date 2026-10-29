@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { useOpenSettings } from '@/components/integrations/useOpenSettings';
 import type { WidgetSettings } from '@/lib/pages/types';
@@ -151,14 +151,31 @@ export function DockerContainerListWidget({ editMode, searchQuery = '', settings
     selectedContainerId, setSelectedContainerId, requestAction, actionLoading,
   } = useDockerWorkspace();
   const [localSearch, setLocalSearch] = useState('');
-  if (hosts.length === 0) return null;
+  const rows = visibleRowsOf(settings);
+  const list = useRef<HTMLDivElement>(null);
+  const [rowsHeight, setRowsHeight] = useState<number | null>(null);
   const search = (searchQuery || localSearch).toLowerCase();
   const filtered = visibleContainers.filter(container => !search
     || container.names?.some(name => name.toLowerCase().includes(search))
     || container.image?.toLowerCase().includes(search)
     || container.id?.toLowerCase().includes(search));
+  // Exactly the chosen number of cards, measured: the next one starts below the fold, not half visible.
+  useLayoutEffect(() => {
+    const element = list.current;
+    if (!element || rows === 'all') return;
+    const measure = () => {
+      const cards = element.querySelectorAll<HTMLElement>('.nd-container-card');
+      const last = cards[Math.min(rows, cards.length) - 1];
+      if (!last || cards.length <= rows) { setRowsHeight(null); return; }
+      setRowsHeight(Math.ceil(last.getBoundingClientRect().bottom - element.getBoundingClientRect().top + element.scrollTop + 4));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [rows, filtered.length]);
+  if (hosts.length === 0) return null;
 
-  const rows = visibleRowsOf(settings);
   return (
     <div className="nd-docker-container-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {editMode && onUpdateSettings && (
@@ -176,8 +193,9 @@ export function DockerContainerListWidget({ editMode, searchQuery = '', settings
         />
       </div>
       <div
+        ref={list}
         className={`nd-mobile-scroll nd-docker-container-list-scroll ${rows === 'all' ? 'is-unbounded' : ''}`}
-        style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 4, ...(rows !== 'all' ? { '--nd-list-rows': rows } : {}) } as React.CSSProperties}
+        style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 4, paddingBottom: 4, ...(rows !== 'all' ? { '--nd-list-rows': rows } : {}), ...(rowsHeight ? { maxHeight: rowsHeight } : {}) } as React.CSSProperties}
       >
         {containersLoading && visibleContainers.length === 0 && (
           <div style={{ textAlign: 'center', padding: 20 }}>

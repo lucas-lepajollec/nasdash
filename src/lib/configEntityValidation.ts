@@ -418,6 +418,7 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   readNumber(body, 'borderRadius', { min: 0, max: 100 });
   readNumber(body, 'cardOpacity', { min: 0, max: 1 });
   readNumber(body, 'surfaceBlur', { min: 0, max: 40 });
+  readNumber(body, 'wallpaperDim', { min: 0, max: 0.8 });
   readNumber(body, 'softEdges', { min: 0, max: 32 });
   if (body.tasks !== undefined) {
     const tasks = readObject(body, 'tasks');
