@@ -128,7 +128,7 @@ function LoginForm() {
             <h1 className="ndc-settings-title">{t('welcome.code.title')}</h1>
             <p className="ndc-settings-desc">{t('welcome.code.lead')}</p>
           </div>
-          {error && <p className="ndw-note is-error" role="alert">{error}</p>}
+          {error && <p className="ndw-alert is-error" role="alert">{error}</p>}
           <div className="ndw-field">
             <label className="ndw-label" htmlFor="setup-code">{t('welcome.code.label')}</label>
             <input id="setup-code" className="nd-input is-code" value={password} onChange={event => setPassword(event.target.value)}
@@ -153,8 +153,8 @@ function LoginForm() {
           <h1 className="ndc-settings-title">{t('welcome.signIn.title')}</h1>
           <p className="ndc-settings-desc">{t('welcome.signIn.lead')}</p>
         </div>
-        {notice && <p className="ndw-note is-ok" role="status">{notice}</p>}
-        {error && <p className="ndw-note is-error" role="alert">{error}</p>}
+        {notice && <p className="ndw-alert is-ok" role="status">{notice}</p>}
+        {error && <p className="ndw-alert is-error" role="alert">{error}</p>}
         <div className="ndw-field">
           <label className="ndw-label" htmlFor="login-username">{t('welcome.signIn.username')}</label>
           <input id="login-username" className="nd-input" value={username} onChange={e => setUsername(e.target.value)}

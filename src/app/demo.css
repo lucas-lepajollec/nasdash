@@ -1,0 +1,68 @@
+/* ---------- Public demo: welcome dialog and chip ----------
+   The dashboard's own glass, text and buttons, so the welcome reads as part of NasDash. */
+.nd-demo-dialog {
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  color: var(--nd-text);
+  background: rgba(var(--nd-card-bg-rgb), 0.74);
+  border: 1px solid rgb(255 255 255 / 0.09);
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.45);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
+}
+.nd-demo-dialog::backdrop { background: rgb(0 0 0 / 0.38); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+body.light .nd-demo-dialog { border-color: rgb(255 255 255 / 0.6); box-shadow: 0 24px 80px rgb(15 23 42 / 0.18); }
+body.light .nd-demo-dialog::backdrop { background: rgb(15 23 42 / 0.16); }
+
+.nd-demo-inner { display: flex; flex-direction: column; gap: 20px; padding: 26px 28px 22px; }
+.nd-demo-brand { display: flex; align-items: center; gap: 9px; font-size: 0.86rem; font-weight: 500; }
+.nd-demo-brand img { display: block; width: 18px; height: 18px; }
+.nd-demo-badge { margin-left: auto; padding: 3px 9px; border-radius: 999px; font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
+.nd-demo-title { margin: 6px 0 0; font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.7rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1.15; outline: none; }
+.nd-demo-lead { margin: -8px 0 0; font-size: 0.8rem; line-height: 1.6; color: var(--nd-text-muted); }
+
+.nd-demo-points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.nd-demo-points li { display: flex; align-items: center; gap: 11px; font-size: 0.76rem; color: var(--nd-text); }
+.nd-demo-points svg { flex: none; color: var(--nd-accent); }
+
+.nd-demo-themes { display: flex; flex-direction: column; gap: 9px; padding-top: 16px; border-top: 1px solid var(--nd-card-border); }
+.nd-demo-label { font-size: 0.64rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.nd-demo-theme-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.nd-demo-theme { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px 0 7px; border: 1px solid var(--nd-card-border); border-radius: 6px; background: var(--nd-subcard-bg); color: var(--nd-text-muted); font: inherit; font-size: 0.72rem; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+.nd-demo-theme:hover { color: var(--nd-text); }
+.nd-demo-theme[aria-checked='true'] { border-color: var(--nd-accent); color: var(--nd-text); }
+.nd-demo-theme-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgb(255 255 255 / 0.14); }
+
+.nd-demo-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid var(--nd-card-border); }
+.nd-demo-links { display: flex; gap: 14px; }
+.nd-demo-links a { font-size: 0.72rem; text-decoration: none; }
+.nd-demo-actions { display: flex; gap: 8px; margin-left: auto; }
+.nd-demo-actions .nd-btn { height: 34px; padding: 0 14px; font-size: 0.76rem; }
+
+/* The chip that reopens the welcome or resets the demo. */
+.nd-demo-chip {
+  position: fixed; right: 16px; bottom: 16px; z-index: 100050;
+  display: flex; align-items: center; padding: 3px;
+  border: 1px solid rgb(255 255 255 / 0.09); border-radius: 999px;
+  background: rgba(var(--nd-card-bg-rgb), 0.72); color: var(--nd-text);
+  box-shadow: 0 10px 32px rgb(0 0 0 / 0.3);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+}
+body.light .nd-demo-chip { border-color: rgb(255 255 255 / 0.6); box-shadow: 0 10px 32px rgb(15 23 42 / 0.12); }
+.nd-demo-chip.is-hidden { visibility: hidden; }
+.nd-demo-chip button { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px; border: none; border-radius: 999px; background: none; color: var(--nd-text-muted); font: inherit; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer; }
+.nd-demo-chip button:hover { color: var(--nd-text); background: var(--nd-subcard-bg); }
+.nd-demo-chip .nd-demo-chip-reset { width: 30px; padding: 0; justify-content: center; }
+.nd-demo-chip-sep { width: 1px; height: 16px; background: var(--nd-card-border); }
+
+@media (max-width: 560px) {
+  .nd-demo-inner { padding: 22px 20px 18px; }
+  .nd-demo-title { font-size: 1.4rem; }
+  .nd-demo-actions { width: 100%; }
+  .nd-demo-actions .nd-btn { flex: 1; }
+}

@@ -65,7 +65,11 @@ export function WelcomeShell({ wallpaper, mode, glass = DEFAULT_GLASS, children 
     <main className="ndw" style={style}>
       {/* eslint-disable-next-line @next/next/no-img-element -- a full-screen local image, already sized */}
       <img className="ndw-wallpaper" src={wallpaper} alt="" />
-      <div className="ndw-brand">NasDash</div>
+      <div className="ndw-brand">
+        {/* eslint-disable-next-line @next/next/no-img-element -- a small static SVG */}
+        <img src="/logo.svg" alt="" width={18} height={18} />
+        NasDash
+      </div>
       <Clock />
       {children}
     </main>

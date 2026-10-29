@@ -14,12 +14,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Settings → Appearance → Wallpaper veil** darkens the wallpaper (lightens it in light mode) so widgets stand out. With a background blur, surfaces now get light translucent hairlines and keep the wallpaper's colours, like the sign-in card.
 - Empty pages: administrators get a dashed slot where the first widget will go; it enters edit mode and opens the widget library.
 
+- Public demo: one page per theme (Home, Services, Machines, Docker, Network, Media, Downloads, Music, Feeds) showing every widget type, on the aurora wallpaper with the glass appearance, widget titles shown. Its welcome now uses NasDash's own glass and buttons, says what is safe to try, and offers the dashboard tour or free exploration.
+
 ### Changed
 
 - New installations start private, without sample devices, services or Docker host, on one Home page holding a clock and the weather, with a wallpaper, its veil, surface blur, transparent cards and the Lucide icon set. Existing installations keep their settings, mode and pages.
 - The sign-in screen and the guide use the dashboard's own fonts, buttons, fields, settings layout, widget-library cards and glass (read from Appearance), so arriving on the dashboard does not change the look.
 - No `viewer` account is created on a new installation: it is created when public mode is chosen (in the guide or in Settings), since its permissions are what anonymous visitors see. Existing viewer accounts are unchanged.
-- The sign-in screen is redrawn: the wallpaper, the name and the time, one card, and the documented recovery command behind **Forgot it?**.
+- The sign-in screen is redrawn: the wallpaper, the logo and name, the time, one card, and the documented recovery command behind **Forgot it?**.
 
 ### Removed
 

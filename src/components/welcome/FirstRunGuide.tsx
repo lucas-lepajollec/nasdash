@@ -153,7 +153,7 @@ function StepFrame({ index, step, error, children, footer }: { index: number; st
       <div className="ndw-guide-scroll">
         <StepHead index={index} step={step} />
         <div className="ndw-guide-content">
-          {error && <p className="ndw-note is-error" role="alert">{error}</p>}
+          {error && <p className="ndw-alert is-error" role="alert">{error}</p>}
           {children}
         </div>
       </div>

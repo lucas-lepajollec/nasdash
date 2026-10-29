@@ -141,9 +141,9 @@ async function settle(page) {
 }
 
 async function dismissDemoChrome(page) {
-  const dialog = page.locator('dialog.lh-demo-dialog');
+  const dialog = page.locator('dialog.nd-demo-dialog');
   if (await dialog.isVisible().catch(() => false)) {
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await page.getByRole('button', { name: 'Explore on my own', exact: true }).click();
     await dialog.waitFor({ state: 'hidden', timeout: 10_000 });
   }
   const closeBanner = page.getByRole('button', { name: 'Hide demo banner' });
@@ -151,7 +151,7 @@ async function dismissDemoChrome(page) {
 }
 
 async function assertReadyForCapture(page) {
-  if (await page.locator('dialog.lh-demo-dialog[open]').count()) {
+  if (await page.locator('dialog.nd-demo-dialog[open]').count()) {
     throw new Error('Demo intro dialog is still open.');
   }
   const demo = await page.evaluate(async () => (await (await fetch('/api/config')).json()).demoMode);
@@ -250,18 +250,18 @@ try {
   await waitForDockerDetail(desktopPage);
   await capture(desktopPage, 'nasdash-demo-docker');
 
-  await selectDesktopTab(desktopPage, 'Networks');
+  await selectDesktopTab(desktopPage, 'Network');
   await desktopPage.getByText(/Excellent/).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
   await capture(desktopPage, 'nasdash-demo-networks');
 
-  await selectDesktopTab(desktopPage, 'Widgets');
+  await selectDesktopTab(desktopPage, 'Media');
   await capture(desktopPage, 'nasdash-demo-widgets');
 
   await selectDesktopTab(desktopPage, 'Machines');
   await desktopPage.getByText('Atlas NAS', { exact: true }).filter({ visible: true }).first().waitFor();
   await capture(desktopPage, 'nasdash-demo-machines');
 
-  await selectDesktopTab(desktopPage, 'Calendar');
+  await selectDesktopTab(desktopPage, 'Feeds');
   await capture(desktopPage, 'nasdash-demo-calendar');
   await selectDesktopTab(desktopPage, 'Home');
 

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRollingDemoCalendar } from './demoCalendar';
 import { validatePagesDocument } from './pages/validation';
+import { WIDGET_CATALOG } from './widgets/catalog';
 import { DEMO_DOCKER_SERVICES } from './demoDockerFixtures';
 
 const fixturesDirectory = path.join(process.cwd(), 'demo', 'fixtures');
@@ -108,17 +109,18 @@ describe('public demo fixtures', () => {
     expect(createRollingDemoCalendar()).toEqual(createRollingDemoCalendar(new Date(reference)));
   });
 
-  it('ships valid demo pages, with a Machines page on the real demo devices', () => {
+  it('ships valid themed demo pages that show every widget type', () => {
     const document = validatePagesDocument(JSON.parse(fs.readFileSync(path.join(fixturesDirectory, 'pages.json'), 'utf8')));
     const config = JSON.parse(fs.readFileSync(path.join(fixturesDirectory, 'config.json'), 'utf8')) as { devices: Array<{ id: string }>; settings: { tabOrder: string[] } };
     const deviceIds = new Set(config.devices.map(device => device.id));
-    const machines = document.pages.find(page => page.id === 'custom_demo-machines');
-    expect(machines?.widgets.length).toBeGreaterThanOrEqual(6);
-    for (const widget of machines!.widgets) {
+    for (const widget of document.pages.flatMap(page => page.widgets)) {
       if (typeof widget.settings.deviceId === 'string') expect(deviceIds.has(widget.settings.deviceId)).toBe(true);
     }
-    expect(config.settings.tabOrder).toContain('custom_demo-machines');
-    expect(document.pages.map(page => page.id)).toEqual(expect.arrayContaining(['dashboard', 'docker', 'networks', 'widgets']));
+    const shown = new Set(document.pages.flatMap(page => page.widgets.map(widget => widget.type)));
+    expect(WIDGET_CATALOG.map(entry => entry.type).filter(type => !shown.has(type))).toEqual([]);
+    expect(config.settings.tabOrder).toEqual(document.pages.map(page => page.id));
+    // Widget access rules name these page ids.
+    expect(document.pages.map(page => page.id)).toEqual(expect.arrayContaining(['dashboard', 'docker', 'networks']));
   });
 
   it('ships a representative service catalogue with safe links and logos', () => {
