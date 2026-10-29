@@ -424,6 +424,11 @@ export interface DashboardConfig {
     emojiTheme?: string;
     /** The Home page's first steps were closed by an admin. */
     onboardingDismissed?: boolean;
+    /**
+     * A new installation whose first-run guide is not finished: only the fresh-install template sets it, never a
+     * recovered configuration. Cleared by `/api/setup` when the administrator completes or skips the guide.
+     */
+    setupPending?: boolean;
     /** Rhythms of the background tasks and the backup schedule (Settings → Tasks). */
     tasks?: {
       monitoringSeconds?: number;

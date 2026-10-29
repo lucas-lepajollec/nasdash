@@ -55,16 +55,18 @@ try {
   const first = start('first', data);
   await wait(first);
   const initial = docker(['logs', first]);
-  const admin = initial.match(/Initial password generated for admin: ([A-Za-z0-9_-]+)/)?.[1];
-  assert.ok(admin, 'Admin password missing before the first HTTP/login request.');
-  assert.equal((initial.match(/Initial password generated for/g) || []).length, 2);
+  // A new installation prints one setup code (the administrator's first password) and creates no viewer account.
+  const admin = initial.match(/Setup code: ([A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4})/)?.[1];
+  assert.ok(admin, 'Setup code missing before the first HTTP/login request.');
+  assert.equal((initial.match(/Setup code:/g) || []).length, 1);
+  assert.ok(!initial.includes('Initial password generated for'));
   assert.equal(await login(first, admin, true), 200);
   const state = accountState(first);
   stop(first);
   const next = start('restart', data, ['-e', 'NASDASH_ADMIN_PASSWORD=ignored-existing-account-password']);
   await wait(next);
   assert.equal(accountState(next), state, 'Restart changed accounts or the signing key.');
-  assert.ok(!docker(['logs', next]).includes('Initial password generated for'));
+  assert.ok(!/Setup code:|Initial password generated for/.test(docker(['logs', next])));
   assert.equal(await login(next, admin), 200);
   stop(next);
 
@@ -102,7 +104,7 @@ try {
     assert.ok(logs.includes('Data permission check failed'));
     assert.ok(logs.includes('runtime UID:GID 1001:1001'));
     assert.ok(!logs.includes('Starting the application'));
-    assert.ok(!logs.includes('Initial password generated for'));
+    assert.ok(!/Setup code:|Initial password generated for/.test(logs));
     stop(denied);
   }
   console.info(`[NASDASH] First-start container checks passed for ${image}: generated credentials before HTTP, restart preservation, offline recovery, custom UID/GID and permission failures.`);

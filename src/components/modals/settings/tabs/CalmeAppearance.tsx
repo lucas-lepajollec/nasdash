@@ -11,6 +11,7 @@ import CustomSelect from '../../../shared/CustomSelect';
 import { Emoji } from '../../../shared/Emoji';
 import { THEME_GALLERY } from '../../ThemeGalleryView';
 import { CalmeHeading, CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '../shared/CalmeControls';
+import { BUNDLED_WALLPAPERS } from '@/lib/wallpapers';
 
 /** Themes shown as thumbnails; the others are one click away in the gallery. */
 const FEATURED_THEMES = ['nasdash', 'nord', 'everforest-dark', 'rose-pine-dawn'];
@@ -304,6 +305,27 @@ function Wallpaper(props: CalmeAppearanceProps) {
           />
           <button type="button" className="nd-btn" onClick={props.onSaveBackground}>{t('Enregistrer')}</button>
           {props.backgroundImage && <button type="button" className="ndc-icon-button" aria-label={t('Effacer')} title={t('Effacer')} onClick={props.onClearBackground}><X size={14} /></button>}
+        </div>
+      </section>
+
+      <section className="ndc-set-block">
+        <CalmeHeading info={t('settings.calme.bundledWallpapersHint')}>{t('settings.calme.bundledWallpapers')}</CalmeHeading>
+        {/* The photos shipped with NasDash, reused as they are (the existing gallery tiles). */}
+        <div className="ndc-wallpapers">
+          {BUNDLED_WALLPAPERS.map(item => (
+            <div
+              key={item.id}
+              role="button"
+              tabIndex={0}
+              aria-pressed={props.backgroundImage === item.src}
+              aria-label={t(`wallpaper.${item.id}`)}
+              className="ndc-wallpaper"
+              style={{ backgroundImage: `url("${item.src}")` }}
+              title={t(`wallpaper.${item.id}`)}
+              onClick={() => props.onPickBackground(item.src)}
+              onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); props.onPickBackground(item.src); } }}
+            />
+          ))}
         </div>
       </section>
 

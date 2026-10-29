@@ -38,6 +38,12 @@ export default function Shell() {
 
   const { pages, editing, startEditing, finishEditing, getPage, applyToPage, applyToPages, loadError: pagesError } = usePages();
   const editMode = user?.role === 'admin' && editing;
+
+  // A new installation's administrator goes through the first-run guide first (it can be skipped there).
+  const setupPending = config?.settings?.setupPending === true && user?.role === 'admin' && !user.isAnonymous;
+  useEffect(() => {
+    if (setupPending) window.location.replace('/setup');
+  }, [setupPending]);
   const [libraryTarget, setLibraryTarget] = useState<LibraryTarget | null>(null);
   // Pages are mounted on first visit, then kept mounted to preserve their state.
   const [visitedPages, setVisitedPages] = useState<string[]>([]);

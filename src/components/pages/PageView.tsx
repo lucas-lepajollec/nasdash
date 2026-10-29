@@ -18,7 +18,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { List, Plus, Settings2, SquareStack, X } from 'lucide-react';
+import { LayoutGrid, List, Plus, Settings2, SquareStack, X } from 'lucide-react';
 import { WidgetTitleContext } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -110,7 +110,7 @@ export function useWidgetName() {
 export function PageView(props: PageViewProps) {
   const { pageId, isVisible } = props;
   const { t } = useI18n();
-  const { getPage, editing, applyToPage } = usePages();
+  const { getPage, editing, applyToPage, startEditing } = usePages();
   const { user, config, saveCategories, reorderDevices } = useConfig();
   const page = getPage(pageId);
   const editMode = editing && user?.role === 'admin';
@@ -168,12 +168,17 @@ export function PageView(props: PageViewProps) {
           {page.id === 'dashboard' && !editMode && <GettingStarted />}
           {shown.length === 0 && (
             <div className="nd-page-empty">
-              <p>{t('pages.empty.title')}</p>
-              {editMode ? (
-                <button type="button" className="nd-btn nd-btn-accent" onClick={() => props.onOpenLibrary({ pageId: page.id })}>
-                  <Plus size={14} /> {t('pages.column.addWidget')}
-                </button>
-              ) : user?.role === 'admin' && <p className="nd-page-empty-hint">{t('pages.empty.hint')}</p>}
+              <span className="nd-page-empty-icon" aria-hidden="true"><LayoutGrid size={20} /></span>
+              <p className="nd-page-empty-title">{t('pages.empty.title')}</p>
+              {user?.role === 'admin' ? (
+                <>
+                  <p className="nd-page-empty-hint">{t('pages.empty.lead')}</p>
+                  {/* Outside edit mode too: the button enters it and opens the widget library at once. */}
+                  <button type="button" className="nd-btn nd-btn-accent nd-page-empty-add" onClick={() => { if (!editMode) startEditing(); props.onOpenLibrary({ pageId: page.id }); }}>
+                    <Plus size={14} /> {t('pages.column.addWidget')}
+                  </button>
+                </>
+              ) : <p className="nd-page-empty-hint">{t('pages.empty.viewer')}</p>}
             </div>
           )}
           <PageGrid {...props} page={page} widgets={shown} editMode={editMode} edit={edit} />

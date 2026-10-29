@@ -41,8 +41,14 @@ function clone<T>(value: T): T {
 
 function buildFromLegacy(): PagesDocument {
   const config = readConfig();
+  // A new installation starts from one empty Home page: the first-run guide (or the empty page's button) fills it.
+  if (config.settings?.setupPending) return { schemaVersion: PAGES_SCHEMA_VERSION, pages: [freshHomePage()] };
   const customTabs = readCustomTabs();
   return migrateLegacyPages({ config, categories: config.categories || [], customTabs });
+}
+
+export function freshHomePage(): Page {
+  return { id: 'dashboard', name: 'Home', icon: 'lucide:House', revision: 0, widgets: [] };
 }
 
 /**

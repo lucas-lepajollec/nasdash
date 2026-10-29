@@ -2,7 +2,7 @@
   "version": 1,
   "settings": {
     "uiLanguage": "en",
-    "title": "MY HOME LAB",
+    "title": "NasDash",
     "showMonitor": true,
     "totalSlots": 10,
     "hiddenTabs": [],
@@ -10,22 +10,23 @@
     "mode": "dark",
     "dockPosition": "right",
     "tabOrder": [
-      "dashboard",
-      "docker",
-      "networks",
-      "widgets",
-      "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2"
+      "dashboard"
     ],
-    "tabIcons": {
-      "widgets": "🕹️",
-      "custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2": "lucide:Calendar"
-    },
+    "tabIcons": {},
     "hiddenSections": [],
     "hideHeaderTitle": true,
     "hideHeaderSearch": false,
     "hideHeaderMenu": false,
-    "headerLayoutDesktop": { "left": "search", "center": "menu", "right": "none", "splitMenuAround": "none" },
-    "headerLayoutMobile": { "left": "title", "center": "search" },
+    "headerLayoutDesktop": {
+      "left": "search",
+      "center": "menu",
+      "right": "none",
+      "splitMenuAround": "none"
+    },
+    "headerLayoutMobile": {
+      "left": "title",
+      "center": "search"
+    },
     "showHeaderMenuIcons": false,
     "showPingDetails": true,
     "pingIndicatorMode": "all",
@@ -42,9 +43,9 @@
     "hideDock": true,
     "customCss": "",
     "enablePerfMonitor": false,
-    "backgroundImage": "",
+    "backgroundImage": "/wallpapers/aurora-lake.jpg",
     "borderRadius": 12,
-    "cardOpacity": 0.8,
+    "cardOpacity": 0.55,
     "globalFont": "Outfit",
     "titleMobile": "",
     "titleLogo": "",
@@ -73,8 +74,8 @@
     ],
     "widgetsTotalSlots": 14,
     "allowDockerActions": false,
-    "securityMode": "public",
-    "emojiTheme": "native",
+    "securityMode": "private",
+    "emojiTheme": "lucide",
     "dockerActionsSidebar": "right",
     "dockerActionsOrder": 3,
     "dockerContainersSidebar": "right",
@@ -85,7 +86,6 @@
     "mobileBorderRadius": 12,
     "mobileCardOpacity": 0.8,
     "mobileTitleAnimation": "none",
-    "weatherLocation": { "lat": 48.85341, "lon": 2.3488, "name": "Paris" },
     "weatherWidgetStyle": "default",
     "tabs": {
       "home": {
@@ -135,136 +135,87 @@
     "panels": {
       "home-left": {
         "widgets": [
-          { "id": "clock-1", "type": "clock", "props": {} },
-          { "id": "devices-1", "type": "devices", "props": {} }
+          {
+            "id": "clock-1",
+            "type": "clock",
+            "props": {}
+          },
+          {
+            "id": "devices-1",
+            "type": "devices",
+            "props": {}
+          }
         ]
       },
       "home-right": {
         "widgets": [
-          { "id": "quickstats-1", "type": "quickstats", "props": {} },
-          { "id": "calendar-1", "type": "calendar", "props": {} },
-          { "id": "weather-1", "type": "weather", "props": {} }
+          {
+            "id": "quickstats-1",
+            "type": "quickstats",
+            "props": {}
+          },
+          {
+            "id": "calendar-1",
+            "type": "calendar",
+            "props": {}
+          },
+          {
+            "id": "weather-1",
+            "type": "weather",
+            "props": {}
+          }
         ]
       },
       "home-bottom": {
         "widgets": [
-          { "id": "networkgraph-1", "type": "networkgraph", "props": {} }
+          {
+            "id": "networkgraph-1",
+            "type": "networkgraph",
+            "props": {}
+          }
         ]
       },
       "docker-widgets": {
         "widgets": [
-          { "id": "dockercontainers-1", "type": "dockercontainers", "props": { "autoScroll": true, "itemsPerPage": 12 } },
-          { "id": "dockeractions-1", "type": "dockeractions", "props": {} }
+          {
+            "id": "dockercontainers-1",
+            "type": "dockercontainers",
+            "props": {
+              "autoScroll": true,
+              "itemsPerPage": 12
+            }
+          },
+          {
+            "id": "dockeractions-1",
+            "type": "dockeractions",
+            "props": {}
+          }
         ]
       },
       "networks-widgets": {
         "widgets": [
-          { "id": "networkgraph-networks-1", "type": "networkgraph", "props": {} },
-          { "id": "tailscale-networks-1", "type": "tailscale", "props": {} }
-        ]
-      }
-    }
-  },
-  "devices": [
-    {
-      "id": "demo-device-1",
-      "name": "Main Server",
-      "host": "192.168.1.20",
-      "icon": "🏠",
-      "statStyle": "vertical",
-      "hideValues": false,
-      "api": {
-        "type": "glances",
-        "url": "http://192.168.1.20:61208/api/3/all",
-        "token": "user:password"
-      }
-    },
-    {
-      "id": "demo-device-2",
-      "name": "Hypervisor",
-      "host": "proxmox",
-      "icon": "🖥️",
-      "statStyle": "circle",
-      "hideValues": true,
-      "api": {
-        "type": "proxmox",
-        "url": "https://192.168.1.30:8006/api2/json/nodes/proxmox/status",
-        "ip": "192.168.1.30",
-        "port": "8006",
-        "username": "root@pam!example",
-        "nodeName": "proxmox",
-        "vmid": "",
-        "token": "root@pam!example=11111111-2222-3333-4444-555555555555"
-      }
-    }
-  ],
-  "dockerHosts": [
-    {
-      "id": "docker-host-1",
-      "name": "Local Docker",
-      "icon": "🐳",
-      "type": "tcp",
-      "url": "http://192.168.1.20:2375"
-    }
-  ],
-  "dockerActions": [],
-  "appearanceProfiles": [],
-  "categories": [
-    {
-      "id": "category-1",
-      "title": "Applications",
-      "emoji": "🚀",
-      "order": 0,
-      "layout": "bento",
-      "isSecret": false,
-      "services": [
-        {
-          "id": "service-1",
-          "name": "Example Service 1",
-          "logo": "/api/logos/logo.png",
-          "localUrl": "http://192.168.1.10:3000",
-          "secondaryUrl": "http://100.100.100.100:3000"
-        },
-        {
-          "id": "service-2",
-          "name": "Example Service 2",
-          "logo": "/api/logos/logo.png",
-          "localUrl": "http://192.168.1.10:8080",
-          "secondaryUrl": "http://100.100.100.100:8080"
-        }
-      ]
-    }
-  ],
-  "slots": [
-    {
-      "id": "slot-category-1",
-      "type": "category",
-      "order": 0,
-      "category": {
-        "id": "category-1",
-        "title": "Applications",
-        "emoji": "🚀",
-        "order": 0,
-        "layout": "bento",
-        "isSecret": false,
-        "services": [
           {
-            "id": "service-1",
-            "name": "Example Service 1",
-            "logo": "/api/logos/logo.png",
-            "localUrl": "http://192.168.1.10:3000",
-            "secondaryUrl": "http://100.100.100.100:3000"
+            "id": "networkgraph-networks-1",
+            "type": "networkgraph",
+            "props": {}
           },
           {
-            "id": "service-2",
-            "name": "Example Service 2",
-            "logo": "/api/logos/logo.png",
-            "localUrl": "http://192.168.1.10:8080",
-            "secondaryUrl": "http://100.100.100.100:8080"
+            "id": "tailscale-networks-1",
+            "type": "tailscale",
+            "props": {}
           }
         ]
       }
-    }
-  ],
+    },
+    "setupPending": true,
+    "surfaceBlur": 18,
+    "onboardingDismissed": true
+  },
+  "devices": [],
+  "dockerHosts": [],
+  "dockerActions": [],
+  "appearanceProfiles": [],
+  "categories": [],
+  "slots": [],
   "localEvents": []
 }

@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- First start: a new installation opens on a sign-in screen asking for the **setup code** the container prints once (`Setup code: XXXX-XXXX-XXXX`), then a five-step guide: your administrator password, language and look (light or dark, wallpaper), integrations, the widgets of Home, and access (private or open to read). The guide can be skipped once the password is set; `NASDASH_ADMIN_PASSWORD` still sets the first password instead of the code.
+- Five free wallpapers shipped with NasDash (public domain or CC0, credits in `public/wallpapers/CREDITS.md`), offered in the guide and in **Settings → Appearance → Wallpaper**. The sign-in screen shows the chosen one when it is a provided wallpaper, else the default one: an uploaded image is never shown before signing in.
+- Empty pages: administrators get an **Add a widget** button that enters edit mode and opens the widget library.
+
+### Changed
+
+- New installations start private, without sample devices, services or Docker host, on one empty Home page, with a wallpaper, surface blur, transparent cards and the Lucide icon set. Existing installations keep their settings, mode and pages.
+- No `viewer` account is created on a new installation: it is created when public mode is chosen (in the guide or in Settings), since its permissions are what anonymous visitors see. Existing viewer accounts are unchanged.
+- The sign-in screen is redrawn: the wallpaper, one frosted card, and the documented recovery command behind **Forgot it?**.
+
+### Fixed
+
+- Several Gluetun, NUT and apcupsd connections can be saved; adding one no longer replaces the previous one.
+
 ## [0.3.5] - 2026-10-28
 
 ### Upgrading from 0.3.4

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readConfig, writeConfig, writeServices, writeCalendar } from '@/lib/config';
-import { checkAdmin } from '@/lib/auth';
+import { checkAdmin, ensureViewerAccount } from '@/lib/auth';
+import { isDemoMode } from '@/lib/demoMode';
 import { resolveAccessPrincipal } from '@/lib/access';
 import { buildConfigForPrincipal } from '@/lib/configAccess';
 import { sanitizeCustomCss } from '@/lib/sanitizeCss';
@@ -452,7 +453,11 @@ async function handlePUT(req: NextRequest) {
     if (body.mobileBorderRadius !== undefined) config.settings.mobileBorderRadius = body.mobileBorderRadius;
     if (body.mobileCardOpacity !== undefined) config.settings.mobileCardOpacity = body.mobileCardOpacity;
     if (body.mobileTitleAnimation !== undefined) config.settings.mobileTitleAnimation = body.mobileTitleAnimation;
-    if (body.securityMode !== undefined) config.settings.securityMode = body.securityMode;
+    if (body.securityMode !== undefined) {
+      // Anonymous visitors of a public dashboard see what the viewer account may see: it must exist.
+      if (body.securityMode === 'public' && !isDemoMode() && !ensureViewerAccount()) throw new Error('Cannot create the viewer account.');
+      config.settings.securityMode = body.securityMode;
+    }
     
     if (!writeConfig(config)) return persistenceError();
     return NextResponse.json(config.settings);
