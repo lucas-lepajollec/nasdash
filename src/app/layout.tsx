@@ -65,12 +65,10 @@ export default function RootLayout({
                   if (theme && theme !== 'nasdash') {
                     document.body.classList.add('theme-' + theme);
                   }
+                  // The wallpaper from the last visit, shown while the dashboard loads.
                   var bg = localStorage.getItem('nd-bg-preset');
-                  if (bg) {
-                    document.body.style.backgroundImage = 'url(' + bg + ')';
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundPosition = 'center';
-                    document.body.style.backgroundAttachment = 'fixed';
+                  if (bg && /^[A-Za-z0-9_.:/?=&%#-]+$/.test(bg)) {
+                    document.documentElement.style.setProperty('--nd-boot-wallpaper', 'linear-gradient(var(--nd-wallpaper-veil), var(--nd-wallpaper-veil)), url("' + bg + '")');
                   }
                 } catch (e) {}
               })();

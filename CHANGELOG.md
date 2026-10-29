@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- The sign-in screen looks like the dashboard behind it: its theme, and its wallpaper, an uploaded one included (served alone by `/api/setup/wallpaper`, every other upload stays behind sign-in), or the theme's background when it has none.
+- While the dashboard loads, the wallpaper of the last visit shows instead of the theme's background.
+
 ## [0.3.6] - 2026-10-29
 
 ### Upgrading from 0.3.5

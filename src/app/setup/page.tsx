@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { FirstRunGuide } from '@/components/welcome/FirstRunGuide';
 import { useSetupStatus } from '@/components/welcome/WelcomeShell';
+import { DEFAULT_WALLPAPER } from '@/lib/wallpapers';
 import '../welcome.css';
 
 /**
@@ -22,5 +23,5 @@ export default function SetupPage() {
   }, [ready, allowed, status]);
 
   if (!allowed || !status) return <div style={{ minHeight: '100dvh', background: '#0d1016' }} />;
-  return <FirstRunGuide wallpaper={status.wallpaper} />;
+  return <FirstRunGuide wallpaper={status.wallpaper ?? DEFAULT_WALLPAPER} />;
 }

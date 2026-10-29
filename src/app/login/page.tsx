@@ -121,7 +121,7 @@ function LoginForm() {
 
   if (setup.pending) {
     return (
-      <WelcomeShell wallpaper={setup.wallpaper} mode={setup.mode} glass={setup.glass}>
+      <WelcomeShell wallpaper={setup.wallpaper} mobileWallpaper={setup.mobileWallpaper} theme={setup.theme} mode={setup.mode} glass={setup.glass}>
         <form className="ndw-surface ndw-card is-wide" onSubmit={handleSubmit} noValidate>
           <div>
             <span className="ndc-settings-crumb">{t('welcome.code.eyebrow')}</span>
@@ -146,7 +146,7 @@ function LoginForm() {
   }
 
   return (
-    <WelcomeShell wallpaper={setup.wallpaper} mode={setup.mode} glass={setup.glass}>
+    <WelcomeShell wallpaper={setup.wallpaper} mobileWallpaper={setup.mobileWallpaper} theme={setup.theme} mode={setup.mode} glass={setup.glass}>
       <form className="ndw-surface ndw-card" onSubmit={handleSubmit} noValidate>
         <div>
           <span className="ndc-settings-crumb">nasdash</span>
