@@ -18,7 +18,7 @@ const version = JSON.parse(await fs.readFile('package.json', 'utf8')).version;
 if (manifest.productVersion !== version) throw new Error('Regenerate screenshots for the current version first.');
 const buffers = new Map();
 for (const shot of manifest.shots) {
-  if (!/^nasdash-demo-[a-z-]+\.jpg$/.test(shot.file)) throw new Error('Invalid capture filename.');
+  if (!/^nasdash-[a-z-]+\.jpg$/.test(shot.file)) throw new Error('Invalid capture filename.');
   const buffer = await fs.readFile(path.join(source, shot.file));
   if (crypto.createHash('sha256').update(buffer).digest('hex') !== shot.sha256) {
     throw new Error(`Capture does not match manifest: ${shot.file}`);
@@ -51,7 +51,21 @@ if (targets.landing) {
   const readmePath = path.join(targets.landing, 'README.md');
   const readme = await fs.readFile(readmePath, 'utf8');
   await fs.writeFile(readmePath, readme.replace(/nasdash-demo-home(?:-[a-f0-9]{12})?\.jpg/g, publicFilename));
-  console.log('[NASDASH] Synced landing hero, social previews and legacy PNG.');
+  // The gallery of themed pages, named after their content so a new capture is never served from cache.
+  const screens = path.join(publicDir, 'screens');
+  await fs.rm(screens, { recursive: true, force: true });
+  await fs.mkdir(screens, { recursive: true });
+  const gallery = {};
+  for (const name of ['media', 'machines', 'docker', 'networks', 'music', 'downloads']) {
+    const file = `nasdash-demo-${name}.jpg`;
+    const shot = manifest.shots.find(item => item.file === file);
+    if (!shot) throw new Error(`Missing gallery capture: ${file}`);
+    const published = `${name}-${shot.sha256.slice(0, 12)}.jpg`;
+    await fs.writeFile(path.join(screens, published), buffers.get(file));
+    gallery[name] = { src: `/screens/${published}`, width: shot.width, height: shot.height };
+  }
+  await fs.writeFile(path.join(targets.landing, 'src', 'lib', 'screens.json'), `${JSON.stringify(gallery, null, 2)}\n`);
+  console.log('[NASDASH] Synced landing hero, gallery, social previews and legacy PNG.');
 }
 if (targets.docs) {
   const destination = path.join(targets.docs, 'public', 'screenshots');

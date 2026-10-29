@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
-import { DEFAULT_WALLPAPER } from '@/lib/wallpapers';
+import { LIGHT_THEMES } from '@/lib/themes';
 
 /** How the dashboard's surfaces look (Appearance), so the screens before it look the same. */
 export interface SetupGlass { opacity: number; blur: number; dim: number }
-export interface SetupStatus { pending: boolean; wallpaper: string; mode: 'light' | 'dark'; language: string | null; glass?: SetupGlass }
+/** `wallpaper`: the dashboard's own, or null when it has none (the theme's background shows). */
+export interface SetupStatus { pending: boolean; wallpaper: string | null; mobileWallpaper?: string; theme?: string; mode: 'light' | 'dark'; language: string | null; glass?: SetupGlass }
 export const DEFAULT_GLASS: SetupGlass = { opacity: 0.6, blur: 24, dim: 0.15 };
 
 /** Whether this installation is new, and its sign-in wallpaper (`/api/setup`, readable before signing in). */
@@ -17,7 +18,7 @@ export function useSetupStatus(): SetupStatus | null {
     fetch('/api/setup', { cache: 'no-store' })
       .then(response => response.ok ? response.json() as Promise<SetupStatus> : Promise.reject(new Error(String(response.status))))
       .then(value => { if (!cancelled) setStatus(value); })
-      .catch(() => { if (!cancelled) setStatus({ pending: false, wallpaper: DEFAULT_WALLPAPER, mode: 'dark', language: null, glass: DEFAULT_GLASS }); });
+      .catch(() => { if (!cancelled) setStatus({ pending: false, wallpaper: null, mode: 'dark', language: null, glass: DEFAULT_GLASS }); });
     return () => { cancelled = true; };
   }, []);
   return status;
@@ -53,18 +54,41 @@ function Clock() {
  * The wallpaper with its veil, the name and the time, around NasDash's own surfaces. The glass (opacity, blur,
  * veil) is the dashboard's, from Appearance, so arriving on the dashboard changes nothing but the content.
  */
-export function WelcomeShell({ wallpaper, mode, glass = DEFAULT_GLASS, children }: { wallpaper: string; mode: 'light' | 'dark'; glass?: SetupGlass; children: React.ReactNode }) {
-  // Before signing in the dashboard's settings are not readable: light or dark comes from /api/setup.
-  useEffect(() => { document.body.classList.toggle('light', mode === 'light'); }, [mode]);
+export function WelcomeShell({ wallpaper, mobileWallpaper, theme, mode, glass = DEFAULT_GLASS, children }: {
+  wallpaper: string | null; mobileWallpaper?: string; theme?: string; mode: 'light' | 'dark'; glass?: SetupGlass; children: React.ReactNode;
+}) {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 768px)');
+    const update = () => setPhone(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  const image = (phone && mobileWallpaper) || wallpaper;
+  // Before signing in the dashboard's settings are not readable: its theme, light or dark and wallpaper come from
+  // /api/setup. They are also kept for the loading screen that follows signing in.
+  useEffect(() => {
+    const body = document.body;
+    if (theme) {
+      Array.from(body.classList).filter(name => name.startsWith('theme-')).forEach(name => body.classList.remove(name));
+      if (theme !== 'nasdash') body.classList.add(`theme-${theme}`);
+    }
+    body.classList.toggle('light', theme && theme !== 'nasdash' ? LIGHT_THEMES.includes(theme) : mode === 'light');
+    try {
+      if (theme) localStorage.setItem('nd-theme-preset', theme);
+      if (image) localStorage.setItem('nd-bg-preset', image); else localStorage.removeItem('nd-bg-preset');
+    } catch { /* Restricted browser storage. */ }
+  }, [theme, mode, image]);
   const style = {
     '--ndw-opacity': String(glass.opacity),
     '--ndw-blur': `${glass.blur}px`,
     '--nd-wallpaper-dim': String(glass.dim),
   } as React.CSSProperties;
   return (
-    <main className="ndw" style={style}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- a full-screen local image, already sized */}
-      <img className="ndw-wallpaper" src={wallpaper} alt="" />
+    <main className={`ndw ${image ? '' : 'is-plain'}`} style={style}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- a full-screen image, already sized */}
+      {image && <img className="ndw-wallpaper" src={image} alt="" />}
       <div className="ndw-brand">
         {/* eslint-disable-next-line @next/next/no-img-element -- a small static SVG */}
         <img src="/logo.svg" alt="" width={18} height={18} />

@@ -20,50 +20,62 @@
 
 ## Overview
 
-NasDash brings service links, live availability, machine telemetry, Docker management, network topology, Tailscale state, widgets, theming, and local access control into one configurable interface.
+NasDash brings services, machines, Docker, the network, media, downloads, music and photos into one calm, self-hosted dashboard. Each page is a free grid of widgets: 47 of them, from service categories and machine telemetry to Jellyfin, the *arr apps, DNS blocking, VPN and UPS.
 
-Configuration stays on your own server in a persistent Docker volume or bind-mounted directory. Integrations are optional: the dashboard remains useful as a service cockpit while deeper infrastructure capabilities can be enabled deliberately.
+Configuration stays on your own server in a persistent Docker volume or bind-mounted directory. A new installation starts private, asks for a setup code printed in the container log, and walks you through a short guide. Integrations are optional: the dashboard remains useful as a service cockpit while deeper infrastructure capabilities can be enabled deliberately.
 
 ## Product preview
 
-Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile. No personal installation or real infrastructure is connected during capture. Screenshots show NasDash **v0.2.0**, captured on **10 October 2026**, with the English interface and the demo intro dialog closed. [Capture provenance](docs/assets/screenshots/manifest.json) records the source revision, dimensions, and image hashes.
+Every service, address, metric, and log line below comes from NasDash's isolated public-demo profile, or from a throwaway new installation for the first-start screens. No personal installation or real infrastructure is connected during capture. Screenshots show NasDash **0.3.6**, captured on **29 October 2026**, with the English interface. [Capture provenance](docs/assets/screenshots/manifest.json) records the source revision, dimensions, and image hashes.
 
-| Docker management and simulated logs | Network topology |
-| --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker details with fictional metrics, volumes, and logs" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network topology with documentation-only addresses" width="640" /> |
+The demo has one page per part of a homelab:
 
-| Widgets page | Appearance settings |
+| Media | Machines |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-widgets.jpg" alt="NasDash composable widgets page" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash current appearance settings with English selected" width="640" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-media.jpg" alt="NasDash Media page with fictional films, series and photos" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-machines.jpg" alt="NasDash machine telemetry from fictional demo integrations" width="640" /> |
+
+| Docker | Network |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-docker.jpg" alt="NasDash Docker details with fictional metrics, volumes, and logs" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-networks.jpg" alt="NasDash network page with DNS blocking, VPN and topology" width="640" /> |
+
+| Downloads | Music |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-downloads.jpg" alt="NasDash downloads page with the *arr apps and download clients" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-music.jpg" alt="NasDash music page with fictional albums and playlists" width="640" /> |
+
+First start: a setup code, then a short guide and a tour of the dashboard.
+
+| Setup code | First-run guide |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-first-start-code.jpg" alt="NasDash sign-in screen asking for the setup code" width="640" /> | <img src="docs/assets/screenshots/nasdash-guide-appearance.jpg" alt="NasDash first-run guide, language and look step" width="640" /> |
 
 | Page editor | Widget library |
 | --- | --- |
 | <img src="docs/assets/screenshots/nasdash-demo-editor.jpg" alt="NasDash free-grid page editor with widget controls" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-library.jpg" alt="NasDash searchable widget library" width="640" /> |
 
-Theme, layout, and visual profiles are first-class product surfaces, not a single default look:
+Theme, wallpaper, and glass are first-class product surfaces, not a single default look:
 
-| Visual Themes gallery | GitHub Light |
+| Appearance settings | Themes gallery |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-themes.jpg" alt="NasDash current themes and icons gallery" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-github-light.jpg" alt="NasDash home dashboard in the GitHub Light theme" width="640" /> |
-
-| Apple Dark | Cyberpunk |
-| --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-home-apple-dark.jpg" alt="NasDash home dashboard in the Apple Dark theme" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-cyberpunk.jpg" alt="NasDash home dashboard in the Cyberpunk theme" width="640" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-settings.jpg" alt="NasDash appearance settings with wallpaper, blur and veil" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-themes.jpg" alt="NasDash themes and icons gallery" width="640" /> |
 
 <details>
-<summary>More themes, layout options, and mobile</summary>
+<summary>More pages, themes, and mobile</summary>
 
-| Machine telemetry | Calendar |
+| Services | Feeds |
 | --- | --- |
-| <img src="docs/assets/screenshots/nasdash-demo-machines.jpg" alt="NasDash machine telemetry from fictional demo integrations" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-calendar.jpg" alt="NasDash calendar with fictional homelab events" width="640" /> |
+| <img src="docs/assets/screenshots/nasdash-demo-services.jpg" alt="NasDash services page with fictional categories and bookmarks" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-feeds.jpg" alt="NasDash feeds page with news, markets and the calendar" width="640" /> |
+
+| GitHub Light | Apple Dark |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-home-github-light.jpg" alt="NasDash home dashboard in the GitHub Light theme" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-apple-dark.jpg" alt="NasDash home dashboard in the Apple Dark theme" width="640" /> |
 
 | Dracula | Nord |
 | --- | --- |
 | <img src="docs/assets/screenshots/nasdash-demo-home-dracula.jpg" alt="NasDash home dashboard in the Dracula theme" width="640" /> | <img src="docs/assets/screenshots/nasdash-demo-home-nord.jpg" alt="NasDash home dashboard in the Nord theme" width="640" /> |
 
-<p align="center">
-  <img src="docs/assets/screenshots/nasdash-demo-home-layout.jpg" alt="NasDash home with the dock visible and widget titles shown" width="900" />
-</p>
+| Cyberpunk | Dashboard tour |
+| --- | --- |
+| <img src="docs/assets/screenshots/nasdash-demo-home-cyberpunk.jpg" alt="NasDash home dashboard in the Cyberpunk theme" width="640" /> | <img src="docs/assets/screenshots/nasdash-tour.jpg" alt="NasDash dashboard tour bubble" width="640" /> |
 
 | Mobile home | Mobile Docker |
 | --- | --- |

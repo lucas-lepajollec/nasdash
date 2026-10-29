@@ -135,7 +135,10 @@ async function settle(page) {
     }
   ` });
   await page.locator('.nd-page-grid--placing').filter({ visible: true }).waitFor({ state: 'hidden', timeout: 30_000 });
-  await page.waitForFunction(() => [...document.images].every(img => img.complete && img.naturalWidth > 0));
+  // Images on screen must be loaded; lazy ones further down may never start.
+  await page.waitForFunction(() => [...document.images].every(img => img.complete || img.loading === 'lazy'), undefined, { timeout: 15_000 }).catch(() => {});
+  const broken = await page.evaluate(() => [...document.images].filter(img => img.complete && img.naturalWidth === 0 && img.getBoundingClientRect().height > 0).map(img => img.src.slice(0, 120)));
+  if (broken.length) console.warn('[NASDASH] Broken images on this capture:', broken);
   await page.mouse.move(0, 0);
   await page.waitForTimeout(600);
 }
@@ -165,7 +168,7 @@ async function assertReadyForCapture(page) {
 async function waitForHomeData(page) {
   await page.locator('[data-page-id="dashboard"] .nd-page-grid:not(.nd-page-grid--placing)').waitFor({ timeout: 30_000 });
   await page.getByText('Atlas NAS', { exact: true }).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
-  await page.waitForFunction(() => /CPU\s+\d+%/.test(document.body.innerText));
+  await page.waitForFunction(() => /CPU\s+\d+\s?%/.test(document.body.innerText));
   await page.getByText(/Excellent/).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
 }
 
@@ -178,10 +181,12 @@ async function waitForDockerDetail(page) {
   await page.getByText(/jellyfin container starting/).waitFor({ timeout: 20_000 });
 }
 
-async function capture(page, name, fullPage = name.startsWith('nasdash-demo-home')) {
+async function capture(page, name, fullPage = name.startsWith('nasdash-demo-home'), { demo = true } = {}) {
   await settle(page);
-  await dismissDemoChrome(page);
-  await assertReadyForCapture(page);
+  if (demo) {
+    await dismissDemoChrome(page);
+    await assertReadyForCapture(page);
+  }
   const destination = path.join(stagingDirectory, `${name}.jpg`);
   await page.screenshot({ path: destination, type: 'jpeg', quality: 88, fullPage });
   const png = await page.screenshot({ type: 'png', fullPage });
@@ -226,6 +231,49 @@ async function closeSettings(page) {
   await page.getByRole('dialog', { name: 'NasDash Settings' }).waitFor({ state: 'hidden', timeout: 10_000 }).catch(() => {});
 }
 
+/**
+ * A throwaway new installation for the first-start screens. Its setup code is
+ * read from the server log and never printed; the data folder is deleted after.
+ */
+async function startFreshInstall() {
+  const freshPort = port + 1;
+  const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'nasdash-capture-fresh-'));
+  for (const entry of await fs.readdir(path.join(projectDirectory, 'data'))) {
+    if (entry.endsWith('.example.json')) await fs.copyFile(path.join(projectDirectory, 'data', entry), path.join(dataDirectory, entry));
+  }
+  let log = '';
+  const child = spawn(process.execPath, [nextEntryPoint, 'dev', '-H', '127.0.0.1', '-p', String(freshPort)], {
+    cwd: projectDirectory,
+    env: {
+      ...process.env,
+      NASDASH_DEMO_MODE: 'false',
+      NASDASH_DATA_DIR: dataDirectory,
+      NASDASH_JWT_SECRET: 'nasdash-screenshot-runtime-only',
+      NASDASH_NEXT_DIST_DIR: '.next-capture-fresh',
+      NEXT_TELEMETRY_DISABLED: '1',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+    detached: process.platform !== 'win32',
+  });
+  child.stdout.on('data', chunk => { log += chunk; });
+  child.stderr.on('data', chunk => { log += chunk; });
+  const url = `http://127.0.0.1:${freshPort}`;
+  const deadline = Date.now() + 120_000;
+  let code;
+  while (Date.now() < deadline && !code) {
+    try { await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(1_000) }); } catch {}
+    code = log.match(/Setup code: ([A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4})/)?.[1];
+    if (!code) await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  if (!code) throw new Error('The new installation did not print its setup code.');
+  const stop = async () => {
+    try { process.kill(-child.pid, 'SIGTERM'); } catch {}
+    await fs.rm(dataDirectory, { recursive: true, force: true });
+  };
+  return { url, code, stop };
+}
+
 let browser;
 try {
   await waitForServer();
@@ -246,6 +294,14 @@ try {
   await dismissDemoChrome(desktopPage);
   await capture(desktopPage, 'nasdash-demo-home');
 
+  // One capture per themed page of the demo.
+  await selectDesktopTab(desktopPage, 'Services');
+  await capture(desktopPage, 'nasdash-demo-services');
+
+  await selectDesktopTab(desktopPage, 'Machines');
+  await desktopPage.getByText('Atlas NAS', { exact: true }).filter({ visible: true }).first().waitFor();
+  await capture(desktopPage, 'nasdash-demo-machines');
+
   await selectDesktopTab(desktopPage, 'Docker');
   await waitForDockerDetail(desktopPage);
   await capture(desktopPage, 'nasdash-demo-docker');
@@ -254,15 +310,10 @@ try {
   await desktopPage.getByText(/Excellent/).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
   await capture(desktopPage, 'nasdash-demo-networks');
 
-  await selectDesktopTab(desktopPage, 'Media');
-  await capture(desktopPage, 'nasdash-demo-widgets');
-
-  await selectDesktopTab(desktopPage, 'Machines');
-  await desktopPage.getByText('Atlas NAS', { exact: true }).filter({ visible: true }).first().waitFor();
-  await capture(desktopPage, 'nasdash-demo-machines');
-
-  await selectDesktopTab(desktopPage, 'Feeds');
-  await capture(desktopPage, 'nasdash-demo-calendar');
+  for (const [tab, filename] of [['Media', 'nasdash-demo-media'], ['Downloads', 'nasdash-demo-downloads'], ['Music', 'nasdash-demo-music'], ['Feeds', 'nasdash-demo-feeds']]) {
+    await selectDesktopTab(desktopPage, tab);
+    await capture(desktopPage, filename);
+  }
   await selectDesktopTab(desktopPage, 'Home');
 
   await openSettings(desktopPage);
@@ -294,14 +345,7 @@ try {
     await capture(desktopPage, filename);
   }
 
-  await applySettings(desktopPage, {
-    theme: 'nasdash',
-    mode: 'dark',
-    hideDock: false,
-    hideWidgetTitles: false,
-  });
-  await selectDesktopTab(desktopPage, 'Home');
-  await capture(desktopPage, 'nasdash-demo-home-layout');
+  await applyTheme(desktopPage, 'nasdash');
   await desktop.close();
 
   const mobile = await browser.newContext({
@@ -325,6 +369,39 @@ try {
   await waitForDockerDetail(mobilePage);
   await capture(mobilePage, 'nasdash-demo-mobile-docker');
   await mobile.close();
+
+  // First start, on a new installation: sign-in with the setup code, the five steps of the guide, the tour.
+  await stopServer();
+  const install = await startFreshInstall();
+  try {
+    const first = await browser.newContext({ viewport: { width: 1920, height: 1080 }, colorScheme: 'dark', locale: 'en-US', timezoneId: 'Europe/Paris', reducedMotion: 'reduce', deviceScaleFactor: 1 });
+    const firstPage = await first.newPage();
+    await installCaptureHooks(firstPage);
+    await firstPage.goto(`${install.url}/login?lang=en`);
+    await firstPage.getByLabel('Setup code').waitFor();
+    await capture(firstPage, 'nasdash-first-start-code', false, { demo: false });
+    await firstPage.getByLabel('Setup code').fill(install.code);
+    await firstPage.getByRole('button', { name: 'Continue', exact: true }).click();
+    await firstPage.getByLabel('New password').waitFor({ timeout: 30_000 });
+    await capture(firstPage, 'nasdash-guide-account', false, { demo: false });
+    const password = crypto.randomBytes(18).toString('base64url');
+    await firstPage.getByLabel('New password').fill(password);
+    await firstPage.getByLabel('Confirm').fill(password);
+    for (const step of ['nasdash-guide-appearance', 'nasdash-guide-integrations', 'nasdash-guide-widgets', 'nasdash-guide-access']) {
+      await firstPage.getByRole('button', { name: 'Continue', exact: true }).click();
+      await firstPage.waitForTimeout(1_200);
+      await capture(firstPage, step, false, { demo: false });
+    }
+    await firstPage.getByRole('button', { name: 'Open the dashboard', exact: true }).click();
+    const bubble = firstPage.locator('.nd-tour-bubble');
+    await bubble.waitFor({ timeout: 30_000 });
+    await firstPage.keyboard.press('ArrowRight');
+    await firstPage.waitForTimeout(600);
+    await capture(firstPage, 'nasdash-tour', false, { demo: false });
+    await first.close();
+  } finally {
+    await install.stop();
+  }
 
   const manifest = {
     productVersion: JSON.parse(await fs.readFile(path.join(projectDirectory, 'package.json'), 'utf8')).version,

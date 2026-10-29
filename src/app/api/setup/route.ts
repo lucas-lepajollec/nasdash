@@ -3,22 +3,24 @@ import { checkAdmin } from '@/lib/auth';
 import { readConfig, writeConfig } from '@/lib/config';
 import { isDemoMode } from '@/lib/demoMode';
 import { boundedJson } from '@/lib/widgetData/services';
-import { DEFAULT_WALLPAPER, isBundledWallpaper } from '@/lib/wallpapers';
+import { signInWallpaper } from '@/lib/wallpapers';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 
 /**
  * GET: what the sign-in and first-start screens need before anyone is signed in — whether this installation is new,
- * and how to dress the screen (bundled wallpaper, light or dark, language, the surfaces' glass). Nothing else.
+ * and how to dress the screen like the dashboard (its wallpaper or none, theme, light or dark, language, the
+ * surfaces' glass). Nothing else.
  */
 export async function GET() {
   const settings = readConfig().settings ?? {};
-  // Bundled wallpapers only: an uploaded image may be personal and stays behind sign-in.
-  const wallpaper = isBundledWallpaper(settings.backgroundImage) ? settings.backgroundImage : DEFAULT_WALLPAPER;
+  const mobile = signInWallpaper(settings.mobileWallpaper, 'mobile');
   return NextResponse.json({
     pending: !isDemoMode() && settings.setupPending === true,
-    wallpaper,
+    wallpaper: signInWallpaper(settings.backgroundImage),
+    ...(mobile ? { mobileWallpaper: mobile } : {}),
+    theme: typeof settings.theme === 'string' && /^[a-z0-9-]{1,40}$/.test(settings.theme) ? settings.theme : 'nasdash',
     mode: settings.mode === 'light' ? 'light' : 'dark',
     language: settings.uiLanguage ?? null,
     // The look of the dashboard's surfaces, so signing in looks like what follows.

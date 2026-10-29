@@ -174,6 +174,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const activeBg = (isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || '');
     
     setActiveBgUrl(activeBg);
+    if (!activeBg) document.documentElement.style.removeProperty('--nd-boot-wallpaper');
     if (typeof window !== 'undefined') {
       localStorage.setItem('nd-theme-preset', activeTheme);
       if (activeBg) {
@@ -646,7 +647,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
           zIndex: -1,
           backgroundColor: 'var(--nd-bg)',
           // The veil of Appearance sits between the wallpaper and the cards (dark in dark mode, light in light mode).
-          backgroundImage: activeBgUrl ? `linear-gradient(var(--nd-wallpaper-veil), var(--nd-wallpaper-veil)), url("${activeBgUrl}")` : 'var(--nd-bg-gradient)',
+          // Until the settings arrive, the wallpaper of the last visit (set before the first paint by the layout).
+          backgroundImage: activeBgUrl ? `linear-gradient(var(--nd-wallpaper-veil), var(--nd-wallpaper-veil)), url("${activeBgUrl}")` : config ? 'var(--nd-bg-gradient)' : 'var(--nd-boot-wallpaper, var(--nd-bg-gradient))',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
