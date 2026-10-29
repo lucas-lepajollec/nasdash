@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-10-29
+
+### Upgrading from 0.3.6
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.3.6` image.
+- If you use an uploaded wallpaper, it now shows on the sign-in screen, so anyone who can open that page can see this one image. Choose a bundled wallpaper, or none, to keep it behind sign-in.
+
 ### Changed
 
 - The sign-in screen looks like the dashboard behind it: its theme, and its wallpaper, an uploaded one included (served alone by `/api/setup/wallpaper`, every other upload stays behind sign-in), or the theme's background when it has none.
@@ -590,7 +597,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.6...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.7...HEAD
+[0.3.7]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.3...v0.3.4
