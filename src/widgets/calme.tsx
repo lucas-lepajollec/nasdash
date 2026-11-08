@@ -72,16 +72,20 @@ export function WidgetTitleText({ title, editMode }: { title: string; editMode?:
   );
 }
 
-export function CalmeWidget({ title, aside, editMode, children, flush }: {
+export function CalmeWidget({ title, aside, editMode, children, flush, bare, hideTitle }: {
   title: string;
   aside?: React.ReactNode;
   editMode?: boolean;
   children: React.ReactNode;
   /** No inner padding (lists that draw their own rows). */
   flush?: boolean;
+  /** No card at all: the content sits on the wallpaper (a blended web page). */
+  bare?: boolean;
+  /** This widget's own choice to hide its title (still shown in edit mode). */
+  hideTitle?: boolean;
 }) {
   const { config } = useConfig();
-  const showTitle = !(config?.settings?.hideWidgetTitles ?? false) || editMode;
+  const showTitle = !(config?.settings?.hideWidgetTitles ?? false) && !hideTitle || editMode;
   return (
     <section className="ndc-widget">
       {showTitle && (
@@ -90,7 +94,7 @@ export function CalmeWidget({ title, aside, editMode, children, flush }: {
           {aside && <span className="ndc-title-aside">{aside}</span>}
         </h3>
       )}
-      <div className={`ndc-box ${flush ? 'ndc-box--flush' : ''}`}>{children}</div>
+      <div className={`ndc-box ${flush ? 'ndc-box--flush' : ''} ${bare ? 'ndc-box--bare' : ''}`}>{children}</div>
     </section>
   );
 }

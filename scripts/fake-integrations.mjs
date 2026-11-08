@@ -229,9 +229,22 @@ function speedtest(data) {
   };
 }
 function wud(data) {
+  // An update takes a few seconds, then the container is up to date; triggers are listed per container.
+  const containers = data.map(container => ({ ...container }));
   return (req, res) => {
     if (req.headers.authorization !== `Basic ${Buffer.from('admin:fake-password').toString('base64')}`) return send(res, 401, 'Unauthorized', 'text/plain');
-    return new URL(req.url, 'http://fake').pathname === '/api/containers' ? send(res, 200, JSON.stringify(data)) : send(res, 404, JSON.stringify({ error: 'NotFound' }));
+    const path = new URL(req.url, 'http://fake').pathname;
+    if (path === '/api/containers') return send(res, 200, JSON.stringify(containers));
+    const match = /^\/api\/containers\/([^/]+)\/(triggers|watch)(?:\/([a-z]+)\/([A-Za-z0-9_-]+))?$/.exec(path);
+    const container = match && containers.find(item => item.id === decodeURIComponent(match[1]));
+    if (!container) return send(res, 404, JSON.stringify({ error: 'Not found' }));
+    if (match[2] === 'watch') return send(res, 200, JSON.stringify(container));
+    if (req.method === 'GET') return send(res, 200, JSON.stringify([{ id: 'docker.local', type: 'docker', name: 'local', configuration: {} }]));
+    if (match[3] !== 'docker' || match[4] !== 'local') return send(res, 404, JSON.stringify({ error: 'Not found', message: 'Trigger not found' }));
+    setTimeout(() => {
+      Object.assign(container, { updateAvailable: false, updateKind: { kind: 'unknown' } });
+      send(res, 200, '{}');
+    }, 3000);
   };
 }
 

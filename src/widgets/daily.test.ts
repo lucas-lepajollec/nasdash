@@ -50,3 +50,32 @@ describe('notes', () => {
     expect(html).not.toContain('<script>');
   });
 });
+
+import { lineSpeed } from './speedtest/CalmeSpeedtest';
+import { folderActive, shownFolders } from './syncthing/CalmeSyncthing';
+import { iconName, shownUpdates } from './container-updates/CalmeContainerUpdates';
+import type { SyncthingFolder } from '@/lib/widgetData/contracts';
+
+describe('kit widget settings', () => {
+  it('tells a line speed in bits or bytes', () => {
+    expect(lineSpeed(940_000_000, 'bits', 'en')).toEqual(['940', 'Mbit/s']);
+    expect(lineSpeed(940_000_000, 'bytes', 'en')).toEqual(['118', 'MB/s']);
+    expect(lineSpeed(2_400_000_000, 'bits', 'fr')).toEqual(['2,4', 'Gbit/s']);
+  });
+  it('shows the folders asked for, hidden ones left out', () => {
+    const folder = (id: string, state: SyncthingFolder['state'], completion = 100, errors = 0): SyncthingFolder => ({ id, label: id, state, completion, needBytes: 0, globalBytes: 1, errors });
+    const folders = [folder('docs', 'idle'), folder('photos', 'syncing', 60), folder('music', 'idle', 100, 2), folder('notes', 'paused')];
+    expect(folders.filter(folderActive).map(item => item.id)).toEqual(['photos', 'music']);
+    expect(shownFolders(folders, { folders: 'active' }).map(item => item.id)).toEqual(['photos', 'music']);
+    expect(shownFolders(folders, { hiddenFolders: ['docs', 42], folders: 'all' }).map(item => item.id)).toEqual(['photos', 'music', 'notes']);
+  });
+  it('finds an app icon name from its image and can leave rebuilt images out', () => {
+    expect(iconName('immich-app/immich-server')).toBe('immich');
+    expect(iconName('ghcr.io/linuxserver/sonarr:latest')).toBe('sonarr');
+    expect(iconName('library/postgres')).toBe('postgres');
+    expect(iconName('../<script>')).toBeUndefined();
+    const updates = [{ name: 'a', image: 'a', current: '1', kind: 'tag' as const }, { name: 'b', image: 'b', current: 'latest', kind: 'digest' as const }, { name: 'c', image: 'c', current: 'latest', kind: 'digest' as const, status: 'updating' as const }];
+    expect(shownUpdates(updates, { digests: false }).map(update => update.name)).toEqual(['a', 'c']);
+    expect(shownUpdates(updates, {})).toHaveLength(3);
+  });
+});

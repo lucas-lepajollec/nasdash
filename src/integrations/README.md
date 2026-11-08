@@ -204,7 +204,13 @@ Kit services, checked against their documentation and source (2026-11-08):
 - [What's Up Docker](https://github.com/getwud/wud) `GET /api/containers`
   (`app/model/container.ts`): `updateAvailable`, `updateKind` (`tag` or
   `digest`, `semverDiff`), `result.link`; basic authentication when enabled.
-  Only http(s) links reach the widget.
+  Only http(s) links reach the widget. An update (`update` / `updateAll`
+  actions, administrators) runs the container's `dockercompose` or `docker`
+  trigger (`POST /api/containers/:id/triggers/:type/:name`, role `rw`), then
+  `POST /api/containers/:id/watch`, in the background with up to 15 minutes
+  (`ServiceOptions.longRequest`); only ids WUD lists as updatable are accepted.
+  Its state is added to every answer (`KitServer.decorate`) and a finished
+  update renews the shared reading (`KitServer.revision`).
 
 ## Trying an integration without installing it
 

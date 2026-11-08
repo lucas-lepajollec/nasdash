@@ -1156,7 +1156,9 @@
           "type": "webpage",
           "settings": {
             "url": "https://www.openstreetmap.org/export/embed.html?bbox=4.86%2C52.35%2C4.94%2C52.39&layer=mapnik",
-            "height": 360
+            "height": 420,
+            "blend": true,
+            "title": false
           },
           "x": 0,
           "y": 180,

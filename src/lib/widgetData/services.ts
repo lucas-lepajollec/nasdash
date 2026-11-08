@@ -107,7 +107,8 @@ export function assertStatus(status: number) {
  * no redirects. httpRequest only strips Authorization on cross-origin redirects,
  * so SID / x-api-key requests must use this stricter transport too.
  */
-export interface ServiceOptions extends HttpOptions { body?: string }
+/** `longRequest`: an action that takes minutes (an image pull); `timeoutMs` may then go up to 15 minutes. */
+export interface ServiceOptions extends HttpOptions { body?: string; longRequest?: boolean }
 export async function serviceBytes(instance: IntegrationInstance, path: string, options: ServiceOptions = {}, maxBytes = 8 * 1024 * 1024): Promise<{ bytes: Buffer; contentType: string; status: number; headers?: Record<string, string | string[] | undefined> }> {
   const url = new URL(serviceUrl(instance, path));
   // Some APIs (GitHub…) refuse requests that do not name their client.
@@ -131,7 +132,7 @@ export async function serviceBytes(instance: IntegrationInstance, path: string, 
         response.on('error', reject);
         response.on('end', () => resolve({ bytes: Buffer.concat(chunks), contentType: String(response.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase(), status, headers: response.headers }));
       });
-      const timer = setTimeout(() => req.destroy(new ServiceError('widgets.error.timeout', 504)), Math.min(options.timeoutMs ?? 6000, 6000));
+      const timer = setTimeout(() => req.destroy(new ServiceError('widgets.error.timeout', 504)), Math.min(options.timeoutMs ?? 6000, options.longRequest ? 15 * 60_000 : 6000));
       req.on('close', () => clearTimeout(timer));
       req.on('error', reject);
       req.end(body);

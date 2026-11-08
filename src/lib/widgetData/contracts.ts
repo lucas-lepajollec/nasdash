@@ -908,6 +908,8 @@ export interface ContainerUpdatesSummary extends KitSummaryBase {
   errors: number;
 }
 export interface ContainerUpdate {
+  /** What's Up Docker's container id (the target of an update). */
+  id?: string;
   name: string;
   image: string;
   current: string;
@@ -917,4 +919,9 @@ export interface ContainerUpdate {
   level?: 'major' | 'minor' | 'patch' | 'prerelease';
   /** Release notes or changelog (http/https only). */
   link?: string;
+  /** WUD has a Docker or Docker Compose trigger for it: an administrator may update it from the widget. */
+  updatable?: boolean;
+  /** An update asked from NasDash: in progress, just done, or failed (with the reason's key). */
+  status?: 'updating' | 'updated' | 'failed';
+  error?: string;
 }

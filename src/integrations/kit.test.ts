@@ -10,7 +10,7 @@ import { KIT_FAMILIES } from './kit';
 import { kitServer } from './kitServer';
 import { collectSyncthing, toSyncthing } from './syncthing/collect';
 import { resultTime, toSpeedtest } from './speedtest/collect';
-import { collectWud, toUpdates } from './wud/collect';
+import { collectWud, decorateWud, toUpdates, updateTrigger, wudKit } from './wud/collect';
 import syncthing from './syncthing/samples/service.json';
 import results from './speedtest/samples/results.json';
 import containers from './wud/samples/containers.json';
@@ -100,19 +100,64 @@ describe('Speedtest Tracker', () => {
 });
 
 describe("What's Up Docker", () => {
-  it('lists updates, biggest jumps first, with safe links and short digests', async () => {
-    json.mockResolvedValue(containers);
+  const triggers = [{ id: 'docker.local', type: 'docker', name: 'local' }];
+  const answers = (map: Record<string, unknown> = {}) => json.mockImplementation(async (_instance, path, options) => {
+    if (path === '/api/containers') return containers;
+    if (/^\/api\/containers\/[^/]+\/triggers$/.test(path)) return path.includes('a3') ? [] : triggers;
+    if (path in map) return typeof map[path] === 'function' ? (map[path] as (options: unknown) => unknown)(options) : map[path];
+    throw new ServiceError('widgets.error.http', 502, { status: 404 });
+  });
+  const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  it('lists updates, biggest jumps first, with safe links, short digests and whether each can run from NasDash', async () => {
+    answers();
     const summary = await collectWud(source('wud', { auth: 'basic', username: 'reader' }, { password: 'fake-password' }));
     expect(summary).toMatchObject({ provider: 'wud', total: 5, errors: 1 });
     expect(summary.updates).toEqual([
-      { name: 'postgres', image: 'library/postgres', current: '16.4', latest: '17.2', kind: 'tag', level: 'major' },
-      { name: 'jellyfin', image: 'jellyfin/jellyfin', current: '10.10.3', latest: '10.11.0', kind: 'tag', level: 'minor', link: 'https://github.com/jellyfin/jellyfin/releases/tag/v10.11.0' },
-      { name: 'Pi-hole', image: 'pihole/pihole', current: '0123456789ab', latest: 'fedcba987654', kind: 'digest' },
+      { id: 'a3', name: 'postgres', image: 'library/postgres', current: '16.4', latest: '17.2', kind: 'tag', level: 'major', updatable: false },
+      { id: 'a1', name: 'jellyfin', image: 'jellyfin/jellyfin', current: '10.10.3', latest: '10.11.0', kind: 'tag', level: 'minor', link: 'https://github.com/jellyfin/jellyfin/releases/tag/v10.11.0', updatable: true },
+      { id: 'a2', name: 'Pi-hole', image: 'pihole/pihole', current: '0123456789ab', latest: 'fedcba987654', kind: 'digest', updatable: true },
     ]);
     expect(json.mock.calls[0][2]?.headers).toEqual({ Authorization: `Basic ${Buffer.from('reader:fake-password').toString('base64')}` });
   });
   it('sends no credentials without authentication and refuses a non-list', () => {
     expect(toUpdates(source('wud'), { data: containers }).total).toBe(5);
     expect(() => toUpdates(source('wud'), { error: 'x' })).toThrow(ServiceError);
+  });
+  it('picks the Docker Compose trigger first, then Docker, never a notification', () => {
+    expect(updateTrigger([{ type: 'smtp', name: 'mail' }, { type: 'docker', name: 'local' }, { type: 'dockercompose', name: 'stack' }])).toEqual({ type: 'dockercompose', name: 'stack' });
+    expect(updateTrigger([{ type: 'smtp', name: 'mail' }, { type: 'ntfy', name: 'phone' }])).toBeUndefined();
+    expect(updateTrigger([{ type: 'docker', name: '../x' }])).toBeUndefined();
+  });
+  it('updates a listed container in the background with its trigger, then has WUD check it again', async () => {
+    let finish: (value: unknown) => void = () => undefined;
+    answers({
+      '/api/containers/a1/triggers/docker/local': () => new Promise(resolve => { finish = resolve; }),
+      '/api/containers/a1/watch': {},
+    });
+    const instance = source('wud', {}, {});
+    await wudKit.actions!.update.run(instance, 'a1');
+    const updating = decorateWud(instance, await collectWud(instance));
+    expect(updating.updates.find(update => update.id === 'a1')).toMatchObject({ status: 'updating' });
+    const call = json.mock.calls.find(([, path]) => path === '/api/containers/a1/triggers/docker/local')!;
+    expect(call[2]).toMatchObject({ method: 'POST', longRequest: true });
+    const revision = wudKit.revision!(instance);
+    finish({});
+    await flush(); await flush();
+    expect(json.mock.calls.some(([, path, options]) => path === '/api/containers/a1/watch' && options?.method === 'POST')).toBe(true);
+    expect(wudKit.revision!(instance)).toBeGreaterThan(revision);
+    expect(decorateWud(instance, await collectWud(instance)).updates.find(update => update.id === 'a1')).toMatchObject({ status: 'updated' });
+  });
+  it('refuses an id WUD does not list as updatable, and says why a trigger failed', async () => {
+    answers({ '/api/containers/a2/triggers/docker/local': () => Promise.reject(new ServiceError('integrations.error.authentication', 502, { status: 403 })) });
+    const instance = source('wud', {}, {});
+    instance.id = 'wud-refusals';
+    await expect(wudKit.actions!.update.run(instance, 'a3')).rejects.toMatchObject({ key: 'widgets.updates.error.notListed' });
+    await expect(wudKit.actions!.update.run(instance, 'made-up')).rejects.toMatchObject({ key: 'widgets.updates.error.notListed' });
+    await expect(wudKit.actions!.update.run(instance)).rejects.toMatchObject({ key: 'widgets.error.invalidRequest' });
+    await wudKit.actions!.update.run(instance, 'a2');
+    await flush(); await flush();
+    expect(decorateWud(instance, await collectWud(instance)).updates.find(update => update.id === 'a2')).toMatchObject({ status: 'failed', error: 'integrations.error.authentication' });
+    expect(json.mock.calls.some(([, path]) => String(path).includes('made-up'))).toBe(false);
   });
 });

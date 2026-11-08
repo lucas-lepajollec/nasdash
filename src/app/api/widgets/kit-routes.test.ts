@@ -57,6 +57,8 @@ describe('integration kit route', () => {
     state.admin = true;
     expect((await POST(post({ widget: 'speedtest', widgetId: 'w', action: 'delete' }))).status).toBe(400);
     expect((await POST(post({ widget: 'speedtest', widgetId: 'w', action: 'toString' }))).status).toBe(400);
+    expect((await POST(post({ widget: 'speedtest', widgetId: 'w', action: 'run', target: '../../etc' }))).status).toBe(400);
+    expect((await POST(post({ widget: 'speedtest', widgetId: 'w', action: 'run', target: 42 }))).status).toBe(400);
     state.settings = { integrationId: 'wud-one' };
     expect((await POST(post({ widget: 'container-updates', widgetId: 'w', action: 'run' }))).status).toBe(400);
     expect(json).not.toHaveBeenCalled();

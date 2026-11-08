@@ -35,8 +35,13 @@ function resolve(request: Request, widget: unknown, widgetId: unknown, draft: un
 }
 
 const failure = (error: unknown) => { const response = serviceFailure(error); response.headers.set('Cache-Control', headers['Cache-Control']); return response; };
-const read = (instance: Parameters<typeof serviceIdentity>[0], server: NonNullable<ReturnType<typeof kitServer>>) =>
-  summaries.get(serviceIdentity(instance), () => server.collect(instance), Date.now(), server.ttlMs);
+const key = (instance: Parameters<typeof serviceIdentity>[0], server: NonNullable<ReturnType<typeof kitServer>>) => `${serviceIdentity(instance)}:${server.revision?.(instance) ?? 0}`;
+const read = async (instance: Parameters<typeof serviceIdentity>[0], server: NonNullable<ReturnType<typeof kitServer>>) => {
+  const summary = await summaries.get(key(instance, server), () => server.collect(instance), Date.now(), server.ttlMs);
+  return server.decorate ? server.decorate(instance, summary) : summary;
+};
+/** What an action is about (a container id…): a short plain identifier, or nothing. */
+const TARGET = /^[A-Za-z0-9_.:-]{1,128}$/;
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest) {
     const resolved = resolve(request, url.searchParams.get('widget'), url.searchParams.get('widgetId'), queryDraft(url));
     if (resolved.response) return resolved.response;
     const { instance, server, principal } = resolved;
-    const summary = isDemoMode() ? server.demo(instance) : await read(instance, server);
+    const summary = isDemoMode() ? (server.decorate ? server.decorate(instance, server.demo(instance)) : server.demo(instance)) : await read(instance, server);
     const canControl = !!server.actions && (principal.role === 'admin' || isDemoMode());
     return NextResponse.json({ ...summary, canControl }, { headers });
   } catch (error) { return failure(error); }
@@ -60,10 +65,15 @@ export async function POST(request: NextRequest) {
     const { instance, server } = resolved;
     const action = typeof body.action === 'string' && server.actions && Object.prototype.hasOwnProperty.call(server.actions, body.action) ? server.actions[body.action] : undefined;
     if (!action) throw new ServiceError('widgets.error.invalidRequest', 400);
-    if (isDemoMode()) { action.demo?.(instance); return NextResponse.json({ ...server.demo(instance), canControl: true }, { headers }); }
-    const identity = serviceIdentity(instance);
-    try { await action.run(instance); }
-    finally { summaries.delete(identity); }
+    if (body.target !== undefined && (typeof body.target !== 'string' || !TARGET.test(body.target))) throw new ServiceError('widgets.error.invalidRequest', 400);
+    const target = body.target as string | undefined;
+    if (isDemoMode()) {
+      action.demo?.(instance, target);
+      const demo = server.demo(instance);
+      return NextResponse.json({ ...(server.decorate ? server.decorate(instance, demo) : demo), canControl: true }, { headers });
+    }
+    try { await action.run(instance, target); }
+    finally { summaries.delete(key(instance, server)); }
     return NextResponse.json({ ...await read(instance, server), canControl: true }, { headers });
   } catch (error) { return failure(error); }
 }

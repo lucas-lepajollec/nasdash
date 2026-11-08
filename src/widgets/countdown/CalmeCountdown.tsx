@@ -80,6 +80,7 @@ function presetsOf(settings: WidgetSettings): number[] {
   return list.length ? [...new Set(list)].slice(0, 6) : DEFAULT_PRESETS;
 }
 
+/** The time, refreshed every `stepMs` while active; `sync` brings it up to date at once (after a start or a resume). */
 function useNow(stepMs: number, active: boolean) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -87,13 +88,13 @@ function useNow(stepMs: number, active: boolean) {
     const timer = window.setInterval(() => setNow(Date.now()), stepMs);
     return () => window.clearInterval(timer);
   }, [stepMs, active]);
-  return now;
+  return [now, () => setNow(Date.now())] as const;
 }
 
 function DateCountdown({ settings, isVisible }: { settings: WidgetSettings; isVisible: boolean }) {
   const { t, locale } = useI18n();
   const target = countdownTarget(settings.date);
-  const now = useNow(30_000, isVisible && target !== undefined);
+  const [now] = useNow(30_000, isVisible && target !== undefined);
   if (target === undefined) return <p className="ndw-media-sub is-quiet">{t('widgets.countdown.noDate')}</p>;
   const left = target - now, { days, hours, minutes } = parts(left);
   const label = typeof settings.label === 'string' && settings.label.trim() ? settings.label.trim() : '';
@@ -151,7 +152,7 @@ function Timer({ widgetId, presets, isVisible }: { widgetId: string; presets: nu
   useEffect(() => { setState(readTimer(widgetId)); }, [widgetId]);
   const running = state?.endsAt !== undefined;
   // It keeps counting off screen: ringing does not depend on being visible.
-  const now = useNow(running ? 250 : 60_000, running || isVisible);
+  const [now, syncNow] = useNow(running ? 250 : 60_000, running || isVisible);
   // `now` may be a step behind a timer just started: never more than its duration.
   const remaining = !state ? 0 : running ? Math.min(state.minutes * 60_000, Math.max(0, state.endsAt! - now)) : state.left ?? state.minutes * 60_000;
   const done = running && remaining === 0;
@@ -162,7 +163,8 @@ function Timer({ widgetId, presets, isVisible }: { widgetId: string; presets: nu
     writeTimer(widgetId, finished);
     setState(finished);
   }, [done, state, widgetId]);
-  const set = (next: TimerState | null) => { writeTimer(widgetId, next); setState(next); };
+  // The clock is brought up to date with the state: a resumed timer never shows the seconds of a stale clock.
+  const set = (next: TimerState | null) => { writeTimer(widgetId, next); setState(next); syncNow(); };
   const total = Math.ceil(remaining / 1000);
   const clock = [Math.floor(total / 60), total % 60].map(value => String(value).padStart(2, '0')).join(':');
   const over = !!state && !running && state.left === 0;
