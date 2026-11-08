@@ -12,6 +12,7 @@
     "demo:lan": "node scripts/demo-dev.mjs --lan",
     "demo:authoring:apply": "node scripts/demo-authoring-apply.mjs",
     "fake:integrations": "node scripts/fake-integrations.mjs",
+    "new:integration": "node scripts/new-integration.mjs",
     "demo:capture": "node scripts/capture-demo.mjs",
     "demo:docker": "docker compose -f docker-compose.demo.yml up --build -d",
     "demo:docker:start": "docker compose -f docker-compose.demo.yml up -d",
@@ -65,6 +66,9 @@
   "overrides": {
     "@vitest/mocker": "4.1.12",
     "js-yaml": "4.3.2",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.5"
+    },
     "vite": "8.3.5"
   }
 }

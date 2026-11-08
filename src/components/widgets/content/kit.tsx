@@ -39,7 +39,7 @@ async function readJson<T>(response: Response): Promise<T> {
  * when the widget is first visible, then every `refreshMs` while visible, never
  * while hidden (another page, or a browser tab in the background).
  */
-export function useWidgetData<T>(route: string, widgetId: string, settings: WidgetSettings, options: { refreshMs: number; isVisible?: boolean; method?: 'GET' | 'POST'; params?: Record<string, string>; body?: Record<string, unknown>; enabled?: boolean }) {
+export function useWidgetData<T>(route: string, widgetId: string, settings: WidgetSettings, options: { refreshMs: number | ((data: T | undefined) => number); isVisible?: boolean; method?: 'GET' | 'POST'; params?: Record<string, string>; body?: Record<string, unknown>; enabled?: boolean }) {
   const { user } = useAuth();
   const admin = user?.role === 'admin';
   const method = options.method ?? 'POST';
@@ -64,7 +64,7 @@ export function useWidgetData<T>(route: string, widgetId: string, settings: Widg
       body: JSON.stringify({ widgetId, ...(draft ? { draft } : {}), ...(options.body ?? {}) }),
     }));
   }, {
-    refreshInterval: options.isVisible === false ? 0 : options.refreshMs,
+    refreshInterval: options.isVisible === false ? 0 : options.refreshMs as number | ((data: T | undefined) => number),
     revalidateOnFocus: false,
     keepPreviousData: true,
     dedupingInterval: 5_000,

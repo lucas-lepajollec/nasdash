@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Syncthing** widget: whether each folder is up to date, how far a sync has gone and what is left, folders in error, the connected devices and the transfer rate. Full or compact, every folder or only the active ones, folders of your choice hidden. Read only, with Syncthing's API key.
+- **Internet speed** widget (Speedtest Tracker): the latest download, upload, ping and jitter, the curve of the recent speeds or pings and, for administrators, a button that starts a test. Full or compact, Mbit/s or MB/s, and the share of your subscription's speed the latest test reached. Needs an API token that reads results (and runs tests, for the button).
+- **Container updates** widget (What's Up Docker): which containers have a newer image, from the current version to the new one, major jumps first, with app icons and the release notes when the registry gives them; how many rows show is set with a slider, the others one click away. Administrators update one container or all of them from the widget, through WUD's Docker or Docker Compose trigger, after a confirmation that warns about major versions (it can be turned off). Needs a WUD account with the `rw` role when WUD has authentication.
+- **Notes**: a short note written in place by an administrator, with headings, lists, bold and links. **To-do**: a short list ticked, added to and cleared in place. **Countdown**: the days left until a date, or a timer that rings in the browser, with three durations at hand, any other typed on the spot, durations kept or removed in edit mode, and three looks (standard, large, and animated: a little tomato walking to its flag, still when paused). **Web page**: another site inside the dashboard, sandboxed, from 160 to 4,000 pixels high; it loads once on screen, stays loaded five minutes after its page is left, then is unloaded (sites that refuse to be framed stay blank, and an http page cannot show inside an https dashboard).
+- The three new connections have their own sections in **Settings → Integrations** and their place in the first-start guide; the public demo shows every new widget with fictional data.
+- For contributors, the **integration kit**: one data route, one widget shell and one list of families shared by service integrations, `npm run new:integration` to write a new one, and `scripts/i18n-add.mjs` to add interface texts to the five languages at once (`src/integrations/README.md`).
+
 ## [0.3.7] - 2026-10-29
 
 ### Upgrading from 0.3.6

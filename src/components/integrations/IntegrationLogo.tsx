@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Braces, Cpu, Plug } from 'lucide-react';
+import { getServiceIntegration } from '@/integrations/registry';
 
 /**
  * Logos of the integrations, from the dashboard-icons collection the service
@@ -51,7 +52,8 @@ const LOGOS: Record<string, string> = {
 /** `bare`: the logo alone, without its tile (inside widgets). */
 export function IntegrationLogo({ id, size = 28, bare }: { id: string; size?: number; bare?: boolean }) {
   const [failed, setFailed] = useState(false);
-  const src = LOGOS[id];
+  const own = getServiceIntegration(id)?.logo;
+  const src = LOGOS[id] ?? (own ? `${ICONS}/${own}` : undefined);
   return (
     <span className={`ndc-int-logo ${bare ? 'is-bare' : ''}`} style={{ width: size, height: size }} aria-hidden="true">
       {src && !failed

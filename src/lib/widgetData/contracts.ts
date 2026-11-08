@@ -841,3 +841,87 @@ export interface MusicLibraryResponse {
  * with `pages` an ordered subset of albums | tracks): most played, all time; `tracks` when that page is on.
  */
 export interface MusicTopResponse { server: MusicServer; name: string; albums: MusicAlbum[]; tracks?: MusicTrack[]; fetchedAt: number }
+
+/* ── Integration kit (`src/integrations/kit.ts`) ──────────────────────────────
+ * GET /api/widgets/kit?widget=<type>&widgetId=… answers the summary of the widget's connection;
+ * POST { widget, widgetId, action } runs one of its actions (administrators).
+ */
+/** Fields every kit answer carries. */
+export interface KitSummaryBase {
+  /** Connection type and name (`config.integrations[]`). */
+  provider: string;
+  name: string;
+  /** The viewer may run the widget's actions (administrators, and the public demo). */
+  canControl?: boolean;
+  fetchedAt: number;
+}
+/** Syncthing: folders (completion, state, errors), the other devices and the transfer rate. */
+export interface SyncthingSummary extends KitSummaryBase {
+  provider: 'syncthing';
+  version?: string;
+  uptimeSeconds?: number;
+  folders: SyncthingFolder[];
+  /** The other devices (this one excluded), connected first. */
+  devices: { id: string; name: string; connected: boolean; paused: boolean }[];
+  /** Bytes per second since the previous reading, once there is one. */
+  inRate?: number;
+  outRate?: number;
+}
+export interface SyncthingFolder {
+  id: string;
+  label: string;
+  /** `syncing` covers scanning and preparing; `waiting` the queued states. */
+  state: 'idle' | 'syncing' | 'scanning' | 'waiting' | 'error' | 'paused' | 'unknown';
+  /** 0–100, of what this device needs. */
+  completion: number;
+  needBytes: number;
+  globalBytes: number;
+  /** Files that failed to sync in the last pass. */
+  errors: number;
+}
+/** Speedtest Tracker: the latest test and the recent ones (bits per second, milliseconds). */
+export interface SpeedtestSummary extends KitSummaryBase {
+  provider: 'speedtest';
+  latest?: SpeedtestResult;
+  /** Completed tests, oldest first (≤ 25). */
+  history: SpeedtestResult[];
+  /** A test was asked for and has not finished. */
+  running: boolean;
+}
+export interface SpeedtestResult {
+  at: number;
+  downloadBps: number;
+  uploadBps: number;
+  pingMs: number;
+  jitterMs?: number;
+  server?: string;
+  isp?: string;
+  failed?: boolean;
+}
+/** What's Up Docker: containers whose image has a newer tag or digest. */
+export interface ContainerUpdatesSummary extends KitSummaryBase {
+  provider: 'wud';
+  /** Watched containers. */
+  total: number;
+  updates: ContainerUpdate[];
+  /** Containers WUD could not check. */
+  errors: number;
+}
+export interface ContainerUpdate {
+  /** What's Up Docker's container id (the target of an update). */
+  id?: string;
+  name: string;
+  image: string;
+  current: string;
+  latest?: string;
+  kind: 'tag' | 'digest' | 'unknown';
+  /** How far the new tag is (semantic versions only). */
+  level?: 'major' | 'minor' | 'patch' | 'prerelease';
+  /** Release notes or changelog (http/https only). */
+  link?: string;
+  /** WUD has a Docker or Docker Compose trigger for it: an administrator may update it from the widget. */
+  updatable?: boolean;
+  /** An update asked from NasDash: in progress, just done, or failed (with the reason's key). */
+  status?: 'updating' | 'updated' | 'failed';
+  error?: string;
+}

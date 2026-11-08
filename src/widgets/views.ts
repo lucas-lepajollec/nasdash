@@ -49,6 +49,14 @@ import markets from './markets/view';
 import dns from './dns/view';
 import vpn from './vpn/view';
 import ups from './ups/view';
+import syncthing from './syncthing/view';
+import speedtest from './speedtest/view';
+import containerUpdates from './container-updates/view';
+import notes from './notes/view';
+import todo from './todo/view';
+import countdown from './countdown/view';
+import webpage from './webpage/view';
+// new:integration views
 import type { WidgetViewProps } from './types';
 
 /**
@@ -82,6 +90,14 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'dns': dns,
   'vpn': vpn,
   'ups': ups,
+  'syncthing': syncthing,
+  'speedtest': speedtest,
+  'container-updates': containerUpdates,
+  'notes': notes,
+  'todo': todo,
+  'countdown': countdown,
+  'webpage': webpage,
+  // new:integration view entries
   'rss': rss,
   'markets': markets,
   'quotes': quotes,

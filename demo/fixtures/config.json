@@ -375,6 +375,31 @@
         "host": "nas.demo.invalid",
         "port": "3493"
       }
+    },
+    {
+      "id": "syncthing-demo",
+      "type": "syncthing",
+      "name": "Syncthing",
+      "settings": {
+        "url": "http://syncthing.demo.invalid:8384"
+      }
+    },
+    {
+      "id": "speedtest-demo",
+      "type": "speedtest",
+      "name": "Fibre line",
+      "settings": {
+        "url": "http://speedtest.demo.invalid:8080"
+      }
+    },
+    {
+      "id": "wud-demo",
+      "type": "wud",
+      "name": "What's Up Docker",
+      "settings": {
+        "url": "http://wud.demo.invalid:3000",
+        "auth": "none"
+      }
     }
   ],
   "devices": [

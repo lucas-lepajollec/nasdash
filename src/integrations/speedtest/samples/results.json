@@ -1,0 +1,13 @@
+{
+  "data": [
+    { "id": 42, "service": "ookla", "ping": 0, "download": 0, "upload": 0, "status": "running", "scheduled": false, "healthy": null, "data": {}, "created_at": "2026-11-08 10:05:00", "updated_at": "2026-11-08 10:05:00" },
+    { "id": 41, "service": "ookla", "ping": 8.214, "download": 110000000, "upload": 51250000, "download_bits": 880000000, "upload_bits": 410000000, "status": "completed", "scheduled": true, "healthy": true,
+      "data": { "isp": "Example Fibre", "ping": { "jitter": 1.25, "latency": 8.214 }, "server": { "id": 1234, "name": "Fictional Transit", "location": "Amsterdam", "country": "Netherlands", "host": "speedtest.example.net" } },
+      "created_at": "2026-11-08 10:00:00", "updated_at": "2026-11-08 10:00:40" },
+    { "id": 40, "service": "ookla", "ping": 0, "download": 0, "upload": 0, "status": "failed", "scheduled": true, "healthy": null, "data": {}, "created_at": "2026-11-08 09:00:00", "updated_at": "2026-11-08 09:00:20" },
+    { "id": 39, "service": "ookla", "ping": 9.5, "download": 105000000, "upload": 50000000, "status": "completed", "scheduled": true, "healthy": true,
+      "data": { "isp": "Example Fibre", "server": { "name": "Fictional Transit Amsterdam", "location": "Amsterdam" } },
+      "created_at": "2026-11-08 08:00:00", "updated_at": "2026-11-08 08:00:40" }
+  ],
+  "links": {}, "meta": { "current_page": 1, "total": 4 }
+}

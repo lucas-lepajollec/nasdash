@@ -644,6 +644,17 @@
           "y": 241,
           "w": 8,
           "h": 71
+        },
+        {
+          "id": "machines-syncthing",
+          "type": "syncthing",
+          "settings": {
+            "integrationId": "syncthing-demo"
+          },
+          "x": 8,
+          "y": 241,
+          "w": 8,
+          "h": 70
         }
       ]
     },
@@ -703,6 +714,17 @@
           "y": 170,
           "w": 6,
           "h": 48
+        },
+        {
+          "id": "docker-updates",
+          "type": "container-updates",
+          "settings": {
+            "integrationId": "wud-demo"
+          },
+          "x": 6,
+          "y": 218,
+          "w": 6,
+          "h": 60
         }
       ]
     },
@@ -802,11 +824,22 @@
           "h": 96
         },
         {
+          "id": "network-speedtest",
+          "type": "speedtest",
+          "settings": {
+            "integrationId": "speedtest-demo"
+          },
+          "x": 16,
+          "y": 98,
+          "w": 8,
+          "h": 60
+        },
+        {
           "id": "network-graph",
           "type": "networkgraph",
           "settings": {},
           "x": 16,
-          "y": 133,
+          "y": 158,
           "w": 8,
           "h": 63
         },
@@ -824,7 +857,7 @@
           "type": "network-topology",
           "settings": {},
           "x": 0,
-          "y": 204,
+          "y": 221,
           "w": 24,
           "h": 458
         }
@@ -1051,6 +1084,80 @@
           "y": 0,
           "w": 12,
           "h": 90
+        },
+        {
+          "id": "feeds-countdown",
+          "type": "countdown",
+          "settings": {
+            "label": "New year",
+            "date": "2028-01-01"
+          },
+          "x": 12,
+          "y": 90,
+          "w": 6,
+          "h": 40
+        },
+        {
+          "id": "feeds-timer",
+          "type": "countdown",
+          "settings": {
+            "mode": "timer",
+            "style": "animated"
+          },
+          "x": 18,
+          "y": 90,
+          "w": 6,
+          "h": 40
+        },
+        {
+          "id": "feeds-notes",
+          "type": "notes",
+          "settings": {
+            "text": "# Maintenance\n- Replace the backup drive in the **NAS** before Friday\n- Renew the domain (expires in March)\n\nRouter admin guide: https://docs.nasdash.lucas-homelab.fr"
+          },
+          "x": 0,
+          "y": 114,
+          "w": 12,
+          "h": 50
+        },
+        {
+          "id": "feeds-todo",
+          "type": "todo",
+          "settings": {
+            "items": [
+              {
+                "id": "t1",
+                "text": "Update Jellyfin to 10.11",
+                "done": false
+              },
+              {
+                "id": "t2",
+                "text": "Check the UPS battery date",
+                "done": false
+              },
+              {
+                "id": "t3",
+                "text": "Move photos to the new pool",
+                "done": true
+              }
+            ]
+          },
+          "x": 12,
+          "y": 130,
+          "w": 12,
+          "h": 50
+        },
+        {
+          "id": "feeds-webpage",
+          "type": "webpage",
+          "settings": {
+            "url": "https://www.openstreetmap.org/export/embed.html?bbox=4.86%2C52.35%2C4.94%2C52.39&layer=mapnik",
+            "height": 420
+          },
+          "x": 0,
+          "y": 180,
+          "w": 24,
+          "h": 100
         }
       ]
     }
