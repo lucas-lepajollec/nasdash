@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-11-08
+
+### Upgrading from 0.3.7
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.3.7` image.
+- Viewers limited to chosen widgets do not see the new ones until you add them in **Settings → Users and access**; viewers without a limit see them on the pages they can open.
+- Updating containers from the Container updates widget needs a What's Up Docker account with the `rw` role and a Docker or Docker Compose trigger in WUD; with a read-only account the widget only lists updates.
+
 ### Added
 
 - **Syncthing** widget: whether each folder is up to date, how far a sync has gone and what is left, folders in error, the connected devices and the transfer rate. Full or compact, every folder or only the active ones, folders of your choice hidden. Read only, with Syncthing's API key.
@@ -606,7 +614,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.7...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...HEAD
+[0.3.8]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.4...v0.3.5
