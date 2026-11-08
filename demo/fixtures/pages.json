@@ -1102,11 +1102,7 @@
           "type": "countdown",
           "settings": {
             "mode": "timer",
-            "presets": [
-              5,
-              15,
-              25
-            ]
+            "style": "animated"
           },
           "x": 18,
           "y": 90,
@@ -1156,9 +1152,7 @@
           "type": "webpage",
           "settings": {
             "url": "https://www.openstreetmap.org/export/embed.html?bbox=4.86%2C52.35%2C4.94%2C52.39&layer=mapnik",
-            "height": 420,
-            "blend": true,
-            "title": false
+            "height": 420
           },
           "x": 0,
           "y": 180,

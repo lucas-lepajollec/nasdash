@@ -42,7 +42,9 @@ export function KitWidget<T extends KitSummaryBase>({ widget, widgetId, settings
   children: (data: T, tools: KitTools) => React.ReactNode;
 }) {
   const { t } = useI18n();
-  const { config } = useConfig();
+  // An administrator's action carries the widget's settings, like its readings: a widget not saved yet (the demo's) still works.
+  const { config, user } = useConfig();
+  const admin = user?.role === 'admin';
   const family = kitFamilyOfWidget(widget)!;
   const connection = chosenConnection(config?.integrations, family.types, settings.integrationId);
   const { data, error, mutate, stale } = useWidgetData<T>('/api/widgets/kit', widgetId, settings, { refreshMs, isVisible, method: 'GET', params: { widget }, enabled: !!connection });
@@ -60,7 +62,7 @@ export function KitWidget<T extends KitSummaryBase>({ widget, widgetId, settings
   const run = async (action: string, target?: string) => {
     setBusy(target ? `${action}:${target}` : action); setFailed(null);
     try {
-      const response = await demoFetch('/api/widgets/kit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ widget, widgetId, action, ...(target ? { target } : {}) }) });
+      const response = await demoFetch('/api/widgets/kit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ widget, widgetId, action, ...(target ? { target } : {}), ...(admin ? { draft: settings } : {}) }) });
       const answer = await response.json().catch(() => null) as (T & { error?: string }) | null;
       if (!response.ok || !answer) throw new WidgetDataError(answer?.error || 'widgets.error.network', response.status);
       void mutate(answer, { revalidate: false });

@@ -79,3 +79,28 @@ describe('kit widget settings', () => {
     expect(shownUpdates(updates, {})).toHaveLength(3);
   });
 });
+
+import { clockText, DEFAULT_DURATIONS, durationsOf, parseDuration } from './countdown/CalmeCountdown';
+
+describe('timer durations', () => {
+  it('reads a duration typed freely, between ten seconds and a day', () => {
+    expect(parseDuration('25')).toBe(1500);
+    expect(parseDuration('7:30')).toBe(450);
+    expect(parseDuration('1:05:00')).toBe(3900);
+    expect(parseDuration('90s')).toBe(90);
+    expect(parseDuration('45 min')).toBe(2700);
+    expect(parseDuration('1h30')).toBe(5400);
+    expect(parseDuration('2,5')).toBe(150);
+    for (const text of ['', 'abc', '5s', '0', '25h', '7:75', '-3']) expect(parseDuration(text)).toBeUndefined();
+  });
+  it('keeps valid saved durations, reads the older minutes, and falls back to the three defaults', () => {
+    expect(durationsOf({ durations: [60, 60, 3, 'x', 90] })).toEqual([60, 90]);
+    expect(durationsOf({ presets: [5, 25] })).toEqual([300, 1500]);
+    expect(durationsOf({})).toEqual(DEFAULT_DURATIONS);
+    expect(durationsOf({ durations: Array.from({ length: 12 }, (_, index) => 60 * (index + 1)) })).toHaveLength(8);
+  });
+  it('shows hours only when there are some', () => {
+    expect(clockText(450)).toBe('07:30');
+    expect(clockText(3900)).toBe('1:05:00');
+  });
+});

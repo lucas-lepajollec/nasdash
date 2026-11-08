@@ -5,12 +5,12 @@ import { ArrowRight, ArrowUpCircle, Box, Check, CircleAlert, CircleCheck, Extern
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { ContainerUpdate, ContainerUpdatesSummary } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
-import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { KitWidget, type KitTools } from '@/components/widgets/content/KitWidget';
 import { bounded } from '@/components/widgets/content/kit';
 
-const ROWS = [3, 5, 8, 12, 20] as const;
+export const ROWS = { min: 3, max: 40, default: 5 } as const;
 const ICONS = 'https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons';
 
 /** The app's icon name from its image: `immich-app/immich-server` → `immich`, `library/postgres` → `postgres`. */
@@ -38,14 +38,15 @@ export function shownUpdates(updates: ContainerUpdate[], settings: WidgetSetting
  */
 export default function CalmeContainerUpdates(props: { widgetId: string; settings: WidgetSettings; editMode: boolean; isVisible: boolean; onUpdateSettings: (settings: WidgetSettings) => void }) {
   const { t } = useI18n();
-  const rows = bounded(props.settings.rows, 3, 20, 5);
+  const rows = bounded(props.settings.rows, ROWS.min, ROWS.max, ROWS.default);
   return (
     <KitWidget<ContainerUpdatesSummary> widget="container-updates" skeleton={[40, 44, 44]} {...props}
       refreshMs={refreshPace}
       extraSettings={(draft, change) => (
         <>
-          <CalmeRow label={t('widgets.updates.rows')}>
-            <CalmeSegmented label={t('widgets.updates.rows')} value={String(bounded(draft.rows, 3, 20, 5))} options={ROWS.map(count => ({ value: String(count), label: String(count) }))} onChange={value => change({ rows: Number(value) === 5 ? null : Number(value) })} />
+          <CalmeRow label={t('widgets.updates.rows')} stacked>
+            <CalmeSlider label={t('widgets.updates.rows')} min={ROWS.min} max={ROWS.max} step={1} value={bounded(draft.rows, ROWS.min, ROWS.max, ROWS.default)}
+              onChange={value => change({ rows: value })} onCommit={value => change({ rows: value === ROWS.default ? null : value })} format={String} />
           </CalmeRow>
           <CalmeRow label={t('widgets.updates.showDigests')} info={t('widgets.updates.showDigestsHint')}>
             <CalmeSwitch label={t('widgets.updates.showDigests')} checked={draft.digests !== false} onChange={on => change({ digests: on ? null : false })} />
@@ -66,6 +67,8 @@ export default function CalmeContainerUpdates(props: { widgetId: string; setting
 function Updates({ data, tools, rows, settings }: { data: ContainerUpdatesSummary; tools: KitTools; rows: number; settings: WidgetSettings }) {
   const { t } = useI18n();
   const [asking, setAsking] = useState<ContainerUpdate | 'all' | null>(null);
+  // The rows past the chosen number are one click away, and back.
+  const [expanded, setExpanded] = useState(false);
   const updates = shownUpdates(data.updates, settings);
   const pending = updates.filter(update => update.status !== 'updated');
   const count = pending.length;
@@ -89,7 +92,7 @@ function Updates({ data, tools, rows, settings }: { data: ContainerUpdatesSummar
         <span className="ndw-upd-count">
           {count ? <span className="ndw-upd-number">{count}</span> : <CircleCheck size={18} aria-hidden="true" className="ndw-upd-ok" />}
           <span className="ndw-upd-label">
-            <span>{count ? t('widgets.updates.availableLabel') : t('widgets.updates.none')}</span>
+            <span className="ndw-upd-label-main">{count ? t('widgets.updates.availableLabel') : t('widgets.updates.none')}</span>
             <span className="ndw-media-sub">{[t('widgets.updates.watched', { count: data.total }), data.errors ? t('widgets.updates.errors', { count: data.errors }) : ''].filter(Boolean).join(' · ')}</span>
           </span>
         </span>
@@ -99,10 +102,14 @@ function Updates({ data, tools, rows, settings }: { data: ContainerUpdatesSummar
       </div>
       {updates.length > 0 && (
         <ul className="ndw-upd-list">
-          {updates.slice(0, rows).map(update => <Row key={`${update.id ?? update.name}:${update.image}`} update={update} icons={settings.icons !== false} control={control} busy={tools.busy === `update:${update.id}`} onUpdate={() => start(update)} />)}
+          {(expanded ? updates : updates.slice(0, rows)).map(update => <Row key={`${update.id ?? update.name}:${update.image}`} update={update} icons={settings.icons !== false} control={control} busy={tools.busy === `update:${update.id}`} onUpdate={() => start(update)} />)}
         </ul>
       )}
-      {hidden > 0 && <span className="ndw-media-sub">{t('widgets.updates.more', { count: hidden })}</span>}
+      {hidden > 0 && (
+        <button type="button" className="ndw-upd-more" aria-expanded={expanded} onClick={() => setExpanded(open => !open)}>
+          {expanded ? t('widgets.updates.less') : t('widgets.updates.more', { count: hidden })}
+        </button>
+      )}
       <ConfirmModal
         isOpen={asking !== null}
         onClose={() => setAsking(null)}
@@ -141,8 +148,9 @@ function Row({ update, icons, control, busy, onUpdate }: { update: ContainerUpda
       <span className="ndw-upd-main">
         <span className="ndw-upd-name">
           <span title={update.image}>{update.name}</span>
-          {update.level && <span className={`ndw-upd-level is-${update.level}`}>{t(`widgets.updates.level.${update.level}`)}</span>}
-          {update.kind === 'digest' && <span className="ndw-upd-level">{t('widgets.updates.rebuilt')}</span>}
+          {/* On a narrow widget the badge becomes a coloured dot; its word stays for screen readers and in the tooltip. */}
+          {update.level && <span className={`ndw-upd-level is-${update.level}`} title={t(`widgets.updates.level.${update.level}`)}><span>{t(`widgets.updates.level.${update.level}`)}</span></span>}
+          {update.kind === 'digest' && <span className="ndw-upd-level" title={t('widgets.updates.rebuilt')}><span>{t('widgets.updates.rebuilt')}</span></span>}
           {update.link && (
             <a className="ndw-upd-notes" href={update.link} target="_blank" rel="noreferrer noopener" aria-label={t('widgets.updates.notes', { name: update.name })} title={t('widgets.updates.notes', { name: update.name })}>
               <ExternalLink size={11} />
@@ -156,7 +164,7 @@ function Row({ update, icons, control, busy, onUpdate }: { update: ContainerUpda
       </span>
       <span className="ndw-upd-side">
         {update.status === 'updated' ? <span className="ndw-upd-state is-done"><Check size={12} aria-hidden="true" />{t('widgets.updates.updated')}</span>
-          : updating ? <span className="ndw-upd-state"><span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" />{t('widgets.updates.updating')}</span>
+          : updating ? <span className="ndw-upd-state" title={t('widgets.updates.updating')}><span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" /><span className="ndw-upd-state-word">{t('widgets.updates.updating')}</span></span>
             : update.status === 'failed' ? (
               <span className="ndw-upd-state is-bad" title={update.error ? t(update.error) : undefined}>
                 <CircleAlert size={12} aria-hidden="true" />{t('widgets.updates.failed')}
