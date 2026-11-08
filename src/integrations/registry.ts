@@ -31,6 +31,10 @@ import { prometheusManifest } from './prometheus/manifest';
 import { proxmoxManifest } from './proxmox/manifest';
 import { headscaleManifest } from './headscale/manifest';
 import { tailscaleManifest } from './tailscale/manifest';
+import { syncthingManifest } from './syncthing/manifest';
+import { speedtestManifest } from './speedtest/manifest';
+import { wudManifest } from './wud/manifest';
+// new:integration manifests
 import type { DeviceIntegrationManifest, ServiceIntegrationManifest } from './types';
 
 /**
@@ -76,7 +80,7 @@ export const DEVICE_INTEGRATION_IDS = DEVICE_INTEGRATIONS.map(integration => int
  * widgets, instead of a device to monitor. Adding one: `<id>/manifest.ts`
  * (fields), server code reading it, then list the manifest here.
  */
-export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tmdbManifest, tailscaleManifest, headscaleManifest, gluetunManifest, nutManifest, apcupsdManifest, piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest, piwigoManifest, librephotosManifest, customapiManifest, jellyfinManifest, embyManifest, plexManifest, navidromeManifest, sonarrManifest, radarrManifest, lidarrManifest, prowlarrManifest, qbittorrentManifest, transmissionManifest, delugeManifest, sabnzbdManifest, nzbgetManifest];
+export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tmdbManifest, tailscaleManifest, headscaleManifest, gluetunManifest, nutManifest, apcupsdManifest, syncthingManifest, speedtestManifest, wudManifest, /* new:integration list */ piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest, piwigoManifest, librephotosManifest, customapiManifest, jellyfinManifest, embyManifest, plexManifest, navidromeManifest, sonarrManifest, radarrManifest, lidarrManifest, prowlarrManifest, qbittorrentManifest, transmissionManifest, delugeManifest, sabnzbdManifest, nzbgetManifest];
 
 export function getServiceIntegration(id: string | undefined): ServiceIntegrationManifest | undefined {
   return SERVICE_INTEGRATIONS.find(integration => integration.id === id);

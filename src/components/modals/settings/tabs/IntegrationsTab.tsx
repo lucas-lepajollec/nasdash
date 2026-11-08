@@ -17,12 +17,14 @@ import { MONITORING_INFO, MonitoringConnectionDialog, testConnection, type TestR
 import { ServiceConnectionDialog } from '@/components/integrations/ServiceConnectionDialog';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { DockerHostFormModal, type DockerHostDraft } from '@/components/widgets/docker/DockerViews';
+import { KIT_FAMILIES, type KitFamily, type KitSection } from '@/integrations/kit';
 import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 
 /** Where the widgets and dialogs link to: `settings → integrations → <section>`. */
 /** Media servers, and TMDB (the movie catalogue Coming soon can read). */
 const MEDIA_SECTION_TYPES = [...MEDIA_SERVER_TYPES, 'navidrome', 'tmdb'] as const;
-export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'tunnel' | 'power' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom';
+/** Kit families (`src/integrations/kit.ts`) bring their own sections. */
+export type IntegrationSection = 'monitoring' | 'docker' | 'vpn' | 'tunnel' | 'power' | 'dns' | 'media' | 'arr' | 'downloads' | 'photos' | 'custom' | KitSection;
 export const integrationSectionId = (section: IntegrationSection) => `settings-integrations-${section}`;
 
 type Status = TestResult | 'running' | undefined;
@@ -109,6 +111,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   const media = (config?.integrations ?? []).filter(instance => (MEDIA_SECTION_TYPES as readonly string[]).includes(instance.type));
   const arr = (config?.integrations ?? []).filter(instance => (ARR_TYPES as readonly string[]).includes(instance.type));
   const downloads = (config?.integrations ?? []).filter(instance => (DOWNLOAD_CLIENT_TYPES as readonly string[]).includes(instance.type));
+  const kit = Object.fromEntries(KIT_FAMILIES.map(family => [family.section, (config?.integrations ?? []).filter(instance => family.types.includes(instance.type))]));
   const serviceName = (type: string) => getServiceIntegration(type)?.name ?? type;
 
   // Opened from a widget or a dialog: straight to its category.
@@ -127,7 +130,7 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
   // Each saved connection is tried once when the page opens: its state shows at a glance.
   const tested = useRef(new Set<string>());
   useEffect(() => {
-    for (const instance of [...instances, ...tunnel, ...power, ...dns, ...media, ...arr, ...downloads, ...photos, ...custom]) {
+    for (const instance of [...instances, ...tunnel, ...power, ...dns, ...media, ...arr, ...downloads, ...photos, ...custom, ...Object.values(kit).flat()]) {
       if (tested.current.has(instance.id)) continue;
       tested.current.add(instance.id);
       void runTest(instance);
@@ -249,9 +252,10 @@ export function IntegrationsTab({ targetSection, onOpenTab, showSensitive = fals
         )),
       )}
 
-      {(['tunnel', 'power', 'dns', 'media', 'arr', 'downloads', 'photos', 'custom'] as const).map(id => {
-        const saved = { tunnel, power, dns, media, arr, downloads, photos, custom }[id];
-        const kinds: readonly string[] = { tunnel: VPN_TUNNEL_TYPES, power: UPS_TYPES, dns: DNS_TYPES, media: MEDIA_SECTION_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_STATS_TYPES, custom: CUSTOM_API_TYPES }[id];
+      {([...['tunnel', 'power', 'dns', 'media', 'arr', 'downloads', 'photos'], ...KIT_FAMILIES.map(family => family.section), 'custom'] as IntegrationSection[]).map(id => {
+        const family: KitFamily | undefined = KIT_FAMILIES.find(item => item.section === id);
+        const saved = family ? kit[family.section] : ({ tunnel, power, dns, media, arr, downloads, photos, custom } as Record<string, IntegrationInstance[]>)[id];
+        const kinds: readonly string[] = family ? family.types : ({ tunnel: VPN_TUNNEL_TYPES, power: UPS_TYPES, dns: DNS_TYPES, media: MEDIA_SECTION_TYPES, arr: ARR_TYPES, downloads: DOWNLOAD_CLIENT_TYPES, photos: PHOTO_STATS_TYPES, custom: CUSTOM_API_TYPES } as Record<string, readonly string[]>)[id];
         return (
           <React.Fragment key={id}>
             {section(

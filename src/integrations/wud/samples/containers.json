@@ -1,0 +1,20 @@
+[
+  { "id": "a1", "name": "jellyfin", "displayName": "jellyfin", "status": "running", "watcher": "local",
+    "image": { "id": "sha256:aaa", "registry": { "name": "hub", "url": "https://registry-1.docker.io/v2" }, "name": "jellyfin/jellyfin", "tag": { "value": "10.10.3", "semver": true }, "digest": { "watch": false }, "architecture": "amd64", "os": "linux" },
+    "result": { "tag": "10.11.0", "link": "https://github.com/jellyfin/jellyfin/releases/tag/v10.11.0" },
+    "updateAvailable": true, "updateKind": { "kind": "tag", "localValue": "10.10.3", "remoteValue": "10.11.0", "semverDiff": "minor" } },
+  { "id": "a2", "name": "pihole", "displayName": "Pi-hole", "status": "running", "watcher": "local",
+    "image": { "id": "sha256:bbb", "registry": { "name": "hub", "url": "https://registry-1.docker.io/v2" }, "name": "pihole/pihole", "tag": { "value": "latest", "semver": false }, "digest": { "watch": true, "value": "sha256:0123456789abcdef0123456789abcdef" }, "architecture": "amd64", "os": "linux" },
+    "result": { "tag": "latest", "digest": "sha256:fedcba9876543210fedcba9876543210" },
+    "updateAvailable": true, "updateKind": { "kind": "digest", "localValue": "sha256:0123456789abcdef0123456789abcdef", "remoteValue": "sha256:fedcba9876543210fedcba9876543210", "semverDiff": "unknown" } },
+  { "id": "a3", "name": "postgres", "displayName": "postgres", "status": "running", "watcher": "local",
+    "image": { "id": "sha256:ccc", "registry": { "name": "hub", "url": "https://registry-1.docker.io/v2" }, "name": "library/postgres", "tag": { "value": "16.4", "semver": true }, "digest": { "watch": false }, "architecture": "amd64", "os": "linux" },
+    "result": { "tag": "17.2", "link": "javascript:alert(1)" },
+    "updateAvailable": true, "updateKind": { "kind": "tag", "localValue": "16.4", "remoteValue": "17.2", "semverDiff": "major" } },
+  { "id": "a4", "name": "caddy", "displayName": "caddy", "status": "running", "watcher": "local",
+    "image": { "id": "sha256:ddd", "registry": { "name": "hub", "url": "https://registry-1.docker.io/v2" }, "name": "library/caddy", "tag": { "value": "2.9", "semver": true }, "digest": { "watch": false }, "architecture": "amd64", "os": "linux" },
+    "result": { "tag": "2.9" }, "updateAvailable": false, "updateKind": { "kind": "unknown" } },
+  { "id": "a5", "name": "private-app", "displayName": "private-app", "status": "running", "watcher": "local",
+    "image": { "id": "sha256:eee", "registry": { "name": "ghcr", "url": "https://ghcr.io/v2" }, "name": "example/private-app", "tag": { "value": "1.0.0", "semver": true }, "digest": { "watch": false }, "architecture": "amd64", "os": "linux" },
+    "error": { "message": "Unauthorized" }, "updateAvailable": false, "updateKind": { "kind": "unknown" } }
+]

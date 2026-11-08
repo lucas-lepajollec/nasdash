@@ -160,6 +160,52 @@ Provider errors reuse `widgets.error.network`, `parse`, `http`, `timeout`,
 TLS/URL errors add `integrations.error.certificate` and `integrations.error.invalidUrl`.
 The UI owner maintains these keys in all five interface languages.
 
+## The integration kit
+
+A service integration read by one widget, with nothing special to show
+before it is saved, uses the kit instead of its own route and settings code.
+`src/integrations/kit.ts` (browser-safe) lists the **families**: a Settings →
+Integrations section, the widget reading it, the service types it accepts and
+the first-start family it joins. `src/integrations/kitServer.ts` (server) maps
+each type to its `KitServer`: `collect` (the summary, shared for `ttlMs` by
+every widget on the same connection), `test` (what the connection test reads),
+`demo` (fictional data, never a request) and optional admin `actions`.
+
+Everything else is shared:
+
+| Shared piece | Where |
+| --- | --- |
+| Data route: `GET /api/widgets/kit?widget=<type>&widgetId=…`, `POST { widget, widgetId, action }` (administrators) | `src/app/api/widgets/kit/route.ts` |
+| Widget shell: connection picker, setup guide, loading, errors, actions | `src/components/widgets/content/KitWidget.tsx` |
+| Settings → Integrations section, connection dialog, connection test, address hidden from visitors, first-start guide | read from `KIT_FAMILIES` |
+| Logo | `logo` in the manifest (`svg/<name>.svg` of the dashboard-icons collection) |
+| Contracts | `KitSummaryBase` and each summary in `src/lib/widgetData/contracts.ts` |
+| Consistency test (manifest, server, widget, view, texts in five languages) | `src/integrations/kit.test.ts` |
+
+`npm run new:integration -- <id> --name "Name" --section <section> --widget <type> --guide machines|docker|network`
+writes a new family: manifest, collector with its sample and test, widget, and
+the lines in the registry, `kit.ts`, `kitServer.ts`, `definitions.ts` and
+`views.ts`. `--into <section>` adds another provider to an existing family.
+The generator also writes the interface texts to translate; add them with
+`node scripts/i18n-add.mjs <file>`, which writes the five dictionaries at once.
+
+Kit services, checked against their documentation and source (2026-11-08):
+
+- [Syncthing REST API](https://docs.syncthing.net/dev/rest.html): `X-API-Key`;
+  `/rest/system/status`, `/rest/system/version`, `/rest/config/folders`,
+  `/rest/config/devices`, `/rest/system/connections` and `/rest/db/status`
+  per folder (documented as expensive: at most 24 folders, one reading shared
+  for 30 s). The transfer rate is the difference between two readings.
+- [Speedtest Tracker API](https://docs.speedtest-tracker.dev/api/): Bearer
+  token, `Accept: application/json`; `GET /api/v1/results?sort=-created_at`
+  (the latest 25) and `POST /api/v1/speedtests/run` for the admin button.
+  `download` and `upload` are bytes per second (`ResultResource`); NasDash
+  keeps bits per second. Dates without a zone are read as UTC.
+- [What's Up Docker](https://github.com/getwud/wud) `GET /api/containers`
+  (`app/model/container.ts`): `updateAvailable`, `updateKind` (`tag` or
+  `digest`, `semverDiff`), `result.link`; basic authentication when enabled.
+  Only http(s) links reach the widget.
+
 ## Trying an integration without installing it
 
 `npm run fake:integrations` starts local fake servers answering from the
@@ -182,6 +228,9 @@ The UI owner maintains these keys in all five interface languages.
 | `http://127.0.0.1:2622` | AdGuard Home, username `admin`, password `fake-password` |
 | `http://127.0.0.1:2623` | Immich, API key `fake-immich-key` |
 | `http://127.0.0.1:2624` | PhotoPrism, token `fake-photoprism-token` |
+| `127.0.0.1:2627` | Syncthing, API key `fake-syncthing-key` |
+| `127.0.0.1:2628` | Speedtest Tracker, API token `fake-speedtest-token` |
+| `127.0.0.1:2629` | What's Up Docker, basic authentication `admin` / `fake-password` |
 | `127.0.0.1:2619` | A server answering HTML (error case) |
 | `127.0.0.1:2618` | Nothing (unreachable case) |
 

@@ -10,6 +10,9 @@ import { demoFetch } from '@/lib/demoTransport';
 import { BUNDLED_WALLPAPERS, isBundledWallpaper } from '@/lib/wallpapers';
 import { ARR_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 import { getServiceIntegration, selectableDeviceIntegrations } from '@/integrations/registry';
+import { isKitType, KIT_FAMILIES, kitFamilyOfWidget, type KitGuideFamily } from '@/integrations/kit';
+
+const kitKinds = (guide: KitGuideFamily) => KIT_FAMILIES.filter(family => family.guide === guide).flatMap(family => family.types);
 import { insertWidget, newWidgetInstance } from '@/lib/pages/operations';
 import type { Page } from '@/lib/pages/types';
 import { getWidgetCatalogEntry } from '@/lib/widgets/catalog';
@@ -38,6 +41,8 @@ const SUGGESTIONS: { family: string; widgets: string[] }[] = [
   { family: 'network', widgets: ['dns', 'vpn', 'tailscale'] },
   { family: 'power', widgets: ['ups'] },
   { family: 'photos', widgets: ['photos', 'photos-stats'] },
+  // Kit widgets join the family of their connections.
+  ...KIT_FAMILIES.map(family => ({ family: family.guide, widgets: [family.widget] })),
 ];
 const ALWAYS = ['clock', 'weather', 'calendar', 'bookmarks'];
 const PRESELECTED = new Set(['devices', 'dockercontainers', 'media-nowplaying', 'media-downloads', 'dns', 'vpn', 'ups', 'clock', 'weather']);
@@ -49,6 +54,8 @@ function familyWidgetConnected(widget: string, types: Set<string>): boolean {
   if (widget === 'tailscale') return types.has('tailscale') || types.has('headscale');
   if (widget === 'media-downloads') return DOWNLOAD_CLIENT_TYPES.some(type => types.has(type));
   if (widget === 'media-upcoming' || widget === 'media-queue') return ARR_TYPES.some(type => types.has(type));
+  const kit = kitFamilyOfWidget(widget);
+  if (kit) return kit.types.some(type => types.has(type));
   return true;
 }
 
@@ -245,16 +252,17 @@ function IntegrationsStep({ index, error, nav, onNext, onChanged }: { index: num
   const [service, setService] = useState<string | null>(null);
   const [docker, setDocker] = useState<DockerHostDraft['type'] | null>(null);
   const families: Family[] = useMemo(() => [
-    { id: 'machines', icon: <Cpu size={17} />, kinds: selectableDeviceIntegrations().map(item => item.id), monitoring: true },
-    { id: 'docker', icon: <Container size={17} />, kinds: DOCKER_KINDS, docker: true },
+    // Kit connections complete a family (Syncthing next to the machines…) and open their own dialog.
+    { id: 'machines', icon: <Cpu size={17} />, kinds: [...selectableDeviceIntegrations().map(item => item.id), ...kitKinds('machines')], monitoring: true },
+    { id: 'docker', icon: <Container size={17} />, kinds: [...DOCKER_KINDS, ...kitKinds('docker')], docker: true },
     { id: 'media', icon: <Film size={17} />, kinds: [...MEDIA_SERVER_TYPES, 'navidrome'] },
     { id: 'arr', icon: <Download size={17} />, kinds: [...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] },
-    { id: 'network', icon: <Network size={17} />, kinds: ['tailscale', 'headscale', ...VPN_TUNNEL_TYPES, ...DNS_TYPES] },
+    { id: 'network', icon: <Network size={17} />, kinds: ['tailscale', 'headscale', ...VPN_TUNNEL_TYPES, ...DNS_TYPES, ...kitKinds('network')] },
     { id: 'power', icon: <Zap size={17} />, kinds: UPS_TYPES },
     { id: 'photos', icon: <ImageIcon size={17} />, kinds: PHOTO_STATS_TYPES },
   ], []);
-  const count = (family: Family) => family.docker ? (config?.dockerHosts ?? []).length
-    : (config?.integrations ?? []).filter(instance => family.kinds.includes(instance.type)).length;
+  const services = (family: Family) => (config?.integrations ?? []).filter(instance => family.kinds.includes(instance.type)).length;
+  const count = (family: Family) => family.docker ? (config?.dockerHosts ?? []).length + services(family) : services(family);
   const name = (kind: string) => getServiceIntegration(kind)?.name ?? selectableDeviceIntegrations().find(item => item.id === kind)?.name ?? kind;
   const addHost = async (draft: DockerHostDraft) => {
     const response = await demoFetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...draft, type: 'dockerHost', connection: draft.type }) });
@@ -265,7 +273,7 @@ function IntegrationsStep({ index, error, nav, onNext, onChanged }: { index: num
     onChanged();
     setDocker(null);
   };
-  const label = (family: Family, kind: string) => family.docker ? t(`integrations.docker.${kind}`) : name(kind);
+  const label = (family: Family, kind: string) => family.docker && !isKitType(kind) ? t(`integrations.docker.${kind}`) : name(kind);
   return (
     <StepFrame index={index} step="integrations" error={error} footer={<GuideFooter nav={nav} primary={<Primary busy={nav.busy} onClick={onNext}>{t('welcome.continue')}</Primary>} />}>
       <div className="ndw-families">
@@ -287,7 +295,7 @@ function IntegrationsStep({ index, error, nav, onNext, onChanged }: { index: num
                 // The tiles of Settings → Integrations: each opens NasDash's own connection window.
                 <div className="ndc-int-tiles">
                   {family.kinds.map(kind => (
-                    <button key={kind} type="button" className="ndc-int-tile" onClick={() => family.docker ? setDocker(kind as DockerHostDraft['type']) : family.monitoring ? setMonitoring(kind) : setService(kind)}>
+                    <button key={kind} type="button" className="ndc-int-tile" onClick={() => isKitType(kind) ? setService(kind) : family.docker ? setDocker(kind as DockerHostDraft['type']) : family.monitoring ? setMonitoring(kind) : setService(kind)}>
                       <IntegrationLogo id={kind} size={28} />
                       <span className="ndc-int-tile-text"><span className="ndc-int-tile-name">{label(family, kind)}</span></span>
                     </button>
@@ -318,6 +326,7 @@ function WidgetsStep({ index, error, nav, busy, run, onDone }: { index: number; 
     ...(['tailscale', 'headscale', ...VPN_TUNNEL_TYPES, ...DNS_TYPES].some(type => connectedTypes.has(type)) ? ['network'] : []),
     ...(UPS_TYPES.some(type => connectedTypes.has(type)) ? ['power'] : []),
     ...(PHOTO_STATS_TYPES.some(type => connectedTypes.has(type)) ? ['photos'] : []),
+    ...KIT_FAMILIES.filter(family => family.types.some(type => connectedTypes.has(type))).map(family => family.guide),
   ]), [config?.devices, config?.dockerHosts, connectedTypes]);
   const offered = SUGGESTIONS.filter(item => families.has(item.family)).flatMap(item => item.widgets).filter(widget => familyWidgetConnected(widget, connectedTypes) && getWidgetCatalogEntry(widget));
   const always = ALWAYS.filter(widget => getWidgetCatalogEntry(widget));

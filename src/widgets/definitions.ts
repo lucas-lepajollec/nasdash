@@ -48,6 +48,14 @@ import markets from './markets/definition';
 import dns from './dns/definition';
 import vpn from './vpn/definition';
 import ups from './ups/definition';
+import syncthing from './syncthing/definition';
+import speedtest from './speedtest/definition';
+import containerUpdates from './container-updates/definition';
+import notes from './notes/definition';
+import todo from './todo/definition';
+import countdown from './countdown/definition';
+import webpage from './webpage/definition';
+// new:integration definitions
 import type { WidgetDefinition } from './define';
 
 /**
@@ -61,17 +69,19 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // System
   devices, device, deviceChart, storage, metricCpu, metricMemory, metricGpu, metricTemperature, metricLoad, metricNetwork,
   // Docker
-  dockercontainers, dockeractions, dockerHosts, dockerSummary, dockerContainerList, dockerExplorer,
+  dockercontainers, dockeractions, dockerHosts, dockerSummary, dockerContainerList, dockerExplorer, containerUpdates,
   // Network
-  networkgraph, tailscale, networkTools, networkTopology, dns, vpn, ups,
+  networkgraph, tailscale, networkTools, networkTopology, dns, vpn, ups, speedtest, syncthing,
   // Content
   mediaNowPlaying, mediaRecent, mediaLibrary, mediaUpcoming, mediaQueue, mediaDownloads, mediaIndexers, mediaArr,
   // Music
   musicNowPlaying, musicRecent, musicLibrary, musicTop, musicPlaylists,
   // Content
-  rss, markets, quotes, photos, photosStats, bookmarks, customapi,
+  rss, markets, quotes, photos, photosStats, bookmarks, customapi, webpage,
   // Gadgets
-  clock, calendar, weather,
+  clock, calendar, weather, notes, todo, countdown,
+  // Integration kit widgets added by `npm run new:integration`
+  // new:integration widgets
   // Layout
   spacer,
 ];

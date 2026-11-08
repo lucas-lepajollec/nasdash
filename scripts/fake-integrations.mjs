@@ -206,6 +206,35 @@ function widgetService(id, data) {
   };
 }
 
+/** Integration kit services: each answers its sample, with the expected credentials. */
+function syncthing(data) {
+  let received = 1_000_000;
+  return (req, res) => {
+    if (req.headers['x-api-key'] !== 'fake-syncthing-key') return send(res, 403, 'CSRF Error');
+    const url = new URL(req.url, 'http://fake');
+    received += Math.round(2_000_000 + Math.random() * 4_000_000);
+    if (url.pathname === '/rest/db/status') return send(res, 200, JSON.stringify(data.folderStatus[url.searchParams.get('folder')] ?? {}));
+    const routes = { '/rest/system/status': data.status, '/rest/system/version': data.version, '/rest/config/folders': data.folders, '/rest/config/devices': data.devices,
+      '/rest/system/connections': { ...data.connections, total: { ...data.connections.total, inBytesTotal: received } } };
+    return url.pathname in routes ? send(res, 200, JSON.stringify(routes[url.pathname])) : send(res, 404, '404 page not found', 'text/plain');
+  };
+}
+function speedtest(data) {
+  return (req, res) => {
+    if (req.headers.authorization !== 'Bearer fake-speedtest-token') return send(res, 401, JSON.stringify({ message: 'Unauthenticated.' }));
+    const url = new URL(req.url, 'http://fake');
+    if (url.pathname === '/api/v1/results') return send(res, 200, JSON.stringify(data));
+    if (url.pathname === '/api/v1/speedtests/run' && req.method === 'POST') return send(res, 201, JSON.stringify({ data: { id: 99, status: 'waiting' }, message: 'Speedtest added to the queue.' }));
+    return send(res, 404, JSON.stringify({ message: 'Not found.' }));
+  };
+}
+function wud(data) {
+  return (req, res) => {
+    if (req.headers.authorization !== `Basic ${Buffer.from('admin:fake-password').toString('base64')}`) return send(res, 401, 'Unauthorized', 'text/plain');
+    return new URL(req.url, 'http://fake').pathname === '/api/containers' ? send(res, 200, JSON.stringify(data)) : send(res, 404, JSON.stringify({ error: 'NotFound' }));
+  };
+}
+
 /** A server that answers HTML instead of JSON (wrong port, login page…). */
 const html = (_req, res) => send(res, 200, '<html><body>Login</body></html>', 'text/html');
 
@@ -228,6 +257,9 @@ const servers = [
   { port: 2622, name: 'AdGuard Home — admin / fake-password', handler: widgetService('adguard', sample('adguard', 'service')) },
   { port: 2623, name: 'Immich — API key "fake-immich-key"', handler: widgetService('immich', sample('immich', 'service')) },
   { port: 2624, name: 'PhotoPrism — token "fake-photoprism-token"', handler: widgetService('photoprism', sample('photoprism', 'service')) },
+  { port: 2627, name: 'Syncthing — API key "fake-syncthing-key"', handler: syncthing(sample('syncthing', 'service')) },
+  { port: 2628, name: 'Speedtest Tracker — API token "fake-speedtest-token"', handler: speedtest(sample('speedtest', 'results')) },
+  { port: 2629, name: "What's Up Docker — admin / fake-password", handler: wud(sample('wud', 'containers')) },
   { port: 2619, name: 'Error case — HTML instead of JSON (use with Glances)', handler: html },
 ];
 

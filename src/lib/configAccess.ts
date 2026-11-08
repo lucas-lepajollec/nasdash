@@ -3,6 +3,7 @@ import { DashboardConfig } from './types';
 import { NO_ACCESS } from './permissions';
 import { maskInstanceSecrets, stripInstanceSecrets } from '@/integrations/instances';
 import { isMonitoringType } from '@/integrations/sources';
+import { KIT_TYPES } from '@/integrations/kit';
 import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MUSIC_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES, VPN_TUNNEL_TYPES, UPS_TYPES } from './widgetData/contracts';
 
 type SerializableConfig = DashboardConfig & {
@@ -44,7 +45,7 @@ function filterSecretCategories(config: SerializableConfig): void {
 }
 
 /** Service connections whose address stays server-side for visitors (the widget only needs id, name, type). */
-const SERVICE_ADDRESS_TYPES = new Set<string>([...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MUSIC_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES, ...VPN_TUNNEL_TYPES, ...UPS_TYPES]);
+const SERVICE_ADDRESS_TYPES = new Set<string>([...DNS_TYPES, ...PHOTO_STATS_TYPES, ...CUSTOM_API_TYPES, ...MUSIC_SERVER_TYPES, ...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES, ...VPN_TUNNEL_TYPES, ...UPS_TYPES, ...KIT_TYPES]);
 
 export function buildConfigForPrincipal(
   config: DashboardConfig,

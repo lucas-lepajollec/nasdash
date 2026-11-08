@@ -1,0 +1,25 @@
+{
+  "status": { "myID": "AAAAAAA-BBBBBBB-CCCCCCC-DDDDDDD-EEEEEEE-FFFFFFF-GGGGGGG-HHHHHHH", "uptime": 86400, "startTime": "2026-11-07T10:00:00Z" },
+  "version": { "arch": "amd64", "os": "linux", "version": "v2.0.10", "longVersion": "syncthing v2.0.10 \"Hafnium Hornet\" (go1.25 linux-amd64)" },
+  "folders": [
+    { "id": "abcd-1234", "label": "Documents", "paused": false, "devices": [] },
+    { "id": "efgh-5678", "label": "Photos", "paused": false, "devices": [] },
+    { "id": "ijkl-9012", "label": "", "paused": true, "devices": [] }
+  ],
+  "devices": [
+    { "deviceID": "AAAAAAA-BBBBBBB-CCCCCCC-DDDDDDD-EEEEEEE-FFFFFFF-GGGGGGG-HHHHHHH", "name": "nas", "paused": false },
+    { "deviceID": "LAPTOPX-1111111-2222222-3333333-4444444-5555555-6666666-7777777", "name": "laptop", "paused": false },
+    { "deviceID": "PHONEXX-1111111-2222222-3333333-4444444-5555555-6666666-7777777", "name": "phone", "paused": false }
+  ],
+  "connections": {
+    "connections": {
+      "LAPTOPX-1111111-2222222-3333333-4444444-5555555-6666666-7777777": { "connected": true, "paused": false, "inBytesTotal": 1000, "outBytesTotal": 2000, "type": "tcp-client" },
+      "PHONEXX-1111111-2222222-3333333-4444444-5555555-6666666-7777777": { "connected": false, "paused": false, "inBytesTotal": 0, "outBytesTotal": 0, "type": "" }
+    },
+    "total": { "at": "2026-11-08T10:00:00Z", "inBytesTotal": 1000000, "outBytesTotal": 500000 }
+  },
+  "folderStatus": {
+    "abcd-1234": { "globalBytes": 1000, "needBytes": 0, "inSyncBytes": 1000, "pullErrors": 0, "state": "idle" },
+    "efgh-5678": { "globalBytes": 4000, "needBytes": 1000, "inSyncBytes": 3000, "pullErrors": 2, "state": "syncing" }
+  }
+}

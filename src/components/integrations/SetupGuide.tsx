@@ -7,6 +7,8 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { monitoringInstances } from '@/integrations/sources';
 import { latestInstance } from '@/integrations/instances';
 import { useOpenSettings } from './useOpenSettings';
+import type { IntegrationSection } from '@/components/modals/settings/tabs/IntegrationsTab';
+import { kitFamilyOfSection, type KitSection } from '@/integrations/kit';
 import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SERVER_TYPES, PHOTO_STATS_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 
 /**
@@ -16,7 +18,8 @@ import { ARR_TYPES, CUSTOM_API_TYPES, DNS_TYPES, DOWNLOAD_CLIENT_TYPES, MEDIA_SE
  * Each step links straight to the right place; done steps are ticked.
  * Visitors who cannot change the settings are told an admin has to.
  */
-export type SetupKind = 'devices' | 'docker' | 'vpn' | 'tunnel' | 'ups' | 'dns' | 'photos' | 'bookmarks' | 'customapi' | 'media' | 'arr' | 'prowlarr' | 'downloads' | 'rss' | 'markets' | 'weather';
+/** Kit families add their section (`src/integrations/kit.ts`): `setup.<section>.title`, `.connect`, `.connectAction`. */
+export type SetupKind = KitSection | 'devices' | 'docker' | 'vpn' | 'tunnel' | 'ups' | 'dns' | 'photos' | 'bookmarks' | 'customapi' | 'media' | 'arr' | 'prowlarr' | 'downloads' | 'rss' | 'markets' | 'weather';
 
 
 export function SetupGuide({ kind }: { kind: SetupKind }) {
@@ -25,7 +28,10 @@ export function SetupGuide({ kind }: { kind: SetupKind }) {
   const { openIntegrations, openMachines, openWidgetSettings } = useOpenSettings();
   const admin = user?.role === 'admin';
 
-  const steps = kind === 'devices'
+  const family = kitFamilyOfSection(kind);
+  const steps = family
+    ? [{ done: !!latestInstance(config ?? {}, [...family.types]), label: t(`setup.${kind}.connect`), action: t(`setup.${kind}.connectAction`), open: () => openIntegrations(kind as IntegrationSection) }]
+    : kind === 'devices'
     ? [
       { done: monitoringInstances(config).length > 0, label: t('setup.devices.source'), action: t('setup.devices.sourceAction'), open: () => openIntegrations('monitoring') },
       { done: (config?.devices ?? []).length > 0, label: t('setup.devices.machines'), action: t('setup.devices.machinesAction'), open: openMachines },

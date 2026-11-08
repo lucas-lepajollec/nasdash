@@ -190,5 +190,7 @@ export interface ServiceIntegrationManifest {
   section?: 'media' | 'photos';
   id: string;
   name: string;
+  /** Logo path in the dashboard-icons collection (`svg/<name>.svg`), when `IntegrationLogo` has none of its own. */
+  logo?: string;
   fields: readonly ServiceField[];
 }
