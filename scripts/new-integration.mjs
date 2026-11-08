@@ -51,7 +51,9 @@ const pascal = (value => value.split(/[-_]/).map(part => part[0].toUpperCase() +
 const summary = `${into ? '' : pascal}Summary`;
 
 const kit = read('src/integrations/kit.ts');
-const existing = new RegExp(`\\{ section: '${section}', widget: '([^']+)', types: \\[([^\\]]*)\\]`).exec(kit);
+// The section is letters only (checked above); escaped anyway, as any text put in a pattern.
+const escaped = section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const existing = new RegExp(`\\{ section: '${escaped}', widget: '([^']+)', types: \\[([^\\]]*)\\]`).exec(kit);
 if (into && !existing) fail(`No kit family has the section "${section}".`);
 if (!into && existing) fail(`The section "${section}" exists already: use --into ${section} to add a provider to it.`);
 if (existsSync(path(`src/integrations/${id}`))) fail(`src/integrations/${id} exists already.`);
