@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- To-do: the **+** next to the field adds the task, like Enter.
+- Timer: a large round button starts, pauses and resumes, and starts the last duration again once it is over (no need to pick one); the durations are filled chips with white text, kept on one row with the field for another duration and wrapped only when the widget is too narrow.
+
 ## [0.3.8] - 2026-11-08
 
 ### Upgrading from 0.3.7

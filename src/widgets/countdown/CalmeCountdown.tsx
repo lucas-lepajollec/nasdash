@@ -209,26 +209,36 @@ function Timer({ widgetId, settings, style, editMode, isVisible, onUpdateSetting
   const durationLabel = (seconds: number) => seconds % 60 ? clockText(seconds) : seconds >= 3600 && seconds % 3600 === 0 ? t('widgets.countdown.hoursShort', { count: seconds / 3600 }) : t('widgets.countdown.minutes', { count: seconds / 60 });
   const save = (next: number[]) => onUpdateSettings({ durations: next, presets: null });
 
+  // The main button: pause, resume, or start again the last duration (or the one typed), never a dead end.
+  const next = typed ?? state?.seconds ?? durations[0];
+  const main = () => {
+    if (running) set({ seconds: state!.seconds, left: remaining });
+    else if (state && !over && !typed) set(runFrom(state.seconds, remaining));
+    else { set(runFrom(next, next * 1000)); setCustom(''); }
+  };
+  const mainLabel = running ? t('widgets.countdown.pause') : state && !over && !typed ? t('widgets.countdown.resume') : t('widgets.countdown.startFor', { duration: durationLabel(next) });
+
   return (
     <div className={`ndw-countdown is-timer ${style === 'large' ? 'is-large' : ''}`}>
       {style === 'animated' && <Walker progress={progress} running={running && isVisible} over={over} />}
-      <span className={`ndw-countdown-big is-clock ${over ? 'is-over' : ''}`} role="timer" aria-live="off">{clock}</span>
+      <div className="ndw-timer-head">
+        <span className={`ndw-countdown-big is-clock ${over ? 'is-over' : ''}`} role="timer" aria-live="off">{clock}</span>
+        <span className="ndw-timer-controls" data-no-widget-drag>
+          <button type="button" className={`ndw-timer-main ${running ? 'is-running' : ''}`} onClick={main} aria-label={mainLabel} title={mainLabel}>
+            {running ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+          </button>
+          {state && (
+            <button type="button" className="ndw-timer-reset" onClick={() => set(null)} aria-label={t('widgets.countdown.reset')} title={t('widgets.countdown.reset')}>
+              <RotateCcw size={14} />
+            </button>
+          )}
+        </span>
+      </div>
       {over && <span className="ndw-media-sub" role="status">{t('widgets.countdown.over')}</span>}
-      <span className="ndw-timer-actions" data-no-widget-drag>
-        {state && !over && (
-          <button type="button" className="ndc-icon-button" onClick={() => set(running ? { seconds: state.seconds, left: remaining } : runFrom(state.seconds, remaining))}
-            aria-label={t(running ? 'widgets.countdown.pause' : 'widgets.countdown.resume')} title={t(running ? 'widgets.countdown.pause' : 'widgets.countdown.resume')}>
-            {running ? <Pause size={12} /> : <Play size={12} />}
-          </button>
-        )}
-        {state && (
-          <button type="button" className="ndc-icon-button" onClick={() => set(null)} aria-label={t('widgets.countdown.reset')} title={t('widgets.countdown.reset')}>
-            <RotateCcw size={12} />
-          </button>
-        )}
+      <div className="ndw-timer-durations" data-no-widget-drag>
         {durations.map(seconds => (
           <span key={seconds} className={`ndw-chip-group ${state?.seconds === seconds && !over ? 'is-on' : ''}`}>
-            <button type="button" className="ndw-chip" onClick={() => set(runFrom(seconds, seconds * 1000))} aria-label={t('widgets.countdown.startFor', { duration: durationLabel(seconds) })}>
+            <button type="button" className="ndw-chip is-filled" onClick={() => { set(runFrom(seconds, seconds * 1000)); setCustom(''); }} aria-label={t('widgets.countdown.startFor', { duration: durationLabel(seconds) })}>
               {durationLabel(seconds)}
             </button>
             {editMode && durations.length > 1 && (
@@ -238,19 +248,18 @@ function Timer({ widgetId, settings, style, editMode, isVisible, onUpdateSetting
             )}
           </span>
         ))}
-      </span>
-      {/* Any other duration, typed on the spot; kept with the widget from edit mode. */}
-      <form className="ndw-timer-custom" data-no-widget-drag onSubmit={event => { event.preventDefault(); if (typed) { set(runFrom(typed, typed * 1000)); setCustom(''); } }}>
-        <input value={custom} maxLength={9} inputMode="text" placeholder={t('widgets.countdown.customPlaceholder')} aria-label={t('widgets.countdown.custom')} aria-invalid={custom.trim() !== '' && !typed} onChange={event => setCustom(event.target.value)} />
-        <button type="submit" className="ndc-icon-button" disabled={!typed} aria-label={t('widgets.countdown.startCustom')} title={t('widgets.countdown.startCustom')}><Play size={12} /></button>
-        {editMode && (
-          <button type="button" className="ndc-icon-button" disabled={!typed || durations.includes(typed) || durations.length >= MAX_DURATIONS}
-            onClick={() => { if (typed) { save([...durations, typed].sort((a, b) => a - b)); setCustom(''); } }}
-            aria-label={t('widgets.countdown.saveDuration')} title={t('widgets.countdown.saveDuration')}>
-            <BookmarkPlus size={12} />
-          </button>
-        )}
-      </form>
+        {/* Any other duration, typed on the spot (Enter or the main button starts it); kept with the widget from edit mode. */}
+        <form className="ndw-timer-custom" onSubmit={event => { event.preventDefault(); if (typed) { set(runFrom(typed, typed * 1000)); setCustom(''); } }}>
+          <input value={custom} maxLength={9} inputMode="text" placeholder={t('widgets.countdown.customPlaceholder')} aria-label={t('widgets.countdown.custom')} aria-invalid={custom.trim() !== '' && !typed} onChange={event => setCustom(event.target.value)} />
+          {editMode && (
+            <button type="button" className="ndc-icon-button" disabled={!typed || durations.includes(typed) || durations.length >= MAX_DURATIONS}
+              onClick={() => { if (typed) { save([...durations, typed].sort((a, b) => a - b)); setCustom(''); } }}
+              aria-label={t('widgets.countdown.saveDuration')} title={t('widgets.countdown.saveDuration')}>
+              <BookmarkPlus size={12} />
+            </button>
+          )}
+        </form>
+      </div>
     </div>
   );
 }
