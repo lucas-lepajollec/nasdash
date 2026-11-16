@@ -34,6 +34,8 @@
 /* A list of rows separated by hairlines (feeds, tickers, top domains…). */
 .ndw-rows { display: flex; flex-direction: column; min-width: 0; }
 .ndw-rows > * + * { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+/* A single column: nothing above the first row, whatever its own rule says. */
+.ndw-rows:not(.is-columns) > :first-child { border-top-color: transparent; }
 
 /* Segmented tabs inside a widget (feeds, ranges). */
 .ndw-tabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
@@ -833,7 +835,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 
 /* Paged grid (market tiles, news cards): columns follow the block; arrows and "2 / 3" under it. */
 .ndw-paged { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.ndw-paged-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--ndw-col, 160px), 1fr)); gap: 10px; }
+.ndw-paged-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--ndw-col, 160px), 100%), 1fr)); gap: 10px; }
 .ndw-paged-cell, .ndw-scroll-cell { display: flex; min-width: 0; }
 .ndw-paged-cell > *, .ndw-scroll-cell > * { flex: 1; min-width: 0; }
 .ndw-pager { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -1435,7 +1437,8 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-music-genre-bar > span { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--nd-text) 30%, transparent); }
 .ndw-music-genre-bar.is-first > span { background: var(--nd-accent); }
 .ndw-music-genre > .ndw-media-time { text-align: right; }
-.ndw-music-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.ndw-music-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(56px, calc((100% - 16px) / 3)), 1fr)); gap: 8px; }
+.ndw-music-strip > span > * { width: 100% !important; height: auto !important; aspect-ratio: 1; }
 .ndw-music-rank { min-width: 1ch; flex-shrink: 0; color: var(--nd-text-dimmed); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ndw-music-toprow { gap: 12px; }
 .ndw-music-toprow { border-top: 1px solid var(--nd-card-border); }
@@ -1492,6 +1495,13 @@ button.ndw-music-next-row:hover .ndw-music-next-title { color: var(--nd-accent);
   .ndw-mx-tile { gap: 12px; padding: 12px; }
   .ndw-mx-statrow { grid-template-columns: repeat(auto-fit, minmax(min(70px, 100%), 1fr)); }
   .ndw-mx-label { white-space: normal; }
+  /* Hero cards (recently played, coming soon, recently added, listening): the poster above the text, smaller type. */
+  .ndw-mx-hero-body { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; }
+  .ndw-mx-hero-body > .ndw-media-poster { width: 64px !important; }
+  .ndw-mx-hero .ndw-mx-calm, .ndw-mx-hero .ndw-mx-title { font-size: 0.95rem; }
+  .ndw-mx-hero-text { width: 100%; }
+  .ndw-media-hero-body { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+  .ndw-media-hero-title { font-size: 0.95rem; }
   /* Rows of the queue, downloads and music: tighter, the secondary column under the title instead of beside it. */
   .ndw-mx-qrow { gap: 8px; }
   .ndw-mx-qrow .ndw-media-poster { width: 32px; }

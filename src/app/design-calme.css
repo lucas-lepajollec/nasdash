@@ -276,7 +276,10 @@ body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .nd-page-
 }
 
 /* Clock: a large, light time (sized by the block, never wrapped), the date
-   on one line and a hairline filling as the day goes by. */
+   on one line and a hairline filling as the day goes by. Aligned left (default), centred or right. */
+.ndc-clock.is-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.ndc-clock.is-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.ndc-clock.is-center :is(.ndc-clock-date, .ndc-clock-split), .ndc-clock.is-right :is(.ndc-clock-date, .ndc-clock-split) { align-items: inherit; justify-content: inherit; }
 .ndc-clock-time {
   display: flex;
   align-items: flex-start;
@@ -2646,8 +2649,10 @@ body[data-design="calme"] .nd-service--compact .nd-service-icon { width: 28px; h
 body[data-design="calme"] .nd-service--compact .nd-service-icon img { width: 18px; height: 18px; }
 
 /* Grid with names */
+/* auto-fill, not auto-fit: once every service fits on one line, a wider widget keeps the tiles at their size
+   (empty tracks stay) instead of stretching them apart. */
 body[data-design="calme"] .nd-services-grid--bento {
-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
   gap: 6px;
 }
 
@@ -2680,9 +2685,9 @@ body[data-design="calme"] .nd-service--bento .nd-service-name { font-size: 0.76r
 
 /* Logo-only grids: columns stretch to fill the width; each tile has a fixed
    height per size and the logo tile inside is square, centred. */
-body[data-design="calme"] .nd-services-grid--bento-logo-large { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
-body[data-design="calme"] .nd-services-grid--bento-logo-medium { grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 6px; }
-body[data-design="calme"] .nd-services-grid--bento-logo-small { grid-template-columns: repeat(auto-fit, minmax(62px, 1fr)); gap: 4px; }
+body[data-design="calme"] .nd-services-grid--bento-logo-large { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+body[data-design="calme"] .nd-services-grid--bento-logo-medium { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
+body[data-design="calme"] .nd-services-grid--bento-logo-small { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 4px; }
 
 body[data-design="calme"] :is(.nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small) {
   aspect-ratio: auto;

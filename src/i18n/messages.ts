@@ -2435,6 +2435,10 @@ const en: Dictionary = {
   'widgets.reading.section.recent': "Recently added",
   'widgets.reading.none': "Nothing in progress or added.",
   'widgets.styleInherit': "Like the settings",
+  'widgets.clock.align': "Alignment",
+  'widgets.clock.align.left': "Left",
+  'widgets.clock.align.center': "Centre",
+  'widgets.clock.align.right': "Right",
 };
 
 const fr: Dictionary = {
@@ -4856,6 +4860,10 @@ const fr: Dictionary = {
   'widgets.reading.section.recent': "Ajouts récents",
   'widgets.reading.none': "Rien en cours ni ajouté.",
   'widgets.styleInherit': "Comme les réglages",
+  'widgets.clock.align': "Alignement",
+  'widgets.clock.align.left': "Gauche",
+  'widgets.clock.align.center': "Centre",
+  'widgets.clock.align.right': "Droite",
 };
 
 const es: Dictionary = {
@@ -7277,6 +7285,10 @@ const es: Dictionary = {
   'widgets.reading.section.recent': "Añadidos recientemente",
   'widgets.reading.none': "Nada en curso ni añadido.",
   'widgets.styleInherit': "Como los ajustes",
+  'widgets.clock.align': "Alineación",
+  'widgets.clock.align.left': "Izquierda",
+  'widgets.clock.align.center': "Centro",
+  'widgets.clock.align.right': "Derecha",
 };
 
 const de: Dictionary = {
@@ -9698,6 +9710,10 @@ const de: Dictionary = {
   'widgets.reading.section.recent': "Kürzlich hinzugefügt",
   'widgets.reading.none': "Nichts angefangen oder neu.",
   'widgets.styleInherit': "Wie in den Einstellungen",
+  'widgets.clock.align': "Ausrichtung",
+  'widgets.clock.align.left': "Links",
+  'widgets.clock.align.center': "Mitte",
+  'widgets.clock.align.right': "Rechts",
 };
 
 const it: Dictionary = {
@@ -12118,6 +12134,10 @@ const it: Dictionary = {
   'widgets.reading.section.recent': "Aggiunti di recente",
   'widgets.reading.none': "Niente in corso né aggiunto.",
   'widgets.styleInherit': "Come le impostazioni",
+  'widgets.clock.align': "Allineamento",
+  'widgets.clock.align.left': "Sinistra",
+  'widgets.clock.align.center': "Centro",
+  'widgets.clock.align.right': "Destra",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

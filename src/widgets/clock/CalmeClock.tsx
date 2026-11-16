@@ -9,6 +9,7 @@ import { pick, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { CalmeWidget } from '../calme';
 
 const DESIGNS = ['inherit', 'default', 'minimal', 'glow', 'split'] as const;
+const ALIGNS = ['left', 'center', 'right'] as const;
 type Design = Exclude<typeof DESIGNS[number], 'inherit'>;
 
 /**
@@ -58,15 +59,22 @@ export default function CalmeClock({ editMode, isVisible = true, settings = {}, 
       {editMode && onUpdateSettings && (
         <WidgetSettingsButton title={t('widgets.settingsOf', { name: t('widget.clock.name') })} settings={settings} onSave={onUpdateSettings} shared={{ tab: 'widget-clock', label: t('widget.clock.name') }}>
           {(draft, change) => (
+            <>
+            <CalmeRow label={t('widgets.clock.align')}>
+              <CalmeSegmented label={t('widgets.clock.align')} value={pick(draft.align, ALIGNS, 'left')}
+                options={ALIGNS.map(value => ({ value, label: t(`widgets.clock.align.${value}`) }))}
+                onChange={value => change({ align: value === 'left' ? null : value })} />
+            </CalmeRow>
             <CalmeRow label={t('Design & Style')} stacked>
               <CalmeSegmented label={t('Design & Style')} value={pick(draft.design, DESIGNS, 'inherit')}
                 options={[{ value: 'inherit', label: t('widgets.styleInherit') }, { value: 'default', label: t('Défaut') }, { value: 'minimal', label: t('settings.calme.clockMinimal') }, { value: 'glow', label: t('settings.calme.clockAccent') }, { value: 'split', label: t('settings.calme.clockSplit') }]}
                 onChange={value => change({ design: value === 'inherit' ? null : value })} />
             </CalmeRow>
+            </>
           )}
         </WidgetSettingsButton>
       )}
-      <div className={`ndc-clock ndc-clock--${design}`}>
+      <div className={`ndc-clock ndc-clock--${design} is-${pick(settings.align, ALIGNS, 'left')}`}>
         {design === 'split' ? (
           <div className="ndc-clock-split">
             <span>{hour}</span>
