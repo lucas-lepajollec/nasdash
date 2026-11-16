@@ -51,7 +51,8 @@ export interface WidgetDefinition {
  * with its container queries. Only widgets that mean nothing small keep
  * `WIDE_WIDTHS` (the Docker explorer, the topology, ports, a web page).
  */
-export const ALL_WIDTHS = [3, 4, 6, 8, 12, 16, 24] as const;
+/** Every column from 3 to 24: resizing never skips an in-between width. */
+export const ALL_WIDTHS: readonly number[] = Array.from({ length: 22 }, (_, index) => index + 3);
 export const WIDE_WIDTHS = [12, 16, 18, 20, 24] as const;
 
 /** Identity function that type-checks a definition file. */
