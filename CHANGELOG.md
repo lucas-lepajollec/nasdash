@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Uptime** widget (Uptime Kuma): every monitor of a status page with its state, its latest checks and its 24-hour uptime, grouped like the page; full or compact, only the problems if you like. No account needed.
+- **Requests** widget (Seerr, Overseerr, Jellyseerr): how many requests wait, are on their way or arrived, the latest ones with their poster and who asked; administrators approve or decline a pending request in place.
+- **Notifications** widget (ntfy topics or Gotify applications): the latest notifications by priority, with their link; full or compact, only the important ones if you like.
+- **Reading** widget (Audiobookshelf, Kavita, Komga): what is being read or listened to with its progress, and what was added, as covers (relayed by NasDash, the server's key stays private) or a list.
+- The clock and the weather can have their own style per widget, or keep following Settings → Widgets.
+
+### Changed
+
+- **Every widget fits every width**, from 3 columns to the whole page, and lays itself out more compactly when narrow (the media, music, Docker, network and new widgets included). Only the Docker explorer, the network topology, ports and the web page keep their larger minimum. The clock grows with its widget.
+
 ### Fixed
 
 - To-do: the **+** next to the field adds the task, like Enter.

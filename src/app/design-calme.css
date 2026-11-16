@@ -294,7 +294,7 @@ body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .nd-page-
   line-height: 0.95;
 }
 
-.ndc-clock-hm { font-size: clamp(2.3rem, 23cqi, 3.9rem); }
+.ndc-clock-hm { font-size: clamp(2.3rem, 17cqi, 8rem); }
 
 .ndc-clock-colon {
   display: inline-block;
@@ -315,7 +315,7 @@ body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .nd-page-
 .ndc-clock-split {
   display: flex;
   flex-direction: column;
-  font-size: clamp(2.6rem, 30cqi, 4.6rem);
+  font-size: clamp(2.6rem, 20cqi, 9rem);
   line-height: 0.9;
   color: var(--nd-text);
   font-variant-numeric: tabular-nums;

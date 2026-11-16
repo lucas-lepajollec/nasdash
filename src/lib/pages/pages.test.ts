@@ -209,10 +209,12 @@ describe('grid operations', () => {
     }
     // One definition per widget type.
     expect(new Set(WIDGET_CATALOG.map(entry => entry.type)).size).toBe(WIDGET_CATALOG.length);
-    // 1920 px wide page: 80 px columns, every clock format fits.
-    expect(widthFormats('clock', 80)).toEqual([3, 4, 6, 8]);
+    // 1920 px wide page: 80 px columns, every clock format fits (the sizes policy: every width).
+    expect(widthFormats('clock', 80)).toEqual([3, 4, 6, 8, 12, 16, 24]);
     // 1000 px: 3 columns (≈ 125 px) are below the clock's 150 px minimum.
-    expect(widthFormats('clock', 42)).toEqual([4, 6, 8]);
+    expect(widthFormats('clock', 42)).toEqual([4, 6, 8, 12, 16, 24]);
+    // Widgets that mean nothing small keep their wide formats only.
+    expect(widthFormats('docker-explorer', 80)).toEqual([12, 16, 18, 20, 24]);
     // Nothing fits: the largest format is still offered.
     expect(widthFormats('network-topology', 10)).toEqual([24]);
     expect(snapWidth([3, 4, 6, 8], 5.2)).toBe(6);

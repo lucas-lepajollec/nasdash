@@ -400,6 +400,40 @@
         "url": "http://wud.demo.invalid:3000",
         "auth": "none"
       }
+    },
+    {
+      "id": "uptimekuma-demo",
+      "type": "uptimekuma",
+      "name": "Uptime Kuma",
+      "settings": {
+        "url": "http://uptime.demo.invalid:3001",
+        "slug": "homelab"
+      }
+    },
+    {
+      "id": "seerr-demo",
+      "type": "seerr",
+      "name": "Seerr",
+      "settings": {
+        "url": "http://seerr.demo.invalid:5055"
+      }
+    },
+    {
+      "id": "ntfy-demo",
+      "type": "ntfy",
+      "name": "ntfy",
+      "settings": {
+        "url": "https://ntfy.demo.invalid",
+        "topics": "backups, updates, ups"
+      }
+    },
+    {
+      "id": "audiobookshelf-demo",
+      "type": "audiobookshelf",
+      "name": "Audiobookshelf",
+      "settings": {
+        "url": "http://audiobooks.demo.invalid:13378"
+      }
     }
   ],
   "devices": [

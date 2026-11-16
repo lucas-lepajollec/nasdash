@@ -1,0 +1,22 @@
+{
+  "page": {
+    "config": { "slug": "homelab", "title": "Homelab", "published": true },
+    "incidents": [],
+    "maintenanceList": [],
+    "publicGroupList": [
+      { "id": 1, "name": "Services", "weight": 1, "monitorList": [
+        { "id": 3, "name": "Jellyfin", "type": "http", "sendUrl": true, "url": "https://jellyfin.example.com" },
+        { "id": 4, "name": "Immich", "type": "http", "sendUrl": false },
+        { "id": 7, "name": "Old box", "type": "ping", "sendUrl": true, "url": "javascript:alert(1)" }
+      ] },
+      { "id": 2, "name": "Empty", "weight": 2, "monitorList": [] }
+    ]
+  },
+  "heartbeat": {
+    "heartbeatList": {
+      "3": [ { "status": 1, "time": "2026-11-16 10:00:00", "msg": "", "ping": 41.6 }, { "status": 1, "time": "2026-11-16 10:01:00", "msg": "", "ping": 42.2 } ],
+      "4": [ { "status": 1, "time": "2026-11-16 10:00:00", "msg": "", "ping": 80 }, { "status": 0, "time": "2026-11-16 10:01:00", "msg": "", "ping": null } ]
+    },
+    "uptimeList": { "3_24": 1, "4_24": 0.9654 }
+  }
+}

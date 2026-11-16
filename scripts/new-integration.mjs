@@ -4,7 +4,7 @@
  * integration and its widget, and lists it everywhere NasDash needs it.
  *
  *   npm run new:integration -- <id> --name "Display name" --section <section> \
- *     --widget <widget-type> --guide machines|docker|network [--group <widget group>]
+ *     --widget <widget-type> --guide machines|docker|network|media [--group <widget group>]
  *   npm run new:integration -- <id> --name "Display name" --into <existing section>
  *
  * The first form creates a new family: a Settings → Integrations section, a
@@ -33,14 +33,14 @@ const into = option('into');
 const section = into ?? option('section');
 const widget = option('widget');
 const guide = option('guide');
-const group = option('group') ?? (guide === 'docker' ? 'docker' : guide === 'machines' ? 'system' : 'network');
+const group = option('group') ?? (guide === 'docker' ? 'docker' : guide === 'machines' ? 'system' : guide === 'media' ? 'media' : 'network');
 
 if (!id || !/^[a-z]+$/.test(id)) fail('The integration id is lowercase letters only, e.g. `npm run new:integration -- uptimekuma --name "Uptime Kuma" …`.');
 if (!name) fail('--name "Display name" is required.');
 if (!section || !/^[a-z]+$/.test(section)) fail('--section (or --into) is lowercase letters only.');
 if (!into) {
   if (!widget || !/^[a-z][a-z0-9-]{1,40}$/.test(widget)) fail('--widget is the new widget type, e.g. `uptime`.');
-  if (!['machines', 'docker', 'network'].includes(guide)) fail('--guide is machines, docker or network (the first-start family).');
+  if (!['machines', 'docker', 'network', 'media'].includes(guide)) fail('--guide is machines, docker, network or media (the first-start family).');
   if (!['services', 'system', 'docker', 'network', 'media', 'music', 'downloads', 'content', 'gadgets'].includes(group)) fail('--group is a widget library group.');
 }
 
@@ -169,16 +169,15 @@ describe(${JSON.stringify(name)}, () => {
 `);
 
 if (!into) {
-  write(`src/widgets/${widget}/definition.ts`, `import { defineWidget } from '../define';
+  write(`src/widgets/${widget}/definition.ts`, `import { ALL_WIDTHS, defineWidget } from '../define';
 
 export default defineWidget({
   type: '${widget}', group: '${group}', icon: '🧩',
   nameKey: 'widget.${widget}.name', descriptionKey: 'widget.${widget}.description',
   // What the service tells about the installation: viewers need their own permission.
   access: { permission: '${widget}' },
-  // Widths it can be resized to (columns out of 24), width when added,
-  // smallest usable width (px) and typical height (px) before measuring.
-  sizes: { formats: [4, 6, 8, 12], default: 6, minPx: 180, h: 220 },
+  // Every width, compact when narrow (the sizes policy in define.ts).
+  sizes: { formats: ALL_WIDTHS, default: 6, minPx: 150, h: 220 },
 });
 `);
   write(`src/widgets/${widget}/view.tsx`, `import { WidgetContainer } from '@/components/widgets/WidgetContainer';

@@ -255,7 +255,7 @@ function IntegrationsStep({ index, error, nav, onNext, onChanged }: { index: num
     // Kit connections complete a family (Syncthing next to the machines…) and open their own dialog.
     { id: 'machines', icon: <Cpu size={17} />, kinds: [...selectableDeviceIntegrations().map(item => item.id), ...kitKinds('machines')], monitoring: true },
     { id: 'docker', icon: <Container size={17} />, kinds: [...DOCKER_KINDS, ...kitKinds('docker')], docker: true },
-    { id: 'media', icon: <Film size={17} />, kinds: [...MEDIA_SERVER_TYPES, 'navidrome'] },
+    { id: 'media', icon: <Film size={17} />, kinds: [...MEDIA_SERVER_TYPES, 'navidrome', ...kitKinds('media')] },
     { id: 'arr', icon: <Download size={17} />, kinds: [...ARR_TYPES, ...DOWNLOAD_CLIENT_TYPES] },
     { id: 'network', icon: <Network size={17} />, kinds: ['tailscale', 'headscale', ...VPN_TUNNEL_TYPES, ...DNS_TYPES, ...kitKinds('network')] },
     { id: 'power', icon: <Zap size={17} />, kinds: UPS_TYPES },

@@ -1,10 +1,10 @@
-import { defineWidget } from '../define';
+import { ALL_WIDTHS, defineWidget } from '../define';
 
 export default defineWidget({
   type: 'metric-network', group: 'system', icon: '📶',
   nameKey: 'widget.metricNetwork.name', descriptionKey: 'widget.metricNetwork.description',
   access: { permission: 'devices' },
-  // Widths it can be resized to (columns out of 24), width when added,
+  // Every width, compact when narrow (the sizes policy in define.ts); width when added,
   // smallest usable width (px) and typical height (px) before measuring.
-  sizes: { formats: [3, 4, 6, 8, 12, 16, 24], default: 6, minPx: 150, h: 220 },
+  sizes: { formats: ALL_WIDTHS, default: 6, minPx: 150, h: 220 },
 });

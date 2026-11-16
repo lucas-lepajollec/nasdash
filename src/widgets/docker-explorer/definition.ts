@@ -1,4 +1,4 @@
-import { defineWidget } from '../define';
+import { defineWidget, WIDE_WIDTHS } from '../define';
 
 export default defineWidget({
   type: 'docker-explorer', group: 'docker', icon: '🔎',
@@ -7,5 +7,5 @@ export default defineWidget({
   linkGroup: 'docker',
   // Widths it can be resized to (columns out of 24), width when added,
   // smallest usable width (px) and typical height (px) before measuring.
-  sizes: { formats: [12, 16, 18, 20, 24], default: 18, minPx: 420, h: 640 },
+  sizes: { formats: WIDE_WIDTHS, default: 18, minPx: 420, h: 640 },
 });

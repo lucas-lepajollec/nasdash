@@ -56,6 +56,10 @@ import notes from './notes/view';
 import todo from './todo/view';
 import countdown from './countdown/view';
 import webpage from './webpage/view';
+import uptimekumaView from './uptime/view';
+import seerrView from './media-requests/view';
+import ntfyView from './notifications/view';
+import audiobookshelfView from './reading/view';
 // new:integration views
 import type { WidgetViewProps } from './types';
 
@@ -97,6 +101,10 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'todo': todo,
   'countdown': countdown,
   'webpage': webpage,
+  'uptime': uptimekumaView,
+  'media-requests': seerrView,
+  'notifications': ntfyView,
+  'reading': audiobookshelfView,
   // new:integration view entries
   'rss': rss,
   'markets': markets,

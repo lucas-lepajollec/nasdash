@@ -3,7 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import type { WidgetSettings } from '@/lib/pages/types';
+import { CalmeRow, CalmeSegmented } from '@/components/modals/settings/shared/CalmeControls';
+import { pick, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { CalmeWidget } from '../calme';
+
+const DESIGNS = ['inherit', 'default', 'minimal', 'glow', 'split'] as const;
+type Design = Exclude<typeof DESIGNS[number], 'inherit'>;
 
 /**
  * Calme clock: a large, light time with the seconds kept small, the date on
@@ -11,13 +17,15 @@ import { CalmeWidget } from '../calme';
  * Settings still apply: "minimal" keeps the time alone, "split" stacks the
  * hours over the minutes, "glow" puts the time in the accent colour.
  */
-export default function CalmeClock({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
+export default function CalmeClock({ editMode, isVisible = true, settings = {}, onUpdateSettings }: { editMode?: boolean; isVisible?: boolean; settings?: WidgetSettings; onUpdateSettings?: (settings: WidgetSettings) => void }) {
   const { t, locale } = useI18n();
   const { config } = useConfig();
   const [now, setNow] = useState<Date | null>(null);
   const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const timeZone = config?.settings?.clockTimezone || localZone;
-  const design = config?.settings?.clockDesign || 'default';
+  // Each clock may have its own style; otherwise the one of Settings → Widgets → Clock.
+  const own = pick(settings.design, DESIGNS, 'inherit');
+  const design: Design = own === 'inherit' ? config?.settings?.clockDesign || 'default' : own;
 
   // Ticks only while its page is shown.
   useEffect(() => {
@@ -47,6 +55,17 @@ export default function CalmeClock({ editMode, isVisible = true }: { editMode?: 
 
   return (
     <CalmeWidget title={t('widget.clock.name')} editMode={editMode} aside={zoneLabel || undefined}>
+      {editMode && onUpdateSettings && (
+        <WidgetSettingsButton title={t('widgets.settingsOf', { name: t('widget.clock.name') })} settings={settings} onSave={onUpdateSettings} shared={{ tab: 'widget-clock', label: t('widget.clock.name') }}>
+          {(draft, change) => (
+            <CalmeRow label={t('Design & Style')} stacked>
+              <CalmeSegmented label={t('Design & Style')} value={pick(draft.design, DESIGNS, 'inherit')}
+                options={[{ value: 'inherit', label: t('widgets.styleInherit') }, { value: 'default', label: t('Défaut') }, { value: 'minimal', label: t('settings.calme.clockMinimal') }, { value: 'glow', label: t('settings.calme.clockAccent') }, { value: 'split', label: t('settings.calme.clockSplit') }]}
+                onChange={value => change({ design: value === 'inherit' ? null : value })} />
+            </CalmeRow>
+          )}
+        </WidgetSettingsButton>
+      )}
       <div className={`ndc-clock ndc-clock--${design}`}>
         {design === 'split' ? (
           <div className="ndc-clock-split">

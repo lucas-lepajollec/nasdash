@@ -1,0 +1,14 @@
+{
+  "count": { "total": 12, "movie": 7, "tv": 5, "pending": 2, "approved": 3, "declined": 1, "processing": 2, "available": 6 },
+  "requests": {
+    "pageInfo": { "pages": 1, "pageSize": 20, "results": 3, "page": 1 },
+    "results": [
+      { "id": 41, "status": 1, "type": "movie", "createdAt": "2026-11-16T09:00:00.000Z", "media": { "id": 9, "tmdbId": 101, "status": 2, "mediaType": "movie" }, "requestedBy": { "id": 2, "displayName": "Alex", "username": "alex" } },
+      { "id": 40, "status": 2, "type": "tv", "createdAt": "2026-11-15T09:00:00.000Z", "media": { "id": 8, "tmdbId": 202, "status": 3, "mediaType": "tv" }, "requestedBy": { "id": 3, "plexUsername": "sam" } },
+      { "id": 39, "status": 2, "type": "movie", "createdAt": "2026-11-14T09:00:00.000Z", "media": { "id": 7, "tmdbId": 303, "status": 5, "mediaType": "movie" }, "requestedBy": {} }
+    ]
+  },
+  "movie101": { "id": 101, "title": "The Quiet Orbit", "releaseDate": "2026-03-01", "posterPath": "/quiet.jpg" },
+  "tv202": { "id": 202, "name": "Harbour Lights", "firstAirDate": "2025-09-10", "posterPath": "../../evil.jpg" },
+  "movie303": { "id": 303, "title": "Northbound", "releaseDate": "2024-01-01" }
+}

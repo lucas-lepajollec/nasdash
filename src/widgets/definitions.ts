@@ -55,6 +55,10 @@ import notes from './notes/definition';
 import todo from './todo/definition';
 import countdown from './countdown/definition';
 import webpage from './webpage/definition';
+import uptimekumaWidget from './uptime/definition';
+import seerrWidget from './media-requests/definition';
+import ntfyWidget from './notifications/definition';
+import audiobookshelfWidget from './reading/definition';
 // new:integration definitions
 import type { WidgetDefinition } from './define';
 
@@ -81,6 +85,10 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   // Gadgets
   clock, calendar, weather, notes, todo, countdown,
   // Integration kit widgets added by `npm run new:integration`
+  uptimekumaWidget,
+  seerrWidget,
+  ntfyWidget,
+  audiobookshelfWidget,
   // new:integration widgets
   // Layout
   spacer,
