@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdmin } from '@/lib/auth';
 import { isDemoMode } from '@/lib/demoMode';
-import { kitFamilyOfWidget } from '@/integrations/kit';
 import { kitServer } from '@/integrations/kitServer';
 import { TtlCache } from '@/lib/widgetData/cache';
 import type { KitSummaryBase } from '@/lib/widgetData/contracts';
-import { resolveWidgetSettings } from '@/lib/widgetData/resolve';
-import { boundedJson, demoVisitorInstance, getServiceInstance, queryDraft, serviceFailure, serviceIdentity, ServiceError } from '@/lib/widgetData/services';
+import { resolveKitWidget } from '@/lib/widgetData/kitResolve';
+import { boundedJson, queryDraft, serviceFailure, serviceIdentity, ServiceError } from '@/lib/widgetData/services';
 
 /**
  * The integration kit's data route: one route for every kit widget
@@ -20,19 +19,7 @@ export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store' };
 const summaries = new TtlCache<KitSummaryBase>(60_000, 300, 10 * 60_000);
 
-function resolve(request: Request, widget: unknown, widgetId: unknown, draft: unknown) {
-  const family = typeof widget === 'string' ? kitFamilyOfWidget(widget) : undefined;
-  if (!family) throw new ServiceError('widgets.error.invalidWidget', 400);
-  const lookup = resolveWidgetSettings(request, widgetId, family.widget, draft);
-  if (!lookup.ok) return { response: NextResponse.json({ error: lookup.error }, { status: lookup.status, headers }) };
-  const chosen = lookup.settings.integrationId;
-  if (chosen != null && (typeof chosen !== 'string' || !chosen)) throw new ServiceError('widgets.error.invalidSettings', 400);
-  const instance = getServiceInstance(chosen, family.types) ?? demoVisitorInstance(chosen, family.types);
-  if (!instance) return { response: NextResponse.json({ error: 'widgets.error.notFound' }, { status: 404, headers }) };
-  const server = kitServer(instance.type);
-  if (!server) throw new ServiceError('widgets.error.notFound', 404);
-  return { instance, server, principal: lookup.principal };
-}
+const resolve = resolveKitWidget;
 
 const failure = (error: unknown) => { const response = serviceFailure(error); response.headers.set('Cache-Control', headers['Cache-Control']); return response; };
 const key = (instance: Parameters<typeof serviceIdentity>[0], server: NonNullable<ReturnType<typeof kitServer>>) => `${serviceIdentity(instance)}:${server.revision?.(instance) ?? 0}`;

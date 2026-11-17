@@ -925,3 +925,80 @@ export interface ContainerUpdate {
   status?: 'updating' | 'updated' | 'failed';
   error?: string;
 }
+
+/** Uptime Kuma (a public status page): each monitor's state, recent beats and 24-hour uptime. */
+export interface UptimeSummary extends KitSummaryBase {
+  provider: 'uptimekuma';
+  /** The status page's title. */
+  title?: string;
+  groups: { name: string; monitors: UptimeMonitor[] }[];
+}
+export interface UptimeMonitor {
+  id: string;
+  name: string;
+  status: 'up' | 'down' | 'pending' | 'maintenance' | 'unknown';
+  /** 0–100 over 24 hours, when the page gives it. */
+  uptime?: number;
+  /** Milliseconds, latest beat. */
+  ping?: number;
+  /** The latest beats, oldest first (at most 60): the same states. */
+  beats: UptimeMonitor['status'][];
+  /** The monitored address, when the page shows it (http/https only). */
+  url?: string;
+}
+
+/** Seerr (Overseerr, Jellyseerr): request counts and the latest requests. */
+export interface MediaRequestsSummary extends KitSummaryBase {
+  provider: 'seerr';
+  counts: { total: number; pending: number; approved: number; processing: number; available: number; declined: number };
+  requests: MediaRequestItem[];
+}
+export interface MediaRequestItem {
+  id: string;
+  title: string;
+  kind: 'movie' | 'tv';
+  year?: number;
+  /** A TMDB poster (public CDN, https only). */
+  poster?: string;
+  requestedBy?: string;
+  requestedAt?: number;
+  /** pending approval, approved (being processed), available, declined. */
+  status: 'pending' | 'approved' | 'processing' | 'available' | 'declined' | 'unknown';
+}
+
+/** ntfy topics or Gotify applications: the latest notifications, newest first. */
+export interface NotificationsSummary extends KitSummaryBase {
+  provider: 'ntfy' | 'gotify';
+  messages: NotificationItem[];
+}
+export interface NotificationItem {
+  id: string;
+  /** The topic (ntfy) or the application (Gotify). */
+  source: string;
+  title?: string;
+  message: string;
+  /** 1 (min) to 5 (urgent), 3 by default. */
+  priority: number;
+  time: number;
+  /** The link the notification opens (http/https only). */
+  link?: string;
+  tags?: string[];
+}
+
+/** Audiobookshelf, Kavita or Komga: what is being read or listened to, and what was added. */
+export interface ReadingSummary extends KitSummaryBase {
+  provider: 'audiobookshelf' | 'kavita' | 'komga';
+  inProgress: ReadingItem[];
+  recent: ReadingItem[];
+}
+export interface ReadingItem {
+  id: string;
+  title: string;
+  /** Author, series or library. */
+  subtitle?: string;
+  kind: 'book' | 'audiobook' | 'comic' | 'podcast';
+  /** 0–100. */
+  progress?: number;
+  /** A cover served by `GET /api/widgets/kit/image` (the integration's own image, behind NasDash). */
+  cover?: string;
+}

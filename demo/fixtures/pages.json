@@ -860,6 +860,17 @@
           "y": 221,
           "w": 24,
           "h": 458
+        },
+        {
+          "id": "network-uptime",
+          "type": "uptime",
+          "settings": {
+            "integrationId": "uptimekuma-demo"
+          },
+          "x": 0,
+          "y": 679,
+          "w": 8,
+          "h": 70
         }
       ]
     },
@@ -941,6 +952,28 @@
           "y": 376,
           "w": 24,
           "h": 76
+        },
+        {
+          "id": "media-requests",
+          "type": "media-requests",
+          "settings": {
+            "integrationId": "seerr-demo"
+          },
+          "x": 0,
+          "y": 452,
+          "w": 12,
+          "h": 80
+        },
+        {
+          "id": "media-reading",
+          "type": "reading",
+          "settings": {
+            "integrationId": "audiobookshelf-demo"
+          },
+          "x": 12,
+          "y": 452,
+          "w": 12,
+          "h": 80
         }
       ]
     },
@@ -1158,6 +1191,17 @@
           "y": 180,
           "w": 24,
           "h": 100
+        },
+        {
+          "id": "feeds-notifications",
+          "type": "notifications",
+          "settings": {
+            "integrationId": "ntfy-demo"
+          },
+          "x": 0,
+          "y": 280,
+          "w": 8,
+          "h": 70
         }
       ]
     }

@@ -8,6 +8,13 @@ import type { KitSummaryBase } from '@/lib/widgetData/contracts';
 import { syncthingKit } from './syncthing/collect';
 import { speedtestKit } from './speedtest/collect';
 import { wudKit } from './wud/collect';
+import { uptimekumaKit } from './uptimekuma/collect';
+import { seerrKit } from './seerr/collect';
+import { ntfyKit } from './ntfy/collect';
+import { audiobookshelfKit } from './audiobookshelf/collect';
+import { gotifyKit } from './gotify/collect';
+import { kavitaKit } from './kavita/collect';
+import { komgaKit } from './komga/collect';
 // new:integration imports
 
 export interface KitAction {
@@ -28,6 +35,11 @@ export interface KitServer<T extends KitSummaryBase = KitSummaryBase> {
   actions?: Record<string, KitAction>;
   /** Changes when the shared reading is out of date (an action finished in the background). */
   revision?(instance: IntegrationInstance): number;
+  /**
+   * An image the summary named (a cover): only ids the integration listed itself are served, read with the
+   * connection's own credentials, so the browser never holds them.
+   */
+  image?(instance: IntegrationInstance, id: string): Promise<{ bytes: Buffer; contentType: string }>;
   /** Adds what is not cached with the reading (actions in progress), on every answer. */
   decorate?(instance: IntegrationInstance, summary: T): T;
 }
@@ -36,6 +48,13 @@ const SERVERS: Record<string, KitServer> = {
   syncthing: syncthingKit,
   speedtest: speedtestKit,
   wud: wudKit,
+  uptimekuma: uptimekumaKit,
+  seerr: seerrKit,
+  ntfy: ntfyKit,
+  audiobookshelf: audiobookshelfKit,
+  gotify: gotifyKit,
+  kavita: kavitaKit,
+  komga: komgaKit,
   // new:integration servers
 };
 

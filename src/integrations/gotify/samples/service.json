@@ -1,0 +1,10 @@
+{
+  "messages": {
+    "messages": [
+      { "id": 25, "appid": 2, "message": "Disk almost full", "title": "Alert", "priority": 8, "date": "2026-11-16T10:05:00Z" },
+      { "id": 24, "appid": 1, "message": "2.4 GB in 6 min", "title": "Backup finished", "priority": 5, "date": "2026-11-16T10:00:00Z", "extras": { "client::notification": { "click": { "url": "https://backup.example.com" } } } }
+    ],
+    "paging": { "size": 2, "limit": 50, "since": 0 }
+  },
+  "applications": [ { "id": 1, "name": "Backups" }, { "id": 2, "name": "Monitoring" } ]
+}

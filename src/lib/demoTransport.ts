@@ -1,4 +1,5 @@
 import type { DashboardConfig } from './types';
+import { takeBoot } from './bootFetch';
 import type { DemoWorkspace } from './demoSession';
 
 const KEY = 'nasdash-demo-workspace-v1';
@@ -20,6 +21,9 @@ export function activateDemoTransport(config: DashboardConfig): boolean {
 export function demoFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const path = new URL(url, typeof location === 'undefined' ? 'http://localhost' : location.href);
   const supported = /^\/api\/(?:config(?:\/(?:calendar|topology))?|pages|devices\/[^/]+(?:\/history)?|docker\/[^/]+\/(?:containers(?:\/[^/]+(?:\/logs)?)?|images|volumes))$/.test(path.pathname);
+  // The dashboard's first read of its pages may already be on its way (outside the demo only).
+  const early = !workspace && !options.method && `${path.pathname}${path.search}` === '/api/pages' ? takeBoot('/api/pages') : undefined;
+  if (early) return early;
   if (!workspace || !supported) return fetch(url, options);
   const run = async () => {
     const response = await fetch('/api/demo/workspace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: options.signal,

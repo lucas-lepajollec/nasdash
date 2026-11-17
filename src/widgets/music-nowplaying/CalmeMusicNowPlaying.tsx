@@ -8,7 +8,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { demoFetch } from '@/lib/demoTransport';
 import { CalmeRow, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, DataError, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, DataError, useBoxWidth, useRelativeTime, useShowMore, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { clock } from '@/components/widgets/media/shared';
 import { Backdrop, Track } from '@/components/widgets/media/visual';
 import { AlbumCard, Cover, MusicServerField, MusicSetup, PlaybackSetting, useMusicConnection } from '@/components/widgets/music/shared';
@@ -165,9 +165,7 @@ export default function CalmeMusicNowPlaying({ widgetId, settings = {}, editMode
                       {(data.recent?.length ?? 0) > 0 && (
                         <div className="ndw-mx-section">
                           <span className="ndw-mx-label">{t('widgets.music.playedLately')}</span>
-                          <div className="ndw-mx-rail" style={{ '--ndw-cols': columns } as React.CSSProperties}>
-                            {data.recent!.slice(0, recentCount).map(album => <AlbumCard key={album.id} album={album} widgetId={widgetId} playable={canPlay} />)}
-                          </div>
+                          <RecentAlbums albums={data.recent!} limit={recentCount} columns={columns} widgetId={widgetId} playable={canPlay} />
                         </div>
                       )}
                     </>
@@ -262,5 +260,18 @@ function MusicSearch({ widgetId }: { widgetId: string }) {
         </ul>
       )}
     </div>
+  );
+}
+
+/** Albums played lately: as many as the setting asks, the others behind "+N more". */
+function RecentAlbums({ albums, limit, columns, widgetId, playable }: { albums: NonNullable<MusicNowPlayingResponse['recent']>; limit: number; columns: number; widgetId: string; playable: boolean }) {
+  const [shown, more] = useShowMore(albums, limit);
+  return (
+    <>
+      <div className="ndw-mx-rail" style={{ '--ndw-cols': columns } as React.CSSProperties}>
+        {shown.map(album => <AlbumCard key={album.id} album={album} widgetId={widgetId} playable={playable} />)}
+      </div>
+      {more}
+    </>
   );
 }

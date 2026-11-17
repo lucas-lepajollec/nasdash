@@ -9,6 +9,10 @@ import { useConfig } from '@/hooks/useConfig';
 import { Emoji } from '../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
 import { WidgetHeaderActions } from '../../widgets/WidgetHeaderActions';
+import { stableColumns } from '../../widgets/content/kit';
+
+/** Tile grids (with names, or logos only): smallest tile and gap, in px, for steady columns. */
+const TILE_GRIDS: Record<string, { min: number; gap: number }> = { bento: { min: 92, gap: 6 }, 'bento-logo-large': { min: 104, gap: 8 }, 'bento-logo-medium': { min: 88, gap: 6 }, 'bento-logo-small': { min: 62, gap: 4 } };
 
 interface CategoryCardProps {
   category: Category;
@@ -53,6 +57,17 @@ export default function CategoryCard({
     touchAction: 'pan-y',
   };
 
+  const tileGrid = TILE_GRIDS[category.layout || ''];
+  const gridNode = React.useRef<HTMLElement | null>(null);
+  const [gridWidth, setGridWidth] = React.useState(0);
+  React.useLayoutEffect(() => {
+    const element = gridNode.current;
+    if (!element || !tileGrid) return;
+    setGridWidth(element.clientWidth);
+    const observer = new ResizeObserver(entries => setGridWidth(Math.round(entries[0]?.contentRect.width ?? 0)));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [tileGrid]);
   const filteredServices = searchQuery
     ? category.services.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : category.services;
@@ -100,11 +115,13 @@ export default function CategoryCard({
       <div className="nd-card" style={{ position: 'relative' }}>
         {categoryTitlePosition === 'inside' && titleElement}
       <div 
-        ref={setDroppable} 
+        ref={node => { setDroppable(node); gridNode.current = node; }} 
         data-service={embedded ? 'category-content' : undefined}
         className={`nd-services-grid nd-services-grid--${category.layout || 'standard'}`} 
         style={{
           minHeight: filteredServices.length === 0 ? 40 : undefined,
+          // Tiles fill the line, then keep their size as the widget widens (no breathing, no drifting apart).
+          ...(tileGrid && gridWidth && filteredServices.length ? { gridTemplateColumns: stableColumns(gridWidth, filteredServices.length, tileGrid.min, Math.round(tileGrid.min * 1.2), tileGrid.gap) } : {}),
           ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, outline: '2px dashed var(--nd-accent)' } : {})
         }}
       >

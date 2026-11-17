@@ -9,7 +9,7 @@
  */
 
 /** First-start guide families a kit family joins (`FirstRunGuide`). */
-export type KitGuideFamily = 'machines' | 'docker' | 'network';
+export type KitGuideFamily = 'machines' | 'docker' | 'network' | 'media';
 
 export interface KitFamily {
   /** Section of Settings → Integrations (`integrations.<section>…` keys) and setup guide (`setup.<section>…`). */
@@ -25,6 +25,10 @@ const FAMILIES = [
   { section: 'sync', widget: 'syncthing', types: ['syncthing'], guide: 'machines' },
   { section: 'speedtest', widget: 'speedtest', types: ['speedtest'], guide: 'network' },
   { section: 'updates', widget: 'container-updates', types: ['wud'], guide: 'docker' },
+  { section: 'uptime', widget: 'uptime', types: ['uptimekuma'], guide: 'network' },
+  { section: 'requests', widget: 'media-requests', types: ['seerr'], guide: 'media' },
+  { section: 'notifications', widget: 'notifications', types: ['ntfy', 'gotify'], guide: 'network' },
+  { section: 'reading', widget: 'reading', types: ['audiobookshelf', 'kavita', 'komga'], guide: 'media' },
   // new:integration families
 ] as const satisfies readonly KitFamily[];
 

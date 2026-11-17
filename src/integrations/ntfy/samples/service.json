@@ -1,0 +1,8 @@
+{
+  "lines": [
+    "{\"id\":\"open1\",\"time\":1763287000,\"event\":\"open\",\"topic\":\"backups,alerts\"}",
+    "{\"id\":\"m1\",\"time\":1763287200,\"event\":\"message\",\"topic\":\"backups\",\"title\":\"Backup finished\",\"message\":\"2.4 GB in 6 min\",\"priority\":3,\"tags\":[\"white_check_mark\"],\"click\":\"https://backup.example.com\"}",
+    "{\"id\":\"m2\",\"time\":1763287300,\"event\":\"message\",\"topic\":\"alerts\",\"message\":\"Disk almost full\",\"priority\":5,\"click\":\"javascript:alert(1)\"}",
+    "{\"id\":\"k1\",\"time\":1763287400,\"event\":\"keepalive\",\"topic\":\"backups\"}"
+  ]
+}

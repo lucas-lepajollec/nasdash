@@ -211,6 +211,24 @@ Kit services, checked against their documentation and source (2026-11-08):
   (`ServiceOptions.longRequest`); only ids WUD lists as updatable are accepted.
   Its state is added to every answer (`KitServer.decorate`) and a finished
   update renews the shared reading (`KitServer.revision`).
+- [Uptime Kuma](https://github.com/louislam/uptime-kuma) status pages, no account:
+  `GET /api/status-page/{slug}` and `/api/status-page/heartbeat/{slug}`
+  (`server/routers/status-page-router.js`); beat 0 down, 1 up, 2 pending,
+  3 maintenance; the 24-hour uptime is a fraction on current versions.
+- Seerr / Overseerr / Jellyseerr (`overseerr-api.yml`): `X-Api-Key`,
+  `/api/v1/request/count`, `/api/v1/request?take=20&sort=added`, titles from
+  `/api/v1/movie|tv/{tmdbId}` (cached a day), posters from TMDB's public CDN;
+  `approve` / `decline` actions only for an id listed as pending.
+- [ntfy](https://docs.ntfy.sh/subscribe/api/): `/{topics}/json?poll=1&since=24h`,
+  Bearer access token; [Gotify](https://github.com/gotify/server): client token
+  (`X-Gotify-Key`), `/message`, `/application`; priorities 0–10 mapped to 1–5.
+- Audiobookshelf (Bearer: `/api/me`, `/api/me/items-in-progress`,
+  `/api/libraries/{id}/personalized`), Kavita (`/api/Plugin/authenticate` then
+  Bearer: `/api/Series/on-deck`, `/api/Series/recently-added-v2`, source
+  `Kavita.Server/Controllers`) and Komga (`X-API-Key`: `/api/v1/books`,
+  `/books/ondeck`, `/books/latest`). Covers go through
+  `GET /api/widgets/kit/image` (`KitServer.image`), which serves only ids the
+  integration listed in its own answers (`reading/shared.ts`).
 
 ## Trying an integration without installing it
 

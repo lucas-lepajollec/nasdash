@@ -9,6 +9,7 @@ import { ConfigProvider } from '@/providers/ConfigProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { messages } from '@/i18n/messages';
 import { isDemoMode } from '@/lib/demoMode';
+import { BOOT_SCRIPT } from '@/lib/bootFetch';
 
 // Fonts ship with the source (src/app/fonts, OFL, see LICENSES.txt): a build
 // never downloads them, so it cannot fail on Google Fonts being unreachable.
@@ -75,6 +76,8 @@ export default function RootLayout({
             `
           }}
         />
+        {/* The dashboard's first requests start now, in parallel with the JavaScript. */}
+        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
         <I18nProvider>
           <ConfigProvider>
             {children}

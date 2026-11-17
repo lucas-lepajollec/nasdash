@@ -5,7 +5,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
+import type { WidgetSettings } from '@/lib/pages/types';
+import { CalmeRow, CalmeSegmented } from '@/components/modals/settings/shared/CalmeControls';
+import { pick, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { CalmeWidget } from '../calme';
+
+const STYLES = ['inherit', 'minimal', 'currentOnly', 'default', 'extended'] as const;
 import CalmeWeatherIcon from './CalmeWeatherIcon';
 import { rainOf, skyOf, timeOfDay, useWeather, weatherLabelKey } from './useWeather';
 
@@ -16,16 +21,30 @@ import { rainOf, skyOf, timeOfDay, useWeather, weatherLabelKey } from './useWeat
  * of squeezing them (container queries in design-calme.css). A quiet scene
  * behind follows the sky and the time of day at the location.
  */
-export default function CalmeWeather({ editMode, isVisible = true }: { editMode?: boolean; isVisible?: boolean }) {
+export default function CalmeWeather({ editMode, isVisible = true, settings = {}, onUpdateSettings }: { editMode?: boolean; isVisible?: boolean; settings?: WidgetSettings; onUpdateSettings?: (settings: WidgetSettings) => void }) {
   const { t, locale } = useI18n();
   const { config } = useConfig();
-  const style = config?.settings?.weatherWidgetStyle || 'default';
+  // Each weather widget may have its own style; otherwise the one of Settings → Widgets → Weather.
+  const own = pick(settings.style, STYLES, 'inherit');
+  const style = own === 'inherit' ? config?.settings?.weatherWidgetStyle || 'default' : own;
+  const styleButton = editMode && onUpdateSettings ? (
+    <WidgetSettingsButton title={t('widgets.settingsOf', { name: t('widget.weather.name') })} settings={settings} onSave={onUpdateSettings} shared={{ tab: 'widget-weather', label: t('widget.weather.name') }}>
+      {(draft, change) => (
+        <CalmeRow label={t('Style du Widget Météo')} stacked>
+          <CalmeSegmented label={t('Style du Widget Météo')} value={pick(draft.style, STYLES, 'inherit')}
+            options={[{ value: 'inherit', label: t('widgets.styleInherit') }, { value: 'minimal', label: t('settings.calme.weatherMinimal') }, { value: 'currentOnly', label: t('settings.calme.weatherNow') }, { value: 'default', label: t('settings.calme.weather3') }, { value: 'extended', label: t('settings.calme.weather5') }]}
+            onChange={value => change({ style: value === 'inherit' ? null : value })} />
+        </CalmeRow>
+      )}
+    </WidgetSettingsButton>
+  ) : null;
   const { locations, location, weather, loading, error, stale, previous, next } = useWeather(isVisible);
   const round = (value: number) => Math.round(value);
 
   if (!location) {
     return (
       <CalmeWidget title={t('widget.weather.name')} editMode={editMode}>
+        {styleButton}
         <SetupGuide kind="weather" />
       </CalmeWidget>
     );
@@ -56,6 +75,7 @@ export default function CalmeWeather({ editMode, isVisible = true }: { editMode?
       editMode={editMode}
       aside={loading ? <span className="nd-spinner" style={{ width: 10, height: 10 }} /> : stale ? <span className="ndc-stale-dot" title={t('weather.stale')} aria-label={t('weather.stale')} /> : undefined}
     >
+      {styleButton}
       <div className="ndc-weather" data-sky={sky} data-rain={rainOf(weather.current.weather_code)} data-time={moment} data-style={style}>
         <div className="ndc-weather-scene" aria-hidden="true">
           <span className="ndc-scene-light" />

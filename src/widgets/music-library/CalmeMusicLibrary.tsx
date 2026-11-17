@@ -6,7 +6,7 @@ import type { MusicLibraryResponse } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { DataError, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { DataError, useWidgetData, WidgetSettingsButton, useStableGrid } from '@/components/widgets/content/kit';
 import { Stat } from '@/components/widgets/media/visual';
 import { Cover, MusicServerField, MusicSetup, useMusicConnection } from '@/components/widgets/music/shared';
 
@@ -73,9 +73,9 @@ export default function CalmeMusicLibrary({ widgetId, settings = {}, editMode, i
                         <span className="ndw-mx-label">{t('widgets.music.week')}</span>
                         {data.weekCount !== undefined && <span className="ndw-media-time">{t('widgets.music.weekCount', { count: data.weekCount })}</span>}
                       </span>
-                      <div className="ndw-music-strip">
+                      <CoverStrip count={data.week!.length}>
                         {data.week!.map(album => <span key={album.id} title={[album.title, album.artist].filter(Boolean).join(' · ')}><Cover id={album.id} title={album.title} cover={album.cover} size={56} /></span>)}
-                      </div>
+                      </CoverStrip>
                     </div>
                   )}
                 </div>
@@ -83,4 +83,10 @@ export default function CalmeMusicLibrary({ widgetId, settings = {}, editMode, i
       </div>
     </CalmeWidget>
   );
+}
+
+/** This week's covers: they fill the line, then keep their size as the widget widens. */
+function CoverStrip({ count, children }: { count: number; children: React.ReactNode }) {
+  const [ref, style] = useStableGrid<HTMLDivElement>(count, 40, 64, 8);
+  return <div ref={ref} className="ndw-music-strip" style={style}>{children}</div>;
 }

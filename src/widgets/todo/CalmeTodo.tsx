@@ -87,7 +87,10 @@ export default function CalmeTodo({ settings, editMode, onUpdateSettings }: { se
         {items.length === 0 && !admin && <span className="ndw-media-sub is-quiet">{t('widgets.todo.emptyViewer')}</span>}
         {admin && items.length < TODO_MAX && (
           <form className="ndw-todo-add" onSubmit={event => { event.preventDefault(); add(); }} data-no-widget-drag>
-            <Plus size={12} aria-hidden="true" />
+            {/* The + adds the task, like Enter. */}
+            <button type="submit" className="ndw-todo-add-button" disabled={!text.trim()} aria-label={t('widgets.todo.add')} title={t('widgets.todo.add')}>
+              <Plus size={13} aria-hidden="true" />
+            </button>
             <input value={text} maxLength={TODO_TEXT_MAX} placeholder={t('widgets.todo.add')} aria-label={t('widgets.todo.add')} onChange={event => setText(event.target.value)} />
           </form>
         )}

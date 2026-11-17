@@ -34,6 +34,8 @@
 /* A list of rows separated by hairlines (feeds, tickers, top domains…). */
 .ndw-rows { display: flex; flex-direction: column; min-width: 0; }
 .ndw-rows > * + * { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+/* A single column: nothing above the first row, whatever its own rule says. */
+.ndw-rows:not(.is-columns) > :first-child { border-top-color: transparent; }
 
 /* Segmented tabs inside a widget (feeds, ranges). */
 .ndw-tabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; }
@@ -490,6 +492,114 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 .ndw-speed-line > .is-quiet { color: var(--nd-text-muted); font-size: 0.8em; }
 .ndw-settings-checks { display: flex; flex-direction: column; max-height: 220px; overflow-y: auto; }
 
+/* ---------- Uptime Kuma: one line per monitor (dot, name, beats, uptime) ---------- */
+.ndw-uptime-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ndw-uptime-list { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.ndw-uptime-row { display: grid; grid-template-columns: auto minmax(5ch, max-content) minmax(0, 1fr) auto; align-items: center; gap: 9px; min-width: 0; font-size: 0.78rem; }
+.ndw-uptime-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--nd-text-dimmed); }
+.ndw-uptime-row.is-up .ndw-uptime-dot { background: var(--nd-green); }
+.ndw-uptime-row.is-down .ndw-uptime-dot { background: var(--nd-red); }
+.ndw-uptime-row.is-pending .ndw-uptime-dot, .ndw-uptime-row.is-maintenance .ndw-uptime-dot { background: var(--nd-yellow); }
+.ndw-uptime-name { min-width: 0; overflow: hidden; color: var(--nd-text); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+a.ndw-uptime-name:hover { color: var(--nd-accent); }
+.ndw-uptime-row.is-down .ndw-uptime-name { color: var(--nd-red); }
+/* The beats fill the room left by the name: the latest on the right, older ones dropped first when narrow. */
+.ndw-uptime-beats { display: flex; justify-content: flex-end; align-items: flex-end; gap: 2px; height: 14px; min-width: 0; overflow: hidden; }
+.ndw-uptime.is-aligned .ndw-uptime-row { grid-template-columns: auto minmax(5ch, min(var(--ndw-uptime-name), 45%)) minmax(0, 1fr) auto; }
+/* Each beat stretches a little (3 to 8 px) so the line fills its column; the oldest are dropped when it is too narrow. */
+.ndw-uptime-beats > span { flex: 1 1 0; min-width: 3px; max-width: 8px; height: 100%; border-radius: 2px; background: color-mix(in srgb, var(--nd-green) 70%, transparent); }
+.ndw-uptime-beats > .is-down { background: var(--nd-red); }
+.ndw-uptime-beats > .is-pending, .ndw-uptime-beats > .is-maintenance { background: var(--nd-yellow); }
+.ndw-uptime-beats > .is-unknown { background: var(--nd-card-border); }
+.ndw-uptime-figure { min-width: 7ch; color: var(--nd-text-muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; text-align: right; }
+.ndw-uptime.is-compact .ndw-uptime-list { gap: 5px; }
+@container (max-width: 300px) { .ndw-uptime-beats { display: none; } .ndw-uptime-row { grid-template-columns: auto minmax(0, 1fr) auto; } }
+
+/* ---------- Seerr: counts, then requests with their poster ---------- */
+.ndw-req { container-type: inline-size; }
+.ndw-req-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ndw-req-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ndw-req-poster { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 30px; height: 45px; overflow: hidden; border-radius: 5px; background: color-mix(in srgb, var(--nd-text) 7%, transparent); color: var(--nd-text-dimmed); }
+.ndw-req-poster > img { width: 100%; height: 100%; object-fit: cover; }
+.ndw-req-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.ndw-req-title { overflow: hidden; color: var(--nd-text); font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-req-year { color: var(--nd-text-dimmed); }
+.ndw-req-actions { display: inline-flex; flex-shrink: 0; gap: 6px; }
+/* Decisions: two round tinted buttons of the same size, the colour saying what they do. */
+.ndw-req-decide { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; cursor: pointer; transition: background 0.15s ease; }
+.ndw-req-decide.is-ok { background: color-mix(in srgb, var(--nd-green) 16%, transparent); color: var(--nd-green); }
+.ndw-req-decide.is-ok:hover { background: color-mix(in srgb, var(--nd-green) 28%, transparent); }
+.ndw-req-decide.is-no { background: color-mix(in srgb, var(--nd-red) 14%, transparent); color: var(--nd-red); }
+.ndw-req-decide.is-no:hover { background: color-mix(in srgb, var(--nd-red) 26%, transparent); }
+.ndw-req-decide:disabled { opacity: 0.5; cursor: default; }
+.ndw-req-decide:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndw-req-status { display: inline-flex; flex-shrink: 0; align-items: center; height: 20px; padding: 0 9px; border-radius: 999px; background: color-mix(in srgb, var(--nd-text) 7%, transparent); color: var(--nd-text-muted); font-size: 0.64rem; font-weight: 500; white-space: nowrap; }
+.ndw-req-status.is-pending { background: color-mix(in srgb, var(--nd-yellow) 16%, transparent); color: var(--nd-yellow); }
+.ndw-req-status.is-available { background: color-mix(in srgb, var(--nd-green) 16%, transparent); color: var(--nd-green); }
+.ndw-req-status.is-declined { background: color-mix(in srgb, var(--nd-red) 14%, transparent); color: var(--nd-red); }
+@container (max-width: 260px) { .ndw-req-poster { display: none; } .ndw-req .ndw-mx-statrow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ndw-req-status { display: none; } }
+
+/* ---------- Notifications: a priority mark, the title, the text, where and when ---------- */
+.ndw-notif-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.ndw-notif-row { display: flex; gap: 10px; min-width: 0; }
+.ndw-notif-mark { flex-shrink: 0; width: 3px; border-radius: 3px; background: var(--nd-card-border); }
+.ndw-notif-row.is-p4 .ndw-notif-mark { background: var(--nd-yellow); }
+.ndw-notif-row.is-p5 .ndw-notif-mark { background: var(--nd-red); }
+.ndw-notif-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.ndw-notif-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ndw-notif-title { min-width: 0; overflow: hidden; color: var(--nd-text); font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-notif-link { display: inline-flex; flex-shrink: 0; color: var(--nd-text-dimmed); }
+.ndw-notif-link:hover { color: var(--nd-accent); }
+.ndw-notif-text { display: -webkit-box; overflow: hidden; color: var(--nd-text-muted); font-size: 0.74rem; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.ndw-notif.is-compact .ndw-notif-list { gap: 7px; }
+/* Bubbles: rounded tinted cards, side by side (at most 380 px each) on a wide widget. */
+.ndw-notif-list.is-bubbles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 380px)); justify-content: start; gap: 8px; }
+.ndw-notif-bubble { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.ndw-notif-bubble.is-p4 { background: color-mix(in srgb, var(--nd-yellow) 9%, color-mix(in srgb, var(--nd-text) 4%, transparent)); }
+.ndw-notif-bubble.is-p5 { background: color-mix(in srgb, var(--nd-red) 11%, color-mix(in srgb, var(--nd-text) 4%, transparent)); }
+.ndw-notif-bubble-top { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--nd-text-dimmed); font-size: 0.64rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.ndw-notif-bubble-source { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-notif-bubble-when { flex-shrink: 0; text-transform: none; letter-spacing: 0; }
+.ndw-notif-prio { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--nd-text-dimmed); }
+.is-p4 > .ndw-notif-bubble-top > .ndw-notif-prio { background: var(--nd-yellow); }
+.is-p5 > .ndw-notif-bubble-top > .ndw-notif-prio { background: var(--nd-red); }
+.ndw-notif-title.is-strong { font-weight: 600; }
+/* Timeline: time, then a thread with a dot per notification, then the text. */
+.ndw-notif-list.is-timeline { display: grid; grid-template-columns: auto 14px minmax(0, 1fr); gap: 0 8px; }
+/* Every step shares the list's columns, so the thread stays straight whatever the time's length. */
+.ndw-notif-step { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; min-width: 0; }
+.ndw-notif-step-time { min-width: 5ch; padding-top: 1px; color: var(--nd-text-dimmed); font-size: 0.7rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.ndw-notif-step-rail { position: relative; display: flex; justify-content: center; }
+.ndw-notif-step-rail::before { content: ''; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--nd-card-border); }
+.ndw-notif-step:first-child .ndw-notif-step-rail::before { top: 6px; }
+.ndw-notif-step:last-child .ndw-notif-step-rail::before { bottom: auto; height: 6px; }
+.ndw-notif-step-rail > span { position: relative; width: 7px; height: 7px; margin-top: 4px; border-radius: 50%; background: var(--nd-text-dimmed); box-shadow: 0 0 0 3px var(--nd-card-bg); }
+.ndw-notif-step.is-p4 .ndw-notif-step-rail > span { background: var(--nd-yellow); }
+.ndw-notif-step.is-p5 .ndw-notif-step-rail > span { background: var(--nd-red); }
+.ndw-notif-step > .ndw-notif-main { padding-bottom: 12px; }
+.ndw-notif-step:last-child > .ndw-notif-main { padding-bottom: 0; }
+.ndw-notif-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ndw-notif-text.is-full { display: block; -webkit-line-clamp: unset; }
+.ndw-notif-new { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--nd-accent); }
+
+/* ---------- Reading: covers that wrap to the width, or a list ---------- */
+.ndw-read { container-type: inline-size; }
+.ndw-read-section { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ndw-read-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 12px 10px; margin: 0; padding: 0; list-style: none; }
+.ndw-read-shelf .ndw-read-item { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ndw-read-shelf .ndw-read-cover { aspect-ratio: 2 / 3; width: 100%; }
+.ndw-read-cover { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px; background: color-mix(in srgb, var(--nd-text) 7%, transparent); color: var(--nd-text-dimmed); }
+.ndw-read-cover > img { width: 100%; height: 100%; object-fit: cover; }
+.ndw-read-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ndw-read-title { overflow: hidden; color: var(--nd-text); font-size: 0.74rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-read-shelf .ndw-read-text .ndw-media-sub { font-size: 0.64rem; }
+.ndw-read-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ndw-read-list .ndw-read-item { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; column-gap: 10px; row-gap: 4px; }
+.ndw-read-list .ndw-read-cover { grid-row: 1 / 3; width: 30px; height: 45px; }
+.ndw-read-list .mx-track, .ndw-read-list .ndw-mx-track { grid-column: 2; }
+.ndw-read-percent { grid-row: 1; grid-column: 3; color: var(--nd-text-muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; }
+@container (max-width: 220px) { .ndw-read-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 /* ---------- Notes, to-do, countdown and web page ---------- */
 .ndw-notes { position: relative; min-width: 0; }
 .ndw-notes-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; color: var(--nd-text); font-size: 0.82rem; line-height: 1.5; overflow-wrap: anywhere; }
@@ -517,6 +627,9 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 @media (hover: none) { .ndw-todo-remove { opacity: 0.7; } }
 .ndw-todo-remove:hover { color: var(--nd-red); }
 .ndw-todo-add { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--nd-text-dimmed); }
+.ndw-todo-add-button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: none; border-radius: 5px; background: none; color: var(--nd-accent); cursor: pointer; }
+.ndw-todo-add-button:hover:not(:disabled) { background: color-mix(in srgb, var(--nd-accent) 14%, transparent); }
+.ndw-todo-add-button:disabled { color: var(--nd-text-dimmed); cursor: default; }
 .ndw-todo-add > input { flex: 1; min-width: 0; padding: 4px 0; border: none; border-bottom: 1px solid transparent; background: none; color: var(--nd-text); font: inherit; font-size: 0.8rem; outline: none; }
 .ndw-todo-add > input:focus { border-bottom-color: var(--nd-card-border); }
 .ndw-countdown { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -534,7 +647,7 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 .ndw-chip-group:has(> .ndw-chip-remove) > .ndw-chip { border-right: none; border-radius: 999px 0 0 999px; padding-right: 6px; }
 .ndw-chip-remove { display: inline-flex; align-items: center; align-self: stretch; padding: 0 7px 0 4px; border: 1px solid var(--nd-card-border); border-left: none; border-radius: 0 999px 999px 0; background: transparent; color: var(--nd-text-dimmed); cursor: pointer; }
 .ndw-chip-remove:hover { color: var(--nd-red); }
-.ndw-timer-custom { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.ndw-timer-custom { display: inline-flex; align-items: center; gap: 4px; }
 .ndw-timer-custom > input { width: 12ch; min-width: 0; padding: 3px 8px; border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent; color: var(--nd-text); font: inherit; font-size: 0.7rem; outline: none; }
 .ndw-timer-custom > input:focus { border-color: var(--nd-accent-dim); }
 .ndw-timer-custom > input[aria-invalid="true"] { border-color: color-mix(in srgb, var(--nd-red) 60%, transparent); }
@@ -562,6 +675,28 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 @media (prefers-reduced-motion: reduce) {
   .ndw-walker *, .ndw-walker.is-running *, .ndw-walker.is-over * { animation: none !important; transition: none !important; }
 }
+/* Timer: the time with its round controls, then the durations in one row that wraps only when it must. */
+.ndw-timer-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; min-width: 0; }
+.ndw-countdown.is-large .ndw-timer-head { flex-direction: column; justify-content: center; }
+.ndw-timer-controls { display: inline-flex; flex-shrink: 0; align-items: center; gap: 8px; }
+.ndw-timer-main, .ndw-timer-reset { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; transition: transform 0.12s ease, background 0.15s ease, opacity 0.15s ease; }
+.ndw-timer-main { width: 38px; height: 38px; border: none; background: var(--nd-accent); color: var(--nd-bg, #0d1117); }
+.ndw-timer-main > svg { margin-left: 1px; }
+.ndw-timer-main.is-running > svg { margin-left: 0; }
+.ndw-timer-main:hover { transform: scale(1.06); }
+.ndw-timer-main:active { transform: scale(0.96); }
+.ndw-timer-reset { width: 38px; height: 38px; border: none; background: color-mix(in srgb, var(--nd-text) 6%, transparent); color: var(--nd-text-muted); }
+.ndw-timer-reset:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 11%, transparent); }
+.ndw-timer-main:focus-visible, .ndw-timer-reset:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndw-timer-durations { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.ndw-countdown.is-large .ndw-timer-durations { justify-content: center; }
+.ndw-chip.is-filled { border-color: transparent; outline: none; background: color-mix(in srgb, var(--nd-accent) 34%, var(--nd-card-bg, #161b22)); color: #fff; font-weight: 500; }
+.ndw-chip.is-filled:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
+.ndw-chip.is-filled:hover { border-color: transparent; background: color-mix(in srgb, var(--nd-accent) 48%, var(--nd-card-bg, #161b22)); color: #fff; }
+.ndw-chip-group.is-on > .ndw-chip.is-filled { color: #fff; border-color: transparent; background: color-mix(in srgb, var(--nd-accent) 62%, var(--nd-card-bg, #161b22)); }
+.ndw-chip-group:has(> .ndw-chip-remove) > .ndw-chip.is-filled { border-right: none; }
+.ndw-chip-group:has(> .ndw-chip.is-filled) > .ndw-chip-remove { border-color: transparent; background: color-mix(in srgb, var(--nd-accent) 22%, var(--nd-card-bg, #161b22)); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .ndw-timer-main, .ndw-timer-reset { transition: none; } .ndw-timer-main:hover, .ndw-timer-main:active { transform: none; } }
 .ndw-timer-actions, .ndw-timer-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
 .ndw-chip { padding: 3px 9px; border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.7rem; cursor: pointer; }
 .ndw-chip:hover { color: var(--nd-text); }
@@ -597,7 +732,7 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 .ndw-dns-head > .ndw-note { position: absolute; top: 100%; left: 0; }
 
 /* Figures: number first in the display face, its label under it. */
-.ndw-dns-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 12px 18px; }
+.ndw-dns-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 160px)); justify-content: start; gap: 12px 18px; }
 .ndw-dns-figures--stack { grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; min-width: 0; }
 .ndw-dns-figure { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ndw-dns-figure-value { font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.32rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -738,7 +873,7 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 
 /* Paged grid (market tiles, news cards): columns follow the block; arrows and "2 / 3" under it. */
 .ndw-paged { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.ndw-paged-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--ndw-col, 160px), 1fr)); gap: 10px; }
+.ndw-paged-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--ndw-col, 160px), 100%), 1fr)); gap: 10px; }
 .ndw-paged-cell, .ndw-scroll-cell { display: flex; min-width: 0; }
 .ndw-paged-cell > *, .ndw-scroll-cell > * { flex: 1; min-width: 0; }
 .ndw-pager { display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -761,7 +896,9 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 .ndw-photo.is-square { aspect-ratio: 1; }
 .ndw-photo-video { position: absolute; right: 6px; bottom: 6px; display: inline-flex; padding: 4px; border-radius: 50%; color: #fff; background: rgb(0 0 0 / 0.45); }
 .ndw-photo-pages { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.ndw-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; animation: ndw-photo-in 0.6s ease; }
+/* Grids of the sizes policy: auto-fit with a maximum, so once every item fits it keeps its size and the extra width
+   stays empty (auto-fill with 1fr keeps adding empty columns: items shrink and grow again with every column). */
+.ndw-photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 170px)); justify-content: start; gap: 8px; animation: ndw-photo-in 0.6s ease; }
 /* Mosaic: tiles of mixed sizes packed densely (spans set per photo). */
 .ndw-photo-mosaic { display: grid; gap: 6px; animation: ndw-photo-in 0.6s ease; }
 .ndw-photo.is-tile { height: 100%; }
@@ -822,9 +959,9 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 .ndw-bookmark-path button { padding: 0; border: none; color: var(--nd-text-dimmed); background: none; font: inherit; cursor: pointer; }
 .ndw-bookmark-path button:hover { color: var(--nd-text); text-decoration: underline; }
 .ndw-bookmark-path [aria-current] { color: var(--nd-text); }
-.ndw-bookmark-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.ndw-bookmark-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 210px)); justify-content: start; gap: 6px; }
 .ndw-bookmark-tiles .ndw-bookmark { padding: 9px 10px; border: 1px solid var(--nd-card-border); }
-.ndw-bookmark-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 4px; }
+.ndw-bookmark-icons { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 96px)); justify-content: start; gap: 4px; }
 .ndw-bookmark.is-icon { flex-direction: column; gap: 6px; padding: 10px 4px 8px; }
 .ndw-bookmark-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.68rem; color: var(--nd-text-dimmed); }
 .ndw-bookmark.is-icon:hover .ndw-bookmark-label { color: var(--nd-text); }
@@ -877,7 +1014,7 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 .ndw-api-value.is-ok { color: var(--nd-green); }
 .ndw-api-unit { margin-inline-start: 3px; font-size: 0.55em; font-weight: 400; color: var(--nd-text-dimmed); letter-spacing: 0; }
 .ndw-api-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.68rem; letter-spacing: 0.02em; }
-.ndw-api-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 16px 18px; }
+.ndw-api-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 170px)); justify-content: start; gap: 16px 18px; }
 .ndw-api-figure { display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden; }
 .ndw-api-gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 14px; justify-items: center; }
 .ndw-api-gauge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
@@ -942,7 +1079,7 @@ a.ndw-kit-row-name:hover { color: var(--nd-accent); }
 @media (hover: none) { .ndw-api-pick { opacity: 1; } }
 
 /* ---------- Media ---------- */
-.ndw-media-box { min-width: 0; }
+.ndw-media-box { min-width: 0; container-type: inline-size; }
 .ndw-media-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text); font-size: 0.82rem; font-weight: 500; text-decoration: none; }
 a.ndw-media-title:hover { text-decoration: underline; }
 .ndw-media-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.7rem; }
@@ -1130,7 +1267,10 @@ a.ndw-mx-hero:hover > .ndw-mx-backdrop { transform: scale(1.025); }
 .ndw-mx-figure-unit { color: var(--nd-text-muted); font-size: 0.7rem; }
 
 /* Rails: posters (2:3) or wide pictures (16:9) in columns, a title and a line beneath. */
-.ndw-mx-rail { display: grid; grid-template-columns: repeat(var(--ndw-cols, 4), minmax(0, 1fr)); gap: 14px 12px; }
+/* Rails and shelves: their computed columns, each at most --ndw-max wide, so a wider widget leaves room on the right instead of
+   stretching the posters (the sizes policy). */
+.ndw-mx-rail { display: grid; grid-template-columns: repeat(var(--ndw-cols, 4), minmax(0, var(--ndw-max, 170px))); justify-content: start; gap: 14px 12px; }
+.ndw-mx-rail.is-wide { --ndw-max: 260px; }
 .ndw-mx-rail-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: inherit; text-decoration: none; }
 .ndw-mx-rail-art { position: relative; display: block; }
 .ndw-mx-rail-art .ndw-media-poster { width: 100% !important; border-radius: 8px; }
@@ -1178,7 +1318,7 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 /* *arr status: one block per app, separated by hairlines. */
 
 /* Library: a card per library with pictures, its newest posters fanned over a blur. */
-.ndw-mx-shelves { display: grid; grid-template-columns: repeat(var(--ndw-cols, 3), minmax(0, 1fr)); gap: 12px; }
+.ndw-mx-shelves { display: grid; grid-template-columns: repeat(var(--ndw-cols, 3), minmax(0, 340px)); justify-content: start; gap: 12px; }
 .ndw-mx-shelf { position: relative; display: flex; align-items: flex-end; height: var(--ndw-shelf-h, 200px); overflow: hidden; border-radius: 12px; clip-path: inset(0 round 12px); background: rgb(10 11 13); isolation: isolate; }
 .ndw-mx-shelf > .ndw-mx-backdrop { z-index: -2; }
 /* Three sizes; the fan grows with the card. Pictures crossfade: the new set fades in over the old. */
@@ -1212,7 +1352,7 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-media-list.is-large .ndw-mx-qrow .ndw-media-sub { font-size: 0.8rem; }
 
 /* Tiles (*arr status) and lines (indexers): a quiet surface, no outline; figures over their labels. */
-.ndw-mx-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.ndw-mx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 320px)); justify-content: start; gap: 12px; }
 .ndw-mx-tile { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px 18px; border-radius: 12px; background: color-mix(in srgb, var(--nd-text) 3.5%, transparent); }
 .ndw-mx-tile-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .ndw-mx-tile-head > .ndw-media-row-text { flex: 1; }
@@ -1254,7 +1394,7 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 /* A row of figures in equal columns, split by hairlines (indexers, queue). */
 /* Every figure has its rule on the left; the row starts 13px early and clips that first rule, so a row that wraps
    never begins with a stray line. */
-.ndw-mx-statrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 14px 0; margin-left: -13px; clip-path: inset(0 0 0 1px); }
+.ndw-mx-statrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(86px, 100%), 1fr)); gap: 14px 0; margin-left: -13px; clip-path: inset(0 0 0 1px); }
 .ndw-mx-statrow > .ndw-mx-stat { padding: 0 12px; border-left: 1px solid var(--nd-card-border); }
 .ndw-mx-stat-of { color: var(--nd-text-dimmed); font-size: 0.6em; font-weight: 500; }
 
@@ -1340,7 +1480,8 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-music-genre-bar > span { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--nd-text) 30%, transparent); }
 .ndw-music-genre-bar.is-first > span { background: var(--nd-accent); }
 .ndw-music-genre > .ndw-media-time { text-align: right; }
-.ndw-music-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.ndw-music-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(56px, calc((100% - 16px) / 3)), 1fr)); gap: 8px; }
+.ndw-music-strip > span > * { width: 100% !important; height: auto !important; aspect-ratio: 1; }
 .ndw-music-rank { min-width: 1ch; flex-shrink: 0; color: var(--nd-text-dimmed); font-family: var(--font-geist), system-ui, sans-serif; font-size: 0.92rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ndw-music-toprow { gap: 12px; }
 .ndw-music-toprow { border-top: 1px solid var(--nd-card-border); }
@@ -1386,3 +1527,55 @@ button.ndw-music-next-row:hover .ndw-music-next-title { color: var(--nd-accent);
 .ndw-music-tracklist > li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 5px 0; }
 .ndw-music-tracklist-error { margin: 0 0 8px; padding-left: 58px; color: var(--nd-text-muted); font-size: 0.78rem; }
 .ndw-music-tracklist .ndw-music-next-rank { color: var(--nd-text-dimmed); }
+
+/* ---------- The sizes policy: every widget readable at 3 columns (about 200 px) ---------- */
+@container (max-width: 280px) {
+  .ndw-mx-head { flex-wrap: wrap; row-gap: 6px; }
+  .ndw-mx-head > .ndc-seg { order: 3; flex-basis: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .ndw-mx-figures { flex-wrap: wrap; gap: 10px 18px; }
+  .ndw-mx-figures-end { align-items: flex-start; margin-left: 0; }
+  .ndw-mx-figures-end.is-row { gap: 14px; }
+  .ndw-mx-tile { gap: 12px; padding: 12px; }
+  .ndw-mx-statrow { grid-template-columns: repeat(auto-fit, minmax(min(70px, 100%), 1fr)); }
+  .ndw-mx-label { white-space: normal; }
+  /* Rows of the queue, downloads and music: tighter, the secondary column under the title instead of beside it. */
+  .ndw-mx-qrow { gap: 8px; }
+  .ndw-mx-qrow .ndw-media-poster { width: 32px; }
+  .ndw-mx-end { display: none; }
+  /* Queue: the poster goes, the share and the time sit under the title. */
+  .ndw-mx-qitem { flex-wrap: wrap; gap: 4px 8px; }
+  .ndw-mx-qitem .ndw-media-poster { display: none; }
+  .ndw-mx-qitem-text { flex: 1 1 100%; }
+  .ndw-mx-qitem-end { flex: 1; flex-direction: row; align-items: baseline; gap: 8px; }
+  /* Decorative overlaps (a fanned stack of covers) stay inside the widget. */
+  .ndw-media-box { overflow-x: clip; }
+  [role="tablist"] { flex-wrap: wrap; }
+}
+/* Network tools: fields that shrink with the widget instead of pushing it. */
+.nd-page-network-tools { min-width: 0; }
+.nd-page-network-tools input, .nd-page-network-tools select { min-width: 0; }
+
+/* Hero cards (recently played, coming soon, recently added, listening) up to about 4 columns: the poster above the
+   text, smaller type, and the card as tall as its content (never cut at the top). */
+@container (max-width: 360px) {
+  .ndw-mx-hero, .ndw-mx-hero.is-medium { min-height: 0; }
+  .ndw-mx-hero-body { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px; }
+  .ndw-mx-hero-body > .ndw-media-poster { width: 64px !important; }
+  .ndw-mx-hero .ndw-mx-calm, .ndw-mx-hero .ndw-mx-title { font-size: 0.95rem; }
+  .ndw-mx-hero-text { width: 100%; }
+  .ndw-media-hero { align-items: stretch; }
+  .ndw-media-hero-body { flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 8px; padding: 12px; }
+  .ndw-media-hero-body > .ndw-media-poster { width: 56px !important; }
+  .ndw-media-hero-title { font-size: 0.95rem; }
+  .ndw-music-now { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .ndw-music-now.is-large { gap: 12px; padding: 14px; }
+  .ndw-music-now .ndw-media-poster { width: 72px !important; }
+  .ndw-mx-display { font-size: 1.1rem; }
+  .ndw-mx-eyebrow { white-space: normal; }
+}
+/* Figures of the music library (and other stat rows): never cut, a unit never alone on its line. */
+.ndw-mx-stat-value { white-space: nowrap; }
+@container (max-width: 300px) {
+  .ndw-mx-stat-value { font-size: 1.25rem; }
+  .ndw-mx-statrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

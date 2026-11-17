@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, ColumnRows, columnsOf, ColumnsSetting, DataError, pick, useBoxWidth, useRelativeTime, useShowMore, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { clock, MediaConnectionField, MediaPoster, MediaSetup, useMediaConnection } from '@/components/widgets/media/shared';
 import { Backdrop, Hero, Track } from '@/components/widgets/media/visual';
 
@@ -110,14 +110,14 @@ export default function CalmeNowPlaying({ widgetId, settings, editMode, isVisibl
                     <div className="ndw-mx-section">
                       <span className="ndw-mx-label">{t('widgets.media.continue')}</span>
                       {history === 'list'
-                        ? <ColumnRows columns={columnsOf(settings, width, size === 'large' ? 360 : 280)} className={`ndw-media-list is-${size}`}>{rest.slice(0, count).map(entry => <WatchedRow key={entry.item.id} entry={entry} size={size} />)}</ColumnRows>
-                        : <WatchedRail entries={rest.slice(0, count)} width={width} />}
+                        ? <WatchedList entries={rest} limit={count} columns={columnsOf(settings, width, size === 'large' ? 360 : 280)} size={size} />
+                        : <WatchedRail entries={rest} limit={count} width={width} />}
                     </div>
                   )}
                   {history !== 'none' && !watched.length && (data.recent?.length ?? 0) > 0 && (
                     <div className="ndw-mx-section">
                       <span className="ndw-mx-label">{t('widgets.media.latest')}</span>
-                      <WatchedRail entries={data.recent!.slice(0, count).map(item => ({ item }))} width={width} />
+                      <WatchedRail entries={data.recent!.map(item => ({ item }))} limit={count} width={width} />
                     </div>
                   )}
                 </div>
@@ -197,13 +197,22 @@ function useStatus() {
 }
 
 /** Wide pictures with the progress along their foot, like "continue watching". */
-function WatchedRail({ entries, width }: { entries: MediaWatched[]; width: number }) {
+/** The rest of the history as rows: as many as the setting asks, the others behind "+N more". */
+function WatchedList({ entries, limit, columns, size }: { entries: MediaWatched[]; limit: number; columns: number; size: Parameters<typeof WatchedRow>[0]['size'] }) {
+  const [shown, more] = useShowMore(entries, limit);
+  return <><ColumnRows columns={columns} className={`ndw-media-list is-${size}`}>{shown.map(entry => <WatchedRow key={entry.item.id} entry={entry} size={size} />)}</ColumnRows>{more}</>;
+}
+
+function WatchedRail({ entries, limit, width }: { entries: MediaWatched[]; limit: number; width: number }) {
   const { name, code } = useNames();
   const status = useStatus();
   const columns = Math.max(2, Math.min(5, Math.floor((width + 12) / 190)));
+  // Two rows of posters at most by default; the others behind "+N more".
+  const [shown, more] = useShowMore(entries, Math.min(limit, columns * 2));
   return (
+    <>
     <div className="ndw-mx-rail is-wide" style={{ '--ndw-cols': columns } as React.CSSProperties}>
-      {entries.slice(0, columns * 2).map(entry => {
+      {shown.map(entry => {
         const { item } = entry;
         const body = (
           <>
@@ -225,6 +234,8 @@ function WatchedRail({ entries, width }: { entries: MediaWatched[]; width: numbe
           : <span key={item.id} className="ndw-mx-rail-item" title={item.title}>{body}</span>;
       })}
     </div>
+    {more}
+    </>
   );
 }
 
