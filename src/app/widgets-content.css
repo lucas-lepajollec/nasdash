@@ -553,7 +553,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-notif-text { display: -webkit-box; overflow: hidden; color: var(--nd-text-muted); font-size: 0.74rem; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .ndw-notif.is-compact .ndw-notif-list { gap: 7px; }
 /* Bubbles: rounded tinted cards, side by side (at most 380 px each) on a wide widget. */
-.ndw-notif-list.is-bubbles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 380px)); justify-content: start; gap: 8px; }
+.ndw-notif-list.is-bubbles { display: grid; --fit-min: 220px; --fit-max: 380px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 8px; }
 .ndw-notif-bubble { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
 .ndw-notif-bubble.is-p4 { background: color-mix(in srgb, var(--nd-yellow) 9%, color-mix(in srgb, var(--nd-text) 4%, transparent)); }
 .ndw-notif-bubble.is-p5 { background: color-mix(in srgb, var(--nd-red) 11%, color-mix(in srgb, var(--nd-text) 4%, transparent)); }
@@ -732,7 +732,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-dns-head > .ndw-note { position: absolute; top: 100%; left: 0; }
 
 /* Figures: number first in the display face, its label under it. */
-.ndw-dns-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 160px)); justify-content: start; gap: 12px 18px; }
+.ndw-dns-figures { display: grid; --fit-min: 88px; --fit-max: 160px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 12px 18px; }
 .ndw-dns-figures--stack { grid-template-columns: repeat(2, minmax(0, 1fr)); flex: 1; min-width: 0; }
 .ndw-dns-figure { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ndw-dns-figure-value { font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.32rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--nd-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -837,7 +837,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
   /* DNS: the server name goes, figures and ring stack. */
   .ndw-dns-server { display: none; }
   .ndw-dns-hero { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .ndw-dns-figures, .ndw-dns-figures--stack { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+  .ndw-dns-figures, .ndw-dns-figures--stack { --fit-min: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
   .ndw-dns-figure-value { font-size: 1.05rem; }
   .ndw-dns-compact-line { flex-direction: column; gap: 4px; }
   .ndw-dns-big { font-size: 1.6rem; }
@@ -896,9 +896,9 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-photo.is-square { aspect-ratio: 1; }
 .ndw-photo-video { position: absolute; right: 6px; bottom: 6px; display: inline-flex; padding: 4px; border-radius: 50%; color: #fff; background: rgb(0 0 0 / 0.45); }
 .ndw-photo-pages { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-/* Grids of the sizes policy: auto-fit with a maximum, so once every item fits it keeps its size and the extra width
+/* Grids of the sizes policy (--fit-min/--fit-max, laid out by useFitGrid): columns counted with the smallest size; once every item fits it keeps its size and the extra width
    stays empty (auto-fill with 1fr keeps adding empty columns: items shrink and grow again with every column). */
-.ndw-photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 170px)); justify-content: start; gap: 8px; animation: ndw-photo-in 0.6s ease; }
+.ndw-photo-grid { display: grid; --fit-min: 110px; --fit-max: 170px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 8px; animation: ndw-photo-in 0.6s ease; }
 /* Mosaic: tiles of mixed sizes packed densely (spans set per photo). */
 .ndw-photo-mosaic { display: grid; gap: 6px; animation: ndw-photo-in 0.6s ease; }
 .ndw-photo.is-tile { height: 100%; }
@@ -959,9 +959,9 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-bookmark-path button { padding: 0; border: none; color: var(--nd-text-dimmed); background: none; font: inherit; cursor: pointer; }
 .ndw-bookmark-path button:hover { color: var(--nd-text); text-decoration: underline; }
 .ndw-bookmark-path [aria-current] { color: var(--nd-text); }
-.ndw-bookmark-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 210px)); justify-content: start; gap: 6px; }
+.ndw-bookmark-tiles { display: grid; --fit-min: 150px; --fit-max: 210px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 6px; }
 .ndw-bookmark-tiles .ndw-bookmark { padding: 9px 10px; border: 1px solid var(--nd-card-border); }
-.ndw-bookmark-icons { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 96px)); justify-content: start; gap: 4px; }
+.ndw-bookmark-icons { display: grid; --fit-min: 72px; --fit-max: 96px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 4px; }
 .ndw-bookmark.is-icon { flex-direction: column; gap: 6px; padding: 10px 4px 8px; }
 .ndw-bookmark-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.68rem; color: var(--nd-text-dimmed); }
 .ndw-bookmark.is-icon:hover .ndw-bookmark-label { color: var(--nd-text); }
@@ -1014,7 +1014,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-api-value.is-ok { color: var(--nd-green); }
 .ndw-api-unit { margin-inline-start: 3px; font-size: 0.55em; font-weight: 400; color: var(--nd-text-dimmed); letter-spacing: 0; }
 .ndw-api-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text-dimmed); font-size: 0.68rem; letter-spacing: 0.02em; }
-.ndw-api-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 170px)); justify-content: start; gap: 16px 18px; }
+.ndw-api-figures { display: grid; --fit-min: 96px; --fit-max: 170px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 16px 18px; }
 .ndw-api-figure { display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden; }
 .ndw-api-gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 14px; justify-items: center; }
 .ndw-api-gauge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
@@ -1352,7 +1352,7 @@ a.ndw-mx-qrow:hover .ndw-media-title { color: var(--nd-accent); }
 .ndw-media-list.is-large .ndw-mx-qrow .ndw-media-sub { font-size: 0.8rem; }
 
 /* Tiles (*arr status) and lines (indexers): a quiet surface, no outline; figures over their labels. */
-.ndw-mx-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 320px)); justify-content: start; gap: 12px; }
+.ndw-mx-tiles { display: grid; --fit-min: 230px; --fit-max: 320px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 12px; }
 .ndw-mx-tile { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 16px 18px; border-radius: 12px; background: color-mix(in srgb, var(--nd-text) 3.5%, transparent); }
 .ndw-mx-tile-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .ndw-mx-tile-head > .ndw-media-row-text { flex: 1; }

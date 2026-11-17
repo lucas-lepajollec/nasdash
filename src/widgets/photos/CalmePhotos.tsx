@@ -13,7 +13,7 @@ import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { DialogPortal } from '@/widgets/devices/ColorDialog';
 import { CalmeWidget } from '../calme';
-import { bounded, chartHeight, DataError, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, chartHeight, DataError, pick, useBoxWidth, useFitGrid, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 import { packMosaic, wantedSpan } from './mosaic';
 
@@ -133,6 +133,7 @@ function PhotosBody({ photos, display, settings, width, visible, onOpen }: {
   photos: Photo[]; display: PhotosDisplay; settings: WidgetSettings; width: number; visible: boolean; onOpen: (index: number) => void;
 }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const caption = usePhotoText();
   const auto = autoOf(settings);
   const interval = Number(pick(String(settings.interval), INTERVALS, '30'));
@@ -159,7 +160,7 @@ function PhotosBody({ photos, display, settings, width, visible, onOpen }: {
     return (
       <div className="ndw-photo-pages" {...cycle.hover}>
         {/* The key restarts the fade each time other photos come in. */}
-        <div key={cycle.start} className={display === 'grid' ? 'ndw-photo-grid' : 'ndw-photo-mosaic'} style={display === 'mosaic' ? { gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: Math.max(56, Math.round(width / columns * 0.62)) } : undefined}>
+        <div key={`${cycle.start}-${display}`} ref={display === 'grid' ? fit : undefined} className={display === 'grid' ? 'ndw-photo-grid' : 'ndw-photo-mosaic'} style={display === 'mosaic' ? { gridTemplateColumns: `repeat(${columns}, 1fr)`, gridAutoRows: Math.max(56, Math.round(width / columns * 0.62)) } : undefined}>
           {display === 'grid'
             ? shown.map(({ photo, index }) => thumb(photo, index, 'is-square'))
             : <Mosaic shown={shown} columns={columns} render={(photo, index, style) => thumb(photo, index, 'is-tile', style)} />}

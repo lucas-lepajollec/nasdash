@@ -40,7 +40,7 @@ export default function CalmeLibrary({ widgetId, settings, editMode, isVisible, 
   const pictured = libraries.filter(library => library.kind !== 'music' && library.kind !== 'books' && (library.covers?.length || own[library.kind]));
   const plain = libraries.filter(library => !pictured.includes(library));
   const added = libraries.reduce((sum, library) => sum + (library.added ?? 0), 0);
-  const columns = Math.max(1, Math.min(6, Math.floor((width + 14) / { small: 180, medium: 230, large: 300 }[pick(settings.shelf, SHELF_SIZES, 'medium')])));
+  const columns = Math.max(1, Math.min(6, Math.floor((width + 14) / { small: 180, medium: 230, large: 280 }[pick(settings.shelf, SHELF_SIZES, 'medium')])));
 
   return (
     <CalmeWidget title={title} editMode={editMode} aside={data ? <span className="ndc-title-note">{data.name}</span> : undefined}>

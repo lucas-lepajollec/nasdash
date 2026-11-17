@@ -16,3 +16,12 @@ describe('stableColumns', () => {
     expect(stableColumns(0, 5, 76, 112, 10)).toBeUndefined();
   });
 });
+
+describe('posterWidth', () => {
+  it('keeps the posters at their size whatever the width', async () => {
+    const { posterWidth } = await import('@/widgets/media-recent/CalmeRecent');
+    expect(posterWidth(440, 120)).toBe(120);
+    expect(posterWidth(1600, 120)).toBe(120);
+    expect(posterWidth(90, 120)).toBe(90);
+  });
+});

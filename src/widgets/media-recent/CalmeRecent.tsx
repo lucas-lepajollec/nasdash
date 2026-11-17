@@ -85,9 +85,17 @@ function PosterCard({ item, width, now }: { item: MediaItem; width: number; now:
     : <span className="ndw-media-tile" style={{ width }} title={label}>{body}</span>;
 }
 
-/** Posters as a grid, as many per line as fit. */
+/**
+ * Posters as a grid, as many per line as fit, always at the same size: a wider
+ * widget adds a poster per line, never resizes them (what is left on the right
+ * is less than one poster). Narrower than one poster, it takes the whole width.
+ */
+export function posterWidth(width: number, poster: number): number {
+  return Math.floor(Math.max(Math.min(76, width), Math.min(poster, width)));
+}
 function PosterGrid({ items, width, now, poster = 120 }: { items: MediaItem[]; width: number; now: number; poster?: number }) {
-  return <div className="ndw-media-grid">{items.map(item => <PosterCard key={item.id} now={now} item={item} width={Math.max(76, Math.min(poster + 10, width / Math.max(2, Math.round(width / poster)) - 10))} />)}</div>;
+  const size = posterWidth(width, poster);
+  return <div className="ndw-media-grid">{items.map(item => <PosterCard key={item.id} now={now} item={item} width={size} />)}</div>;
 }
 
 /** Posters in one row; arrows, shown only when there is more that way, scroll it by a screenful. */

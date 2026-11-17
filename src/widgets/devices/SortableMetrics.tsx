@@ -6,6 +6,7 @@ import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, useS
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useFitGrid } from '@/components/widgets/content/kit';
 
 interface MetricItem { id: string; label: string; content: ReactNode }
 
@@ -37,12 +38,13 @@ export function SortableMetrics({ items, className, enabled, onMove, kind = 'met
   kind?: 'metric' | 'group';
 }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: kind === 'group' ? groupKeyboardCoordinates : sortableKeyboardCoordinates }),
   );
-  if (!enabled || items.length < 2) return <div className={className}>{items.map(item => <div className="ndc-m-sortable" data-metric-entry={item.id} key={item.id}>{item.content}</div>)}</div>;
+  if (!enabled || items.length < 2) return <div ref={fit} className={className}>{items.map(item => <div className="ndc-m-sortable" data-metric-entry={item.id} key={item.id}>{item.content}</div>)}</div>;
   const position = (id: string | number, target = id) => {
     const index = items.findIndex(item => item.id === target);
     return t('devices.look.metricPosition', { name: items.find(item => item.id === id)?.label ?? '', position: index + 1, total: items.length });
@@ -63,7 +65,7 @@ export function SortableMetrics({ items, className, enabled, onMove, kind = 'met
       onDragEnd={({ active, over }) => { if (over) onMove(String(active.id), String(over.id)); }}
     >
       <SortableContext items={items.map(item => item.id)} strategy={rectSortingStrategy}>
-        <div className={className}>{items.map(item => <SortableMetric key={item.id} item={item} kind={kind} />)}</div>
+        <div ref={fit} className={className}>{items.map(item => <SortableMetric key={item.id} item={item} kind={kind} />)}</div>
       </SortableContext>
     </DndContext>
   );

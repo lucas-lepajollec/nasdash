@@ -1,4 +1,4 @@
-import { defineWidget } from '../define';
+import { ALL_WIDTHS, defineWidget } from '../define';
 
 export default defineWidget({
   type: 'service-ports', group: 'services', icon: '🔌',
@@ -6,5 +6,5 @@ export default defineWidget({
   access: null, settingsTab: 'widget-services',
   // Widths it can be resized to (columns out of 24), width when added,
   // smallest usable width (px) and typical height (px) before measuring.
-  sizes: { formats: [6, 12, 18, 24], default: 24, minPx: 200, h: 90 },
+  sizes: { formats: ALL_WIDTHS, default: 24, minPx: 80, h: 90 },
 });

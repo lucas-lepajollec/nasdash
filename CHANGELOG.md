@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Changed
+
+- The ports widget can take every width, from 3 columns to the whole page.
+- Recently added: the posters of the grid (and under the featured title) keep their size as the widget widens; a wider widget adds a poster per line instead of resizing them all.
+
+### Fixed
+
+- Bookmarks, the *arr status, Docker containers and actions, Tailscale, DNS, photos, machines, custom API figures, notification bubbles and large library shelves: their tiles again sit side by side as soon as two fit, instead of staying in one column with empty space beside it (regression in 0.3.9).
+
 ## [0.3.9] - 2026-11-17
 
 ### Upgrading from 0.3.8

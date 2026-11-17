@@ -12,7 +12,7 @@ import { Emoji } from '@/components/shared/Emoji';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { pick, SiteIcon, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { pick, SiteIcon, useFitGrid, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { descendantsOf, folderOptions, hostOf, indexByParent, pathTo } from './tree';
 import { BookmarkDragScope, type BookmarkDragProps, NO_DRAG, useBookmarkDragEnabled, useBookmarkZone, WithBookmarkDrag } from './dnd';
 
@@ -178,6 +178,7 @@ function useOpenFolders(widgetId: string): [Set<string>, (id: string) => void] {
 /** Tiles or icons of one folder at a time, with the path back to the widget's folder. */
 function Browser({ items, byParent, root, icons, options }: { items: BookmarkItem[]; byParent: Children; root?: string; icons: boolean; options: LinkOptions }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const editing = useBookmarkDragEnabled();
   const [here, setHere] = useState<string | undefined>(root);
   const current = here && (here === root || (root ? descendantsOf(items, root).has(here) : true)) && items.some(item => item.id === here) ? here : root;
@@ -196,7 +197,7 @@ function Browser({ items, byParent, root, icons, options }: { items: BookmarkIte
           ))}
         </nav>
       )}
-      <div className={icons ? 'ndw-bookmark-icons' : 'ndw-bookmark-tiles'}>
+      <div ref={fit} className={icons ? 'ndw-bookmark-icons' : 'ndw-bookmark-tiles'}>
         {(byParent.get(current) ?? NONE).map(item => item.kind === 'folder'
           ? dragged(item, 'horizontal', drag => <FolderTile item={item} count={(byParent.get(item.id) ?? NONE).length} icons={icons} onOpen={setHere} widget={options.widget} drag={drag} />, editing)
           : dragged(item, 'horizontal', drag => <BookmarkLink item={item} {...options} compact={icons} drag={drag} />, editing))}

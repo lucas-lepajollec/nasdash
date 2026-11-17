@@ -250,6 +250,35 @@ export function stableColumns(width: number, count: number, min: number, max: nu
   if (columns >= count) return `repeat(${count}, ${Math.floor(Math.min(max, (width - (count - 1) * gap) / count) * 10) / 10}px)`;
   return `repeat(${columns}, minmax(0, 1fr))`;
 }
+/**
+ * The same columns for a CSS grid that declares its item size in its stylesheet
+ * (`--fit-min` and `--fit-max`, in px): the column count follows the smallest
+ * size, the items and the gap are read from the element itself, and the result
+ * is written straight to its style (no re-render). A plain `auto-fit,
+ * minmax(min, max)` grid would count its columns with the maximum instead, and
+ * leave a single column in a widget that has room for two.
+ */
+export function fitGrid(element: HTMLElement) {
+  const style = getComputedStyle(element);
+  const min = parseFloat(style.getPropertyValue('--fit-min'));
+  const max = parseFloat(style.getPropertyValue('--fit-max'));
+  const width = element.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0);
+  const template = min > 0 ? stableColumns(width, element.children.length, min, max > 0 ? max : Infinity, parseFloat(style.columnGap) || 0) : undefined;
+  if (element.style.gridTemplateColumns !== (template ?? '')) element.style.gridTemplateColumns = template ?? '';
+}
+/** A ref for a `--fit-min`/`--fit-max` grid: laid out on mount, on resize and when its items change. */
+export function useFitGrid<T extends HTMLElement>(): (element: T | null) => (() => void) | undefined {
+  return React.useCallback((element: T | null) => {
+    if (!element) return undefined;
+    fitGrid(element);
+    const resize = new ResizeObserver(() => fitGrid(element));
+    const items = new MutationObserver(() => fitGrid(element));
+    resize.observe(element);
+    items.observe(element, { childList: true });
+    return () => { resize.disconnect(); items.disconnect(); };
+  }, []);
+}
+
 export function useStableGrid<T extends HTMLElement>(count: number, min: number, max: number, gap: number): [React.RefObject<T | null>, React.CSSProperties] {
   const [ref, width] = useBoxWidth<T>();
   const template = stableColumns(width, count, min, max, gap);

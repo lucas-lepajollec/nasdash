@@ -15,7 +15,7 @@ import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { TimeChart, type ChartSeries } from '@/components/charts/TimeChart';
 import { RingGauge } from '@/components/charts/Gauges';
 import { CalmeWidget } from '../calme';
-import { bounded, chartHeight, DataError, pick, useBoxWidth, useWidgetData, WidgetDataError, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, chartHeight, DataError, pick, useBoxWidth, useFitGrid, useWidgetData, WidgetDataError, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection, ConnectionPicker } from '@/components/widgets/content/ConnectionPicker';
 
 export type DnsStyle = 'bars' | 'chart' | 'ring' | 'compact' | 'full';
@@ -88,6 +88,7 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
   data: DnsSummary; style: DnsStyle; width: number; settings: WidgetSettings; widgetId: string; onChanged: (summary: DnsSummary) => void;
 }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const number = useNumbers();
   const sections = Array.isArray(settings.sections) ? SECTIONS.filter(section => (settings.sections as unknown[]).includes(section)) : [...SECTIONS];
   const topCount = bounded(settings.topCount, 3, 10, 5);
@@ -110,7 +111,7 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
     return (
       <div className="ndw-dns-bars-style">
         {head}
-        {figures.some(Boolean) && <div className="ndw-dns-figures">{figures}</div>}
+        {figures.some(Boolean) && <div ref={fit} className="ndw-dns-figures">{figures}</div>}
         {data.history.length > 1 && <DnsBars data={data} height={chartHeight(width, 0.18, 56, 120)} />}
       </div>
     );
@@ -148,7 +149,7 @@ function DnsBody({ data, style, width, settings, widgetId, onChanged }: {
     return (
       <div className="ndw-dns-chart-style">
         {head}
-        {figures.some(Boolean) && <div className="ndw-dns-figures">{figures}</div>}
+        {figures.some(Boolean) && <div ref={fit} className="ndw-dns-figures">{figures}</div>}
         <DnsChart data={data} height={chartHeight(width, 0.36, 120, 300)} narrow={width < 240} />
       </div>
     );

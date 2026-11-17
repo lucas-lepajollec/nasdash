@@ -7,6 +7,7 @@ import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 import { useWidgetSize } from '@/components/widgets/WidgetContainer';
 import { getDockerErrorPresentation } from '@/lib/dockerErrorContract';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useFitGrid } from '@/components/widgets/content/kit';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { CalmeWidget } from '../calme';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
@@ -29,6 +30,7 @@ type Props = {
  */
 export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateProps, isVisible = true }: Props) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const { size } = useWidgetSize();
   const { hosts, selectedHostId, setSelectedHostId, containerList, error, isLoading, allowActions, actionRunning, actionError, toggleContainer } = useDockerContainers({ editMode, isVisible });
   const [page, setPage] = useState(1);
@@ -122,13 +124,13 @@ export default function CalmeDockerContainers({ editMode, widgetProps, onUpdateP
 
         {!error && containerList.length > 0 && (autoScroll ? (
           <div className="ndc-ctrs-viewport" style={{ '--ndc-rows': perPage } as React.CSSProperties}>
-            <div className="ndc-ctrs-grid ndc-ctrs-loop" style={{ animationDuration: `${looped.length * 2}s` }}>
+            <div ref={fit} className="ndc-ctrs-grid ndc-ctrs-loop" style={{ animationDuration: `${looped.length * 2}s` }}>
               {looped.map((c: any, index: number) => row(c, `a-${c.id}-${index}`))}
               {looped.map((c: any, index: number) => row(c, `b-${c.id}-${index}`))}
             </div>
           </div>
         ) : (
-          <div className="ndc-ctrs-grid">{visible.map((c: any) => row(c, c.id))}</div>
+          <div ref={fit} className="ndc-ctrs-grid">{visible.map((c: any) => row(c, c.id))}</div>
         ))}
       </div>
     </CalmeWidget>
