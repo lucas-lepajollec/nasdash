@@ -1,5 +1,6 @@
 'use client';
 
+import { takeBoot } from '@/lib/bootFetch';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { applySoftEdges, applyWallpaperDim } from '@/lib/appearance';
 import { DashboardConfig, Category, Service, Device, DockerActionConfig, DockerHost, LocalCalendarEvent, type IntegrationInstance } from '@/lib/types';
@@ -106,7 +107,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
 
   const fetchConfig = useCallback(async (retryCount = 0) => {
     try {
-      const res = await fetch('/api/config');
+      const res = await (takeBoot('/api/config') ?? fetch('/api/config'));
       if (res.status === 401) {
         const isLoginPage = window.location.pathname === '/login';
         if (!isLoginPage) {

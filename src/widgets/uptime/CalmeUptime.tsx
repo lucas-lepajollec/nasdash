@@ -53,6 +53,9 @@ export default function CalmeUptime(props: { widgetId: string; settings: WidgetS
           <CalmeRow label={t('widgets.uptime.problemsOnly')} info={t('widgets.uptime.problemsOnlyHint')}>
             <CalmeSwitch label={t('widgets.uptime.problemsOnly')} checked={draft.problems === true} onChange={on => change({ problems: on || null })} />
           </CalmeRow>
+          <CalmeRow label={t('widgets.markets.alignColumns')} info={t('widgets.uptime.alignHint')}>
+            <CalmeSwitch label={t('widgets.markets.alignColumns')} checked={draft.align !== 'free'} onChange={on => change({ align: on ? null : 'free' })} />
+          </CalmeRow>
           <CalmeRow label={t('widgets.uptime.showGroups')}>
             <CalmeSwitch label={t('widgets.uptime.showGroups')} checked={draft.groups !== false} onChange={on => change({ groups: on ? null : false })} />
           </CalmeRow>
@@ -70,8 +73,11 @@ function Uptime({ data, settings }: { data: UptimeSummary; settings: WidgetSetti
   const down = all.filter(monitor => monitor.status === 'down').length;
   const groups = shownMonitors(data.groups, settings.problems === true, pick(settings.choose, CHOICES, 'all') === 'chosen' ? chosenMonitors(settings) : undefined);
   const withNames = settings.groups !== false && groups.length > 1;
+  // Aligned (default): every row gets the longest name's width, so all the beat lines start at the same place.
+  const aligned = settings.align !== 'free';
+  const longest = Math.max(5, ...groups.flatMap(group => group.monitors.map(monitor => monitor.name.length)));
   return (
-    <div className={`ndw-kit ndw-uptime ${compact ? 'is-compact' : ''}`}>
+    <div className={`ndw-kit ndw-uptime ${compact ? 'is-compact' : ''} ${aligned ? 'is-aligned' : ''}`} style={aligned ? { '--ndw-uptime-name': `${longest + 1}ch` } as React.CSSProperties : undefined}>
       <span className={`ndw-kit-state ${down ? 'is-bad' : ''}`}>
         {down ? <CircleAlert size={13} aria-hidden="true" /> : <CircleCheck size={13} aria-hidden="true" />}
         <span className="ndw-kit-name">{data.title ?? data.name}</span>

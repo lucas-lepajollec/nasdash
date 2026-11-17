@@ -2459,6 +2459,11 @@ const en: Dictionary = {
   'widgets.notifications.markNew': "Mark what is new",
   'widgets.notifications.markNewHint': "A dot on the notifications that arrived since you last saw the widget in this browser.",
   'widgets.notifications.new': "New",
+  'widgets.uptime.alignHint': "Every beat line starts at the same place, after the longest name. Off: each line starts right after its own name.",
+  'widgets.notifications.style.full': "Lines",
+  'widgets.notifications.style.compact': "Compact",
+  'widgets.notifications.style.bubbles': "Bubbles",
+  'widgets.notifications.style.timeline': "Timeline",
 };
 
 const fr: Dictionary = {
@@ -4904,6 +4909,11 @@ const fr: Dictionary = {
   'widgets.notifications.markNew': "Marquer les nouvelles",
   'widgets.notifications.markNewHint': "Un point sur les notifications arrivées depuis que vous avez vu le widget pour la dernière fois dans ce navigateur.",
   'widgets.notifications.new': "Nouveau",
+  'widgets.uptime.alignHint': "Toutes les lignes de pings commencent au même endroit, après le nom le plus long. Désactivé : chaque ligne commence juste après son nom.",
+  'widgets.notifications.style.full': "Lignes",
+  'widgets.notifications.style.compact': "Compact",
+  'widgets.notifications.style.bubbles': "Bulles",
+  'widgets.notifications.style.timeline': "Fil",
 };
 
 const es: Dictionary = {
@@ -7349,6 +7359,11 @@ const es: Dictionary = {
   'widgets.notifications.markNew': "Marcar las nuevas",
   'widgets.notifications.markNewHint': "Un punto en las notificaciones llegadas desde la última vez que vio el widget en este navegador.",
   'widgets.notifications.new': "Nuevo",
+  'widgets.uptime.alignHint': "Todas las líneas de latidos empiezan en el mismo sitio, tras el nombre más largo. Desactivado: cada línea empieza justo después de su nombre.",
+  'widgets.notifications.style.full': "Líneas",
+  'widgets.notifications.style.compact': "Compacto",
+  'widgets.notifications.style.bubbles': "Burbujas",
+  'widgets.notifications.style.timeline': "Cronología",
 };
 
 const de: Dictionary = {
@@ -9794,6 +9809,11 @@ const de: Dictionary = {
   'widgets.notifications.markNew': "Neue markieren",
   'widgets.notifications.markNewHint': "Ein Punkt an Benachrichtigungen, die seit Ihrem letzten Blick auf das Widget in diesem Browser eingegangen sind.",
   'widgets.notifications.new': "Neu",
+  'widgets.uptime.alignHint': "Alle Prüfzeilen beginnen an derselben Stelle, nach dem längsten Namen. Aus: jede Zeile beginnt direkt nach ihrem Namen.",
+  'widgets.notifications.style.full': "Zeilen",
+  'widgets.notifications.style.compact': "Kompakt",
+  'widgets.notifications.style.bubbles': "Blasen",
+  'widgets.notifications.style.timeline': "Zeitleiste",
 };
 
 const it: Dictionary = {
@@ -12238,6 +12258,11 @@ const it: Dictionary = {
   'widgets.notifications.markNew': "Segna le nuove",
   'widgets.notifications.markNewHint': "Un punto sulle notifiche arrivate dall’ultima volta che hai visto il widget in questo browser.",
   'widgets.notifications.new': "Nuovo",
+  'widgets.uptime.alignHint': "Tutte le righe dei controlli iniziano nello stesso punto, dopo il nome più lungo. Disattivato: ogni riga inizia subito dopo il suo nome.",
+  'widgets.notifications.style.full': "Righe",
+  'widgets.notifications.style.compact': "Compatto",
+  'widgets.notifications.style.bubbles': "Bolle",
+  'widgets.notifications.style.timeline': "Cronologia",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

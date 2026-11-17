@@ -35,6 +35,9 @@ import { WidgetActionsSlotContext } from '../widgets/WidgetHeaderActions';
 import { Emoji } from '../shared/Emoji';
 import { PageWidgetContent } from './PageWidgetContent';
 
+/** GridStack starts loading with this module, not once the page has rendered. */
+const gridstackModule = typeof window === 'undefined' ? null : import('gridstack');
+
 /**
  * A page is one free grid (GridStack). In edit mode a widget is dragged from
  * anywhere and stays where it is dropped. Its width is changed from its sides
@@ -229,7 +232,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   useEffect(() => {
     let disposed = false;
     let pressCleanup: (() => void) | undefined;
-    void import('gridstack').then(({ GridStack: Grid }) => {
+    void (gridstackModule ?? import('gridstack')).then(({ GridStack: Grid }) => {
       if (disposed || !root.current) return;
       const instance = Grid.init({
         cellHeight: GRID_ROW_PX,
@@ -484,11 +487,20 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // measured and stopped growing (content loading), then show the placed grid
   // at once and only animate later changes.
   const { isVisible } = props;
+  // When every widget had its first height: the grid is shown at most REVEAL_CAP_MS later, even if some
+  // widgets are still loading their data (they grow in place, animated, instead of holding the whole page).
+  const measuredAt = useRef(0);
+  const visibleAt = useRef(0);
   useEffect(() => {
     if (revealed || !ready || !isVisible) return;
+    const now = Date.now();
+    if (!visibleAt.current) visibleAt.current = now;
     const measured = widgets.every(widget => heights[widget.id] !== undefined);
-    const since = Date.now() - heightsAt;
-    const delay = measured ? Math.max(0, SETTLE_MS - since) : SETTLE_MAX_MS;
+    if (measured && !measuredAt.current) measuredAt.current = now;
+    // Fixed deadlines: a widget changing height again must not push the first display back.
+    const delay = measured
+      ? Math.min(Math.max(0, SETTLE_MS - (now - heightsAt)), Math.max(0, measuredAt.current + REVEAL_CAP_MS - now))
+      : Math.max(0, visibleAt.current + SETTLE_MAX_MS - now);
     const timer = window.setTimeout(() => {
       requestAnimationFrame(() => {
         setRevealed(true);
@@ -650,8 +662,10 @@ function pointerSide(event: React.PointerEvent<HTMLElement>): ResizeEdge {
 }
 /** First display: heights unchanged for this long… */
 const SETTLE_MS = 60;
-/** …or at most this long after the page became visible. */
-const SETTLE_MAX_MS = 300;
+/** …or at most this long after the page became visible (a widget with nothing to show yet never reports a height). */
+const SETTLE_MAX_MS = 150;
+/** The longest the first display waits for widgets that keep growing (data still loading). */
+const REVEAL_CAP_MS = 120;
 
 /** Widgets without a title of their own get one in edit mode, like the others. Network tools has its section titles. */
 const UNTITLED_TYPES = new Set([

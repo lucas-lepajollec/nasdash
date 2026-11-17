@@ -505,14 +505,15 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-uptime-row.is-down .ndw-uptime-name { color: var(--nd-red); }
 /* The beats fill the room left by the name: the latest on the right, older ones dropped first when narrow. */
 .ndw-uptime-beats { display: flex; justify-content: flex-end; align-items: flex-end; gap: 2px; height: 14px; min-width: 0; overflow: hidden; }
-.ndw-uptime-beats > span { flex: 0 0 4px; height: 100%; border-radius: 2px; background: color-mix(in srgb, var(--nd-green) 70%, transparent); }
+.ndw-uptime.is-aligned .ndw-uptime-row { grid-template-columns: auto minmax(5ch, min(var(--ndw-uptime-name), 45%)) minmax(0, 1fr) auto; }
+/* Each beat stretches a little (3 to 8 px) so the line fills its column; the oldest are dropped when it is too narrow. */
+.ndw-uptime-beats > span { flex: 1 1 0; min-width: 3px; max-width: 8px; height: 100%; border-radius: 2px; background: color-mix(in srgb, var(--nd-green) 70%, transparent); }
 .ndw-uptime-beats > .is-down { background: var(--nd-red); }
 .ndw-uptime-beats > .is-pending, .ndw-uptime-beats > .is-maintenance { background: var(--nd-yellow); }
 .ndw-uptime-beats > .is-unknown { background: var(--nd-card-border); }
-.ndw-uptime-figure { min-width: 6ch; color: var(--nd-text-muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; text-align: right; }
+.ndw-uptime-figure { min-width: 7ch; color: var(--nd-text-muted); font-size: 0.7rem; font-variant-numeric: tabular-nums; text-align: right; }
 .ndw-uptime.is-compact .ndw-uptime-list { gap: 5px; }
 @container (max-width: 300px) { .ndw-uptime-beats { display: none; } .ndw-uptime-row { grid-template-columns: auto minmax(0, 1fr) auto; } }
-@container (min-width: 700px) { .ndw-uptime-beats > span { flex-basis: 6px; } }
 
 /* ---------- Seerr: counts, then requests with their poster ---------- */
 .ndw-req { container-type: inline-size; }
@@ -551,6 +552,40 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-notif-link:hover { color: var(--nd-accent); }
 .ndw-notif-text { display: -webkit-box; overflow: hidden; color: var(--nd-text-muted); font-size: 0.74rem; line-height: 1.4; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 .ndw-notif.is-compact .ndw-notif-list { gap: 7px; }
+/* Bubbles: rounded tinted cards, side by side (at most 380 px each) on a wide widget. */
+.ndw-notif-list.is-bubbles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 380px)); justify-content: start; gap: 8px; }
+.ndw-notif-bubble { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.ndw-notif-bubble.is-p4 { background: color-mix(in srgb, var(--nd-yellow) 9%, color-mix(in srgb, var(--nd-text) 4%, transparent)); }
+.ndw-notif-bubble.is-p5 { background: color-mix(in srgb, var(--nd-red) 11%, color-mix(in srgb, var(--nd-text) 4%, transparent)); }
+.ndw-notif-bubble-top { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--nd-text-dimmed); font-size: 0.64rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.ndw-notif-bubble-source { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-notif-bubble-when { flex-shrink: 0; text-transform: none; letter-spacing: 0; }
+.ndw-notif-prio { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--nd-text-dimmed); }
+.is-p4 > .ndw-notif-bubble-top > .ndw-notif-prio { background: var(--nd-yellow); }
+.is-p5 > .ndw-notif-bubble-top > .ndw-notif-prio { background: var(--nd-red); }
+.ndw-notif-title.is-strong { font-weight: 600; }
+/* Timeline: time, then a thread with a dot per notification, then the text. */
+.ndw-notif-list.is-timeline { display: grid; grid-template-columns: auto 14px minmax(0, 1fr); gap: 0 8px; }
+/* Every step shares the list's columns, so the thread stays straight whatever the time's length. */
+.ndw-notif-step { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; min-width: 0; }
+.ndw-notif-step-time { min-width: 5ch; padding-top: 1px; color: var(--nd-text-dimmed); font-size: 0.7rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.ndw-notif-step-rail { position: relative; display: flex; justify-content: center; }
+.ndw-notif-step-rail::before { content: ''; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--nd-card-border); }
+.ndw-notif-step:first-child .ndw-notif-step-rail::before { top: 6px; }
+.ndw-notif-step:last-child .ndw-notif-step-rail::before { bottom: auto; height: 6px; }
+.ndw-notif-step-rail > span { position: relative; width: 7px; height: 7px; margin-top: 4px; border-radius: 50%; background: var(--nd-text-dimmed); box-shadow: 0 0 0 3px var(--nd-card-bg); }
+.ndw-notif-step.is-p4 .ndw-notif-step-rail > span { background: var(--nd-yellow); }
+.ndw-notif-step.is-p5 .ndw-notif-step-rail > span { background: var(--nd-red); }
+.ndw-notif-step > .ndw-notif-main { padding-bottom: 12px; }
+.ndw-notif-step:last-child > .ndw-notif-main { padding-bottom: 0; }
+/* The style picker's miniatures. */
+.ndw-notif-sample { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.ndw-notif-sample > i { display: block; height: 8px; border-radius: 3px; background: color-mix(in srgb, var(--nd-text) 18%, transparent); }
+.ndw-notif-sample.is-full > i { height: 14px; border-left: 3px solid var(--nd-accent); border-radius: 2px; }
+.ndw-notif-sample.is-compact > i { height: 6px; }
+.ndw-notif-sample.is-bubbles > i { height: 14px; border-radius: 7px; }
+.ndw-notif-sample.is-timeline { padding-left: 10px; border-left: 1px solid color-mix(in srgb, var(--nd-text) 25%, transparent); }
+.ndw-notif-sample.is-timeline > i { height: 10px; }
 .ndw-notif-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ndw-notif-text.is-full { display: block; -webkit-line-clamp: unset; }
 .ndw-notif-new { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--nd-accent); }

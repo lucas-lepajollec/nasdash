@@ -7,9 +7,19 @@ import type { NotificationItem, NotificationsSummary } from '@/lib/widgetData/co
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { KitWidget } from '@/components/widgets/content/KitWidget';
-import { bounded, pick, useRelativeTime } from '@/components/widgets/content/kit';
+import { CalmeField } from '@/components/shared/CalmeDialog';
+import { bounded, pick, StylePicker, useRelativeTime } from '@/components/widgets/content/kit';
 
-const STYLES = ['full', 'compact'] as const;
+/** A miniature of each style, for the picker. */
+const SAMPLES: Record<Style, React.ReactNode> = {
+  full: <span className="ndw-notif-sample is-full"><i /><i /></span>,
+  compact: <span className="ndw-notif-sample is-compact"><i /><i /><i /></span>,
+  bubbles: <span className="ndw-notif-sample is-bubbles"><i /><i /></span>,
+  timeline: <span className="ndw-notif-sample is-timeline"><i /><i /></span>,
+};
+
+const STYLES = ['full', 'compact', 'bubbles', 'timeline'] as const;
+type Style = typeof STYLES[number];
 const LEVELS = ['all', 'high'] as const;
 const TEXTS = ['none', 'short', 'full'] as const;
 export const NOTIFICATION_ROWS = { min: 2, max: 30, default: 6 } as const;
@@ -28,13 +38,13 @@ export default function CalmeNotifications(props: { widgetId: string; settings: 
     <KitWidget<NotificationsSummary> widget="notifications" refreshMs={30_000} skeleton={[34, 34, 34]} {...props}
       extraSettings={(draft, change) => (
         <>
-          <CalmeRow label={t('widgets.display')}>
-            <CalmeSegmented label={t('widgets.display')} value={pick(draft.style, STYLES, 'full')} options={STYLES.map(value => ({ value, label: t(`widgets.style.${value}`) }))} onChange={value => change({ style: value === 'full' ? null : value })} />
-          </CalmeRow>
+          <CalmeField label={t('widgets.display')}>
+            <StylePicker label={t('widgets.display')} value={pick(draft.style, STYLES, 'full')} options={STYLES.map(value => ({ value, name: t(`widgets.notifications.style.${value}`), sample: SAMPLES[value] }))} onChange={value => change({ style: value === 'full' ? null : value })} />
+          </CalmeField>
           <CalmeRow label={t('widgets.notifications.level')}>
             <CalmeSegmented label={t('widgets.notifications.level')} value={pick(draft.level, LEVELS, 'all')} options={LEVELS.map(value => ({ value, label: t(`widgets.notifications.level.${value}`) }))} onChange={value => change({ level: value === 'all' ? null : value })} />
           </CalmeRow>
-          {pick(draft.style, STYLES, 'full') === 'full' && (
+          {pick(draft.style, STYLES, 'full') !== 'compact' && (
             <CalmeRow label={t('widgets.notifications.text')}>
               <CalmeSegmented label={t('widgets.notifications.text')} value={pick(draft.text, TEXTS, 'short')} options={TEXTS.map(value => ({ value, label: t(`widgets.notifications.text.${value}`) }))} onChange={value => change({ text: value === 'short' ? null : value })} />
             </CalmeRow>
@@ -75,7 +85,9 @@ function Notifications({ data, settings, widgetId }: { data: NotificationsSummar
   const { t } = useI18n();
   const ago = useRelativeTime();
   const [expanded, setExpanded] = useState(false);
-  const compact = pick(settings.style, STYLES, 'full') === 'compact';
+  const { locale } = useI18n();
+  const style = pick(settings.style, STYLES, 'full');
+  const compact = style === 'compact';
   const text = compact ? 'none' : pick(settings.text, TEXTS, 'short');
   const rows = bounded(settings.rows, NOTIFICATION_ROWS.min, NOTIFICATION_ROWS.max, NOTIFICATION_ROWS.default);
   const messages = shownNotifications(data.messages, settings);
@@ -87,29 +99,61 @@ function Notifications({ data, settings, widgetId }: { data: NotificationsSummar
   const groups = settings.group === true
     ? [...new Set(visible.map(message => message.source))].map(source => ({ source, items: visible.filter(message => message.source === source) }))
     : [{ source: '', items: visible }];
+  const sourceShown = settings.source !== false && settings.group !== true;
+  const clock = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
+  const day = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+  const today = new Date().toDateString();
   const row = (message: NotificationItem) => {
     const fresh = settings.markNew !== false && seen > 0 && message.time > seen;
+    const title = message.title || message.message;
+    const body = text !== 'none' && message.title ? <span className={`ndw-notif-text ${text === 'full' ? 'is-full' : ''}`}>{message.message}</span> : null;
+    const link = message.link && <a className="ndw-notif-link" href={message.link} target="_blank" rel="noreferrer noopener" aria-label={t('widgets.notifications.open')} title={t('widgets.notifications.open')}><ExternalLink size={11} /></a>;
+    const dot = fresh && <span className="ndw-notif-new" title={t('widgets.notifications.new')} aria-label={t('widgets.notifications.new')} />;
+    // Bubbles: one rounded card each, like on a phone — its source and age above the title.
+    if (style === 'bubbles') return (
+      <li key={`${message.source}:${message.id}`} className={`ndw-notif-bubble is-p${message.priority}`}>
+        <span className="ndw-notif-bubble-top">
+          <span className="ndw-notif-prio" aria-hidden="true" />
+          <span className="ndw-notif-bubble-source">{sourceShown ? message.source : ''}</span>
+          {dot}
+          <span className="ndw-notif-bubble-when">{ago(message.time)}</span>
+        </span>
+        <span className="ndw-notif-head"><span className="ndw-notif-title is-strong">{title}</span>{link}</span>
+        {body}
+      </li>
+    );
+    // Timeline: the time on the left, a dot on a thread coloured by priority.
+    if (style === 'timeline') {
+      const at = new Date(message.time);
+      return (
+        <li key={`${message.source}:${message.id}`} className={`ndw-notif-step is-p${message.priority}`}>
+          <time className="ndw-notif-step-time" dateTime={at.toISOString()} title={ago(message.time)}>{at.toDateString() === today ? clock.format(at) : day.format(at)}</time>
+          <span className="ndw-notif-step-rail" aria-hidden="true"><span /></span>
+          <span className="ndw-notif-main">
+            <span className="ndw-notif-head">{dot}<span className="ndw-notif-title">{title}</span>{link}</span>
+            {body}
+            {sourceShown && <span className="ndw-media-sub">{message.source}</span>}
+          </span>
+        </li>
+      );
+    }
     return (
       <li key={`${message.source}:${message.id}`} className={`ndw-notif-row is-p${message.priority}`}>
         <span className="ndw-notif-mark" aria-hidden="true" />
         <span className="ndw-notif-main">
-          <span className="ndw-notif-head">
-            {fresh && <span className="ndw-notif-new" title={t('widgets.notifications.new')} aria-label={t('widgets.notifications.new')} />}
-            <span className="ndw-notif-title">{message.title || message.message}</span>
-            {message.link && <a className="ndw-notif-link" href={message.link} target="_blank" rel="noreferrer noopener" aria-label={t('widgets.notifications.open')} title={t('widgets.notifications.open')}><ExternalLink size={11} /></a>}
-          </span>
-          {text !== 'none' && message.title && <span className={`ndw-notif-text ${text === 'full' ? 'is-full' : ''}`}>{message.message}</span>}
-          <span className="ndw-media-sub">{[settings.source !== false && settings.group !== true ? message.source : '', ago(message.time)].filter(Boolean).join(' · ')}</span>
+          <span className="ndw-notif-head">{dot}<span className="ndw-notif-title">{title}</span>{link}</span>
+          {body}
+          <span className="ndw-media-sub">{[sourceShown ? message.source : '', ago(message.time)].filter(Boolean).join(' · ')}</span>
         </span>
       </li>
     );
   };
   return (
-    <div className={`ndw-kit ndw-notif ${compact ? 'is-compact' : ''}`}>
+    <div className={`ndw-kit ndw-notif is-${style}`}>
       {groups.map(group => (
         <div key={group.source || 'all'} className="ndw-notif-group">
           {group.source && <span className="ndw-mx-label">{group.source}</span>}
-          <ul className="ndw-notif-list">{group.items.map(row)}</ul>
+          <ul className={`ndw-notif-list is-${style}`}>{group.items.map(row)}</ul>
         </div>
       ))}
       {hidden > 0 && (

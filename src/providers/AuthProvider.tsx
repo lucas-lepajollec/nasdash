@@ -1,5 +1,6 @@
 'use client';
 
+import { takeBoot } from '@/lib/bootFetch';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { demoFetch } from '@/lib/demoTransport';
@@ -29,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      const res = await (takeBoot('/api/auth/me') ?? fetch('/api/auth/me', { cache: 'no-store' }));
       const data = await res.json() as { user: AuthUser | null };
       setUser(data.user);
     } catch (e) {

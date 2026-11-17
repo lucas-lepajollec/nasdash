@@ -12,14 +12,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- **Uptime** widget (Uptime Kuma): every monitor of a status page with its state, its latest checks and its 24-hour uptime, grouped like the page; full or compact, only the problems if you like, all the monitors or only those you choose (per widget); the latest checks fill the width of the widget. No account needed.
+- **Uptime** widget (Uptime Kuma): every monitor of a status page with its state, its latest checks and its 24-hour uptime, grouped like the page; full or compact, only the problems if you like, all the monitors or only those you choose (per widget); the latest checks fill the width of the widget and start at the same place on every line (or right after each name). No account needed.
 - **Requests** widget (Seerr, Overseerr, Jellyseerr): how many requests wait, are on their way or arrived, the latest ones with their poster and who asked; administrators approve or decline a pending request in place, after a confirmation.
-- **Notifications** widget (ntfy topics or Gotify applications): the latest notifications by priority, with their link; full or compact, only the important ones if you like, title only, two lines or the whole text, grouped by source, with a dot on what arrived since you last looked.
+- **Notifications** widget (ntfy topics or Gotify applications): the latest notifications by priority, with their link; four styles (lines, compact, bubbles, timeline), only the important ones if you like, title only, two lines or the whole text, grouped by source, with a dot on what arrived since you last looked.
 - **Reading** widget (Audiobookshelf, Kavita, Komga): what is being read or listened to with its progress, and what was added, as covers (relayed by NasDash, the server's key stays private) or a list.
 - The clock and the weather can have their own style per widget, or keep following Settings → Widgets. The clock can also be aligned left, centred or right.
 
 ### Changed
 
+- **The dashboard appears sooner.** Its first requests start with the page instead of after the JavaScript, the grid library loads straight away, and the widgets are shown as soon as they are placed instead of waiting for the slowest one's data (they finish loading in place).
 - **Every widget fits every width**, from 3 columns to the whole page, and lays itself out more compactly when narrow (the media, music, Docker, network and new widgets included). Every column count between them is offered (no skipped size). Only the Docker explorer, the network topology, ports and the web page keep their larger minimum. The clock grows with its widget; service tiles keep their size on a wide widget instead of drifting apart; hero cards, cover strips and news cards fit narrow widgets.
 - **Items keep their size as a widget widens.** Once every cover, tile, card or figure fits on one line, a wider widget leaves room on the right instead of making them shrink and grow again with every column (reading, service categories, music covers, news, markets, bookmarks, photos, Docker, machines, rails and shelves).
 - A list cut by a "how many" setting always says how many are hidden and shows them on demand (+N more): requests, notifications, downloads, recently played and what is being watched.
