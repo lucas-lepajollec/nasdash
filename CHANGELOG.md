@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-11-17
+
+### Upgrading from 0.3.8
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.3.8` image.
+- Viewers limited to chosen widgets do not see the new Uptime, Requests, Notifications and Reading widgets until you add them in **Settings → Users and access**.
+- Approving or declining Seerr requests from the widget needs an API key with the right to manage requests. Request posters load from TMDB in the browser; reading covers are relayed by NasDash, so the services' keys stay on the server.
+
 ### Security
 
 - Next.js 16.4.6 (GHSA-mfr8-8qww-v76h, moderate).
@@ -639,7 +647,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.9...HEAD
+[0.3.9]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.5...v0.3.6
