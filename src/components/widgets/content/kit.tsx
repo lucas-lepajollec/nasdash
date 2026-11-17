@@ -237,6 +237,41 @@ export function useBoxWidth<T extends HTMLElement>(): [React.RefObject<T | null>
   return [ref, width];
 }
 
+/**
+ * Columns of a grid of `count` items that never "breathe" as the widget widens:
+ * while they do not all fit on one line they fill it (equal columns); once they
+ * all fit, they grow up to `max` px and then keep their size, the extra width
+ * staying empty. (A CSS `auto-fill, 1fr` grid keeps adding empty columns, so its
+ * items shrink and grow again with every column gained.)
+ */
+export function stableColumns(width: number, count: number, min: number, max: number, gap: number): string | undefined {
+  if (!width || count < 1) return undefined;
+  const columns = Math.max(1, Math.floor((width + gap) / (min + gap)));
+  if (columns >= count) return `repeat(${count}, ${Math.floor(Math.min(max, (width - (count - 1) * gap) / count) * 10) / 10}px)`;
+  return `repeat(${columns}, minmax(0, 1fr))`;
+}
+export function useStableGrid<T extends HTMLElement>(count: number, min: number, max: number, gap: number): [React.RefObject<T | null>, React.CSSProperties] {
+  const [ref, width] = useBoxWidth<T>();
+  const template = stableColumns(width, count, min, max, gap);
+  return [ref, template ? { gridTemplateColumns: template } : {}];
+}
+
+/**
+ * A list capped by a widget setting: the first `limit` items, and a "+N more"
+ * button that shows the rest (and folds them back) whenever some are hidden.
+ */
+export function useShowMore<T>(items: readonly T[], limit: number): [readonly T[], React.ReactNode] {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const hidden = Math.max(0, items.length - limit);
+  const toggle = hidden > 0 && (
+    <button type="button" className="ndw-upd-more" aria-expanded={open} onClick={() => setOpen(value => !value)}>
+      {open ? t('widgets.updates.less') : t('widgets.updates.more', { count: hidden })}
+    </button>
+  );
+  return [open ? items : items.slice(0, limit), toggle];
+}
+
 /** A chart height that grows with its block's width, within bounds. */
 export function chartHeight(width: number, ratio: number, min: number, max: number): number {
   return Math.round(Math.min(max, Math.max(min, width * ratio)));
@@ -293,6 +328,8 @@ export function PagedGrid({ items, perPage, mode, minColumn, label }: {
   // A shorter list or another page size: never stay on a page that no longer exists.
   const current = Math.min(page, pages - 1);
   const style = { '--ndw-col': `${minColumn}px` } as React.CSSProperties;
+  const onPage = items.slice(current * perPage, current * perPage + perPage);
+  const [gridRef, gridStyle] = useStableGrid<HTMLDivElement>(onPage.length, minColumn, Math.round(minColumn * 1.5), 10);
 
   if (mode === 'scroll') {
     const visible = Math.max(shown, perPage);
@@ -309,8 +346,8 @@ export function PagedGrid({ items, perPage, mode, minColumn, label }: {
   }
   return (
     <div className="ndw-paged" style={style}>
-      <div className="ndw-paged-grid" role="list" aria-label={label}>
-        {items.slice(current * perPage, current * perPage + perPage).map((item, index) => <div key={index} role="listitem" className="ndw-paged-cell">{item}</div>)}
+      <div ref={gridRef} className="ndw-paged-grid" style={gridStyle} role="list" aria-label={label}>
+        {onPage.map((item, index) => <div key={index} role="listitem" className="ndw-paged-cell">{item}</div>)}
       </div>
       {pages > 1 && (
         <div className="ndw-pager">

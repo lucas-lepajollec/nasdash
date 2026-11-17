@@ -8,7 +8,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSegmented } from '@/components/modals/settings/shared/CalmeControls';
 import { KitWidget } from '@/components/widgets/content/KitWidget';
-import { pick } from '@/components/widgets/content/kit';
+import { pick, useStableGrid } from '@/components/widgets/content/kit';
 import { Track } from '@/components/widgets/media/visual';
 
 const SHOWS = ['both', 'progress', 'recent'] as const;
@@ -55,13 +55,19 @@ function Reading({ data, widgetId, settings }: { data: ReadingSummary; widgetId:
       {sections.map(([id, items]) => (
         <section key={id} className="ndw-read-section">
           <span className="ndw-mx-label">{t(`widgets.reading.section.${id}`)}</span>
-          <ul className={list ? 'ndw-read-list' : 'ndw-read-shelf'}>
-            {items.map(item => <Book key={item.id} item={item} widgetId={widgetId} settings={settings} list={list} />)}
-          </ul>
+          {list
+            ? <ul className="ndw-read-list">{items.map(item => <Book key={item.id} item={item} widgetId={widgetId} settings={settings} list />)}</ul>
+            : <Shelf items={items} widgetId={widgetId} settings={settings} />}
         </section>
       ))}
     </div>
   );
+}
+
+/** Covers that fill the line while they do not all fit, then keep their size (no breathing as the widget widens). */
+function Shelf({ items, widgetId, settings }: { items: ReadingItem[]; widgetId: string; settings: WidgetSettings }) {
+  const [ref, style] = useStableGrid<HTMLUListElement>(items.length, 76, 112, 10);
+  return <ul ref={ref} className="ndw-read-shelf" style={style}>{items.map(item => <Book key={item.id} item={item} widgetId={widgetId} settings={settings} list={false} />)}</ul>;
 }
 
 function Book({ item, widgetId, settings, list }: { item: ReadingItem; widgetId: string; settings: WidgetSettings; list: boolean }) {

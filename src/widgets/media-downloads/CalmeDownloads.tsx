@@ -9,7 +9,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { CalmeWidget } from '../calme';
-import { bounded, DataError, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { bounded, DataError, useRelativeTime, useShowMore, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { AreaChart, Figure, Ring } from '@/components/widgets/media/visual';
 import { ArrSetup, chosenSources, FailuresNote, SourcesField, useByteFormat, useConnections, useEta } from '@/components/widgets/media/arr';
 
@@ -124,7 +124,7 @@ function Client({ client, samples, chart, count, busy, onAct }: { client: Downlo
     client.queued ? t('widgets.arr.queued', { count: client.queued }) : '',
     client.seeding ? t('widgets.arr.seeding', { count: client.seeding }) : '',
   ].filter(Boolean);
-  const items = client.items.filter(item => item.state !== 'seeding' && item.state !== 'completed').slice(0, count);
+  const [items, more] = useShowMore(client.items.filter(item => item.state !== 'seeding' && item.state !== 'completed'), count);
   // A paused SABnzbd or NZBGet queue holds every item: only the client's own button can start them again.
   const itemControl = client.canControl && !(client.clientPaused && (client.type === 'sabnzbd' || client.type === 'nzbget'));
   return (
@@ -173,6 +173,7 @@ function Client({ client, samples, chart, count, busy, onAct }: { client: Downlo
           ))}
         </ul>
       )}
+      {more}
       {rest && (client.completed?.length ?? 0) > 0 && (
         <div className="ndw-mx-section">
           <span className="ndw-mx-label">{t('widgets.arr.finished')}</span>

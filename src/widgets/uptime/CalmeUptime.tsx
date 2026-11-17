@@ -11,9 +11,13 @@ import { pick } from '@/components/widgets/content/kit';
 
 const STYLES = ['full', 'compact'] as const;
 
-/** The monitors a widget lists: all, or only those that are not up. */
-export function shownMonitors(groups: UptimeSummary['groups'], problemsOnly: boolean) {
-  return groups.map(group => ({ ...group, monitors: problemsOnly ? group.monitors.filter(monitor => monitor.status !== 'up') : group.monitors })).filter(group => group.monitors.length > 0);
+const CHOICES = ['all', 'chosen'] as const;
+/** The monitors a widget chose (`chosen` mode), by id. */
+export const chosenMonitors = (settings: WidgetSettings) => new Set(Array.isArray(settings.monitors) ? settings.monitors.filter((id): id is string => typeof id === 'string') : []);
+
+/** The monitors a widget lists: all or the chosen ones, then only those that are not up if asked. */
+export function shownMonitors(groups: UptimeSummary['groups'], problemsOnly: boolean, chosen?: Set<string>) {
+  return groups.map(group => ({ ...group, monitors: group.monitors.filter(monitor => (!chosen || chosen.has(monitor.id)) && (!problemsOnly || monitor.status !== 'up')) })).filter(group => group.monitors.length > 0);
 }
 
 /**
@@ -25,8 +29,24 @@ export default function CalmeUptime(props: { widgetId: string; settings: WidgetS
   const { t } = useI18n();
   return (
     <KitWidget<UptimeSummary> widget="uptime" refreshMs={60_000} skeleton={[22, 26, 26, 26]} {...props}
-      extraSettings={(draft, change) => (
+      extraSettings={(draft, change, data) => (
         <>
+          <CalmeRow label={t('widgets.uptime.monitors')} info={t('widgets.uptime.monitorsHint')}>
+            <CalmeSegmented label={t('widgets.uptime.monitors')} value={pick(draft.choose, CHOICES, 'all')} options={CHOICES.map(value => ({ value, label: t(`widgets.uptime.monitors.${value}`) }))}
+              onChange={value => change(value === 'all' ? { choose: null } : { choose: value, monitors: Array.isArray(draft.monitors) ? draft.monitors : (data?.groups.flatMap(group => group.monitors.map(monitor => monitor.id)) ?? []) })} />
+          </CalmeRow>
+          {pick(draft.choose, CHOICES, 'all') === 'chosen' && data && (
+            <div className="ndw-settings-checks">
+              {data.groups.flatMap(group => group.monitors.map(monitor => {
+                const chosen = chosenMonitors(draft);
+                return (
+                  <CalmeRow key={monitor.id} label={data.groups.length > 1 ? [monitor.name, group.name].join(' · ') : monitor.name}>
+                    <CalmeSwitch label={monitor.name} checked={chosen.has(monitor.id)} onChange={on => { const next = new Set(chosen); if (on) next.add(monitor.id); else next.delete(monitor.id); change({ monitors: [...next] }); }} />
+                  </CalmeRow>
+                );
+              }))}
+            </div>
+          )}
           <CalmeRow label={t('widgets.display')}>
             <CalmeSegmented label={t('widgets.display')} value={pick(draft.style, STYLES, 'full')} options={STYLES.map(value => ({ value, label: t(`widgets.style.${value}`) }))} onChange={value => change({ style: value === 'full' ? null : value })} />
           </CalmeRow>
@@ -48,7 +68,7 @@ function Uptime({ data, settings }: { data: UptimeSummary; settings: WidgetSetti
   const compact = pick(settings.style, STYLES, 'full') === 'compact';
   const all = data.groups.flatMap(group => group.monitors);
   const down = all.filter(monitor => monitor.status === 'down').length;
-  const groups = shownMonitors(data.groups, settings.problems === true);
+  const groups = shownMonitors(data.groups, settings.problems === true, pick(settings.choose, CHOICES, 'all') === 'chosen' ? chosenMonitors(settings) : undefined);
   const withNames = settings.groups !== false && groups.length > 1;
   return (
     <div className={`ndw-kit ndw-uptime ${compact ? 'is-compact' : ''}`}>

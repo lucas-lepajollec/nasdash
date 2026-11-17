@@ -10,7 +10,8 @@ import type { KitServer } from '../kitServer';
  * Only what the page itself publishes; Uptime Kuma caches them a minute or more.
  */
 const STATES: UptimeMonitor['status'][] = ['down', 'up', 'pending', 'maintenance'];
-const MAX_BEATS = 30;
+/** Enough beats to fill a wide widget; a narrow one shows the latest that fit. */
+const MAX_BEATS = 60;
 export const slugOf = (instance: IntegrationInstance) => {
   const slug = (instance.settings.slug ?? '').trim().toLowerCase();
   if (!/^[a-z0-9-]{1,64}$/.test(slug)) throw new ServiceError('integrations.uptimekuma.badSlug', 400);

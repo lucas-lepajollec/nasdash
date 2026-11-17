@@ -941,7 +941,7 @@ export interface UptimeMonitor {
   uptime?: number;
   /** Milliseconds, latest beat. */
   ping?: number;
-  /** The latest beats, oldest first (at most 30): the same states. */
+  /** The latest beats, oldest first (at most 60): the same states. */
   beats: UptimeMonitor['status'][];
   /** The monitored address, when the page shows it (http/https only). */
   url?: string;

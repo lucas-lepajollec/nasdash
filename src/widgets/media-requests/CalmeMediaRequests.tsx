@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 import { Check, Clapperboard, Tv, X } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { MediaRequestItem, MediaRequestsSummary } from '@/lib/widgetData/contracts';
@@ -50,9 +51,14 @@ export default function CalmeMediaRequests(props: { widgetId: string; settings: 
 
 function Requests({ data, tools, settings }: { data: MediaRequestsSummary; tools: KitTools; settings: WidgetSettings }) {
   const { t, locale } = useI18n();
+  const [expanded, setExpanded] = useState(false);
+  // Every decision is confirmed first: a request approved by a stray click starts a download.
+  const [asking, setAsking] = useState<{ request: MediaRequestItem; action: 'approve' | 'decline' } | null>(null);
   const number = (value: number) => new Intl.NumberFormat(locale).format(value);
   const rows = bounded(settings.rows, REQUEST_ROWS.min, REQUEST_ROWS.max, REQUEST_ROWS.default);
-  const requests = shownRequests(data.requests, settings).slice(0, rows);
+  const all = shownRequests(data.requests, settings);
+  const requests = expanded ? all : all.slice(0, rows);
+  const hidden = Math.max(0, all.length - rows);
   return (
     <div className="ndw-kit ndw-req">
       {settings.counts !== false && (
@@ -64,12 +70,26 @@ function Requests({ data, tools, settings }: { data: MediaRequestsSummary; tools
       )}
       {requests.length === 0
         ? <span className="ndw-media-sub is-quiet">{pick(settings.filter, FILTERS, 'all') === 'pending' ? t('widgets.requests.nonePending') : t('widgets.requests.none')}</span>
-        : <ul className="ndw-req-list">{requests.map(request => <Request key={request.id} request={request} posters={settings.posters !== false} control={data.canControl === true} tools={tools} />)}</ul>}
+        : <ul className="ndw-req-list">{requests.map(request => <Request key={request.id} request={request} posters={settings.posters !== false} control={data.canControl === true} tools={tools} onDecide={action => setAsking({ request, action })} />)}</ul>}
+      {hidden > 0 && (
+        <button type="button" className="ndw-upd-more" aria-expanded={expanded} onClick={() => setExpanded(open => !open)}>
+          {expanded ? t('widgets.updates.less') : t('widgets.updates.more', { count: hidden })}
+        </button>
+      )}
+      <ConfirmModal
+        isOpen={asking !== null}
+        onClose={() => setAsking(null)}
+        onConfirm={() => { const decision = asking; setAsking(null); if (decision) void tools.run(decision.action, decision.request.id); }}
+        title={asking ? t(asking.action === 'approve' ? 'widgets.requests.approveTitle' : 'widgets.requests.declineTitle', { title: asking.request.title }) : ''}
+        description={asking ? t(asking.action === 'approve' ? 'widgets.requests.approveConfirm' : 'widgets.requests.declineConfirm', { title: asking.request.title, who: asking.request.requestedBy ?? '?' }) : ''}
+        confirmLabel={asking ? t(asking.action === 'approve' ? 'widgets.requests.approveAction' : 'widgets.requests.declineAction') : ''}
+        cancelLabel={t('Annuler')}
+      />
     </div>
   );
 }
 
-function Request({ request, posters, control, tools }: { request: MediaRequestItem; posters: boolean; control: boolean; tools: KitTools }) {
+function Request({ request, posters, control, tools, onDecide }: { request: MediaRequestItem; posters: boolean; control: boolean; tools: KitTools; onDecide: (action: 'approve' | 'decline') => void }) {
   const { t } = useI18n();
   const ago = useRelativeTime();
   const busy = tools.busy === `approve:${request.id}` || tools.busy === `decline:${request.id}`;
@@ -88,8 +108,8 @@ function Request({ request, posters, control, tools }: { request: MediaRequestIt
       </span>
       {control && request.status === 'pending' ? (
         <span className="ndw-req-actions">
-          <button type="button" className="ndc-icon-button ndw-req-ok" disabled={busy} onClick={() => void tools.run('approve', request.id)} aria-label={t('widgets.requests.approve', { title: request.title })} title={t('widgets.requests.approve', { title: request.title })}><Check size={13} /></button>
-          <button type="button" className="ndc-icon-button ndw-req-no" disabled={busy} onClick={() => void tools.run('decline', request.id)} aria-label={t('widgets.requests.decline', { title: request.title })} title={t('widgets.requests.decline', { title: request.title })}><X size={13} /></button>
+          <button type="button" className="ndw-req-decide is-ok" disabled={busy} onClick={() => onDecide('approve')} aria-label={t('widgets.requests.approve', { title: request.title })} title={t('widgets.requests.approve', { title: request.title })}><Check size={13} /></button>
+          <button type="button" className="ndw-req-decide is-no" disabled={busy} onClick={() => onDecide('decline')} aria-label={t('widgets.requests.decline', { title: request.title })} title={t('widgets.requests.decline', { title: request.title })}><X size={13} /></button>
         </span>
       ) : <span className={`ndw-req-status is-${request.status}`}>{t(`widgets.requests.status.${request.status}`)}</span>}
     </li>

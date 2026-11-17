@@ -12,20 +12,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- **Uptime** widget (Uptime Kuma): every monitor of a status page with its state, its latest checks and its 24-hour uptime, grouped like the page; full or compact, only the problems if you like. No account needed.
-- **Requests** widget (Seerr, Overseerr, Jellyseerr): how many requests wait, are on their way or arrived, the latest ones with their poster and who asked; administrators approve or decline a pending request in place.
-- **Notifications** widget (ntfy topics or Gotify applications): the latest notifications by priority, with their link; full or compact, only the important ones if you like.
+- **Uptime** widget (Uptime Kuma): every monitor of a status page with its state, its latest checks and its 24-hour uptime, grouped like the page; full or compact, only the problems if you like, all the monitors or only those you choose (per widget); the latest checks fill the width of the widget. No account needed.
+- **Requests** widget (Seerr, Overseerr, Jellyseerr): how many requests wait, are on their way or arrived, the latest ones with their poster and who asked; administrators approve or decline a pending request in place, after a confirmation.
+- **Notifications** widget (ntfy topics or Gotify applications): the latest notifications by priority, with their link; full or compact, only the important ones if you like, title only, two lines or the whole text, grouped by source, with a dot on what arrived since you last looked.
 - **Reading** widget (Audiobookshelf, Kavita, Komga): what is being read or listened to with its progress, and what was added, as covers (relayed by NasDash, the server's key stays private) or a list.
 - The clock and the weather can have their own style per widget, or keep following Settings → Widgets. The clock can also be aligned left, centred or right.
 
 ### Changed
 
 - **Every widget fits every width**, from 3 columns to the whole page, and lays itself out more compactly when narrow (the media, music, Docker, network and new widgets included). Every column count between them is offered (no skipped size). Only the Docker explorer, the network topology, ports and the web page keep their larger minimum. The clock grows with its widget; service tiles keep their size on a wide widget instead of drifting apart; hero cards, cover strips and news cards fit narrow widgets.
+- **Items keep their size as a widget widens.** Once every cover, tile, card or figure fits on one line, a wider widget leaves room on the right instead of making them shrink and grow again with every column (reading, service categories, music covers, news, markets, bookmarks, photos, Docker, machines, rails and shelves).
+- A list cut by a "how many" setting always says how many are hidden and shows them on demand (+N more): requests, notifications, downloads, recently played and what is being watched.
 
 ### Fixed
 
 - To-do: the **+** next to the field adds the task, like Enter.
 - Timer: a large round button starts, pauses and resumes, and starts the last duration again once it is over (no need to pick one); the durations are filled chips with white text, kept on one row with the field for another duration and wrapped only when the widget is too narrow.
+- Listening, Recently added and the music library at 3–4 columns: the cover above the text, the card as tall as its content (no longer cut at the top), figures never cut and their unit never alone on a line.
 
 ## [0.3.8] - 2026-11-08
 

@@ -146,8 +146,8 @@ function Hero({ items, width, now, rest: restDisplay }: { items: MediaItem[]; wi
   return (
     <div className="ndw-media-hero-wrap">
       {first.link
-        ? <a className="ndw-media-hero" style={{ height }} href={first.link} target="_blank" rel="noopener noreferrer">{inner}</a>
-        : <div className="ndw-media-hero" style={{ height }}>{inner}</div>}
+        ? <a className="ndw-media-hero" style={{ minHeight: height }} href={first.link} target="_blank" rel="noopener noreferrer">{inner}</a>
+        : <div className="ndw-media-hero" style={{ minHeight: height }}>{inner}</div>}
       {rest.length > 0 && (restDisplay === 'grid' ? <PosterGrid items={rest} width={width} now={now} poster={94} /> : <PosterRow items={rest} now={now} width={84} small />)}
     </div>
   );
