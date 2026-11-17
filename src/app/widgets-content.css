@@ -578,14 +578,6 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-notif-step.is-p5 .ndw-notif-step-rail > span { background: var(--nd-red); }
 .ndw-notif-step > .ndw-notif-main { padding-bottom: 12px; }
 .ndw-notif-step:last-child > .ndw-notif-main { padding-bottom: 0; }
-/* The style picker's miniatures. */
-.ndw-notif-sample { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-.ndw-notif-sample > i { display: block; height: 8px; border-radius: 3px; background: color-mix(in srgb, var(--nd-text) 18%, transparent); }
-.ndw-notif-sample.is-full > i { height: 14px; border-left: 3px solid var(--nd-accent); border-radius: 2px; }
-.ndw-notif-sample.is-compact > i { height: 6px; }
-.ndw-notif-sample.is-bubbles > i { height: 14px; border-radius: 7px; }
-.ndw-notif-sample.is-timeline { padding-left: 10px; border-left: 1px solid color-mix(in srgb, var(--nd-text) 25%, transparent); }
-.ndw-notif-sample.is-timeline > i { height: 10px; }
 .ndw-notif-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ndw-notif-text.is-full { display: block; -webkit-line-clamp: unset; }
 .ndw-notif-new { flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--nd-accent); }

@@ -79,7 +79,7 @@ function Book({ item, widgetId, settings, list }: { item: ReadingItem; widgetId:
     <span className="ndw-read-cover" aria-hidden="true">
       {item.cover && !failed
         // eslint-disable-next-line @next/next/no-img-element -- a cover relayed by NasDash
-        ? <img src={coverUrl(widgetId, item.cover, user?.role === 'admin' ? settings : undefined)} alt="" loading="lazy" onError={() => setFailed(true)} />
+        ? <img src={coverUrl(widgetId, item.cover, user?.role === 'admin' ? settings : undefined)} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />
         : <Icon size={16} />}
     </span>
   );

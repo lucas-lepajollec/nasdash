@@ -188,7 +188,7 @@ function Timer({ widgetId, settings, style, editMode, isVisible, onUpdateSetting
   useEffect(() => { setState(readTimer(widgetId)); }, [widgetId]);
   const running = state?.endsAt !== undefined;
   // It keeps counting off screen: ringing does not depend on being visible.
-  const [now, syncNow] = useNow(running ? 250 : 60_000, running || isVisible);
+  const [now, syncNow] = useNow(running ? (isVisible ? 250 : 1000) : 60_000, running || isVisible);
   const total = (state?.seconds ?? 0) * 1000;
   // `now` may be a step behind a timer just started: never more than its duration.
   const remaining = !state ? 0 : running ? Math.min(total, Math.max(0, state.endsAt! - now)) : state.left ?? total;

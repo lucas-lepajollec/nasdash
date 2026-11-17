@@ -7,19 +7,9 @@ import type { NotificationItem, NotificationsSummary } from '@/lib/widgetData/co
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { KitWidget } from '@/components/widgets/content/KitWidget';
-import { CalmeField } from '@/components/shared/CalmeDialog';
-import { bounded, pick, StylePicker, useRelativeTime } from '@/components/widgets/content/kit';
-
-/** A miniature of each style, for the picker. */
-const SAMPLES: Record<Style, React.ReactNode> = {
-  full: <span className="ndw-notif-sample is-full"><i /><i /></span>,
-  compact: <span className="ndw-notif-sample is-compact"><i /><i /><i /></span>,
-  bubbles: <span className="ndw-notif-sample is-bubbles"><i /><i /></span>,
-  timeline: <span className="ndw-notif-sample is-timeline"><i /><i /></span>,
-};
+import { bounded, pick, useRelativeTime } from '@/components/widgets/content/kit';
 
 const STYLES = ['full', 'compact', 'bubbles', 'timeline'] as const;
-type Style = typeof STYLES[number];
 const LEVELS = ['all', 'high'] as const;
 const TEXTS = ['none', 'short', 'full'] as const;
 export const NOTIFICATION_ROWS = { min: 2, max: 30, default: 6 } as const;
@@ -38,9 +28,9 @@ export default function CalmeNotifications(props: { widgetId: string; settings: 
     <KitWidget<NotificationsSummary> widget="notifications" refreshMs={30_000} skeleton={[34, 34, 34]} {...props}
       extraSettings={(draft, change) => (
         <>
-          <CalmeField label={t('widgets.display')}>
-            <StylePicker label={t('widgets.display')} value={pick(draft.style, STYLES, 'full')} options={STYLES.map(value => ({ value, name: t(`widgets.notifications.style.${value}`), sample: SAMPLES[value] }))} onChange={value => change({ style: value === 'full' ? null : value })} />
-          </CalmeField>
+          <CalmeRow label={t('widgets.display')} stacked>
+            <CalmeSegmented label={t('widgets.display')} value={pick(draft.style, STYLES, 'full')} options={STYLES.map(value => ({ value, label: t(`widgets.notifications.style.${value}`) }))} onChange={value => change({ style: value === 'full' ? null : value })} />
+          </CalmeRow>
           <CalmeRow label={t('widgets.notifications.level')}>
             <CalmeSegmented label={t('widgets.notifications.level')} value={pick(draft.level, LEVELS, 'all')} options={LEVELS.map(value => ({ value, label: t(`widgets.notifications.level.${value}`) }))} onChange={value => change({ level: value === 'all' ? null : value })} />
           </CalmeRow>

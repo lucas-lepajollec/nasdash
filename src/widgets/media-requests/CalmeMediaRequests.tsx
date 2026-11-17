@@ -99,7 +99,7 @@ function Request({ request, posters, control, tools, onDecide }: { request: Medi
       {posters && (
         <span className="ndw-req-poster" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element -- a TMDB poster from its public CDN */}
-          {request.poster ? <img src={request.poster} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <Kind size={14} />}
+          {request.poster ? <img src={request.poster} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <Kind size={14} />}
         </span>
       )}
       <span className="ndw-req-main">
