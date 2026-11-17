@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.10] - 2026-11-17
+
+### Upgrading from 0.3.9
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.3.9` image.
+
 ### Changed
 
 - The ports widget can take every width, from 3 columns to the whole page.
@@ -656,7 +662,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.9...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.10...HEAD
+[0.3.10]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.6...v0.3.7
