@@ -7,7 +7,7 @@ import type { NotificationItem, NotificationsSummary } from '@/lib/widgetData/co
 import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { KitWidget } from '@/components/widgets/content/KitWidget';
-import { bounded, pick, useRelativeTime } from '@/components/widgets/content/kit';
+import { bounded, pick, useFitGrid, useRelativeTime } from '@/components/widgets/content/kit';
 
 const STYLES = ['full', 'compact', 'bubbles', 'timeline'] as const;
 const LEVELS = ['all', 'high'] as const;
@@ -73,6 +73,7 @@ function useLastSeen(widgetId: string, newest: number | undefined) {
 
 function Notifications({ data, settings, widgetId }: { data: NotificationsSummary; settings: WidgetSettings; widgetId: string }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLUListElement>();
   const ago = useRelativeTime();
   const [expanded, setExpanded] = useState(false);
   const { locale } = useI18n();
@@ -143,7 +144,7 @@ function Notifications({ data, settings, widgetId }: { data: NotificationsSummar
       {groups.map(group => (
         <div key={group.source || 'all'} className="ndw-notif-group">
           {group.source && <span className="ndw-mx-label">{group.source}</span>}
-          <ul className={`ndw-notif-list is-${style}`}>{group.items.map(row)}</ul>
+          <ul ref={fit} className={`ndw-notif-list is-${style}`}>{group.items.map(row)}</ul>
         </div>
       ))}
       {hidden > 0 && (

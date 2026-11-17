@@ -49,7 +49,7 @@ export interface WidgetDefinition {
  * The sizes policy: a widget fits every width (`ALL_WIDTHS`, from a quarter of
  * a phone to the whole page) and lays itself out more compactly when narrow,
  * with its container queries. Only widgets that mean nothing small keep
- * `WIDE_WIDTHS` (the Docker explorer, the topology, ports, a web page).
+ * `WIDE_WIDTHS` or a short list (the Docker explorer, the topology, a web page).
  */
 /** Every column from 3 to 24: resizing never skips an in-between width. */
 export const ALL_WIDTHS: readonly number[] = Array.from({ length: 22 }, (_, index) => index + 3);

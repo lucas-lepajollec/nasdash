@@ -10,6 +10,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useFitGrid } from '@/components/widgets/content/kit';
 import { WidgetHeaderActions } from './WidgetHeaderActions';
 import { dockerJsonFetcher, readDockerResponse, dockerActionError } from '@/lib/dockerErrorContract';
 import { resolveDockerTarget } from '@/lib/dockerTargets';
@@ -59,6 +60,7 @@ function SortableActionItem({ action, editMode, onEdit, onExecute, isLoading }: 
 
 export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const { config, setDockerActionModal, reorderDockerActions } = useConfig();
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
 
@@ -174,7 +176,7 @@ export default function DockerWidget({ editMode }: { editMode?: boolean }) {
   return (
     <CalmeWidget title={t("Actions Docker")} editMode={editMode}>
       {addButton}
-      <div className="ndc-actions">{list}</div>
+      <div ref={fit} className="ndc-actions">{list}</div>
     </CalmeWidget>
   );
 }

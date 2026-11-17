@@ -110,7 +110,7 @@ import { ALL_WIDTHS } from './define';
 
 describe('sizes policy', () => {
   it('lets every regular widget take every width, from 3 to 24 columns', () => {
-    const special = new Set(['docker-explorer', 'network-topology', 'service-ports', 'webpage', 'service-category', 'spacer', 'device-chart', 'docker-summary']);
+    const special = new Set(['docker-explorer', 'network-topology', 'webpage', 'service-category', 'spacer', 'device-chart', 'docker-summary']);
     for (const definition of WIDGET_DEFINITIONS.filter(item => !special.has(item.type))) {
       expect(definition.sizes.formats, definition.type).toEqual(ALL_WIDTHS);
       expect(definition.sizes.minPx, definition.type).toBeLessThanOrEqual(150);

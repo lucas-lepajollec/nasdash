@@ -4,6 +4,7 @@ import React from 'react';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { ArrowUpRight, Laptop, Loader2, Monitor, Server, Smartphone } from 'lucide-react';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useFitGrid } from '@/components/widgets/content/kit';
 import { CalmeWidget } from '../calme';
 import { useTailscaleDevices } from './useTailscaleDevices';
 
@@ -24,6 +25,7 @@ function OsIcon({ os, hostname }: { os?: string; hostname?: string }) {
  */
 export default function CalmeTailscale({ editMode, showSensitive = false, isVisible = true }: { editMode?: boolean; showSensitive?: boolean; isVisible?: boolean }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLUListElement>();
   const { devices, error, unconfigured, loading } = useTailscaleDevices(isVisible);
   const admin = (
     <a className="ndc-link" href="https://login.tailscale.com/admin" target="_blank" rel="noopener noreferrer">
@@ -55,7 +57,7 @@ export default function CalmeTailscale({ editMode, showSensitive = false, isVisi
 
   return (
     <CalmeWidget title="Tailscale" editMode={editMode} aside={<>{`${online}/${devices.length}`} · {admin}</>}>
-      <ul className="ndc-mesh">
+      <ul ref={fit} className="ndc-mesh">
         {sorted.map(device => (
           <li key={device.id} className={`ndc-mesh-device ${device.online ? '' : 'is-offline'}`}>
             <span className="ndc-mesh-icon"><OsIcon os={device.os} hostname={device.hostname} /></span>

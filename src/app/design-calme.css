@@ -1233,8 +1233,9 @@ body[data-design="calme"] .nd-service--bento .nd-service-name {
 
 .ndc-ctrs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 340px));
-  justify-content: start;
+  --fit-min: 240px;
+  --fit-max: 340px;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr));
   gap: 6px 18px;
   margin: 0 -8px;
 }
@@ -1305,8 +1306,9 @@ body[data-design="calme"] .nd-service--bento .nd-service-name {
 /* ---------- Docker actions ---------- */
 .ndc-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 300px));
-  justify-content: start;
+  --fit-min: 200px;
+  --fit-max: 300px;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr));
   gap: 2px 12px;
   margin: 0 -8px;
 }
@@ -1382,8 +1384,9 @@ body[data-design="calme"] .nd-service--bento .nd-service-name {
   margin: 0 -8px;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 320px));
-  justify-content: start;
+  --fit-min: 220px;
+  --fit-max: 320px;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr));
   gap: 2px 12px;
 }
 
@@ -3194,17 +3197,17 @@ body.light {
 .ndc-dev-group { min-width: 0; }
 .ndc-dev-group--ring { display: flex; flex-wrap: wrap; gap: 12px 16px; }
 .ndc-dev--small .ndc-dev-group--ring { gap: 10px; }
-.ndc-dev-group--value { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 130px)); justify-content: start; gap: 12px 16px; flex: 1; }
-.ndc-dev--small .ndc-dev-group--value { grid-template-columns: repeat(auto-fit, minmax(min(110px, 100%), 1fr)); }
+.ndc-dev-group--value { display: grid; --fit-min: 92px; --fit-max: 130px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 12px 16px; flex: 1; }
+.ndc-dev--small .ndc-dev-group--value { --fit-min: 110px; --fit-max: none; }
 .ndc-dev-group--bar { display: flex; flex-direction: column; gap: 11px; padding-top: 2px; }
-.ndc-dev-group--chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 360px)); justify-content: start; gap: 14px 18px; }
+.ndc-dev-group--chart { display: grid; --fit-min: 240px; --fit-max: 360px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 14px 18px; }
 .ndc-dev-range { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 0.68rem; color: var(--nd-text-muted); }
 
 /* One-measure widgets */
 .ndc-metric-list { min-width: 0; }
 .ndc-metric-list--bar { display: flex; flex-direction: column; gap: 11px; }
-.ndc-metric-list--value { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 150px)); justify-content: start; gap: 12px 16px; }
-.ndc-metric-list--ring { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 112px)); justify-content: start; gap: 14px 10px; justify-items: center; }
+.ndc-metric-list--value { display: grid; --fit-min: 110px; --fit-max: 150px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 12px 16px; }
+.ndc-metric-list--ring { display: grid; --fit-min: 88px; --fit-max: 112px; grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr)); gap: 14px 10px; justify-items: center; }
 .ndc-m-sortable { position: relative; min-width: 0; max-width: 100%; }
 .ndc-dev-group--ring > .ndc-m-sortable { min-width: 80px; }
 .ndc-m-sortable.is-editable { padding-left: 20px; }

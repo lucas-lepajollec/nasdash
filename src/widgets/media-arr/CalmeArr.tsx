@@ -9,7 +9,7 @@ import { IntegrationLogo } from '@/components/integrations/IntegrationLogo';
 import { CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
-import { DataError, pick, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { DataError, pick, useFitGrid, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { ArrSetup, chosenSources, SourcesField, useByteFormat, useConnections } from '@/components/widgets/media/arr';
 import { Stat, Track } from '@/components/widgets/media/visual';
 
@@ -27,6 +27,7 @@ export default function CalmeArr({ widgetId, settings, editMode, isVisible, onUp
   widgetId: string; settings: WidgetSettings; editMode: boolean; isVisible: boolean; onUpdateSettings: (settings: WidgetSettings) => void;
 }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const connections = useConnections(ARR_TYPES);
   const sources = chosenSources(connections, settings);
   const { data, error, mutate, stale } = useWidgetData<ArrStatusResponse>('/api/widgets/arr/status', widgetId, settings, { refreshMs: 60_000, isVisible, method: 'GET', enabled: sources.length > 0 });
@@ -60,7 +61,7 @@ export default function CalmeArr({ widgetId, settings, editMode, isVisible, onUp
             : !data ? <div className="ndw-skeleton" aria-hidden="true"><span className="ndw-skeleton-row" style={{ height: 70 }} /></div>
               : layout === 'rows'
                 ? <div className="ndw-mx-applist">{data.apps.map(app => <AppRow key={app.id} app={app} parts={parts} />)}</div>
-                : <div className="ndw-mx-tiles">{data.apps.map(app => <AppTile key={app.id} app={app} parts={parts} />)}</div>}
+                : <div ref={fit} className="ndw-mx-tiles">{data.apps.map(app => <AppTile key={app.id} app={app} parts={parts} />)}</div>}
       </div>
     </CalmeWidget>
   );

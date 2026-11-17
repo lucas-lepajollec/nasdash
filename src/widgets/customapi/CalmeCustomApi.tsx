@@ -10,7 +10,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
 import { RingGauge } from '@/components/charts/Gauges';
 import { CalmeWidget } from '../calme';
-import { DataError, pick, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
+import { DataError, pick, useFitGrid, useRelativeTime, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
 import { chosenConnection } from '@/components/widgets/content/ConnectionPicker';
 import { formatValue, shareOf, toneOf, type Tone } from './format';
 import { CustomApiSettings } from './CustomApiSettings';
@@ -75,6 +75,7 @@ function useFormat() {
 
 export function CustomApiBody({ data, display, fields, settings }: { data: CustomApiResponse; display: CustomApiDisplay; fields: CustomApiField[]; settings: WidgetSettings }) {
   const { t } = useI18n();
+  const fit = useFitGrid<HTMLDivElement>();
   const format = useFormat();
 
   if (display === 'status') {
@@ -145,7 +146,7 @@ export function CustomApiBody({ data, display, fields, settings }: { data: Custo
   }
 
   return (
-    <div className="ndw-api-figures">
+    <div ref={fit} className="ndw-api-figures">
       {fields.map((field, index) => (
         <div key={field.id} className="ndw-api-figure">
           <Value field={field} value={data.values[index]} format={format} />
