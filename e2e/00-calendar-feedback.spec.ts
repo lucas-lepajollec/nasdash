@@ -16,7 +16,7 @@ function futureDate(days = 2) {
 test('calendar agenda supports dated creation, editing, failures and confirmed deletion', async ({ page }) => {
   await prepare(page);
   await page.goto('/');
-  const calendar = page.locator('.ndc-calendar:visible').first();
+  const calendar = page.locator('.nd-tab-view [data-active="true"] .ndc-calendar:visible').first();
   await expect(calendar).toBeVisible();
   await calendar.locator('.ndc-cal-day.is-today').click();
   let form = page.getByRole('dialog', { name: 'Add an event', exact: true });

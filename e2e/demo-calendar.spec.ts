@@ -20,7 +20,7 @@ for (const [language, proceed, edit, editTitle, save, remove] of languages) {
     });
     await page.goto(`/?lang=${language}`);
     await page.getByRole('button', { name: proceed, exact: true }).click();
-    const calendar = page.locator('.ndc-calendar:visible').first();
+    const calendar = page.locator('.nd-tab-view [data-active="true"] .ndc-calendar:visible').first();
     const originalTitle = await calendar.locator('.ndc-cal-event-title').first().innerText();
     await calendar.locator('.ndc-cal-event').first().click();
     await page.locator('.ndc-dialog').getByRole('button', { name: edit, exact: true }).click();
