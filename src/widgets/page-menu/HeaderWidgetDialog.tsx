@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { SlidersHorizontal } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { HeaderAlign } from '@/lib/pages/header';
 import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 import { CalmeDialog } from '@/components/shared/CalmeDialog';
-import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
+import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { useI18n } from '@/i18n/I18nProvider';
 import { DialogPortal } from '../devices/ColorDialog';
 
@@ -22,17 +22,22 @@ export function readMenuStyle(settings: WidgetSettings): MenuStyle {
 export function readMenuPart(settings: WidgetSettings): MenuPart {
   return settings.part === 'first' || settings.part === 'second' ? settings.part : 'all';
 }
+/** How many pages the menu shows before its last button; undefined: all of them. */
+export function readMenuLimit(settings: WidgetSettings): number | undefined {
+  const limit = settings.maxPages;
+  return typeof limit === 'number' && Number.isFinite(limit) && limit >= 1 ? Math.floor(limit) : undefined;
+}
 
 /**
- * Edit mode: the settings button of a header widget and its dialog. The menu
- * offers its style, icons, alignment and the pages it shows; the buttons only
- * their alignment. These are per widget: the pages themselves are shared.
+ * Edit mode: the ✎ of a menu widget and its dialog: style, icons, how many
+ * pages show before the last button, the part of the pages and alignment.
+ * These are per widget: the pages themselves are shared.
  */
-export function HeaderWidgetSettings({ kind, title, settings, fallbackAlign, onSave }: {
-  kind: 'menu' | 'actions';
+export function MenuWidgetSettings({ title, settings, pageCount, onSave }: {
   title: string;
   settings: WidgetSettings;
-  fallbackAlign: HeaderAlign;
+  /** Pages in this menu's part, the most the slider offers. */
+  pageCount: number;
   onSave: (settings: WidgetSettings) => void;
 }) {
   const { t } = useI18n();
@@ -41,18 +46,17 @@ export function HeaderWidgetSettings({ kind, title, settings, fallbackAlign, onS
   return (
     <WidgetHeaderActions>
       <button type="button" className="nd-action-icon accent" onClick={event => { event.stopPropagation(); setOpen(true); }} title={label} aria-label={label}>
-        <SlidersHorizontal size={13} />
+        <Pencil size={13} />
       </button>
-      {open && <Dialog kind={kind} label={label} settings={settings} fallbackAlign={fallbackAlign} onSave={onSave} onClose={() => setOpen(false)} />}
+      {open && <Dialog label={label} settings={settings} pageCount={pageCount} onSave={onSave} onClose={() => setOpen(false)} />}
     </WidgetHeaderActions>
   );
 }
 
-function Dialog({ kind, label, settings, fallbackAlign, onSave, onClose }: {
-  kind: 'menu' | 'actions';
+function Dialog({ label, settings, pageCount, onSave, onClose }: {
   label: string;
   settings: WidgetSettings;
-  fallbackAlign: HeaderAlign;
+  pageCount: number;
   onSave: (settings: WidgetSettings) => void;
   onClose: () => void;
 }) {
@@ -60,6 +64,9 @@ function Dialog({ kind, label, settings, fallbackAlign, onSave, onClose }: {
   const [draft, setDraft] = useState<WidgetSettings>(settings);
   const change = (patch: WidgetSettings) => setDraft(current => ({ ...current, ...patch }));
   const style = readMenuStyle(draft);
+  const shown = Math.min(readMenuLimit(draft) ?? pageCount, pageCount);
+  // At the top of the slider every page shows, the ones added later too.
+  const setShown = (value: number) => change({ maxPages: value >= pageCount ? 0 : value });
   return (
     <DialogPortal onClose={onClose}>
       {ref => (
@@ -73,42 +80,52 @@ function Dialog({ kind, label, settings, fallbackAlign, onSave, onClose }: {
             <button type="button" className="nd-btn nd-btn-accent" onClick={() => { onSave(draft); onClose(); }}>{t('Enregistrer')}</button>
           </>}
         >
-          {kind === 'menu' && (
-            <>
-              <CalmeRow label={t('pages.header.style')}>
-                <CalmeSegmented
-                  label={t('pages.header.style')}
-                  value={style}
-                  options={[
-                    { value: 'tabs', label: t('pages.header.styleTabs') },
-                    { value: 'boxed', label: t('pages.header.styleBoxed') },
-                    { value: 'list', label: t('pages.header.styleList') },
-                  ]}
-                  onChange={value => change({ style: value })}
-                />
-              </CalmeRow>
-              <CalmeRow label={t('settings.calme.tabIcons')}>
-                <CalmeSwitch label={t('settings.calme.tabIcons')} checked={draft.icons === true} onChange={value => change({ icons: value })} />
-              </CalmeRow>
-              <CalmeRow label={t('pages.header.part')} info={t('pages.header.partInfo')}>
-                <CalmeSegmented
-                  label={t('pages.header.part')}
-                  value={readMenuPart(draft)}
-                  options={[
-                    { value: 'all', label: t('pages.header.partAll') },
-                    { value: 'first', label: t('pages.header.partFirst') },
-                    { value: 'second', label: t('pages.header.partSecond') },
-                  ]}
-                  onChange={value => change({ part: value })}
-                />
-              </CalmeRow>
-            </>
+          <CalmeRow label={t('pages.header.style')}>
+            <CalmeSegmented
+              label={t('pages.header.style')}
+              value={style}
+              options={[
+                { value: 'tabs', label: t('pages.header.styleTabs') },
+                { value: 'boxed', label: t('pages.header.styleBoxed') },
+                { value: 'list', label: t('pages.header.styleList') },
+              ]}
+              onChange={value => change({ style: value })}
+            />
+          </CalmeRow>
+          <CalmeRow label={t('settings.calme.tabIcons')}>
+            <CalmeSwitch label={t('settings.calme.tabIcons')} checked={draft.icons === true} onChange={value => change({ icons: value })} />
+          </CalmeRow>
+          {pageCount > 1 && (
+            <CalmeRow label={t('pages.header.shown')} info={t('pages.header.shownInfo')}>
+              <CalmeSlider
+                label={t('pages.header.shown')}
+                value={shown}
+                min={1}
+                max={pageCount}
+                step={1}
+                onChange={setShown}
+                onCommit={setShown}
+                format={value => value >= pageCount ? t('pages.header.shownAll') : String(value)}
+              />
+            </CalmeRow>
           )}
-          {(kind === 'actions' || style !== 'list') && (
+          <CalmeRow label={t('pages.header.part')} info={t('pages.header.partInfo')}>
+            <CalmeSegmented
+              label={t('pages.header.part')}
+              value={readMenuPart(draft)}
+              options={[
+                { value: 'all', label: t('pages.header.partAll') },
+                { value: 'first', label: t('pages.header.partFirst') },
+                { value: 'second', label: t('pages.header.partSecond') },
+              ]}
+              onChange={value => change({ part: value })}
+            />
+          </CalmeRow>
+          {style !== 'list' && (
             <CalmeRow label={t('pages.header.align')}>
               <CalmeSegmented
                 label={t('pages.header.align')}
-                value={readAlign(draft, fallbackAlign)}
+                value={readAlign(draft, 'center')}
                 options={[
                   { value: 'start', label: t('pages.header.alignStart') },
                   { value: 'center', label: t('pages.header.alignCenter') },

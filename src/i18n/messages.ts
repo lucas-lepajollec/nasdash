@@ -2142,7 +2142,7 @@ const en: Dictionary = {
   "pages.header.styleTabs": "Tabs",
   "pages.header.styleBoxed": "In a block",
   "pages.header.styleList": "List",
-  "pages.header.part": "Pages shown",
+  'pages.header.part': "Part of the menu",
   "pages.header.partInfo": "Showing half of the pages lets two menus frame another widget.",
   "pages.header.partAll": "All",
   "pages.header.partFirst": "First half",
@@ -2492,6 +2492,11 @@ const en: Dictionary = {
   'widgets.notifications.style.compact': "Compact",
   'widgets.notifications.style.bubbles': "Bubbles",
   'widgets.notifications.style.timeline': "Timeline",
+  'pages.header.more': "More",
+  'pages.header.morePages': "{count} more pages",
+  'pages.header.shown': "Visible pages",
+  'pages.header.shownInfo': "The other pages unfold from the last button of the menu.",
+  'pages.header.shownAll': "All",
 };
 
 const fr: Dictionary = {
@@ -4620,7 +4625,7 @@ const fr: Dictionary = {
   "pages.header.styleTabs": "Onglets",
   "pages.header.styleBoxed": "Dans un bloc",
   "pages.header.styleList": "Liste",
-  "pages.header.part": "Pages affichées",
+  'pages.header.part': "Partie du menu",
   "pages.header.partInfo": "N’afficher qu’une moitié des pages permet d’encadrer un autre widget avec deux menus.",
   "pages.header.partAll": "Toutes",
   "pages.header.partFirst": "Première moitié",
@@ -4970,6 +4975,11 @@ const fr: Dictionary = {
   'widgets.notifications.style.compact': "Compact",
   'widgets.notifications.style.bubbles': "Bulles",
   'widgets.notifications.style.timeline': "Fil",
+  'pages.header.more': "Plus",
+  'pages.header.morePages': "{count} autres pages",
+  'pages.header.shown': "Pages visibles",
+  'pages.header.shownInfo': "Les autres pages se déroulent depuis le dernier bouton du menu.",
+  'pages.header.shownAll': "Toutes",
 };
 
 const es: Dictionary = {
@@ -7098,7 +7108,7 @@ const es: Dictionary = {
   "pages.header.styleTabs": "Pestañas",
   "pages.header.styleBoxed": "En un bloque",
   "pages.header.styleList": "Lista",
-  "pages.header.part": "Páginas mostradas",
+  'pages.header.part': "Parte del menú",
   "pages.header.partInfo": "Mostrar solo la mitad de las páginas permite rodear otro widget con dos menús.",
   "pages.header.partAll": "Todas",
   "pages.header.partFirst": "Primera mitad",
@@ -7448,6 +7458,11 @@ const es: Dictionary = {
   'widgets.notifications.style.compact': "Compacto",
   'widgets.notifications.style.bubbles': "Burbujas",
   'widgets.notifications.style.timeline': "Cronología",
+  'pages.header.more': "Más",
+  'pages.header.morePages': "{count} páginas más",
+  'pages.header.shown': "Páginas visibles",
+  'pages.header.shownInfo': "Las demás páginas se despliegan desde el último botón del menú.",
+  'pages.header.shownAll': "Todas",
 };
 
 const de: Dictionary = {
@@ -9576,7 +9591,7 @@ const de: Dictionary = {
   "pages.header.styleTabs": "Reiter",
   "pages.header.styleBoxed": "In einem Block",
   "pages.header.styleList": "Liste",
-  "pages.header.part": "Angezeigte Seiten",
+  'pages.header.part': "Teil des Menüs",
   "pages.header.partInfo": "Nur eine Hälfte der Seiten anzuzeigen erlaubt es, ein anderes Widget mit zwei Menüs einzurahmen.",
   "pages.header.partAll": "Alle",
   "pages.header.partFirst": "Erste Hälfte",
@@ -9926,6 +9941,11 @@ const de: Dictionary = {
   'widgets.notifications.style.compact': "Kompakt",
   'widgets.notifications.style.bubbles': "Blasen",
   'widgets.notifications.style.timeline': "Zeitleiste",
+  'pages.header.more': "Mehr",
+  'pages.header.morePages': "{count} weitere Seiten",
+  'pages.header.shown': "Sichtbare Seiten",
+  'pages.header.shownInfo': "Die übrigen Seiten klappen über die letzte Schaltfläche des Menüs auf.",
+  'pages.header.shownAll': "Alle",
 };
 
 const it: Dictionary = {
@@ -12053,7 +12073,7 @@ const it: Dictionary = {
   "pages.header.styleTabs": "Schede",
   "pages.header.styleBoxed": "In un blocco",
   "pages.header.styleList": "Elenco",
-  "pages.header.part": "Pagine mostrate",
+  'pages.header.part': "Parte del menu",
   "pages.header.partInfo": "Mostrare solo metà delle pagine permette di incorniciare un altro widget con due menu.",
   "pages.header.partAll": "Tutte",
   "pages.header.partFirst": "Prima metà",
@@ -12403,6 +12423,11 @@ const it: Dictionary = {
   'widgets.notifications.style.compact': "Compatto",
   'widgets.notifications.style.bubbles': "Bolle",
   'widgets.notifications.style.timeline': "Cronologia",
+  'pages.header.more': "Altro",
+  'pages.header.morePages': "Altre {count} pagine",
+  'pages.header.shown': "Pagine visibili",
+  'pages.header.shownInfo': "Le altre pagine si aprono dall'ultimo pulsante del menu.",
+  'pages.header.shownAll': "Tutte",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

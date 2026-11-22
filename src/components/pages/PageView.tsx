@@ -35,6 +35,7 @@ import { usePages } from '@/providers/PagesProvider';
 import ServiceItem from '../tabs/home/ServiceItem';
 import { DockerWorkspaceProvider } from '../widgets/docker/DockerWorkspace';
 import { WidgetActionsSlotContext } from '../widgets/WidgetHeaderActions';
+import { WidgetFitContext } from '../widgets/WidgetFit';
 import { Emoji } from '../shared/Emoji';
 import { PageWidgetContent } from './PageWidgetContent';
 
@@ -48,8 +49,8 @@ const gridstackModule = typeof window === 'undefined' ? null : import('gridstack
  * so a widget is never shown at a width its content does not support; its
  * height always follows its content (no inner scrollbar).
  * Heights are measured continuously and the layout is reflowed around them
- * while keeping the stored vertical gaps (`reflowHeights`), so titles shown in
- * edit mode push widgets down and leaving edit mode brings them back. Below
+ * while keeping the stored vertical gaps (`reflowHeights`), so a widget that
+ * grows pushes the ones below and they come back when it shrinks. Below
  * the editing width the page becomes one read-only column in reading order.
  */
 
@@ -214,6 +215,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // Rendered heights (px), for the two tablet columns.
   const [pxHeights, setPxHeights] = useState<Record<string, number>>({});
   const [columnPx, setColumnPx] = useState(0);
+  // Widths (px) asked by widgets that fit their content (see WidgetFit).
+  const [fitPx, setFitPx] = useState<Record<string, number>>({});
   // The grid is shown once the page is visible and its widgets are measured
   // and placed: no flash of unplaced widgets, no animation for that placement.
   const [revealed, setRevealed] = useState(false);
@@ -230,6 +233,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
   useEffect(() => { editRef.current = edit; }, [edit]);
+  const widgetsRef = useRef(widgets);
+  useEffect(() => { widgetsRef.current = widgets; }, [widgets]);
+  const unfitRef = useRef<(placements: ({ id: string } & GridPlacement)[]) => ({ id: string } & GridPlacement)[]>(placements => placements);
   // Phones: the phone header (title, search, menu) replaces the header widgets.
   const [phoneHeader, setPhoneHeader] = useState(false);
   useEffect(() => {
@@ -335,7 +341,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
           });
           const settled = release && landing(release);
           if (release && settled) placements = pushOverlaps(settled, release.id);
-          editRef.current(current => applyPlacements(current, placements));
+          editRef.current(current => applyPlacements(current, unfitRef.current(placements)));
         });
       };
       // Where the pointer grabbed the widget, taken on press: GridStack measures
@@ -386,6 +392,38 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     };
   }, []);
 
+  const measureWidth = useCallback((id: string, px: number) => {
+    setFitPx(current => current[id] === px ? current : { ...current, [id]: px });
+  }, []);
+
+  // Widgets that fit their content take just the columns it needs at this
+  // screen width, on the side they are aligned to; never more than stored.
+  const fitted = useMemo(() => {
+    const column = gridWidth / GRID_COLUMNS;
+    if (!column) return widgets;
+    return widgets.map(widget => {
+      const px = fitPx[widget.id];
+      if (!px) return widget;
+      const w = Math.max(1, Math.ceil((px + GRID_MARGIN * 2) / column));
+      if (w >= widget.w) return widget;
+      return { ...widget, w, x: widget.x + fitShift(widget, widget.w - w) };
+    });
+  }, [fitPx, gridWidth, widgets]);
+  const fittedRef = useRef(fitted);
+  useEffect(() => { fittedRef.current = fitted; }, [fitted]);
+  // What is saved keeps the stored width of those widgets, at the place shown.
+  const unfit = useCallback((placements: ({ id: string } & GridPlacement)[]) => {
+    const stored = new Map(widgetsRef.current.map(widget => [widget.id, widget]));
+    const shown = new Map(fittedRef.current.map(widget => [widget.id, widget]));
+    return placements.map(placement => {
+      const widget = stored.get(placement.id);
+      if (!widget || shown.get(placement.id)?.w === widget.w || placement.w >= widget.w) return placement;
+      const x = placement.x - fitShift(widget, widget.w - placement.w);
+      return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, x)) };
+    });
+  }, []);
+  useEffect(() => { unfitRef.current = unfit; }, [unfit]);
+
   const measure = useCallback((id: string, px: number) => {
     // A hidden page measures 0; narrow screens have other widths: keep the desktop heights.
     if (px < 1) return;
@@ -403,11 +441,11 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // being chosen, the widget pushes the ones it now overlaps downwards; they
   // come back if it shrinks again before the handle is released.
   const displayed = useMemo(() => {
-    const base = resize ? widgets.map(widget => widget.id === resize.id ? { ...widget, x: resize.x, w: resize.w } : widget) : widgets;
+    const base = resize ? fitted.map(widget => widget.id === resize.id ? { ...widget, x: resize.x, w: resize.w } : widget) : fitted;
     const flowed = reflowHeights(base, heights);
     if (hits) return packSearchResults(flowed, hits);
     return resize ? pushOverlaps(flowed, resize.id) : flowed;
-  }, [heights, hits, resize, widgets]);
+  }, [fitted, heights, hits, resize]);
   const displayedRef = useRef(displayed);
   useEffect(() => { displayedRef.current = displayed; }, [displayed]);
 
@@ -446,13 +484,13 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const placements = displayedRef.current;
         setResize(null);
-        editRef.current(page => applyPlacements(page, placements));
+        editRef.current(page => applyPlacements(page, unfit(placements)));
       }));
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', stop);
     window.addEventListener('pointercancel', stop);
-  }, [formatsOf]);
+  }, [formatsOf, unfit]);
 
   // Register new items, forget removed ones and apply the displayed layout.
   useLayoutEffect(() => {
@@ -585,7 +623,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     if (mode !== 'tablet' || !gridWidth) return null;
     // Above the phone width the header widgets keep their row at the top, at
     // their desktop proportions; on phones the phone header replaces them.
-    const header = phoneHeader ? [] : compactOrder.filter(widget => HEADER_WIDGET_TYPES.has(widget.type));
+    const shownAt = new Map(fitted.map(widget => [widget.id, widget]));
+    const header = phoneHeader ? [] : compactOrder.filter(widget => HEADER_WIDGET_TYPES.has(widget.type)).map(widget => shownAt.get(widget.id) ?? widget);
     const bandHeight = header.length ? Math.max(...header.map(widget => pxHeights[widget.id] ?? 0)) + COMPACT_GAP : 0;
     const bottoms = [bandHeight, bandHeight];
     const places = new Map<string, { column: number; top: number }>();
@@ -600,7 +639,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
       bottoms[column] += (pxHeights[widget.id] ?? 0) + COMPACT_GAP;
     }
     return { places, band, height: Math.max(0, ...bottoms) };
-  }, [compactOrder, editMode, gridWidth, hits, mode, page, phoneHeader, pxHeights]);
+  }, [compactOrder, editMode, fitted, gridWidth, hits, mode, page, phoneHeader, pxHeights]);
   // Phones and tablets in edit mode: the widgets with their controls (default),
   // or the compact list to reorder quickly.
   const [listView, setListView] = useState(false);
@@ -649,6 +688,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
                 editMode={editable || compactEdit}
                 edit={edit}
                 onMeasure={measure}
+                onMeasureWidth={measureWidth}
                 onResizeStart={editable ? (edge, event) => startResize(widget, edge, event) : undefined}
                 canResizeWidth={editable && !getWidgetCatalogEntry(widget.type)?.fixedWidth && formatsOf(widget).length > 1}
               />
@@ -705,6 +745,8 @@ interface WidgetFrameProps extends PageViewProps {
   editMode: boolean;
   edit: (operation: (page: Page) => Page) => void;
   onMeasure: (widgetId: string, px: number) => void;
+  /** Widgets that fit their content report the width it needs. */
+  onMeasureWidth: (widgetId: string, px: number) => void;
   /** Starts choosing the width from a side (`e`, `w`). */
   onResizeStart?: (edge: ResizeEdge, event: React.PointerEvent<HTMLElement>) => void;
   /** More than one width format at this screen width. */
@@ -716,7 +758,7 @@ interface WidgetFrameProps extends PageViewProps {
  * mode its controls sit in its top-right corner, together with the header
  * buttons of the widget (`WidgetHeaderActions`).
  */
-function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, canResizeWidth, ...props }: WidgetFrameProps) {
+function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, onResizeStart, canResizeWidth, ...props }: WidgetFrameProps) {
   const { t } = useI18n();
   const { updateWidgetSettings } = usePages();
   const { setSettingsModal } = useConfig();
@@ -735,6 +777,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
     visible: showTitle,
     setVisible: (visible: boolean) => updateWidgetSettings(page.id, widget.id, { showTitle: visible }),
   }), [customTitle, page.id, showTitle, updateWidgetSettings, widget.id]);
+  const reportWidth = useCallback((px: number) => onMeasureWidth(widget.id, px), [onMeasureWidth, widget.id]);
 
   useEffect(() => {
     const node = ref.current;
@@ -773,8 +816,9 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
           <Emoji emoji={entry?.icon ?? '🧩'} /> {name}
         </div>
       )}
-      <WidgetActionsSlotContext.Provider value={editMode ? slot : null}>
+      <WidgetActionsSlotContext.Provider value={editMode ? slot : undefined}>
         <WidgetTitleContext.Provider value={titleContext}>
+        <WidgetFitContext.Provider value={reportWidth}>
         <PageWidgetContent
           pageId={page.id}
           instance={widget}
@@ -787,6 +831,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
           onUpdateSettings={settings => updateWidgetSettings(page.id, widget.id, settings)}
           onRemoveView={() => edit(current => removeWidget(current, widget.id))}
         />
+        </WidgetFitContext.Provider>
         </WidgetTitleContext.Provider>
       </WidgetActionsSlotContext.Provider>
       {editMode && onResizeStart && canResizeWidth && (
@@ -822,6 +867,15 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
       )}
     </div>
   );
+}
+
+/**
+ * How far a widget that fits its content moves when it is `spare` columns
+ * narrower than stored: it keeps the side it is aligned to (the end by default).
+ */
+function fitShift(widget: WidgetInstance, spare: number): number {
+  const align = widget.settings.align;
+  return align === 'start' ? 0 : align === 'center' ? Math.floor(spare / 2) : spare;
 }
 
 /**

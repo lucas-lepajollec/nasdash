@@ -4,6 +4,7 @@ import React, { createContext, useContext, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
+import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 
 /** Shared widget shell of the Calme interface: the title sits above a quiet block. */
 
@@ -30,25 +31,30 @@ export function useTitleShown(hiddenByDefault = false): boolean {
   return context?.visible ?? (!(config?.settings?.hideWidgetTitles ?? false) && !hiddenByDefault);
 }
 
-/** Edit mode: the eye next to a title shows or hides it outside edit mode, for this widget only. */
+/**
+ * Edit mode: the eye that shows or hides a title outside edit mode, for this
+ * widget only. Next to a shown title; a hidden title stays hidden while
+ * editing (the page does not jump) and its eye joins the widget's controls.
+ */
 export function WidgetTitleVisibility({ shown }: { shown: boolean }) {
   const { t } = useI18n();
   const context = useContext(WidgetTitleContext);
   if (!context?.setVisible) return null;
   const label = shown ? t('pages.widget.hideTitle') : t('pages.widget.showTitle');
-  return (
+  const button = (
     <button
       type="button"
-      className={`ndc-title-eye ${shown ? '' : 'is-off'}`}
+      className={shown ? 'ndc-title-eye' : 'nd-action-icon'}
       aria-pressed={!shown}
       aria-label={label}
       title={label}
       data-no-widget-drag
       onClick={event => { event.stopPropagation(); context.setVisible?.(!shown); }}
     >
-      {shown ? <Eye size={12} aria-hidden="true" /> : <EyeOff size={12} aria-hidden="true" />}
+      {shown ? <Eye size={12} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}
     </button>
   );
+  return shown ? button : <WidgetHeaderActions>{button}</WidgetHeaderActions>;
 }
 
 /**
@@ -118,21 +124,25 @@ export function CalmeWidget({ title, aside, editMode, children, flush, hideTitle
   children: React.ReactNode;
   /** No inner padding (lists that draw their own rows). */
   flush?: boolean;
-  /** The title is hidden unless this widget is set to show it (still shown in edit mode). */
+  /** The title is hidden unless this widget is set to show it. */
   hideTitle?: boolean;
   /** The content without the surrounding block (header widgets). */
   bare?: boolean;
 }) {
   const shown = useTitleShown(hideTitle);
+  // Out of a page (nothing to save the choice in), edit mode shows the title to rename it.
+  const pageTitle = useContext(WidgetTitleContext)?.setVisible !== undefined;
+  const titled = shown || (editMode && !pageTitle);
   return (
     <section className={`ndc-widget ${bare ? 'ndc-widget--bare' : ''}`}>
-      {(shown || editMode) && (
-        <h3 className={`ndc-title ${shown ? '' : 'is-hidden-title'}`}>
+      {titled && (
+        <h3 className="ndc-title">
           <WidgetTitleText title={title} editMode={editMode} />
-          {editMode && <WidgetTitleVisibility shown={shown} />}
+          {editMode && shown && <WidgetTitleVisibility shown />}
           {aside && <span className="ndc-title-aside">{aside}</span>}
         </h3>
       )}
+      {editMode && !shown && <WidgetTitleVisibility shown={false} />}
       {bare ? children : <div className={`ndc-box ${flush ? 'ndc-box--flush' : ''}`}>{children}</div>}
     </section>
   );

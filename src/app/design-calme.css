@@ -243,13 +243,9 @@ body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .nd-page-
   body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-actions { opacity: 1; }
 }
 
-/* Edit mode: the title row is tall enough for the widget controls drawn in
-   its top-right corner, and its text stays clear of them. */
-.nd-page-widget--editing .ndc-title {
-  min-height: 32px;
-  align-items: center;
-  padding-top: 2px;
-}
+/* Edit mode: the title row keeps its height (nothing on the page moves when
+   editing starts); the widget controls are centred on it, in the corner. */
+.nd-page-widget--editing .ndc-title { align-items: center; }
 
 .ndc-title-aside {
   margin-left: auto;
@@ -702,10 +698,6 @@ body[data-design="calme"] .nd-category-title-above {
   padding: 0 2px;
   /* Room for the edit-mode controls drawn in the corner. */
   padding-right: var(--nd-page-actions-width, 0px);
-}
-
-body[data-design="calme"] .nd-page-widget--editing .nd-category-title-above {
-  min-height: 32px;
 }
 
 body[data-design="calme"] .nd-service {
@@ -2733,9 +2725,9 @@ body[data-outlines="off"][data-design="calme"] .nd-input:not(:focus) { border-co
 body[data-design="calme"] .nd-header { padding-left: 32px; padding-right: 32px; }
 
 /* Edit controls sit in the widget's top-right corner, flush with its edge and
-   centred on its title row (32 px in edit mode). */
+   centred on its title row (17 px: they reach into the gutter above). */
 body[data-design="calme"] .nd-page-widget-actions {
-  top: 2px;
+  top: -6px;
   right: 0;
   height: 28px;
   padding: 0 2px;
@@ -3931,7 +3923,11 @@ body[data-design="calme"][data-blur="on"].light {
 }
 .nd-header-menu.is-vertical .nd-header-tab-link.is-active { background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
 .nd-header-menu.is-vertical .nd-header-tab-add { align-self: flex-start; margin: 4px 10px; }
-.nd-hw-actions { gap: 8px; }
+/* The row is as wide as its buttons; the widget is fitted to it (WidgetFit).
+   When even that is too wide, only the account name gives way. */
+.nd-hw-actions-row { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.nd-hw-actions-row > * { flex-shrink: 0; }
+.nd-hw-actions-row > .nd-hw-account { flex-shrink: 1; }
 .nd-hw-divider { width: 1px; height: 16px; margin: 0 4px; background: var(--nd-border); flex-shrink: 0; }
 .nd-hw-account { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .nd-hw-user {
@@ -3940,10 +3936,8 @@ body[data-design="calme"][data-blur="on"].light {
   color: var(--nd-text); font-size: 0.72rem; font-weight: 600;
 }
 .nd-hw-user svg { color: var(--nd-accent); flex-shrink: 0; }
-.nd-hw-user-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nd-hw-user-name { min-width: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nd-hw-logout, .nd-hw-login { min-width: 0; padding: 6px; justify-content: center; text-decoration: none; }
-/* A narrow buttons widget keeps the buttons and drops the name. */
-@container (max-width: 250px) { .nd-hw-user { display: none; } }
 
 /* Edit mode: the eye next to a title shows or hides it outside edit mode, for that widget. */
 .ndc-title-eye {
@@ -3951,7 +3945,6 @@ body[data-design="calme"][data-blur="on"].light {
   background: none; color: var(--nd-text-dimmed); cursor: pointer; flex-shrink: 0;
 }
 .ndc-title-eye:hover, .ndc-title-eye:focus-visible { color: var(--nd-text); }
-.ndc-title.is-hidden-title > :not(.ndc-title-eye),
 .is-hidden-title > :not(.ndc-title-eye):not(.nd-category-edit-actions) { opacity: 0.45; }
 
 /* Searching: widgets that do not match step aside. */
@@ -3972,3 +3965,27 @@ body[data-design="calme"][data-blur="on"].light {
 .nd-hw-menu.is-wrapping .nd-header-menu { flex-wrap: wrap; }
 body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !important; }
 .nd-hw-menu.is-tight .nd-header-tab-link { padding-left: 6px; padding-right: 6px; }
+
+/* Menu widget with a page limit: the last button unfolds the other pages. */
+.nd-header-tab-more { white-space: nowrap; }
+.nd-header-tab-more-chevron { flex-shrink: 0; transition: transform 0.15s ease; }
+.nd-header-tab-more[aria-expanded="true"] .nd-header-tab-more-chevron { transform: rotate(180deg); }
+.nd-header-more-panel {
+  position: fixed; z-index: 400; min-width: 180px; max-width: 280px; max-height: min(420px, 70vh); overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2px; padding: 6px; box-sizing: border-box;
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); background: var(--nd-bg-surface, var(--nd-bg));
+}
+.nd-header-more-panel .nd-header-tab { display: flex; }
+.nd-header-more-panel .nd-header-tab-link {
+  flex: 1; width: 100%; margin: 0; padding: 8px 10px; border-bottom: none; border-radius: 4px; text-align: left;
+}
+.nd-header-more-panel .nd-header-tab-link:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.nd-header-more-panel .nd-header-tab-link.is-active { color: var(--nd-text); background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
+.nd-header-more-panel .nd-header-tab-rename { top: 50%; right: 6px; transform: translateY(-50%); }
+.nd-header-more-panel .nd-header-tab-input { flex: 1; margin: 4px 10px; }
+/* Edit mode: the "+" of a menu row sits just after it, outside its width, so
+   the pages stay exactly where they are out of edit mode. */
+.nd-hw-menu .nd-header-menu:not(.is-vertical) { position: relative; }
+.nd-hw-menu .nd-header-menu:not(.is-vertical) > .nd-header-tab-add {
+  position: absolute; left: 100%; top: 50%; margin-left: 2px; transform: translateY(-50%);
+}

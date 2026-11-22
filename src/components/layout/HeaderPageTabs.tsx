@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Pencil, Plus } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ChevronDown, Pencil, Plus } from 'lucide-react';
 import type { TabDef, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -14,25 +15,39 @@ import { Emoji } from '../shared/Emoji';
  * and drop, renamed in place (pencil on hover, or a double click) and a new
  * page is created from the "+" at the end, without going through settings.
  * `tabs` is the whole ordered list; `start`/`end` the part shown here (the
- * menu can be split around the title).
+ * menu can be split around another widget). With a `limit`, the pages after
+ * it are listed under a last button that unfolds them; in edit mode they are
+ * reordered and renamed there too.
  */
 type TabsProps = {
   tabs: TabDef[]; start?: number; end?: number; activeTab?: TabId; onSwitch?: (id: TabId) => void; editing: boolean;
   showIcons: boolean; flushFirst: boolean; last: boolean; tabIcons?: Record<string, string>;
   /** One page per line (the menu widget's list style). */
   vertical?: boolean;
+  /** How many pages show in the row; the others unfold from the last button. */
+  limit?: number;
 };
+
+/** The pages of this part: those in the row, then those under the last button. */
+function splitTabs({ tabs, start = 0, end = tabs.length, limit }: TabsProps): [TabDef[], TabDef[]] {
+  const part = tabs.slice(start, end);
+  const cut = limit && limit > 0 && limit < part.length ? limit : part.length;
+  return [part.slice(0, cut), part.slice(cut)];
+}
 
 export function HeaderPageTabs(props: TabsProps) {
   // Out of edit mode the menu reads nothing more than its props: no page or settings subscription.
   return props.editing ? <EditableTabs {...props} /> : <PlainTabs {...props} />;
 }
 
-function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, showIcons, flushFirst, tabIcons, vertical }: TabsProps) {
+function PlainTabs(props: TabsProps) {
+  const { activeTab, onSwitch, showIcons, flushFirst, tabIcons, vertical } = props;
   const { t } = useI18n();
+  const [row, more] = splitTabs(props);
+  const [open, setOpen] = useState(false);
   return (
     <nav data-tour="pages" className={`nd-header-menu ${vertical ? 'is-vertical' : ''}`}>
-      {tabs.slice(start, end).map((tab, index) => {
+      {row.map((tab, index) => {
         const isActive = tab.id === activeTab;
         const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
         return (
@@ -43,17 +58,37 @@ function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, sh
           </button>
         );
       })}
+      {more.length > 0 && (
+        <MorePages tabs={more} activeTab={activeTab} open={open} onOpenChange={setOpen}>
+          {more.map(tab => {
+            const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
+            return (
+              <button key={tab.id} type="button" aria-current={tab.id === activeTab ? 'page' : undefined}
+                onClick={() => { setOpen(false); onSwitch?.(tab.id); }}
+                className={`nd-btn-menu-link nd-header-tab-link ${tab.id === activeTab ? 'is-active' : ''}`}>
+                {icon && <span className="nd-header-tab-icon"><Emoji emoji={icon} /></span>}
+                <span className="nd-header-tab-name">{t(tab.name)}</span>
+              </button>
+            );
+          })}
+        </MorePages>
+      )}
     </nav>
   );
 }
 
-function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, editing, showIcons, flushFirst, last, vertical }: TabsProps) {
+function EditableTabs(props: TabsProps) {
+  const { tabs, activeTab, onSwitch, editing, showIcons, flushFirst, last, vertical } = props;
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { pages, createPage, updatePageDetails } = usePages();
   const [renaming, setRenaming] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const shown = tabs.slice(start, end);
+  const [row, more] = splitTabs(props);
+  const shown = [...row, ...more];
+  const [moreOpen, setMoreOpen] = useState(false);
+  // A page just added lands under the last button: it unfolds to name it.
+  const open = moreOpen || more.some(tab => tab.id === renaming);
 
   const move = (id: string, over: string) => {
     void updateConfig({ tabOrder: moveById(tabs, tab => tab.id, id, over).map(tab => tab.id) });
@@ -72,37 +107,45 @@ function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch,
     } finally { setBusy(false); }
   };
 
+  const item = (tab: TabDef, index: number) => {
+    const isActive = tab.id === activeTab;
+    const icon = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
+    const label = t(tab.name);
+    const canRename = editing && pages.some(page => page.id === tab.id);
+    return (
+      <Item key={tab.id} editing={editing} id={tab.id}>
+        {renaming === tab.id
+          ? <RenameField initial={label} onDone={value => rename(tab.id, value, label)} onCancel={() => setRenaming(null)} />
+          : (
+            <>
+              <button type="button" aria-current={isActive ? 'page' : undefined} onClick={() => onSwitch?.(tab.id)}
+                onDoubleClick={canRename ? () => setRenaming(tab.id) : undefined}
+                className={`nd-btn-menu-link nd-header-tab-link ${isActive ? 'is-active' : ''} ${index === 0 && flushFirst ? 'is-flush' : ''}`}>
+                {icon && <span className="nd-header-tab-icon"><Emoji emoji={icon} /></span>}
+                <span className="nd-header-tab-name">{label}</span>
+              </button>
+              {canRename && (
+                <button type="button" className="nd-header-tab-rename" onClick={() => setRenaming(tab.id)}
+                  aria-label={t('pages.settings.renameNamed', { name: label })} title={t('pages.settings.rename')}>
+                  <Pencil size={11} />
+                </button>
+              )}
+            </>
+          )}
+      </Item>
+    );
+  };
+
   return (
     <nav data-tour="pages" className={`nd-header-menu ${editing ? 'is-editing' : ''} ${vertical ? 'is-vertical' : ''}`}>
-      <Sortable editing={editing} vertical={vertical} ids={shown.map(tab => tab.id)} onMove={move}>
-        {shown.map((tab, index) => {
-          const isActive = tab.id === activeTab;
-          const icon = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
-          const label = t(tab.name);
-          const canRename = editing && pages.some(page => page.id === tab.id);
-          return (
-            <Item key={tab.id} editing={editing} id={tab.id}>
-              {renaming === tab.id
-                ? <RenameField initial={label} onDone={value => rename(tab.id, value, label)} onCancel={() => setRenaming(null)} />
-                : (
-                  <>
-                    <button type="button" aria-current={isActive ? 'page' : undefined} onClick={() => onSwitch?.(tab.id)}
-                      onDoubleClick={canRename ? () => setRenaming(tab.id) : undefined}
-                      className={`nd-btn-menu-link nd-header-tab-link ${isActive ? 'is-active' : ''} ${index === 0 && flushFirst ? 'is-flush' : ''}`}>
-                      {icon && <span className="nd-header-tab-icon"><Emoji emoji={icon} /></span>}
-                      <span className="nd-header-tab-name">{label}</span>
-                    </button>
-                    {canRename && (
-                      <button type="button" className="nd-header-tab-rename" onClick={() => setRenaming(tab.id)}
-                        aria-label={t('pages.settings.renameNamed', { name: label })} title={t('pages.settings.rename')}>
-                        <Pencil size={11} />
-                      </button>
-                    )}
-                  </>
-                )}
-            </Item>
-          );
-        })}
+      {/* One list for the row and the unfolded pages: a page moves between them by drag and drop. */}
+      <Sortable editing={editing} layout={more.length ? 'grid' : vertical ? 'list' : 'row'} ids={shown.map(tab => tab.id)} onMove={move}>
+        {row.map(item)}
+        {more.length > 0 && (
+          <MorePages tabs={more} activeTab={activeTab} open={open} onOpenChange={setMoreOpen}>
+            {more.map((tab, index) => item(tab, row.length + index))}
+          </MorePages>
+        )}
       </Sortable>
       {editing && last && (
         <button type="button" className="nd-header-tab-add" onClick={() => void create()} disabled={busy}
@@ -115,8 +158,72 @@ function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch,
 }
 
 /** Drag and drop exists only while editing: out of edit mode the menu is plain buttons, with nothing listening. */
-function Sortable({ editing, vertical, ids, onMove, children }: { editing: boolean; vertical?: boolean; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
-  return editing ? <SortableList ids={ids} enabled layout={vertical ? 'list' : 'row'} onMove={onMove}>{children}</SortableList> : <>{children}</>;
+function Sortable({ editing, layout, ids, onMove, children }: { editing: boolean; layout: 'list' | 'row' | 'grid'; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
+  return editing ? <SortableList ids={ids} enabled layout={layout} onMove={onMove}>{children}</SortableList> : <>{children}</>;
+}
+
+/**
+ * The last button of a menu with a page limit: it names the page shown when
+ * that page is one of those it holds, and unfolds them below itself.
+ */
+function MorePages({ tabs, activeTab, open, onOpenChange, children }: {
+  tabs: TabDef[]; activeTab?: TabId; open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode;
+}) {
+  const { t } = useI18n();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement | null>(null);
+  const current = tabs.find(tab => tab.id === activeTab);
+
+  // Under the button, kept inside the window.
+  const place = (node: HTMLDivElement | null) => {
+    const box = trigger.current?.getBoundingClientRect();
+    if (!node || !box) return;
+    node.style.top = `${Math.round(box.bottom + 6)}px`;
+    const left = Math.min(box.left, window.innerWidth - node.offsetWidth - 8);
+    node.style.left = `${Math.max(8, Math.round(left))}px`;
+  };
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (trigger.current?.contains(target) || panel.current?.contains(target)) return;
+      onOpenChange(false);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      onOpenChange(false);
+      trigger.current?.focus();
+    };
+    const follow = () => place(panel.current);
+    document.addEventListener('pointerdown', away, true);
+    document.addEventListener('keydown', key);
+    window.addEventListener('resize', follow);
+    window.addEventListener('scroll', follow, true);
+    return () => {
+      document.removeEventListener('pointerdown', away, true);
+      document.removeEventListener('keydown', key);
+      window.removeEventListener('resize', follow);
+      window.removeEventListener('scroll', follow, true);
+    };
+  }, [onOpenChange, open]);
+
+  return (
+    <>
+      <button ref={trigger} type="button" aria-expanded={open} aria-current={current ? 'page' : undefined}
+        title={t('pages.header.morePages', { count: tabs.length })}
+        onClick={() => onOpenChange(!open)}
+        className={`nd-btn-menu-link nd-header-tab-link nd-header-tab-more ${current ? 'is-active' : ''}`}>
+        <span className="nd-header-tab-name">{current ? t(current.name) : t('pages.header.more')}</span>
+        <ChevronDown size={13} aria-hidden="true" className="nd-header-tab-more-chevron" />
+      </button>
+      {open && typeof document !== 'undefined' && createPortal(
+        <div ref={node => { panel.current = node; place(node); }} className="nd-header-more-panel" role="group" aria-label={t('pages.header.more')}>
+          {children}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
 }
 function Item({ editing, id, children }: { editing: boolean; id: string; children: React.ReactNode }) {
   return editing ? <SortableItem id={id} className="nd-header-tab">{children}</SortableItem> : <div className="nd-header-tab">{children}</div>;

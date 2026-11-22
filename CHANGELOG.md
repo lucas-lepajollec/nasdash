@@ -13,12 +13,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- The header is made of widgets: **Search**, **Page menu** and **Buttons** (hide information, edit mode, settings, account). Move them anywhere on a page, use them several times; every search widget shows the same search and every menu the same pages. The search keeps its width handles. The menu has three styles (tabs, in a block, a list), icons, an alignment and can show half of the pages, so two menus can frame another widget; in edit mode its pages are still reordered, renamed and added in place. Every page keeps at least one menu and one buttons widget, and new pages start with all three.
+- The header is made of widgets: **Search**, **Page menu** and **Buttons** (hide information, edit mode, settings, account). Move them anywhere on a page, use them several times; every search widget shows the same search and every menu the same pages. The search keeps its width handles; the buttons widget is as wide as its buttons. The menu has three styles (tabs, in a block, a list), icons, an alignment, a slider for how many pages it shows (the others unfold from a last button) and can show half of the pages, so two menus can frame another widget; in edit mode its pages are still reordered, renamed and added in place, the unfolded ones too. Every page keeps at least one menu and one buttons widget, and new pages start with all three.
 - The search looks through every widget of the page: case, accents and one typo are forgiven, all the words typed must appear, and the widgets that do not match step aside while the others move up. Searching a category's name shows the whole category.
-- Each widget can show or hide its own title, whatever the general setting: the eye next to its title in edit mode. Header widgets hide theirs by default.
+- Each widget can show or hide its own title, whatever the general setting: the eye next to its title in edit mode, or among its controls when the title is hidden. Header widgets hide theirs by default.
 - Phones: a new header with the page's name in large type and round glass buttons for the search and the menu; the menu opens as a glass sheet from the bottom with the pages and the actions. Swipe left or right to change page; dots at the bottom show where you are. Narrower side margins.
 - NasDash can be installed on a phone's home screen (Safari: Share, Add to Home Screen) and opens full screen.
 - Machines widget: in edit mode, drag the machines into the order you want (#167).
+
+### Changed
+
+- Entering edit mode no longer moves anything on the page: hidden titles stay hidden and the title rows keep their height (the widget controls show over the corner when the pointer is on a widget).
 
 ### Removed
 

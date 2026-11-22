@@ -7,14 +7,15 @@ import { HeaderPageTabs } from '@/components/layout/HeaderPageTabs';
 import { useShellControls } from '@/components/layout/ShellControls';
 import { CalmeWidget } from '../calme';
 import type { WidgetViewProps } from '../types';
-import { HeaderWidgetSettings, readAlign, readMenuPart, readMenuStyle } from './HeaderWidgetDialog';
+import { MenuWidgetSettings, readAlign, readMenuLimit, readMenuPart, readMenuStyle } from './HeaderWidgetDialog';
 
 /**
  * The page menu, as a widget: the same pages in every menu widget. In edit
  * mode the pages are reordered by drag and drop, renamed in place and a new
  * page is added from the "+" (in the widget that shows the last pages).
- * Its own settings: style (tabs, in a block, a list), icons, alignment, and
- * which pages it shows (all, or one half for a menu split around another widget).
+ * Its own settings: style (tabs, in a block, a list), icons, alignment, how
+ * many pages show before a last button that unfolds the others, and which
+ * pages it holds (all, or one half for a menu split around another widget).
  */
 export default function PageMenuView({ instance, editMode, onUpdateSettings }: WidgetViewProps) {
   const { t } = useI18n();
@@ -27,8 +28,10 @@ export default function PageMenuView({ instance, editMode, onUpdateSettings }: W
   const middle = Math.ceil(tabs.length / 2);
   const start = part === 'second' ? middle : 0;
   const end = part === 'first' ? middle : tabs.length;
+  const limit = readMenuLimit(settings);
   const title = t('widget.page-menu.name');
-  const [menuBox, fitLevel] = useMenuFit(style !== 'list', tabs.slice(start, end).map(tab => tab.name).join('\n') + (editMode ? '\n+' : ''));
+  const rowTabs = tabs.slice(start, limit ? Math.min(end, start + limit) : end);
+  const [menuBox, fitLevel] = useMenuFit(style !== 'list', rowTabs.map(tab => tab.name).join('\n') + (rowTabs.length < end - start ? `\n…${activeTab}` : ''));
   const menu = (
     <HeaderPageTabs
       tabs={tabs}
@@ -42,11 +45,12 @@ export default function PageMenuView({ instance, editMode, onUpdateSettings }: W
       flushFirst={false}
       last={end >= tabs.length}
       vertical={style === 'list'}
+      limit={limit}
     />
   );
   return (
     <CalmeWidget title={title} editMode={editMode} bare={style === 'tabs'} hideTitle>
-      {editMode && <HeaderWidgetSettings kind="menu" title={title} settings={settings} fallbackAlign="center" onSave={onUpdateSettings} />}
+      {editMode && <MenuWidgetSettings title={title} settings={settings} pageCount={end - start} onSave={onUpdateSettings} />}
       <div ref={menuBox} className={`nd-hw nd-hw--${style === 'list' ? 'start' : align} nd-hw-menu nd-hw-menu--${style} ${fitLevel === 1 ? 'is-tight' : fitLevel === 2 ? 'is-tight is-wrapping' : ''}`}>{menu}</div>
     </CalmeWidget>
   );
