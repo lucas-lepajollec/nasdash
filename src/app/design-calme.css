@@ -3983,9 +3983,11 @@ body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !impor
 .nd-header-more-panel .nd-header-tab-link:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
 .nd-header-more-panel .nd-header-tab-link.is-active { color: var(--nd-text); background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
 .nd-header-more-panel .nd-header-tab-rename { top: 50%; right: 6px; transform: translateY(-50%); }
+.nd-header-more-panel .nd-header-tab-delete { top: 50%; left: auto; right: 26px; transform: translateY(-50%); }
 .nd-header-more-panel .nd-header-tab-input { flex: 1; margin: 4px 10px; }
-/* Edit mode: the "+" of a menu row sits just after it, outside its width, so
-   the pages stay exactly where they are out of edit mode. */
+/* Edit mode: the "+" sits right after the last page. On one line it is kept
+   outside the row's width, so the pages stay where they are out of edit
+   mode; when the row wraps it follows the last page on its line. */
 .nd-hw-menu .nd-header-menu:not(.is-vertical) { position: relative; }
 .nd-hw-menu .nd-header-menu:not(.is-vertical) > .nd-header-tab-add {
   position: absolute; left: 100%; top: 50%; margin-left: 2px; transform: translateY(-50%);
@@ -3999,3 +4001,8 @@ body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !impor
 .nd-page-widget--fit.nd-page-widget--end { margin-left: auto; }
 /* Edit controls with nothing in them (a required widget) are not drawn. */
 .nd-page-widget-actions:not(:has(button)) { display: none !important; }
+.nd-hw-menu.is-wrapping .nd-header-menu:not(.is-vertical) > .nd-header-tab-add { position: static; margin-left: 0; transform: none; }
+/* Dragging the menu or the buttons: the landing slot is as wide as the widget. */
+.nd-page-drop-preview--fit::before { width: var(--nd-preview-fit); max-width: 100%; }
+.nd-page-drop-preview--center::before { margin-inline: auto; }
+.nd-page-drop-preview--end::before { margin-left: auto; }

@@ -76,7 +76,7 @@ function useMenuFit(enabled: boolean, content: string) {
     const check = () => {
       const nav = box.querySelector<HTMLElement>('.nd-header-menu');
       if (!nav || box.clientWidth < 1) return;
-      if (level < 2) needs.current.widths[level] = nav.scrollWidth;
+      if (level < 2) needs.current.widths[level] = rowWidth(nav);
       const [roomy, tight] = needs.current.widths;
       // The widget is only as wide as its menu: the room is that of its place
       // on the page, less what surrounds the row (block style).
@@ -96,4 +96,15 @@ function useMenuFit(enabled: boolean, content: string) {
     return () => observer.disconnect();
   }, [content, enabled, level]);
   return [ref, level] as const;
+}
+
+/** Width of the pages in a row, without the edit mode's "+" (it sits outside the row). */
+function rowWidth(nav: HTMLElement): number {
+  const left = nav.getBoundingClientRect().left;
+  let right = left;
+  for (const child of Array.from(nav.children)) {
+    if (child.classList.contains('nd-header-tab-add')) continue;
+    right = Math.max(right, child.getBoundingClientRect().right);
+  }
+  return Math.ceil(right - left);
 }

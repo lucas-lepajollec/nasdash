@@ -2,18 +2,20 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Pencil, Plus } from 'lucide-react';
+import { ChevronDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { TabDef, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { usePages } from '@/providers/PagesProvider';
 import { moveById, SortableItem, SortableList } from '../widgets/content/Sortable';
 import { Emoji } from '../shared/Emoji';
+import ConfirmModal from '../modals/ConfirmModal';
 
 /**
  * The pages in the header menu. In edit mode they are put in order by drag
- * and drop, renamed in place (pencil on hover, or a double click) and a new
- * page is created from the "+" at the end, without going through settings.
+ * and drop, renamed in place (pencil on hover, or a double click), deleted
+ * (bin on hover, after a confirmation) and a new page is created from the
+ * "+" right after the last one, without going through settings.
  * `tabs` is the whole ordered list; `start`/`end` the part shown here (the
  * menu can be split around another widget). With a `limit`, the pages after
  * it are listed under a last button that unfolds them; in edit mode they are
@@ -59,7 +61,7 @@ function PlainTabs(props: TabsProps) {
         );
       })}
       {more.length > 0 && (
-        <MorePages tabs={more} activeTab={activeTab} open={open} onOpenChange={setOpen}>
+        <MorePages tabs={more} open={open} onOpenChange={setOpen}>
           {more.map(tab => {
             const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
             return (
@@ -81,8 +83,9 @@ function EditableTabs(props: TabsProps) {
   const { tabs, activeTab, onSwitch, editing, showIcons, flushFirst, last, vertical } = props;
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
-  const { pages, createPage, updatePageDetails } = usePages();
+  const { pages, createPage, updatePageDetails, deletePage } = usePages();
   const [renaming, setRenaming] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<TabDef | null>(null);
   const [busy, setBusy] = useState(false);
   const [row, more] = splitTabs(props);
   const shown = [...row, ...more];
@@ -112,6 +115,8 @@ function EditableTabs(props: TabsProps) {
     const icon = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
     const label = t(tab.name);
     const canRename = editing && pages.some(page => page.id === tab.id);
+    // The last page stays: a dashboard always has one.
+    const canDelete = canRename && pages.length > 1;
     return (
       <Item key={tab.id} editing={editing} id={tab.id}>
         {renaming === tab.id
@@ -124,6 +129,12 @@ function EditableTabs(props: TabsProps) {
                 {icon && <span className="nd-header-tab-icon"><Emoji emoji={icon} /></span>}
                 <span className="nd-header-tab-name">{label}</span>
               </button>
+              {canDelete && (
+                <button type="button" className="nd-header-tab-delete" onClick={() => setPendingDelete(tab)}
+                  aria-label={t('pages.settings.deleteNamed', { name: label })} title={t('pages.settings.delete')}>
+                  <Trash2 size={11} />
+                </button>
+              )}
               {canRename && (
                 <button type="button" className="nd-header-tab-rename" onClick={() => setRenaming(tab.id)}
                   aria-label={t('pages.settings.renameNamed', { name: label })} title={t('pages.settings.rename')}>
@@ -142,7 +153,7 @@ function EditableTabs(props: TabsProps) {
       <Sortable editing={editing} layout={more.length ? 'grid' : vertical ? 'list' : 'row'} ids={shown.map(tab => tab.id)} onMove={move}>
         {row.map(item)}
         {more.length > 0 && (
-          <MorePages tabs={more} activeTab={activeTab} open={open} onOpenChange={setMoreOpen}>
+          <MorePages tabs={more} open={open} onOpenChange={setMoreOpen}>
             {more.map((tab, index) => item(tab, row.length + index))}
           </MorePages>
         )}
@@ -153,6 +164,15 @@ function EditableTabs(props: TabsProps) {
           {busy ? <span className="nd-spinner" aria-hidden="true" /> : <Plus size={14} />}
         </button>
       )}
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={async () => { if (pendingDelete) await deletePage(pendingDelete.id); }}
+        title={t('pages.settings.deleteTitle')}
+        description={t('pages.settings.deleteDescription', { name: pendingDelete ? t(pendingDelete.name) : '' })}
+        confirmLabel={t('pages.settings.delete')}
+        cancelLabel={t('Annuler')}
+      />
     </nav>
   );
 }
@@ -162,17 +182,13 @@ function Sortable({ editing, layout, ids, onMove, children }: { editing: boolean
   return editing ? <SortableList ids={ids} enabled layout={layout} onMove={onMove}>{children}</SortableList> : <>{children}</>;
 }
 
-/**
- * The last button of a menu with a page limit, "Others": it unfolds the
- * other pages below itself, and is marked when the page shown is one of them.
- */
-function MorePages({ tabs, activeTab, open, onOpenChange, children }: {
-  tabs: TabDef[]; activeTab?: TabId; open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode;
+/** The last button of a menu with a page limit, "Others": it unfolds the other pages below itself. */
+function MorePages({ tabs, open, onOpenChange, children }: {
+  tabs: TabDef[]; open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode;
 }) {
   const { t } = useI18n();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement | null>(null);
-  const current = tabs.find(tab => tab.id === activeTab);
 
   // Under the button, kept inside the window.
   const place = (node: HTMLDivElement | null) => {
@@ -209,10 +225,10 @@ function MorePages({ tabs, activeTab, open, onOpenChange, children }: {
 
   return (
     <>
-      <button ref={trigger} type="button" aria-expanded={open} aria-current={current ? 'page' : undefined}
+      <button ref={trigger} type="button" aria-expanded={open}
         title={t('pages.header.morePages', { count: tabs.length })}
         onClick={() => onOpenChange(!open)}
-        className={`nd-btn-menu-link nd-header-tab-link nd-header-tab-more ${current ? 'is-active' : ''}`}>
+        className="nd-btn-menu-link nd-header-tab-link nd-header-tab-more">
         <span className="nd-header-tab-name">{t('pages.header.more')}</span>
         <ChevronDown size={13} aria-hidden="true" className="nd-header-tab-more-chevron" />
       </button>

@@ -228,7 +228,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   const [heights, setHeights] = useState<Record<string, number>>({});
   // Where the dragged widget will land, drawn instead of GridStack's own
   // placeholder (which refuses big jumps across widgets and lags behind).
-  const [dropPreview, setDropPreview] = useState<GridPlacement | null>(null);
+  const [dropPreview, setDropPreview] = useState<(GridPlacement & { fitPx?: number; fitAlign?: 'start' | 'center' | 'end' }) | null>(null);
   const heightsRef = useRef(heights);
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
@@ -362,6 +362,12 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         setGesture(true);
         const id = String(el.gridstackNode?.id ?? el.getAttribute('gs-id'));
         const start = grab;
+        // A widget as wide as its content: the landing slot is drawn that wide too.
+        const fitted = el.querySelector<HTMLElement>('.nd-page-widget--fit');
+        const fit = fitted ? {
+          fitPx: Math.round(fitted.getBoundingClientRect().width),
+          fitAlign: fitted.classList.contains('nd-page-widget--end') ? 'end' as const : fitted.classList.contains('nd-page-widget--center') ? 'center' as const : 'start' as const,
+        } : {};
         const read = (event: MouseEvent | TouchEvent) => {
           const gridBox = root.current?.getBoundingClientRect();
           const point = 'touches' in event ? event.touches[0] : event;
@@ -373,7 +379,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
             // As the page will show it: stored gaps kept around the measured heights.
             const layout = settled ? reflowHeights(pushOverlaps(settled, id), heightsRef.current) : null;
             const target = layout?.find(placement => placement.id === id);
-            setDropPreview(target ? { x: target.x, y: target.y, w: target.w, h: target.h } : null);
+            setDropPreview(target ? { x: target.x, y: target.y, w: target.w, h: target.h, ...fit } : null);
             if (layout) hold(layout, id);
           });
         };
@@ -697,14 +703,15 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         ))}
         {dropPreview && (
           <div
-            className="nd-page-drop-preview"
+            className={`nd-page-drop-preview ${dropPreview.fitPx ? `nd-page-drop-preview--fit nd-page-drop-preview--${dropPreview.fitAlign}` : ''}`}
             aria-hidden="true"
             style={{
               left: `${(dropPreview.x / GRID_COLUMNS) * 100}%`,
               width: `${(dropPreview.w / GRID_COLUMNS) * 100}%`,
               top: dropPreview.y * GRID_ROW_PX,
               height: dropPreview.h * GRID_ROW_PX,
-            }}
+              ...(dropPreview.fitPx ? { '--nd-preview-fit': `${dropPreview.fitPx}px` } : {}),
+            } as React.CSSProperties}
           />
         )}
       </div>

@@ -3099,9 +3099,25 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   opacity: 0;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
-.nd-header-tab:hover .nd-header-tab-rename, .nd-header-tab-rename:focus-visible { opacity: 1; }
+/* The bin mirrors the pencil, on the other side of the name. */
+.nd-header-tab-delete {
+  position: absolute;
+  top: -6px;
+  left: -2px;
+  display: inline-flex;
+  padding: 3px;
+  border: none;
+  color: var(--nd-text-dimmed);
+  background: none;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.nd-header-tab:hover .nd-header-tab-rename, .nd-header-tab-rename:focus-visible,
+.nd-header-tab:hover .nd-header-tab-delete, .nd-header-tab-delete:focus-visible { opacity: 1; }
 .nd-header-tab-rename:hover { color: var(--nd-text); }
-@media (hover: none) { .nd-header-tab-rename { opacity: 1; } }
+.nd-header-tab-delete:hover { color: var(--nd-red); }
+@media (hover: none) { .nd-header-tab-rename, .nd-header-tab-delete { opacity: 1; } }
 .nd-header-tab-input {
   margin: 0 12px;
   padding: 5px 0 3px;
