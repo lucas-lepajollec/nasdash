@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     if (!validPhotoId(instance.type, id) || !['thumb', 'preview'].includes(size)) throw new ServiceError('widgets.error.invalidRequest', 400);
     if (isDemoMode()) {
       const file = demoPhotoFile(id);
-      if (file) return NextResponse.redirect(new URL(file, request.url), { status: 307, headers });
+      if (file) return new NextResponse(null, { status: 307, headers: { ...headers, Location: file } });
       return new NextResponse(demoLandscape(id), { headers: { ...headers, 'Content-Type': 'image/svg+xml', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
     }
     // A draft preview (admin) may show photos the saved widget did not list.

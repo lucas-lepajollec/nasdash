@@ -2,7 +2,7 @@ import { navidromeCoverBytes } from '@/integrations/navidrome/collect';
 import { MUSIC_WIDGET_TYPES } from '@/lib/widgetData/music';
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
-import { demoArtFor } from '@/lib/demo/publicDomain';
+import { demoArtFor } from '@/lib/demo/library';
 import { jellyfinHeaders } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { arrHeaders } from '@/integrations/arr/collect';
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     if (isDemoMode()) {
       // The demo's public-domain artwork ships with it; anything else gets drawn art.
       const file = match.path ? demoArtFor(match.path) : undefined;
-      if (file) return NextResponse.redirect(new URL(file, request.url), { status: 307, headers: imageHeaders });
+      if (file) return new NextResponse(null, { status: 307, headers: { ...imageHeaders, Location: file } });
       return new NextResponse(demoMediaArt(id, kind), { headers: { ...imageHeaders, 'Content-Type': 'image/svg+xml', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
     }
     const { instance, path } = match;

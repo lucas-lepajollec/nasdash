@@ -99,7 +99,7 @@ it('only advertises control to admins and checks admin, CSRF, server and action 
 it('keeps demo playlists, search, history, audio and control offline, with valid WAV ranges', async () => {
   state.demo = true;
   type('music-playlists'); expect((await (await playlists(get())).json()).playlists.length).toBeGreaterThan(0);
-  expect((await (await search(get('q=Joplin'))).json()).tracks.length).toBeGreaterThan(0);
+  expect((await (await search(get('q=Morgenstern'))).json()).tracks.length).toBeGreaterThan(0);
   type('music-recent'); settings().content = 'tracks'; const history = await (await recent(get())).json(); expect(history.tracks.length).toBeGreaterThan(0);
   const request = get('id=' + history.tracks[0].id); let response = await stream(request); const wav = Buffer.from(await response.arrayBuffer()); expect(wav.toString('ascii', 0, 4)).toBe('RIFF'); expect(wav.length).toBeLessThan(10000);
   request.headers.set('Range', 'bytes=0-43'); response = await stream(request); expect(response.status).toBe(206); expect(response.headers.get('content-range')).toBe(`bytes 0-43/${wav.length}`); expect((await response.arrayBuffer()).byteLength).toBe(44);

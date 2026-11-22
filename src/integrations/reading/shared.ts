@@ -1,7 +1,7 @@
 import type { IntegrationInstance } from '@/lib/types';
 import type { ReadingItem, ReadingSummary } from '@/lib/widgetData/contracts';
 import { serviceBytes, ServiceError } from '@/lib/widgetData/services';
-import { DEMO_BOOKS, DEMO_COMICS, demoArtId } from '@/lib/demo/publicDomain';
+import { DEMO_BOOKS, DEMO_COMICS, demoArtId } from '@/lib/demo/library';
 
 /**
  * What the three reading servers share: the covers each answer lists, which
@@ -30,7 +30,7 @@ export async function coverBytes(instance: IntegrationInstance, path: string, he
 export function demoReading(instance: IntegrationInstance, provider: ReadingSummary['provider']): ReadingSummary {
   const kind: ReadingItem['kind'] = provider === 'audiobookshelf' ? 'audiobook' : provider === 'komga' ? 'comic' : 'book';
   const minute = Math.floor(Date.now() / 60_000);
-  // Public-domain novels and newspaper comics (src/lib/demo/publicDomain.ts), with their real covers.
+  // Classic novels (Standard Ebooks) and the Pepper&Carrot comic (src/lib/demo/library.ts), with their covers.
   const works = kind === 'comic' ? DEMO_COMICS : DEMO_BOOKS;
   const item = (n: number, progress?: number): ReadingItem => {
     const work = works[n % works.length];
@@ -39,7 +39,7 @@ export function demoReading(instance: IntegrationInstance, provider: ReadingSumm
   return {
     provider, name: instance.name,
     inProgress: [item(0, 64 + (minute % 3)), item(1, 23), item(2, 88)],
-    recent: [item(3), item(4), item(5), item(6)],
+    recent: [item(3), item(4), item(5), ...(works.length > 6 ? [item(6)] : [])],
     fetchedAt: Date.now(),
   };
 }

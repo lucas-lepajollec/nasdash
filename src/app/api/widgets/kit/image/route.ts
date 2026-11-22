@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
-import { demoArtFor } from '@/lib/demo/publicDomain';
+import { demoArtFor } from '@/lib/demo/library';
 import { resolveKitWidget } from '@/lib/widgetData/kitResolve';
 import { demoLandscape, queryDraft, serviceFailure, ServiceError } from '@/lib/widgetData/services';
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     if (isDemoMode()) {
       // The demo's covers ship with it (public-domain works); anything else gets drawn art.
       const file = demoArtFor(id);
-      if (file) return NextResponse.redirect(new URL(file, request.url), { status: 307, headers: { 'Cache-Control': 'private, max-age=3600' } });
+      if (file) return new NextResponse(null, { status: 307, headers: { 'Cache-Control': 'private, max-age=3600', Location: file } });
       return new NextResponse(demoLandscape(id), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=3600', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
     }
     if (!server.image) throw new ServiceError('widgets.error.notFound', 404);

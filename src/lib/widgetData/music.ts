@@ -4,7 +4,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicServer, MusicTopResponse, MusicTrack, MusicPlaylist, MusicSearchResponse } from './contracts';
 import { proxyMediaItem } from './media';
 import { serviceIdentity, ServiceError } from './services';
-import { DEMO_ALBUMS, demoArtId } from '@/lib/demo/publicDomain';
+import { DEMO_ALBUMS, demoArtId } from '@/lib/demo/library';
 
 export const MUSIC_WIDGET_TYPES = ['music-nowplaying', 'music-recent', 'music-library', 'music-top', 'music-playlists'] as const;
 export type MusicWidgetType = typeof MUSIC_WIDGET_TYPES[number];
@@ -36,10 +36,10 @@ export async function musicWeek(read: (offset: number, size: number) => Promise<
   return { week: week.slice(0, 8) };
 }
 const identity = (instance: IntegrationInstance) => ({ server: instance.type as MusicServer, name: instance.name, fetchedAt: Date.UTC(2026, 0, 15, 12) });
-/** Public-domain ragtime and jazz-age records (src/lib/demo/publicDomain.ts). */
+/** Soundtracks of open films (src/lib/demo/library.ts). */
 const album = (n: number) => DEMO_ALBUMS[n % DEMO_ALBUMS.length];
 export const demoMusicAlbums = (count: number): MusicAlbum[] => Array.from({ length: count }, (_, n) => ({
-  id: `demo-music-${n}`, title: album(n).title + (n >= DEMO_ALBUMS.length ? ` (${['Piano Roll', 'Orchestra', 'Live'][Math.floor(n / DEMO_ALBUMS.length - 1) % 3]})` : ''), artist: album(n).artist,
+  id: `demo-music-${n}`, title: album(n).title + (n >= DEMO_ALBUMS.length ? ` · ${['Deluxe', 'Live', 'Remastered'][Math.floor(n / DEMO_ALBUMS.length - 1) % 3]}` : ''), artist: album(n).artist,
   year: album(n).year, trackCount: 8 + n % 5, cover: demoArtId(album(n).slug), addedAt: Date.UTC(2026, 0, 15, 12) - n * 86400000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, plays: 82 - n,
 }));
 export function demoMusicNowPlaying(instance: IntegrationInstance): MusicNowPlayingResponse {
@@ -51,7 +51,7 @@ export function demoMusicNowPlaying(instance: IntegrationInstance): MusicNowPlay
 export function demoMusicRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): MusicRecentResponse { return { ...identity(instance), albums: content === 'tracks' ? [] : demoMusicAlbums(count), ...(content === 'tracks' ? { tracks: demoMusicTracks(count) } : {}) }; }
 export function demoMusicTop(instance: IntegrationInstance, count: number): MusicTopResponse { return { ...identity(instance), albums: demoMusicAlbums(count) }; }
 export function demoMusicLibrary(instance: IntegrationInstance): MusicLibraryResponse {
-  return { ...identity(instance), artists: 96, albums: 210, tracks: 2640, durationMs: 601920000, genres: [{ name: 'Ragtime', count: 72 }, { name: 'Jazz', count: 46 }, { name: 'Blues', count: 39 }], week: demoMusicAlbums(7), weekCount: 7 };
+  return { ...identity(instance), artists: 96, albums: 210, tracks: 2640, durationMs: 601920000, genres: [{ name: 'Soundtrack', count: 72 }, { name: 'Orchestral', count: 46 }, { name: 'Electronic', count: 39 }], week: demoMusicAlbums(7), weekCount: 7 };
 }
 
 const tracks = new Map<string, number>();
@@ -90,7 +90,7 @@ export function musicPages(settings: Record<string, unknown>): (typeof MUSIC_PAG
   return pages as (typeof MUSIC_PAGES[number])[];
 }
 export const demoMusicTracks = (count = 8): MusicTrack[] => Array.from({ length: count }, (_, n) => ({ id: `demo-song-${n}`, title: album(n).tracks[Math.floor(n / DEMO_ALBUMS.length) % album(n).tracks.length], artist: album(n).artist, album: album(n).title, albumId: `demo-music-${n % DEMO_ALBUMS.length}`, durationMs: 198000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, cover: demoArtId(album(n).slug) }));
-export const demoMusicPlaylists = (instance: IntegrationInstance, count: number) => ({ ...identity(instance), playlists: Array.from({ length: Math.min(count, 4) }, (_, n): MusicPlaylist => ({ id: `demo-playlist-${n}`, name: ['Ragtime mornings', 'Jazz age evenings', 'Piano rolls', 'Sunday blues'][n], trackCount: 8, durationMs: 1584000, cover: demoArtId(album(n).slug), owner: 'Alex' })) });
+export const demoMusicPlaylists = (instance: IntegrationInstance, count: number) => ({ ...identity(instance), playlists: Array.from({ length: Math.min(count, 4) }, (_, n): MusicPlaylist => ({ id: `demo-playlist-${n}`, name: ['Film scores', 'Quiet evening', 'Adventure', 'Focus'][n], trackCount: 8, durationMs: 1584000, cover: demoArtId(album(n).slug), owner: 'Alex' })) });
 export function demoMusicSearch(instance: IntegrationInstance, query: string): MusicSearchResponse {
   const matches = (value: string) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
   return { tracks: demoMusicTracks(20).filter(item => matches([item.title, item.artist, item.album].join(' '))), albums: demoMusicAlbums(20).filter(item => matches([item.title, item.artist].join(' '))), playlists: demoMusicPlaylists(instance, 4).playlists.filter(item => matches(item.name)) };

@@ -163,7 +163,8 @@ describe('offline demos and week boundaries', () => {
     const result = await (await routes[MUSIC_WIDGET_TYPES.indexOf(type)](get())).json();
     expect(result.server).toBe('navidrome');
     const cover = type === 'music-nowplaying' ? result.sessions[0].track.cover : type === 'music-library' ? result.week[0].cover : type === 'music-playlists' ? result.playlists[0].cover : result.albums[0].cover;
-    expect((await imageGet(image(cover))).headers.get('content-type')).toBe('image/svg+xml');
+    // The demo's own artwork: a static file it ships, linked directly.
+    expect(cover).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/);
     for (const collect of [collectNavidromeNowPlaying, collectNavidromeRecent, collectNavidromeLibrary, collectNavidromeTop, serviceJson, serviceBytes]) expect(collect).not.toHaveBeenCalled();
   });
   it('accepts demo visitor connections while remaining offline', async () => {

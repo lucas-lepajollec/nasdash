@@ -203,7 +203,8 @@ describe('fictional demo and config privacy', () => {
   it.each([['media-upcoming', upcomingGet], ['media-queue', queueGet], ['media-arr', statusGet], ['media-indexers', indexersGet], ['media-downloads', downloadsGet]] as const)('never fetches for demo %s or its art', async (type, route) => {
     state.demo = true; widget().type = type;
     const response = await route(get()), result = await response.json(); expect(response.status).toBe(200);
-    if (type === 'media-upcoming' || type === 'media-queue') { expect(result.items.length).toBeGreaterThan(0); expect((await imageGet(image(result.items[0].poster))).headers.get('content-type')).toBe('image/svg+xml'); }
+    if (type === 'media-upcoming' || type === 'media-queue') { expect(result.items.length).toBeGreaterThan(0); // The demo's own artwork: a static file it ships, linked directly.
+      expect(result.items[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/); }
     for (const collector of [collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers, collectDownloadClient, serviceBytes, serviceJson]) expect(collector).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toMatch(/fictional-key|fictional-password|example.com/);
   });
@@ -288,8 +289,8 @@ describe('upcoming library mode and idle data', () => {
     try {
       state.instances.push(source('jellyfin')); widget().settings = { source: 'library', ended: true };
       const result = await (await upcomingGet(get())).json(); expect(result.followUps).toHaveLength(4); expect(new Set(result.followUps.map((item: { status: string }) => item.status)).size).toBe(4);
-      // The demo's own artwork (a file it ships, or drawn art): never fetched.
-      expect([200, 307]).toContain((await imageGet(image(result.followUps[0].poster))).status);
+      // The demo's own artwork: a static file it ships, never fetched.
+      expect(result.followUps[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/);
       expect(demoArrRecent(state.instances[0])).toHaveLength(3); expect(demoIndexers(state.instances[2]).hourly).toHaveLength(24);
       expect(demoDownloadClient(state.instances[3])).toMatchObject({ sessionDownloaded: 48600000000, sessionUploaded: 12400000000, seeding: 1 }); expect(demoDownloadClient(state.instances[3]).completed?.length).toBeGreaterThan(0);
       expect(fetcher).not.toHaveBeenCalled(); expect(collectLibraryUpcoming).not.toHaveBeenCalled(); expect(serviceJson).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
@@ -298,7 +299,7 @@ describe('upcoming library mode and idle data', () => {
   it('returns fictional later releases for an empty one-day album window without fetching', async () => {
     state.demo = true; state.instances = [source('lidarr')]; widget().settings = { days: 1, kinds: ['album'] };
     const result = await (await upcomingGet(get())).json(); expect(result.items).toEqual([]); expect(result.later).toHaveLength(3);
-    expect(result.later[0].poster).toContain('/api/widgets/media/image?'); expect(collectArrUpcoming).not.toHaveBeenCalled();
+    expect(result.later[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/); expect(collectArrUpcoming).not.toHaveBeenCalled();
   });
 });
 
@@ -364,7 +365,7 @@ describe('admin catalogue search route', () => {
   });
   it('returns demo hits without contacting any catalogue', async () => {
     state.demo = true; const response = await catalogGet(search('q=cloud&kinds=movie'));
-    expect(await response.json()).toMatchObject([{ title: 'His Girl Friday', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
+    expect(await response.json()).toMatchObject([{ title: 'Charge', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
   });
 });
 

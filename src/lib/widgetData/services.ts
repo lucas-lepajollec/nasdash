@@ -11,7 +11,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import { isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
 import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, MUSIC_SERVER_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES, type DnsProvider, type UpsSummary, type VpnTunnelSummary } from './contracts';
-import { DEMO_PHOTOS, demoArtUrl } from '@/lib/demo/publicDomain';
+import { DEMO_PHOTOS, demoArtUrl } from '@/lib/demo/library';
 
 export class ServiceError extends Error {
   constructor(readonly key: string, readonly status = 502, readonly parameters?: Record<string, string | number>) {
@@ -260,7 +260,7 @@ function demoPortrait(id: string): boolean {
 }
 /**
  * The picture of a demo photo: a public-domain photograph that ships with the
- * demo (src/lib/demo/publicDomain.ts), cut to the photo's orientation.
+ * demo (src/lib/demo/library.ts), cut to the photo's orientation.
  */
 export function demoPhotoFile(id: string): string | undefined {
   const n = Number(id.replace(/\D/g, '').slice(-3));
