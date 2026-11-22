@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addHeaderWidgets, DEFAULT_HEADER_SLOTS, ensureRequiredWidgets, isLastRequiredWidget, legacyHeaderSlots, type LegacyHeaderSettings } from './header';
+import { addHeaderWidgets, DEFAULT_HEADER_SLOTS, ensureRequiredWidgets, growMenusIntoFreedColumns, isLastRequiredWidget, legacyHeaderSlots, type LegacyHeaderSettings } from './header';
 import type { Page } from './types';
 
 const place = (settings: LegacyHeaderSettings | undefined) => legacyHeaderSlots(settings).map(({ type, x, w, settings: own, hidden }) => ({ type, x, w, ...own, ...(hidden ? { hidden } : {}) }));
@@ -80,5 +80,24 @@ describe('required header widgets', () => {
     expect(isLastRequiredWidget(full, full.widgets.find(widget => widget.type === 'page-search')!.id)).toBe(false);
     const twice = { ...full, widgets: [...full.widgets, { ...menu, id: 'menu-2', y: 100 }] };
     expect(isLastRequiredWidget(twice, menu.id)).toBe(false);
+  });
+});
+
+describe('growMenusIntoFreedColumns', () => {
+  const widget = (id: string, type: string, x: number, w: number, y = 0, h = 13) => ({ id, type, x, y, w, h });
+  it('gives the menu the columns the fitted buttons leave beside it', () => {
+    const stored = [widget('s', 'page-search', 0, 4), widget('m', 'page-menu', 4, 15), widget('a', 'page-actions', 19, 5)];
+    const shown = [stored[0], stored[1], widget('a', 'page-actions', 21, 3)];
+    expect(growMenusIntoFreedColumns(stored, shown).map(item => [item.id, item.x, item.w])).toEqual([['s', 0, 4], ['m', 4, 17], ['a', 21, 3]]);
+  });
+  it('takes the columns freed on its left by start-aligned buttons', () => {
+    const stored = [widget('a', 'page-actions', 0, 5), widget('m', 'page-menu', 5, 10)];
+    const shown = [widget('a', 'page-actions', 0, 3), stored[1]];
+    expect(growMenusIntoFreedColumns(stored, shown)[1]).toMatchObject({ x: 3, w: 12 });
+  });
+  it('leaves a menu alone when the buttons are elsewhere or unchanged', () => {
+    const stored = [widget('m', 'page-menu', 4, 10), widget('a', 'page-actions', 19, 5), widget('b', 'page-actions', 14, 5, 20)];
+    const shown = [stored[0], widget('a', 'page-actions', 21, 3), widget('b', 'page-actions', 16, 3, 20)];
+    expect(growMenusIntoFreedColumns(stored, shown)[0]).toBe(stored[0]);
   });
 });

@@ -25,7 +25,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
 import { CalmeInfo } from '../modals/settings/shared/CalmeControls';
-import { HEADER_WIDGET_TYPES, isLastRequiredWidget } from '@/lib/pages/header';
+import { growMenusIntoFreedColumns, HEADER_WIDGET_TYPES, isLastRequiredWidget } from '@/lib/pages/header';
 import { prepareSearchText, searchTerms, textMatches, widgetSearchText } from '@/lib/search/match';
 import { MOBILE_QUERY } from '../layout/MobilePager';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
@@ -403,16 +403,17 @@ function PageGrid({ page, widgets, editMode, edit, onRevealed, ...props }: PageG
 
   // Widgets that fit their content take just the columns it needs at this
   // screen width, on the side they are aligned to; never more than stored.
+  // A page menu beside them takes the columns they leave.
   const fitted = useMemo(() => {
     const column = gridWidth / GRID_COLUMNS;
     if (!column) return widgets;
-    return widgets.map(widget => {
+    return growMenusIntoFreedColumns(widgets, widgets.map(widget => {
       const px = fitPx[widget.id];
       if (!px) return widget;
       const w = Math.max(1, Math.ceil((px + GRID_MARGIN * 2) / column));
       if (w >= widget.w) return widget;
       return { ...widget, w, x: widget.x + fitShift(widget, widget.w - w) };
-    });
+    }));
   }, [fitPx, gridWidth, widgets]);
   const fittedRef = useRef(fitted);
   useEffect(() => { fittedRef.current = fitted; }, [fitted]);
@@ -422,7 +423,12 @@ function PageGrid({ page, widgets, editMode, edit, onRevealed, ...props }: PageG
     const shown = new Map(fittedRef.current.map(widget => [widget.id, widget]));
     return placements.map(placement => {
       const widget = stored.get(placement.id);
-      if (!widget || shown.get(placement.id)?.w === widget.w || placement.w >= widget.w) return placement;
+      const was = shown.get(placement.id);
+      // A menu grown into freed columns and not resized keeps its stored width.
+      if (widget && was && was.w > widget.w && placement.w === was.w) {
+        return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, placement.x + widget.x - was.x)) };
+      }
+      if (!widget || was?.w === widget.w || placement.w >= widget.w) return placement;
       const x = placement.x - fitShift(widget, widget.w - placement.w);
       return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, x)) };
     });

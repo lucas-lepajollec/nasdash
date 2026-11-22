@@ -193,3 +193,33 @@ export function isLastRequiredWidget(page: Pick<Page, 'widgets'>, widgetId: stri
   if (!widget || !REQUIRED_WIDGET_TYPES.includes(widget.type)) return false;
   return page.widgets.filter(candidate => candidate.type === widget.type).length === 1;
 }
+
+type Placed = Pick<WidgetInstance, 'id' | 'type' | 'x' | 'y' | 'w' | 'h'>;
+
+/**
+ * A widget fitted to its content (the buttons) shows narrower than stored;
+ * a page menu touching it takes the columns it leaves on the menu's side, as
+ * the historical header gave the menu all the room the buttons did not use.
+ * Display only: `stored` is what the page saves, `shown` the fitted widths.
+ */
+export function growMenusIntoFreedColumns<T extends Placed>(stored: readonly T[], shown: readonly T[]): T[] {
+  const before = new Map(stored.map(widget => [widget.id, widget]));
+  const overlaps = (a: Placed, b: Placed) => a.y < b.y + b.h && b.y < a.y + a.h;
+  return shown.map(menu => {
+    if (menu.type !== MENU_WIDGET) return menu;
+    let { x, w } = menu;
+    for (const other of shown) {
+      const was = before.get(other.id);
+      if (!was || other.id === menu.id || other.w >= was.w || !overlaps(menu, other)) continue;
+      // Freed on its left side, against the menu's right edge.
+      if (was.x === menu.x + menu.w && other.x > was.x) w += other.x - was.x;
+      // Freed on its right side, against the menu's left edge.
+      if (was.x + was.w === menu.x && other.x + other.w < was.x + was.w) {
+        const freed = was.x + was.w - (other.x + other.w);
+        x -= freed;
+        w += freed;
+      }
+    }
+    return x === menu.x && w === menu.w ? menu : { ...menu, x, w };
+  });
+}
