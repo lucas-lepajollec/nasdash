@@ -24,6 +24,9 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
+import { HEADER_WIDGET_TYPES, isLastRequiredWidget } from '@/lib/pages/header';
+import { prepareSearchText, searchTerms, textMatches, widgetSearchText } from '@/lib/search/match';
+import { MOBILE_QUERY } from '../layout/MobilePager';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
@@ -227,6 +230,16 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
   useEffect(() => { editRef.current = edit; }, [edit]);
+  // Phones: the phone header (title, search, menu) replaces the header widgets.
+  const [phoneHeader, setPhoneHeader] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY);
+    const update = () => setPhoneHeader(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  const hits = useSearchHits(root, props.searchQuery, !editMode, widgets);
 
   // Create the grid once; items are rendered by React and registered below.
   useEffect(() => {
@@ -392,8 +405,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   const displayed = useMemo(() => {
     const base = resize ? widgets.map(widget => widget.id === resize.id ? { ...widget, x: resize.x, w: resize.w } : widget) : widgets;
     const flowed = reflowHeights(base, heights);
+    if (hits) return packSearchResults(flowed, hits);
     return resize ? pushOverlaps(flowed, resize.id) : flowed;
-  }, [heights, resize, widgets]);
+  }, [heights, hits, resize, widgets]);
   const displayedRef = useRef(displayed);
   useEffect(() => { displayedRef.current = displayed; }, [displayed]);
 
@@ -569,17 +583,24 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // Tablets: two columns, each widget going into the shorter one, in order.
   const tablet = useMemo(() => {
     if (mode !== 'tablet' || !gridWidth) return null;
-    const bottoms = [0, 0];
+    // Above the phone width the header widgets keep their row at the top, at
+    // their desktop proportions; on phones the phone header replaces them.
+    const header = phoneHeader ? [] : compactOrder.filter(widget => HEADER_WIDGET_TYPES.has(widget.type));
+    const bandHeight = header.length ? Math.max(...header.map(widget => pxHeights[widget.id] ?? 0)) + COMPACT_GAP : 0;
+    const bottoms = [bandHeight, bandHeight];
     const places = new Map<string, { column: number; top: number }>();
+    const band = new Map(header.map(widget => [widget.id, { left: widget.x / GRID_COLUMNS, width: widget.w / GRID_COLUMNS }]));
     for (const widget of compactOrder) {
+      if (HEADER_WIDGET_TYPES.has(widget.type)) continue;
+      if (hits && !hits.has(widget.id)) continue;
       // Hidden ones stay in place (dimmed) while editing, so they can be shown again.
       if (isHiddenOnMobile(page, widget.id) && !editMode) continue;
       const column = bottoms[1] < bottoms[0] ? 1 : 0;
       places.set(widget.id, { column, top: bottoms[column] });
       bottoms[column] += (pxHeights[widget.id] ?? 0) + COMPACT_GAP;
     }
-    return { places, height: Math.max(0, ...bottoms) };
-  }, [compactOrder, editMode, gridWidth, mode, page, pxHeights]);
+    return { places, band, height: Math.max(0, ...bottoms) };
+  }, [compactOrder, editMode, gridWidth, hits, mode, page, phoneHeader, pxHeights]);
   // Phones and tablets in edit mode: the widgets with their controls (default),
   // or the compact list to reorder quickly.
   const [listView, setListView] = useState(false);
@@ -607,7 +628,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         {widgets.map(widget => (
           <div
             key={widget.id}
-            className={`grid-stack-item ${resize?.id === widget.id ? 'nd-page-item--resizing' : ''} ${narrow && isHiddenOnMobile(page, widget.id) ? (compactEdit ? 'nd-page-item--mobile-dimmed' : 'nd-page-item--mobile-hidden') : ''}`}
+            className={`grid-stack-item ${resize?.id === widget.id ? 'nd-page-item--resizing' : ''} ${narrow && isHiddenOnMobile(page, widget.id) ? (compactEdit ? 'nd-page-item--mobile-dimmed' : 'nd-page-item--mobile-hidden') : ''} ${hits && !hits.has(widget.id) ? 'nd-page-item--filtered' : ''} ${tablet?.band.has(widget.id) ? 'nd-page-item--band' : ''} ${HEADER_WIDGET_TYPES.has(widget.type) ? 'nd-page-item--header' : ''}`}
             gs-id={widget.id}
             gs-x={widget.x}
             gs-y={widget.y}
@@ -617,6 +638,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
             style={{
               order: readingOrder.get(widget.id),
               ...(tablet?.places.has(widget.id) ? { '--nd-tablet-column': tablet.places.get(widget.id)!.column, '--nd-tablet-top': `${tablet.places.get(widget.id)!.top}px` } : {}),
+              ...(tablet?.band.has(widget.id) ? { '--nd-band-left': tablet.band.get(widget.id)!.left, '--nd-band-width': tablet.band.get(widget.id)!.width } : {}),
             } as React.CSSProperties}
           >
             <div className="grid-stack-item-content">
@@ -628,7 +650,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
                 edit={edit}
                 onMeasure={measure}
                 onResizeStart={editable ? (edge, event) => startResize(widget, edge, event) : undefined}
-                canResizeWidth={editable && formatsOf(widget).length > 1}
+                canResizeWidth={editable && !getWidgetCatalogEntry(widget.type)?.fixedWidth && formatsOf(widget).length > 1}
               />
             </div>
           </div>
@@ -646,6 +668,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
           />
         )}
       </div>
+      {hits && widgets.every(widget => HEADER_WIDGET_TYPES.has(widget.type) || !hits.has(widget.id)) && widgets.some(widget => !HEADER_WIDGET_TYPES.has(widget.type)) && (
+        <p className="nd-page-search-empty" role="status">{t('search.noResult', { query: props.searchQuery.trim() })}</p>
+      )}
     </>
   );
 }
@@ -703,10 +728,13 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
   const entry = getWidgetCatalogEntry(widget.type);
   const name = widgetName(widget);
   const customTitle = typeof widget.settings.customTitle === 'string' ? widget.settings.customTitle : undefined;
+  const showTitle = typeof widget.settings.showTitle === 'boolean' ? widget.settings.showTitle : undefined;
   const titleContext = useMemo(() => ({
     custom: customTitle,
     rename: (title: string) => updateWidgetSettings(page.id, widget.id, { customTitle: title }),
-  }), [customTitle, page.id, updateWidgetSettings, widget.id]);
+    visible: showTitle,
+    setVisible: (visible: boolean) => updateWidgetSettings(page.id, widget.id, { showTitle: visible }),
+  }), [customTitle, page.id, showTitle, updateWidgetSettings, widget.id]);
 
   useEffect(() => {
     const node = ref.current;
@@ -784,11 +812,82 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
               <Settings2 size={13} />
             </button>
           )}
-          <button type="button" className="nd-action-icon danger" onClick={() => edit(current => removeWidget(current, widget.id))} title={t('pages.widget.removeNamed', { name })} aria-label={t('pages.widget.removeNamed', { name })}>
-            <X size={13} />
-          </button>
+          {/* The last menu and the last buttons of a page stay: without them the page would be a dead end. */}
+          {!isLastRequiredWidget(page, widget.id) && (
+            <button type="button" className="nd-action-icon danger" onClick={() => edit(current => removeWidget(current, widget.id))} title={t('pages.widget.removeNamed', { name })} aria-label={t('pages.widget.removeNamed', { name })}>
+              <X size={13} />
+            </button>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * Searching: the widgets whose content matches the query (all words, case,
+ * accents and one typo forgiven, see src/lib/search/match.ts), or null when
+ * nothing is searched. The header widgets always stay. Widgets update their
+ * content (data arriving), so the result follows it.
+ */
+function useSearchHits(root: React.RefObject<HTMLDivElement | null>, query: string, enabled: boolean, widgets: WidgetInstance[]): Set<string> | null {
+  const nameOf = useWidgetName();
+  const terms = useMemo(() => searchTerms(query), [query]);
+  const [hits, setHits] = useState<Set<string> | null>(null);
+  const active = enabled && terms.length > 0;
+  const names = useMemo(() => new Map(widgets.map(widget => [widget.id, [
+    nameOf(widget),
+    typeof widget.settings.customTitle === 'string' ? widget.settings.customTitle : '',
+  ]])), [nameOf, widgets]);
+  const typeOf = useMemo(() => new Map(widgets.map(widget => [widget.id, widget.type])), [widgets]);
+  useEffect(() => {
+    const element = root.current;
+    if (!active || !element) { setHits(null); return; }
+    let timer = 0;
+    const compute = () => {
+      const next = new Set<string>();
+      element.querySelectorAll<HTMLElement>('.nd-page-widget[data-widget-id]').forEach(node => {
+        const id = node.dataset.widgetId;
+        if (!id) return;
+        const type = typeOf.get(id);
+        if (type && HEADER_WIDGET_TYPES.has(type)) { next.add(id); return; }
+        if (textMatches(terms, prepareSearchText(widgetSearchText(node, names.get(id) ?? [])))) next.add(id);
+      });
+      setHits(current => current && current.size === next.size && [...next].every(id => current.has(id)) ? current : next);
+    };
+    compute();
+    const observer = new MutationObserver(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(compute, 250);
+    });
+    observer.observe(element, { subtree: true, childList: true, characterData: true });
+    return () => { observer.disconnect(); window.clearTimeout(timer); };
+  }, [active, names, root, terms, typeOf]);
+  return active ? hits : null;
+}
+
+/**
+ * Search results on the grid: the matching widgets keep their columns and
+ * move up into the room left by the others, in reading order; the others are
+ * parked below, out of sight and one row tall (they stay mounted so their
+ * content is still searched).
+ */
+function packSearchResults<T extends GridPlacement & { id: string }>(widgets: T[], hits: Set<string>): T[] {
+  const placed: T[] = [];
+  const result = new Map<string, T>();
+  for (const widget of [...widgets].filter(candidate => hits.has(candidate.id)).sort((a, b) => a.y - b.y || a.x - b.x)) {
+    const above = placed.filter(other => other.x < widget.x + widget.w && widget.x < other.x + other.w);
+    const y = above.length ? Math.max(...above.map(other => other.y + other.h)) : 0;
+    const next = y === widget.y ? widget : { ...widget, y };
+    placed.push(next);
+    result.set(widget.id, next);
+  }
+  let parked = placed.reduce((bottom, widget) => Math.max(bottom, widget.y + widget.h), 0) + 1;
+  for (const widget of widgets) {
+    if (result.has(widget.id)) continue;
+    // One row each: hidden, they must not leave a tall empty page behind.
+    result.set(widget.id, { ...widget, x: 0, y: parked, h: 1 });
+    parked += 1;
+  }
+  return widgets.map(widget => result.get(widget.id)!);
 }

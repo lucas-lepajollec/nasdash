@@ -1,0 +1,88 @@
+'use client';
+
+import { useLayoutEffect, useRef, useState } from 'react';
+import { useConfig } from '@/hooks/useConfig';
+import { useI18n } from '@/i18n/I18nProvider';
+import { HeaderPageTabs } from '@/components/layout/HeaderPageTabs';
+import { useShellControls } from '@/components/layout/ShellControls';
+import { CalmeWidget } from '../calme';
+import type { WidgetViewProps } from '../types';
+import { HeaderWidgetSettings, readAlign, readMenuPart, readMenuStyle } from './HeaderWidgetDialog';
+
+/**
+ * The page menu, as a widget: the same pages in every menu widget. In edit
+ * mode the pages are reordered by drag and drop, renamed in place and a new
+ * page is added from the "+" (in the widget that shows the last pages).
+ * Its own settings: style (tabs, in a block, a list), icons, alignment, and
+ * which pages it shows (all, or one half for a menu split around another widget).
+ */
+export default function PageMenuView({ instance, editMode, onUpdateSettings }: WidgetViewProps) {
+  const { t } = useI18n();
+  const { config } = useConfig();
+  const { tabs, activeTab, switchTab } = useShellControls();
+  const { settings } = instance;
+  const style = readMenuStyle(settings);
+  const align = readAlign(settings, 'center');
+  const part = readMenuPart(settings);
+  const middle = Math.ceil(tabs.length / 2);
+  const start = part === 'second' ? middle : 0;
+  const end = part === 'first' ? middle : tabs.length;
+  const title = t('widget.page-menu.name');
+  const [menuBox, fitLevel] = useMenuFit(style !== 'list', tabs.slice(start, end).map(tab => tab.name).join('\n') + (editMode ? '\n+' : ''));
+  const menu = (
+    <HeaderPageTabs
+      tabs={tabs}
+      start={start}
+      end={end}
+      activeTab={activeTab}
+      onSwitch={switchTab}
+      editing={editMode}
+      showIcons={settings.icons === true}
+      tabIcons={config?.settings?.tabIcons}
+      flushFirst={false}
+      last={end >= tabs.length}
+      vertical={style === 'list'}
+    />
+  );
+  return (
+    <CalmeWidget title={title} editMode={editMode} bare={style === 'tabs'} hideTitle>
+      {editMode && <HeaderWidgetSettings kind="menu" title={title} settings={settings} fallbackAlign="center" onSave={onUpdateSettings} />}
+      <div ref={menuBox} className={`nd-hw nd-hw--${style === 'list' ? 'start' : align} nd-hw-menu nd-hw-menu--${style} ${fitLevel === 1 ? 'is-tight' : fitLevel === 2 ? 'is-tight is-wrapping' : ''}`}>{menu}</div>
+    </CalmeWidget>
+  );
+}
+
+/**
+ * A row of pages that does not fit its widget first draws its tabs closer
+ * together, and only then wraps onto a second line: no page is ever hidden.
+ * Natural widths are measured at each step and kept, so widening the widget
+ * steps back. `content` changes (pages renamed, added) start over.
+ */
+function useMenuFit(enabled: boolean, content: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState<{ content: string; level: 0 | 1 | 2 }>({ content, level: 0 });
+  const needs = useRef<{ content: string; widths: (number | undefined)[] }>({ content, widths: [] });
+  // New pages or names: measure again from the roomiest look.
+  if (state.content !== content) setState({ content, level: 0 });
+  const level = enabled ? state.level : 0;
+  useLayoutEffect(() => {
+    const box = ref.current;
+    if (!enabled || !box) return;
+    if (needs.current.content !== content) needs.current = { content, widths: [] };
+    const check = () => {
+      const nav = box.querySelector<HTMLElement>('.nd-header-menu');
+      if (!nav || box.clientWidth < 1) return;
+      if (level < 2) needs.current.widths[level] = nav.scrollWidth;
+      const [roomy, tight] = needs.current.widths;
+      const available = box.clientWidth;
+      let next: 0 | 1 | 2 = 0;
+      if (roomy !== undefined && roomy > available) next = tight !== undefined && tight > available ? 2 : 1;
+      if (next !== level) setState(current => current.level === next ? current : { ...current, level: next });
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [content, enabled, level]);
+  return [ref, level] as const;
+}

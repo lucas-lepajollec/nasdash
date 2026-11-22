@@ -16,7 +16,7 @@ vi.mock('@/integrations/downloads/lookup', async original => ({ ...await origina
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/arr/collect', async original => ({ ...await original<typeof import('@/integrations/arr/collect')>(), collectArrUpcoming: vi.fn(), collectArrQueue: vi.fn(), collectArrRecent: vi.fn(), collectArrStatus: vi.fn(), collectProwlarrIndexers: vi.fn() }));
 vi.mock('@/lib/widgetData/libraryUpcoming', () => ({ collectLibraryUpcoming: vi.fn() }));

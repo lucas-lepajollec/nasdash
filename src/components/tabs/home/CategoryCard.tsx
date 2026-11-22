@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { Pencil, Trash2, Plus, GripVertical } from 'lucide-react';
 import { Category } from '@/lib/types';
 import ServiceItem from './ServiceItem';
@@ -10,6 +10,8 @@ import { Emoji } from '../../shared/Emoji';
 import { useI18n } from '@/i18n/I18nProvider';
 import { WidgetHeaderActions } from '../../widgets/WidgetHeaderActions';
 import { stableColumns } from '../../widgets/content/kit';
+import { WidgetTitleContext, WidgetTitleVisibility } from '@/widgets/calme';
+import { prepareSearchText, searchTerms, textMatches } from '@/lib/search/match';
 
 /** Tile grids (with names, or logos only): smallest tile and gap, in px, for steady columns. */
 const TILE_GRIDS: Record<string, { min: number; gap: number }> = { bento: { min: 92, gap: 6 }, 'bento-logo-large': { min: 104, gap: 8 }, 'bento-logo-medium': { min: 88, gap: 6 }, 'bento-logo-small': { min: 62, gap: 4 } };
@@ -35,6 +37,7 @@ export default function CategoryCard({
   const { t } = useI18n();
   const { config } = useConfig();
   const hideCategoryTitles = config?.settings?.hideCategoryTitles ?? false;
+  const titleChoice = useContext(WidgetTitleContext)?.visible;
   // The title sits above the card unless the user chose a position.
   const categoryTitlePosition = config?.settings?.categoryTitlePosition || 'above';
 
@@ -68,16 +71,22 @@ export default function CategoryCard({
     observer.observe(element);
     return () => observer.disconnect();
   }, [tileGrid]);
-  const filteredServices = searchQuery
-    ? category.services.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  // Searching: the services whose name (or address, when shown) matches, or
+  // the whole category when its own name does (src/lib/search/match.ts).
+  const terms = searchTerms(searchQuery ?? '');
+  const categoryHit = terms.length > 0 && textMatches(terms, prepareSearchText(t(category.title)));
+  const filteredServices = terms.length && !categoryHit
+    ? category.services.filter(service => textMatches(terms, prepareSearchText([service.name, ...(showSensitive ? [service.localUrl, service.secondaryUrl ?? ''] : [])].join(' '))))
     : category.services;
 
   if (searchQuery && filteredServices.length === 0) return null;
 
   const showDropGap = editMode && (category.layout !== 'bento' && category.layout !== 'grid' && !category.layout?.startsWith('bento-logo'));
 
-  // Titles are always shown while editing; the page reflows when they hide again.
-  const showTitle = !hideCategoryTitles || editMode;
+  // This category view's own choice wins over the general setting. Titles are
+  // always shown while editing; the page reflows when they hide again.
+  const titleShown = titleChoice ?? !hideCategoryTitles;
+  const showTitle = titleShown || editMode;
 
   // On a page, these buttons join the widget's controls in its top-right corner.
   const editActions = editMode && (
@@ -97,7 +106,7 @@ export default function CategoryCard({
   );
 
   const titleElement = showTitle && (
-    <div className={`${categoryTitlePosition === 'above' ? 'nd-category-title-above' : 'nd-category-title'}`}>
+    <div className={`${categoryTitlePosition === 'above' ? 'nd-category-title-above' : 'nd-category-title'} ${titleShown ? '' : 'is-hidden-title'}`}>
       {editMode && !embedded && (
         <button {...attributes} {...listeners} style={{ cursor: 'grab', background: 'none', border: 'none', color: 'var(--nd-text-dimmed)', padding: 2 }}>
           <GripVertical size={13} />
@@ -105,6 +114,7 @@ export default function CategoryCard({
       )}
       <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
+      {editMode && <WidgetTitleVisibility shown={titleShown} />}
       {editActions && <div className="nd-category-edit-actions">{editActions}</div>}
     </div>
   );

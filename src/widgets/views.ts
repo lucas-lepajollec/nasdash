@@ -61,6 +61,9 @@ import seerrView from './media-requests/view';
 import ntfyView from './notifications/view';
 import audiobookshelfView from './reading/view';
 // new:integration views
+import pageSearch from './page-search/view';
+import pageMenu from './page-menu/view';
+import pageActions from './page-actions/view';
 import type { WidgetViewProps } from './types';
 
 /**
@@ -130,4 +133,7 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'calendar': calendar,
   'weather': weather,
   'spacer': spacer,
+  'page-search': pageSearch,
+  'page-menu': pageMenu,
+  'page-actions': pageActions,
 };

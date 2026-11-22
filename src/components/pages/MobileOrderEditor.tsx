@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { getWidgetCatalogEntry } from '@/lib/widgets/catalog';
 import { isHiddenOnMobile, mobileOrder, moveOnMobile, resetMobileLayout, setHiddenOnMobile } from '@/lib/pages/operations';
 import type { Page, WidgetInstance } from '@/lib/pages/types';
+import { HEADER_WIDGET_TYPES } from '@/lib/pages/header';
 import { CalmeInfo } from '@/components/modals/settings/shared/CalmeControls';
 import { Emoji } from '@/components/shared/Emoji';
 
@@ -24,13 +25,20 @@ export function MobileOrderEditor({ page, edit, nameOf }: {
   nameOf: (widget: WidgetInstance) => string;
 }) {
   const { t } = useI18n();
-  const widgets = mobileOrder({ ...page, widgets: page.widgets.filter(widget => !widget.hidden) });
+  // The header widgets are not part of the phone order: the phone header replaces them.
+  const all = mobileOrder({ ...page, widgets: page.widgets.filter(widget => !widget.hidden) });
+  const widgets = all.filter(widget => !HEADER_WIDGET_TYPES.has(widget.type));
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-  const move = (id: string, index: number) => edit(current => moveOnMobile(current, id, index));
+  // Positions in this list, turned into positions in the whole phone order.
+  const move = (id: string, index: number) => {
+    const target = widgets[Math.max(0, Math.min(widgets.length - 1, index))];
+    const position = target ? all.findIndex(widget => widget.id === target.id) : index;
+    edit(current => moveOnMobile(current, id, position));
+  };
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return;
     const index = widgets.findIndex(widget => widget.id === over.id);

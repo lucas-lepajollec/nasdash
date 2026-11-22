@@ -142,9 +142,12 @@ test('mobile menu opens without changing the React hook order', async ({ page })
   await expect(menuButton).toBeVisible();
   await menuButton.click();
 
-  await expect(page.locator('.nd-mobile-menu-content')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true');
+  const sheet = page.getByRole('dialog', { name: 'Menu' });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole('link', { name: 'Log in' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   expect(pageErrors).toEqual([]);
 });
 

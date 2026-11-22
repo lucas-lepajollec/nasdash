@@ -5,6 +5,7 @@ import { resolveAccessPrincipal } from '@/lib/access';
 import { readConfig } from '@/lib/config';
 import { withDemoSession } from '@/lib/demoSession';
 import { getWidgetCatalogEntry } from '@/lib/widgets/catalog';
+import { addHeaderWidgets, DEFAULT_HEADER_SLOTS, ensureRequiredWidgets } from '@/lib/pages/header';
 import { buildOfficialPage, buildTemplate, PAGE_TEMPLATES, type PageTemplateId } from '@/lib/pages/presets';
 import { pagesForViewer, readPagesDocument, writePagesDocument } from '@/lib/pages/store';
 import { isOfficialPageId, type Page, type PagesDocument } from '@/lib/pages/types';
@@ -76,7 +77,8 @@ async function handlePOST(req: NextRequest) {
       // A copied preset is an ordinary page: it does not claim to be the official one.
       const { preset: _preset, ...structure } = built;
       void _preset;
-      const page = validatePage({ id, name, icon, ...(description ? { description } : {}), revision: 1, ...structure });
+      // New pages start with the header widgets in their default places.
+      const page = validatePage(addHeaderWidgets({ id, name, icon, ...(description ? { description } : {}), revision: 1, ...structure }, DEFAULT_HEADER_SLOTS));
       assertInstanceLimits(document, page);
       document.pages.push(page);
       writePagesDocument(document);
@@ -104,7 +106,7 @@ async function handlePOST(req: NextRequest) {
     // restore: rebuild an official page from its preset, keeping a backup first.
     const presetId = current.preset ?? (isOfficialPageId(current.id) ? current.id : undefined);
     if (!presetId) return NextResponse.json({ error: 'Cette page n’a pas de modèle d’origine.' }, { status: 400 });
-    const rebuilt = buildOfficialPage(presetId, { categories, deviceCount, document });
+    const rebuilt = addHeaderWidgets(buildOfficialPage(presetId, { categories, deviceCount, document }), DEFAULT_HEADER_SLOTS);
     const page = validatePage({
       ...rebuilt,
       id: current.id,
@@ -136,7 +138,8 @@ async function handlePUT(req: NextRequest) {
       return NextResponse.json({ error: 'Cette page a été modifiée ailleurs.', code: 'conflict', page: current }, { status: 409 });
     }
     assertInstanceLimits(document, incoming);
-    const saved: Page = { ...incoming, preset: current.preset, revision: current.revision + 1 };
+    // The menu and the buttons cannot be removed from a page (an older client may still try).
+    const saved: Page = { ...ensureRequiredWidgets(incoming), preset: current.preset, revision: current.revision + 1 };
     if (!saved.preset) delete saved.preset;
     document.pages[index] = saved;
     writePagesDocument(document);

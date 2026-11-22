@@ -24,7 +24,7 @@ const mockedWrite = vi.mocked(writePagesDocument);
 function documentFixture(): PagesDocument {
   const categories = [{ id: 'media', title: 'Media', emoji: '🎬', order: 0, services: [] }];
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     pages: [
       { ...buildOfficialPage('dashboard', { categories }), revision: 3 },
       { ...buildOfficialPage('docker', { categories }), revision: 1 },

@@ -44,7 +44,7 @@ describe('supplied installation defaults', () => {
     expect(config.dockerHosts).toEqual([]);
     expect(config.categories).toEqual([]);
     expect(pages.pages).toEqual([expect.objectContaining({ id: 'dashboard', name: 'Home' })]);
-    expect(pages.pages[0].widgets.map(widget => widget.type)).toEqual(['clock', 'weather']);
+    expect(pages.pages[0].widgets.map(widget => widget.type)).toEqual(['page-search', 'page-menu', 'page-actions', 'clock', 'weather']);
     expect(read('topology').nodes).toEqual([]);
     expect(read('services')).toEqual([]);
   });

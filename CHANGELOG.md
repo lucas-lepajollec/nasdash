@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Upgrading from 0.3.10
+
+- Pull and recreate NasDash with the same data mount. On first start, the header becomes widgets on every page: the search, the page menu and the buttons are placed where your header showed them, and the rest of each page moves down by the header's height, so your pages look the same. The previous pages file is kept as `pages.v5.json` next to `pages.json`. Roll back by recreating the recorded `0.3.10` image and putting `pages.v5.json` back as `pages.json`.
+- The site title is no longer shown in the header.
+
+### Added
+
+- The header is made of widgets: **Search**, **Page menu** and **Buttons** (hide information, edit mode, settings, account). Move them anywhere on a page, use them several times; every search widget shows the same search and every menu the same pages. The search keeps its width handles. The menu has three styles (tabs, in a block, a list), icons, an alignment and can show half of the pages, so two menus can frame another widget; in edit mode its pages are still reordered, renamed and added in place. Every page keeps at least one menu and one buttons widget, and new pages start with all three.
+- The search looks through every widget of the page: case, accents and one typo are forgiven, all the words typed must appear, and the widgets that do not match step aside while the others move up. Searching a category's name shows the whole category.
+- Each widget can show or hide its own title, whatever the general setting: the eye next to its title in edit mode. Header widgets hide theirs by default.
+- Phones: a new header with the page's name in large type and round glass buttons for the search and the menu; the menu opens as a glass sheet from the bottom with the pages and the actions. Swipe left or right to change page; dots at the bottom show where you are. Narrower side margins.
+- NasDash can be installed on a phone's home screen (Safari: Share, Add to Home Screen) and opens full screen.
+- Machines widget: in edit mode, drag the machines into the order you want (#167).
+
+### Removed
+
+- The Header settings (title, logo, font and animation of the title, element order, split menu, tab icons) and the mobile header settings: the header widgets and their own settings replace them.
+
 ## [0.3.10] - 2026-11-17
 
 ### Upgrading from 0.3.9

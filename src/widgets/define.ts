@@ -43,6 +43,8 @@ export interface WidgetDefinition {
   defaultSettings?: WidgetSettings;
   /** Hidden from the library (created through dedicated flows). */
   internal?: boolean;
+  /** Keeps the width it was placed with: no resize handles (the page menu and buttons). */
+  fixedWidth?: boolean;
 }
 
 /**

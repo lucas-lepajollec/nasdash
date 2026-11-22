@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({ demo: false, admin: true, authenticated: true,
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/jellyfin/collect', async original => ({ ...await original<typeof import('@/integrations/jellyfin/collect')>(), collectJellyfinNowPlaying: vi.fn(), collectJellyfinRecent: vi.fn(), collectJellyfinLibrary: vi.fn(), collectJellyfinHistory: vi.fn() }));
 vi.mock('@/integrations/plex/collect', async original => ({ ...await original<typeof import('@/integrations/plex/collect')>(), collectPlexNowPlaying: vi.fn(), collectPlexRecent: vi.fn(), collectPlexLibrary: vi.fn() }));

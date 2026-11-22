@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "pages": [
     {
       "id": "dashboard",
@@ -9,11 +9,42 @@
       "revision": 7,
       "widgets": [
         {
+          "id": "page-search-dashboard",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-dashboard",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-dashboard",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "home-clock",
           "type": "clock",
           "settings": {},
           "x": 0,
-          "y": 43,
+          "y": 57,
           "w": 6,
           "h": 45
         },
@@ -22,7 +53,7 @@
           "type": "weather",
           "settings": {},
           "x": 0,
-          "y": 88,
+          "y": 102,
           "w": 6,
           "h": 91
         },
@@ -67,7 +98,7 @@
             ]
           },
           "x": 6,
-          "y": 43,
+          "y": 57,
           "w": 4,
           "h": 130
         },
@@ -76,7 +107,7 @@
           "type": "quotes",
           "settings": {},
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 16,
           "h": 43
         },
@@ -85,7 +116,7 @@
           "type": "calendar",
           "settings": {},
           "x": 16,
-          "y": 0,
+          "y": 14,
           "w": 8,
           "h": 83
         },
@@ -96,7 +127,7 @@
             "categoryId": "category-media"
           },
           "x": 16,
-          "y": 83,
+          "y": 97,
           "w": 8,
           "h": 70
         },
@@ -107,7 +138,7 @@
             "categoryId": "category-infrastructure"
           },
           "x": 10,
-          "y": 43,
+          "y": 57,
           "w": 6,
           "h": 94
         },
@@ -116,7 +147,7 @@
           "type": "ups",
           "settings": {},
           "x": 16,
-          "y": 153,
+          "y": 167,
           "w": 8,
           "h": 66
         },
@@ -127,7 +158,7 @@
             "integrationId": "navidrome-demo"
           },
           "x": 10,
-          "y": 137,
+          "y": 151,
           "w": 6,
           "h": 82
         },
@@ -138,7 +169,7 @@
             "display": "icons"
           },
           "x": 6,
-          "y": 173,
+          "y": 187,
           "w": 4,
           "h": 40
         },
@@ -147,7 +178,7 @@
           "type": "networkgraph",
           "settings": {},
           "x": 0,
-          "y": 179,
+          "y": 193,
           "w": 6,
           "h": 63
         }
@@ -161,13 +192,44 @@
       "revision": 2,
       "widgets": [
         {
+          "id": "page-search-services",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-services",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-services",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "services-media",
           "type": "service-category",
           "settings": {
             "categoryId": "category-media"
           },
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 70
         },
@@ -178,7 +240,7 @@
             "categoryId": "category-infrastructure"
           },
           "x": 6,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 94
         },
@@ -189,7 +251,7 @@
             "categoryId": "category-automation"
           },
           "x": 12,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 79
         },
@@ -198,7 +260,7 @@
           "type": "quickstats",
           "settings": {},
           "x": 18,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 42
         },
@@ -237,7 +299,7 @@
             ]
           },
           "x": 18,
-          "y": 42,
+          "y": 56,
           "w": 6,
           "h": 59
         },
@@ -248,7 +310,7 @@
             "categoryId": "category-library-automation"
           },
           "x": 0,
-          "y": 70,
+          "y": 84,
           "w": 6,
           "h": 90
         },
@@ -259,7 +321,7 @@
             "categoryId": "category-network"
           },
           "x": 6,
-          "y": 94,
+          "y": 108,
           "w": 6,
           "h": 82
         },
@@ -270,7 +332,7 @@
             "display": "tree"
           },
           "x": 12,
-          "y": 79,
+          "y": 93,
           "w": 6,
           "h": 46
         },
@@ -279,7 +341,7 @@
           "type": "spacer",
           "settings": {},
           "x": 0,
-          "y": 210,
+          "y": 224,
           "w": 24,
           "h": 30
         },
@@ -288,7 +350,7 @@
           "type": "service-ports",
           "settings": {},
           "x": 0,
-          "y": 176,
+          "y": 190,
           "w": 24,
           "h": 34
         }
@@ -302,11 +364,42 @@
       "revision": 3,
       "widgets": [
         {
+          "id": "page-search-machines",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-machines",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-machines",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "machines-fleet",
           "type": "devices",
           "settings": {},
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 154
         },
@@ -404,7 +497,7 @@
             "valueFormat": null
           },
           "x": 6,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 173
         },
@@ -417,7 +510,7 @@
             "range": "1h"
           },
           "x": 12,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 73
         },
@@ -514,7 +607,7 @@
             "valueFormat": null
           },
           "x": 18,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 84
         },
@@ -526,7 +619,7 @@
             "chartStyle": "line"
           },
           "x": 6,
-          "y": 173,
+          "y": 187,
           "w": 12,
           "h": 68
         },
@@ -535,7 +628,7 @@
           "type": "metric-temperature",
           "settings": {},
           "x": 12,
-          "y": 73,
+          "y": 87,
           "w": 6,
           "h": 46
         },
@@ -544,7 +637,7 @@
           "type": "metric-gpu",
           "settings": {},
           "x": 12,
-          "y": 119,
+          "y": 133,
           "w": 6,
           "h": 50
         },
@@ -553,7 +646,7 @@
           "type": "storage",
           "settings": {},
           "x": 18,
-          "y": 84,
+          "y": 98,
           "w": 6,
           "h": 99
         },
@@ -586,7 +679,7 @@
             ]
           },
           "x": 18,
-          "y": 183,
+          "y": 197,
           "w": 6,
           "h": 46
         },
@@ -632,7 +725,7 @@
             ]
           },
           "x": 0,
-          "y": 154,
+          "y": 168,
           "w": 6,
           "h": 59
         },
@@ -641,7 +734,7 @@
           "type": "metric-load",
           "settings": {},
           "x": 0,
-          "y": 241,
+          "y": 255,
           "w": 8,
           "h": 71
         },
@@ -652,7 +745,7 @@
             "integrationId": "syncthing-demo"
           },
           "x": 8,
-          "y": 241,
+          "y": 255,
           "w": 8,
           "h": 70
         }
@@ -666,11 +759,42 @@
       "revision": 5,
       "widgets": [
         {
+          "id": "page-search-docker",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-docker",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-docker",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "docker-hosts",
           "type": "docker-hosts",
           "settings": {},
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 6,
           "h": 30
         },
@@ -681,7 +805,7 @@
             "visibleRows": 8
           },
           "x": 0,
-          "y": 30,
+          "y": 44,
           "w": 6,
           "h": 167
         },
@@ -690,7 +814,7 @@
           "type": "docker-explorer",
           "settings": {},
           "x": 6,
-          "y": 0,
+          "y": 14,
           "w": 18,
           "h": 170
         },
@@ -702,7 +826,7 @@
             "itemsPerPage": 4
           },
           "x": 12,
-          "y": 170,
+          "y": 184,
           "w": 12,
           "h": 75
         },
@@ -711,7 +835,7 @@
           "type": "dockeractions",
           "settings": {},
           "x": 6,
-          "y": 170,
+          "y": 184,
           "w": 6,
           "h": 48
         },
@@ -722,7 +846,7 @@
             "integrationId": "wud-demo"
           },
           "x": 6,
-          "y": 218,
+          "y": 232,
           "w": 6,
           "h": 60
         }
@@ -735,6 +859,37 @@
       "description": "Map, DNS, VPN and network tools",
       "revision": 3,
       "widgets": [
+        {
+          "id": "page-search-networks",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-networks",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-networks",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
         {
           "id": "network-dns",
           "type": "dns",
@@ -750,7 +905,7 @@
             ]
           },
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 8,
           "h": 78
         },
@@ -761,7 +916,7 @@
             "integrationId": "adguard-demo"
           },
           "x": 0,
-          "y": 78,
+          "y": 92,
           "w": 8,
           "h": 78
         },
@@ -799,7 +954,7 @@
             ]
           },
           "x": 20,
-          "y": 0,
+          "y": 14,
           "w": 4,
           "h": 50
         },
@@ -808,7 +963,7 @@
           "type": "network-tools",
           "settings": {},
           "x": 8,
-          "y": 0,
+          "y": 14,
           "w": 8,
           "h": 195
         },
@@ -819,7 +974,7 @@
             "integrationId": "gluetun-demo"
           },
           "x": 16,
-          "y": 0,
+          "y": 14,
           "w": 4,
           "h": 96
         },
@@ -830,7 +985,7 @@
             "integrationId": "speedtest-demo"
           },
           "x": 16,
-          "y": 98,
+          "y": 112,
           "w": 8,
           "h": 60
         },
@@ -839,7 +994,7 @@
           "type": "networkgraph",
           "settings": {},
           "x": 16,
-          "y": 158,
+          "y": 172,
           "w": 8,
           "h": 63
         },
@@ -848,7 +1003,7 @@
           "type": "tailscale",
           "settings": {},
           "x": 0,
-          "y": 156,
+          "y": 170,
           "w": 8,
           "h": 48
         },
@@ -857,7 +1012,7 @@
           "type": "network-topology",
           "settings": {},
           "x": 0,
-          "y": 221,
+          "y": 235,
           "w": 24,
           "h": 458
         },
@@ -868,7 +1023,7 @@
             "integrationId": "uptimekuma-demo"
           },
           "x": 0,
-          "y": 679,
+          "y": 693,
           "w": 8,
           "h": 70
         }
@@ -882,6 +1037,37 @@
       "revision": 2,
       "widgets": [
         {
+          "id": "page-search-media",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-media",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-media",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "media-nowplaying",
           "type": "media-nowplaying",
           "settings": {
@@ -889,7 +1075,7 @@
             "showUsers": true
           },
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 16,
           "h": 145
         },
@@ -900,7 +1086,7 @@
             "integrationId": "jellyfin-demo"
           },
           "x": 16,
-          "y": 0,
+          "y": 14,
           "w": 8,
           "h": 174
         },
@@ -913,7 +1099,7 @@
             "count": 12
           },
           "x": 0,
-          "y": 145,
+          "y": 159,
           "w": 16,
           "h": 85
         },
@@ -925,7 +1111,7 @@
             "mediaId": "jellyfin-demo"
           },
           "x": 16,
-          "y": 174,
+          "y": 188,
           "w": 8,
           "h": 82
         },
@@ -936,7 +1122,7 @@
             "showUsers": true
           },
           "x": 0,
-          "y": 230,
+          "y": 244,
           "w": 16,
           "h": 146
         },
@@ -949,7 +1135,7 @@
             "count": 16
           },
           "x": 0,
-          "y": 376,
+          "y": 390,
           "w": 24,
           "h": 76
         },
@@ -960,7 +1146,7 @@
             "integrationId": "seerr-demo"
           },
           "x": 0,
-          "y": 452,
+          "y": 466,
           "w": 12,
           "h": 80
         },
@@ -971,7 +1157,7 @@
             "integrationId": "audiobookshelf-demo"
           },
           "x": 12,
-          "y": 452,
+          "y": 466,
           "w": 12,
           "h": 80
         }
@@ -985,11 +1171,42 @@
       "revision": 3,
       "widgets": [
         {
+          "id": "page-search-downloads",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-downloads",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-downloads",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "downloads-arr",
           "type": "media-arr",
           "settings": {},
           "x": 4,
-          "y": 0,
+          "y": 14,
           "w": 8,
           "h": 150
         },
@@ -998,7 +1215,7 @@
           "type": "media-queue",
           "settings": {},
           "x": 12,
-          "y": 0,
+          "y": 14,
           "w": 12,
           "h": 100
         },
@@ -1007,7 +1224,7 @@
           "type": "media-downloads",
           "settings": {},
           "x": 12,
-          "y": 100,
+          "y": 114,
           "w": 12,
           "h": 119
         },
@@ -1016,7 +1233,7 @@
           "type": "media-indexers",
           "settings": {},
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 4,
           "h": 142
         }
@@ -1030,6 +1247,37 @@
       "revision": 2,
       "widgets": [
         {
+          "id": "page-search-music",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-music",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-music",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "music-nowplaying",
           "type": "music-nowplaying",
           "settings": {
@@ -1037,7 +1285,7 @@
             "showUsers": true
           },
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 16,
           "h": 93
         },
@@ -1048,7 +1296,7 @@
             "integrationId": "navidrome-demo"
           },
           "x": 0,
-          "y": 93,
+          "y": 107,
           "w": 8,
           "h": 90
         },
@@ -1059,7 +1307,7 @@
             "integrationId": "navidrome-demo"
           },
           "x": 8,
-          "y": 93,
+          "y": 107,
           "w": 8,
           "h": 84
         },
@@ -1071,7 +1319,7 @@
             "content": "pages"
           },
           "x": 16,
-          "y": 0,
+          "y": 14,
           "w": 8,
           "h": 186
         },
@@ -1083,7 +1331,7 @@
             "content": "pages"
           },
           "x": 0,
-          "y": 186,
+          "y": 200,
           "w": 24,
           "h": 65
         }
@@ -1097,6 +1345,37 @@
       "revision": 2,
       "widgets": [
         {
+          "id": "page-search-feeds",
+          "type": "page-search",
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {}
+        },
+        {
+          "id": "page-menu-feeds",
+          "type": "page-menu",
+          "x": 6,
+          "y": 0,
+          "w": 12,
+          "h": 13,
+          "settings": {
+            "align": "center"
+          }
+        },
+        {
+          "id": "page-actions-feeds",
+          "type": "page-actions",
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 13,
+          "settings": {
+            "align": "end"
+          }
+        },
+        {
           "id": "feeds-rss",
           "type": "rss",
           "settings": {
@@ -1105,7 +1384,7 @@
             "images": true
           },
           "x": 0,
-          "y": 0,
+          "y": 14,
           "w": 12,
           "h": 114
         },
@@ -1114,7 +1393,7 @@
           "type": "markets",
           "settings": {},
           "x": 12,
-          "y": 0,
+          "y": 14,
           "w": 12,
           "h": 90
         },
@@ -1126,7 +1405,7 @@
             "date": "2028-01-01"
           },
           "x": 12,
-          "y": 90,
+          "y": 104,
           "w": 6,
           "h": 40
         },
@@ -1138,7 +1417,7 @@
             "style": "animated"
           },
           "x": 18,
-          "y": 90,
+          "y": 104,
           "w": 6,
           "h": 40
         },
@@ -1149,7 +1428,7 @@
             "text": "# Maintenance\n- Replace the backup drive in the **NAS** before Friday\n- Renew the domain (expires in March)\n\nRouter admin guide: https://docs.nasdash.lucas-homelab.fr"
           },
           "x": 0,
-          "y": 114,
+          "y": 128,
           "w": 12,
           "h": 50
         },
@@ -1176,7 +1455,7 @@
             ]
           },
           "x": 12,
-          "y": 130,
+          "y": 144,
           "w": 12,
           "h": 50
         },
@@ -1188,7 +1467,7 @@
             "height": 420
           },
           "x": 0,
-          "y": 180,
+          "y": 194,
           "w": 24,
           "h": 100
         },
@@ -1199,7 +1478,7 @@
             "integrationId": "ntfy-demo"
           },
           "x": 0,
-          "y": 280,
+          "y": 294,
           "w": 8,
           "h": 70
         }

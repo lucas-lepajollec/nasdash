@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useRef, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 
@@ -8,9 +9,47 @@ import { useI18n } from '@/i18n/I18nProvider';
 
 /**
  * The title chosen for one widget on a page (`settings.customTitle`) and how
- * to change it; provided by the page around each widget.
+ * to change it; provided by the page around each widget. `visible` is this
+ * widget's own choice to show or hide its title (`settings.showTitle`): it
+ * wins over the general setting; undefined follows it.
  */
-export const WidgetTitleContext = createContext<{ custom?: string; rename: (title: string) => void } | null>(null);
+export const WidgetTitleContext = createContext<{
+  custom?: string;
+  rename: (title: string) => void;
+  visible?: boolean;
+  setVisible?: (visible: boolean) => void;
+} | null>(null);
+
+/**
+ * Whether a widget's title shows outside edit mode: the widget's own choice
+ * first, otherwise the general setting and the widget's default (`hiddenByDefault`).
+ */
+export function useTitleShown(hiddenByDefault = false): boolean {
+  const { config } = useConfig();
+  const context = useContext(WidgetTitleContext);
+  return context?.visible ?? (!(config?.settings?.hideWidgetTitles ?? false) && !hiddenByDefault);
+}
+
+/** Edit mode: the eye next to a title shows or hides it outside edit mode, for this widget only. */
+export function WidgetTitleVisibility({ shown }: { shown: boolean }) {
+  const { t } = useI18n();
+  const context = useContext(WidgetTitleContext);
+  if (!context?.setVisible) return null;
+  const label = shown ? t('pages.widget.hideTitle') : t('pages.widget.showTitle');
+  return (
+    <button
+      type="button"
+      className={`ndc-title-eye ${shown ? '' : 'is-off'}`}
+      aria-pressed={!shown}
+      aria-label={label}
+      title={label}
+      data-no-widget-drag
+      onClick={event => { event.stopPropagation(); context.setVisible?.(!shown); }}
+    >
+      {shown ? <Eye size={12} aria-hidden="true" /> : <EyeOff size={12} aria-hidden="true" />}
+    </button>
+  );
+}
 
 /**
  * A widget title: the custom one when set, otherwise the default. In edit
@@ -72,27 +111,29 @@ export function WidgetTitleText({ title, editMode }: { title: string; editMode?:
   );
 }
 
-export function CalmeWidget({ title, aside, editMode, children, flush, hideTitle }: {
+export function CalmeWidget({ title, aside, editMode, children, flush, hideTitle, bare }: {
   title: string;
   aside?: React.ReactNode;
   editMode?: boolean;
   children: React.ReactNode;
   /** No inner padding (lists that draw their own rows). */
   flush?: boolean;
-  /** This widget's own choice to hide its title (still shown in edit mode). */
+  /** The title is hidden unless this widget is set to show it (still shown in edit mode). */
   hideTitle?: boolean;
+  /** The content without the surrounding block (header widgets). */
+  bare?: boolean;
 }) {
-  const { config } = useConfig();
-  const showTitle = !(config?.settings?.hideWidgetTitles ?? false) && !hideTitle || editMode;
+  const shown = useTitleShown(hideTitle);
   return (
-    <section className="ndc-widget">
-      {showTitle && (
-        <h3 className="ndc-title">
+    <section className={`ndc-widget ${bare ? 'ndc-widget--bare' : ''}`}>
+      {(shown || editMode) && (
+        <h3 className={`ndc-title ${shown ? '' : 'is-hidden-title'}`}>
           <WidgetTitleText title={title} editMode={editMode} />
+          {editMode && <WidgetTitleVisibility shown={shown} />}
           {aside && <span className="ndc-title-aside">{aside}</span>}
         </h3>
       )}
-      <div className={`ndc-box ${flush ? 'ndc-box--flush' : ''}`}>{children}</div>
+      {bare ? children : <div className={`ndc-box ${flush ? 'ndc-box--flush' : ''}`}>{children}</div>}
     </section>
   );
 }

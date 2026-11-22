@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { useConfig } from '@/hooks/useConfig';
 import { useWidgetSize } from '@/components/widgets/WidgetContainer';
 import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
+import { moveById, SortableItem, SortableList } from '@/components/widgets/content/Sortable';
 import { CalmeWidget } from '../calme';
 import { latestTime, useDevicesData, type DeviceSnapshot } from './deviceData';
 import { uptimeText } from './format';
@@ -46,7 +47,7 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
   onUpdateSettings: (settings: WidgetSettings) => void;
 }) {
   const { t } = useI18n();
-  const { setDeviceModal } = useConfig();
+  const { config, setDeviceModal, reorderDevices } = useConfig();
   const { width } = useWidgetSize();
   const selected = Array.isArray(settings.selectedDeviceIds) ? (settings.selectedDeviceIds as string[]) : null;
   const shown = selected ? devices.filter(device => selected.includes(device.id)) : devices;
@@ -83,15 +84,25 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
       {shown.length === 0 ? (
         devices.length === 0 ? <SetupGuide kind="devices" /> : <div className="ndc-empty">{t('devices.calme.noDevice')}</div>
       ) : (
-        <div className={`ndc-fleet ${stacked ? 'is-stacked' : ''}`}>
-          {shown.map(device => {
-            const entry = data[device.id] ?? {};
-            const row = <FleetRow device={device} snapshot={entry.data} state={stateOf(entry)} look={look} metrics={metrics} stacked={stacked} />;
-            return editMode ? (
-              <button key={device.id} type="button" className="ndc-fleet-edit" onClick={() => setDeviceModal({ open: true, device })} title={t('devices.calme.edit')}>{row}</button>
-            ) : <React.Fragment key={device.id}>{row}</React.Fragment>;
-          })}
-        </div>
+        // Edit mode: machines are put in order by drag and drop (the order of the
+        // machines everywhere), and a click opens one to edit it.
+        <SortableList
+          ids={shown.map(device => device.id)}
+          enabled={editMode}
+          onMove={(id, over) => { if (config?.devices) void reorderDevices(moveById(config.devices, device => device.id, id, over)); }}
+        >
+          <div className={`ndc-fleet ${stacked ? 'is-stacked' : ''}`}>
+            {shown.map(device => {
+              const entry = data[device.id] ?? {};
+              const row = <FleetRow device={device} snapshot={entry.data} state={stateOf(entry)} look={look} metrics={metrics} stacked={stacked} />;
+              return editMode ? (
+                <SortableItem key={device.id} id={device.id} className="ndc-fleet-sortable" title={t('devices.calme.reorderHint')}>
+                  <button type="button" className="ndc-fleet-edit" onClick={() => setDeviceModal({ open: true, device })} title={t('devices.calme.edit')}>{row}</button>
+                </SortableItem>
+              ) : <React.Fragment key={device.id}>{row}</React.Fragment>;
+            })}
+          </div>
+        </SortableList>
       )}
     </CalmeWidget>
   );

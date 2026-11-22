@@ -19,6 +19,8 @@ import { Emoji } from '../shared/Emoji';
 type TabsProps = {
   tabs: TabDef[]; start?: number; end?: number; activeTab?: TabId; onSwitch?: (id: TabId) => void; editing: boolean;
   showIcons: boolean; flushFirst: boolean; last: boolean; tabIcons?: Record<string, string>;
+  /** One page per line (the menu widget's list style). */
+  vertical?: boolean;
 };
 
 export function HeaderPageTabs(props: TabsProps) {
@@ -26,10 +28,10 @@ export function HeaderPageTabs(props: TabsProps) {
   return props.editing ? <EditableTabs {...props} /> : <PlainTabs {...props} />;
 }
 
-function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, showIcons, flushFirst, tabIcons }: TabsProps) {
+function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, showIcons, flushFirst, tabIcons, vertical }: TabsProps) {
   const { t } = useI18n();
   return (
-    <nav data-tour="pages" className="nd-header-menu" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+    <nav data-tour="pages" className={`nd-header-menu ${vertical ? 'is-vertical' : ''}`}>
       {tabs.slice(start, end).map((tab, index) => {
         const isActive = tab.id === activeTab;
         const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
@@ -45,7 +47,7 @@ function PlainTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, sh
   );
 }
 
-function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, editing, showIcons, flushFirst, last }: TabsProps) {
+function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch, editing, showIcons, flushFirst, last, vertical }: TabsProps) {
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { pages, createPage, updatePageDetails } = usePages();
@@ -71,8 +73,8 @@ function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch,
   };
 
   return (
-    <nav data-tour="pages" className={`nd-header-menu ${editing ? 'is-editing' : ''}`}>
-      <Sortable editing={editing} ids={shown.map(tab => tab.id)} onMove={move}>
+    <nav data-tour="pages" className={`nd-header-menu ${editing ? 'is-editing' : ''} ${vertical ? 'is-vertical' : ''}`}>
+      <Sortable editing={editing} vertical={vertical} ids={shown.map(tab => tab.id)} onMove={move}>
         {shown.map((tab, index) => {
           const isActive = tab.id === activeTab;
           const icon = showIcons ? (config?.settings?.tabIcons?.[tab.id] || tab.icon) : null;
@@ -113,8 +115,8 @@ function EditableTabs({ tabs, start = 0, end = tabs.length, activeTab, onSwitch,
 }
 
 /** Drag and drop exists only while editing: out of edit mode the menu is plain buttons, with nothing listening. */
-function Sortable({ editing, ids, onMove, children }: { editing: boolean; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
-  return editing ? <SortableList ids={ids} enabled layout="row" onMove={onMove}>{children}</SortableList> : <>{children}</>;
+function Sortable({ editing, vertical, ids, onMove, children }: { editing: boolean; vertical?: boolean; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
+  return editing ? <SortableList ids={ids} enabled layout={vertical ? 'list' : 'row'} onMove={onMove}>{children}</SortableList> : <>{children}</>;
 }
 function Item({ editing, id, children }: { editing: boolean; id: string; children: React.ReactNode }) {
   return editing ? <SortableItem id={id} className="nd-header-tab">{children}</SortableItem> : <div className="nd-header-tab">{children}</div>;

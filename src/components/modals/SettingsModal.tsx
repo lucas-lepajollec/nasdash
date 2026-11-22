@@ -302,7 +302,6 @@ export const THEME_PRESETS: Record<string, {
 
 import { CalmeSettingsSidebar, useCalmeSettingsSections } from './settings/CalmeSettingsSidebar';
 import { AppearanceTab } from './settings/tabs/AppearanceTab';
-import { HeaderTab } from './settings/tabs/HeaderTab';
 import { MobileTab } from './settings/tabs/MobileTab';
 import { DeveloperTab } from './settings/tabs/DeveloperTab';
 import { SecurityTab } from './settings/tabs/SecurityTab';
@@ -499,7 +498,6 @@ export default function SettingsModal({ onClose, restoreFocus, showSensitive = f
               )}
               {currentTab === 'tasks' && <TasksTab />}
               {currentTab === 'help' && <HelpTab />}
-              {currentTab === 'header' && <HeaderTab />}
               {currentTab === 'mobile' && <MobileTab />}
 
           {currentTab === 'widget-networkgraph' && <NetworkGraphWidgetTab />}

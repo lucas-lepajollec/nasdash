@@ -27,6 +27,9 @@ import quickstats from './quickstats/definition';
 import serviceCategory from './service-category/definition';
 import servicePorts from './service-ports/definition';
 import spacer from './spacer/definition';
+import pageSearch from './page-search/definition';
+import pageMenu from './page-menu/definition';
+import pageActions from './page-actions/definition';
 import storage from './storage/definition';
 import tailscale from './tailscale/definition';
 import weather from './weather/definition';
@@ -90,6 +93,7 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   ntfyWidget,
   audiobookshelfWidget,
   // new:integration widgets
-  // Layout
+  // Layout: the page header (search, menu, buttons), then the historical spacer
+  pageSearch, pageMenu, pageActions,
   spacer,
 ];

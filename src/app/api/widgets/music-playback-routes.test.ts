@@ -7,7 +7,7 @@ vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/auth', async original => ({ ...await original<typeof import('@/lib/auth')>(), checkAdmin: () => state.csrf || state.role !== 'admin' ? new Response(null, { status: 403 }) : null }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.role, allowedTabs: [], allowedWidgets: state.denied ? ['__nasdash_none__'] : [], isAnonymous: state.anonymous } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: () => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: () => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceStream: vi.fn(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/navidrome/collect', async original => ({ ...await original<typeof import('@/integrations/navidrome/collect')>(), collectNavidromeNowPlaying: vi.fn(), collectNavidromeRecent: vi.fn(), collectNavidromeTracks: vi.fn(), collectNavidromePlaylists: vi.fn(), collectNavidromeSearch: vi.fn() }));
 vi.mock('@/integrations/jellyfin/collect', async original => ({ ...await original<typeof import('@/integrations/jellyfin/collect')>(), controlJellyfinMusic: vi.fn(), collectJellyfinMusicNowPlaying: vi.fn(), jellyfinMusicStreamPath: vi.fn() }));

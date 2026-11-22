@@ -1,0 +1,391 @@
+/* ==================== PHONE NAVIGATION ====================
+   Large page title with round glass buttons, a glass menu sheet, and dots for
+   the pages reached by swiping. Glass: translucent, blurred, a thin light edge,
+   no shadow. */
+
+.nd-glass {
+  background: color-mix(in srgb, var(--nd-bg-surface, var(--nd-bg)) 58%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+.light .nd-glass {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+/* ---- Header ---- */
+/* Larger screens use the header widgets of each page. */
+.nd-mhead {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+}
+
+.nd-mhead-title {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-geist), system-ui, sans-serif;
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--nd-text);
+}
+
+.nd-mhead-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.nd-mhead-button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nd-text);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.nd-mhead-button:active {
+  transform: scale(0.94);
+}
+
+.nd-mhead-button[aria-expanded="true"] {
+  color: var(--nd-accent);
+}
+
+.nd-mhead .nd-search {
+  flex: 1;
+  max-width: none;
+}
+
+.nd-mhead .nd-search {
+  position: relative;
+}
+
+.nd-mhead .nd-search input {
+  height: 44px;
+  border-radius: 22px;
+  padding-right: 40px;
+}
+
+.nd-mhead-clear {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--nd-text-dimmed);
+  cursor: pointer;
+}
+
+.nd-mhead-cancel {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  color: var(--nd-accent);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* ---- Menu sheet ---- */
+.nd-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+}
+
+.nd-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  animation: nd-fade-in 0.2s ease-out;
+}
+
+.light .nd-sheet-backdrop {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.nd-sheet {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  max-height: calc(100dvh - 72px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 0 16px 16px;
+  border-radius: 28px;
+  color: var(--nd-text);
+  outline: none;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: nd-sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* The sheet sits over the page, so it is less see-through than the buttons. */
+.nd-sheet.nd-glass {
+  background: color-mix(in srgb, var(--nd-bg-surface, var(--nd-bg)) 78%, transparent);
+}
+
+.light .nd-sheet.nd-glass {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+@keyframes nd-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.nd-sheet-grabber {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 0 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.nd-sheet-grabber span {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--nd-text-dimmed);
+  opacity: 0.6;
+}
+
+.nd-sheet-label {
+  margin: 0 0 8px;
+  padding: 0 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--nd-text-muted);
+}
+
+.nd-sheet-pages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.nd-sheet-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 76px;
+  padding: 10px 6px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--nd-text) 6%, transparent);
+  color: var(--nd-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.nd-sheet-page[aria-current="page"] {
+  background: color-mix(in srgb, var(--nd-accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--nd-accent) 40%, transparent);
+  color: var(--nd-accent);
+}
+
+.nd-sheet-page-icon {
+  display: inline-flex;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.nd-sheet-page-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.nd-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--nd-text) 6%, transparent);
+}
+
+.nd-sheet-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 50px;
+  padding: 0 16px;
+  border: none;
+  background: none;
+  color: var(--nd-text);
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nd-sheet-action + .nd-sheet-action {
+  border-top: 1px solid color-mix(in srgb, var(--nd-text) 8%, transparent);
+}
+
+.nd-sheet-action svg {
+  flex: 0 0 auto;
+  color: var(--nd-text-muted);
+}
+
+.nd-sheet-action:active,
+.nd-sheet-page:active {
+  background: color-mix(in srgb, var(--nd-text) 12%, transparent);
+}
+
+.nd-sheet-action-note {
+  margin-left: auto;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--nd-text-muted);
+}
+
+/* ---- Page dots ---- */
+.nd-page-dots {
+  display: none;
+}
+
+/* ---- Phones and small tablets ---- */
+@media (min-width: 961px) {
+  /* The header widgets start where the header's content used to be (the grid
+     itself starts 8 px higher, its gutter). */
+  .nd-page {
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 960px) {
+  .nd-mhead {
+    display: flex;
+  }
+
+  body .nd-header.nd-mhead {
+    padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+    margin: 0 0 4px;
+  }
+
+  /* The phone header replaces the header widgets. */
+  .nd-page-grid > .grid-stack-item.nd-page-item--header {
+    display: none !important;
+  }
+
+  .nd-shell,
+  .nd-shell--dock-left,
+  .nd-shell--dock-right,
+  .nd-shell--dock-hidden {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* Side margins, wider only where the screen has a notch (landscape). */
+  body[data-design="calme"] .nd-page,
+  .nd-page {
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  /* The pages are in the menu and the dots: no side dock on a phone. */
+  .nd-dock-portal,
+  .nd-dock,
+  .nd-dock-mobile-btn {
+    display: none !important;
+  }
+
+  .nd-page-dots {
+    position: fixed;
+    left: 50%;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    max-width: calc(100vw - 120px);
+    padding: 0 6px;
+    border-radius: 999px;
+  }
+
+  .nd-page-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .nd-page-dot span {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--nd-text-dimmed);
+    opacity: 0.7;
+    transition: width 0.2s ease, background 0.2s ease;
+  }
+
+  .nd-page-dot[aria-current="page"] span {
+    width: 18px;
+    background: var(--nd-text);
+    opacity: 1;
+  }
+
+  .nd-page-enter--next {
+    animation: nd-page-in-next 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .nd-page-enter--prev {
+    animation: nd-page-in-prev 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@keyframes nd-page-in-next {
+  from { opacity: 0.4; transform: translateX(36px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes nd-page-in-prev {
+  from { opacity: 0.4; transform: translateX(-36px); }
+  to { opacity: 1; transform: translateX(0); }
+}

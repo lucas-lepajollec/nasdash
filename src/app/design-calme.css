@@ -3905,3 +3905,70 @@ body[data-design="calme"][data-blur="on"].light {
   --nd-card-hover-border: rgb(15 23 42 / 0.16);
   --nd-border: rgb(15 23 42 / 0.1);
 }
+
+/* ---------- Header widgets (search, page menu, buttons: src/widgets/page-*) ---------- */
+.ndc-widget--bare { gap: 6px; }
+.nd-hw { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 36px; }
+.nd-hw--start { justify-content: flex-start; }
+.nd-hw--center { justify-content: center; }
+.nd-hw--end { justify-content: flex-end; }
+.nd-hw-search { position: relative; flex: 1; max-width: none; min-width: 0; }
+.nd-hw-search input::-webkit-search-cancel-button { display: none; }
+.nd-hw-search-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; padding: 2px; border: none; background: none; color: var(--nd-text-dimmed); cursor: pointer;
+}
+/* The menu never hides pages (see useMenuFit in src/widgets/page-menu/view.tsx). */
+.nd-hw-menu .nd-header-menu { row-gap: 4px; min-width: 0; }
+.nd-hw--center .nd-header-menu { justify-content: center; }
+.nd-hw--end .nd-header-menu { justify-content: flex-end; }
+.nd-hw-menu--boxed { padding: 2px 12px; }
+.nd-hw-menu--list { display: block; padding: 6px; }
+.nd-header-menu.is-vertical { flex-direction: column; align-items: stretch; gap: 2px !important; }
+.nd-header-menu.is-vertical .nd-header-tab { display: flex; }
+.nd-header-menu.is-vertical .nd-header-tab-link {
+  flex: 1; margin: 0; padding: 8px 10px; border-bottom: none; border-radius: 4px; text-align: left;
+}
+.nd-header-menu.is-vertical .nd-header-tab-link.is-active { background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
+.nd-header-menu.is-vertical .nd-header-tab-add { align-self: flex-start; margin: 4px 10px; }
+.nd-hw-actions { gap: 8px; }
+.nd-hw-divider { width: 1px; height: 16px; margin: 0 4px; background: var(--nd-border); flex-shrink: 0; }
+.nd-hw-account { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.nd-hw-user {
+  display: flex; align-items: center; gap: 6px; height: 36px; padding: 6px 12px; box-sizing: border-box; min-width: 0;
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); background: var(--nd-card-bg);
+  color: var(--nd-text); font-size: 0.72rem; font-weight: 600;
+}
+.nd-hw-user svg { color: var(--nd-accent); flex-shrink: 0; }
+.nd-hw-user-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nd-hw-logout, .nd-hw-login { min-width: 0; padding: 6px; justify-content: center; text-decoration: none; }
+/* A narrow buttons widget keeps the buttons and drops the name. */
+@container (max-width: 250px) { .nd-hw-user { display: none; } }
+
+/* Edit mode: the eye next to a title shows or hides it outside edit mode, for that widget. */
+.ndc-title-eye {
+  display: inline-flex; align-items: center; padding: 2px; border: none; border-radius: 3px;
+  background: none; color: var(--nd-text-dimmed); cursor: pointer; flex-shrink: 0;
+}
+.ndc-title-eye:hover, .ndc-title-eye:focus-visible { color: var(--nd-text); }
+.ndc-title.is-hidden-title > :not(.ndc-title-eye),
+.is-hidden-title > :not(.ndc-title-eye):not(.nd-category-edit-actions) { opacity: 0.45; }
+
+/* Searching: widgets that do not match step aside. */
+.nd-page-grid > .grid-stack-item.nd-page-item--filtered { display: none !important; }
+.nd-page-search-empty { margin: 24px 0; text-align: center; font-size: 0.8rem; color: var(--nd-text-muted); }
+
+/* Tablets (above the phone header): the header widgets keep one row at the top, at their desktop proportions. */
+.nd-page-grid.nd-page-grid--narrow.nd-page-grid--tablet > .grid-stack-item.nd-page-item--band {
+  top: 0 !important;
+  left: calc(var(--nd-band-left, 0) * (100% + 16px)) !important;
+  width: calc(var(--nd-band-width, 1) * (100% + 16px) - 16px) !important;
+}
+/* Edit mode: machines are dragged into order (the order of the machines everywhere). */
+.ndc-fleet-sortable.is-sortable { cursor: grab; }
+.ndc-fleet-sortable.is-dragging { position: relative; z-index: 2; opacity: 0.7; }
+/* A menu short of room: tabs closer together first, a second line last. */
+.nd-hw-menu .nd-header-menu { flex-wrap: nowrap; }
+.nd-hw-menu.is-wrapping .nd-header-menu { flex-wrap: wrap; }
+body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !important; }
+.nd-hw-menu.is-tight .nd-header-tab-link { padding-left: 6px; padding-right: 6px; }

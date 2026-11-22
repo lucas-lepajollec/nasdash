@@ -1071,70 +1071,11 @@ body {
   }
 }
 
-/* Actions Visibility */
-.nd-mobile-actions {
-  display: none !important;
-}
-.nd-mobile-menu {
-  display: none !important;
-}
-.nd-header-mobile {
-  display: none !important;
-}
-.nd-header-desktop {
-  display: flex !important;
-}
-
+/* The header is made of widgets on each page (src/lib/pages/header.ts); the
+   phone header (MobileHeader, mobile.css) only shows on narrow screens. */
 @media (max-width: 960px) {
   .nd-header-menu {
     display: none !important;
-  }
-
-  .nd-header {
-    position: relative;
-    gap: 8px;
-    padding: 12px 12px;
-    margin-bottom: 8px;
-  }
-
-  .nd-header-actions {
-    flex: 0 0 auto;
-  }
-
-  .nd-desktop-actions {
-    display: none !important;
-  }
-
-  .nd-mobile-actions {
-    display: flex !important;
-  }
-
-  .nd-header-desktop {
-    display: none !important;
-  }
-
-  .nd-header-mobile {
-    display: flex !important;
-  }
-
-  .nd-mobile-menu {
-    display: flex !important;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 0 10px 12px 10px;
-    animation: nd-fade-in 0.2s;
-    margin-top: -4px;
-  }
-
-  .nd-brand {
-    flex: 0 0 auto;
-  }
-
-  .nd-search {
-    flex: 1;
-    width: 100%;
-    min-width: 100px;
-    max-width: 340px;
   }
 
   .nd-search input {
@@ -1145,10 +1086,6 @@ body {
 
   .nd-search-icon {
     left: 8px;
-  }
-
-  .nd-brand span strong {
-    display: none;
   }
 }
 

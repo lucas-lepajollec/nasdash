@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import './themes.css';
 import './design-calme.css';
 import './widgets-content.css';
+import './mobile.css';
 import { ConfigProvider } from '@/providers/ConfigProvider';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { messages } from '@/i18n/messages';
@@ -33,7 +34,9 @@ export function generateMetadata(): Metadata {
   return {
     title: messages.en['meta.title'],
     description: messages.en['meta.description'],
-    icons: '/logo.svg',
+    icons: { icon: '/logo.svg', apple: '/icons/apple-touch-icon.png' },
+    // Opened from the home screen: full screen, the page drawn under the status bar.
+    appleWebApp: { capable: true, title: 'NasDash', statusBarStyle: 'black-translucent' },
     robots: demoMode
       ? {
           index: false,
@@ -48,6 +51,17 @@ export function generateMetadata(): Metadata {
       : undefined,
   };
 }
+
+/** The page reaches the screen edges (notch, home indicator): the phone header and dots keep clear with safe-area insets. */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#111318' },
+    { media: '(prefers-color-scheme: light)', color: '#f6f5f2' },
+  ],
+};
 
 export default function RootLayout({
   children,
