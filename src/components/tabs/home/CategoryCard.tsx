@@ -83,11 +83,10 @@ export default function CategoryCard({
 
   const showDropGap = editMode && (category.layout !== 'bento' && category.layout !== 'grid' && !category.layout?.startsWith('bento-logo'));
 
-  // This category view's own choice wins over the general setting. On a page
-  // a hidden title stays hidden while editing (nothing jumps); its eye and the
-  // edit buttons sit with the widget's controls.
+  // This category view's own choice wins over the general setting. Titles are
+  // always shown while editing; the page reflows when they hide again.
   const titleShown = titleChoice ?? !hideCategoryTitles;
-  const showTitle = titleShown || (editMode && !embedded);
+  const showTitle = titleShown || editMode;
 
   // On a page, these buttons join the widget's controls in its top-right corner.
   const editActions = editMode && (
@@ -115,7 +114,7 @@ export default function CategoryCard({
       )}
       <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
       <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
-      {editMode && titleShown && <WidgetTitleVisibility shown />}
+      {editMode && <WidgetTitleVisibility shown={titleShown} />}
       {editActions && <div className="nd-category-edit-actions">{editActions}</div>}
     </div>
   );
@@ -123,7 +122,6 @@ export default function CategoryCard({
   return (
     <div ref={setNodeRef} style={{ ...style, position: 'relative' }} className="nd-animate-in">
       {categoryTitlePosition === 'above' && titleElement}
-      {editMode && !showTitle && <>{editActions}<WidgetTitleVisibility shown={false} /></>}
       <div className="nd-card" style={{ position: 'relative' }}>
         {categoryTitlePosition === 'inside' && titleElement}
       <div 

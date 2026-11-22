@@ -3945,6 +3945,7 @@ body[data-design="calme"][data-blur="on"].light {
   background: none; color: var(--nd-text-dimmed); cursor: pointer; flex-shrink: 0;
 }
 .ndc-title-eye:hover, .ndc-title-eye:focus-visible { color: var(--nd-text); }
+.ndc-title.is-hidden-title > :not(.ndc-title-eye),
 .is-hidden-title > :not(.ndc-title-eye):not(.nd-category-edit-actions) { opacity: 0.45; }
 
 /* Searching: widgets that do not match step aside. */
