@@ -4,6 +4,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import type { MusicAlbum, MusicLibraryResponse, MusicNowPlayingResponse, MusicRecentResponse, MusicServer, MusicTopResponse, MusicTrack, MusicPlaylist, MusicSearchResponse } from './contracts';
 import { proxyMediaItem } from './media';
 import { serviceIdentity, ServiceError } from './services';
+import { DEMO_ALBUMS, demoArtId } from '@/lib/demo/publicDomain';
 
 export const MUSIC_WIDGET_TYPES = ['music-nowplaying', 'music-recent', 'music-library', 'music-top', 'music-playlists'] as const;
 export type MusicWidgetType = typeof MUSIC_WIDGET_TYPES[number];
@@ -35,22 +36,22 @@ export async function musicWeek(read: (offset: number, size: number) => Promise<
   return { week: week.slice(0, 8) };
 }
 const identity = (instance: IntegrationInstance) => ({ server: instance.type as MusicServer, name: instance.name, fetchedAt: Date.UTC(2026, 0, 15, 12) });
-const artists = ['The Paper Satellites', 'Mira Vale', 'Cedar Echo', 'The Lantern Ensemble'];
-const titles = ['Signals from the Garden', 'Tidal Letters', 'Copper Skies', 'A Small Observatory', 'Cloud Atlas Radio', 'Night Orchard'];
+/** Public-domain ragtime and jazz-age records (src/lib/demo/publicDomain.ts). */
+const album = (n: number) => DEMO_ALBUMS[n % DEMO_ALBUMS.length];
 export const demoMusicAlbums = (count: number): MusicAlbum[] => Array.from({ length: count }, (_, n) => ({
-  id: `demo-music-${n}`, title: titles[n % titles.length] + (n >= titles.length ? ` ${Math.floor(n / titles.length) + 1}` : ''), artist: artists[n % artists.length],
-  year: 2025, trackCount: 8 + n % 5, cover: `demo:music:${n}`, addedAt: Date.UTC(2026, 0, 15, 12) - n * 86400000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, plays: 82 - n,
+  id: `demo-music-${n}`, title: album(n).title + (n >= DEMO_ALBUMS.length ? ` (${['Piano Roll', 'Orchestra', 'Live'][Math.floor(n / DEMO_ALBUMS.length - 1) % 3]})` : ''), artist: album(n).artist,
+  year: album(n).year, trackCount: 8 + n % 5, cover: demoArtId(album(n).slug), addedAt: Date.UTC(2026, 0, 15, 12) - n * 86400000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, plays: 82 - n,
 }));
 export function demoMusicNowPlaying(instance: IntegrationInstance): MusicNowPlayingResponse {
   return { ...identity(instance), sessions: [{ id: 'demo-music-session', user: 'Alex', player: 'Music Web · Study', state: 'playing', positionMs: 74000, quality: 'FLAC',
     canControl: instance.type === 'jellyfin' || instance.type === 'emby',
-    track: { id: 'demo-track', albumId: 'demo-music-0', title: 'The Glass Meridian', artist: artists[0], album: titles[0], durationMs: 234000, cover: 'demo:music:0' },
-    next: [{ id: 'demo-next', title: 'Aerial Seeds', artist: artists[0], album: titles[0], durationMs: 198000, cover: 'demo:music:0' }] }] };
+    track: { id: 'demo-track', albumId: 'demo-music-0', title: album(0).tracks[0], artist: album(0).artist, album: album(0).title, durationMs: 234000, cover: demoArtId(album(0).slug) },
+    next: [{ id: 'demo-next', title: album(0).tracks[1], artist: album(0).artist, album: album(0).title, durationMs: 198000, cover: demoArtId(album(0).slug) }] }] };
 }
 export function demoMusicRecent(instance: IntegrationInstance, count: number, content: 'added' | 'albums' | 'tracks' = 'added'): MusicRecentResponse { return { ...identity(instance), albums: content === 'tracks' ? [] : demoMusicAlbums(count), ...(content === 'tracks' ? { tracks: demoMusicTracks(count) } : {}) }; }
 export function demoMusicTop(instance: IntegrationInstance, count: number): MusicTopResponse { return { ...identity(instance), albums: demoMusicAlbums(count) }; }
 export function demoMusicLibrary(instance: IntegrationInstance): MusicLibraryResponse {
-  return { ...identity(instance), artists: 96, albums: 210, tracks: 2640, durationMs: 601920000, genres: [{ name: 'Ambient', count: 72 }, { name: 'Jazz', count: 46 }, { name: 'Electronic', count: 39 }], week: demoMusicAlbums(7), weekCount: 7 };
+  return { ...identity(instance), artists: 96, albums: 210, tracks: 2640, durationMs: 601920000, genres: [{ name: 'Ragtime', count: 72 }, { name: 'Jazz', count: 46 }, { name: 'Blues', count: 39 }], week: demoMusicAlbums(7), weekCount: 7 };
 }
 
 const tracks = new Map<string, number>();
@@ -88,8 +89,8 @@ export function musicPages(settings: Record<string, unknown>): (typeof MUSIC_PAG
   if (!Array.isArray(pages) || !pages.length || pages.some(page => !(MUSIC_PAGES as readonly unknown[]).includes(page)) || new Set(pages).size !== pages.length) throw new ServiceError('widgets.error.invalidSettings', 400);
   return pages as (typeof MUSIC_PAGES[number])[];
 }
-export const demoMusicTracks = (count = 8): MusicTrack[] => Array.from({ length: count }, (_, n) => ({ id: `demo-song-${n}`, title: ['The Glass Meridian', 'Aerial Seeds', 'Soft Geometry', 'Moonlit Maps'][n % 4], artist: artists[n % 4], album: titles[n % 6], albumId: `demo-music-${n % 6}`, durationMs: 198000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, cover: `demo:music:${n % 6}` }));
-export const demoMusicPlaylists = (instance: IntegrationInstance, count: number) => ({ ...identity(instance), playlists: Array.from({ length: Math.min(count, 4) }, (_, n): MusicPlaylist => ({ id: `demo-playlist-${n}`, name: ['Quiet mornings', 'Night signals', 'Garden radio', 'Copper evenings'][n], trackCount: 8, durationMs: 1584000, cover: `demo:music:${n}`, owner: 'Alex' })) });
+export const demoMusicTracks = (count = 8): MusicTrack[] => Array.from({ length: count }, (_, n) => ({ id: `demo-song-${n}`, title: album(n).tracks[Math.floor(n / DEMO_ALBUMS.length) % album(n).tracks.length], artist: album(n).artist, album: album(n).title, albumId: `demo-music-${n % DEMO_ALBUMS.length}`, durationMs: 198000, playedAt: Date.UTC(2026, 0, 15, 11) - n * 3600000, cover: demoArtId(album(n).slug) }));
+export const demoMusicPlaylists = (instance: IntegrationInstance, count: number) => ({ ...identity(instance), playlists: Array.from({ length: Math.min(count, 4) }, (_, n): MusicPlaylist => ({ id: `demo-playlist-${n}`, name: ['Ragtime mornings', 'Jazz age evenings', 'Piano rolls', 'Sunday blues'][n], trackCount: 8, durationMs: 1584000, cover: demoArtId(album(n).slug), owner: 'Alex' })) });
 export function demoMusicSearch(instance: IntegrationInstance, query: string): MusicSearchResponse {
   const matches = (value: string) => value.toLocaleLowerCase().includes(query.toLocaleLowerCase());
   return { tracks: demoMusicTracks(20).filter(item => matches([item.title, item.artist, item.album].join(' '))), albums: demoMusicAlbums(20).filter(item => matches([item.title, item.artist].join(' '))), playlists: demoMusicPlaylists(instance, 4).playlists.filter(item => matches(item.name)) };

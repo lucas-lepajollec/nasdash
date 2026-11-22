@@ -28,6 +28,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Phone menu: after nine pages, the page list scrolls inside the sheet.
 - Phones: a swiped page follows the finger exactly and leaves on the side it was pushed to while the next one comes in; the pages on either side are loaded ahead, so the next one is never empty.
 - Public demo on phones: the welcome and the reset are in the menu (⋯) instead of a floating chip over the page dots and the edit bar; the demo's menu gathers its pages in two sub-menus.
+- Public demo: the films, serials, records, books, comics and photos are real works in the public domain (silent films and serials, ragtime records, classic novels, early comics, public photographs) instead of invented titles.
 
 - Entering edit mode moves the page less: title rows keep their height (the widget controls show over their corner when the pointer is on a widget), and only hidden titles, shown in edit mode, make room for themselves.
 

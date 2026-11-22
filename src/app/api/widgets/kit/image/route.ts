@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
+import { demoArtFor } from '@/lib/demo/publicDomain';
 import { resolveKitWidget } from '@/lib/widgetData/kitResolve';
 import { demoLandscape, queryDraft, serviceFailure, ServiceError } from '@/lib/widgetData/services';
 
@@ -19,7 +20,12 @@ export async function GET(request: NextRequest) {
     const resolved = resolveKitWidget(request, url.searchParams.get('widget'), url.searchParams.get('widgetId'), queryDraft(url));
     if (resolved.response) return resolved.response;
     const { instance, server } = resolved;
-    if (isDemoMode()) return new NextResponse(demoLandscape(id), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=3600', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
+    if (isDemoMode()) {
+      // The demo's covers ship with it (public-domain works); anything else gets drawn art.
+      const file = demoArtFor(id);
+      if (file) return NextResponse.redirect(new URL(file, request.url), { status: 307, headers: { 'Cache-Control': 'private, max-age=3600' } });
+      return new NextResponse(demoLandscape(id), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=3600', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
+    }
     if (!server.image) throw new ServiceError('widgets.error.notFound', 404);
     const image = await server.image(instance, id);
     if (!/^image\/(png|jpe?g|webp|gif|avif)$/.test(image.contentType)) throw new ServiceError('widgets.error.parse');

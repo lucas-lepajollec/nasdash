@@ -82,16 +82,16 @@ async function decide(instance: IntegrationInstance, target: string | undefined,
   await seerrRequest(instance, `/request/${target}/${decision}`, { method: 'POST' });
 }
 
-/* Public demo: fictional titles; deciding moves a request out of the pending ones. */
+/* Public demo: public-domain titles; deciding moves a request out of the pending ones. */
 const demoDecisions = new Map<string, 'approved' | 'declined'>();
 export function demoSeerr(instance: IntegrationInstance): MediaRequestsSummary {
   const now = Date.now(), day = 86_400_000;
   const all: MediaRequestItem[] = [
-    { id: '41', title: 'The Quiet Orbit', kind: 'movie', year: 2026, requestedBy: 'Alex', requestedAt: now - 2 * 3_600_000, status: 'pending' },
-    { id: '40', title: 'Harbour Lights', kind: 'tv', year: 2025, requestedBy: 'Sam', requestedAt: now - 5 * 3_600_000, status: 'pending' },
-    { id: '39', title: 'Northbound', kind: 'movie', year: 2024, requestedBy: 'Alex', requestedAt: now - day, status: 'processing' },
-    { id: '38', title: 'Paper Gardens', kind: 'tv', year: 2023, requestedBy: 'Jo', requestedAt: now - 2 * day, status: 'available' },
-    { id: '37', title: 'Static Bloom', kind: 'movie', year: 2022, requestedBy: 'Sam', requestedAt: now - 4 * day, status: 'available' },
+    { id: '41', title: 'His Girl Friday', kind: 'movie', year: 1940, requestedBy: 'Alex', requestedAt: now - 2 * 3_600_000, status: 'pending' },
+    { id: '40', title: 'Les Vampires', kind: 'tv', year: 1915, requestedBy: 'Sam', requestedAt: now - 5 * 3_600_000, status: 'pending' },
+    { id: '39', title: 'Charade', kind: 'movie', year: 1963, requestedBy: 'Alex', requestedAt: now - day, status: 'processing' },
+    { id: '38', title: 'Fantômas', kind: 'tv', year: 1913, requestedBy: 'Jo', requestedAt: now - 2 * day, status: 'available' },
+    { id: '37', title: 'Night of the Living Dead', kind: 'movie', year: 1968, requestedBy: 'Sam', requestedAt: now - 4 * day, status: 'available' },
   ];
   const requests = all.map(request => { const decided = demoDecisions.get(`${instance.id}:${request.id}`); return decided ? { ...request, status: decided } : request; });
   const pending = requests.filter(request => request.status === 'pending').length;

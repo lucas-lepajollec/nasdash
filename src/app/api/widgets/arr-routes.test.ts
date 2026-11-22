@@ -283,12 +283,13 @@ describe('upcoming library mode and idle data', () => {
     state.instances[0].secrets = { apiKey: 'changed' }; state.instances[1].secrets = { apiKey: 'changed' }; vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, sonarr.queue));
     expect((await (await queueGet(get())).json()).recent).toBeUndefined(); expect(collectArrRecent).toHaveBeenCalledTimes(4);
   });
-  it('has fictional values for every new demo field and never fetches library metadata or TVMaze', async () => {
+  it('has demo values for every new demo field and never fetches library metadata or TVMaze', async () => {
     state.demo = true; const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
     try {
       state.instances.push(source('jellyfin')); widget().settings = { source: 'library', ended: true };
-      const result = await (await upcomingGet(get())).json(); expect(result.followUps).toHaveLength(5); expect(new Set(result.followUps.map((item: { status: string }) => item.status)).size).toBe(4);
-      expect((await imageGet(image(result.followUps[0].poster))).status).toBe(200);
+      const result = await (await upcomingGet(get())).json(); expect(result.followUps).toHaveLength(4); expect(new Set(result.followUps.map((item: { status: string }) => item.status)).size).toBe(4);
+      // The demo's own artwork (a file it ships, or drawn art): never fetched.
+      expect([200, 307]).toContain((await imageGet(image(result.followUps[0].poster))).status);
       expect(demoArrRecent(state.instances[0])).toHaveLength(3); expect(demoIndexers(state.instances[2]).hourly).toHaveLength(24);
       expect(demoDownloadClient(state.instances[3])).toMatchObject({ sessionDownloaded: 48600000000, sessionUploaded: 12400000000, seeding: 1 }); expect(demoDownloadClient(state.instances[3]).completed?.length).toBeGreaterThan(0);
       expect(fetcher).not.toHaveBeenCalled(); expect(collectLibraryUpcoming).not.toHaveBeenCalled(); expect(serviceJson).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
@@ -341,7 +342,7 @@ describe('combined upcoming catalogues', () => {
   it('treats null catalogue settings as absent and provides offline fictional demo items', async () => {
     state.demo = true; widget().settings = { sources: ['external'], externalMode: null, watchlist: null, catalogKinds: null };
     const body = await (await upcomingGet(get())).json(); expect(body.external.length).toBeGreaterThan(2);
-    expect(body.external.every((item: { phase: string; poster: string }) => !!item.phase && item.poster.startsWith('data:image/svg+xml,'))).toBe(true);
+    expect(body.external.every((item: { phase: string; poster: string }) => !!item.phase && (item.poster.startsWith('data:image/svg+xml,') || item.poster.startsWith('/demo/art/')))).toBe(true);
     expect(JSON.stringify(body)).not.toMatch(/https?:|Private fallback/); expect(collectExternal).not.toHaveBeenCalled();
     widget().settings.ended = true; expect((await (await upcomingGet(get())).json()).external.some((item: { status: string }) => item.status === 'ended')).toBe(true);
   });
@@ -361,9 +362,9 @@ describe('admin catalogue search route', () => {
     expect(await response.json()).toMatchObject([{ provider: 'tvmaze' }]); expect(searchCatalog).toHaveBeenCalledWith('cloud', ['series']);
     expect((await catalogGet(search('q=cloud&widgetId=absent'))).status).toBe(404); expect((await catalogGet(search('q=cloud&widgetId=!'))).status).toBe(400);
   });
-  it('returns fictional demo hits without contacting any catalogue', async () => {
+  it('returns demo hits without contacting any catalogue', async () => {
     state.demo = true; const response = await catalogGet(search('q=cloud&kinds=movie'));
-    expect(await response.json()).toMatchObject([{ title: 'The Clockwork Aurora', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
+    expect(await response.json()).toMatchObject([{ title: 'His Girl Friday', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
   });
 });
 

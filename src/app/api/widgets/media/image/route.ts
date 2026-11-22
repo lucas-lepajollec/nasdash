@@ -2,6 +2,7 @@ import { navidromeCoverBytes } from '@/integrations/navidrome/collect';
 import { MUSIC_WIDGET_TYPES } from '@/lib/widgetData/music';
 import { NextRequest, NextResponse } from 'next/server';
 import { isDemoMode } from '@/lib/demoMode';
+import { demoArtFor } from '@/lib/demo/publicDomain';
 import { jellyfinHeaders } from '@/integrations/jellyfin/collect';
 import { plexHeaders } from '@/integrations/plex/collect';
 import { arrHeaders } from '@/integrations/arr/collect';
@@ -44,7 +45,12 @@ export async function GET(request: NextRequest) {
     const imageDraft = principal.role === 'admin' && resolved.draft ? settings : undefined;
     const match = instances.map(instance => ({ instance, path: knownMediaImage(instance, widgetId!, id, kind, imageDraft) })).find(value => value.path);
     if (!match) throw new ServiceError('widgets.error.notFound', 404);
-    if (isDemoMode()) return new NextResponse(demoMediaArt(id, kind), { headers: { ...imageHeaders, 'Content-Type': 'image/svg+xml', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
+    if (isDemoMode()) {
+      // The demo's public-domain artwork ships with it; anything else gets drawn art.
+      const file = match.path ? demoArtFor(match.path) : undefined;
+      if (file) return NextResponse.redirect(new URL(file, request.url), { status: 307, headers: imageHeaders });
+      return new NextResponse(demoMediaArt(id, kind), { headers: { ...imageHeaders, 'Content-Type': 'image/svg+xml', 'Content-Security-Policy': "default-src 'none'; sandbox" } });
+    }
     const { instance, path } = match;
     const auth = instance.type === 'navidrome' ? {} : LIBRARY_ARR_TYPES.some(type => type === instance.type) ? arrHeaders(instance) : instance.type === 'plex' ? plexHeaders(instance) : jellyfinHeaders(instance);
     const answer = instance.type === 'navidrome' ? await navidromeCoverBytes(instance, path!) : await serviceBytes(instance, path!, { headers: auth }, 8 * 1024 * 1024);

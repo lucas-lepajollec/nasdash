@@ -1,14 +1,15 @@
 import { demoMediaArt } from './media';
+import { DEMO_ALBUMS, DEMO_FILMS, DEMO_SERIALS, demoArtId, demoArtUrl } from '@/lib/demo/publicDomain';
 import { serviceIdentity, ServiceError } from './services';
 /** Fictional data only. Demo routes never call collectors or remote image servers. */
 import { upcomingPhase } from './arr';
 import type { IntegrationInstance } from '@/lib/types';
 import type { CatalogHit, CatalogKind, ExternalItem, ArrAppStatus, ArrType, DownloadClientStatus, DownloadClientType, DownloadActionRequest, ImportedItem, IndexersResponse, QueueItem, UpcomingItem } from './contracts';
 
-/** Invented titles, different for each *arr so the demo reads like a real library. */
-const SERIES = [['The Weather Cartographers', 'The Glass Orchard'], ['Harbor Lights', 'Low Tide Signals'], ['The Weather Cartographers', 'Northern Relay'], ['Paper Satellites', 'Static Bloom']] as const;
-const MOVIES = ['The Clockwork Meadow', 'A Lantern for the Tide', 'Postcards from Ember Bay', 'The Quiet Orbit'] as const;
-const ALBUMS = [['The Velvet Compasses', 'Small Hours'], ['Juniper Avenue', 'Coastline Radio'], ['The Velvet Compasses', 'Glass Weather'], ['Maren Holt', 'Northbound']] as const;
+/** Public-domain serials, films and records (src/lib/demo/publicDomain.ts), different for each *arr. */
+const SERIES = DEMO_SERIALS.map((serial, i) => ({ slug: serial.slug, title: serial.title, episode: serial.episodes[(i + 2) % serial.episodes.length] }));
+const MOVIES = DEMO_FILMS.slice(4);
+const ALBUMS = DEMO_ALBUMS.slice(2);
 const RELEASES = ['digital', 'cinema', 'physical', 'digital'] as const;
 
 /** Small changes over time, so a demo chart moves. */
@@ -20,10 +21,11 @@ export function demoArrUpcoming(instance: IntegrationInstance, start: number): U
     const base = { id: `${instance.id}:demo-${i}`, source: instance.type as UpcomingItem['source'], sourceName: instance.name, kind,
       // Spread over the coming days at different hours.
       at: start + (kind === 'episode' ? i * 30 + 6 : kind === 'movie' ? i * 52 + 20 : i * 44 + 30) * 3_600_000,
-      hasFile: kind === 'episode' && i === 0, poster: `demo:poster:${instance.id}:${i}`, backdrop: `demo:backdrop:${instance.id}:${i}` } as const;
-    if (kind === 'episode') return { ...base, phase: upcomingPhase({ kind, episode: 3 + i }), title: SERIES[i][1], subtitle: SERIES[i][0], season: 1 + (i % 2), episode: 3 + i };
-    if (kind === 'movie') return { ...base, phase: upcomingPhase({ kind, release: RELEASES[i] }), title: MOVIES[i], release: RELEASES[i] };
-    return { ...base, phase: 'announced', title: ALBUMS[i][1], subtitle: ALBUMS[i][0] };
+      hasFile: kind === 'episode' && i === 0 } as const;
+    const art = (slug: string) => ({ poster: demoArtId(slug), backdrop: demoArtId(slug, 'wide') });
+    if (kind === 'episode') return { ...base, ...art(SERIES[i].slug), phase: upcomingPhase({ kind, episode: 3 + i }), title: SERIES[i].episode, subtitle: SERIES[i].title, season: 1, episode: 3 + i };
+    if (kind === 'movie') return { ...base, ...art(MOVIES[i].slug), phase: upcomingPhase({ kind, release: RELEASES[i] }), title: MOVIES[i].title, release: RELEASES[i] };
+    return { ...base, ...art(ALBUMS[i].slug), phase: 'announced', title: ALBUMS[i].title, subtitle: ALBUMS[i].artist };
   });
 }
 
@@ -98,26 +100,29 @@ function baseDemoDownloadClient(instance: IntegrationInstance): DownloadClientSt
     completed: ['The Glass Orchard S01E02', 'A Lantern for the Tide', 'Coastline Radio FLAC'].map((name, n) => ({ id: demoItemId(instance, n + 20), name, sizeBytes: (n + 1) * 840_000_000, at: Date.now() - (n + 1) * 3600000 })),
     active: torrent ? 3 : 1, paused: torrent ? 1 : 0, queued: torrent ? 0 : 4, freeBytes: torrent ? 1_200_000_000_000 : 860_000_000_000, altSpeed: false,
     items: torrent ? [
-      { id: demoItemId(instance, 1), name: 'Low Tide Signals S01E04 1080p', progress: 64, state: 'downloading', downloadBps: Math.round(down * 0.7), etaMs: 320_000, sizeBytes: 2_400_000_000 },
-      { id: demoItemId(instance, 2), name: 'The Clockwork Meadow 2160p', progress: 31, state: 'downloading', downloadBps: Math.round(down * 0.3), etaMs: 2_700_000, sizeBytes: 18_000_000_000 },
-      { id: demoItemId(instance, 3), name: 'Small Hours (FLAC)', progress: 100, state: 'seeding', sizeBytes: 420_000_000 },
-      { id: demoItemId(instance, 4), name: 'Northern Relay S02E01', progress: 12, state: 'paused', sizeBytes: 1_800_000_000 },
+      { id: demoItemId(instance, 1), name: 'Les.Vampires.1915.E04.The.Spectre.1080p', progress: 64, state: 'downloading', downloadBps: Math.round(down * 0.7), etaMs: 320_000, sizeBytes: 2_400_000_000 },
+      { id: demoItemId(instance, 2), name: 'Metropolis.1927.Restored.2160p', progress: 31, state: 'downloading', downloadBps: Math.round(down * 0.3), etaMs: 2_700_000, sizeBytes: 18_000_000_000 },
+      { id: demoItemId(instance, 3), name: 'Scott Joplin - Maple Leaf Rag (FLAC)', progress: 100, state: 'seeding', sizeBytes: 420_000_000 },
+      { id: demoItemId(instance, 4), name: 'Judex.1916.E01.1080p', progress: 12, state: 'paused', sizeBytes: 1_800_000_000 },
     ] : [
-      { id: demoItemId(instance, 5), name: 'Postcards.from.Ember.Bay.1080p', progress: 82, state: 'downloading', downloadBps: down, etaMs: 140_000, sizeBytes: 9_200_000_000 },
-      { id: demoItemId(instance, 6), name: 'Glass.Weather.FLAC', progress: 0, state: 'queued', sizeBytes: 610_000_000 },
+      { id: demoItemId(instance, 5), name: 'The.General.1926.1080p', progress: 82, state: 'downloading', downloadBps: down, etaMs: 140_000, sizeBytes: 9_200_000_000 },
+      { id: demoItemId(instance, 6), name: 'Gershwin.Rhapsody.in.Blue.FLAC', progress: 0, state: 'queued', sizeBytes: 610_000_000 },
     ] };
 }
 
-/** Demo catalogue art uses the existing local media artwork, never a public CDN. */
+/** Demo catalogue art is the demo's own public-domain artwork (or drawn art), never a public CDN. */
+const drawn = (id: string, kind: 'poster' | 'backdrop') => `data:image/svg+xml,${encodeURIComponent(demoMediaArt(id, kind))}`;
 export function demoExternalUpcoming(): ExternalItem[] {
-  return ['The Cloud Observatory', 'Lanterns Beyond the Lake', 'A Small Constellation', 'The Silver Tram', 'The Last Paper Moon'].map((title, n) => ({
-    id: `demo-external-${n}`, provider: n % 2 ? 'kitsu' : 'tvmaze', kind: n % 2 ? 'anime' : 'series', title,
+  // The four serials, then an early Japanese short (1917) on the anime side.
+  const shows = [...DEMO_SERIALS.map(serial => ({ slug: serial.slug, title: serial.title, anime: false })), { slug: 'namakura-gatana', title: 'Namakura Gatana', anime: true }];
+  return shows.map((serial, n) => ({
+    id: `demo-external-${n}`, provider: serial.anime ? 'kitsu' as const : 'tvmaze' as const, kind: serial.anime ? 'anime' as const : 'series' as const, title: serial.title,
     status: (['airing', 'upcoming', 'announced', 'upcoming', 'ended'] as const)[n], phase: n === 0 ? 'current' : 'announced',
     ...(n < 2 || n === 3 ? { at: Date.now() + (n + 1) * 86400000, season: 2, episode: n === 0 ? 4 : 1 } : {}),
-    poster: `data:image/svg+xml,${encodeURIComponent(demoMediaArt(`demo:poster:external:${n}`, 'poster'))}`, backdrop: `data:image/svg+xml,${encodeURIComponent(demoMediaArt(`demo:backdrop:external:${n}`, 'backdrop'))}`,
+    poster: demoArtUrl(serial.slug) ?? drawn(`demo:poster:external:${n}`, 'poster'), backdrop: demoArtUrl(serial.slug, 'wide') ?? drawn(`demo:backdrop:external:${n}`, 'backdrop'),
   }));
 }
 export function demoCatalogHits(kinds: CatalogKind[]): CatalogHit[] {
   return [...demoExternalUpcoming().map(({ provider, kind, title, status, poster }, n) => ({ provider, kind, title, status, poster, id: `demo-${n}` })),
-    { provider: 'tmdb' as const, kind: 'movie' as const, title: 'The Clockwork Aurora', id: 'demo-movie', status: 'Planned' }].filter(hit => kinds.includes(hit.kind));
+    { provider: 'tmdb' as const, kind: 'movie' as const, title: 'His Girl Friday', id: 'demo-movie', status: 'Released', ...(demoArtUrl('his-girl-friday') ? { poster: demoArtUrl('his-girl-friday') } : {}) }].filter(hit => kinds.includes(hit.kind));
 }

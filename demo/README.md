@@ -4,6 +4,13 @@ This directory is the only data source used by the public showcase container.
 Every value must remain fictional: no private address copied from a real setup,
 credential, token, password hash, uploaded logo, or personal calendar entry.
 
+The media widgets show real works in the public domain (silent films and
+serials, ragtime sheet music, classic novels, early comics, photographs by
+NASA, the U.S. National Archives and the Library of Congress), listed in
+`src/lib/demo/publicDomain.ts`. Their pictures ship in `public/demo/art/`
+(listed in `src/lib/demo/art.ts`, sources in `CREDITS.md` there); a work
+without one keeps drawn artwork. Nothing is fetched online.
+
 `npm run demo` starts the isolated demo with hot reload on
 <http://localhost:2505> without building an image or copying files into
 `data/`. It remains loopback-only unless `npm run demo:lan` is used.

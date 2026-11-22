@@ -1,6 +1,7 @@
 import type { IntegrationInstance } from '@/lib/types';
 import type { ReadingItem, ReadingSummary } from '@/lib/widgetData/contracts';
 import { serviceBytes, ServiceError } from '@/lib/widgetData/services';
+import { DEMO_BOOKS, DEMO_COMICS, demoArtId } from '@/lib/demo/publicDomain';
 
 /**
  * What the three reading servers share: the covers each answer lists, which
@@ -29,20 +30,16 @@ export async function coverBytes(instance: IntegrationInstance, path: string, he
 export function demoReading(instance: IntegrationInstance, provider: ReadingSummary['provider']): ReadingSummary {
   const kind: ReadingItem['kind'] = provider === 'audiobookshelf' ? 'audiobook' : provider === 'komga' ? 'comic' : 'book';
   const minute = Math.floor(Date.now() / 60_000);
-  const item = (id: string, title: string, subtitle: string, progress?: number): ReadingItem => ({ id, title, subtitle, kind, ...(progress !== undefined ? { progress } : {}), cover: `demo-${id}` });
+  // Public-domain novels and newspaper comics (src/lib/demo/publicDomain.ts), with their real covers.
+  const works = kind === 'comic' ? DEMO_COMICS : DEMO_BOOKS;
+  const item = (n: number, progress?: number): ReadingItem => {
+    const work = works[n % works.length];
+    return { id: `r${n + 1}`, title: work.title, subtitle: work.author, kind, ...(progress !== undefined ? { progress } : {}), cover: demoArtId(work.slug) };
+  };
   return {
     provider, name: instance.name,
-    inProgress: [
-      item('r1', 'The Lighthouse Keeper', 'M. Arden', 64 + (minute % 3)),
-      item('r2', 'Salt and Circuits', 'J. Okafor', 23),
-      item('r3', 'A Field Guide to Quiet', 'L. Moreau', 88),
-    ],
-    recent: [
-      item('r4', 'Northern Lines', 'K. Ilves'),
-      item('r5', 'The Paper Orchard', 'S. Lind'),
-      item('r6', 'Copper Weather', 'R. Haas'),
-      item('r7', 'Small Engines', 'T. Okoro'),
-    ],
+    inProgress: [item(0, 64 + (minute % 3)), item(1, 23), item(2, 88)],
+    recent: [item(3), item(4), item(5), item(6)],
     fetchedAt: Date.now(),
   };
 }

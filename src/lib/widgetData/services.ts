@@ -11,6 +11,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import { isCertificateError, type HttpOptions } from '@/integrations/http';
 import { resolveWidgetSettings } from './resolve';
 import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_TYPES, PHOTO_STATS_TYPES, MEDIA_SERVER_TYPES, MUSIC_SERVER_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES, type DnsProvider, type UpsSummary, type VpnTunnelSummary } from './contracts';
+import { DEMO_PHOTOS, demoArtUrl } from '@/lib/demo/publicDomain';
 
 export class ServiceError extends Error {
   constructor(readonly key: string, readonly status = 502, readonly parameters?: Record<string, string | number>) {
@@ -249,7 +250,7 @@ export function demoPhotos(instance: IntegrationInstance, count: number, widgetI
   const photos = Array.from({ length: count }, (_, i) => {
     const n = (i + offset) % 60;
     const id = instance.type === 'immich' ? `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` : `pdemo${String(n).padStart(11, '0')}`;
-    return { id, ...photoUrls(widgetId, id, draft), ...(demoPortrait(id) ? { width: 800, height: 1200 } : { width: 1200, height: 800 }), takenAt: Date.UTC(2024, 5, 1 + n), place: ['Silver Lake', 'Blue Ridge', 'Quiet Coast'][n % 3] };
+    return { id, ...photoUrls(widgetId, id, draft), ...(demoPortrait(id) ? { width: 800, height: 1200 } : { width: 1200, height: 800 }), takenAt: Date.UTC(2024, 5, 1 + n), place: DEMO_PHOTOS[n % DEMO_PHOTOS.length].place };
   });
   return { provider: instance.type as 'immich' | 'photoprism', name: instance.name, photos, stats: { photos: 1240, videos: 38 }, fetchedAt: Date.UTC(2026, 0, 15, 12) };
 }
@@ -257,7 +258,16 @@ export function demoPhotos(instance: IntegrationInstance, count: number, widgetI
 function demoPortrait(id: string): boolean {
   return Number(id.replace(/\D/g, '').slice(-3)) % 3 === 1;
 }
-/** Calm generated landscapes (dawn, sea, forest, dusk…): no real photo ships with the demo. */
+/**
+ * The picture of a demo photo: a public-domain photograph that ships with the
+ * demo (src/lib/demo/publicDomain.ts), cut to the photo's orientation.
+ */
+export function demoPhotoFile(id: string): string | undefined {
+  const n = Number(id.replace(/\D/g, '').slice(-3));
+  if (!Number.isFinite(n)) return undefined;
+  return demoArtUrl(DEMO_PHOTOS[n % DEMO_PHOTOS.length].slug, demoPortrait(id) ? 'tall' : 'wide');
+}
+/** Calm generated landscapes (dawn, sea, forest, dusk…), when no photograph ships for an id. */
 export function demoLandscape(id: string): string {
   const n = [...id].reduce((sum, char) => sum * 31 + char.charCodeAt(0) >>> 0, 0);
   const [sky, glow, far, near] = [
