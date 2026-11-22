@@ -2140,8 +2140,6 @@ const en: Dictionary = {
   "pages.header.settingsOf": "{name} settings",
   "pages.header.style": "Style",
   "pages.header.styleTabs": "Tabs",
-  "pages.header.styleBoxed": "In a block",
-  "pages.header.styleList": "List",
   "pages.header.align": "Alignment",
   "pages.header.alignStart": "Left",
   "pages.header.alignCenter": "Centre",
@@ -2492,6 +2490,12 @@ const en: Dictionary = {
   'pages.header.shown': "Visible pages",
   'pages.header.shownInfo': "The other pages unfold from the last button of the menu.",
   'pages.header.shownAll': "All",
+  'pages.header.stylePill': "Capsule",
+  'pages.header.styleSegmented': "Segmented",
+  'pages.header.styleIcons': "Icons",
+  'pages.header.perRow': "Pages per line",
+  'pages.header.perRowInfo': "The pages go to a new line after this many (the “Others” button counts as one). Auto: as many as the widget holds.",
+  'pages.header.perRowAuto': "Auto",
 };
 
 const fr: Dictionary = {
@@ -4618,8 +4622,6 @@ const fr: Dictionary = {
   "pages.header.settingsOf": "Réglages : {name}",
   "pages.header.style": "Style",
   "pages.header.styleTabs": "Onglets",
-  "pages.header.styleBoxed": "Dans un bloc",
-  "pages.header.styleList": "Liste",
   "pages.header.align": "Alignement",
   "pages.header.alignStart": "Gauche",
   "pages.header.alignCenter": "Centre",
@@ -4970,6 +4972,12 @@ const fr: Dictionary = {
   'pages.header.shown': "Pages visibles",
   'pages.header.shownInfo': "Les autres pages se déroulent depuis le dernier bouton du menu.",
   'pages.header.shownAll': "Toutes",
+  'pages.header.stylePill': "Capsule",
+  'pages.header.styleSegmented': "Segmenté",
+  'pages.header.styleIcons': "Icônes",
+  'pages.header.perRow': "Pages par ligne",
+  'pages.header.perRowInfo': "Les pages passent à la ligne après ce nombre (le bouton « Autres » compte pour une). Auto : autant que le widget en contient.",
+  'pages.header.perRowAuto': "Auto",
 };
 
 const es: Dictionary = {
@@ -7096,8 +7104,6 @@ const es: Dictionary = {
   "pages.header.settingsOf": "Ajustes: {name}",
   "pages.header.style": "Estilo",
   "pages.header.styleTabs": "Pestañas",
-  "pages.header.styleBoxed": "En un bloque",
-  "pages.header.styleList": "Lista",
   "pages.header.align": "Alineación",
   "pages.header.alignStart": "Izquierda",
   "pages.header.alignCenter": "Centro",
@@ -7448,6 +7454,12 @@ const es: Dictionary = {
   'pages.header.shown': "Páginas visibles",
   'pages.header.shownInfo': "Las demás páginas se despliegan desde el último botón del menú.",
   'pages.header.shownAll': "Todas",
+  'pages.header.stylePill': "Cápsula",
+  'pages.header.styleSegmented': "Segmentado",
+  'pages.header.styleIcons': "Iconos",
+  'pages.header.perRow': "Páginas por línea",
+  'pages.header.perRowInfo': "Las páginas pasan a una nueva línea tras este número (el botón «Otras» cuenta como una). Auto: tantas como quepan en el widget.",
+  'pages.header.perRowAuto': "Auto",
 };
 
 const de: Dictionary = {
@@ -9574,8 +9586,6 @@ const de: Dictionary = {
   "pages.header.settingsOf": "Einstellungen: {name}",
   "pages.header.style": "Stil",
   "pages.header.styleTabs": "Reiter",
-  "pages.header.styleBoxed": "In einem Block",
-  "pages.header.styleList": "Liste",
   "pages.header.align": "Ausrichtung",
   "pages.header.alignStart": "Links",
   "pages.header.alignCenter": "Mitte",
@@ -9926,6 +9936,12 @@ const de: Dictionary = {
   'pages.header.shown': "Sichtbare Seiten",
   'pages.header.shownInfo': "Die übrigen Seiten klappen über die letzte Schaltfläche des Menüs auf.",
   'pages.header.shownAll': "Alle",
+  'pages.header.stylePill': "Kapsel",
+  'pages.header.styleSegmented': "Segmentiert",
+  'pages.header.styleIcons': "Symbole",
+  'pages.header.perRow': "Seiten pro Zeile",
+  'pages.header.perRowInfo': "Nach dieser Anzahl beginnen die Seiten eine neue Zeile (die Schaltfläche „Weitere“ zählt als eine). Auto: so viele, wie das Widget fasst.",
+  'pages.header.perRowAuto': "Auto",
 };
 
 const it: Dictionary = {
@@ -12051,8 +12067,6 @@ const it: Dictionary = {
   "pages.header.settingsOf": "Impostazioni: {name}",
   "pages.header.style": "Stile",
   "pages.header.styleTabs": "Schede",
-  "pages.header.styleBoxed": "In un blocco",
-  "pages.header.styleList": "Elenco",
   "pages.header.align": "Allineamento",
   "pages.header.alignStart": "Sinistra",
   "pages.header.alignCenter": "Centro",
@@ -12403,6 +12417,12 @@ const it: Dictionary = {
   'pages.header.shown': "Pagine visibili",
   'pages.header.shownInfo': "Le altre pagine si aprono dall'ultimo pulsante del menu.",
   'pages.header.shownAll': "Tutte",
+  'pages.header.stylePill': "Capsula",
+  'pages.header.styleSegmented': "Segmentato",
+  'pages.header.styleIcons': "Icone",
+  'pages.header.perRow': "Pagine per riga",
+  'pages.header.perRowInfo': "Dopo questo numero le pagine vanno a capo (il pulsante «Altre» conta come una). Auto: quante ne entrano nel widget.",
+  'pages.header.perRowAuto': "Auto",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

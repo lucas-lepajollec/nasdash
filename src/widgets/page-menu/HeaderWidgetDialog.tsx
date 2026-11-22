@@ -10,17 +10,28 @@ import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components
 import { useI18n } from '@/i18n/I18nProvider';
 import { DialogPortal } from '../devices/ColorDialog';
 
-export type MenuStyle = 'tabs' | 'boxed' | 'list';
+/**
+ * Menu looks: underlined tabs (the original), a soft capsule on the page
+ * shown, a segmented control (one track, the page shown raised in it) and
+ * icons over their names, like a dock.
+ */
+export type MenuStyle = 'tabs' | 'pill' | 'segmented' | 'icons';
+export const MENU_STYLES: MenuStyle[] = ['tabs', 'pill', 'segmented', 'icons'];
 export type MenuPart = 'all' | 'first' | 'second';
 
 export function readAlign(settings: WidgetSettings, fallback: HeaderAlign): HeaderAlign {
   return settings.align === 'start' || settings.align === 'center' || settings.align === 'end' ? settings.align : fallback;
 }
 export function readMenuStyle(settings: WidgetSettings): MenuStyle {
-  return settings.style === 'boxed' || settings.style === 'list' ? settings.style : 'tabs';
+  return MENU_STYLES.includes(settings.style as MenuStyle) ? settings.style as MenuStyle : 'tabs';
 }
 export function readMenuPart(settings: WidgetSettings): MenuPart {
   return settings.part === 'first' || settings.part === 'second' ? settings.part : 'all';
+}
+/** Pages on each line of the menu; undefined: as many as fit. */
+export function readMenuPerRow(settings: WidgetSettings): number | undefined {
+  const perRow = settings.perRow;
+  return typeof perRow === 'number' && Number.isFinite(perRow) && perRow >= 1 ? Math.floor(perRow) : undefined;
 }
 /** How many pages the menu shows before its last button; undefined: all of them. */
 export function readMenuLimit(settings: WidgetSettings): number | undefined {
@@ -29,8 +40,8 @@ export function readMenuLimit(settings: WidgetSettings): number | undefined {
 }
 
 /**
- * Edit mode: the ✎ of a menu widget and its dialog: style, icons, how many
- * pages show before the last button, and alignment. (A menu split in two
+ * Edit mode: the ✎ of a menu widget and its dialog: style, icons, pages per
+ * line, how many pages show before the "Others" button, and alignment. (A menu split in two
  * halves only comes from an upgraded header; see `readMenuPart`.)
  * These are per widget: the pages themselves are shared.
  */
@@ -68,6 +79,9 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
   const shown = Math.min(readMenuLimit(draft) ?? pageCount, pageCount);
   // At the top of the slider every page shows, the ones added later too.
   const setShown = (value: number) => change({ maxPages: value >= pageCount ? 0 : value });
+  // Pages per line count the "Others" button as one.
+  const perRowMax = Math.max(1, shown < pageCount ? shown + 1 : pageCount);
+  const perRow = Math.min(readMenuPerRow(draft) ?? 0, perRowMax);
   return (
     <DialogPortal onClose={onClose}>
       {ref => (
@@ -81,21 +95,12 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
             <button type="button" className="nd-btn nd-btn-accent" onClick={() => { onSave(draft); onClose(); }}>{t('Enregistrer')}</button>
           </>}
         >
-          <CalmeRow label={t('pages.header.style')}>
-            <CalmeSegmented
-              label={t('pages.header.style')}
-              value={style}
-              options={[
-                { value: 'tabs', label: t('pages.header.styleTabs') },
-                { value: 'boxed', label: t('pages.header.styleBoxed') },
-                { value: 'list', label: t('pages.header.styleList') },
-              ]}
-              onChange={value => change({ style: value })}
-            />
-          </CalmeRow>
-          <CalmeRow label={t('settings.calme.tabIcons')}>
-            <CalmeSwitch label={t('settings.calme.tabIcons')} checked={draft.icons === true} onChange={value => change({ icons: value })} />
-          </CalmeRow>
+          <MenuStylePicker value={style} onChange={value => change({ style: value })} />
+          {style !== 'icons' && (
+            <CalmeRow label={t('settings.calme.tabIcons')}>
+              <CalmeSwitch label={t('settings.calme.tabIcons')} checked={draft.icons === true} onChange={value => change({ icons: value })} />
+            </CalmeRow>
+          )}
           {pageCount > 1 && (
             <CalmeRow label={t('pages.header.shown')} info={t('pages.header.shownInfo')}>
               <CalmeSlider
@@ -110,22 +115,65 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
               />
             </CalmeRow>
           )}
-          {style !== 'list' && (
-            <CalmeRow label={t('pages.header.align')}>
-              <CalmeSegmented
-                label={t('pages.header.align')}
-                value={readAlign(draft, 'center')}
-                options={[
-                  { value: 'start', label: t('pages.header.alignStart') },
-                  { value: 'center', label: t('pages.header.alignCenter') },
-                  { value: 'end', label: t('pages.header.alignEnd') },
-                ]}
-                onChange={value => change({ align: value })}
+          {perRowMax > 1 && (
+            <CalmeRow label={t('pages.header.perRow')} info={t('pages.header.perRowInfo')}>
+              <CalmeSlider
+                label={t('pages.header.perRow')}
+                value={perRow}
+                min={0}
+                max={perRowMax}
+                step={1}
+                onChange={value => change({ perRow: value })}
+                onCommit={value => change({ perRow: value })}
+                format={value => value < 1 ? t('pages.header.perRowAuto') : String(value)}
               />
             </CalmeRow>
           )}
+          <CalmeRow label={t('pages.header.align')}>
+            <CalmeSegmented
+              label={t('pages.header.align')}
+              value={readAlign(draft, 'center')}
+              options={[
+                { value: 'start', label: t('pages.header.alignStart') },
+                { value: 'center', label: t('pages.header.alignCenter') },
+                { value: 'end', label: t('pages.header.alignEnd') },
+              ]}
+              onChange={value => change({ align: value })}
+            />
+          </CalmeRow>
         </CalmeDialog>
       )}
     </DialogPortal>
+  );
+}
+
+/** The four looks, each drawn as a small sample of the menu itself. */
+function MenuStylePicker({ value, onChange }: { value: MenuStyle; onChange: (style: MenuStyle) => void }) {
+  const { t } = useI18n();
+  const names: Record<MenuStyle, string> = {
+    tabs: t('pages.header.styleTabs'),
+    pill: t('pages.header.stylePill'),
+    segmented: t('pages.header.styleSegmented'),
+    icons: t('pages.header.styleIcons'),
+  };
+  const samples: [string, string][] = [['⌂', t('Home')], ['▶', t('Médias')], ['♪', t('Music')]];
+  return (
+    <div className="nd-menu-styles" role="radiogroup" aria-label={t('pages.header.style')}>
+      {MENU_STYLES.map(style => (
+        <button key={style} type="button" role="radio" aria-checked={value === style} className="nd-menu-style" onClick={() => onChange(style)}>
+          <span className={`nd-menu-style-sample nd-hw-menu nd-hw-menu--${style}`} aria-hidden="true">
+            <span className="nd-header-menu">
+              {samples.map(([icon, name], index) => (
+                <span key={name} className={`nd-header-tab-link ${index === 0 ? 'is-active' : ''}`}>
+                  {style === 'icons' && <span className="nd-header-tab-icon">{icon}</span>}
+                  <span className="nd-header-tab-name">{name}</span>
+                </span>
+              ))}
+            </span>
+          </span>
+          <span className="nd-menu-style-name">{names[style]}</span>
+        </button>
+      ))}
+    </div>
   );
 }

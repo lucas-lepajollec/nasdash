@@ -24,6 +24,7 @@ import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
+import { CalmeInfo } from '../modals/settings/shared/CalmeControls';
 import { HEADER_WIDGET_TYPES, isLastRequiredWidget } from '@/lib/pages/header';
 import { prepareSearchText, searchTerms, textMatches, widgetSearchText } from '@/lib/search/match';
 import { MOBILE_QUERY } from '../layout/MobilePager';
@@ -228,7 +229,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   const [heights, setHeights] = useState<Record<string, number>>({});
   // Where the dragged widget will land, drawn instead of GridStack's own
   // placeholder (which refuses big jumps across widgets and lags behind).
-  const [dropPreview, setDropPreview] = useState<(GridPlacement & { fitPx?: number; fitAlign?: 'start' | 'center' | 'end' }) | null>(null);
+  const [dropPreview, setDropPreview] = useState<GridPlacement | null>(null);
   const heightsRef = useRef(heights);
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
@@ -362,12 +363,6 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         setGesture(true);
         const id = String(el.gridstackNode?.id ?? el.getAttribute('gs-id'));
         const start = grab;
-        // A widget as wide as its content: the landing slot is drawn that wide too.
-        const fitted = el.querySelector<HTMLElement>('.nd-page-widget--fit');
-        const fit = fitted ? {
-          fitPx: Math.round(fitted.getBoundingClientRect().width),
-          fitAlign: fitted.classList.contains('nd-page-widget--end') ? 'end' as const : fitted.classList.contains('nd-page-widget--center') ? 'center' as const : 'start' as const,
-        } : {};
         const read = (event: MouseEvent | TouchEvent) => {
           const gridBox = root.current?.getBoundingClientRect();
           const point = 'touches' in event ? event.touches[0] : event;
@@ -379,7 +374,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
             // As the page will show it: stored gaps kept around the measured heights.
             const layout = settled ? reflowHeights(pushOverlaps(settled, id), heightsRef.current) : null;
             const target = layout?.find(placement => placement.id === id);
-            setDropPreview(target ? { x: target.x, y: target.y, w: target.w, h: target.h, ...fit } : null);
+            setDropPreview(target ? { x: target.x, y: target.y, w: target.w, h: target.h } : null);
             if (layout) hold(layout, id);
           });
         };
@@ -657,11 +652,11 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     <>
       {compactEdit && (
         <div className="nd-page-mobile-bar" role="group" aria-label={t('pages.mobile.title')}>
-          <span className="nd-page-mobile-bar-note">{t('pages.mobile.editNote')}</span>
-          <span className="ndc-seg nd-page-mobile-switch">
-            <button type="button" aria-pressed={!listView} onClick={() => setListView(false)}><SquareStack size={13} /> {t('pages.mobile.widgets')}</button>
-            <button type="button" aria-pressed={listView} onClick={() => setListView(true)}><List size={13} /> {t('pages.mobile.list')}</button>
+          <span className="nd-page-mobile-switch">
+            <button type="button" aria-pressed={!listView} onClick={() => setListView(false)}><SquareStack size={14} aria-hidden="true" /> {t('pages.mobile.widgets')}</button>
+            <button type="button" aria-pressed={listView} onClick={() => setListView(true)}><List size={14} aria-hidden="true" /> {t('pages.mobile.list')}</button>
           </span>
+          <CalmeInfo text={t('pages.mobile.editNote')} />
         </div>
       )}
       {compactEdit && listView && <MobileOrderEditor page={page} edit={edit} nameOf={titleOf} />}
@@ -703,15 +698,14 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         ))}
         {dropPreview && (
           <div
-            className={`nd-page-drop-preview ${dropPreview.fitPx ? `nd-page-drop-preview--fit nd-page-drop-preview--${dropPreview.fitAlign}` : ''}`}
+            className="nd-page-drop-preview"
             aria-hidden="true"
             style={{
               left: `${(dropPreview.x / GRID_COLUMNS) * 100}%`,
               width: `${(dropPreview.w / GRID_COLUMNS) * 100}%`,
               top: dropPreview.y * GRID_ROW_PX,
               height: dropPreview.h * GRID_ROW_PX,
-              ...(dropPreview.fitPx ? { '--nd-preview-fit': `${dropPreview.fitPx}px` } : {}),
-            } as React.CSSProperties}
+            }}
           />
         )}
       </div>
@@ -814,7 +808,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, 
   return (
     <div
       ref={ref}
-      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''} ${entry?.fixedWidth ? `nd-page-widget--fit nd-page-widget--${fitAlign(widget)}` : ''}`}
+      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''}`}
       data-widget-id={widget.id}
       style={editMode ? { '--nd-page-actions-width': `${actionsWidth}px` } as React.CSSProperties : undefined}
     >
@@ -874,13 +868,6 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, 
       )}
     </div>
   );
-}
-
-/** The side a header widget is aligned to (its content, and its outline in edit mode). */
-function fitAlign(widget: WidgetInstance): 'start' | 'center' | 'end' {
-  const align = widget.settings.align;
-  if (widget.type === 'page-menu' && widget.settings.style === 'list') return 'start';
-  return align === 'start' || align === 'center' ? align : widget.type === 'page-menu' ? 'center' : 'end';
 }
 
 /**

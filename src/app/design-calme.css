@@ -3650,9 +3650,22 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 
 /* Phones and tablets in edit mode: the widgets keep their controls; moves
    (arrows) and hiding only change the phone order. */
-.nd-page-mobile-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-.nd-page-mobile-bar-note { font-size: 0.7rem; color: var(--nd-text-muted); line-height: 1.4; flex: 1; min-width: 160px; }
-.nd-page-mobile-switch button { display: inline-flex; align-items: center; gap: 6px; }
+/* Phones and tablets in edit mode: widgets or the order list, a segmented
+   control in the glass of the phone header; what it does is in the ⓘ. */
+.nd-page-mobile-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.nd-page-mobile-switch {
+  display: flex; flex: 1; gap: 2px; padding: 3px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
+  background: color-mix(in srgb, var(--nd-bg-surface) 55%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+}
+.nd-page-mobile-switch button {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 12px;
+  border: none; border-radius: 999px; background: transparent; color: var(--nd-text-muted);
+  font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.nd-page-mobile-switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--nd-text) 12%, transparent); color: var(--nd-text); }
+.nd-page-mobile-bar .ndc-info { flex-shrink: 0; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--nd-text-muted); }
 .nd-page-grid > .grid-stack-item.nd-page-item--mobile-dimmed .nd-page-widget > :not(.nd-page-widget-actions) { opacity: 0.4; }
 .nd-page-grid--compact-editing .nd-page-widget-actions { opacity: 1 !important; visibility: visible !important; }
 .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { width: 32px; height: 32px; }
@@ -3910,24 +3923,18 @@ body[data-design="calme"][data-blur="on"].light {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   display: inline-flex; padding: 2px; border: none; background: none; color: var(--nd-text-dimmed); cursor: pointer;
 }
-/* The menu never hides pages (see useMenuFit in src/widgets/page-menu/view.tsx). */
-.nd-hw-menu .nd-header-menu { row-gap: 4px; min-width: 0; }
-.nd-hw--center .nd-header-menu { justify-content: center; }
-.nd-hw--end .nd-header-menu { justify-content: flex-end; }
-.nd-hw-menu--boxed { padding: 2px 12px; }
-.nd-hw-menu--list { display: block; padding: 6px; }
-.nd-header-menu.is-vertical { flex-direction: column; align-items: stretch; gap: 2px !important; }
-.nd-header-menu.is-vertical .nd-header-tab { display: flex; }
-.nd-header-menu.is-vertical .nd-header-tab-link {
-  flex: 1; margin: 0; padding: 8px 10px; border-bottom: none; border-radius: 4px; text-align: left;
-}
-.nd-header-menu.is-vertical .nd-header-tab-link.is-active { background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
-.nd-header-menu.is-vertical .nd-header-tab-add { align-self: flex-start; margin: 4px 10px; }
-/* The row is as wide as its buttons; the widget is fitted to it (WidgetFit).
-   When even that is too wide, only the account name gives way. */
-.nd-hw-actions-row { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
-.nd-hw-actions-row > * { flex-shrink: 0; }
-.nd-hw-actions-row > .nd-hw-account { flex-shrink: 1; }
+/* The widget takes the grid columns its buttons need (WidgetFit) and the
+   buttons stretch to fill them exactly, like the edges of any widget. When
+   even that is too narrow, only the account name gives way. */
+.nd-hw-actions-row { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.nd-hw-actions-row > * { flex: 1 0 auto; }
+.nd-hw-actions-row > .nd-hw-divider { flex: 0 0 1px; }
+.nd-hw-actions-row > .nd-hw-account { flex: 2 1 auto; }
+.nd-hw-actions-row .nd-btn { justify-content: center; }
+.nd-hw-account .nd-hw-user { flex: 1 1 auto; justify-content: center; }
+.nd-hw-account .nd-hw-logout { flex: 0 0 auto; }
+.nd-hw-actions-row.is-measuring { width: max-content; }
+.nd-hw-actions-row.is-measuring > *, .nd-hw-actions-row.is-measuring .nd-hw-user { flex-grow: 0 !important; }
 .nd-hw-divider { width: 1px; height: 16px; margin: 0 4px; background: var(--nd-border); flex-shrink: 0; }
 .nd-hw-account { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .nd-hw-user {
@@ -3961,11 +3968,6 @@ body[data-design="calme"][data-blur="on"].light {
 /* Edit mode: machines are dragged into order (the order of the machines everywhere). */
 .ndc-fleet-sortable.is-sortable { cursor: grab; }
 .ndc-fleet-sortable.is-dragging { position: relative; z-index: 2; opacity: 0.7; }
-/* A menu short of room: tabs closer together first, a second line last. */
-.nd-hw-menu .nd-header-menu { flex-wrap: nowrap; }
-.nd-hw-menu.is-wrapping .nd-header-menu { flex-wrap: wrap; }
-body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !important; }
-.nd-hw-menu.is-tight .nd-header-tab-link { padding-left: 6px; padding-right: 6px; }
 
 /* Menu widget with a page limit: the last button unfolds the other pages. */
 .nd-header-tab-more { white-space: nowrap; }
@@ -3985,24 +3987,67 @@ body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !impor
 .nd-header-more-panel .nd-header-tab-rename { top: 50%; right: 6px; transform: translateY(-50%); }
 .nd-header-more-panel .nd-header-tab-delete { top: 50%; left: auto; right: 26px; transform: translateY(-50%); }
 .nd-header-more-panel .nd-header-tab-input { flex: 1; margin: 4px 10px; }
-/* Edit mode: the "+" sits right after the last page. On one line it is kept
-   outside the row's width, so the pages stay where they are out of edit
-   mode; when the row wraps it follows the last page on its line. */
-.nd-hw-menu .nd-header-menu:not(.is-vertical) { position: relative; }
-.nd-hw-menu .nd-header-menu:not(.is-vertical) > .nd-header-tab-add {
-  position: absolute; left: 100%; top: 50%; margin-left: 2px; transform: translateY(-50%);
-}
-/* Menu and buttons: the widget is exactly as wide as its content, on the
-   side it is aligned to (its title and edit controls follow). */
-.nd-page-widget--fit { width: fit-content; max-width: 100%; }
-/* A size container has no width of its own content: these widgets take theirs. */
-.nd-page-widget--fit .ndc-widget { container-type: normal; }
-.nd-page-widget--fit.nd-page-widget--center { margin-inline: auto; }
-.nd-page-widget--fit.nd-page-widget--end { margin-left: auto; }
 /* Edit controls with nothing in them (a required widget) are not drawn. */
 .nd-page-widget-actions:not(:has(button)) { display: none !important; }
-.nd-hw-menu.is-wrapping .nd-header-menu:not(.is-vertical) > .nd-header-tab-add { position: static; margin-left: 0; transform: none; }
-/* Dragging the menu or the buttons: the landing slot is as wide as the widget. */
-.nd-page-drop-preview--fit::before { width: var(--nd-preview-fit); max-width: 100%; }
-.nd-page-drop-preview--center::before { margin-inline: auto; }
-.nd-page-drop-preview--end::before { margin-left: auto; }
+
+/* ---------- Menu widget (src/widgets/page-menu) ---------- */
+/* Pages keep their spacing and go to the next line when the widget is full,
+   or after a set number per line (a grid of that many columns). */
+.nd-hw-menu .nd-header-menu { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 6px; }
+.nd-hw--center.nd-hw-menu .nd-header-menu { justify-content: center; }
+.nd-hw--end.nd-hw-menu .nd-header-menu { justify-content: flex-end; }
+.nd-hw-menu.has-per-row .nd-header-menu { display: grid; grid-template-columns: repeat(var(--nd-menu-per-row), max-content); }
+.nd-header-tab-more-icon { display: none !important; }
+
+/* Capsule: the page shown sits in a soft accent capsule. */
+body[data-design="calme"] .nd-hw-menu--pill .nd-header-menu { gap: 4px !important; }
+.nd-hw-menu--pill .nd-header-tab-link { margin: 0; padding: 7px 14px; border-bottom: none; border-radius: 999px; transition: background 0.15s ease, color 0.15s ease; }
+.nd-hw-menu--pill .nd-header-tab-link:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.nd-hw-menu--pill .nd-header-tab-link.is-active { color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 14%, transparent); }
+
+/* Segmented: one quiet track holding the pages, the page shown raised in it. */
+body[data-design="calme"] .nd-hw-menu--segmented .nd-header-menu {
+  flex: 0 1 auto; gap: 2px !important; padding: 3px; border-radius: 12px;
+  border: 1px solid var(--nd-card-border); background: var(--nd-card-bg);
+}
+.nd-hw-menu--segmented .nd-header-tab-link { margin: 0; padding: 6px 14px; border-bottom: none; border-radius: 9px; transition: background 0.15s ease, color 0.15s ease; }
+.nd-hw-menu--segmented .nd-header-tab-link:hover { color: var(--nd-text); }
+.nd-hw-menu--segmented .nd-header-tab-link.is-active { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 11%, transparent); }
+
+/* Icons: each page an icon over its name, like a dock. */
+body[data-design="calme"] .nd-hw-menu--icons .nd-header-menu { gap: 4px !important; }
+.nd-hw-menu--icons .nd-header-tab-link {
+  flex-direction: column; gap: 5px; min-width: 60px; margin: 0; padding: 4px 6px; border-bottom: none; border-radius: 10px;
+}
+.nd-hw-menu--icons .nd-header-tab-icon {
+  display: flex !important; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px;
+  font-size: 17px; background: color-mix(in srgb, var(--nd-text) 7%, transparent); transition: background 0.15s ease, color 0.15s ease;
+}
+body[data-design="calme"] .nd-hw-menu--icons .nd-header-tab-name { font-size: 0.68rem !important; }
+.nd-hw-menu--icons .nd-header-tab-link:hover .nd-header-tab-icon { background: color-mix(in srgb, var(--nd-text) 12%, transparent); }
+.nd-hw-menu--icons .nd-header-tab-link.is-active { color: var(--nd-text); }
+.nd-hw-menu--icons .nd-header-tab-link.is-active .nd-header-tab-icon { color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 18%, transparent); }
+.nd-hw-menu--icons .nd-header-tab-more-chevron { display: none; }
+
+/* The style picker of the menu dialog: each look drawn small. */
+.nd-menu-styles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
+.nd-menu-style {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border: 1px solid var(--nd-card-border);
+  border-radius: 10px; background: transparent; color: var(--nd-text-muted); font: inherit; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease;
+}
+.nd-menu-style:hover { color: var(--nd-text); }
+.nd-menu-style[aria-checked="true"] { border-color: var(--nd-accent); color: var(--nd-text); }
+.nd-menu-style-sample {
+  display: flex; align-items: center; justify-content: center; height: 64px; overflow: hidden; pointer-events: none;
+  border-radius: 7px; background: color-mix(in srgb, var(--nd-text) 4%, transparent);
+}
+body[data-design="calme"] .nd-menu-style-sample .nd-header-menu { flex: 0 0 auto; flex-wrap: nowrap; gap: 2px !important; }
+body[data-design="calme"] .nd-hw-menu--segmented.nd-menu-style-sample .nd-header-menu { padding: 2px; }
+.nd-menu-style-sample .nd-header-tab-link { padding: 4px 8px; }
+.nd-hw-menu--icons.nd-menu-style-sample .nd-header-tab-link { min-width: 0; padding: 2px 4px; }
+.nd-hw-menu--icons.nd-menu-style-sample .nd-header-tab-icon { width: 26px; height: 26px; font-size: 13px; border-radius: 8px; }
+.nd-menu-style-sample .nd-header-tab-name { font-size: 0.7rem; white-space: nowrap; }
+.nd-menu-style-name { font-size: 0.75rem; text-align: center; }
+/* Pages per line: every page as wide as its column, its name centred. */
+.nd-hw-menu.has-per-row .nd-header-tab-link,
+.nd-hw-menu.has-per-row .nd-header-menu > .nd-header-tab { justify-content: center; }

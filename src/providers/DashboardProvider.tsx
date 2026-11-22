@@ -169,9 +169,13 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     // interface's own radius, opacity and font show. Values the user actually
     // chose still win.
     const custom = <T,>(value: T | undefined, legacyDefault: T): T | undefined => (value === legacyDefault ? undefined : value);
-    const activeRadius = custom((isMobile && config.settings?.mobileBorderRadius !== undefined) ? config.settings.mobileBorderRadius : config.settings?.borderRadius, 12);
-    const activeOpacity = custom((isMobile && config.settings?.mobileCardOpacity !== undefined) ? config.settings.mobileCardOpacity : config.settings?.cardOpacity, 0.8);
-    const activeFont = custom((isMobile && config.settings?.mobileGlobalFont) ? config.settings.mobileGlobalFont : config.settings?.globalFont, 'Outfit');
+    // Phones: their own value when one was chosen, otherwise the general one
+    // (a phone value left at that default inherits, it does not reset it).
+    const phoneFirst = <T,>(phone: T | undefined, general: T | undefined, legacyDefault: T): T | undefined =>
+      (isMobile ? custom(phone || phone === 0 ? phone : undefined, legacyDefault) : undefined) ?? custom(general, legacyDefault);
+    const activeRadius = phoneFirst(config.settings?.mobileBorderRadius, config.settings?.borderRadius, 12);
+    const activeOpacity = phoneFirst(config.settings?.mobileCardOpacity, config.settings?.cardOpacity, 0.8);
+    const activeFont = phoneFirst(config.settings?.mobileGlobalFont, config.settings?.globalFont, 'Outfit');
     const activeBg = (isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || '');
     
     setActiveBgUrl(activeBg);

@@ -4,8 +4,9 @@ import { createContext, useContext, useLayoutEffect, useRef } from 'react';
 
 /**
  * Widgets that take the width of their content (the page buttons): the page
- * hears the width the content needs and gives the widget just enough columns,
- * keeping the side it is aligned to (see `fitWidths` in PageView).
+ * hears the width the content needs and gives the widget just enough grid
+ * columns, keeping the side it is aligned to (`fitted` in PageView); the
+ * content then stretches to those columns.
  */
 export const WidgetFitContext = createContext<((px: number) => void) | null>(null);
 
@@ -23,11 +24,15 @@ export function useFitWidth<Row extends HTMLElement, Shrinking extends HTMLEleme
     if (!report || !node) return;
     let last = 0;
     const check = () => {
+      // The row stretches to its widget: its own width is read without that
+      // (the class is removed before anything is painted).
+      node.classList.add('is-measuring');
       const cut = shrinking.current;
       // Up to its own maximum width (a long name is cut anyway).
       const max = cut ? parseFloat(getComputedStyle(cut).maxWidth) : NaN;
       const hidden = cut ? Math.max(0, Math.min(cut.scrollWidth, Number.isFinite(max) ? max : Infinity) - cut.clientWidth) : 0;
       const px = Math.ceil(node.getBoundingClientRect().width + hidden);
+      node.classList.remove('is-measuring');
       if (px > 0 && Math.abs(px - last) >= 1) { last = px; report(px); }
     };
     check();

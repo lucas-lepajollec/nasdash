@@ -389,3 +389,34 @@
   from { opacity: 0.4; transform: translateX(-36px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Phones and tablets: the edit bar is one glass capsule at the bottom, like
+   the phone header: state as a dot, undo/redo, add, cancel (icon), save. */
+@media (max-width: 960px) {
+  body[data-design="calme"] .nd-page-editor-bar {
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: auto;
+    max-width: calc(100vw - 24px);
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 2px;
+    padding: 5px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
+    background: color-mix(in srgb, var(--nd-bg-surface) 60%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: none;
+  }
+  body[data-design="calme"] .nd-page-editor-bar > * + * { margin-left: 0; padding-left: 0; }
+  body[data-design="calme"] .nd-page-editor-bar > * + *::before { display: none; }
+  body[data-design="calme"] .nd-page-editor-status { width: auto; padding: 0 8px 0 10px; }
+  .nd-page-editor-status-text, .nd-page-editor-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button,
+  body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 40px; min-width: 40px; border-radius: 999px; justify-content: center; }
+  body[data-design="calme"] .nd-page-editor-bar .nd-btn-accent { padding: 0 16px; }
+  body[data-design="calme"] .nd-page-editor-dot { width: 8px; height: 8px; }
+  .nd-page-editor-alert { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 62px); }
+}

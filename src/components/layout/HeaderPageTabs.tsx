@@ -2,20 +2,21 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { TabDef, TabId } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { usePages } from '@/providers/PagesProvider';
 import { moveById, SortableItem, SortableList } from '../widgets/content/Sortable';
 import { Emoji } from '../shared/Emoji';
+import { WidgetHeaderActions } from '../widgets/WidgetHeaderActions';
 import ConfirmModal from '../modals/ConfirmModal';
 
 /**
  * The pages in the header menu. In edit mode they are put in order by drag
  * and drop, renamed in place (pencil on hover, or a double click), deleted
  * (bin on hover, after a confirmation) and a new page is created from the
- * "+" right after the last one, without going through settings.
+ * "+" among the widget's controls, without going through settings.
  * `tabs` is the whole ordered list; `start`/`end` the part shown here (the
  * menu can be split around another widget). With a `limit`, the pages after
  * it are listed under a last button that unfolds them; in edit mode they are
@@ -24,8 +25,6 @@ import ConfirmModal from '../modals/ConfirmModal';
 type TabsProps = {
   tabs: TabDef[]; start?: number; end?: number; activeTab?: TabId; onSwitch?: (id: TabId) => void; editing: boolean;
   showIcons: boolean; flushFirst: boolean; last: boolean; tabIcons?: Record<string, string>;
-  /** One page per line (the menu widget's list style). */
-  vertical?: boolean;
   /** How many pages show in the row; the others unfold from the last button. */
   limit?: number;
 };
@@ -43,12 +42,12 @@ export function HeaderPageTabs(props: TabsProps) {
 }
 
 function PlainTabs(props: TabsProps) {
-  const { activeTab, onSwitch, showIcons, flushFirst, tabIcons, vertical } = props;
+  const { activeTab, onSwitch, showIcons, flushFirst, tabIcons } = props;
   const { t } = useI18n();
   const [row, more] = splitTabs(props);
   const [open, setOpen] = useState(false);
   return (
-    <nav data-tour="pages" className={`nd-header-menu ${vertical ? 'is-vertical' : ''}`}>
+    <nav data-tour="pages" className="nd-header-menu">
       {row.map((tab, index) => {
         const isActive = tab.id === activeTab;
         const icon = showIcons ? (tabIcons?.[tab.id] || tab.icon) : null;
@@ -80,7 +79,7 @@ function PlainTabs(props: TabsProps) {
 }
 
 function EditableTabs(props: TabsProps) {
-  const { tabs, activeTab, onSwitch, editing, showIcons, flushFirst, last, vertical } = props;
+  const { tabs, activeTab, onSwitch, editing, showIcons, flushFirst, last } = props;
   const { t } = useI18n();
   const { config, updateConfig } = useConfig();
   const { pages, createPage, updatePageDetails, deletePage } = usePages();
@@ -148,9 +147,10 @@ function EditableTabs(props: TabsProps) {
   };
 
   return (
-    <nav data-tour="pages" className={`nd-header-menu ${editing ? 'is-editing' : ''} ${vertical ? 'is-vertical' : ''}`}>
+    <nav data-tour="pages" className={`nd-header-menu ${editing ? 'is-editing' : ''}`}>
       {/* One list for the row and the unfolded pages: a page moves between them by drag and drop. */}
-      <Sortable editing={editing} layout={more.length ? 'grid' : vertical ? 'list' : 'row'} ids={shown.map(tab => tab.id)} onMove={move}>
+      {/* Pages wrap onto several lines: sorted as a grid. */}
+      <Sortable editing={editing} ids={shown.map(tab => tab.id)} onMove={move}>
         {row.map(item)}
         {more.length > 0 && (
           <MorePages tabs={more} open={open} onOpenChange={setMoreOpen}>
@@ -159,10 +159,12 @@ function EditableTabs(props: TabsProps) {
         )}
       </Sortable>
       {editing && last && (
-        <button type="button" className="nd-header-tab-add" onClick={() => void create()} disabled={busy}
-          aria-label={t('pages.header.newPage')} title={t('pages.header.newPage')}>
-          {busy ? <span className="nd-spinner" aria-hidden="true" /> : <Plus size={14} />}
-        </button>
+        <WidgetHeaderActions>
+          <button type="button" className="nd-action-icon success" onClick={() => void create()} disabled={busy}
+            aria-label={t('pages.header.newPage')} title={t('pages.header.newPage')}>
+            {busy ? <span className="nd-spinner" aria-hidden="true" /> : <Plus size={13} />}
+          </button>
+        </WidgetHeaderActions>
       )}
       <ConfirmModal
         isOpen={pendingDelete !== null}
@@ -178,8 +180,8 @@ function EditableTabs(props: TabsProps) {
 }
 
 /** Drag and drop exists only while editing: out of edit mode the menu is plain buttons, with nothing listening. */
-function Sortable({ editing, layout, ids, onMove, children }: { editing: boolean; layout: 'list' | 'row' | 'grid'; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
-  return editing ? <SortableList ids={ids} enabled layout={layout} onMove={onMove}>{children}</SortableList> : <>{children}</>;
+function Sortable({ editing, ids, onMove, children }: { editing: boolean; ids: string[]; onMove: (id: string, over: string) => void; children: React.ReactNode }) {
+  return editing ? <SortableList ids={ids} enabled layout="grid" onMove={onMove}>{children}</SortableList> : <>{children}</>;
 }
 
 /** The last button of a menu with a page limit, "Others": it unfolds the other pages below itself. */
@@ -229,6 +231,8 @@ function MorePages({ tabs, open, onOpenChange, children }: {
         title={t('pages.header.morePages', { count: tabs.length })}
         onClick={() => onOpenChange(!open)}
         className="nd-btn-menu-link nd-header-tab-link nd-header-tab-more">
+        {/* Drawn only in the icon style, where every page has one. */}
+        <span className="nd-header-tab-icon nd-header-tab-more-icon" aria-hidden="true"><MoreHorizontal size={16} /></span>
         <span className="nd-header-tab-name">{t('pages.header.more')}</span>
         <ChevronDown size={13} aria-hidden="true" className="nd-header-tab-more-chevron" />
       </button>

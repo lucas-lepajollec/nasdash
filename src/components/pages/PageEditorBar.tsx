@@ -44,7 +44,7 @@ export function PageEditorBar({ onAddWidget }: { onAddWidget: () => void }) {
       <div className="nd-page-editor-bar" role="toolbar" aria-label={t('pages.editor.toolbar')}>
         <span className="nd-page-editor-status" aria-live="polite">
           <span className={`nd-page-editor-dot ${dirty ? 'is-dirty' : ''}`} aria-hidden="true" />
-          {saving ? t('pages.editor.saving') : dirty ? t('pages.editor.unsaved') : t('pages.editor.editing')}
+          <span className="nd-page-editor-status-text">{saving ? t('pages.editor.saving') : dirty ? t('pages.editor.unsaved') : t('pages.editor.editing')}</span>
         </span>
         <div className="nd-page-editor-group">
           <button type="button" className="nd-page-icon-button" onClick={undo} disabled={!canUndo || saving} title={t('pages.editor.undo')} aria-label={t('pages.editor.undo')}>
@@ -58,8 +58,8 @@ export function PageEditorBar({ onAddWidget }: { onAddWidget: () => void }) {
           <Plus size={14} /> <span>{t('pages.editor.addWidget')}</span>
         </button>
         <div className="nd-page-editor-group">
-          <button type="button" className="nd-btn" onClick={() => (dirty ? setConfirmCancel(true) : cancelEditing())} disabled={saving}>
-            <X size={14} /> <span>{t('Annuler')}</span>
+          <button type="button" className="nd-btn" onClick={() => (dirty ? setConfirmCancel(true) : cancelEditing())} disabled={saving} aria-label={t('Annuler')} title={t('Annuler')}>
+            <X size={14} /> <span className="nd-page-editor-label">{t('Annuler')}</span>
           </button>
           <button type="button" className="nd-btn nd-btn-accent" onClick={() => void finishEditing()} disabled={saving}>
             {saving ? <Loader2 size={14} className="nd-spin" /> : <Check size={14} />} <span>{dirty ? t('pages.editor.save') : t('pages.editor.done')}</span>
