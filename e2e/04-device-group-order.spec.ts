@@ -72,7 +72,8 @@ test('single-machine display groups move independently without converting readin
     await expect.poll(groupIds).toEqual(['bar', 'ring', 'chart', 'value']);
     await expect(widget.locator('.ndc-group-drag')).toHaveCount(0);
     const saved = await (await page.request.get('/api/pages')).json();
-    const stored = saved.pages.find((item: Page) => item.id === fixture.id).widgets[0];
+    // The page also holds the header widgets the server adds to every page.
+    const stored = (saved.pages.find((item: Page) => item.id === fixture.id) as Page).widgets.find(item => !item.type.startsWith('page-'))!;
     expect(stored.settings.metrics).toEqual(metrics);
     expect(stored.settings.deviceGroupOrder).toEqual(['bar', 'ring', 'chart', 'value']);
 

@@ -115,7 +115,10 @@ test('metric dragging stays in its widget and persists through displays and Stor
     await expect(storage.locator('.ndc-m-drag')).toHaveCount(0);
     const saved = await (await page.request.get('/api/pages')).json();
     const stored = saved.pages.find((item: Page) => item.id === fixture.id) as Page;
-    expect(stored.widgets.map(({ id, x, y, w }) => ({ id, x, y, w }))).toEqual(widgets.map(({ id, x, y, w }) => ({ id, x, y, w })));
+    // The server adds the header widgets on top of the page and moves the rest down once; the layout itself is unchanged.
+    const own = stored.widgets.filter(item => !item.type.startsWith('page-'));
+    const shift = own[0].y - widgets[0].y;
+    expect(own.map(({ id, x, y, w }) => ({ id, x, y: y - shift, w }))).toEqual(widgets.map(({ id, x, y, w }) => ({ id, x, y, w })));
     expect(stored.widgets.find(item => item.id === 'order-storage')?.settings.storageOrder).toBe('manual');
     expect(stored.widgets.find(item => item.id === 'order-storage')?.settings.metricOrder).toHaveLength(3);
     for (const kind of kinds.slice(1)) await expect(page.locator(`[data-widget-id="order-${kind}"] .ndc-m-label`)).toHaveText([second.name, first.name]);

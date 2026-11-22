@@ -53,7 +53,8 @@ test('Storage groups hosts, saves its sort mode and keeps chart colours stable',
     await page.reload();
     await expect(storage.locator('.ndc-m-label')).toHaveText(usageOrder);
     const saved = await (await page.request.get('/api/pages')).json();
-    expect(saved.pages.find((item: Page) => item.id === fixture.id).widgets[0].settings.storageOrder).toBe('usage');
+    // The page also holds the header widgets the server adds to every page.
+    expect((saved.pages.find((item: Page) => item.id === fixture.id) as Page).widgets.find(item => !item.type.startsWith('page-'))?.settings.storageOrder).toBe('usage');
     await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     await openSettings();
     await dialog.getByRole('radio', { name: 'By host', exact: true }).click();
