@@ -30,7 +30,8 @@ export function readMenuLimit(settings: WidgetSettings): number | undefined {
 
 /**
  * Edit mode: the ✎ of a menu widget and its dialog: style, icons, how many
- * pages show before the last button, the part of the pages and alignment.
+ * pages show before the last button, and alignment. (A menu split in two
+ * halves only comes from an upgraded header; see `readMenuPart`.)
  * These are per widget: the pages themselves are shared.
  */
 export function MenuWidgetSettings({ title, settings, pageCount, onSave }: {
@@ -109,18 +110,6 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
               />
             </CalmeRow>
           )}
-          <CalmeRow label={t('pages.header.part')} info={t('pages.header.partInfo')}>
-            <CalmeSegmented
-              label={t('pages.header.part')}
-              value={readMenuPart(draft)}
-              options={[
-                { value: 'all', label: t('pages.header.partAll') },
-                { value: 'first', label: t('pages.header.partFirst') },
-                { value: 'second', label: t('pages.header.partSecond') },
-              ]}
-              onChange={value => change({ part: value })}
-            />
-          </CalmeRow>
           {style !== 'list' && (
             <CalmeRow label={t('pages.header.align')}>
               <CalmeSegmented

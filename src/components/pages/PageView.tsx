@@ -807,7 +807,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, 
   return (
     <div
       ref={ref}
-      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''}`}
+      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''} ${entry?.fixedWidth ? `nd-page-widget--fit nd-page-widget--${fitAlign(widget)}` : ''}`}
       data-widget-id={widget.id}
       style={editMode ? { '--nd-page-actions-width': `${actionsWidth}px` } as React.CSSProperties : undefined}
     >
@@ -867,6 +867,13 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, 
       )}
     </div>
   );
+}
+
+/** The side a header widget is aligned to (its content, and its outline in edit mode). */
+function fitAlign(widget: WidgetInstance): 'start' | 'center' | 'end' {
+  const align = widget.settings.align;
+  if (widget.type === 'page-menu' && widget.settings.style === 'list') return 'start';
+  return align === 'start' || align === 'center' ? align : widget.type === 'page-menu' ? 'center' : 'end';
 }
 
 /**

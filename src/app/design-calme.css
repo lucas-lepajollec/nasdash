@@ -3990,3 +3990,12 @@ body[data-design="calme"] .nd-hw-menu.is-tight .nd-header-menu { gap: 8px !impor
 .nd-hw-menu .nd-header-menu:not(.is-vertical) > .nd-header-tab-add {
   position: absolute; left: 100%; top: 50%; margin-left: 2px; transform: translateY(-50%);
 }
+/* Menu and buttons: the widget is exactly as wide as its content, on the
+   side it is aligned to (its title and edit controls follow). */
+.nd-page-widget--fit { width: fit-content; max-width: 100%; }
+/* A size container has no width of its own content: these widgets take theirs. */
+.nd-page-widget--fit .ndc-widget { container-type: normal; }
+.nd-page-widget--fit.nd-page-widget--center { margin-inline: auto; }
+.nd-page-widget--fit.nd-page-widget--end { margin-left: auto; }
+/* Edit controls with nothing in them (a required widget) are not drawn. */
+.nd-page-widget-actions:not(:has(button)) { display: none !important; }

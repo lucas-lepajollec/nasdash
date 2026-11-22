@@ -163,8 +163,8 @@ function Sortable({ editing, layout, ids, onMove, children }: { editing: boolean
 }
 
 /**
- * The last button of a menu with a page limit: it names the page shown when
- * that page is one of those it holds, and unfolds them below itself.
+ * The last button of a menu with a page limit, "Others": it unfolds the
+ * other pages below itself, and is marked when the page shown is one of them.
  */
 function MorePages({ tabs, activeTab, open, onOpenChange, children }: {
   tabs: TabDef[]; activeTab?: TabId; open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode;
@@ -213,7 +213,7 @@ function MorePages({ tabs, activeTab, open, onOpenChange, children }: {
         title={t('pages.header.morePages', { count: tabs.length })}
         onClick={() => onOpenChange(!open)}
         className={`nd-btn-menu-link nd-header-tab-link nd-header-tab-more ${current ? 'is-active' : ''}`}>
-        <span className="nd-header-tab-name">{current ? t(current.name) : t('pages.header.more')}</span>
+        <span className="nd-header-tab-name">{t('pages.header.more')}</span>
         <ChevronDown size={13} aria-hidden="true" className="nd-header-tab-more-chevron" />
       </button>
       {open && typeof document !== 'undefined' && createPortal(

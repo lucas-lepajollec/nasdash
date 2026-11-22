@@ -78,7 +78,12 @@ function useMenuFit(enabled: boolean, content: string) {
       if (!nav || box.clientWidth < 1) return;
       if (level < 2) needs.current.widths[level] = nav.scrollWidth;
       const [roomy, tight] = needs.current.widths;
-      const available = box.clientWidth;
+      // The widget is only as wide as its menu: the room is that of its place
+      // on the page, less what surrounds the row (block style).
+      const frame = box.closest<HTMLElement>('.nd-page-widget') ?? box;
+      const place = frame.parentElement ?? box;
+      const around = frame.getBoundingClientRect().width - nav.getBoundingClientRect().width;
+      const available = place.clientWidth - Math.max(0, around) + 1;
       let next: 0 | 1 | 2 = 0;
       if (roomy !== undefined && roomy > available) next = tight !== undefined && tight > available ? 2 : 1;
       if (next !== level) setState(current => current.level === next ? current : { ...current, level: next });
@@ -86,6 +91,8 @@ function useMenuFit(enabled: boolean, content: string) {
     check();
     const observer = new ResizeObserver(check);
     observer.observe(box);
+    const place = box.closest('.nd-page-widget')?.parentElement;
+    if (place) observer.observe(place);
     return () => observer.disconnect();
   }, [content, enabled, level]);
   return [ref, level] as const;
