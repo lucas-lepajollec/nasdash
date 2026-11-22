@@ -263,6 +263,15 @@ export interface DashboardConfig {
     headerLayoutDesktop?: HeaderLayoutDesktop;
     headerLayoutMobile?: HeaderLayoutMobile;
     showHeaderMenuIcons?: boolean;
+    /** Settings shared by every page menu widget (src/lib/pages/menu.ts). */
+    pageMenu?: {
+      style?: 'tabs' | 'pill' | 'segmented' | 'icons';
+      icons?: boolean;
+      perRow?: number;
+      maxPages?: number;
+      align?: 'start' | 'center' | 'end';
+      groups?: { id: string; name: string; pages: string[] }[];
+    };
     showPingDetails?: boolean;
     /** Latency graph: show average, range, jitter and quality (off by default). */
     networkGraphStats?: boolean;

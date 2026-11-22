@@ -7,7 +7,7 @@ import { THEME_PRESETS } from '../../SettingsModal';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Plus, X } from 'lucide-react';
-import { CalmeHeading, CalmeOrderList, CalmeRow, CalmeSegmented, CalmeSlider } from '../shared/CalmeControls';
+import { CalmeHeading, CalmeRow, CalmeSlider } from '../shared/CalmeControls';
 
 export function MobileTab() {
   const { t } = useI18n();
@@ -15,19 +15,13 @@ export function MobileTab() {
   const demoMode = config?.demoMode === true;
   
   // Local States initialized from Config
-  const [titleMobile, setTitleMobile] = useState('');
   const [mobileWallpaper, setMobileWallpaper] = useState('');
   
   const [mobileTheme, setMobileTheme] = useState('');
   const [mobileGlobalFont, setMobileGlobalFont] = useState('');
   const [mobileBorderRadius, setMobileBorderRadius] = useState<number | ''>('');
   const [mobileCardOpacity, setMobileCardOpacity] = useState<number | ''>('');
-  const [mobileTitleAnimation, setMobileTitleAnimation] = useState('');
   
-  // Header Layout Mobile
-  const [leftElement, setLeftElement] = useState<'title' | 'search' | 'none'>('title');
-  const [centerElement, setCenterElement] = useState<'title' | 'search' | 'none'>('search');
-  const [itemsOrder, setItemsOrder] = useState<('title' | 'search')[]>([]);
 
   const [uploadedBgs, setUploadedBgs] = useState<{ name: string; url: string }[]>([]);
   const [bgToDelete, setBgToDelete] = useState<string | null>(null);
@@ -50,26 +44,14 @@ export function MobileTab() {
 
   useEffect(() => {
     if (config) {
-      if (config.settings?.titleMobile !== undefined) setTitleMobile(config.settings.titleMobile);
       if (config.settings?.mobileWallpaper !== undefined) setMobileWallpaper(config.settings.mobileWallpaper);
       if (config.settings?.mobileTheme !== undefined) setMobileTheme(config.settings.mobileTheme);
       if (config.settings?.mobileGlobalFont !== undefined) setMobileGlobalFont(config.settings.mobileGlobalFont);
       if (config.settings?.mobileBorderRadius !== undefined) setMobileBorderRadius(config.settings.mobileBorderRadius);
       if (config.settings?.mobileCardOpacity !== undefined) setMobileCardOpacity(config.settings.mobileCardOpacity);
-      if (config.settings?.mobileTitleAnimation !== undefined) setMobileTitleAnimation(config.settings.mobileTitleAnimation);
       if (config.settings?.mobileAppearanceProfiles) setMobileAppearanceProfiles(config.settings.mobileAppearanceProfiles);
-
-      const ml = config.settings?.headerLayoutMobile || { left: 'title', center: 'search' };
-      setLeftElement(ml.left || 'title');
-      setCenterElement(ml.center || 'search');
-
-      if (itemsOrder.length === 0) {
-        const active = [ml.left, ml.center].filter(x => x && x !== 'none') as ('title' | 'search')[];
-        const inactive = ['title', 'search'].filter(x => !active.includes(x as any)) as ('title' | 'search')[];
-        setItemsOrder([...active, ...inactive]);
-      }
     }
-  }, [config, itemsOrder]);
+  }, [config]);
 
   const fetchUploadedBgs = async () => {
     try {
@@ -125,7 +107,6 @@ export function MobileTab() {
         mobileTheme, mobileWallpaper, mobileGlobalFont,
         mobileBorderRadius: typeof mobileBorderRadius === 'number' ? mobileBorderRadius : undefined,
         mobileCardOpacity: typeof mobileCardOpacity === 'number' ? mobileCardOpacity : undefined,
-        titleMobile, mobileTitleAnimation,
       }
     };
     const updatedProfiles = [...mobileAppearanceProfiles, newProfile];
@@ -141,8 +122,6 @@ export function MobileTab() {
     if (settings.mobileGlobalFont !== undefined) setMobileGlobalFont(settings.mobileGlobalFont);
     if (settings.mobileBorderRadius !== undefined) setMobileBorderRadius(settings.mobileBorderRadius);
     if (settings.mobileCardOpacity !== undefined) setMobileCardOpacity(settings.mobileCardOpacity);
-    if (settings.titleMobile !== undefined) setTitleMobile(settings.titleMobile);
-    if (settings.mobileTitleAnimation !== undefined) setMobileTitleAnimation(settings.mobileTitleAnimation);
     
     await updateConfig(settings);
   };
@@ -154,52 +133,8 @@ export function MobileTab() {
     setConfirmDeleteMobileProfile(null);
   };
 
-  const toggleMobileVisibility = async (item: 'title' | 'search', visible: boolean) => {
-    const activeItems = itemsOrder.filter(x => {
-      if (x === item) return visible;
-      const currentActive = [leftElement, centerElement].filter(y => y !== 'none');
-      return currentActive.includes(x);
-    });
-    
-    const newLeft = activeItems[0] || 'none';
-    const newCenter = activeItems[1] || 'none';
-    
-    setLeftElement(newLeft);
-    setCenterElement(newCenter);
-    await updateConfig({
-      headerLayoutMobile: { left: newLeft, center: newCenter }
-    });
-  };
-
-  const moveItem = async (index: number, direction: -1 | 1) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= itemsOrder.length) return;
-    
-    const newOrder = [...itemsOrder];
-    const temp = newOrder[index];
-    newOrder[index] = newOrder[newIndex];
-    newOrder[newIndex] = temp;
-
-    setItemsOrder(newOrder);
-
-    const activeItems = newOrder.filter(x => {
-      const currentActive = [leftElement, centerElement].filter(y => y !== 'none');
-      return currentActive.includes(x);
-    });
-
-    const newLeft = activeItems[0] || 'none';
-    const newCenter = activeItems[1] || 'none';
-
-    setLeftElement(newLeft);
-    setCenterElement(newCenter);
-    await updateConfig({
-      headerLayoutMobile: { left: newLeft, center: newCenter }
-    });
-  };
-
   const [addingProfile, setAddingProfile] = useState(false);
   const inherit = t("Hériter de Desktop");
-  const currentLayout = [leftElement, centerElement].filter(x => x !== 'none');
   const uploadMobileWallpaper = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -218,24 +153,6 @@ export function MobileTab() {
   };
   return (
     <div className="ndc-set-page">
-      <section className="ndc-set-block">
-        <CalmeHeading info={t("Le bouton du menu principal reste toujours accessible à droite de l'écran.")}>{t('settings.calme.mobileHeader')}</CalmeHeading>
-        <CalmeRow label={t('settings.calme.titleText')} info={t("Laissez vide pour utiliser le titre principal")}>
-          <input type="text" className="nd-input" style={{ width: 240 }} value={titleMobile} onChange={(e) => setTitleMobile(e.target.value)} onBlur={() => updateConfig({ titleMobile })} aria-label={t('settings.calme.titleText')} />
-        </CalmeRow>
-        <CalmeOrderList
-          moveUpLabel={t("Monter")}
-          moveDownLabel={t("Descendre")}
-          onMove={(index, direction) => { void moveItem(index, direction); }}
-          items={itemsOrder.map((item, index) => ({
-            id: item,
-            label: item === 'title' ? t('Titre / Logo') : t('Barre de Recherche'),
-            sub: currentLayout.includes(item) ? (index === 0 ? t('Zone Gauche') : t('Zone Centrale')) : t("Masqué"),
-            enabled: currentLayout.includes(item),
-            onToggle: value => { void toggleMobileVisibility(item, value); },
-          }))}
-        />
-      </section>
 
       <section className="ndc-set-block">
         <CalmeHeading info={t("Surchargez les paramètres globaux (thème, fond, géométrie)")}>{t('settings.calme.mobileLook')}</CalmeHeading>
@@ -258,14 +175,6 @@ export function MobileTab() {
               options={[{ value: '', label: inherit }, ...['Outfit', 'Inter', 'Poppins', 'Rubik', 'Ubuntu', 'Lexend', 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Montserrat', 'Roboto'].map(font => ({ value: font, label: font }))]}
             />
           </div>
-        </CalmeRow>
-        <CalmeRow label={t("Animation du titre")}>
-          <CalmeSegmented
-            label={t("Animation du titre")}
-            value={mobileTitleAnimation || 'inherit'}
-            options={[{ value: 'inherit', label: t("Hérité") }, { value: 'none', label: t("Aucune") }, { value: 'spotlight-silver', label: t('settings.calme.sweep') }]}
-            onChange={value => { const next = value === 'inherit' ? '' : value; setMobileTitleAnimation(next); updateConfig({ mobileTitleAnimation: next }); }}
-          />
         </CalmeRow>
         <CalmeRow label={t('settings.calme.radius')} info={t('settings.calme.inheritHint')}>
           <CalmeSlider

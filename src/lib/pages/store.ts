@@ -9,6 +9,7 @@ import { isDemoMode } from '../demoMode';
 import { getDemoSessionPages, setDemoSessionPages } from '../demoSession';
 import { canViewWidget, type WidgetViewer } from '../widgets/catalog';
 import { migrateLegacyPages, sectionedPageToGrid, type SectionedPage } from './legacy-migration';
+import { addHeaderWidgets, DEFAULT_HEADER_SLOTS, ensureRequiredWidgets, legacyHeaderSlots } from './header';
 import { insertWidget, newWidgetInstance, resolveOverlaps } from './operations';
 import { PAGES_SCHEMA_VERSION, type Page, type PagesDocument } from './types';
 import { validatePagesDocument } from './validation';
@@ -44,7 +45,9 @@ function buildFromLegacy(): PagesDocument {
   // A new installation starts from one empty Home page: the first-run guide (or the empty page's button) fills it.
   if (config.settings?.setupPending) return { schemaVersion: PAGES_SCHEMA_VERSION, pages: [freshHomePage()] };
   const customTabs = readCustomTabs();
-  return migrateLegacyPages({ config, categories: config.categories || [], customTabs });
+  const migrated = migrateLegacyPages({ config, categories: config.categories || [], customTabs });
+  const slots = legacyHeaderSlots(config.settings);
+  return { ...migrated, pages: migrated.pages.map(page => addHeaderWidgets(page, slots)) };
 }
 
 /** Widgets a new installation's Home starts with, so the page is never blank on arrival. */
@@ -52,18 +55,30 @@ export const FRESH_HOME_WIDGETS = ['clock', 'weather'] as const;
 
 export function freshHomePage(): Page {
   const empty: Page = { id: 'dashboard', name: 'Home', icon: 'lucide:House', revision: 0, widgets: [] };
-  return FRESH_HOME_WIDGETS.reduce((page, type) => insertWidget(page, newWidgetInstance(type, {}, page)), empty);
+  const filled = FRESH_HOME_WIDGETS.reduce((page, type) => insertWidget(page, newWidgetInstance(type, {}, page)), empty);
+  return addHeaderWidgets(filled, DEFAULT_HEADER_SLOTS);
 }
 
 /**
  * Older documents are placed on the current grid once; the original file is
- * kept next to it (`pages.v1.json` … `pages.v4.json`).
+ * kept next to it (`pages.v1.json` … `pages.v5.json`).
  * - v1 arranged widgets in sections and columns;
  * - v2 used 12 columns (now 24): horizontal values double;
  * - v2/v3 used 8 px rows and v4 16 px rows (now 4 px): vertical values scale.
  * Spacers from v2/v3 are dropped: the free grid keeps empty space by itself.
+ * - up to v5 the header (search, menu, buttons) sat above the pages: it
+ *   becomes header widgets placed where the header showed them, and the rest
+ *   of each page moves down by the header's height (`legacyHeaderSlots`).
  */
-const ROW_SCALE: Record<number, number> = { 2: 2, 3: 2, 4: 4 };
+const ROW_SCALE: Record<number, number> = { 2: 2, 3: 2, 4: 4, 5: 1 };
+
+/** Up to v5: the header settings become header widgets on every page (a new revision, so open editors reload). */
+function withLegacyHeader(pages: Page[]): Page[] {
+  const slots = legacyHeaderSlots(readConfig().settings);
+  return pages.map(page => (Array.isArray(page.widgets)
+    ? { ...addHeaderWidgets(page, slots), revision: (Number.isInteger(page.revision) ? page.revision : 0) + 1 }
+    : page));
+}
 
 function upgradeDocument(raw: unknown): { document: PagesDocument; from: number | null } {
   const candidate = raw as { schemaVersion?: number; pages?: unknown[]; migration?: PagesDocument['migration'] } | null;
@@ -73,7 +88,7 @@ function upgradeDocument(raw: unknown): { document: PagesDocument; from: number 
     const context = { categories: config.categories || [], deviceCount: config.devices?.length ?? 1 };
     const document = validatePagesDocument({
       schemaVersion: PAGES_SCHEMA_VERSION,
-      pages: (candidate.pages as SectionedPage[]).map(page => sectionedPageToGrid(page, context)),
+      pages: withLegacyHeader((candidate.pages as SectionedPage[]).map(page => sectionedPageToGrid(page, context))),
       migration: { from: 'sections', at: new Date().toISOString(), notes: [] },
     });
     return { document, from: 1 };
@@ -81,7 +96,7 @@ function upgradeDocument(raw: unknown): { document: PagesDocument; from: number 
   if (version !== undefined && ROW_SCALE[version] && Array.isArray(candidate?.pages)) {
     const horizontal = version === 2 ? 2 : 1;
     const rows = ROW_SCALE[version];
-    const pages = (candidate.pages as Page[]).map(page => (Array.isArray(page.widgets) ? {
+    const scaled = version === 5 ? candidate.pages as Page[] : (candidate.pages as Page[]).map(page => (Array.isArray(page.widgets) ? {
       ...page,
       widgets: resolveOverlaps(page.widgets.filter(widget => version === 4 || widget.type !== 'spacer').map(widget => ({
         ...widget,
@@ -91,10 +106,15 @@ function upgradeDocument(raw: unknown): { document: PagesDocument; from: number 
         h: Math.max(1, widget.h * rows),
       }))),
     } : page));
+    const pages = withLegacyHeader(scaled);
     const document = validatePagesDocument({ ...candidate, schemaVersion: PAGES_SCHEMA_VERSION, pages });
     return { document, from: version };
   }
-  return { document: validatePagesDocument(raw), from: null };
+  const document = validatePagesDocument(raw);
+  // Every page keeps its menu and its buttons, whatever wrote the file.
+  const pages = document.pages.map(ensureRequiredWidgets);
+  const changed = pages.some((page, index) => page !== document.pages[index]);
+  return { document: changed ? { ...document, pages } : document, from: changed ? PAGES_SCHEMA_VERSION : null };
 }
 
 function readFromDisk(): PagesDocument {
@@ -118,7 +138,7 @@ function readFromDisk(): PagesDocument {
       if (from !== null) {
         safeWriteFileSync(path.join(getDataDirectory(), `pages.v${from}.json`), text, 'utf-8');
         writeToDisk(document);
-        console.info(`[NASDASH] Pages migrated to the free grid; previous version preserved in pages.v${from}.json.`);
+        console.info(`[NASDASH] Pages upgraded; previous version preserved in pages.v${from}.json.`);
         return clone(document);
       }
       globalCache.__nasdashPages = clone(document);

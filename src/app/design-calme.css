@@ -17,7 +17,9 @@ body[data-design="calme"]:not([class*="theme-"]):not(.light) {
   --nd-card-bg-rgb: 21, 23, 28;
   --nd-card-bg-opacity: 1;
   --nd-card-bg: rgb(21 23 28);
-  --nd-subcard-bg: hsl(222 14% 12%);
+  /* Hovers, wells and icon tiles are a light veil of the text colour, as in
+     every other theme: the same on a translucent or an opaque card. */
+  --nd-subcard-bg: color-mix(in srgb, var(--nd-text) 7%, transparent);
   --nd-card-border: hsl(222 13% 14.5%);
   --nd-border: var(--nd-card-border);
   --nd-card-hover-border: hsl(222 12% 22%);
@@ -33,9 +35,9 @@ body[data-design="calme"]:not([class*="theme-"]):not(.light) {
   --nd-red: hsl(0 66% 68%);
   --nd-purple: hsl(255 72% 76%);
   --nd-blue: hsl(200 72% 68%);
-  --nd-progress-bg: hsl(222 14% 12%);
-  --nd-icon-bg: hsl(222 14% 12%);
-  --nd-icon-border: hsl(222 13% 15%);
+  --nd-progress-bg: color-mix(in srgb, var(--nd-text) 10%, transparent);
+  --nd-icon-bg: color-mix(in srgb, var(--nd-text) 8%, transparent);
+  --nd-icon-border: color-mix(in srgb, var(--nd-text) 11%, transparent);
   --nd-dropdown-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
@@ -47,7 +49,7 @@ body[data-design="calme"].light:not([class*="theme-"]) {
   --nd-card-bg-rgb: 253, 252, 250;
   --nd-card-bg-opacity: 1;
   --nd-card-bg: rgb(253 252 250);
-  --nd-subcard-bg: hsl(40 14% 93%);
+  --nd-subcard-bg: color-mix(in srgb, var(--nd-text) 6%, transparent);
   --nd-card-border: hsl(40 12% 88%);
   --nd-border: var(--nd-card-border);
   --nd-card-hover-border: hsl(40 10% 78%);
@@ -94,7 +96,7 @@ body[data-design="calme"] .nd-header-tab-input {
 
 body[data-design="calme"] .nd-search input {
   height: 32px;
-  border-radius: 6px;
+  border-radius: var(--nd-field-radius);
   background: var(--nd-card-bg);
   font-size: 0.8rem;
 }
@@ -173,9 +175,10 @@ body[data-design="calme"] .nd-input {
   box-shadow: none;
 }
 
-body[data-design="calme"] .nd-input:focus {
-  border-color: var(--nd-accent-dim);
-  box-shadow: 0 0 0 3px var(--nd-accent-glow);
+/* Every text field focuses like the search: a firmer hairline, no coloured ring. */
+body[data-design="calme"] :is(.nd-input, textarea.nd-input, .ndc-input, .nd-header-tab-input):focus {
+  border-color: var(--nd-card-hover-border);
+  box-shadow: none;
 }
 
 /* Dialogs: one surface, a slightly stronger border, a calm backdrop. */
@@ -243,13 +246,9 @@ body[data-design="calme"] .nd-page-widget--editing:has(:focus-visible) .nd-page-
   body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-actions { opacity: 1; }
 }
 
-/* Edit mode: the title row is tall enough for the widget controls drawn in
-   its top-right corner, and its text stays clear of them. */
-.nd-page-widget--editing .ndc-title {
-  min-height: 32px;
-  align-items: center;
-  padding-top: 2px;
-}
+/* Edit mode: the title row keeps its height (nothing on the page moves when
+   editing starts); the widget controls are centred on it, in the corner. */
+.nd-page-widget--editing .ndc-title { align-items: center; }
 
 .ndc-title-aside {
   margin-left: auto;
@@ -704,10 +703,6 @@ body[data-design="calme"] .nd-category-title-above {
   padding-right: var(--nd-page-actions-width, 0px);
 }
 
-body[data-design="calme"] .nd-page-widget--editing .nd-category-title-above {
-  min-height: 32px;
-}
-
 body[data-design="calme"] .nd-service {
   border-radius: 5px;
 }
@@ -1037,6 +1032,9 @@ body[data-design="calme"] .nd-host-btn {
   border-radius: 6px;
 }
 
+/* The open tab sits 3 px inside the track, a widget edge: concentric with it. */
+body[data-design="calme"] .nd-docker-tab { border-radius: var(--nd-nested-radius); }
+
 body[data-design="calme"] .nd-docker-tab--active {
   background: var(--nd-subcard-bg);
 }
@@ -1052,11 +1050,12 @@ body[data-design="calme"] .nd-host-btn--active {
 
 /* Containers: the status is the dot, not a coloured edge; the selection is
    a quiet surface instead of a glow. */
+/* Each container is a card of its own on the page: a widget edge. */
 body[data-design="calme"] .nd-container-card {
   border-color: var(--nd-card-border);
   border-left-width: 1px;
   background: transparent;
-  border-radius: 6px;
+  border-radius: var(--nd-card-radius);
 }
 
 body[data-design="calme"] .nd-container-card:hover {
@@ -1102,10 +1101,12 @@ body[data-design="calme"] .nd-port-pill {
   background: transparent;
 }
 
-/* Edit mode: the name shown above widgets without a title of their own. */
+/* The name of widgets without a title of their own: shown in edit mode, and
+   outside it when chosen with its eye (then like any widget title). */
 body[data-design="calme"] .nd-page-widget-edit-title {
   box-sizing: border-box;
-  min-height: 32px;
+  gap: 10px;
+  min-height: 17px;
   margin: 0 0 9px;
   padding: 2px var(--nd-page-actions-width, 0px) 0 2px;
   font-size: 0.72rem;
@@ -1114,6 +1115,7 @@ body[data-design="calme"] .nd-page-widget-edit-title {
 }
 
 body[data-design="calme"] .nd-page-widget-edit-title > :first-child { display: none; }
+body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-edit-title { min-height: 32px; }
 
 /* ---------- Services in bento / grid layouts ----------
    One level only, as in the row layouts: the tile has no frame of its own
@@ -1237,17 +1239,18 @@ body[data-design="calme"] .nd-service--bento .nd-service-name {
   --fit-max: 340px;
   grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr));
   gap: 6px 18px;
-  margin: 0 -8px;
 }
 
+/* The hover takes the status dot in, with room around it (the list's
+   viewport clips anything outside the widget). */
 .ndc-ctr {
   height: 46px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
-  border-radius: 5px;
+  padding: 0 10px;
+  border-radius: 8px;
   min-width: 0;
 }
 
@@ -2132,17 +2135,19 @@ body[data-design="calme"] .nd-btn { white-space: nowrap; flex-shrink: 0; }
   gap: 6px;
   height: 30px;
   padding: 0 11px;
-  border: 1px solid var(--nd-card-border);
-  border-radius: 15px;
-  background: transparent;
+  /* A quiet neutral tile: no outline, no tint; the chosen one a little firmer. */
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--nd-text) 5%, transparent);
   color: var(--nd-text-muted);
   font: inherit;
   font-size: 0.78rem;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.ndc-chip:hover { border-color: var(--nd-card-hover-border); color: var(--nd-text); }
-.ndc-chip[aria-pressed="true"] { border-color: var(--nd-accent); color: var(--nd-text); background: color-mix(in srgb, var(--nd-accent) 10%, transparent); }
+.ndc-chip:hover { background: color-mix(in srgb, var(--nd-text) 9%, transparent); color: var(--nd-text); }
+.ndc-chip[aria-pressed="true"] { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 13%, transparent); font-weight: 500; }
 
 .ndc-chip-actions { display: inline-flex; gap: 12px; }
 
@@ -2628,7 +2633,6 @@ body[data-outlines="off"] .nd-container-card--selected { box-shadow: inset 2px 0
 
 body[data-outlines="off"] .ndc-seg { border-color: transparent; background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
 body[data-outlines="off"] .nd-host-btn--active,
-body[data-outlines="off"] .ndc-chip[aria-pressed="true"],
 body[data-outlines="off"] .ndc-icon-choices .ndc-icon-pick[aria-checked="true"] { background: color-mix(in srgb, var(--nd-accent) 14%, transparent) !important; }
 
 /* Network map groups (dashed frames drawn inline). */
@@ -2733,9 +2737,9 @@ body[data-outlines="off"][data-design="calme"] .nd-input:not(:focus) { border-co
 body[data-design="calme"] .nd-header { padding-left: 32px; padding-right: 32px; }
 
 /* Edit controls sit in the widget's top-right corner, flush with its edge and
-   centred on its title row (32 px in edit mode). */
+   centred on its title row (17 px: they reach into the gutter above). */
 body[data-design="calme"] .nd-page-widget-actions {
-  top: 2px;
+  top: -6px;
   right: 0;
   height: 28px;
   padding: 0 2px;
@@ -2743,7 +2747,7 @@ body[data-design="calme"] .nd-page-widget-actions {
   background: var(--nd-bg-surface);
   border: 1px solid var(--ndc-surface-line);
   border-radius: 7px;
-  box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
 }
 
 body[data-outlines="off"] .nd-page-widget-actions { border-color: transparent; }
@@ -3387,7 +3391,7 @@ body[data-design="calme"] .nd-docker-stat-label { color: var(--nd-text-muted); }
 
 /* Header controls follow the corner setting like the cards (6 px by default). */
 body[data-design="calme"] .nd-header :is(.nd-btn, .nd-search input) {
-  border-radius: var(--nd-card-radius) !important;
+  border-radius: var(--nd-field-radius) !important;
 }
 
 /* Widgets grow with their content (no page-level inner scroll), so long
@@ -3479,7 +3483,7 @@ body[data-design="calme"] .nd-service-tooltip {
   opacity: 0;
   gap: 8px;
   padding: 5px 9px 5px 6px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid var(--nd-card-border);
   background: rgb(var(--nd-card-bg-rgb, 22, 27, 34));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
@@ -3502,7 +3506,7 @@ body[data-design="calme"] .nd-service-tooltip:hover .nd-service-tooltip-arrow { 
 body[data-design="calme"] .nd-service-tooltip-icon {
   width: 22px;
   height: 22px;
-  border-radius: calc(var(--nd-card-radius) * 0.7);
+  border-radius: 5px;
   background: var(--nd-icon-bg);
   color: var(--nd-text-muted);
 }
@@ -3515,8 +3519,8 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 /* Settings → Media: the logo library. */
 .ndc-media-bar { margin-bottom: 10px; }
 .ndc-media-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 8px; }
-.ndc-media-item { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 8px 8px 8px; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
-.ndc-media-thumb { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); overflow: hidden; }
+.ndc-media-item { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 8px 8px 8px; border: 1px solid var(--nd-card-border); border-radius: 6px; }
+.ndc-media-thumb { width: 36px; height: 36px; flex-shrink: 0; display: grid; place-items: center; border-radius: 5px; background: var(--nd-icon-bg); overflow: hidden; }
 .ndc-media-thumb img { max-width: 26px; max-height: 26px; object-fit: contain; }
 .ndc-media-text { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 2px; }
 .ndc-media-name { font-size: 0.74rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3526,7 +3530,7 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .ndc-icon-button.ndc-danger:hover { color: var(--nd-red); }
 
 /* Settings → Tasks and backups. */
-.ndc-tasks, .ndc-backups { list-style: none; margin: 0; padding: 0; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
+.ndc-tasks, .ndc-backups { list-style: none; margin: 0; padding: 0; border: 1px solid var(--nd-card-border); border-radius: 6px; }
 .ndc-task {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) auto;
@@ -3536,7 +3540,7 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
   padding: 12px 14px;
 }
 .ndc-task + .ndc-task, .ndc-backup + .ndc-backup { border-top: 1px solid var(--nd-card-border); }
-.ndc-task-icon { grid-area: icon; align-self: start; width: 32px; height: 32px; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); color: var(--nd-text-muted); flex-shrink: 0; }
+.ndc-task-icon { grid-area: icon; align-self: start; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 5px; background: var(--nd-icon-bg); color: var(--nd-text-muted); flex-shrink: 0; }
 .ndc-task-name { grid-area: name; display: inline-flex; align-items: center; gap: 2px; font-size: 0.82rem; color: var(--nd-text); min-width: 0; }
 .ndc-task-state { grid-area: state; justify-self: end; }
 .ndc-task-meta { grid-area: meta; display: flex; flex-direction: column; gap: 2px; font-size: 0.7rem; color: var(--nd-text-muted); min-width: 0; }
@@ -3553,7 +3557,7 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 }
 
 .ndc-backup-now { height: 30px; gap: 6px; }
-.ndc-backup-plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px 20px; padding: 14px; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
+.ndc-backup-plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px 20px; padding: 14px; border: 1px solid var(--nd-card-border); border-radius: 6px; }
 .ndc-backup-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ndc-backup-field.is-off { opacity: 0.45; pointer-events: none; }
 .ndc-backup-label { display: inline-flex; align-items: center; gap: 2px; font-size: 0.68rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--nd-text-dimmed); }
@@ -3565,7 +3569,7 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .ndc-backup-text { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
 .ndc-backup-date { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--nd-text); }
 .ndc-backup-sub { font-size: 0.68rem; color: var(--nd-text-dimmed); }
-.ndc-restore { margin-top: 20px; padding: 14px 16px; border-radius: var(--nd-card-radius); background: var(--ndc-well); }
+.ndc-restore { margin-top: 20px; padding: 14px 16px; border-radius: 6px; background: var(--ndc-well); }
 .ndc-restore-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .ndc-restore-title { font-size: 0.8rem; color: var(--nd-text); }
 .ndc-restore-head .ndc-link { font-size: 0.72rem; }
@@ -3574,10 +3578,10 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 
 /* Settings → Help. */
 .ndc-help-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 8px; }
-.ndc-help-card { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); color: var(--nd-text); text-decoration: none; transition: border-color 0.14s ease, background 0.14s ease; }
+.ndc-help-card { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--nd-card-border); border-radius: 6px; color: var(--nd-text); text-decoration: none; transition: border-color 0.14s ease, background 0.14s ease; }
 .ndc-help-card:hover { border-color: color-mix(in srgb, var(--nd-accent) 50%, var(--nd-card-border)); background: color-mix(in srgb, var(--nd-text) 3%, transparent); }
 .ndc-help-card:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: 2px; }
-.ndc-help-icon { width: 30px; height: 30px; flex-shrink: 0; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); color: var(--nd-text-muted); }
+.ndc-help-icon { width: 30px; height: 30px; flex-shrink: 0; display: grid; place-items: center; border-radius: 5px; background: var(--nd-icon-bg); color: var(--nd-text-muted); }
 .ndc-help-card:hover .ndc-help-icon, .ndc-help-card:hover .ndc-help-arrow { color: var(--nd-accent); }
 .ndc-help-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .ndc-help-title { font-size: 0.78rem; }
@@ -3592,15 +3596,15 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .nd-mobile-order { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding-bottom: 120px; }
 .nd-mobile-order-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .nd-mobile-order-title { display: inline-flex; align-items: center; gap: 2px; min-width: 0; white-space: nowrap; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-muted); }
-.nd-mobile-order-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ndc-surface-line, var(--nd-card-border)); border-radius: var(--nd-card-radius); background: var(--ndc-surface, var(--nd-card-bg)); overflow: hidden; }
+.nd-mobile-order-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ndc-surface-line, var(--nd-card-border)); border-radius: 8px; background: var(--ndc-surface, var(--nd-card-bg)); overflow: hidden; }
 .nd-mobile-order-row { display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 4px 4px 4px 0; background: var(--ndc-surface, var(--nd-card-bg)); touch-action: manipulation; }
 .nd-mobile-order-row + .nd-mobile-order-row { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
-.nd-mobile-order-row.is-dragging { position: relative; z-index: 2; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); border-radius: var(--nd-card-radius); }
+.nd-mobile-order-row.is-dragging { position: relative; z-index: 2; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); border-radius: 8px; }
 .nd-mobile-order-row.is-hidden .nd-mobile-order-icon, .nd-mobile-order-row.is-hidden .nd-mobile-order-name > span:first-child { opacity: 0.45; }
 .nd-mobile-order-handle { all: unset; display: grid; place-items: center; width: 32px; height: 44px; color: var(--nd-text-dimmed); cursor: grab; touch-action: none; flex-shrink: 0; }
 .nd-mobile-order-handle:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: -2px; border-radius: 6px; }
 .nd-mobile-order-pos { width: 18px; font-size: 0.66rem; color: var(--nd-text-dimmed); text-align: right; flex-shrink: 0; }
-.nd-mobile-order-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: calc(var(--nd-card-radius) * 0.8); background: var(--nd-icon-bg); flex-shrink: 0; font-size: 0.9rem; }
+.nd-mobile-order-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 6px; background: var(--nd-icon-bg); flex-shrink: 0; font-size: 0.9rem; }
 .nd-mobile-order-name { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; font-size: 0.8rem; color: var(--nd-text); }
 .nd-mobile-order-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nd-mobile-order-state { font-size: 0.62rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3658,18 +3662,40 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 
 /* Phones and tablets in edit mode: the widgets keep their controls; moves
    (arrows) and hiding only change the phone order. */
-.nd-page-mobile-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
-.nd-page-mobile-bar-note { font-size: 0.7rem; color: var(--nd-text-muted); line-height: 1.4; flex: 1; min-width: 160px; }
-.nd-page-mobile-switch button { display: inline-flex; align-items: center; gap: 6px; }
+/* Phones and tablets in edit mode: widgets or the order list, a segmented
+   control in the glass of the phone header; what it does is in the ⓘ. */
+.nd-page-mobile-bar { display: flex; align-items: center; margin-bottom: 16px; }
+.nd-page-mobile-switch {
+  display: flex; flex: 1; gap: 2px; padding: 3px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
+  background: color-mix(in srgb, var(--nd-bg-surface) 55%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+}
+.nd-page-mobile-switch button {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 12px;
+  border: none; border-radius: 999px; background: transparent; color: var(--nd-text-muted);
+  font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.nd-page-mobile-switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--nd-text) 12%, transparent); color: var(--nd-text); }
+.nd-page-mobile-switch { position: relative; }
+.nd-page-mobile-switch .ndc-info {
+  position: absolute; top: 50%; right: 6px; width: 28px; height: 28px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--nd-text-dimmed);
+}
 .nd-page-grid > .grid-stack-item.nd-page-item--mobile-dimmed .nd-page-widget > :not(.nd-page-widget-actions) { opacity: 0.4; }
 .nd-page-grid--compact-editing .nd-page-widget-actions { opacity: 1 !important; visibility: visible !important; }
 .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { width: 32px; height: 32px; }
-/* Phones and tablets: the controls get their own row above the widget, so
-   the title stays whole. */
+/* Phones and tablets (controls always shown): on the title's line, against
+   the right edge, with the title's note just before them, while the line
+   holds them all (measured in WidgetFrame); otherwise on their own line
+   above, and the title and its note wrap as needed. */
 .nd-page-grid--compact-editing .nd-page-widget { display: flex; flex-direction: column; }
-.nd-page-grid--compact-editing .nd-page-widget-actions { position: static !important; order: -1; align-self: flex-end; margin: 0 0 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
-.nd-page-grid--compact-editing .nd-page-widget--editing .ndc-title,
-.nd-page-grid--compact-editing .nd-page-widget--editing .nd-page-widget-edit-title { padding-right: 0 !important; }
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions { top: 0; right: 0; height: 36px; flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget:not(.is-actions-above) :is(.ndc-title, .nd-category-title-above, .nd-page-widget-edit-title) {
+  box-sizing: border-box; min-height: 36px; padding-top: 0; align-items: center; padding-right: calc(var(--nd-page-actions-width, 0px) + 12px) !important;
+}
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget.is-actions-above .nd-page-widget-actions { position: static !important; order: -1; align-self: flex-end; height: auto; margin: 0 0 6px; flex-wrap: wrap; }
+.nd-page-grid--compact-editing .nd-page-widget.is-actions-above :is(.ndc-title, .nd-category-title-above, .nd-page-widget-edit-title) { padding-right: 0 !important; flex-wrap: wrap; row-gap: 2px; }
 
 /* Phones: a lone switch stays on its label's line (other controls go below). */
 @media (max-width: 700px) {
@@ -3723,7 +3749,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-summary > span { white-space: nowrap; }
 .nd-docker-resource-summary > span:last-child { color: var(--nd-red); }
 .nd-docker-resource-tools { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(140px, 180px) minmax(180px, 220px); align-items: center; gap: 12px; margin-bottom: 12px; }
-.nd-docker-resource-tools .nd-input, .nd-docker-resource-pagination .nd-input { width: 100%; min-width: 0; height: 38px; font: inherit; font-size: 0.76rem; border-radius: var(--nd-card-radius); }
+.nd-docker-resource-tools .nd-input, .nd-docker-resource-pagination .nd-input { width: 100%; min-width: 0; height: 38px; font: inherit; font-size: 0.76rem; border-radius: 6px; }
 .nd-docker-resource-tools select { padding-right: 24px; }
 .nd-docker-resource-query { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .nd-docker-resource-search { flex: 1; position: relative; display: block; min-width: 0; }
@@ -3735,13 +3761,13 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-control > span { font-size: 0.68rem; color: var(--nd-text-muted); }
 .nd-docker-resource-sort { display: flex; align-items: end; gap: 6px; min-width: 0; }
 .nd-docker-resource-sort > .nd-custom-select { flex: 1; min-width: 0; }
-.nd-docker-resources .nd-btn { min-height: 38px; font-size: 0.74rem; border-radius: var(--nd-card-radius); }
+.nd-docker-resources .nd-btn { min-height: 38px; font-size: 0.74rem; border-radius: 6px; }
 .nd-docker-resources .nd-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .nd-docker-resources .nd-btn:disabled:hover { transform: none; background: transparent; }
 .nd-docker-resources .nd-btn.ndc-danger-ghost { color: var(--nd-red) !important; }
 .nd-docker-resource-actions .nd-btn:disabled { color: var(--nd-text-dimmed) !important; }
 .nd-docker-resource-sort > button { width: 38px; padding: 0; justify-content: center; }
-.nd-docker-resource-selection { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 12px; margin-bottom: 12px; border-radius: var(--nd-card-radius); background: color-mix(in srgb, var(--nd-accent) 8%, var(--nd-bg)); border: 1px solid var(--nd-card-border); font-size: 0.76rem; }
+.nd-docker-resource-selection { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 12px; margin-bottom: 12px; border-radius: 6px; background: color-mix(in srgb, var(--nd-accent) 8%, var(--nd-bg)); border: 1px solid var(--nd-card-border); font-size: 0.76rem; }
 .nd-docker-resource-selection > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .nd-docker-resource-list.nd-docker-detail { padding: 0; min-width: 0; overflow: hidden; }
 .nd-docker-resources input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; margin: 0; accent-color: var(--nd-accent); cursor: pointer; }
@@ -3763,7 +3789,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-name strong { display: block; font-weight: 500; font-size: 0.8rem; line-height: 1.5; overflow-wrap: anywhere; }
 .nd-docker-resource-subline { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.5; }
 .nd-docker-resource-subline code { font: inherit; font-family: ui-monospace, monospace; }
-.nd-docker-resource-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: calc(var(--nd-card-radius) * 0.7); color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 8%, transparent); font-size: 0.68rem; line-height: 1.5; }
+.nd-docker-resource-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 4px; color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 8%, transparent); font-size: 0.68rem; line-height: 1.5; }
 .nd-docker-resource-badge.is-used { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 8%, transparent); }
 .nd-docker-resource-badge > span { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 .nd-docker-resource-status > small, .nd-docker-resource-meta > small { display: block; margin-top: 6px; font-size: 0.66rem; color: var(--nd-text-dimmed); line-height: 1.5; }
@@ -3788,7 +3814,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-page-size > .nd-custom-select { width: 70px !important; }
 .nd-docker-resource-pagination nav { display: flex; align-items: center; gap: 8px; }
 .nd-docker-resource-pagination nav .nd-btn { width: 36px; min-height: 36px; padding: 0; justify-content: center; }
-.nd-docker-resource-targets { list-style: none; padding: 0; margin: 0; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); }
+.nd-docker-resource-targets { list-style: none; padding: 0; margin: 0; border: 1px solid var(--nd-card-border); border-radius: 6px; }
 .nd-docker-resource-targets li { display: flex; align-items: flex-start; gap: 10px; padding: 12px; font-size: 0.78rem; overflow-wrap: anywhere; }
 .nd-docker-resource-targets li + li { border-top: 1px solid var(--nd-card-border); }
 .nd-docker-resource-targets svg { color: var(--nd-text-muted); flex-shrink: 0; margin-top: 2px; }
@@ -3905,3 +3931,182 @@ body[data-design="calme"][data-blur="on"].light {
   --nd-card-hover-border: rgb(15 23 42 / 0.16);
   --nd-border: rgb(15 23 42 / 0.1);
 }
+
+/* ---------- Header widgets (search, page menu, buttons: src/widgets/page-*) ---------- */
+.ndc-widget--bare { gap: 6px; }
+.nd-hw { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 36px; }
+.nd-hw--start { justify-content: flex-start; }
+.nd-hw--center { justify-content: center; }
+.nd-hw--end { justify-content: flex-end; }
+.nd-hw-search { position: relative; flex: 1; max-width: none; min-width: 0; }
+.nd-hw-search input::-webkit-search-cancel-button { display: none; }
+.nd-hw-search-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; padding: 2px; border: none; background: none; color: var(--nd-text-dimmed); cursor: pointer;
+}
+/* The widget takes the grid columns its buttons need (WidgetFit); the
+   buttons keep their size and the account (or the sign-in button) stretches
+   to fill the columns exactly, like the edges of any widget. When even that
+   is too narrow, only the account name gives way. */
+.nd-hw-actions-row { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
+.nd-hw-actions-row > * { flex: 0 0 auto; }
+.nd-hw-actions-row > .nd-hw-account, .nd-hw-actions-row > .nd-hw-login { flex: 1 1 auto; }
+.nd-hw-actions-row .nd-btn { justify-content: center; }
+/* The buttons are this widget's own surfaces: they follow the corners setting. */
+body[data-design="calme"] .nd-hw .nd-btn { border-radius: var(--nd-field-radius); }
+.nd-hw-account .nd-hw-user { flex: 1 1 auto; justify-content: center; }
+.nd-hw-account .nd-hw-logout { flex: 0 0 auto; }
+.nd-hw-actions-row.is-measuring { width: max-content; }
+.nd-hw-actions-row.is-measuring > *, .nd-hw-actions-row.is-measuring .nd-hw-user { flex-grow: 0 !important; }
+.nd-hw-divider { width: 1px; height: 16px; margin: 0 4px; background: var(--nd-border); flex-shrink: 0; }
+.nd-hw-account { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.nd-hw-user {
+  display: flex; align-items: center; gap: 6px; height: 36px; padding: 6px 12px; box-sizing: border-box; min-width: 0;
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-field-radius); background: var(--nd-card-bg);
+  color: var(--nd-text); font-size: 0.72rem; font-weight: 600;
+}
+.nd-hw-user svg { color: var(--nd-accent); flex-shrink: 0; }
+.nd-hw-user-name { min-width: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nd-hw-logout, .nd-hw-login { min-width: 0; padding: 6px; justify-content: center; text-decoration: none; }
+
+/* Edit mode: the eye next to a title shows or hides it outside edit mode, for that widget. */
+.ndc-title-eye {
+  display: inline-flex; align-items: center; padding: 2px; border: none; border-radius: 3px;
+  background: none; color: var(--nd-text-dimmed); cursor: pointer; flex-shrink: 0;
+}
+.ndc-title-eye:hover, .ndc-title-eye:focus-visible { color: var(--nd-text); }
+.ndc-title.is-hidden-title > :not(.ndc-title-eye),
+.is-hidden-title > :not(.ndc-title-eye):not(.nd-category-edit-actions) { opacity: 0.45; }
+
+/* Searching: widgets that do not match step aside. */
+.nd-page-grid > .grid-stack-item.nd-page-item--filtered { display: none !important; }
+.nd-page-search-empty { margin: 24px 0; text-align: center; font-size: 0.8rem; color: var(--nd-text-muted); }
+
+/* Tablets (above the phone header): the header widgets keep one row at the top, at their desktop proportions. */
+.nd-page-grid.nd-page-grid--narrow.nd-page-grid--tablet > .grid-stack-item.nd-page-item--band {
+  top: 0 !important;
+  left: calc(var(--nd-band-left, 0) * (100% + 16px)) !important;
+  width: calc(var(--nd-band-width, 1) * (100% + 16px) - 16px) !important;
+}
+/* Edit mode: machines are dragged into order (the order of the machines everywhere). */
+.ndc-fleet-sortable.is-sortable { cursor: grab; }
+.ndc-fleet-sortable.is-dragging { position: relative; z-index: 2; opacity: 0.7; }
+
+/* Menu widget with a page limit: the last button unfolds the other pages. */
+.nd-header-tab-more { white-space: nowrap; }
+.nd-header-tab-more-chevron { flex-shrink: 0; transition: transform 0.15s ease; }
+.nd-header-tab-more[aria-expanded="true"] .nd-header-tab-more-chevron { transform: rotate(180deg); }
+.nd-header-more-panel {
+  position: fixed; z-index: 400; min-width: 180px; max-width: 280px; max-height: min(420px, 70vh); overflow-y: auto;
+  display: flex; flex-direction: column; gap: 2px; padding: 6px; box-sizing: border-box;
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-ui-radius); background: var(--nd-bg-surface, var(--nd-bg));
+}
+.nd-header-more-panel .nd-header-tab { display: flex; }
+.nd-header-more-panel .nd-header-tab-link {
+  flex: 1; width: 100%; margin: 0; padding: 8px 10px; border-bottom: none; border-radius: 4px; text-align: left;
+}
+.nd-header-more-panel .nd-header-tab-link:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.nd-header-more-panel .nd-header-tab-link.is-active { color: var(--nd-text); background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
+.nd-header-more-panel .nd-header-tab-rename { top: 50%; right: 6px; transform: translateY(-50%); }
+.nd-header-more-panel .nd-header-tab-delete { top: 50%; left: auto; right: 26px; transform: translateY(-50%); }
+.nd-header-more-panel .nd-header-tab-input { flex: 1; margin: 4px 10px; }
+/* Edit controls with nothing in them (a required widget) are not drawn. */
+.nd-page-widget-actions:not(:has(button)) { display: none !important; }
+
+/* ---------- Menu widget (src/widgets/page-menu) ---------- */
+/* Pages keep their spacing and go to the next line when the widget is full,
+   or after a set number per line (a grid of that many columns). */
+.nd-hw-menu .nd-header-menu { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; row-gap: 6px; }
+.nd-hw--center.nd-hw-menu .nd-header-menu { justify-content: center; }
+.nd-hw--end.nd-hw-menu .nd-header-menu { justify-content: flex-end; }
+.nd-hw-menu.has-per-row .nd-header-menu { flex: 1 1 auto !important; }
+/* At most that many per line, each a share of the width; a page never gets
+   narrower than its name, so a narrow widget simply holds fewer per line. */
+body[data-design="calme"] .nd-hw-menu.has-per-row .nd-header-menu { column-gap: 4px !important; }
+.nd-hw-menu.has-per-row .nd-header-menu > * {
+  flex: 0 0 calc((100% - (var(--nd-menu-per-row) - 1) * 4px) / var(--nd-menu-per-row));
+  min-width: max-content;
+  box-sizing: border-box;
+}
+.nd-header-tab-more-icon { display: none !important; }
+
+/* Capsule: the page shown sits in a soft accent capsule. */
+body[data-design="calme"] .nd-hw-menu--pill .nd-header-menu { gap: 4px !important; }
+.nd-hw-menu--pill .nd-header-tab-link { margin: 0; padding: 7px 14px; border-bottom: none; border-radius: var(--nd-field-radius); transition: background 0.15s ease, color 0.15s ease; }
+.nd-hw-menu--pill .nd-header-tab-link:hover { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.nd-hw-menu--pill .nd-header-tab-link.is-active { color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 14%, transparent); }
+
+/* Segmented: one quiet track holding the pages, the page shown raised in it. */
+body[data-design="calme"] .nd-hw-menu--segmented .nd-header-menu {
+  flex: 0 1 auto; gap: 2px !important; padding: 3px; border-radius: var(--nd-field-radius);
+  border: 1px solid var(--nd-card-border); background: var(--nd-card-bg);
+}
+.nd-hw-menu--segmented .nd-header-tab-link { margin: 0; padding: 6px 14px; border-bottom: none; border-radius: max(2px, calc(var(--nd-field-radius) - 3px)); transition: background 0.15s ease, color 0.15s ease; }
+.nd-hw-menu--segmented .nd-header-tab-link:hover { color: var(--nd-text); }
+.nd-hw-menu--segmented .nd-header-tab-link.is-active { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 11%, transparent); }
+
+/* Icons: each page an icon over its name, like a dock. */
+body[data-design="calme"] .nd-hw-menu--icons .nd-header-menu { gap: 4px !important; }
+.nd-hw-menu--icons .nd-header-tab-link {
+  flex-direction: column; gap: 5px; min-width: 60px; margin: 0; padding: 4px 6px; border-bottom: none; border-radius: 6px;
+}
+.nd-hw-menu--icons .nd-header-tab-icon {
+  display: flex !important; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: min(var(--nd-field-radius), 12px);
+  font-size: 17px; background: color-mix(in srgb, var(--nd-text) 7%, transparent); transition: background 0.15s ease, color 0.15s ease;
+}
+body[data-design="calme"] .nd-hw-menu--icons .nd-header-tab-name { font-size: 0.68rem !important; }
+.nd-hw-menu--icons .nd-header-tab-link:hover .nd-header-tab-icon { background: color-mix(in srgb, var(--nd-text) 12%, transparent); }
+.nd-hw-menu--icons .nd-header-tab-link.is-active { color: var(--nd-text); }
+.nd-hw-menu--icons .nd-header-tab-link.is-active .nd-header-tab-icon { color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 18%, transparent); }
+.nd-hw-menu--icons .nd-header-tab-more-chevron { display: none; }
+
+/* The style picker of the menu dialog: each look drawn small. */
+.nd-menu-styles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
+.nd-menu-style {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border: 1px solid var(--nd-card-border);
+  border-radius: 10px; background: transparent; color: var(--nd-text-muted); font: inherit; cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease;
+}
+.nd-menu-style:hover { color: var(--nd-text); }
+.nd-menu-style[aria-checked="true"] { border-color: var(--nd-accent); color: var(--nd-text); }
+.nd-menu-style-sample {
+  display: flex; align-items: center; justify-content: center; height: 64px; overflow: hidden; pointer-events: none;
+  border-radius: 7px; background: color-mix(in srgb, var(--nd-text) 4%, transparent);
+}
+body[data-design="calme"] .nd-menu-style-sample .nd-header-menu { flex: 0 0 auto; flex-wrap: nowrap; gap: 2px !important; }
+body[data-design="calme"] .nd-hw-menu--segmented.nd-menu-style-sample .nd-header-menu { padding: 2px; }
+.nd-menu-style-sample .nd-header-tab-link { padding: 4px 8px; }
+.nd-hw-menu--icons.nd-menu-style-sample .nd-header-tab-link { min-width: 0; padding: 2px 4px; }
+.nd-hw-menu--icons.nd-menu-style-sample .nd-header-tab-icon { width: 26px; height: 26px; font-size: 13px; border-radius: 8px; }
+.nd-menu-style-sample .nd-header-tab-name { font-size: 0.7rem; white-space: nowrap; }
+.nd-menu-style-name { font-size: 0.75rem; text-align: center; }
+/* Pages per line: every page as wide as its column, its name centred. */
+.nd-hw-menu.has-per-row .nd-header-tab-link,
+.nd-hw-menu.has-per-row .nd-header-menu > .nd-header-tab { justify-content: center; }
+.nd-hw-menu.has-per-row .nd-header-menu > .nd-header-tab > .nd-header-tab-link { flex: 1; justify-content: center; }
+/* A field set straight on the page, not inside a block, is a widget edge too. */
+.nd-docker-container-list > div > .nd-input { border-radius: var(--nd-field-radius); }
+/* "Others": a sub-menu inside it shows as a small heading over its pages. */
+.nd-header-more-heading { margin: 6px 10px 2px; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.nd-header-more-heading:first-child { margin-top: 2px; }
+
+/* Menu dialog: sub-menus, each a name and the pages it gathers. */
+.nd-menu-groups { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--nd-card-border); }
+.nd-menu-groups-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.nd-menu-groups-title { font-size: 0.8rem; font-weight: 500; color: var(--nd-text); }
+.nd-menu-groups-empty { margin: 0; font-size: 0.74rem; color: var(--nd-text-muted); }
+.nd-menu-group { padding: 10px; border: 1px solid var(--nd-card-border); border-radius: 8px; margin-bottom: 8px; }
+.nd-menu-group-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.nd-menu-group-head .nd-input { flex: 1; min-width: 0; height: 32px; }
+.nd-menu-group-pages { display: flex; flex-wrap: wrap; gap: 6px; }
+.nd-menu-group-page {
+  padding: 4px 10px; border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent;
+  color: var(--nd-text-muted); font: inherit; font-size: 0.74rem; cursor: pointer;
+}
+.nd-menu-group-page[aria-pressed="true"] { border-color: color-mix(in srgb, var(--nd-accent) 60%, transparent); background: color-mix(in srgb, var(--nd-accent) 14%, transparent); color: var(--nd-text); }
+
+/* A widget title keeps its width; its note sits beside it while both fit,
+   otherwise on the next line (still against the right edge), cut short only
+   when even alone it is too long. */
+.ndc-title { flex-wrap: wrap; row-gap: 2px; }
+.ndc-title > :first-child { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-title-aside { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -4,6 +4,14 @@ This directory is the only data source used by the public showcase container.
 Every value must remain fictional: no private address copied from a real setup,
 credential, token, password hash, uploaded logo, or personal calendar entry.
 
+The media widgets show real, freely licensed works: the open movies of
+Blender Studio (CC BY), Standard Ebooks covers (CC0), the Pepper&Carrot comic
+by David Revoy (CC BY 4.0) and NASA photographs (public domain), listed in
+`src/lib/demo/library.ts`. Their pictures ship in `public/demo/art/` (listed
+in `src/lib/demo/art.ts`, credits in `CREDITS.md` there) and are linked
+directly; a test checks every work has its picture and credit. Nothing is
+fetched online.
+
 `npm run demo` starts the isolated demo with hot reload on
 <http://localhost:2505> without building an image or copying files into
 `data/`. It remains loopback-only unless `npm run demo:lan` is used.

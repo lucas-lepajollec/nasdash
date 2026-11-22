@@ -16,7 +16,7 @@ function futureDate(days = 2) {
 test('calendar agenda supports dated creation, editing, failures and confirmed deletion', async ({ page }) => {
   await prepare(page);
   await page.goto('/');
-  const calendar = page.locator('.ndc-calendar:visible').first();
+  const calendar = page.locator('.nd-tab-view [data-active="true"] .ndc-calendar:visible').first();
   await expect(calendar).toBeVisible();
   await calendar.locator('.ndc-cal-day.is-today').click();
   let form = page.getByRole('dialog', { name: 'Add an event', exact: true });
@@ -44,7 +44,7 @@ test('calendar agenda supports dated creation, editing, failures and confirmed d
   await expect(form).toHaveCount(0);
   await expect(calendar.getByText('Calendar feedback event', { exact: true })).toHaveCount(0);
   await page.reload();
-  await page.locator('.nd-header-desktop').getByRole('button', { name: 'Calendar', exact: true }).click();
+  await page.locator('.nd-tab-view [data-active="true"] [data-widget-type="page-menu"]').getByRole('button', { name: 'Calendar', exact: true }).click();
   await calendar.locator('.ndc-cal-event').filter({ hasText: 'Calendar feedback edited' }).click();
   const edited = page.getByRole('dialog', { name: 'Calendar feedback edited', exact: true });
   await edited.getByRole('button', { name: 'Delete', exact: true }).click();
@@ -109,7 +109,7 @@ test('uploaded wallpaper delete confirmation follows all five interface language
       await page.request.put('/api/config', { data: { type: 'settings', uiLanguage: language } });
       await page.goto('/');
       await expect(page.locator('html')).toHaveAttribute('lang', language);
-      await page.locator('.nd-header-desktop [data-settings-trigger="true"]').click();
+      await page.locator('.nd-tab-view [data-active="true"] [data-widget-type="page-actions"] [data-settings-trigger="true"]').click();
       await page.locator('.nd-settings-sidebar').getByRole('button', { name: media, exact: true }).click();
       // The drawn wallpapers come first and cannot be deleted: hover the uploaded one.
       const wallpaper = page.locator('.ndc-wallpaper', { has: page.locator('.ndc-wallpaper-remove') }).first();

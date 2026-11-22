@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({ demo: false, admin: true, authenticated: true,
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/jellyfin/collect', async original => ({ ...await original<typeof import('@/integrations/jellyfin/collect')>(), collectJellyfinNowPlaying: vi.fn(), collectJellyfinRecent: vi.fn(), collectJellyfinLibrary: vi.fn(), collectJellyfinHistory: vi.fn() }));
 vi.mock('@/integrations/plex/collect', async original => ({ ...await original<typeof import('@/integrations/plex/collect')>(), collectPlexNowPlaying: vi.fn(), collectPlexRecent: vi.fn(), collectPlexLibrary: vi.fn() }));
@@ -185,14 +185,13 @@ describe('media image proxy', () => {
 it.each(['jellyfin', 'emby', 'plex'])('never fetches %s demo data or artwork and still checks membership', async type => {
   state.demo = true; state.admin = false; state.instances[0].type = type;
   const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Demo fetched'));
-  expect((await (await nowGet(get())).json()).sessions[0].item.title).toBe('The Quiet Orbit');
+  expect((await (await nowGet(get())).json()).sessions[0].item.title).toBe('Sprite Fright');
   setType('media-recent'); saved().kinds = ['album']; saved().count = 4;
   const response = await recentGet(get()), data = await response.json();
   expect(response.headers.get('cache-control')).toBe('private, no-store');
   expect(data.items).toHaveLength(4); expect(data.items.every((item: { kind: string }) => item.kind === 'album')).toBe(true);
-  const poster = await imageGet(image(data.items[0].poster));
-  expect(poster.headers.get('content-type')).toBe('image/svg+xml'); expect(poster.headers.get('content-security-policy')).toBe("default-src 'none'; sandbox");
-  expect(await poster.text()).toContain('<linearGradient');
+  // The demo's own artwork: a static file it ships, linked directly.
+  expect(data.items[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/);
   expect((await imageGet(get(`widgetId=w&id=${'f'.repeat(64)}&kind=poster`))).status).toBe(404);
   setType('media-library'); expect((await (await libraryGet(get())).json()).counts.movies).toBe(284);
   expect(fetchSpy).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled(); expect(serviceJson).not.toHaveBeenCalled();

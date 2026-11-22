@@ -34,7 +34,7 @@ beforeEach(() => {
     ],
   } });
   vi.mocked(resolveAccessPrincipal).mockReturnValue({ username: 'reader', role: 'viewer', allowedTabs: [], allowedWidgets: [], isAnonymous: false });
-  document = { schemaVersion: 5, pages: [{ id: 'dashboard', name: 'Dashboard', icon: '', revision: 1, widgets: ['rss', 'markets', 'quotes', 'bookmarks'].map((type): WidgetInstance => ({ id: `${type}-widget`, type, x: 0, y: 0, w: 6, h: 10, settings: type === 'rss' ? { feedIds: ['feed-saved'] } : type === 'bookmarks' ? { items: [{ id: 'link', kind: 'link', title: 'Saved', url: 'http://example.com/service' }] } : {} })) }] };
+  document = { schemaVersion: 6, pages: [{ id: 'dashboard', name: 'Dashboard', icon: '', revision: 1, widgets: ['rss', 'markets', 'quotes', 'bookmarks'].map((type): WidgetInstance => ({ id: `${type}-widget`, type, x: 0, y: 0, w: 6, h: 10, settings: type === 'rss' ? { feedIds: ['feed-saved'] } : type === 'bookmarks' ? { items: [{ id: 'link', kind: 'link', title: 'Saved', url: 'http://example.com/service' }] } : {} })) }] };
   vi.mocked(readPagesDocument).mockImplementation(() => document);
 });
 afterEach(() => vi.unstubAllGlobals());

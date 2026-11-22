@@ -10,7 +10,7 @@ const state = vi.hoisted(() => ({ demo: false, admin: true, authenticated: true,
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: [], allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceBytes: vi.fn(), serviceJson: vi.fn() }));
 vi.mock('@/integrations/navidrome/collect', async original => ({ ...await original<typeof import('@/integrations/navidrome/collect')>(), collectNavidromeNowPlaying: vi.fn(), collectNavidromeRecent: vi.fn(), collectNavidromeLibrary: vi.fn(), collectNavidromeTop: vi.fn(), collectNavidromeHistory: vi.fn(), collectNavidromePlaylists: vi.fn() }));
 import { GET as nowGet } from './music/now-playing/route';
@@ -163,7 +163,8 @@ describe('offline demos and week boundaries', () => {
     const result = await (await routes[MUSIC_WIDGET_TYPES.indexOf(type)](get())).json();
     expect(result.server).toBe('navidrome');
     const cover = type === 'music-nowplaying' ? result.sessions[0].track.cover : type === 'music-library' ? result.week[0].cover : type === 'music-playlists' ? result.playlists[0].cover : result.albums[0].cover;
-    expect((await imageGet(image(cover))).headers.get('content-type')).toBe('image/svg+xml');
+    // The demo's own artwork: a static file it ships, linked directly.
+    expect(cover).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/);
     for (const collect of [collectNavidromeNowPlaying, collectNavidromeRecent, collectNavidromeLibrary, collectNavidromeTop, serviceJson, serviceBytes]) expect(collect).not.toHaveBeenCalled();
   });
   it('accepts demo visitor connections while remaining offline', async () => {

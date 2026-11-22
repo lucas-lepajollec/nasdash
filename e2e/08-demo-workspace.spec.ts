@@ -10,7 +10,7 @@ test('@demo edits survive reloads and alternating workers while reset restores t
   });
   await page.goto('/?lang=en');
   await page.getByRole('button', { name: 'Explore on my own', exact: true }).click();
-  const calendar = page.locator('.ndc-calendar:visible').first();
+  const calendar = page.locator('.nd-tab-view [data-active="true"] .ndc-calendar:visible').first();
   await calendar.locator('.ndc-cal-event').first().click();
   await page.locator('.ndc-dialog').getByRole('button', { name: 'Edit', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit event', exact: true });

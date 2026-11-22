@@ -198,8 +198,8 @@ describe('fictional demo services', () => {
       state.settings = { integrationId: 'photos-one', count: 4 };
       const photos = await (await photosGet(get('photos?widgetId=w&seed=3'))).json();
       const image = await imageGet(get(`photos/image?widgetId=w&id=${photos.photos[0].id}`));
-      expect(image.headers.get('content-type')).toBe('image/svg+xml');
-      expect(await image.text()).toContain('<svg');
+      // A photograph shipped with the demo (public/demo/art), never a provider.
+      expect(image.status).toBe(307); expect(image.headers.get('location')).toMatch(/\/demo\/art\/[a-z0-9-]+-(wide|tall)\.webp$/);
       expect((await albumsGet(get('photos/albums?integrationId=photos-one'))).status).toBe(200);
       expect(fetchSpy).not.toHaveBeenCalled(); expect(serviceJson).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
       expect(collectPihole).not.toHaveBeenCalled(); expect(collectImmich).not.toHaveBeenCalled(); expect(collectPhotoprism).not.toHaveBeenCalled();

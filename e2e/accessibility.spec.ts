@@ -60,7 +60,7 @@ test('reduced-motion preference stops decorative movement', async ({ page }) => 
 test('core dashboard and settings stay keyboard accessible', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole('textbox', { name: 'Search dashboard' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Search dashboard' }).filter({ visible: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next month' })).toBeVisible();
 
@@ -142,9 +142,12 @@ test('mobile menu opens without changing the React hook order', async ({ page })
   await expect(menuButton).toBeVisible();
   await menuButton.click();
 
-  await expect(page.locator('.nd-mobile-menu-content')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true');
+  const sheet = page.getByRole('dialog', { name: 'Menu' });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole('link', { name: 'Log in' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   expect(pageErrors).toEqual([]);
 });
 
@@ -160,7 +163,7 @@ test('network editor dialogs keep keyboard focus without changing topology', asy
   // The network page shows its map (Calme) once loaded.
   await expect(page.locator('.ndc-map').first()).toBeVisible({ timeout: 30_000 });
 
-  await page.getByTitle('Edit mode').click();
+  await page.getByTitle('Edit mode').filter({ visible: true }).click();
   // Editing tools live in the map itself, in edit mode.
   await page.getByRole('toolbar', { name: 'Map tools' }).getByRole('button', { name: 'Node' }).click();
 

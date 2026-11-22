@@ -250,7 +250,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
           // Opaque, whatever the card opacity chosen in Appearance.
           background: 'var(--nd-bg-surface, var(--nd-bg))',
           border: '1px solid var(--nd-card-border)',
-          borderRadius: 'var(--nd-card-radius)',
+          borderRadius: 'var(--nd-ui-radius)',
           boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
           // Above the dialogs' overlay (z-index 99999).
           zIndex: 100001,
@@ -299,7 +299,7 @@ export default function CustomSelect({ value, options, onChange, className, styl
                 onKeyDown={(event) => handleOptionKeyDown(event, opt, optionIndex)}
                 style={{
                   padding: '8px 12px',
-                  borderRadius: 'calc(var(--nd-card-radius) * 0.6)',
+                  borderRadius: '6px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

@@ -6,6 +6,47 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Upgrading from 0.3.10
+
+- Pull and recreate NasDash with the same data mount. On first start, the header becomes widgets on every page: the search, the page menu and the buttons are placed where your header showed them, and the rest of each page moves down by the header's height, so your pages look the same. The previous pages file is kept as `pages.v5.json` next to `pages.json`. Roll back by recreating the recorded `0.3.10` image and putting `pages.v5.json` back as `pages.json`.
+- The site title is no longer shown in the header.
+- A menu with many pages can take a second line where the space between its pages used to shrink: widen the menu widget in edit mode, choose how many pages it shows, or gather pages in sub-menus. The menu takes all the room between the search and the buttons, as before.
+
+### Added
+
+- The header is made of widgets: **Search**, **Page menu** and **Buttons** (hide information, edit mode, settings, account). Move them anywhere on a page, use them several times; every search widget shows the same search and every menu the same pages. The search and the menu are resized like any widget; the buttons widget takes the grid columns it needs and its account stretches to fill them. The menu keeps the spacing between its pages and goes to a new line when it is full, or after a chosen number of pages per line (fewer when the widget is too narrow). Its settings are shared by every menu of the dashboard, unless one is set to keep its own (“This menu only”): one of four styles (tabs, capsule, segmented, icons), icons, alignment, how many pages it shows (the others unfold from a last “Others” button) and sub-menus, which gather pages under a name and unfold them. A header that was split around the title becomes two menus, each with half of the pages. In edit mode the menu's pages are still reordered and renamed in place, the unfolded ones too; a bin next to each name deletes a page after a confirmation, and the “+” among the widget's controls adds one. Every page keeps at least one menu and exactly one buttons widget (searches and menus can be added several times), and new pages start with all three.
+- The search looks through every widget of the page: case, accents and one typo are forgiven, all the words typed must appear, and the widgets that do not match step aside while the others move up. Searching a category's name shows the whole category.
+- Each widget can show or hide its own title, whatever the general setting: the eye next to its title in edit mode. Header widgets hide theirs by default.
+- Phones: a new header with the page's name in large type and round glass buttons for the search and the menu; the menu opens as a glass sheet from the bottom with the pages and the actions. Swipe left or right to change page; dots at the bottom show where you are (seven at most, sliding with the page shown). Narrower side margins.
+- NasDash can be installed on a phone's home screen (Safari: Share, Add to Home Screen) and opens full screen.
+- Machines widget: in edit mode, drag the machines into the order you want (#167).
+
+### Changed
+
+- The edit bar is one glass capsule (state, undo, redo, add, cancel, save); on phones and tablets it keeps only icons, and the Widgets / Order switch is a segmented control across the line with its explanation behind an ⓘ.
+- Corners (Appearance) now shape the edges of widgets, including the header widgets (search field, buttons, account, menu highlight), the Docker containers and tabs; what sits against an edge follows it concentrically, while the rest inside widgets and the interface around them (dialogs, menus, settings, dock) keep their own corners.
+- Phone menu: after nine pages, the page list scrolls inside the sheet.
+- Opening a page for the first time no longer shows an empty page for a moment: the previous page stays until the new one is placed.
+- Phones and tablets in edit mode: a widget's controls sit on its title's line, against the right edge, with the title's note just before them, and move to a line of their own above only when the line is too short; the widget library opens as a full-width sheet.
+- Widgets without a title of their own (Docker explorer, container list, network tools, topology) can show their name as a title, from its eye in edit mode, and rename it.
+- Design harmonised: with the default theme, hovers, wells and icon tiles are the same light veil as in every other theme (some were darker, some lighter); text fields focus like the search (a firmer hairline, no coloured ring); choice chips (Docker hosts and others) are neutral tiles without tint or outline; drop shadows behind posters, covers, service icons and widget controls are gone; container updates lose their row lines; playlist rows have one thin line between them (it was drawn twice, and once above the list); the Docker containers widget's hover takes its status dot in, rounded.
+- A widget title keeps its width: its note goes beside it while both fit, otherwise on the next line; the phone search is a glass capsule like the header's buttons; the network tools' fields are as large as the search.
+- Moving the pointer over a page no longer makes blurred surfaces shimmer along their edges (a widget now stands above its neighbours only when something of it reaches over them).
+- Phones: a swiped page follows the finger exactly and leaves on the side it was pushed to while the next one comes in; the pages on either side are loaded ahead, so the next one is never empty.
+- Public demo on phones: the welcome and the reset are in the menu (⋯) instead of a floating chip over the page dots and the edit bar; the demo's menu gathers its pages in two sub-menus.
+- Public demo: the films, series, soundtracks, books, comics and photos are real, freely licensed works with their real posters, covers and pictures (Blender Studio open movies, Standard Ebooks, Pepper&Carrot, NASA; credits in `public/demo/art/CREDITS.md`) instead of invented titles and drawn placeholders.
+
+- Entering edit mode moves the page less: title rows keep their height (the widget controls show over their corner when the pointer is on a widget), and only hidden titles, shown in edit mode, make room for themselves.
+
+### Fixed
+
+- Ticking several tasks quickly (or changing any widget outside edit mode while a save was on its way) could undo the latest change at once: saves of a page now follow one another and keep what was changed meanwhile.
+- Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.
+
+### Removed
+
+- The Header settings (title, logo, font and animation of the title, element order, split menu, tab icons) and the mobile header settings: the header widgets and their own settings replace them.
+
 ## [0.3.10] - 2026-11-17
 
 ### Upgrading from 0.3.9

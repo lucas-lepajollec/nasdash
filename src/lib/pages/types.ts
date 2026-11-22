@@ -10,7 +10,7 @@
  * store credentials. Removing a widget from a page never deletes its resource.
  */
 
-export const PAGES_SCHEMA_VERSION = 5;
+export const PAGES_SCHEMA_VERSION = 6;
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export type WidgetSettings = { [key: string]: JsonValue };

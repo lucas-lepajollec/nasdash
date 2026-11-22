@@ -48,6 +48,12 @@
     },
     "headerLayoutMobile": { "left": "search", "center": "none" },
     "showHeaderMenuIcons": false,
+    "pageMenu": {
+      "groups": [
+        { "id": "infrastructure", "name": "Infrastructure", "pages": ["machines", "docker", "networks"] },
+        { "id": "library", "name": "Library", "pages": ["media", "music", "downloads"] }
+      ]
+    },
     "showPingDetails": false,
     "pingIndicatorMode": "all",
     "hideDevices": false,

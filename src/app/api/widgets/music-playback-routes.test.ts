@@ -7,7 +7,7 @@ vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/auth', async original => ({ ...await original<typeof import('@/lib/auth')>(), checkAdmin: () => state.csrf || state.role !== 'admin' ? new Response(null, { status: 403 }) : null }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.role, allowedTabs: [], allowedWidgets: state.denied ? ['__nasdash_none__'] : [], isAnonymous: state.anonymous } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: () => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: () => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceStream: vi.fn(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/navidrome/collect', async original => ({ ...await original<typeof import('@/integrations/navidrome/collect')>(), collectNavidromeNowPlaying: vi.fn(), collectNavidromeRecent: vi.fn(), collectNavidromeTracks: vi.fn(), collectNavidromePlaylists: vi.fn(), collectNavidromeSearch: vi.fn() }));
 vi.mock('@/integrations/jellyfin/collect', async original => ({ ...await original<typeof import('@/integrations/jellyfin/collect')>(), controlJellyfinMusic: vi.fn(), collectJellyfinMusicNowPlaying: vi.fn(), jellyfinMusicStreamPath: vi.fn() }));
@@ -99,7 +99,7 @@ it('only advertises control to admins and checks admin, CSRF, server and action 
 it('keeps demo playlists, search, history, audio and control offline, with valid WAV ranges', async () => {
   state.demo = true;
   type('music-playlists'); expect((await (await playlists(get())).json()).playlists.length).toBeGreaterThan(0);
-  expect((await (await search(get('q=Glass'))).json()).tracks.length).toBeGreaterThan(0);
+  expect((await (await search(get('q=Morgenstern'))).json()).tracks.length).toBeGreaterThan(0);
   type('music-recent'); settings().content = 'tracks'; const history = await (await recent(get())).json(); expect(history.tracks.length).toBeGreaterThan(0);
   const request = get('id=' + history.tracks[0].id); let response = await stream(request); const wav = Buffer.from(await response.arrayBuffer()); expect(wav.toString('ascii', 0, 4)).toBe('RIFF'); expect(wav.length).toBeLessThan(10000);
   request.headers.set('Range', 'bytes=0-43'); response = await stream(request); expect(response.status).toBe(206); expect(response.headers.get('content-range')).toBe(`bytes 0-43/${wav.length}`); expect((await response.arrayBuffer()).byteLength).toBe(44);

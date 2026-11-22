@@ -67,7 +67,7 @@ test('CPU and each GPU temperature stay separate, configurable and independently
     await expect(metric.locator('.ndc-m-big')).toHaveText(['45 °C']);
     await expect(bars.locator('.ndc-m-label')).toHaveText(['CPU temperature', 'GPU temperature · Graphics A', 'GPU temperature · Graphics B']);
     await expect(bars.locator('.ndc-m-detail')).toHaveCount(0);
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     await settings(bars).click();
     let dialog = page.getByRole('dialog', { name: 'Device settings', exact: true });
     const cpu = dialog.getByRole('checkbox', { name: 'CPU temperature', exact: true });
@@ -115,7 +115,7 @@ test('CPU and each GPU temperature stay separate, configurable and independently
     expect(stored.widgets.find(item => item.id === 'temperature-metric')?.settings.temperaturePart).toBe('gpu');
     expect(stored.widgets.find(item => item.id === 'temperature-metric')?.settings.metricOrder).toEqual([identities[1], identities[0]]);
 
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     await settings(widget(page, 'temperature-no-gpu')).click();
     dialog = page.getByRole('dialog', { name: 'CPU temperature settings', exact: true });
     await expect(dialog.getByRole('radiogroup', { name: 'Temperature sensor' }).getByRole('radio', { name: 'GPU temperature', exact: true })).toHaveCount(0);

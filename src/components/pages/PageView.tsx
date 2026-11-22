@@ -19,11 +19,15 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { List, Plus, Settings2, SquareStack, X } from 'lucide-react';
-import { WidgetTitleContext } from '@/widgets/calme';
+import { WidgetTitleContext, WidgetTitleText, WidgetTitleVisibility } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
 import { MobileOrderEditor } from './MobileOrderEditor';
+import { CalmeInfo } from '../modals/settings/shared/CalmeControls';
+import { growMenusIntoFreedColumns, HEADER_WIDGET_TYPES, isLastRequiredWidget } from '@/lib/pages/header';
+import { prepareSearchText, searchTerms, textMatches, widgetSearchText } from '@/lib/search/match';
+import { MOBILE_QUERY } from '../layout/MobilePager';
 import { GRID_COLUMNS, GRID_ROW_PX, type GridPlacement, type Page, type WidgetInstance } from '@/lib/pages/types';
 import { moveService, readServiceDropTarget } from '@/lib/serviceMoves';
 import type { Service } from '@/lib/types';
@@ -32,6 +36,7 @@ import { usePages } from '@/providers/PagesProvider';
 import ServiceItem from '../tabs/home/ServiceItem';
 import { DockerWorkspaceProvider } from '../widgets/docker/DockerWorkspace';
 import { WidgetActionsSlotContext } from '../widgets/WidgetHeaderActions';
+import { WidgetFitContext } from '../widgets/WidgetFit';
 import { Emoji } from '../shared/Emoji';
 import { PageWidgetContent } from './PageWidgetContent';
 
@@ -45,8 +50,8 @@ const gridstackModule = typeof window === 'undefined' ? null : import('gridstack
  * so a widget is never shown at a width its content does not support; its
  * height always follows its content (no inner scrollbar).
  * Heights are measured continuously and the layout is reflowed around them
- * while keeping the stored vertical gaps (`reflowHeights`), so titles shown in
- * edit mode push widgets down and leaving edit mode brings them back. Below
+ * while keeping the stored vertical gaps (`reflowHeights`), so a widget that
+ * grows pushes the ones below and they come back when it shrinks. Below
  * the editing width the page becomes one read-only column in reading order.
  */
 
@@ -57,6 +62,8 @@ export interface LibraryTarget {
 interface PageViewProps {
   pageId: string;
   isVisible: boolean;
+  /** The page's widgets are placed and shown for the first time. */
+  onRevealed?: () => void;
   searchQuery: string;
   showSensitive: boolean;
   showSecretSections: boolean;
@@ -197,7 +204,7 @@ interface PageGridProps extends PageViewProps {
   edit: (operation: (page: Page) => Page) => void;
 }
 
-function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
+function PageGrid({ page, widgets, editMode, edit, onRevealed, ...props }: PageGridProps) {
   const { t } = useI18n();
   const root = useRef<HTMLDivElement>(null);
   const grid = useRef<GridStack | null>(null);
@@ -211,6 +218,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // Rendered heights (px), for the two tablet columns.
   const [pxHeights, setPxHeights] = useState<Record<string, number>>({});
   const [columnPx, setColumnPx] = useState(0);
+  // Widths (px) asked by widgets that fit their content (see WidgetFit).
+  const [fitPx, setFitPx] = useState<Record<string, number>>({});
   // The grid is shown once the page is visible and its widgets are measured
   // and placed: no flash of unplaced widgets, no animation for that placement.
   const [revealed, setRevealed] = useState(false);
@@ -227,6 +236,21 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
   useEffect(() => { editRef.current = edit; }, [edit]);
+  const revealedRef = useRef(onRevealed);
+  useEffect(() => { revealedRef.current = onRevealed; });
+  const widgetsRef = useRef(widgets);
+  useEffect(() => { widgetsRef.current = widgets; }, [widgets]);
+  const unfitRef = useRef<(placements: ({ id: string } & GridPlacement)[]) => ({ id: string } & GridPlacement)[]>(placements => placements);
+  // Phones: the phone header (title, search, menu) replaces the header widgets.
+  const [phoneHeader, setPhoneHeader] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY);
+    const update = () => setPhoneHeader(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  const hits = useSearchHits(root, props.searchQuery, !editMode, widgets);
 
   // Create the grid once; items are rendered by React and registered below.
   useEffect(() => {
@@ -322,7 +346,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
           });
           const settled = release && landing(release);
           if (release && settled) placements = pushOverlaps(settled, release.id);
-          editRef.current(current => applyPlacements(current, placements));
+          editRef.current(current => applyPlacements(current, unfitRef.current(placements)));
         });
       };
       // Where the pointer grabbed the widget, taken on press: GridStack measures
@@ -373,6 +397,44 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     };
   }, []);
 
+  const measureWidth = useCallback((id: string, px: number) => {
+    setFitPx(current => current[id] === px ? current : { ...current, [id]: px });
+  }, []);
+
+  // Widgets that fit their content take just the columns it needs at this
+  // screen width, on the side they are aligned to; never more than stored.
+  // A page menu beside them takes the columns they leave.
+  const fitted = useMemo(() => {
+    const column = gridWidth / GRID_COLUMNS;
+    if (!column) return widgets;
+    return growMenusIntoFreedColumns(widgets, widgets.map(widget => {
+      const px = fitPx[widget.id];
+      if (!px) return widget;
+      const w = Math.max(1, Math.ceil((px + GRID_MARGIN * 2) / column));
+      if (w >= widget.w) return widget;
+      return { ...widget, w, x: widget.x + fitShift(widget, widget.w - w) };
+    }));
+  }, [fitPx, gridWidth, widgets]);
+  const fittedRef = useRef(fitted);
+  useEffect(() => { fittedRef.current = fitted; }, [fitted]);
+  // What is saved keeps the stored width of those widgets, at the place shown.
+  const unfit = useCallback((placements: ({ id: string } & GridPlacement)[]) => {
+    const stored = new Map(widgetsRef.current.map(widget => [widget.id, widget]));
+    const shown = new Map(fittedRef.current.map(widget => [widget.id, widget]));
+    return placements.map(placement => {
+      const widget = stored.get(placement.id);
+      const was = shown.get(placement.id);
+      // A menu grown into freed columns and not resized keeps its stored width.
+      if (widget && was && was.w > widget.w && placement.w === was.w) {
+        return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, placement.x + widget.x - was.x)) };
+      }
+      if (!widget || was?.w === widget.w || placement.w >= widget.w) return placement;
+      const x = placement.x - fitShift(widget, widget.w - placement.w);
+      return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, x)) };
+    });
+  }, []);
+  useEffect(() => { unfitRef.current = unfit; }, [unfit]);
+
   const measure = useCallback((id: string, px: number) => {
     // A hidden page measures 0; narrow screens have other widths: keep the desktop heights.
     if (px < 1) return;
@@ -390,10 +452,11 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // being chosen, the widget pushes the ones it now overlaps downwards; they
   // come back if it shrinks again before the handle is released.
   const displayed = useMemo(() => {
-    const base = resize ? widgets.map(widget => widget.id === resize.id ? { ...widget, x: resize.x, w: resize.w } : widget) : widgets;
+    const base = resize ? fitted.map(widget => widget.id === resize.id ? { ...widget, x: resize.x, w: resize.w } : widget) : fitted;
     const flowed = reflowHeights(base, heights);
+    if (hits) return packSearchResults(flowed, hits);
     return resize ? pushOverlaps(flowed, resize.id) : flowed;
-  }, [heights, resize, widgets]);
+  }, [fitted, heights, hits, resize]);
   const displayedRef = useRef(displayed);
   useEffect(() => { displayedRef.current = displayed; }, [displayed]);
 
@@ -432,13 +495,13 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
       requestAnimationFrame(() => requestAnimationFrame(() => {
         const placements = displayedRef.current;
         setResize(null);
-        editRef.current(page => applyPlacements(page, placements));
+        editRef.current(page => applyPlacements(page, unfit(placements)));
       }));
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', stop);
     window.addEventListener('pointercancel', stop);
-  }, [formatsOf]);
+  }, [formatsOf, unfit]);
 
   // Register new items, forget removed ones and apply the displayed layout.
   useLayoutEffect(() => {
@@ -510,6 +573,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     return () => window.clearTimeout(timer);
   }, [heights, heightsAt, isVisible, ready, revealed, widgets]);
 
+  useEffect(() => { if (revealed) revealedRef.current?.(); }, [revealed]);
+
   // Editing needs the full grid; narrow screens stay read-only.
   useEffect(() => {
     const el = root.current;
@@ -569,17 +634,25 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   // Tablets: two columns, each widget going into the shorter one, in order.
   const tablet = useMemo(() => {
     if (mode !== 'tablet' || !gridWidth) return null;
-    const bottoms = [0, 0];
+    // Above the phone width the header widgets keep their row at the top, at
+    // their desktop proportions; on phones the phone header replaces them.
+    const shownAt = new Map(fitted.map(widget => [widget.id, widget]));
+    const header = phoneHeader ? [] : compactOrder.filter(widget => HEADER_WIDGET_TYPES.has(widget.type)).map(widget => shownAt.get(widget.id) ?? widget);
+    const bandHeight = header.length ? Math.max(...header.map(widget => pxHeights[widget.id] ?? 0)) + COMPACT_GAP : 0;
+    const bottoms = [bandHeight, bandHeight];
     const places = new Map<string, { column: number; top: number }>();
+    const band = new Map(header.map(widget => [widget.id, { left: widget.x / GRID_COLUMNS, width: widget.w / GRID_COLUMNS }]));
     for (const widget of compactOrder) {
+      if (HEADER_WIDGET_TYPES.has(widget.type)) continue;
+      if (hits && !hits.has(widget.id)) continue;
       // Hidden ones stay in place (dimmed) while editing, so they can be shown again.
       if (isHiddenOnMobile(page, widget.id) && !editMode) continue;
       const column = bottoms[1] < bottoms[0] ? 1 : 0;
       places.set(widget.id, { column, top: bottoms[column] });
       bottoms[column] += (pxHeights[widget.id] ?? 0) + COMPACT_GAP;
     }
-    return { places, height: Math.max(0, ...bottoms) };
-  }, [compactOrder, editMode, gridWidth, mode, page, pxHeights]);
+    return { places, band, height: Math.max(0, ...bottoms) };
+  }, [compactOrder, editMode, fitted, gridWidth, hits, mode, page, phoneHeader, pxHeights]);
   // Phones and tablets in edit mode: the widgets with their controls (default),
   // or the compact list to reorder quickly.
   const [listView, setListView] = useState(false);
@@ -591,10 +664,11 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     <>
       {compactEdit && (
         <div className="nd-page-mobile-bar" role="group" aria-label={t('pages.mobile.title')}>
-          <span className="nd-page-mobile-bar-note">{t('pages.mobile.editNote')}</span>
-          <span className="ndc-seg nd-page-mobile-switch">
-            <button type="button" aria-pressed={!listView} onClick={() => setListView(false)}><SquareStack size={13} /> {t('pages.mobile.widgets')}</button>
-            <button type="button" aria-pressed={listView} onClick={() => setListView(true)}><List size={13} /> {t('pages.mobile.list')}</button>
+          <span className="nd-page-mobile-switch">
+            <button type="button" aria-pressed={!listView} onClick={() => setListView(false)}><SquareStack size={14} aria-hidden="true" /> {t('pages.mobile.widgets')}</button>
+            <button type="button" aria-pressed={listView} onClick={() => setListView(true)}><List size={14} aria-hidden="true" /> {t('pages.mobile.list')}</button>
+            {/* Drawn inside the Order segment (a sibling, as a button holds no other control). */}
+            <CalmeInfo text={t('pages.mobile.editNote')} />
           </span>
         </div>
       )}
@@ -607,7 +681,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
         {widgets.map(widget => (
           <div
             key={widget.id}
-            className={`grid-stack-item ${resize?.id === widget.id ? 'nd-page-item--resizing' : ''} ${narrow && isHiddenOnMobile(page, widget.id) ? (compactEdit ? 'nd-page-item--mobile-dimmed' : 'nd-page-item--mobile-hidden') : ''}`}
+            className={`grid-stack-item ${resize?.id === widget.id ? 'nd-page-item--resizing' : ''} ${narrow && isHiddenOnMobile(page, widget.id) ? (compactEdit ? 'nd-page-item--mobile-dimmed' : 'nd-page-item--mobile-hidden') : ''} ${hits && !hits.has(widget.id) ? 'nd-page-item--filtered' : ''} ${tablet?.band.has(widget.id) ? 'nd-page-item--band' : ''} ${HEADER_WIDGET_TYPES.has(widget.type) ? 'nd-page-item--header' : ''}`}
             gs-id={widget.id}
             gs-x={widget.x}
             gs-y={widget.y}
@@ -617,6 +691,7 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
             style={{
               order: readingOrder.get(widget.id),
               ...(tablet?.places.has(widget.id) ? { '--nd-tablet-column': tablet.places.get(widget.id)!.column, '--nd-tablet-top': `${tablet.places.get(widget.id)!.top}px` } : {}),
+              ...(tablet?.band.has(widget.id) ? { '--nd-band-left': tablet.band.get(widget.id)!.left, '--nd-band-width': tablet.band.get(widget.id)!.width } : {}),
             } as React.CSSProperties}
           >
             <div className="grid-stack-item-content">
@@ -627,8 +702,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
                 editMode={editable || compactEdit}
                 edit={edit}
                 onMeasure={measure}
+                onMeasureWidth={measureWidth}
                 onResizeStart={editable ? (edge, event) => startResize(widget, edge, event) : undefined}
-                canResizeWidth={editable && formatsOf(widget).length > 1}
+                canResizeWidth={editable && !getWidgetCatalogEntry(widget.type)?.fixedWidth && formatsOf(widget).length > 1}
               />
             </div>
           </div>
@@ -646,6 +722,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
           />
         )}
       </div>
+      {hits && widgets.every(widget => HEADER_WIDGET_TYPES.has(widget.type) || !hits.has(widget.id)) && widgets.some(widget => !HEADER_WIDGET_TYPES.has(widget.type)) && (
+        <p className="nd-page-search-empty" role="status">{t('search.noResult', { query: props.searchQuery.trim() })}</p>
+      )}
     </>
   );
 }
@@ -669,7 +748,7 @@ const REVEAL_CAP_MS = 120;
 
 /** Widgets without a title of their own get one in edit mode, like the others. Network tools has its section titles. */
 const UNTITLED_TYPES = new Set([
-  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-topology', 'spacer',
+  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-topology', 'network-tools', 'spacer',
 ]);
 /** Widgets that have their own title in the Calme style. */
 const CALME_TITLED_TYPES = new Set(['docker-summary']);
@@ -680,6 +759,8 @@ interface WidgetFrameProps extends PageViewProps {
   editMode: boolean;
   edit: (operation: (page: Page) => Page) => void;
   onMeasure: (widgetId: string, px: number) => void;
+  /** Widgets that fit their content report the width it needs. */
+  onMeasureWidth: (widgetId: string, px: number) => void;
   /** Starts choosing the width from a side (`e`, `w`). */
   onResizeStart?: (edge: ResizeEdge, event: React.PointerEvent<HTMLElement>) => void;
   /** More than one width format at this screen width. */
@@ -691,7 +772,7 @@ interface WidgetFrameProps extends PageViewProps {
  * mode its controls sit in its top-right corner, together with the header
  * buttons of the widget (`WidgetHeaderActions`).
  */
-function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, canResizeWidth, ...props }: WidgetFrameProps) {
+function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, onResizeStart, canResizeWidth, ...props }: WidgetFrameProps) {
   const { t } = useI18n();
   const { updateWidgetSettings } = usePages();
   const { setSettingsModal } = useConfig();
@@ -703,10 +784,14 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
   const entry = getWidgetCatalogEntry(widget.type);
   const name = widgetName(widget);
   const customTitle = typeof widget.settings.customTitle === 'string' ? widget.settings.customTitle : undefined;
+  const showTitle = typeof widget.settings.showTitle === 'boolean' ? widget.settings.showTitle : undefined;
   const titleContext = useMemo(() => ({
     custom: customTitle,
     rename: (title: string) => updateWidgetSettings(page.id, widget.id, { customTitle: title }),
-  }), [customTitle, page.id, updateWidgetSettings, widget.id]);
+    visible: showTitle,
+    setVisible: (visible: boolean) => updateWidgetSettings(page.id, widget.id, { showTitle: visible }),
+  }), [customTitle, page.id, showTitle, updateWidgetSettings, widget.id]);
+  const reportWidth = useCallback((px: number) => onMeasureWidth(widget.id, px), [onMeasureWidth, widget.id]);
 
   useEffect(() => {
     const node = ref.current;
@@ -728,6 +813,38 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
     return () => observer.disconnect();
   }, [editMode]);
 
+  // Phones and tablets keep the controls shown: on the title's line while it
+  // holds the title, its note and them, otherwise on a line of their own above.
+  const [actionsAbove, setActionsAbove] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!editMode || !node) return;
+    const check = () => {
+      if (!node.closest('.nd-page-grid--compact-editing')) { setActionsAbove(false); return; }
+      const title = node.querySelector<HTMLElement>('.ndc-title, .nd-category-title-above, .nd-page-widget-edit-title');
+      if (!title) { setActionsAbove(false); return; }
+      // The title's own width: each part at the size of what it holds (a
+      // name stretched over the line, or cut short, counts at its text's width).
+      const parts = Array.from(title.children) as HTMLElement[];
+      const gap = parseFloat(getComputedStyle(title).columnGap) || 0;
+      const range = document.createRange();
+      const natural = (part: HTMLElement) => {
+        if (!part.textContent?.trim()) return part.getBoundingClientRect().width;
+        range.selectNodeContents(part);
+        const style = getComputedStyle(part);
+        return range.getBoundingClientRect().width + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      };
+      const needed = parts.reduce((sum, part) => sum + natural(part), 0) + gap * Math.max(0, parts.length - 1) + 4;
+      const controls = actions.current?.getBoundingClientRect().width ?? 0;
+      setActionsAbove(needed > node.getBoundingClientRect().width - controls - 12);
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(node);
+    if (actions.current) observer.observe(actions.current);
+    return () => observer.disconnect();
+  }, [editMode]);
+
   // A category itself is edited from its own button (in the group); this one
   // opens the options shared by every category (pings, address or latency).
   const configure = entry?.settingsTab
@@ -736,17 +853,21 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
   return (
     <div
       ref={ref}
-      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''}`}
+      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''} ${editMode && actionsAbove ? 'is-actions-above' : ''}`}
       data-widget-id={widget.id}
       style={editMode ? { '--nd-page-actions-width': `${actionsWidth}px` } as React.CSSProperties : undefined}
     >
-      {editMode && UNTITLED_TYPES.has(widget.type) && !CALME_TITLED_TYPES.has(widget.type) && (
-        <div className="nd-page-widget-edit-title nd-section-title">
-          <Emoji emoji={entry?.icon ?? '🧩'} /> {name}
-        </div>
-      )}
-      <WidgetActionsSlotContext.Provider value={editMode ? slot : null}>
+      <WidgetActionsSlotContext.Provider value={editMode ? slot : undefined}>
         <WidgetTitleContext.Provider value={titleContext}>
+        {/* Widgets without a title of their own: their name, shown in edit
+            mode (dimmed) and outside it only when its eye says so; renamed in place. */}
+        {UNTITLED_TYPES.has(widget.type) && !CALME_TITLED_TYPES.has(widget.type) && (editMode || (showTitle === true && widget.type !== 'spacer')) && (
+          <div className={`nd-page-widget-edit-title nd-section-title ${showTitle === true || widget.type === 'spacer' ? '' : 'is-hidden-title'}`}>
+            <Emoji emoji={entry?.icon ?? '🧩'} /> {widget.type === 'spacer' ? name : <WidgetTitleText title={name} editMode={editMode} />}
+            {editMode && widget.type !== 'spacer' && <WidgetTitleVisibility shown={showTitle === true} />}
+          </div>
+        )}
+        <WidgetFitContext.Provider value={reportWidth}>
         <PageWidgetContent
           pageId={page.id}
           instance={widget}
@@ -759,6 +880,7 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
           onUpdateSettings={settings => updateWidgetSettings(page.id, widget.id, settings)}
           onRemoveView={() => edit(current => removeWidget(current, widget.id))}
         />
+        </WidgetFitContext.Provider>
         </WidgetTitleContext.Provider>
       </WidgetActionsSlotContext.Provider>
       {editMode && onResizeStart && canResizeWidth && (
@@ -784,11 +906,91 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onResizeStart, c
               <Settings2 size={13} />
             </button>
           )}
-          <button type="button" className="nd-action-icon danger" onClick={() => edit(current => removeWidget(current, widget.id))} title={t('pages.widget.removeNamed', { name })} aria-label={t('pages.widget.removeNamed', { name })}>
-            <X size={13} />
-          </button>
+          {/* The last menu and the last buttons of a page stay: without them the page would be a dead end. */}
+          {!isLastRequiredWidget(page, widget.id) && (
+            <button type="button" className="nd-action-icon danger" onClick={() => edit(current => removeWidget(current, widget.id))} title={t('pages.widget.removeNamed', { name })} aria-label={t('pages.widget.removeNamed', { name })}>
+              <X size={13} />
+            </button>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * How far a widget that fits its content moves when it is `spare` columns
+ * narrower than stored: it keeps the side it is aligned to (the end by default).
+ */
+function fitShift(widget: WidgetInstance, spare: number): number {
+  const align = widget.settings.align;
+  return align === 'start' ? 0 : align === 'center' ? Math.floor(spare / 2) : spare;
+}
+
+/**
+ * Searching: the widgets whose content matches the query (all words, case,
+ * accents and one typo forgiven, see src/lib/search/match.ts), or null when
+ * nothing is searched. The header widgets always stay. Widgets update their
+ * content (data arriving), so the result follows it.
+ */
+function useSearchHits(root: React.RefObject<HTMLDivElement | null>, query: string, enabled: boolean, widgets: WidgetInstance[]): Set<string> | null {
+  const nameOf = useWidgetName();
+  const terms = useMemo(() => searchTerms(query), [query]);
+  const [hits, setHits] = useState<Set<string> | null>(null);
+  const active = enabled && terms.length > 0;
+  const names = useMemo(() => new Map(widgets.map(widget => [widget.id, [
+    nameOf(widget),
+    typeof widget.settings.customTitle === 'string' ? widget.settings.customTitle : '',
+  ]])), [nameOf, widgets]);
+  const typeOf = useMemo(() => new Map(widgets.map(widget => [widget.id, widget.type])), [widgets]);
+  useEffect(() => {
+    const element = root.current;
+    if (!active || !element) { setHits(null); return; }
+    let timer = 0;
+    const compute = () => {
+      const next = new Set<string>();
+      element.querySelectorAll<HTMLElement>('.nd-page-widget[data-widget-id]').forEach(node => {
+        const id = node.dataset.widgetId;
+        if (!id) return;
+        const type = typeOf.get(id);
+        if (type && HEADER_WIDGET_TYPES.has(type)) { next.add(id); return; }
+        if (textMatches(terms, prepareSearchText(widgetSearchText(node, names.get(id) ?? [])))) next.add(id);
+      });
+      setHits(current => current && current.size === next.size && [...next].every(id => current.has(id)) ? current : next);
+    };
+    compute();
+    const observer = new MutationObserver(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(compute, 250);
+    });
+    observer.observe(element, { subtree: true, childList: true, characterData: true });
+    return () => { observer.disconnect(); window.clearTimeout(timer); };
+  }, [active, names, root, terms, typeOf]);
+  return active ? hits : null;
+}
+
+/**
+ * Search results on the grid: the matching widgets keep their columns and
+ * move up into the room left by the others, in reading order; the others are
+ * parked below, out of sight and one row tall (they stay mounted so their
+ * content is still searched).
+ */
+function packSearchResults<T extends GridPlacement & { id: string }>(widgets: T[], hits: Set<string>): T[] {
+  const placed: T[] = [];
+  const result = new Map<string, T>();
+  for (const widget of [...widgets].filter(candidate => hits.has(candidate.id)).sort((a, b) => a.y - b.y || a.x - b.x)) {
+    const above = placed.filter(other => other.x < widget.x + widget.w && widget.x < other.x + other.w);
+    const y = above.length ? Math.max(...above.map(other => other.y + other.h)) : 0;
+    const next = y === widget.y ? widget : { ...widget, y };
+    placed.push(next);
+    result.set(widget.id, next);
+  }
+  let parked = placed.reduce((bottom, widget) => Math.max(bottom, widget.y + widget.h), 0) + 1;
+  for (const widget of widgets) {
+    if (result.has(widget.id)) continue;
+    // One row each: hidden, they must not leave a tall empty page behind.
+    result.set(widget.id, { ...widget, x: 0, y: parked, h: 1 });
+    parked += 1;
+  }
+  return widgets.map(widget => result.get(widget.id)!);
 }

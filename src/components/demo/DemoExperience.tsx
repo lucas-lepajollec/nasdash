@@ -91,6 +91,19 @@ export default function DemoExperience() {
     window.location.reload();
   };
 
+  // Phones reach the welcome and the reset from the menu sheet instead of the chip.
+  const resetRef = useRef(resetDemo);
+  useEffect(() => { resetRef.current = resetDemo; });
+  useEffect(() => {
+    const listen = (event: Event) => {
+      const action = (event as CustomEvent<string>).detail;
+      if (action === 'about') setGuideOpen(true);
+      if (action === 'reset') void resetRef.current();
+    };
+    window.addEventListener('nasdash:demo', listen);
+    return () => window.removeEventListener('nasdash:demo', listen);
+  }, []);
+
   const points = [
     { icon: MousePointerClick, text: t('demo.point.edit') },
     { icon: ShieldCheck, text: t('demo.point.safe') },

@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import type { IntegrationInstance } from '@/lib/types';
 import { MEDIA_IMAGE_ROUTE, type FollowUpItem, type MediaItem, type MediaWatched, type MediaLibraryResponse, type MediaNowPlayingResponse, type MediaRecentResponse, type MediaServer } from './contracts';
 import { serviceIdentity, ServiceError } from './services';
+import { isDemoMode } from '@/lib/demoMode';
+import { DEMO_ALBUMS, DEMO_FILMS, DEMO_SERIALS, demoArtFor, demoArtId } from '@/lib/demo/library';
 
 export const MEDIA_WIDGET_TYPES = ['media-nowplaying', 'media-recent', 'media-library'] as const;
 export type MediaWidgetType = typeof MEDIA_WIDGET_TYPES[number];
@@ -78,6 +80,9 @@ export function proxyMediaItem<T extends { poster?: string; backdrop?: string; l
   const { link, poster, backdrop, ...safe } = item;
   const image = (path: string | undefined, kind: 'poster' | 'backdrop') => {
     if (!path) return undefined;
+    // The public demo's own pictures are static files of NasDash: served as they are.
+    const shipped = isDemoMode() ? demoArtFor(path) : undefined;
+    if (shipped) return shipped;
     const key = hash(JSON.stringify([serviceIdentity(instance), kind, path]));
     const id = `${serviceIdentity(instance)}:${scope(widgetId, draft)}:${key}`;
     membership.delete(id);
@@ -90,14 +95,23 @@ export function proxyMediaItem<T extends { poster?: string; backdrop?: string; l
   return { ...safe, ...(admin && link ? { link } : {}), poster: image(poster, 'poster'), backdrop: image(backdrop, 'backdrop') } as T;
 }
 const identity = (instance: IntegrationInstance) => ({ server: instance.type as MediaServer, name: instance.name, fetchedAt: Date.UTC(2026, 0, 15, 12) });
+/** Open films, series and soundtracks (src/lib/demo/library.ts), in turn. */
 const demoItem = (n: number): MediaItem => {
   const kind = (['movie', 'episode', 'album'] as const)[n % 3];
-  const titles = ['The Quiet Orbit', 'Harbor Lights', 'The Lantern Archive', 'A Map of Rain', 'The Copper Lighthouse', 'Signals from the Garden'];
-  return { id: `demo-${n}`, kind, title: `${titles[n % titles.length]}${n >= titles.length ? ` ${Math.floor(n / titles.length) + 1}` : ''}`,
-    subtitle: kind === 'episode' ? 'Harbor Lights' : kind === 'album' ? 'The Paper Satellites' : undefined,
-    ...(kind === 'episode' ? { season: 2, episode: 5 + n % 4 } : {}),
-    year: 2025, durationMs: kind === 'movie' ? 6840000 : 2640000, addedAt: Date.UTC(2026, 0, 15) - n * 86400000,
-    poster: `demo:poster:${n}`, backdrop: `demo:backdrop:${n}` };
+  const round = Math.floor(n / 3);
+  const base = { id: `demo-${n}`, kind, addedAt: Date.UTC(2026, 0, 15) - n * 86400000 };
+  if (kind === 'movie') {
+    const film = DEMO_FILMS[round % DEMO_FILMS.length];
+    return { ...base, title: film.title, year: film.year, durationMs: film.minutes * 60_000, poster: demoArtId(film.slug), backdrop: demoArtId(film.slug, 'wide') };
+  }
+  if (kind === 'episode') {
+    const serial = DEMO_SERIALS[round % DEMO_SERIALS.length];
+    const episode = round % serial.episodes.length;
+    return { ...base, title: serial.episodes[episode], subtitle: serial.title, season: 1, episode: episode + 1, year: serial.year, durationMs: 2_640_000,
+      poster: demoArtId(serial.slug), backdrop: demoArtId(serial.slug, 'wide') };
+  }
+  const album = DEMO_ALBUMS[round % DEMO_ALBUMS.length];
+  return { ...base, title: album.title, subtitle: album.artist, year: album.year, durationMs: 2_640_000, poster: demoArtId(album.slug), backdrop: demoArtId(album.film, 'wide') };
 };
 export function demoMediaNowPlaying(instance: IntegrationInstance): MediaNowPlayingResponse {
   return { ...identity(instance), sessions: [
@@ -106,11 +120,12 @@ export function demoMediaNowPlaying(instance: IntegrationInstance): MediaNowPlay
   ] };
 }
 export function demoMediaUpcoming(): FollowUpItem[] {
-  return ['The Weather Cartographers', 'Harbor Lights', 'Paper Satellites', 'The Copper Lighthouse', 'Northern Relay'].map((title, n) => {
-    const art = demoItem(n), dated = n < 2;
-    return { id: `demo-follow-${n}`, title, status: (['airing', 'upcoming', 'announced', 'announced', 'ended'] as const)[n],
-      phase: followUpPhase({ status: (['airing', 'upcoming', 'announced', 'announced', 'ended'] as const)[n], episode: n ? 1 : 6 }), ownedSeason: 2, network: 'Lantern Television', poster: art.poster, backdrop: art.backdrop,
-      ...(dated ? { at: Date.now() + (n + 1) * 86400000, season: n + 2, episode: n ? 1 : 6, episodeTitle: n ? 'A New Horizon' : 'The Tide Returns' } : {}) };
+  return DEMO_SERIALS.map((serial, n) => {
+    const dated = n < 2;
+    return { id: `demo-follow-${n}`, title: serial.title, status: (['airing', 'upcoming', 'announced', 'ended'] as const)[n],
+      phase: followUpPhase({ status: (['airing', 'upcoming', 'announced', 'ended'] as const)[n], episode: n ? 1 : 6 }), ownedSeason: 1, network: 'Blender Studio',
+      poster: demoArtId(serial.slug), backdrop: demoArtId(serial.slug, 'wide'),
+      ...(dated ? { at: Date.now() + (n + 1) * 86400000, season: 1, episode: n ? 1 : 6, episodeTitle: serial.episodes[n ? 0 : 5 % serial.episodes.length] } : {}) };
   });
 }
 export function demoMediaHistory(): MediaWatched[] {
@@ -133,7 +148,7 @@ export function demoMediaLibrary(instance: IntegrationInstance): MediaLibraryRes
       { name: 'Stories by the Harbor', kind: 'series', count: 30, episodes: 860, added: 6, art: [0, 4, 8, 12].map(n => demoItem(n)) },
       { name: 'Animated Evenings', kind: 'movies', count: 36, added: 0, art: [3, 7, 11, 15].map(n => demoItem(n)) },
       { name: 'Little Lantern Shows', kind: 'series', count: 12, episodes: 420, added: 3, art: [2, 6, 10, 14].map(n => demoItem(n)) },
-      { name: 'Paper Satellites Radio', kind: 'music', count: 96, albums: 210, tracks: 2640, added: 4 },
+      { name: 'Film Scores', kind: 'music', count: 96, albums: 210, tracks: 2640, added: 4 },
     ] };
 }
 /** Title-free, deterministic local artwork; untrusted text is never interpolated into SVG. */

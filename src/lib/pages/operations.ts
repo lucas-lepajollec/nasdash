@@ -125,8 +125,13 @@ export function reflowHeights<T extends GridPlacement & { id: string }>(widgets:
 
 export type PlacementProblem = 'max-instances';
 
-/** Single-instance widgets (the editable topology) are counted across pages. */
+/**
+ * Single-instance widgets (the editable topology) are counted across pages;
+ * widgets limited per page (the page buttons) on this page.
+ */
 export function placementProblem(document: Pick<PagesDocument, 'pages'> | null, page: Page, widgetType: string): PlacementProblem | null {
+  const perPage = getWidgetCatalogEntry(widgetType)?.maxPerPage;
+  if (perPage !== undefined && page.widgets.filter(widget => widget.type === widgetType).length >= perPage) return 'max-instances';
   const max = getWidgetCatalogEntry(widgetType)?.maxInstances;
   if (max === undefined) return null;
   const pages = document ? document.pages.map(candidate => candidate.id === page.id ? page : candidate) : [page];

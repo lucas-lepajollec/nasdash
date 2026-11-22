@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Header from '@/components/layout/Header';
+import { MobileHeader } from '@/components/layout/MobileHeader';
+import { ShellControlsContext, type ShellControls } from '@/components/layout/ShellControls';
 import DemoExperience from '@/components/demo/DemoExperience';
 import TabDock from '@/components/layout/TabDock';
+import { MOBILE_QUERY, PageDots, usePageSwipe } from '@/components/layout/MobilePager';
 import { useTabs } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import SettingsModal from '@/components/modals/SettingsModal';
@@ -111,6 +113,50 @@ export default function Shell() {
     return mapped;
   })();
 
+  // Phone navigation: the visible pages, in dock order, reached by swiping or from the menu.
+  const pagerTabs = sortedTabs.filter(tab => !hiddenIds.includes(tab.id));
+  const [tabView, setTabView] = useState<HTMLDivElement | null>(null);
+  usePageSwipe(tabView, {
+    enabled: !editMode && pagerTabs.length > 1,
+    canStep: direction => !!pagerTabs[pagerTabs.findIndex(tab => tab.id === activeTab) + direction],
+    onStep: direction => {
+      const next = pagerTabs[pagerTabs.findIndex(tab => tab.id === activeTab) + direction];
+      if (next) switchTab(next.id);
+    },
+  });
+  // Phones: the pages on either side are mounted (hidden) ahead of time, so a
+  // swipe shows one that has already loaded instead of an empty page.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY);
+    const update = () => setPhone(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  // Computers: a page shown for the first time places its widgets out of
+  // sight while the previous page stays, instead of an empty page for a moment.
+  const [readyPages, setReadyPages] = useState<string[]>([]);
+  const [shownTab, setShownTab] = useState(activeTab);
+  const preparing = !phone && !!shownTab && shownTab !== activeTab && !readyPages.includes(activeTab);
+  if (!preparing && shownTab !== activeTab) setShownTab(activeTab);
+  const markReady = (id: string) => setReadyPages(current => current.includes(id) ? current : [...current, id]);
+  useEffect(() => {
+    if (!preparing) return;
+    // Never longer than this: a page whose widgets keep loading shows anyway.
+    const timer = window.setTimeout(() => markReady(activeTab), 800);
+    return () => window.clearTimeout(timer);
+  }, [activeTab, preparing]);
+  const activeIndex = pagerTabs.findIndex(tab => tab.id === activeTab);
+  const neighbours = phone && activeIndex >= 0 ? [pagerTabs[activeIndex - 1]?.id, pagerTabs[activeIndex + 1]?.id] : [];
+  // The page that appears slides in from the side it comes from (phones only, see mobile.css).
+  const [pageEntry, setPageEntry] = useState<{ tab: string; direction: number }>({ tab: activeTab, direction: 0 });
+  if (pageEntry.tab !== activeTab) {
+    const from = pagerTabs.findIndex(tab => tab.id === pageEntry.tab);
+    const to = pagerTabs.findIndex(tab => tab.id === activeTab);
+    setPageEntry({ tab: activeTab, direction: from < 0 || to < 0 || !pageEntry.tab ? 0 : Math.sign(to - from) });
+  }
+
   if (configError && !config && !loading) return <main style={{ padding: 32 }}><p role="alert">{t(configError)}</p><button type="button" onClick={() => void refresh()}>{t('Réessayer')}</button></main>;
 
   if (loading || !ready || !config) {
@@ -134,11 +180,28 @@ export default function Shell() {
   }
 
   const title = config?.settings?.title || process.env.NEXT_PUBLIC_DASHBOARD_TITLE || 'NASDASH';
-  const activePage = getPage(activeTab);
 
   const isDockHidden = config?.settings?.hideDock ?? false;
 
+  // What the header widgets and the phone header act on: one search, one menu, the same buttons everywhere.
+  const shellControls: ShellControls = {
+    searchQuery,
+    setSearchQuery,
+    showSensitive,
+    toggleSensitive: () => setShowSensitive(prev => !prev),
+    editMode,
+    toggleEdit: () => { if (editing) void finishEditing(); else startEditing(); },
+    openSettings: (trigger) => {
+      settingsTriggerRef.current = trigger ?? null;
+      setSettingsModal({ open: true });
+    },
+    tabs: sortedTabs,
+    activeTab,
+    switchTab,
+  };
+
   return (
+    <ShellControlsContext.Provider value={shellControls}>
     <div className={`nd-shell ${isDockHidden ? 'nd-shell--dock-hidden' : `nd-shell--dock-${dockPosition}`}`}>
       {/* Dock — Tab switcher */}
       {!isDockHidden && (
@@ -162,30 +225,7 @@ export default function Shell() {
         <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
           {title}
         </h1>
-        <Header
-          title={title}
-          titleLogo={config?.settings?.titleLogo}
-          titleMobile={config?.settings?.titleMobile}
-          titleFont={config?.settings?.titleFont}
-          titleAnimation={config?.settings?.titleAnimation}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          editMode={editMode}
-          onToggleEdit={() => { if (editing) void finishEditing(); else startEditing(); }}
-          onOpenSettings={(trigger) => {
-            settingsTriggerRef.current = trigger ?? null;
-            setSettingsModal({ open: true });
-          }}
-          onAddCategory={() => {
-            setCategoryModal({ open: true, placement: activePage ? { pageId: activePage.id } : undefined });
-          }}
-          onAddWidget={() => setLibraryTarget({ pageId: activeTab })}
-          secretMode={showSensitive}
-          onToggleSecret={() => setShowSensitive(prev => !prev)}
-          activeTab={activeTab}
-          tabs={sortedTabs}
-          onSwitchTab={switchTab}
-        />
+        <MobileHeader pageTabs={pagerTabs} />
 
         {pagesError && (
           <div className="nd-page-load-error" role="alert">{t('pages.loadError', { error: pagesError })}</div>
@@ -193,12 +233,20 @@ export default function Shell() {
 
         {/* Every page, official or custom, is rendered by the same engine.
             Visited pages stay mounted (hidden) to preserve their state. */}
-        <div className="nd-tab-view">
-          {tabs.filter(tab => tab.id === activeTab || visitedPages.includes(tab.id)).map(tab => (
-            <div key={tab.id} className="flex-1" style={{ display: activeTab === tab.id ? 'block' : 'none' }}>
+        <div className="nd-tab-view" ref={setTabView}>
+          {tabs.filter(tab => tab.id === activeTab || visitedPages.includes(tab.id) || neighbours.includes(tab.id)).map(tab => (
+            <div
+              key={tab.id}
+              data-active={activeTab === tab.id}
+              className={`flex-1 ${activeTab === tab.id && pageEntry.direction ? `nd-page-enter nd-page-enter--${pageEntry.direction > 0 ? 'next' : 'prev'}` : ''}`}
+              style={preparing && tab.id === activeTab
+                ? { position: 'absolute', top: 0, left: 0, right: 0, visibility: 'hidden', pointerEvents: 'none' }
+                : { display: (preparing ? shownTab : activeTab) === tab.id ? 'block' : 'none' }}
+            >
               <PageView
                 pageId={tab.id}
                 isVisible={activeTab === tab.id}
+                onRevealed={() => markReady(tab.id)}
                 searchQuery={searchQuery}
                 showSensitive={showSensitive}
                 showSecretSections={showSecretSections}
@@ -208,6 +256,7 @@ export default function Shell() {
             </div>
           ))}
         </div>
+        {!editMode && <PageDots tabs={pagerTabs} activeTab={activeTab} onSwitch={switchTab} />}
         <PageFooter showSecretSections={showSecretSections} onToggleSecretSections={() => setShowSecretSections(prev => !prev)} />
       </div>
 
@@ -311,5 +360,6 @@ export default function Shell() {
       {user?.role === 'admin' && <PageEditorBar onAddWidget={() => setLibraryTarget({ pageId: activeTab })} />}
       {config?.demoMode === true && <DemoExperience />}
     </div>
+    </ShellControlsContext.Provider>
   );
 }

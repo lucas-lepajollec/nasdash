@@ -94,7 +94,7 @@ test('secondary links close after navigation, support keyboard focus and show th
     await page.reload();
     await card.hover();
     await expect(tip.locator('.nd-service-tooltip-host')).toHaveText('secondary.example.invalid');
-    await page.getByTitle('Hide info', { exact: true }).click();
+    await page.getByTitle('Hide info', { exact: true }).filter({ visible: true }).click();
     await card.hover();
     await expect(tip.locator('.nd-service-tooltip-host')).toHaveText('•••');
     await page.evaluate(() => { delete document.body.dataset.design; });

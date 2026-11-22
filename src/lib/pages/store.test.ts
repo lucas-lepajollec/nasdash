@@ -73,13 +73,59 @@ describe('pages store', () => {
     const { readPagesDocument } = await import('./store');
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
     const [page] = readPagesDocument().pages;
-    expect(page.revision).toBe(4);
-    expect(page.widgets.map(({ x, y, w, h }) => ({ x, y, w, h }))).toEqual([
-      { x: 0, y: 0, w: 4, h: 42 },
-      { x: 20, y: 0, w: 4, h: 60 },
-      { x: 0, y: 42, w: 8, h: 80 },
+    // A new revision: the header widgets were added at the top, the rest moved down by the header's height.
+    expect(page.revision).toBe(5);
+    expect(page.widgets.filter(widget => !widget.type.startsWith('page-')).map(({ x, y, w, h }) => ({ x, y, w, h }))).toEqual([
+      { x: 0, y: 14, w: 4, h: 42 },
+      { x: 20, y: 14, w: 4, h: 60 },
+      { x: 0, y: 56, w: 8, h: 80 },
     ]);
+    expect(page.widgets.filter(widget => widget.type.startsWith('page-')).map(widget => widget.type)).toEqual(['page-search', 'page-menu', 'page-actions']);
     expect(JSON.parse(fs.readFileSync(path.join(directory, 'pages.v2.json'), 'utf8'))).toEqual(legacy);
-    expect(JSON.parse(fs.readFileSync(path.join(directory, 'pages.json'), 'utf8')).schemaVersion).toBe(5);
+    expect(JSON.parse(fs.readFileSync(path.join(directory, 'pages.json'), 'utf8')).schemaVersion).toBe(6);
+  });
+  it('turns the header settings into header widgets once, the rest of each page moved down, and keeps v5', async () => {
+    const config = JSON.parse(fs.readFileSync(path.join(directory, 'config.json'), 'utf8'));
+    config.settings = { ...config.settings, headerLayoutDesktop: { left: 'menu', center: 'search', right: 'none', splitMenuAround: 'none' }, showHeaderMenuIcons: true };
+    fs.writeFileSync(path.join(directory, 'config.json'), JSON.stringify(config));
+    const v5 = {
+      schemaVersion: 5,
+      pages: [{ id: 'dashboard', name: 'Home', icon: '🏠', revision: 9, widgets: [
+        { id: 'a', type: 'clock', settings: {}, x: 0, y: 0, w: 6, h: 40 },
+        { id: 'b', type: 'weather', settings: {}, x: 6, y: 10, w: 6, h: 50 },
+      ] }],
+    };
+    fs.writeFileSync(path.join(directory, 'pages.json'), JSON.stringify(v5));
+    const { readPagesDocument } = await import('./store');
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const [page] = readPagesDocument().pages;
+    expect(page.revision).toBe(10);
+    expect(page.widgets.map(({ id, type, x, y, w, h, settings }) => ({ id, type, x, y, w, h, settings }))).toEqual([
+      { id: 'page-menu-dashboard', type: 'page-menu', x: 0, y: 0, w: 10, h: 13, settings: { align: 'start', icons: true } },
+      { id: 'page-search-dashboard', type: 'page-search', x: 10, y: 0, w: 4, h: 13, settings: {} },
+      { id: 'page-actions-dashboard', type: 'page-actions', x: 19, y: 0, w: 5, h: 13, settings: { align: 'end' } },
+      { id: 'a', type: 'clock', x: 0, y: 14, w: 6, h: 40, settings: {} },
+      { id: 'b', type: 'weather', x: 6, y: 24, w: 6, h: 50, settings: {} },
+    ]);
+    expect(JSON.parse(fs.readFileSync(path.join(directory, 'pages.v5.json'), 'utf8'))).toEqual(v5);
+    // Read again: nothing changes a second time.
+    delete (globalThis as Record<string, unknown>).__nasdashPages;
+    expect(readPagesDocument().pages[0].widgets).toHaveLength(5);
+  });
+
+  it('gives back the menu and the buttons to a page that lost them', async () => {
+    const v6 = {
+      schemaVersion: 6,
+      pages: [{ id: 'dashboard', name: 'Home', icon: '🏠', revision: 3, widgets: [
+        { id: 'menu', type: 'page-menu', settings: {}, x: 6, y: 0, w: 12, h: 13 },
+        { id: 'a', type: 'clock', settings: {}, x: 0, y: 14, w: 6, h: 40 },
+      ] }],
+    };
+    fs.writeFileSync(path.join(directory, 'pages.json'), JSON.stringify(v6));
+    const { readPagesDocument } = await import('./store');
+    vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const [page] = readPagesDocument().pages;
+    expect(page.widgets.filter(widget => widget.type === 'page-actions')).toHaveLength(1);
+    expect(page.widgets.find(widget => widget.id === 'a')?.y).toBe(28);
   });
 });

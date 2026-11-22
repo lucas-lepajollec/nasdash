@@ -182,7 +182,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             transition: all 0.2s ease;
             gap: 8px;
-            border-radius: calc(var(--nd-card-radius) * 0.4);
+            border-radius: 5px;
             cursor: default;
           }
           .nd-port-row:hover {
@@ -255,13 +255,13 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
   
           {/* Search */}
           <div style={{ position: 'relative', marginBottom: 8 }}>
-            <Search size={11} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--nd-text-dimmed)', pointerEvents: 'none' }} />
+            <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--nd-text-dimmed)', pointerEvents: 'none' }} />
             <input
               className="nd-input"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t("Rechercher port, IP, nom...")}
-              style={{ paddingLeft: 26, fontSize: '0.68rem', height: 26 }}
+              style={{ paddingLeft: 30, fontSize: '0.78rem', height: 32 }}
             />
           </div>
   
@@ -317,14 +317,14 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             placeholder={t("Port (ex: 8080)")}
             value={checkPortInput}
             onChange={e => setCheckPortInput(e.target.value)}
-            style={{ flex: 1, fontSize: '0.68rem', height: 26 }}
+            style={{ flex: 1, fontSize: '0.78rem', height: 32 }}
           />
           <input
             className="nd-input"
             placeholder={t("IP (opt. ex: 192.168.1.50)")}
             value={checkIpInput}
             onChange={e => setCheckIpInput(e.target.value)}
-            style={{ flex: 1.2, fontSize: '0.68rem', height: 26 }}
+            style={{ flex: 1.2, fontSize: '0.78rem', height: 32 }}
           />
         </div>
 
@@ -367,14 +367,14 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             placeholder={t("Port de départ")}
             value={genPortInput}
             onChange={e => setGenPortInput(e.target.value)}
-            style={{ flex: 1, fontSize: '0.68rem', height: 26 }}
+            style={{ flex: 1, fontSize: '0.78rem', height: 32 }}
           />
           <input
             className="nd-input"
             placeholder={t("IP cible (opt.)")}
             value={genIpInput}
             onChange={e => setGenIpInput(e.target.value)}
-            style={{ flex: 1.2, fontSize: '0.68rem', height: 26 }}
+            style={{ flex: 1.2, fontSize: '0.78rem', height: 32 }}
           />
         </div>
 

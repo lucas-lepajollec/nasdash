@@ -52,7 +52,7 @@ describe('legacy migration to the grid', () => {
   it('turns every historical page of the demo into a valid grid page', () => {
     const document = migrateLegacyPages(demoInput(), new Date('2026-09-23T00:00:00Z'));
     expect(() => validatePagesDocument(document)).not.toThrow();
-    expect(document.schemaVersion).toBe(5);
+    expect(document.schemaVersion).toBe(6);
     expect(document.pages.map(p => p.id)).toEqual([
       'dashboard', 'docker', 'networks', 'widgets', 'custom_abfe3709-c807-49cd-b64b-a1931d6cb2a2',
     ]);

@@ -16,7 +16,7 @@ vi.mock('@/integrations/downloads/lookup', async original => ({ ...await origina
 vi.mock('@/lib/config', () => ({ readConfig: () => ({ settings: { securityMode: 'public' }, integrations: state.instances }) }));
 vi.mock('@/lib/demoMode', () => ({ isDemoMode: () => state.demo }));
 vi.mock('@/lib/access', async original => ({ ...await original<typeof import('@/lib/access')>(), resolveAccessPrincipal: () => state.authenticated ? { username: 'reader', role: state.admin ? 'admin' : 'viewer', allowedTabs: state.allowedTabs, allowedWidgets: state.allowedWidgets, isAnonymous: !state.admin } : null }));
-vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 5, pages: state.pages }) }));
+vi.mock('@/lib/pages/store', async original => ({ ...await original<typeof import('@/lib/pages/store')>(), readPagesDocument: (): PagesDocument => ({ schemaVersion: 6, pages: state.pages }) }));
 vi.mock('@/lib/widgetData/services', async original => ({ ...await original<typeof import('@/lib/widgetData/services')>(), serviceJson: vi.fn(), serviceBytes: vi.fn() }));
 vi.mock('@/integrations/arr/collect', async original => ({ ...await original<typeof import('@/integrations/arr/collect')>(), collectArrUpcoming: vi.fn(), collectArrQueue: vi.fn(), collectArrRecent: vi.fn(), collectArrStatus: vi.fn(), collectProwlarrIndexers: vi.fn() }));
 vi.mock('@/lib/widgetData/libraryUpcoming', () => ({ collectLibraryUpcoming: vi.fn() }));
@@ -203,7 +203,8 @@ describe('fictional demo and config privacy', () => {
   it.each([['media-upcoming', upcomingGet], ['media-queue', queueGet], ['media-arr', statusGet], ['media-indexers', indexersGet], ['media-downloads', downloadsGet]] as const)('never fetches for demo %s or its art', async (type, route) => {
     state.demo = true; widget().type = type;
     const response = await route(get()), result = await response.json(); expect(response.status).toBe(200);
-    if (type === 'media-upcoming' || type === 'media-queue') { expect(result.items.length).toBeGreaterThan(0); expect((await imageGet(image(result.items[0].poster))).headers.get('content-type')).toBe('image/svg+xml'); }
+    if (type === 'media-upcoming' || type === 'media-queue') { expect(result.items.length).toBeGreaterThan(0); // The demo's own artwork: a static file it ships, linked directly.
+      expect(result.items[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/); }
     for (const collector of [collectArrUpcoming, collectArrQueue, collectArrRecent, collectArrStatus, collectProwlarrIndexers, collectDownloadClient, serviceBytes, serviceJson]) expect(collector).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toMatch(/fictional-key|fictional-password|example.com/);
   });
@@ -283,12 +284,13 @@ describe('upcoming library mode and idle data', () => {
     state.instances[0].secrets = { apiKey: 'changed' }; state.instances[1].secrets = { apiKey: 'changed' }; vi.mocked(collectArrQueue).mockImplementation(async instance => toArrQueue(instance, sonarr.queue));
     expect((await (await queueGet(get())).json()).recent).toBeUndefined(); expect(collectArrRecent).toHaveBeenCalledTimes(4);
   });
-  it('has fictional values for every new demo field and never fetches library metadata or TVMaze', async () => {
+  it('has demo values for every new demo field and never fetches library metadata or TVMaze', async () => {
     state.demo = true; const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
     try {
       state.instances.push(source('jellyfin')); widget().settings = { source: 'library', ended: true };
-      const result = await (await upcomingGet(get())).json(); expect(result.followUps).toHaveLength(5); expect(new Set(result.followUps.map((item: { status: string }) => item.status)).size).toBe(4);
-      expect((await imageGet(image(result.followUps[0].poster))).status).toBe(200);
+      const result = await (await upcomingGet(get())).json(); expect(result.followUps).toHaveLength(4); expect(new Set(result.followUps.map((item: { status: string }) => item.status)).size).toBe(4);
+      // The demo's own artwork: a static file it ships, never fetched.
+      expect(result.followUps[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/);
       expect(demoArrRecent(state.instances[0])).toHaveLength(3); expect(demoIndexers(state.instances[2]).hourly).toHaveLength(24);
       expect(demoDownloadClient(state.instances[3])).toMatchObject({ sessionDownloaded: 48600000000, sessionUploaded: 12400000000, seeding: 1 }); expect(demoDownloadClient(state.instances[3]).completed?.length).toBeGreaterThan(0);
       expect(fetcher).not.toHaveBeenCalled(); expect(collectLibraryUpcoming).not.toHaveBeenCalled(); expect(serviceJson).not.toHaveBeenCalled(); expect(serviceBytes).not.toHaveBeenCalled();
@@ -297,7 +299,7 @@ describe('upcoming library mode and idle data', () => {
   it('returns fictional later releases for an empty one-day album window without fetching', async () => {
     state.demo = true; state.instances = [source('lidarr')]; widget().settings = { days: 1, kinds: ['album'] };
     const result = await (await upcomingGet(get())).json(); expect(result.items).toEqual([]); expect(result.later).toHaveLength(3);
-    expect(result.later[0].poster).toContain('/api/widgets/media/image?'); expect(collectArrUpcoming).not.toHaveBeenCalled();
+    expect(result.later[0].poster).toMatch(/^\/demo\/art\/[a-z0-9-]+\.webp$/); expect(collectArrUpcoming).not.toHaveBeenCalled();
   });
 });
 
@@ -341,7 +343,7 @@ describe('combined upcoming catalogues', () => {
   it('treats null catalogue settings as absent and provides offline fictional demo items', async () => {
     state.demo = true; widget().settings = { sources: ['external'], externalMode: null, watchlist: null, catalogKinds: null };
     const body = await (await upcomingGet(get())).json(); expect(body.external.length).toBeGreaterThan(2);
-    expect(body.external.every((item: { phase: string; poster: string }) => !!item.phase && item.poster.startsWith('data:image/svg+xml,'))).toBe(true);
+    expect(body.external.every((item: { phase: string; poster: string }) => !!item.phase && (item.poster.startsWith('data:image/svg+xml,') || item.poster.startsWith('/demo/art/')))).toBe(true);
     expect(JSON.stringify(body)).not.toMatch(/https?:|Private fallback/); expect(collectExternal).not.toHaveBeenCalled();
     widget().settings.ended = true; expect((await (await upcomingGet(get())).json()).external.some((item: { status: string }) => item.status === 'ended')).toBe(true);
   });
@@ -361,9 +363,9 @@ describe('admin catalogue search route', () => {
     expect(await response.json()).toMatchObject([{ provider: 'tvmaze' }]); expect(searchCatalog).toHaveBeenCalledWith('cloud', ['series']);
     expect((await catalogGet(search('q=cloud&widgetId=absent'))).status).toBe(404); expect((await catalogGet(search('q=cloud&widgetId=!'))).status).toBe(400);
   });
-  it('returns fictional demo hits without contacting any catalogue', async () => {
+  it('returns demo hits without contacting any catalogue', async () => {
     state.demo = true; const response = await catalogGet(search('q=cloud&kinds=movie'));
-    expect(await response.json()).toMatchObject([{ title: 'The Clockwork Aurora', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
+    expect(await response.json()).toMatchObject([{ title: 'Charge', kind: 'movie' }]); expect(searchCatalog).not.toHaveBeenCalled(); expect(collectExternal).not.toHaveBeenCalled();
   });
 });
 

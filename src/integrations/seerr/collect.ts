@@ -2,6 +2,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import type { MediaRequestItem, MediaRequestsSummary } from '@/lib/widgetData/contracts';
 import { array, number, object, serviceJson, string, ServiceError } from '@/lib/widgetData/services';
 import type { KitServer } from '../kitServer';
+import { demoArtUrl } from '@/lib/demo/library';
 
 /**
  * Seerr (Overseerr, Jellyseerr): `GET /api/v1/request/count`, the latest
@@ -82,16 +83,16 @@ async function decide(instance: IntegrationInstance, target: string | undefined,
   await seerrRequest(instance, `/request/${target}/${decision}`, { method: 'POST' });
 }
 
-/* Public demo: fictional titles; deciding moves a request out of the pending ones. */
+/* Public demo: open films (Blender Studio); deciding moves a request out of the pending ones. */
 const demoDecisions = new Map<string, 'approved' | 'declined'>();
 export function demoSeerr(instance: IntegrationInstance): MediaRequestsSummary {
   const now = Date.now(), day = 86_400_000;
   const all: MediaRequestItem[] = [
-    { id: '41', title: 'The Quiet Orbit', kind: 'movie', year: 2026, requestedBy: 'Alex', requestedAt: now - 2 * 3_600_000, status: 'pending' },
-    { id: '40', title: 'Harbour Lights', kind: 'tv', year: 2025, requestedBy: 'Sam', requestedAt: now - 5 * 3_600_000, status: 'pending' },
-    { id: '39', title: 'Northbound', kind: 'movie', year: 2024, requestedBy: 'Alex', requestedAt: now - day, status: 'processing' },
-    { id: '38', title: 'Paper Gardens', kind: 'tv', year: 2023, requestedBy: 'Jo', requestedAt: now - 2 * day, status: 'available' },
-    { id: '37', title: 'Static Bloom', kind: 'movie', year: 2022, requestedBy: 'Sam', requestedAt: now - 4 * day, status: 'available' },
+    { id: '41', title: 'Wing It!', kind: 'movie', year: 2023, poster: demoArtUrl('wing-it'), requestedBy: 'Alex', requestedAt: now - 2 * 3_600_000, status: 'pending' },
+    { id: '40', title: 'Caminandes', kind: 'tv', year: 2013, poster: demoArtUrl('caminandes'), requestedBy: 'Sam', requestedAt: now - 5 * 3_600_000, status: 'pending' },
+    { id: '39', title: 'Charge', kind: 'movie', year: 2022, poster: demoArtUrl('charge'), requestedBy: 'Alex', requestedAt: now - day, status: 'processing' },
+    { id: '38', title: 'Agent 327', kind: 'tv', year: 2017, poster: demoArtUrl('agent-327'), requestedBy: 'Jo', requestedAt: now - 2 * day, status: 'available' },
+    { id: '37', title: 'Hero', kind: 'movie', year: 2018, poster: demoArtUrl('hero'), requestedBy: 'Sam', requestedAt: now - 4 * day, status: 'available' },
   ];
   const requests = all.map(request => { const decided = demoDecisions.get(`${instance.id}:${request.id}`); return decided ? { ...request, status: decided } : request; });
   const pending = requests.filter(request => request.status === 'pending').length;

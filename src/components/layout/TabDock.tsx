@@ -85,7 +85,7 @@ export default function TabDock({
             className="nd-btn" 
             onClick={() => setMobileOpen(false)}
             title={t("Fermer le dock")}
-            style={{ padding: '6px', width: 32, height: 32, borderRadius: 'var(--nd-card-radius)', justifyContent: 'center' }}
+            style={{ padding: '6px', width: 32, height: 32, borderRadius: '8px', justifyContent: 'center' }}
           >
             {position === 'left' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>

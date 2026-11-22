@@ -40,7 +40,6 @@ export function useCalmeSettingsSections(): CalmeSettingsSection[] {
     return [
       { id: 'apparence', group: personal, label: t('settings.calme.appearance'), description: t('settings.calme.descAppearance') },
       { id: 'media', group: personal, label: t('settings.calme.media'), description: t('settings.calme.descMedia') },
-      { id: 'header', group: personal, label: t('settings.calme.header'), description: t('settings.calme.descHeader') },
       { id: 'mobile', group: personal, label: t('settings.calme.mobile'), description: t('settings.calme.descMobile') },
       { id: 'tabs-general', group: personal, label: t('settings.calme.navigation'), description: t('settings.calme.descNavigation') },
       { id: 'pages', group: dashboard, label: t('settings.calme.pages'), description: t('settings.calme.descPages') },
