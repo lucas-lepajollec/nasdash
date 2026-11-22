@@ -299,6 +299,10 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
   }, [adoptSavedPage, conflict, finishEditing]);
 
   const settingsTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  /** Changes made per page outside edit mode, the save on its way, and the last revision saved. */
+  const settingsEdits = useRef<Record<string, number>>({});
+  const settingsSaving = useRef<Record<string, Promise<void>>>({});
+  const savedRevision = useRef<Record<string, number>>({});
   const updateWidgetSettings = useCallback((pageId: string, widgetId: string, settings: WidgetSettings) => {
     if (editing) {
       applyToPage(pageId, page => mergeWidgetSettings(page, widgetId, settings));
@@ -307,13 +311,25 @@ export function PagesProvider({ children }: { children: React.ReactNode }) {
     if (!isAdmin) return;
     // Outside edit mode the change is saved directly, like before.
     setPages(current => current.map(page => page.id === pageId ? mergeWidgetSettings(page, widgetId, settings) : page));
+    settingsEdits.current[pageId] = (settingsEdits.current[pageId] ?? 0) + 1;
     clearTimeout(settingsTimers.current[pageId]);
-    settingsTimers.current[pageId] = setTimeout(async () => {
-      const page = pagesRef.current.find(candidate => candidate.id === pageId);
-      if (!page) return;
-      const result = await putPage(page).catch(() => null);
-      if (result?.ok) adoptSavedPage(result.page);
-      else void refreshPages();
+    settingsTimers.current[pageId] = setTimeout(() => {
+      // One save at a time per page, each from the revision the last one
+      // returned. A change made while a save was on its way stays on screen
+      // (only the revision is taken from the answer) and is saved next:
+      // adopting the answer had undone it, a ticked task unticking at once.
+      const previous = settingsSaving.current[pageId] ?? Promise.resolve();
+      settingsSaving.current[pageId] = previous.then(async () => {
+        const page = pagesRef.current.find(candidate => candidate.id === pageId);
+        if (!page) return;
+        const sent = settingsEdits.current[pageId];
+        const known = savedRevision.current[pageId];
+        const result = await putPage(known !== undefined && known > page.revision ? { ...page, revision: known } : page).catch(() => null);
+        if (!result?.ok) { void refreshPages(); return; }
+        savedRevision.current[pageId] = result.page.revision;
+        if (settingsEdits.current[pageId] === sent) adoptSavedPage(result.page);
+        else setPages(current => current.map(candidate => candidate.id === pageId ? { ...candidate, revision: result.page.revision } : candidate));
+      });
     }, 400);
   }, [adoptSavedPage, applyToPage, editing, isAdmin, putPage, refreshPages]);
 

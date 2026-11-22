@@ -4103,3 +4103,10 @@ body[data-design="calme"] .nd-hw-menu--segmented.nd-menu-style-sample .nd-header
   color: var(--nd-text-muted); font: inherit; font-size: 0.74rem; cursor: pointer;
 }
 .nd-menu-group-page[aria-pressed="true"] { border-color: color-mix(in srgb, var(--nd-accent) 60%, transparent); background: color-mix(in srgb, var(--nd-accent) 14%, transparent); color: var(--nd-text); }
+
+/* A widget title keeps its width; its note sits beside it while both fit,
+   otherwise on the next line (still against the right edge), cut short only
+   when even alone it is too long. */
+.ndc-title { flex-wrap: wrap; row-gap: 2px; }
+.ndc-title > :first-child { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndc-title-aside { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

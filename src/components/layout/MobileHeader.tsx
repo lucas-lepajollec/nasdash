@@ -38,7 +38,7 @@ export function MobileHeader({ pageTabs }: {
       {searchOpen ? (
         <>
           <div className="nd-search">
-            <Search size={14} className="nd-search-icon" aria-hidden="true" />
+            <Search size={17} className="nd-search-icon" aria-hidden="true" />
             <input
               ref={field}
               type="text"
@@ -50,7 +50,7 @@ export function MobileHeader({ pageTabs }: {
             />
             {shell.searchQuery && (
               <button type="button" className="nd-mhead-clear" aria-label={t('Effacer la recherche')} onClick={() => { shell.setSearchQuery(''); field.current?.focus(); }}>
-                <X size={14} aria-hidden="true" />
+                <X size={16} aria-hidden="true" />
               </button>
             )}
           </div>

@@ -30,6 +30,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Phones and tablets in edit mode: a widget's controls sit on its title's line, against the right edge, with the title's note just before them, and move to a line of their own above only when the line is too short; the widget library opens as a full-width sheet.
 - Widgets without a title of their own (Docker explorer, container list, network tools, topology) can show their name as a title, from its eye in edit mode, and rename it.
 - Design harmonised: with the default theme, hovers, wells and icon tiles are the same light veil as in every other theme (some were darker, some lighter); text fields focus like the search (a firmer hairline, no coloured ring); choice chips (Docker hosts and others) are neutral tiles without tint or outline; drop shadows behind posters, covers, service icons and widget controls are gone; container updates lose their row lines; playlist rows have one thin line between them (it was drawn twice, and once above the list); the Docker containers widget's hover takes its status dot in, rounded.
+- A widget title keeps its width: its note goes beside it while both fit, otherwise on the next line; the phone search is a glass capsule like the header's buttons; the network tools' fields are as large as the search.
 - Moving the pointer over a page no longer makes blurred surfaces shimmer along their edges (a widget now stands above its neighbours only when something of it reaches over them).
 - Phones: a swiped page follows the finger exactly and leaves on the side it was pushed to while the next one comes in; the pages on either side are loaded ahead, so the next one is never empty.
 - Public demo on phones: the welcome and the reset are in the menu (⋯) instead of a floating chip over the page dots and the edit bar; the demo's menu gathers its pages in two sub-menus.
@@ -38,6 +39,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Entering edit mode moves the page less: title rows keep their height (the widget controls show over their corner when the pointer is on a widget), and only hidden titles, shown in edit mode, make room for themselves.
 
 ### Fixed
+
+- Ticking several tasks quickly (or changing any widget outside edit mode while a save was on its way) could undo the latest change at once: saves of a page now follow one another and keep what was changed meanwhile.
 
 - Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.
 
