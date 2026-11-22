@@ -1805,7 +1805,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: none;
 }
 
 .nd-service--bento .nd-service-name {
@@ -1909,7 +1909,7 @@ body {
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
   border-radius: 6px !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: none !important;
 }
 
 .nd-service--bento-logo-medium .nd-service-icon {
@@ -1920,7 +1920,7 @@ body {
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
   border-radius: 4px !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: none !important;
 }
 
 .nd-service--bento-logo-small .nd-service-icon {
@@ -1931,7 +1931,7 @@ body {
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
   border-radius: 4px !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: none !important;
 }
 
 .nd-service--bento-logo-large .nd-service-icon img,
@@ -2195,9 +2195,14 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   overflow: visible;
 }
 
-/* A widget containing a hovered service stands above its neighbours. */
+/* A widget stands above its neighbours only when something of it reaches
+   over them: a hovered service (its links), a menu it opened, the edit
+   controls. Raising every hovered widget restacked the page at each move of
+   the pointer, which made blurred surfaces shimmer along their edges. */
 .nd-page-grid > .grid-stack-item:has(.nd-service:hover),
-.nd-page-grid > .grid-stack-item:hover {
+.nd-page-grid > .grid-stack-item:has([data-secondary-open="true"]),
+.nd-page-grid > .grid-stack-item:has([aria-expanded="true"]),
+.nd-page-grid--editing > .grid-stack-item:hover {
   z-index: 30;
 }
 

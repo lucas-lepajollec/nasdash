@@ -17,7 +17,9 @@ body[data-design="calme"]:not([class*="theme-"]):not(.light) {
   --nd-card-bg-rgb: 21, 23, 28;
   --nd-card-bg-opacity: 1;
   --nd-card-bg: rgb(21 23 28);
-  --nd-subcard-bg: hsl(222 14% 12%);
+  /* Hovers, wells and icon tiles are a light veil of the text colour, as in
+     every other theme: the same on a translucent or an opaque card. */
+  --nd-subcard-bg: color-mix(in srgb, var(--nd-text) 7%, transparent);
   --nd-card-border: hsl(222 13% 14.5%);
   --nd-border: var(--nd-card-border);
   --nd-card-hover-border: hsl(222 12% 22%);
@@ -33,9 +35,9 @@ body[data-design="calme"]:not([class*="theme-"]):not(.light) {
   --nd-red: hsl(0 66% 68%);
   --nd-purple: hsl(255 72% 76%);
   --nd-blue: hsl(200 72% 68%);
-  --nd-progress-bg: hsl(222 14% 12%);
-  --nd-icon-bg: hsl(222 14% 12%);
-  --nd-icon-border: hsl(222 13% 15%);
+  --nd-progress-bg: color-mix(in srgb, var(--nd-text) 10%, transparent);
+  --nd-icon-bg: color-mix(in srgb, var(--nd-text) 8%, transparent);
+  --nd-icon-border: color-mix(in srgb, var(--nd-text) 11%, transparent);
   --nd-dropdown-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
@@ -47,7 +49,7 @@ body[data-design="calme"].light:not([class*="theme-"]) {
   --nd-card-bg-rgb: 253, 252, 250;
   --nd-card-bg-opacity: 1;
   --nd-card-bg: rgb(253 252 250);
-  --nd-subcard-bg: hsl(40 14% 93%);
+  --nd-subcard-bg: color-mix(in srgb, var(--nd-text) 6%, transparent);
   --nd-card-border: hsl(40 12% 88%);
   --nd-border: var(--nd-card-border);
   --nd-card-hover-border: hsl(40 10% 78%);
@@ -173,9 +175,10 @@ body[data-design="calme"] .nd-input {
   box-shadow: none;
 }
 
-body[data-design="calme"] .nd-input:focus {
-  border-color: var(--nd-accent-dim);
-  box-shadow: 0 0 0 3px var(--nd-accent-glow);
+/* Every text field focuses like the search: a firmer hairline, no coloured ring. */
+body[data-design="calme"] :is(.nd-input, textarea.nd-input, .ndc-input, .nd-header-tab-input):focus {
+  border-color: var(--nd-card-hover-border);
+  box-shadow: none;
 }
 
 /* Dialogs: one surface, a slightly stronger border, a calm backdrop. */
@@ -1236,17 +1239,18 @@ body[data-design="calme"] .nd-service--bento .nd-service-name {
   --fit-max: 340px;
   grid-template-columns: repeat(auto-fill, minmax(min(var(--fit-min), 100%), 1fr));
   gap: 6px 18px;
-  margin: 0 -8px;
 }
 
+/* The hover takes the status dot in, with room around it (the list's
+   viewport clips anything outside the widget). */
 .ndc-ctr {
   height: 46px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
-  border-radius: 5px;
+  padding: 0 10px;
+  border-radius: 8px;
   min-width: 0;
 }
 
@@ -2131,17 +2135,19 @@ body[data-design="calme"] .nd-btn { white-space: nowrap; flex-shrink: 0; }
   gap: 6px;
   height: 30px;
   padding: 0 11px;
-  border: 1px solid var(--nd-card-border);
-  border-radius: 15px;
-  background: transparent;
+  /* A quiet neutral tile: no outline, no tint; the chosen one a little firmer. */
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--nd-text) 5%, transparent);
   color: var(--nd-text-muted);
   font: inherit;
   font-size: 0.78rem;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.ndc-chip:hover { border-color: var(--nd-card-hover-border); color: var(--nd-text); }
-.ndc-chip[aria-pressed="true"] { border-color: var(--nd-accent); color: var(--nd-text); background: color-mix(in srgb, var(--nd-accent) 10%, transparent); }
+.ndc-chip:hover { background: color-mix(in srgb, var(--nd-text) 9%, transparent); color: var(--nd-text); }
+.ndc-chip[aria-pressed="true"] { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 13%, transparent); font-weight: 500; }
 
 .ndc-chip-actions { display: inline-flex; gap: 12px; }
 
@@ -2627,7 +2633,6 @@ body[data-outlines="off"] .nd-container-card--selected { box-shadow: inset 2px 0
 
 body[data-outlines="off"] .ndc-seg { border-color: transparent; background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
 body[data-outlines="off"] .nd-host-btn--active,
-body[data-outlines="off"] .ndc-chip[aria-pressed="true"],
 body[data-outlines="off"] .ndc-icon-choices .ndc-icon-pick[aria-checked="true"] { background: color-mix(in srgb, var(--nd-accent) 14%, transparent) !important; }
 
 /* Network map groups (dashed frames drawn inline). */
@@ -2742,7 +2747,7 @@ body[data-design="calme"] .nd-page-widget-actions {
   background: var(--nd-bg-surface);
   border: 1px solid var(--ndc-surface-line);
   border-radius: 7px;
-  box-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
 }
 
 body[data-outlines="off"] .nd-page-widget-actions { border-color: transparent; }
