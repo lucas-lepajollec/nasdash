@@ -203,7 +203,7 @@ export default function PerfMonitor() {
       position: 'fixed', bottom: 16, right: 16, zIndex: 99999,
       width: 320, maxHeight: '80vh', overflow: 'auto',
       background: 'var(--nd-card-bg)', border: '1px solid var(--nd-card-border)',
-      borderRadius: 'var(--nd-card-radius)', backdropFilter: 'blur(20px)',
+      borderRadius: 'var(--nd-ui-radius)', backdropFilter: 'blur(20px)',
       boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
       fontFamily: 'var(--font-global), system-ui, sans-serif',
       transition: 'all 0.3s ease-out'
@@ -241,7 +241,7 @@ export default function PerfMonitor() {
       <div style={{ padding: '10px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {statItems.map(item => (
           <div key={item.label} style={{
-            padding: '10px 10px', borderRadius: 'var(--nd-card-radius)',
+            padding: '10px 10px', borderRadius: 'var(--nd-ui-radius)',
             background: 'rgba(128, 128, 128, 0.05)', border: '1px solid var(--nd-card-border)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>

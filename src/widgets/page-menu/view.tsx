@@ -15,8 +15,9 @@ import { MenuWidgetSettings, readAlign, readMenuLimit, readMenuPart, readMenuPer
  * widget is full, or after a set number of pages per line. In edit mode the
  * pages are reordered by drag and drop, renamed and deleted in place, and the
  * "+" among the widget's controls adds one.
- * Its own settings: style, icons, pages per line, how many pages show before
- * an "Others" button that unfolds the rest, and alignment. A header split
+ * Its look (style, icons) is the dashboard's, the same in every menu; its own
+ * settings: pages per line, how many pages show before an "Others" button
+ * that unfolds the rest, and alignment. A header split
  * around its title by an upgrade keeps one half of the pages in each menu.
  */
 export default function PageMenuView({ instance, editMode, onUpdateSettings }: WidgetViewProps) {
@@ -24,7 +25,8 @@ export default function PageMenuView({ instance, editMode, onUpdateSettings }: W
   const { config } = useConfig();
   const { tabs, activeTab, switchTab } = useShellControls();
   const { settings } = instance;
-  const style = readMenuStyle(settings);
+  // One look for every menu of the dashboard.
+  const style = readMenuStyle(config?.settings?.menuStyle);
   const align = readAlign(settings, 'center');
   const part = readMenuPart(settings);
   const middle = Math.ceil(tabs.length / 2);
@@ -46,7 +48,7 @@ export default function PageMenuView({ instance, editMode, onUpdateSettings }: W
           onSwitch={switchTab}
           editing={editMode}
           // The icon style always shows them.
-          showIcons={style === 'icons' || settings.icons === true}
+          showIcons={style === 'icons' || config?.settings?.showHeaderMenuIcons === true}
           tabIcons={config?.settings?.tabIcons}
           flushFirst={false}
           last={end >= tabs.length}

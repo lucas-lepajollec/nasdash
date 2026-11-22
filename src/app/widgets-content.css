@@ -150,7 +150,7 @@
 .ndw-style-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .ndw-style-option {
   display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 10px; min-height: 84px; padding: 12px 12px 10px;
-  border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); background: var(--nd-subcard-bg);
+  border: 1px solid var(--nd-card-border); border-radius: 8px; background: var(--nd-subcard-bg);
   color: var(--nd-text); font: inherit; text-align: left; cursor: pointer; transition: border-color var(--nd-transition);
 }
 .ndw-style-option:hover { border-color: color-mix(in srgb, var(--nd-accent) 45%, var(--nd-card-border)); }
@@ -213,7 +213,7 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 .ndw-rss-headline .ndw-rss-title { -webkit-line-clamp: 1; flex: 1; font-size: 0.76rem; }
 .ndw-rss-time { flex-shrink: 0; font-size: 0.66rem; color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
 
-.ndw-rss-card { display: flex; flex-direction: column; min-width: 0; height: 100%; border-radius: var(--nd-card-radius); overflow: hidden; background: color-mix(in srgb, var(--nd-text) 4%, transparent); transition: background 0.14s ease; }
+.ndw-rss-card { display: flex; flex-direction: column; min-width: 0; height: 100%; border-radius: 6px; overflow: hidden; background: color-mix(in srgb, var(--nd-text) 4%, transparent); transition: background 0.14s ease; }
 .ndw-rss-card:hover { background: color-mix(in srgb, var(--nd-text) 7%, transparent); }
 .ndw-rss-card-media { display: block; aspect-ratio: 16 / 9; background: color-mix(in srgb, var(--nd-text) 3%, transparent); }
 .ndw-rss-card-image { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -224,7 +224,7 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 
 .ndw-rss-magazine { display: flex; flex-direction: column; gap: 10px; }
 .ndw-rss-lead { display: grid; gap: 10px 14px; min-width: 0; }
-.ndw-rss-lead-image { width: 100%; aspect-ratio: 16 / 8; object-fit: cover; border-radius: var(--nd-card-radius); background: var(--nd-subcard-bg); }
+.ndw-rss-lead-image { width: 100%; aspect-ratio: 16 / 8; object-fit: cover; border-radius: 6px; background: var(--nd-subcard-bg); }
 .ndw-rss-lead-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .ndw-rss-lead .ndw-rss-title { font-size: 0.95rem; font-weight: 500; -webkit-line-clamp: 3; }
 .ndw-rss-lead .ndw-rss-summary { -webkit-line-clamp: 3; }
@@ -333,7 +333,7 @@ a:visited .ndw-rss-title { color: var(--nd-text-muted); }
 /* Tiles: symbol and change on top, price large, curve along the bottom edge. */
 .ndw-market-tile {
   position: relative; display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden;
-  padding: 11px 12px 40px; border-radius: var(--nd-card-radius);
+  padding: 11px 12px 40px; border-radius: 6px;
   /* Drawn from the theme's own text colour and borders, so it fits every theme. */
   background: color-mix(in srgb, var(--nd-text) 4%, transparent);
 }
@@ -701,7 +701,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-chip { padding: 3px 9px; border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.7rem; cursor: pointer; }
 .ndw-chip:hover { color: var(--nd-text); }
 .ndw-chip.is-on { border-color: var(--nd-accent-dim); color: var(--nd-accent); }
-.ndw-webpage-frame { position: relative; overflow: hidden; border-radius: calc(var(--nd-card-radius) - 4px); }
+.ndw-webpage-frame { position: relative; overflow: hidden; border-radius: max(2px, calc(var(--nd-card-radius) - 6px)); }
 .ndw-webpage { display: block; width: 100%; height: 100%; border: none; background: transparent; }
 .ndw-webpage-frame.is-editing > .ndw-webpage { pointer-events: none; }
 .ndw-webpage-note { margin: 0; }
@@ -724,7 +724,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-dns-menu {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 20;
   display: flex; flex-direction: column; min-width: 160px; padding: 4px;
-  border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius);
+  border: 1px solid var(--nd-card-border); border-radius: var(--nd-ui-radius);
   background: var(--nd-card-bg); backdrop-filter: blur(12px); box-shadow: 0 12px 32px rgb(0 0 0 / 0.32);
 }
 .ndw-dns-menu button { padding: 7px 10px; border: none; border-radius: 5px; background: transparent; color: var(--nd-text-muted); font: inherit; font-size: 0.72rem; text-align: left; cursor: pointer; }
@@ -852,7 +852,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndc-market-search .nd-input { width: 100%; padding-left: 32px; }
 .ndc-market-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--nd-text-dimmed); pointer-events: none; }
 .ndc-market-search-spin { position: absolute; right: 11px; top: 50%; width: 12px; height: 12px; margin-top: -6px; }
-.ndc-market-results { margin: 0 0 14px; padding: 4px; list-style: none; border: 1px solid var(--nd-card-border); border-radius: var(--nd-card-radius); background: var(--nd-subcard-bg); }
+.ndc-market-results { margin: 0 0 14px; padding: 4px; list-style: none; border: 1px solid var(--nd-card-border); border-radius: 8px; background: var(--nd-subcard-bg); }
 .ndc-market-results .ndc-source-empty { padding: 8px 10px; margin: 0; }
 .ndc-market-result { justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 5px; border: none; }
 .ndc-market-result:hover:not(:disabled) { background: color-mix(in srgb, var(--nd-text) 5%, transparent); }
@@ -888,7 +888,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-photos-box { min-width: 0; }
 .ndw-photo {
   position: relative; display: block; width: 100%; padding: 0; overflow: hidden; border: none;
-  border-radius: calc(var(--nd-card-radius) * 0.75); background: color-mix(in srgb, var(--nd-text) 4%, transparent); cursor: zoom-in;
+  border-radius: var(--nd-content-radius); background: color-mix(in srgb, var(--nd-text) 4%, transparent); cursor: zoom-in;
 }
 .ndw-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
 .ndw-photo:hover img { transform: scale(1.03); }
@@ -907,7 +907,7 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 .ndw-photo.is-strip { flex: 0 0 auto; width: auto; height: 120px; aspect-ratio: 4 / 3; scroll-snap-align: start; }
 
 /* Slideshow: the current photo fades in over the previous one. */
-.ndw-slideshow { position: relative; overflow: hidden; border-radius: calc(var(--nd-card-radius) * 0.75); background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
+.ndw-slideshow { position: relative; overflow: hidden; border-radius: var(--nd-content-radius); background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
 .ndw-slide { position: absolute; inset: 0; padding: 0; border: none; background: none; opacity: 0; transition: opacity 0.9s ease; cursor: zoom-in; }
 .ndw-slide.is-current { opacity: 1; z-index: 1; }
 .ndw-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -928,8 +928,8 @@ a.ndw-uptime-name:hover { color: var(--nd-accent); }
 
 /* Viewer: the photo large, its date and place, arrows and the library link. */
 .ndw-viewer { display: flex; flex-direction: column; gap: 10px; max-width: min(1200px, 94vw); max-height: 92vh; outline: none; }
-.ndw-viewer-image { display: block; min-width: min(640px, 90vw); max-width: 100%; max-height: calc(92vh - 56px); object-fit: contain; border-radius: var(--nd-card-radius); box-shadow: 0 20px 60px rgb(0 0 0 / 0.45); }
-.ndw-viewer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 6px 10px; border-radius: var(--nd-card-radius); background: var(--nd-card-bg); border: 1px solid var(--nd-card-border); }
+.ndw-viewer-image { display: block; min-width: min(640px, 90vw); max-width: 100%; max-height: calc(92vh - 56px); object-fit: contain; border-radius: var(--nd-ui-radius); box-shadow: 0 20px 60px rgb(0 0 0 / 0.45); }
+.ndw-viewer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 6px 10px; border-radius: var(--nd-ui-radius); background: var(--nd-card-bg); border: 1px solid var(--nd-card-border); }
 .ndw-viewer-text { display: inline-flex; gap: 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nd-text); font-size: 0.74rem; }
 .ndw-viewer-count { color: var(--nd-text-dimmed); font-variant-numeric: tabular-nums; }
 .ndw-viewer-tools { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -1154,7 +1154,7 @@ a.ndw-media-title:hover { text-decoration: underline; }
 
 /* Featured: the newest title large over its art. */
 .ndw-media-hero-wrap { display: flex; flex-direction: column; gap: 12px; }
-.ndw-media-hero { position: relative; display: flex; align-items: flex-end; overflow: hidden; border-radius: calc(var(--nd-card-radius) * 0.8); color: inherit; text-decoration: none; background: color-mix(in srgb, var(--nd-text) 6%, transparent); isolation: isolate; }
+.ndw-media-hero { position: relative; display: flex; align-items: flex-end; overflow: hidden; border-radius: var(--nd-content-radius); color: inherit; text-decoration: none; background: color-mix(in srgb, var(--nd-text) 6%, transparent); isolation: isolate; }
 .ndw-media-hero-art { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
 a.ndw-media-hero:hover .ndw-media-hero-art { transform: scale(1.03); }
 .ndw-media-hero-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgb(0 0 0 / 0.78), rgb(0 0 0 / 0.25) 55%, rgb(0 0 0 / 0.05)); }

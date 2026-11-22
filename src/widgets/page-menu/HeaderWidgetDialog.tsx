@@ -8,6 +8,7 @@ import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 import { CalmeDialog } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useConfig } from '@/hooks/useConfig';
 import { DialogPortal } from '../devices/ColorDialog';
 
 /**
@@ -22,8 +23,9 @@ export type MenuPart = 'all' | 'first' | 'second';
 export function readAlign(settings: WidgetSettings, fallback: HeaderAlign): HeaderAlign {
   return settings.align === 'start' || settings.align === 'center' || settings.align === 'end' ? settings.align : fallback;
 }
-export function readMenuStyle(settings: WidgetSettings): MenuStyle {
-  return MENU_STYLES.includes(settings.style as MenuStyle) ? settings.style as MenuStyle : 'tabs';
+/** The look of every menu: one setting for the whole dashboard (`settings.menuStyle`). */
+export function readMenuStyle(value: unknown): MenuStyle {
+  return MENU_STYLES.includes(value as MenuStyle) ? value as MenuStyle : 'tabs';
 }
 export function readMenuPart(settings: WidgetSettings): MenuPart {
   return settings.part === 'first' || settings.part === 'second' ? settings.part : 'all';
@@ -40,10 +42,10 @@ export function readMenuLimit(settings: WidgetSettings): number | undefined {
 }
 
 /**
- * Edit mode: the ✎ of a menu widget and its dialog: style, icons, pages per
- * line, how many pages show before the "Others" button, and alignment. (A menu split in two
- * halves only comes from an upgraded header; see `readMenuPart`.)
- * These are per widget: the pages themselves are shared.
+ * Edit mode: the ✎ of a menu widget and its dialog. The look (style, icons)
+ * is the same for every menu of the dashboard; pages per line, how many pages
+ * show before the "Others" button and alignment belong to this widget. (A
+ * menu split in two halves only comes from an upgraded header; see `readMenuPart`.)
  */
 export function MenuWidgetSettings({ title, settings, pageCount, onSave }: {
   title: string;
@@ -73,9 +75,22 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
   onClose: () => void;
 }) {
   const { t } = useI18n();
+  const { config, updateConfig } = useConfig();
   const [draft, setDraft] = useState<WidgetSettings>(settings);
   const change = (patch: WidgetSettings) => setDraft(current => ({ ...current, ...patch }));
-  const style = readMenuStyle(draft);
+  // Shared by every menu: saved in the dashboard settings.
+  const [look, setLook] = useState(() => ({
+    style: readMenuStyle(config?.settings?.menuStyle),
+    icons: config?.settings?.showHeaderMenuIcons === true,
+  }));
+  const style = look.style;
+  const save = () => {
+    onSave(draft);
+    if (look.style !== readMenuStyle(config?.settings?.menuStyle) || look.icons !== (config?.settings?.showHeaderMenuIcons === true)) {
+      void updateConfig({ menuStyle: look.style, showHeaderMenuIcons: look.icons });
+    }
+    onClose();
+  };
   const shown = Math.min(readMenuLimit(draft) ?? pageCount, pageCount);
   // At the top of the slider every page shows, the ones added later too.
   const setShown = (value: number) => change({ maxPages: value >= pageCount ? 0 : value });
@@ -92,13 +107,14 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
           onClose={onClose}
           footer={<>
             <button type="button" className="nd-btn" onClick={onClose}>{t('Annuler')}</button>
-            <button type="button" className="nd-btn nd-btn-accent" onClick={() => { onSave(draft); onClose(); }}>{t('Enregistrer')}</button>
+            <button type="button" className="nd-btn nd-btn-accent" onClick={save}>{t('Enregistrer')}</button>
           </>}
         >
-          <MenuStylePicker value={style} onChange={value => change({ style: value })} />
+          <p className="nd-menu-styles-note">{t('pages.header.styleShared')}</p>
+          <MenuStylePicker value={style} onChange={value => setLook(current => ({ ...current, style: value }))} />
           {style !== 'icons' && (
             <CalmeRow label={t('settings.calme.tabIcons')}>
-              <CalmeSwitch label={t('settings.calme.tabIcons')} checked={draft.icons === true} onChange={value => change({ icons: value })} />
+              <CalmeSwitch label={t('settings.calme.tabIcons')} checked={look.icons} onChange={value => setLook(current => ({ ...current, icons: value }))} />
             </CalmeRow>
           )}
           {pageCount > 1 && (

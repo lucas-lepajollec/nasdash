@@ -263,6 +263,8 @@ export interface DashboardConfig {
     headerLayoutDesktop?: HeaderLayoutDesktop;
     headerLayoutMobile?: HeaderLayoutMobile;
     showHeaderMenuIcons?: boolean;
+    /** Look of every page menu widget (tabs, capsule, segmented, icons). */
+    menuStyle?: 'tabs' | 'pill' | 'segmented' | 'icons';
     showPingDetails?: boolean;
     /** Latency graph: show average, range, jitter and quality (off by default). */
     networkGraphStats?: boolean;

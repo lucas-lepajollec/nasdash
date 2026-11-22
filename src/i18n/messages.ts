@@ -2496,6 +2496,7 @@ const en: Dictionary = {
   'pages.header.perRow': "Pages per line",
   'pages.header.perRowInfo': "The pages go to a new line after this many (the “Others” button counts as one). Auto: as many as the widget holds.",
   'pages.header.perRowAuto': "Auto",
+  'pages.header.styleShared': "The look is the same for every menu of the dashboard.",
 };
 
 const fr: Dictionary = {
@@ -4978,6 +4979,7 @@ const fr: Dictionary = {
   'pages.header.perRow': "Pages par ligne",
   'pages.header.perRowInfo': "Les pages passent à la ligne après ce nombre (le bouton « Autres » compte pour une). Auto : autant que le widget en contient.",
   'pages.header.perRowAuto': "Auto",
+  'pages.header.styleShared': "L’apparence est la même pour tous les menus du tableau de bord.",
 };
 
 const es: Dictionary = {
@@ -7460,6 +7462,7 @@ const es: Dictionary = {
   'pages.header.perRow': "Páginas por línea",
   'pages.header.perRowInfo': "Las páginas pasan a una nueva línea tras este número (el botón «Otras» cuenta como una). Auto: tantas como quepan en el widget.",
   'pages.header.perRowAuto': "Auto",
+  'pages.header.styleShared': "El aspecto es el mismo para todos los menús del panel.",
 };
 
 const de: Dictionary = {
@@ -9942,6 +9945,7 @@ const de: Dictionary = {
   'pages.header.perRow': "Seiten pro Zeile",
   'pages.header.perRowInfo': "Nach dieser Anzahl beginnen die Seiten eine neue Zeile (die Schaltfläche „Weitere“ zählt als eine). Auto: so viele, wie das Widget fasst.",
   'pages.header.perRowAuto': "Auto",
+  'pages.header.styleShared': "Das Aussehen ist für alle Menüs des Dashboards gleich.",
 };
 
 const it: Dictionary = {
@@ -12423,6 +12427,7 @@ const it: Dictionary = {
   'pages.header.perRow': "Pagine per riga",
   'pages.header.perRowInfo': "Dopo questo numero le pagine vanno a capo (il pulsante «Altre» conta come una). Auto: quante ne entrano nel widget.",
   'pages.header.perRowAuto': "Auto",
+  'pages.header.styleShared': "L’aspetto è lo stesso per tutti i menu della dashboard.",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

@@ -406,6 +406,7 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   }
   readEnum(body, 'dockPosition', ['left', 'right'] as const);
   readEnum(body, 'categoryTitlePosition', ['inside', 'above'] as const);
+  readEnum(body, 'menuStyle', ['tabs', 'pill', 'segmented', 'icons'] as const);
   readEnum(body, 'clockDesign', ['default', 'minimal', 'glow', 'split'] as const);
   readEnum(body, 'weatherWidgetStyle', ['default', 'currentOnly', 'minimal', 'extended'] as const);
   readEnum(body, 'dockerContainersStyle', ['standard', 'extended', 'minimalist', 'grid'] as const);

@@ -655,8 +655,9 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
           <span className="nd-page-mobile-switch">
             <button type="button" aria-pressed={!listView} onClick={() => setListView(false)}><SquareStack size={14} aria-hidden="true" /> {t('pages.mobile.widgets')}</button>
             <button type="button" aria-pressed={listView} onClick={() => setListView(true)}><List size={14} aria-hidden="true" /> {t('pages.mobile.list')}</button>
+            {/* Drawn inside the Order segment (a sibling, as a button holds no other control). */}
+            <CalmeInfo text={t('pages.mobile.editNote')} />
           </span>
-          <CalmeInfo text={t('pages.mobile.editNote')} />
         </div>
       )}
       {compactEdit && listView && <MobileOrderEditor page={page} edit={edit} nameOf={titleOf} />}

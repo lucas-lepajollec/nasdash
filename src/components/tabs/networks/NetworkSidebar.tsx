@@ -182,7 +182,7 @@ export function NetworkSidebar({ showSensitive = true }: { showSensitive?: boole
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             transition: all 0.2s ease;
             gap: 8px;
-            border-radius: calc(var(--nd-card-radius) * 0.4);
+            border-radius: 5px;
             cursor: default;
           }
           .nd-port-row:hover {

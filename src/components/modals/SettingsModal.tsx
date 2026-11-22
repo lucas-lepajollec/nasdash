@@ -296,7 +296,7 @@ export const THEME_PRESETS: Record<string, {
     text: '#f0e6ff',
     textMuted: '#00e5ff',
     bgGradient: 'linear-gradient(135deg, #030008 0%, #090112 40%, #1b002c 100%)',
-    borderRadius: 'var(--nd-card-radius)',
+    borderRadius: 'var(--nd-ui-radius)',
   }
 };
 

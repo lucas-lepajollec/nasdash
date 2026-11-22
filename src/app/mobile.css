@@ -188,11 +188,15 @@
   color: var(--nd-text-muted);
 }
 
+/* Three lines of pages (nine), then the list scrolls inside the sheet. */
 .nd-sheet-pages {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  max-height: calc(76px * 3 + 8px * 2);
   margin-bottom: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .nd-sheet-page {
@@ -390,8 +394,30 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* Phones and tablets: the edit bar is one glass capsule at the bottom, like
-   the phone header: state as a dot, undo/redo, add, cancel (icon), save. */
+/* The edit bar: one glass capsule at the bottom, like the phone header.
+   On a computer it keeps its words; on phones and tablets the state is a dot
+   and cancel an icon. */
+body[data-design="calme"] .nd-page-editor-bar {
+  bottom: max(18px, env(safe-area-inset-bottom));
+  gap: 4px;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
+  background: color-mix(in srgb, var(--nd-bg-surface) 60%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow: none;
+}
+body[data-design="calme"] .nd-page-editor-bar > * + * { margin-left: 0; padding-left: 0; }
+body[data-design="calme"] .nd-page-editor-bar > * + *::before { display: none; }
+body[data-design="calme"] .nd-page-editor-status { padding: 0 10px 0 12px; }
+body[data-design="calme"] .nd-page-editor-group { display: inline-flex; gap: 2px; }
+body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button,
+body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 36px; min-width: 36px; border-radius: 999px; justify-content: center; }
+body[data-design="calme"] .nd-page-editor-bar .nd-btn:not(.nd-btn-accent) { padding: 0 14px; }
+body[data-design="calme"] .nd-page-editor-bar .nd-btn-accent { padding: 0 18px; }
+body[data-design="calme"] .nd-page-editor-dot { width: 7px; height: 7px; }
+
 @media (max-width: 960px) {
   body[data-design="calme"] .nd-page-editor-bar {
     bottom: max(14px, env(safe-area-inset-bottom));
@@ -400,23 +426,16 @@
     flex-wrap: nowrap;
     justify-content: center;
     gap: 2px;
-    padding: 5px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
-    background: color-mix(in srgb, var(--nd-bg-surface) 60%, transparent);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
-    box-shadow: none;
   }
-  body[data-design="calme"] .nd-page-editor-bar > * + * { margin-left: 0; padding-left: 0; }
-  body[data-design="calme"] .nd-page-editor-bar > * + *::before { display: none; }
   body[data-design="calme"] .nd-page-editor-status { width: auto; padding: 0 8px 0 10px; }
   .nd-page-editor-status-text, .nd-page-editor-label {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
   }
   body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button,
-  body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 40px; min-width: 40px; border-radius: 999px; justify-content: center; }
+  body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 40px; min-width: 40px; }
+  body[data-design="calme"] .nd-page-editor-bar .nd-btn:not(.nd-btn-accent) { padding: 0; }
   body[data-design="calme"] .nd-page-editor-bar .nd-btn-accent { padding: 0 16px; }
   body[data-design="calme"] .nd-page-editor-dot { width: 8px; height: 8px; }
+  .nd-page-editor-add span { display: none; }
   .nd-page-editor-alert { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 62px); }
 }

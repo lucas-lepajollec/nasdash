@@ -43,7 +43,10 @@ export function MobileMenuSheet(props: MobileMenuSheetProps) {
 
   const onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     const sheet = dialogRef.current;
-    drag.current = sheet && sheet.scrollTop <= 0 ? { y: event.touches[0].clientY, dy: 0 } : null;
+    // Pulling down a page list that is scrolled scrolls it back, it does not close.
+    const pages = (event.target as HTMLElement).closest('.nd-sheet-pages');
+    const scrolled = pages !== null && pages.scrollTop > 0;
+    drag.current = sheet && sheet.scrollTop <= 0 && !scrolled ? { y: event.touches[0].clientY, dy: 0 } : null;
   };
   const onTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     const sheet = dialogRef.current;

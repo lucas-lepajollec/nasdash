@@ -241,6 +241,26 @@ html {
   color-scheme: light;
 }
 
+/* Corners (Appearance): the setting is --nd-card-radius, set on <body>, so
+   what derives from it is computed here too.
+   - The edges of widgets follow it exactly (var(--nd-card-radius)).
+   - The header widgets' own surfaces (search field, buttons, account, menu
+     highlight) follow it up to a capsule: --nd-field-radius.
+   - What sits a few pixels inside an edge (the page shown in a menu track,
+     the open tab of a Docker track, a framed page) stays concentric with it:
+     --nd-nested-radius.
+   - Large pictures inside a widget's padding (photos, covers) follow it at
+     a smaller radius, so they stay parallel to the edge: --nd-content-radius.
+   - Everything else inside widgets keeps the design's own small corners, and
+     the interface around the widgets (dialogs, menus, bars, the dock) keeps
+     --nd-ui-radius, whatever the setting. */
+body {
+  --nd-field-radius: min(var(--nd-card-radius), 18px);
+  --nd-nested-radius: max(2px, calc(var(--nd-card-radius) - 4px));
+  --nd-content-radius: max(4px, calc(var(--nd-card-radius) - 10px));
+  --nd-ui-radius: 10px;
+}
+
 body {
   font-family: 'Outfit', sans-serif;
   color: var(--nd-text);
@@ -318,7 +338,7 @@ body {
   width: 100%;
   height: 36px;
   padding: 0 12px 0 34px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-field-radius);
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
   color: var(--nd-text);
@@ -356,7 +376,7 @@ body {
 
 .nd-btn {
   padding: 0 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
   border: 1px solid var(--nd-card-border);
   background: var(--nd-card-bg);
   color: var(--nd-text-muted);
@@ -415,7 +435,7 @@ body {
   height: 26px;
   padding: 0;
   margin: 0;
-  border-radius: calc(var(--nd-card-radius) * 0.5);
+  border-radius: 5px;
   transition: all var(--nd-transition);
   display: flex;
   align-items: center;
@@ -483,7 +503,7 @@ body {
 .nd-dock {
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -564,7 +584,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 5px 6px;
-  border-radius: calc(var(--nd-card-radius) * 0.7);
+  border-radius: 4px;
   border: 1px solid transparent;
   transition: background var(--nd-transition), border-color var(--nd-transition);
   text-decoration: none;
@@ -598,7 +618,7 @@ body {
   transform: translateX(-50%) translateY(10px);
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   padding: 6px 12px;
   display: none;
   align-items: center;
@@ -691,7 +711,7 @@ body {
 .nd-service-icon {
   width: 28px;
   height: 28px;
-  border-radius: calc(var(--nd-card-radius) * 0.7);
+  border-radius: 4px;
   background: var(--nd-icon-bg);
   border: 1px solid var(--nd-icon-border);
   display: flex;
@@ -741,7 +761,7 @@ body {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 0.62rem;
   padding: 2px 6px;
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
   background: var(--nd-card-bg);
   color: var(--nd-text-muted);
   border: 1px solid var(--nd-card-border);
@@ -776,7 +796,7 @@ body {
   overscroll-behavior: contain;
   background: var(--nd-bg-surface);
   border: 1px solid var(--nd-card-border);
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   padding: 20px;
   box-shadow: none;
 }
@@ -784,7 +804,7 @@ body {
 .nd-input {
   width: 100%;
   padding: 8px 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--nd-card-border);
   color: var(--nd-text);
@@ -895,7 +915,7 @@ body {
   .nd-dock--left {
     left: 0 !important;
     transform: translate(-100%, -50%) !important;
-    border-radius: 0 var(--nd-card-radius) var(--nd-card-radius) 0 !important;
+    border-radius: 0 var(--nd-ui-radius) var(--nd-ui-radius) 0 !important;
     border-left: none !important;
   }
 
@@ -903,7 +923,7 @@ body {
     right: 0 !important;
     left: auto !important;
     transform: translate(100%, -50%) !important;
-    border-radius: var(--nd-card-radius) 0 0 var(--nd-card-radius) !important;
+    border-radius: var(--nd-ui-radius) 0 0 var(--nd-ui-radius) !important;
     border-right: none !important;
   }
 
@@ -949,7 +969,7 @@ body {
   .nd-dock-mobile-btn--left {
     left: 0;
     border-left: none;
-    border-radius: 0 var(--nd-card-radius) var(--nd-card-radius) 0;
+    border-radius: 0 var(--nd-ui-radius) var(--nd-ui-radius) 0;
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--left {
@@ -959,7 +979,7 @@ body {
   .nd-dock-mobile-btn--right {
     right: 0;
     border-right: none;
-    border-radius: var(--nd-card-radius) 0 0 var(--nd-card-radius);
+    border-radius: var(--nd-ui-radius) 0 0 var(--nd-ui-radius);
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--right {
@@ -996,7 +1016,7 @@ body {
   .nd-dock--left {
     left: 0 !important;
     transform: translate(-100%, -50%) !important;
-    border-radius: 0 var(--nd-card-radius) var(--nd-card-radius) 0 !important;
+    border-radius: 0 var(--nd-ui-radius) var(--nd-ui-radius) 0 !important;
     border-left: none !important;
   }
 
@@ -1004,7 +1024,7 @@ body {
     right: 0 !important;
     left: auto !important;
     transform: translate(100%, -50%) !important;
-    border-radius: var(--nd-card-radius) 0 0 var(--nd-card-radius) !important;
+    border-radius: var(--nd-ui-radius) 0 0 var(--nd-ui-radius) !important;
     border-right: none !important;
   }
 
@@ -1043,7 +1063,7 @@ body {
   .nd-dock-mobile-btn--left {
     left: 0;
     border-left: none;
-    border-radius: 0 var(--nd-card-radius) var(--nd-card-radius) 0;
+    border-radius: 0 var(--nd-ui-radius) var(--nd-ui-radius) 0;
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--left {
@@ -1053,7 +1073,7 @@ body {
   .nd-dock-mobile-btn--right {
     right: 0;
     border-right: none;
-    border-radius: var(--nd-card-radius) 0 0 var(--nd-card-radius);
+    border-radius: var(--nd-ui-radius) 0 0 var(--nd-ui-radius);
   }
 
   .nd-dock-mobile-btn--open.nd-dock-mobile-btn--right {
@@ -1153,7 +1173,7 @@ body {
   background: var(--nd-card-bg);
   border: 1px solid var(--nd-card-border);
   box-shadow: var(--nd-card-shadow);
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   z-index: 100;
   transition: background var(--nd-transition), border-color var(--nd-transition);
 }
@@ -1193,7 +1213,7 @@ body {
   justify-content: center;
   gap: 3px;
   padding: 8px 0;
-  border-radius: var(--nd-card-radius);
+  border-radius: 8px;
   border: 1px solid transparent;
   background: transparent;
   cursor: pointer;
@@ -1292,7 +1312,7 @@ body {
 
 .nd-docker-tab {
   padding: 6px 14px;
-  border-radius: calc(var(--nd-card-radius) * 0.6);
+  border-radius: var(--nd-nested-radius);
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--nd-text-muted);
@@ -1417,7 +1437,7 @@ body {
 
 .nd-host-btn {
   padding: 6px 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--nd-text-muted);
@@ -1480,7 +1500,7 @@ body {
 .nd-docker-stat-card {
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--nd-card-border);
-  border-radius: var(--nd-card-radius);
+  border-radius: 8px;
   padding: 10px;
   text-align: center;
 }
@@ -1547,7 +1567,7 @@ body {
     margin-bottom: 8px;
     padding: 10px;
     background: rgba(0, 0, 0, 0.1);
-    border-radius: var(--nd-card-radius);
+    border-radius: 6px;
     border: 1px solid var(--nd-card-border) !important;
     position: relative;
   }
@@ -1630,7 +1650,7 @@ body {
 .nd-settings-card {
   background: rgba(255, 255, 255, 0.02);
   padding: 14px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid var(--nd-card-border);
 }
 
@@ -1733,7 +1753,7 @@ body {
 .nd-service--compact .nd-service-icon {
   width: 24px;
   height: 24px;
-  border-radius: calc(var(--nd-card-radius) * 0.5);
+  border-radius: 3px;
 }
 
 .nd-service--compact .nd-service-icon img {
@@ -1757,7 +1777,7 @@ body {
   min-width: 0; /* Permet de rétrécir dans la grille */
   border: 1px solid var(--nd-card-border);
   background: rgba(255, 255, 255, 0.01);
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
 }
 
 .light .nd-service--bento {
@@ -1782,7 +1802,7 @@ body {
 .nd-service--bento .nd-service-icon {
   width: 36px;
   height: 36px;
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -1850,7 +1870,7 @@ body {
   min-width: 0;
   border: 1px solid var(--nd-card-border);
   background: rgba(255, 255, 255, 0.01);
-  border-radius: var(--nd-card-radius);
+  border-radius: 6px;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
@@ -1886,7 +1906,7 @@ body {
   box-sizing: border-box !important;
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
-  border-radius: var(--nd-card-radius) !important;
+  border-radius: 6px !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -1897,7 +1917,7 @@ body {
   box-sizing: border-box !important;
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
-  border-radius: calc(var(--nd-card-radius) * 0.7) !important;
+  border-radius: 4px !important;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -1908,7 +1928,7 @@ body {
   box-sizing: border-box !important;
   background: var(--nd-icon-bg) !important;
   border: 1px solid var(--nd-icon-border) !important;
-  border-radius: calc(var(--nd-card-radius) * 0.6) !important;
+  border-radius: 4px !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -2451,7 +2471,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   align-items: center;
   gap: 6px;
   padding: 2px;
-  border-radius: calc(var(--nd-card-radius) * 0.6);
+  border-radius: 7px;
   background: color-mix(in srgb, var(--nd-bg-surface) 88%, transparent);
   cursor: default;
 }
@@ -2546,7 +2566,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   gap: 10px;
   max-width: calc(100vw - 24px);
   padding: 8px 8px 8px 14px;
-  border-radius: calc(var(--nd-card-radius) + 6px);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid color-mix(in srgb, var(--nd-accent) 35%, var(--nd-card-border));
   background: var(--nd-bg-surface);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
@@ -2595,7 +2615,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   gap: 10px;
   max-width: calc(100vw - 24px);
   padding: 10px 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid color-mix(in srgb, var(--nd-orange) 45%, transparent);
   background: var(--nd-bg-surface);
   color: var(--nd-text);
@@ -2645,7 +2665,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   gap: 8px;
   height: 36px;
   padding: 0 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid var(--nd-card-border);
   background: rgba(0, 0, 0, 0.2);
   color: var(--nd-text-muted);
@@ -2699,7 +2719,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   column-gap: 12px;
   row-gap: 6px;
   padding: 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid var(--nd-card-border);
   background: var(--nd-card-bg);
   color: var(--nd-text);
@@ -2760,7 +2780,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: calc(var(--nd-card-radius) * 0.7);
+  border-radius: 7px;
   background: color-mix(in srgb, var(--nd-text) 6%, transparent);
   font-size: 1.1rem;
   color: var(--nd-accent);
@@ -2857,7 +2877,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   padding: 14px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--nd-card-border);
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
 }
 
 .nd-page-settings-card h4 {
@@ -2876,7 +2896,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
 .nd-page-settings-error,
 .nd-page-settings-note {
   padding: 10px 12px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   font-size: 0.72rem;
 }
 
@@ -2929,7 +2949,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   align-items: flex-start;
   gap: 6px;
   padding: 10px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid var(--nd-card-border);
   background: transparent;
   color: var(--nd-text);
@@ -2967,7 +2987,7 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
   align-items: center;
   gap: 10px;
   padding: 8px 8px 8px 10px;
-  border-radius: var(--nd-card-radius);
+  border-radius: var(--nd-ui-radius);
   border: 1px solid var(--nd-card-border);
   background: rgba(0, 0, 0, 0.12);
 }
