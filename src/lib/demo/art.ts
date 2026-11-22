@@ -32,6 +32,7 @@ export const DEMO_ART: ReadonlySet<string> = new Set<string>([
   'grand-canyon-tall',
   'grand-canyon-wide',
   'great-gatsby',
+  'hero',
   'himalayas-tall',
   'himalayas-wide',
   'moby-dick',

@@ -43,6 +43,7 @@ They were resized and cropped for the demo; nothing else was changed.
 | `grand-canyon-tall.webp` | <https://images.nasa.gov/details/iss074e0208848> | Public domain | NASA |
 | `grand-canyon-wide.webp` | <https://images.nasa.gov/details/iss074e0208848> | Public domain | NASA |
 | `great-gatsby.webp` | <https://standardebooks.org/ebooks/f-scott-fitzgerald/the-great-gatsby> | CC0 | Standard Ebooks |
+| `hero.webp` | <https://studio.blender.org/projects/hero/> | CC BY | Blender Studio |
 | `himalayas-tall.webp` | <https://images.nasa.gov/details/iss072e397138> | Public domain | NASA |
 | `himalayas-wide.webp` | <https://images.nasa.gov/details/iss072e397138> | Public domain | NASA |
 | `moby-dick.webp` | <https://standardebooks.org/ebooks/herman-melville/moby-dick> | CC0 | Standard Ebooks |

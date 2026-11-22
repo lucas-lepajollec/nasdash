@@ -250,7 +250,9 @@ export function demoPhotos(instance: IntegrationInstance, count: number, widgetI
   const photos = Array.from({ length: count }, (_, i) => {
     const n = (i + offset) % 60;
     const id = instance.type === 'immich' ? `00000000-0000-4000-8000-${String(n).padStart(12, '0')}` : `pdemo${String(n).padStart(11, '0')}`;
-    return { id, ...photoUrls(widgetId, id, draft), ...(demoPortrait(id) ? { width: 800, height: 1200 } : { width: 1200, height: 800 }), takenAt: Date.UTC(2024, 5, 1 + n), place: DEMO_PHOTOS[n % DEMO_PHOTOS.length].place };
+    // The demo's photographs are static files: linked directly.
+    const file = demoPhotoFile(id);
+    return { id, ...(file ? { thumb: file, preview: file } : photoUrls(widgetId, id, draft)), ...(demoPortrait(id) ? { width: 800, height: 1200 } : { width: 1200, height: 800 }), takenAt: Date.UTC(2024, 5, 1 + n), place: DEMO_PHOTOS[n % DEMO_PHOTOS.length].place };
   });
   return { provider: instance.type as 'immich' | 'photoprism', name: instance.name, photos, stats: { photos: 1240, videos: 38 }, fetchedAt: Date.UTC(2026, 0, 15, 12) };
 }
