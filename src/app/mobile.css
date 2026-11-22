@@ -447,3 +447,26 @@ body[data-design="calme"] .nd-page-editor-dot { width: 7px; height: 7px; }
 @media (prefers-reduced-motion: reduce) {
   .nd-page-enter--next, .nd-page-enter--prev { animation: none; }
 }
+
+/* Phones: the widget library rises as a sheet over the whole width, its
+   search on a line of its own and one card per line. */
+@media (max-width: 700px) {
+  .nd-modal-overlay:has(> .nd-page-library) { align-items: flex-end; padding: 0; }
+  .nd-page-library {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: min(92svh, 760px);
+    max-height: 92svh !important;
+    margin: 0;
+    border-radius: 20px 20px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  .nd-page-library-header { flex-wrap: wrap; gap: 10px; padding: 16px 16px 12px; }
+  .nd-page-library-header h2 { flex: 1; min-width: 0; }
+  .nd-page-library-search { order: 3; flex: 1 1 100%; min-width: 0; height: 40px; }
+  .nd-page-library-body { padding: 12px 16px 16px; }
+  .nd-page-library-grid { grid-template-columns: minmax(0, 1fr); }
+  .nd-page-library-card { min-width: 0; }
+  .nd-page-library-footer { padding: 12px 16px; }
+  .nd-page-library-footer-text { font-size: 0.72rem; }
+}

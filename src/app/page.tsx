@@ -134,6 +134,19 @@ export default function Shell() {
     media.addEventListener('change', update);
     return () => media.removeEventListener('change', update);
   }, []);
+  // Computers: a page shown for the first time places its widgets out of
+  // sight while the previous page stays, instead of an empty page for a moment.
+  const [readyPages, setReadyPages] = useState<string[]>([]);
+  const [shownTab, setShownTab] = useState(activeTab);
+  const preparing = !phone && !!shownTab && shownTab !== activeTab && !readyPages.includes(activeTab);
+  if (!preparing && shownTab !== activeTab) setShownTab(activeTab);
+  const markReady = (id: string) => setReadyPages(current => current.includes(id) ? current : [...current, id]);
+  useEffect(() => {
+    if (!preparing) return;
+    // Never longer than this: a page whose widgets keep loading shows anyway.
+    const timer = window.setTimeout(() => markReady(activeTab), 800);
+    return () => window.clearTimeout(timer);
+  }, [activeTab, preparing]);
   const activeIndex = pagerTabs.findIndex(tab => tab.id === activeTab);
   const neighbours = phone && activeIndex >= 0 ? [pagerTabs[activeIndex - 1]?.id, pagerTabs[activeIndex + 1]?.id] : [];
   // The page that appears slides in from the side it comes from (phones only, see mobile.css).
@@ -226,11 +239,14 @@ export default function Shell() {
               key={tab.id}
               data-active={activeTab === tab.id}
               className={`flex-1 ${activeTab === tab.id && pageEntry.direction ? `nd-page-enter nd-page-enter--${pageEntry.direction > 0 ? 'next' : 'prev'}` : ''}`}
-              style={{ display: activeTab === tab.id ? 'block' : 'none' }}
+              style={preparing && tab.id === activeTab
+                ? { position: 'absolute', top: 0, left: 0, right: 0, visibility: 'hidden', pointerEvents: 'none' }
+                : { display: (preparing ? shownTab : activeTab) === tab.id ? 'block' : 'none' }}
             >
               <PageView
                 pageId={tab.id}
                 isVisible={activeTab === tab.id}
+                onRevealed={() => markReady(tab.id)}
                 searchQuery={searchQuery}
                 showSensitive={showSensitive}
                 showSecretSections={showSecretSections}

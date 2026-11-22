@@ -26,6 +26,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - The edit bar is one glass capsule (state, undo, redo, add, cancel, save); on phones and tablets it keeps only icons, and the Widgets / Order switch is a segmented control across the line with its explanation behind an ⓘ.
 - Corners (Appearance) now shape the edges of widgets, including the header widgets (search field, buttons, account, menu highlight), the Docker containers and tabs; what sits against an edge follows it concentrically, while the rest inside widgets and the interface around them (dialogs, menus, settings, dock) keep their own corners.
 - Phone menu: after nine pages, the page list scrolls inside the sheet.
+- Opening a page for the first time no longer shows an empty page for a moment: the previous page stays until the new one is placed.
+- Phones and tablets in edit mode: a widget's controls sit on its title's line, against the right edge, with the title's note just before them, and move to a line of their own above only when the line is too short; the widget library opens as a full-width sheet.
+- Widgets without a title of their own (Docker explorer, container list, network tools, topology) can show their name as a title, from its eye in edit mode, and rename it.
 - Phones: a swiped page follows the finger exactly and leaves on the side it was pushed to while the next one comes in; the pages on either side are loaded ahead, so the next one is never empty.
 - Public demo on phones: the welcome and the reset are in the menu (⋯) instead of a floating chip over the page dots and the edit bar; the demo's menu gathers its pages in two sub-menus.
 - Public demo: the films, series, soundtracks, books, comics and photos are real, freely licensed works with their real posters, covers and pictures (Blender Studio open movies, Standard Ebooks, Pepper&Carrot, NASA; credits in `public/demo/art/CREDITS.md`) instead of invented titles and drawn placeholders.

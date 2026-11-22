@@ -61,8 +61,7 @@ function Entries({ row, more, activeTab, open, setOpen, page }: {
   return (
     <>
       {row.map(entry => entry.kind === 'page' ? page(entry.tab, false) : (
-        <Dropdown key={entry.id} label={t(entry.group.name)} count={entry.tabs.length}
-          current={entry.tabs.some(tab => tab.id === activeTab)} open={open === entry.id} onOpenChange={toggle(entry.id)}>
+        <Dropdown key={entry.id} label={t(entry.group.name)} count={entry.tabs.length} open={open === entry.id} onOpenChange={toggle(entry.id)}>
           {entry.tabs.map(tab => page(tab, true))}
         </Dropdown>
       ))}
@@ -207,11 +206,11 @@ function Sortable({ editing, ids, onMove, children }: { editing: boolean; ids: s
 }
 
 /**
- * A menu entry that unfolds a list below itself: a sub-menu (named after it,
- * marked when the page shown is in it) or the last "Others" button.
+ * A menu entry that unfolds a list below itself: a sub-menu (named after it)
+ * or the last "Others" button. Neither is highlighted: the page shown is, in the list.
  */
-function Dropdown({ label, count, current = false, others = false, open, onOpenChange, children }: {
-  label: string; count: number; current?: boolean; others?: boolean; open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode;
+function Dropdown({ label, count, others = false, open, onOpenChange, children }: {
+  label: string; count: number; others?: boolean; open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode;
 }) {
   const { t } = useI18n();
   const trigger = useRef<HTMLButtonElement>(null);
@@ -255,7 +254,7 @@ function Dropdown({ label, count, current = false, others = false, open, onOpenC
       <button ref={trigger} type="button" aria-expanded={open}
         title={others ? t('pages.header.morePages', { count }) : undefined}
         onClick={() => onOpenChange(!open)}
-        className={`nd-btn-menu-link nd-header-tab-link nd-header-tab-more ${current ? 'is-active' : ''}`}>
+        className="nd-btn-menu-link nd-header-tab-link nd-header-tab-more">
         {/* Drawn only in the icon style, where every page has one. */}
         <span className="nd-header-tab-icon nd-header-tab-more-icon" aria-hidden="true">{others ? <MoreHorizontal size={16} /> : <Folder size={16} />}</span>
         <span className="nd-header-tab-name">{label}</span>

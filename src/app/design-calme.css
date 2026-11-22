@@ -1098,10 +1098,12 @@ body[data-design="calme"] .nd-port-pill {
   background: transparent;
 }
 
-/* Edit mode: the name shown above widgets without a title of their own. */
+/* The name of widgets without a title of their own: shown in edit mode, and
+   outside it when chosen with its eye (then like any widget title). */
 body[data-design="calme"] .nd-page-widget-edit-title {
   box-sizing: border-box;
-  min-height: 32px;
+  gap: 10px;
+  min-height: 17px;
   margin: 0 0 9px;
   padding: 2px var(--nd-page-actions-width, 0px) 0 2px;
   font-size: 0.72rem;
@@ -1110,6 +1112,7 @@ body[data-design="calme"] .nd-page-widget-edit-title {
 }
 
 body[data-design="calme"] .nd-page-widget-edit-title > :first-child { display: none; }
+body[data-design="calme"] .nd-page-widget--editing .nd-page-widget-edit-title { min-height: 32px; }
 
 /* ---------- Services in bento / grid layouts ----------
    One level only, as in the row layouts: the tile has no frame of its own
@@ -3677,12 +3680,17 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .nd-page-grid > .grid-stack-item.nd-page-item--mobile-dimmed .nd-page-widget > :not(.nd-page-widget-actions) { opacity: 0.4; }
 .nd-page-grid--compact-editing .nd-page-widget-actions { opacity: 1 !important; visibility: visible !important; }
 .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { width: 32px; height: 32px; }
-/* Phones and tablets: the controls get their own row above the widget, so
-   the title stays whole. */
+/* Phones and tablets (controls always shown): on the title's line, against
+   the right edge, with the title's note just before them, while the line
+   holds them all (measured in WidgetFrame); otherwise on their own line
+   above, and the title and its note wrap as needed. */
 .nd-page-grid--compact-editing .nd-page-widget { display: flex; flex-direction: column; }
-.nd-page-grid--compact-editing .nd-page-widget-actions { position: static !important; order: -1; align-self: flex-end; margin: 0 0 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
-.nd-page-grid--compact-editing .nd-page-widget--editing .ndc-title,
-.nd-page-grid--compact-editing .nd-page-widget--editing .nd-page-widget-edit-title { padding-right: 0 !important; }
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions { top: 0; right: 0; height: 36px; flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget:not(.is-actions-above) :is(.ndc-title, .nd-category-title-above, .nd-page-widget-edit-title) {
+  box-sizing: border-box; min-height: 36px; padding-top: 0; align-items: center; padding-right: calc(var(--nd-page-actions-width, 0px) + 12px) !important;
+}
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget.is-actions-above .nd-page-widget-actions { position: static !important; order: -1; align-self: flex-end; height: auto; margin: 0 0 6px; flex-wrap: wrap; }
+.nd-page-grid--compact-editing .nd-page-widget.is-actions-above :is(.ndc-title, .nd-category-title-above, .nd-page-widget-edit-title) { padding-right: 0 !important; flex-wrap: wrap; row-gap: 2px; }
 
 /* Phones: a lone switch stays on its label's line (other controls go below). */
 @media (max-width: 700px) {

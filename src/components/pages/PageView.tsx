@@ -19,7 +19,7 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { List, Plus, Settings2, SquareStack, X } from 'lucide-react';
-import { WidgetTitleContext } from '@/widgets/calme';
+import { WidgetTitleContext, WidgetTitleText, WidgetTitleVisibility } from '@/widgets/calme';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { applyPlacements, isHiddenOnMobile, mobileOrder, pushOverlaps, reflowHeights, removeWidget, settleBelow, snapWidth, widthFormats } from '@/lib/pages/operations';
@@ -62,6 +62,8 @@ export interface LibraryTarget {
 interface PageViewProps {
   pageId: string;
   isVisible: boolean;
+  /** The page's widgets are placed and shown for the first time. */
+  onRevealed?: () => void;
   searchQuery: string;
   showSensitive: boolean;
   showSecretSections: boolean;
@@ -202,7 +204,7 @@ interface PageGridProps extends PageViewProps {
   edit: (operation: (page: Page) => Page) => void;
 }
 
-function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
+function PageGrid({ page, widgets, editMode, edit, onRevealed, ...props }: PageGridProps) {
   const { t } = useI18n();
   const root = useRef<HTMLDivElement>(null);
   const grid = useRef<GridStack | null>(null);
@@ -234,6 +236,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
   useEffect(() => { heightsRef.current = heights; }, [heights]);
   const editRef = useRef(edit);
   useEffect(() => { editRef.current = edit; }, [edit]);
+  const revealedRef = useRef(onRevealed);
+  useEffect(() => { revealedRef.current = onRevealed; });
   const widgetsRef = useRef(widgets);
   useEffect(() => { widgetsRef.current = widgets; }, [widgets]);
   const unfitRef = useRef<(placements: ({ id: string } & GridPlacement)[]) => ({ id: string } & GridPlacement)[]>(placements => placements);
@@ -563,6 +567,8 @@ function PageGrid({ page, widgets, editMode, edit, ...props }: PageGridProps) {
     return () => window.clearTimeout(timer);
   }, [heights, heightsAt, isVisible, ready, revealed, widgets]);
 
+  useEffect(() => { if (revealed) revealedRef.current?.(); }, [revealed]);
+
   // Editing needs the full grid; narrow screens stay read-only.
   useEffect(() => {
     const el = root.current;
@@ -736,7 +742,7 @@ const REVEAL_CAP_MS = 120;
 
 /** Widgets without a title of their own get one in edit mode, like the others. Network tools has its section titles. */
 const UNTITLED_TYPES = new Set([
-  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-topology', 'spacer',
+  'docker-summary', 'docker-container-list', 'docker-explorer', 'network-topology', 'network-tools', 'spacer',
 ]);
 /** Widgets that have their own title in the Calme style. */
 const CALME_TITLED_TYPES = new Set(['docker-summary']);
@@ -801,6 +807,38 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, 
     return () => observer.disconnect();
   }, [editMode]);
 
+  // Phones and tablets keep the controls shown: on the title's line while it
+  // holds the title, its note and them, otherwise on a line of their own above.
+  const [actionsAbove, setActionsAbove] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!editMode || !node) return;
+    const check = () => {
+      if (!node.closest('.nd-page-grid--compact-editing')) { setActionsAbove(false); return; }
+      const title = node.querySelector<HTMLElement>('.ndc-title, .nd-category-title-above, .nd-page-widget-edit-title');
+      if (!title) { setActionsAbove(false); return; }
+      // The title's own width: each part at the size of what it holds (a
+      // name stretched over the line, or cut short, counts at its text's width).
+      const parts = Array.from(title.children) as HTMLElement[];
+      const gap = parseFloat(getComputedStyle(title).columnGap) || 0;
+      const range = document.createRange();
+      const natural = (part: HTMLElement) => {
+        if (!part.textContent?.trim()) return part.getBoundingClientRect().width;
+        range.selectNodeContents(part);
+        const style = getComputedStyle(part);
+        return range.getBoundingClientRect().width + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      };
+      const needed = parts.reduce((sum, part) => sum + natural(part), 0) + gap * Math.max(0, parts.length - 1) + 4;
+      const controls = actions.current?.getBoundingClientRect().width ?? 0;
+      setActionsAbove(needed > node.getBoundingClientRect().width - controls - 12);
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(node);
+    if (actions.current) observer.observe(actions.current);
+    return () => observer.disconnect();
+  }, [editMode]);
+
   // A category itself is edited from its own button (in the group); this one
   // opens the options shared by every category (pings, address or latency).
   const configure = entry?.settingsTab
@@ -809,17 +847,20 @@ function WidgetFrame({ page, widget, editMode, edit, onMeasure, onMeasureWidth, 
   return (
     <div
       ref={ref}
-      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''}`}
+      className={`nd-page-widget ${editMode ? 'nd-page-widget--editing' : ''} ${editMode && actionsAbove ? 'is-actions-above' : ''}`}
       data-widget-id={widget.id}
       style={editMode ? { '--nd-page-actions-width': `${actionsWidth}px` } as React.CSSProperties : undefined}
     >
-      {editMode && UNTITLED_TYPES.has(widget.type) && !CALME_TITLED_TYPES.has(widget.type) && (
-        <div className="nd-page-widget-edit-title nd-section-title">
-          <Emoji emoji={entry?.icon ?? '🧩'} /> {name}
-        </div>
-      )}
       <WidgetActionsSlotContext.Provider value={editMode ? slot : undefined}>
         <WidgetTitleContext.Provider value={titleContext}>
+        {/* Widgets without a title of their own: their name, shown in edit
+            mode (dimmed) and outside it only when its eye says so; renamed in place. */}
+        {UNTITLED_TYPES.has(widget.type) && !CALME_TITLED_TYPES.has(widget.type) && (editMode || (showTitle === true && widget.type !== 'spacer')) && (
+          <div className={`nd-page-widget-edit-title nd-section-title ${showTitle === true || widget.type === 'spacer' ? '' : 'is-hidden-title'}`}>
+            <Emoji emoji={entry?.icon ?? '🧩'} /> {widget.type === 'spacer' ? name : <WidgetTitleText title={name} editMode={editMode} />}
+            {editMode && widget.type !== 'spacer' && <WidgetTitleVisibility shown={showTitle === true} />}
+          </div>
+        )}
         <WidgetFitContext.Provider value={reportWidth}>
         <PageWidgetContent
           pageId={page.id}

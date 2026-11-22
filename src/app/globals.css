@@ -1426,6 +1426,8 @@ body {
 .nd-tab-view {
   flex: 1;
   min-height: 0;
+  /* A page being prepared sits over it, out of sight (src/app/page.tsx). */
+  position: relative;
 }
 
 /* Host selector */

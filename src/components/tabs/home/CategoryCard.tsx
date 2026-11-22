@@ -113,7 +113,7 @@ export default function CategoryCard({
         </button>
       )}
       <span className="nd-category-emoji"><Emoji emoji={category.emoji} /></span>
-      <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
+      <span style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(category.title)}</span>
       {editMode && <WidgetTitleVisibility shown={titleShown} />}
       {editActions && <div className="nd-category-edit-actions">{editActions}</div>}
     </div>
