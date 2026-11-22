@@ -163,17 +163,33 @@ export function usePageSwipe(
   }, [root, enabled]);
 }
 
-/** Small dots at the bottom of a phone screen: where the current page sits among the others. */
+/** Dots shown at most: beyond, they slide with the page shown. */
+const MAX_DOTS = 7;
+
+/**
+ * Small dots at the bottom of a phone screen: where the current page sits
+ * among the others. With many pages only seven show, following the page
+ * shown; the outer ones get smaller when more pages lie beyond them.
+ */
 export function PageDots({ tabs, activeTab, onSwitch }: { tabs: TabDef[]; activeTab: TabId; onSwitch: (id: TabId) => void }) {
   const { t } = useI18n();
   if (tabs.length < 2) return null;
+  const index = Math.max(0, tabs.findIndex(tab => tab.id === activeTab));
+  const start = tabs.length > MAX_DOTS ? Math.min(Math.max(0, index - Math.floor(MAX_DOTS / 2)), tabs.length - MAX_DOTS) : 0;
+  const end = Math.min(tabs.length, start + MAX_DOTS);
+  const size = (position: number) => {
+    const fromStart = start > 0 ? position - start : Infinity;
+    const fromEnd = end < tabs.length ? end - 1 - position : Infinity;
+    const edge = Math.min(fromStart, fromEnd);
+    return edge === 0 ? 'is-far' : edge === 1 ? 'is-near' : '';
+  };
   return (
     <nav className="nd-page-dots nd-glass" aria-label={t('mobile.pages')} data-tour="pages">
-      {tabs.map(tab => (
+      {tabs.slice(start, end).map((tab, offset) => (
         <button
           key={tab.id}
           type="button"
-          className="nd-page-dot"
+          className={`nd-page-dot ${size(start + offset)}`}
           aria-label={t(tab.name)}
           aria-current={tab.id === activeTab ? 'page' : undefined}
           onClick={() => onSwitch(tab.id)}

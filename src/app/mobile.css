@@ -366,8 +366,12 @@
     border-radius: 3px;
     background: var(--nd-text-dimmed);
     opacity: 0.7;
-    transition: width 0.2s ease, background 0.2s ease;
+    transition: width 0.2s ease, height 0.2s ease, background 0.2s ease;
   }
+
+  /* More pages lie beyond: the outer dots shrink. */
+  .nd-page-dot.is-near span { width: 4px; height: 4px; }
+  .nd-page-dot.is-far span { width: 3px; height: 3px; opacity: 0.5; }
 
   .nd-page-dot[aria-current="page"] span {
     width: 18px;
