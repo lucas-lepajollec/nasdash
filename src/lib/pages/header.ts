@@ -35,8 +35,14 @@ export interface HeaderSlot {
   hidden?: boolean;
 }
 
-const SEARCH_W = 6;
-const ACTIONS_W = 6;
+/*
+ * Widths close to the historical header's: the search about as wide as its
+ * field was, the buttons as wide as they are (their widget fits them), and the
+ * menu all the room between, as it had (it no longer squeezes its pages, so a
+ * narrower menu would have taken a second line).
+ */
+const SEARCH_W = 4;
+const ACTIONS_W = 5;
 /** The menu never gets fewer columns than this when it shares the row. */
 const MENU_MIN_W = 6;
 
@@ -89,21 +95,23 @@ export function legacyHeaderSlots(settings: LegacyHeaderSettings | undefined): H
   let rightStart = GRID_COLUMNS - ACTIONS_W;
   if (left === 'search' && searchShown) { slots.push(search(0)); leftEnd = SEARCH_W; }
   if (right === 'search' && searchShown) { rightStart -= SEARCH_W; slots.push(search(rightStart)); }
-  // Centred between what the sides take, when there is room for it.
+  // A menu takes all the room the sides leave (the historical one did); a
+  // menu split around something stays symmetric, so that thing is centred.
+  const middle = { start: leftEnd, end: rightStart };
   const margin = Math.max(leftEnd, GRID_COLUMNS - rightStart);
-  const middle = GRID_COLUMNS - 2 * margin >= MENU_MIN_W ? { start: margin, end: GRID_COLUMNS - margin } : { start: leftEnd, end: rightStart };
+  const symmetric = GRID_COLUMNS - 2 * margin >= MENU_MIN_W ? { start: margin, end: GRID_COLUMNS - margin } : middle;
   let menuPlaced = false;
 
   if (split !== 'none') {
-    // The two halves of the menu frame the middle of the free room.
-    const mid = Math.floor((middle.start + middle.end) / 2);
+    // The two halves of the menu frame the middle of the page.
+    const mid = Math.floor((symmetric.start + symmetric.end) / 2);
     const halves: [number, number][] = [];
     if (split === 'search' && searchShown) {
-      const x = Math.max(middle.start, Math.min(middle.end - SEARCH_W, mid - SEARCH_W / 2));
+      const x = Math.max(symmetric.start, Math.min(symmetric.end - SEARCH_W, mid - SEARCH_W / 2));
       slots.push(search(x));
-      halves.push([middle.start, x], [x + SEARCH_W, middle.end]);
+      halves.push([symmetric.start, x], [x + SEARCH_W, symmetric.end]);
     } else {
-      halves.push([middle.start, mid], [mid, middle.end]);
+      halves.push([symmetric.start, mid], [mid, symmetric.end]);
     }
     halves.forEach(([start, end], index) => {
       if (end - start < 1) return;

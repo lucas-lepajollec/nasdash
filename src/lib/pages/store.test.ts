@@ -101,9 +101,9 @@ describe('pages store', () => {
     const [page] = readPagesDocument().pages;
     expect(page.revision).toBe(10);
     expect(page.widgets.map(({ id, type, x, y, w, h, settings }) => ({ id, type, x, y, w, h, settings }))).toEqual([
-      { id: 'page-menu-dashboard', type: 'page-menu', x: 0, y: 0, w: 9, h: 13, settings: { align: 'start', icons: true } },
-      { id: 'page-search-dashboard', type: 'page-search', x: 9, y: 0, w: 6, h: 13, settings: {} },
-      { id: 'page-actions-dashboard', type: 'page-actions', x: 18, y: 0, w: 6, h: 13, settings: { align: 'end' } },
+      { id: 'page-menu-dashboard', type: 'page-menu', x: 0, y: 0, w: 10, h: 13, settings: { align: 'start', icons: true } },
+      { id: 'page-search-dashboard', type: 'page-search', x: 10, y: 0, w: 4, h: 13, settings: {} },
+      { id: 'page-actions-dashboard', type: 'page-actions', x: 19, y: 0, w: 5, h: 13, settings: { align: 'end' } },
       { id: 'a', type: 'clock', x: 0, y: 14, w: 6, h: 40, settings: {} },
       { id: 'b', type: 'weather', x: 6, y: 24, w: 6, h: 50, settings: {} },
     ]);

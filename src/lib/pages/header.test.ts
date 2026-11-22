@@ -7,9 +7,9 @@ const place = (settings: LegacyHeaderSettings | undefined) => legacyHeaderSlots(
 describe('header widgets from the historical header', () => {
   it('places search, menu and buttons as the default header showed them', () => {
     expect(place(undefined)).toEqual([
-      { type: 'page-search', x: 0, w: 6 },
-      { type: 'page-menu', x: 6, w: 12, align: 'center' },
-      { type: 'page-actions', x: 18, w: 6, align: 'end' },
+      { type: 'page-search', x: 0, w: 4 },
+      { type: 'page-menu', x: 4, w: 15, align: 'center' },
+      { type: 'page-actions', x: 19, w: 5, align: 'end' },
     ]);
     expect(place(undefined)).toEqual(DEFAULT_HEADER_SLOTS.map(({ type, x, w, settings }) => ({ type, x, w, ...settings })));
   });
@@ -17,16 +17,16 @@ describe('header widgets from the historical header', () => {
   it('drops the site title and keeps the menu centred', () => {
     const slots = place({ headerLayoutDesktop: { left: 'title', center: 'menu', right: 'search', splitMenuAround: 'none' } });
     expect(slots.map(slot => slot.type)).toEqual(['page-menu', 'page-search', 'page-actions']);
-    expect(slots[0]).toMatchObject({ x: 0, w: 12, align: 'center' });
-    expect(slots[1]).toMatchObject({ x: 12, w: 6 });
+    expect(slots[0]).toMatchObject({ x: 0, w: 15, align: 'center' });
+    expect(slots[1]).toMatchObject({ x: 15, w: 4 });
   });
 
   it('splits the menu around the search', () => {
     expect(place({ headerLayoutDesktop: { left: 'none', center: 'menu', right: 'none', splitMenuAround: 'search' } })).toEqual([
-      { type: 'page-menu', x: 6, w: 3, align: 'end', part: 'first' },
-      { type: 'page-search', x: 9, w: 6 },
-      { type: 'page-menu', x: 15, w: 3, align: 'start', part: 'second' },
-      { type: 'page-actions', x: 18, w: 6, align: 'end' },
+      { type: 'page-menu', x: 5, w: 5, align: 'end', part: 'first' },
+      { type: 'page-search', x: 10, w: 4 },
+      { type: 'page-menu', x: 14, w: 5, align: 'start', part: 'second' },
+      { type: 'page-actions', x: 19, w: 5, align: 'end' },
     ]);
   });
 

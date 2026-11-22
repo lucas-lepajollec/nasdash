@@ -13,16 +13,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-dashboard",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -31,9 +31,9 @@
         {
           "id": "page-actions-dashboard",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -196,16 +196,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-services",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -214,9 +214,9 @@
         {
           "id": "page-actions-services",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -368,16 +368,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-machines",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -386,9 +386,9 @@
         {
           "id": "page-actions-machines",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -763,16 +763,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-docker",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -781,9 +781,9 @@
         {
           "id": "page-actions-docker",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -864,16 +864,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-networks",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -882,9 +882,9 @@
         {
           "id": "page-actions-networks",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -1041,16 +1041,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-media",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -1059,9 +1059,9 @@
         {
           "id": "page-actions-media",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -1175,16 +1175,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-downloads",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -1193,9 +1193,9 @@
         {
           "id": "page-actions-downloads",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -1251,16 +1251,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-music",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -1269,9 +1269,9 @@
         {
           "id": "page-actions-music",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
@@ -1349,16 +1349,16 @@
           "type": "page-search",
           "x": 0,
           "y": 0,
-          "w": 6,
+          "w": 4,
           "h": 13,
           "settings": {}
         },
         {
           "id": "page-menu-feeds",
           "type": "page-menu",
-          "x": 6,
+          "x": 4,
           "y": 0,
-          "w": 12,
+          "w": 15,
           "h": 13,
           "settings": {
             "align": "center"
@@ -1367,9 +1367,9 @@
         {
           "id": "page-actions-feeds",
           "type": "page-actions",
-          "x": 18,
+          "x": 19,
           "y": 0,
-          "w": 6,
+          "w": 5,
           "h": 13,
           "settings": {
             "align": "end"
