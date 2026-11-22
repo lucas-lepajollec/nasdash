@@ -20,7 +20,7 @@ export default function PageSearchView({ editMode }: WidgetViewProps) {
         <div className="nd-search nd-hw-search" data-tour="search">
           <Search size={13} className="nd-search-icon" aria-hidden="true" />
           <input
-            type="search"
+            type="text"
             aria-label={t('Rechercher dans le tableau de bord')}
             value={searchQuery}
             onChange={event => setSearchQuery(event.target.value)}

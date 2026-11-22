@@ -34,7 +34,7 @@ test('Storage groups hosts, saves its sort mode and keeps chart colours stable',
     const usageOrder = [`volume10 · ${first.name}`, `${second.name}`, `volume2 · ${first.name}`];
     await expect(storage.locator('.ndc-m-label')).toHaveText(hostOrder);
     await expect(page.locator('[data-widget-id="temperature-feedback"]')).toContainText('50 °C');
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     const openSettings = () => storage.getByRole('button', { name: 'Storage settings', exact: true }).click({ timeout: 5000 });
     const dialog = page.getByRole('dialog', { name: 'Storage settings', exact: true });
     await openSettings();
@@ -54,7 +54,7 @@ test('Storage groups hosts, saves its sort mode and keeps chart colours stable',
     await expect(storage.locator('.ndc-m-label')).toHaveText(usageOrder);
     const saved = await (await page.request.get('/api/pages')).json();
     expect(saved.pages.find((item: Page) => item.id === fixture.id).widgets[0].settings.storageOrder).toBe('usage');
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     await openSettings();
     await dialog.getByRole('radio', { name: 'By host', exact: true }).click();
     await dialog.getByRole('radio', { name: 'Figure', exact: true }).click();

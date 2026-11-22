@@ -41,7 +41,7 @@ export function MobileHeader({ pageTabs }: {
             <Search size={14} className="nd-search-icon" aria-hidden="true" />
             <input
               ref={field}
-              type="search"
+              type="text"
               aria-label={t('Rechercher dans le tableau de bord')}
               value={shell.searchQuery}
               onChange={event => shell.setSearchQuery(event.target.value)}

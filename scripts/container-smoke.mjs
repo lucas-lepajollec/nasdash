@@ -85,7 +85,7 @@ async function verifyEnglishInstall(session) {
   assert.deepEqual(config.categories.flatMap(category => category.services.map(service => service.name)), []);
   const document = await get('/api/pages');
   assert.deepEqual(document.pages.map(page => page.name), ['Home']);
-  assert.deepEqual(document.pages[0].widgets.map(widget => widget.type), ['clock', 'weather']);
+  assert.deepEqual(document.pages[0].widgets.map(widget => widget.type), ['page-search', 'page-menu', 'page-actions', 'clock', 'weather']);
 }
 
 function customizeAndHash(name) {

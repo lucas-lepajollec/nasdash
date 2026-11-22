@@ -40,7 +40,7 @@ test('single-machine display groups move independently without converting readin
     const groupIds = () => groups.evaluateAll(elements => elements.map(element => element.getAttribute('data-metric-entry')));
     await expect.poll(groupIds).toEqual(['ring', 'value', 'bar', 'chart']);
     await expect(widget.locator('.ndc-group-drag')).toHaveCount(0);
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     await expect(widget.locator('.ndc-group-drag')).toHaveCount(4);
     const bar = widget.getByRole('button', { name: 'Move group · Bar', exact: true });
     const ring = widget.getByRole('button', { name: 'Move group · Ring', exact: true });
@@ -77,7 +77,7 @@ test('single-machine display groups move independently without converting readin
     expect(stored.settings.deviceGroupOrder).toEqual(['bar', 'ring', 'chart', 'value']);
 
     // Inner metric sorting still works in the nested drag scope and cancels safely.
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     const ringLabels = widget.locator('[data-device-section="ring"] .ndc-m-label');
     const original = await ringLabels.allTextContents();
     const reading = widget.locator('[data-device-section="ring"] .ndc-m-drag').first();

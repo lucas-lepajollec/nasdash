@@ -192,7 +192,7 @@ test('shared settings dropdowns keep Escape and Tab inside the correct dialog', 
   test.skip(process.env.NASDASH_DEMO_MODE === 'true', 'Uses isolated installed-instance fixtures.');
   const { cleanup } = await resourceFixture(page);
   try {
-    await page.getByTitle('Global Settings', { exact: true }).click();
+    await page.getByTitle('Global Settings', { exact: true }).filter({ visible: true }).click();
     const settings = page.locator('.nd-settings-modal');
     const language = settings.getByRole('button', { name: 'Interface language', exact: true });
     await language.click();

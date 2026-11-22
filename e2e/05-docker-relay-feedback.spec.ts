@@ -58,7 +58,7 @@ test('Docker relay resources render safe names, retain errors and reset across h
     await expect(explorer.getByRole('row').filter({ hasText: /^fixture-data/ }).getByRole('checkbox')).toBeDisabled();
     await expect(explorer.getByRole('row').filter({ hasText: 'unused-fixture-data' }).getByRole('checkbox')).toBeEnabled();
     await page.route('**/api/config?type=dockerHost&id=*', route => route.fulfill({ status: 500, json: { error: 'Fictional storage failure' } }));
-    await page.getByTitle('Edit mode', { exact: true }).click();
+    await page.getByTitle('Edit mode', { exact: true }).filter({ visible: true }).click();
     await page.locator('[data-widget-id="relay-hosts"]').getByRole('button', { name: /^Delete the Docker host/ }).first().click();
     const hostConfirmation = page.getByRole('dialog', { name: 'Delete the Docker host', exact: true });
     await hostConfirmation.getByRole('button', { name: 'Delete', exact: true }).click();

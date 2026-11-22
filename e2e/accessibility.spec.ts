@@ -60,7 +60,7 @@ test('reduced-motion preference stops decorative movement', async ({ page }) => 
 test('core dashboard and settings stay keyboard accessible', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole('textbox', { name: 'Search dashboard' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Search dashboard' }).filter({ visible: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Previous month' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next month' })).toBeVisible();
 
@@ -163,7 +163,7 @@ test('network editor dialogs keep keyboard focus without changing topology', asy
   // The network page shows its map (Calme) once loaded.
   await expect(page.locator('.ndc-map').first()).toBeVisible({ timeout: 30_000 });
 
-  await page.getByTitle('Edit mode').click();
+  await page.getByTitle('Edit mode').filter({ visible: true }).click();
   // Editing tools live in the map itself, in edit mode.
   await page.getByRole('toolbar', { name: 'Map tools' }).getByRole('button', { name: 'Node' }).click();
 

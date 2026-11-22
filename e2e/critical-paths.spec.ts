@@ -136,10 +136,10 @@ test.describe.serial('critical self-hosted paths', () => {
       await page.context().addCookies((await admin.storageState()).cookies);
       await page.goto('/');
       await expect(page.locator('html')).toHaveAttribute('lang', 'it');
-      await expect(page.locator('[data-settings-trigger]')).toHaveAttribute('title', 'Impostazioni globali');
+      await expect(page.locator('[data-settings-trigger]').filter({ visible: true })).toHaveAttribute('title', 'Impostazioni globali');
       await page.reload();
       await expect(page.locator('html')).toHaveAttribute('lang', 'it');
-      await expect(page.locator('[data-settings-trigger]')).toHaveAttribute('title', 'Impostazioni globali');
+      await expect(page.locator('[data-settings-trigger]').filter({ visible: true })).toHaveAttribute('title', 'Impostazioni globali');
     } finally {
       const restore = await admin.put('/api/config', { data: { type: 'settings', uiLanguage: 'en' } });
       expect(restore.status()).toBe(200);
@@ -374,7 +374,7 @@ test.describe.serial('critical self-hosted paths', () => {
     await Promise.all([systemResponse, initialDashboardResponses]);
     await page.evaluate(() => sessionStorage.setItem('nasdash-e2e-event-source-close-count', '0'));
 
-    await page.getByTitle('Log out').click();
+    await page.getByTitle('Log out').filter({ visible: true }).click();
     await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 });
     expect(await page.evaluate(() => Number(sessionStorage.getItem('nasdash-e2e-event-source-close-count')))).toBe(1);
 
@@ -422,7 +422,7 @@ test.describe.serial('critical self-hosted paths', () => {
     await page.getByRole('button', { name: 'Log in' }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
 
-    await page.getByTitle('Global Settings').click();
+    await page.getByTitle('Global Settings').filter({ visible: true }).click();
     const settingsDialog = page.getByRole('dialog', { name: 'NasDash Settings' });
     // Users are listed straight on the "Users and access" page.
     await settingsDialog.locator('.nd-settings-sidebar').getByRole('button', { name: 'Users and access', exact: true }).click();
