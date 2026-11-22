@@ -10,14 +10,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Pull and recreate NasDash with the same data mount. On first start, the header becomes widgets on every page: the search, the page menu and the buttons are placed where your header showed them, and the rest of each page moves down by the header's height, so your pages look the same. The previous pages file is kept as `pages.v5.json` next to `pages.json`. Roll back by recreating the recorded `0.3.10` image and putting `pages.v5.json` back as `pages.json`.
 - The site title is no longer shown in the header.
-- A menu with many pages can take a second line where the space between its pages used to shrink: widen the menu widget in edit mode, or choose how many pages it shows.
+- A menu with many pages can take a second line where the space between its pages used to shrink: widen the menu widget in edit mode, choose how many pages it shows, or gather pages in sub-menus. The menu takes all the room between the search and the buttons, as before.
 
 ### Added
 
 - The header is made of widgets: **Search**, **Page menu** and **Buttons** (hide information, edit mode, settings, account). Move them anywhere on a page, use them several times; every search widget shows the same search and every menu the same pages. The search and the menu are resized like any widget; the buttons widget takes the grid columns it needs and its account stretches to fill them. The menu keeps the spacing between its pages and goes to a new line when it is full, or after a chosen number of pages per line (fewer when the widget is too narrow). Its settings are shared by every menu of the dashboard, unless one is set to keep its own (“This menu only”): one of four styles (tabs, capsule, segmented, icons), icons, alignment, how many pages it shows (the others unfold from a last “Others” button) and sub-menus, which gather pages under a name and unfold them. A header that was split around the title becomes two menus, each with half of the pages. In edit mode the menu's pages are still reordered and renamed in place, the unfolded ones too; a bin next to each name deletes a page after a confirmation, and the “+” among the widget's controls adds one. Every page keeps at least one menu and exactly one buttons widget (searches and menus can be added several times), and new pages start with all three.
 - The search looks through every widget of the page: case, accents and one typo are forgiven, all the words typed must appear, and the widgets that do not match step aside while the others move up. Searching a category's name shows the whole category.
 - Each widget can show or hide its own title, whatever the general setting: the eye next to its title in edit mode. Header widgets hide theirs by default.
-- Phones: a new header with the page's name in large type and round glass buttons for the search and the menu; the menu opens as a glass sheet from the bottom with the pages and the actions. Swipe left or right to change page; dots at the bottom show where you are. Narrower side margins.
+- Phones: a new header with the page's name in large type and round glass buttons for the search and the menu; the menu opens as a glass sheet from the bottom with the pages and the actions. Swipe left or right to change page; dots at the bottom show where you are (seven at most, sliding with the page shown). Narrower side margins.
 - NasDash can be installed on a phone's home screen (Safari: Share, Add to Home Screen) and opens full screen.
 - Machines widget: in edit mode, drag the machines into the order you want (#167).
 
@@ -41,7 +41,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Ticking several tasks quickly (or changing any widget outside edit mode while a save was on its way) could undo the latest change at once: saves of a page now follow one another and keep what was changed meanwhile.
-
 - Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.
 
 ### Removed
