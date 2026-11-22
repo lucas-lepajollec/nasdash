@@ -376,21 +376,21 @@
   }
 
   .nd-page-enter--next {
-    animation: nd-page-in-next 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: nd-page-in-next 0.3s cubic-bezier(0.22, 0.9, 0.25, 1);
   }
 
   .nd-page-enter--prev {
-    animation: nd-page-in-prev 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: nd-page-in-prev 0.3s cubic-bezier(0.22, 0.9, 0.25, 1);
   }
 }
 
 @keyframes nd-page-in-next {
-  from { opacity: 0.4; transform: translateX(36px); }
+  from { opacity: 0; transform: translate3d(38%, 0, 0); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes nd-page-in-prev {
-  from { opacity: 0.4; transform: translateX(-36px); }
+  from { opacity: 0; transform: translate3d(-38%, 0, 0); }
   to { opacity: 1; transform: translateX(0); }
 }
 
@@ -438,4 +438,12 @@ body[data-design="calme"] .nd-page-editor-dot { width: 7px; height: 7px; }
   body[data-design="calme"] .nd-page-editor-dot { width: 8px; height: 8px; }
   .nd-page-editor-add span { display: none; }
   .nd-page-editor-alert { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 62px); }
+}
+.nd-sheet-demo { margin-top: 10px; }
+/* A page on its way out never widens the screen. */
+@media (max-width: 960px) {
+  .nd-tab-view { overflow-x: clip; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nd-page-enter--next, .nd-page-enter--prev { animation: none; }
 }

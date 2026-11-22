@@ -4069,7 +4069,24 @@ body[data-design="calme"] .nd-hw-menu--segmented.nd-menu-style-sample .nd-header
 /* Pages per line: every page as wide as its column, its name centred. */
 .nd-hw-menu.has-per-row .nd-header-tab-link,
 .nd-hw-menu.has-per-row .nd-header-menu > .nd-header-tab { justify-content: center; }
-.nd-menu-styles-note { margin: 0 0 10px; font-size: 0.74rem; color: var(--nd-text-muted); }
 .nd-hw-menu.has-per-row .nd-header-menu > .nd-header-tab > .nd-header-tab-link { flex: 1; justify-content: center; }
 /* A field set straight on the page, not inside a block, is a widget edge too. */
 .nd-docker-container-list > div > .nd-input { border-radius: var(--nd-field-radius); }
+/* "Others": a sub-menu inside it shows as a small heading over its pages. */
+.nd-header-more-heading { margin: 6px 10px 2px; font-size: 0.66rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); }
+.nd-header-more-heading:first-child { margin-top: 2px; }
+
+/* Menu dialog: sub-menus, each a name and the pages it gathers. */
+.nd-menu-groups { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--nd-card-border); }
+.nd-menu-groups-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.nd-menu-groups-title { font-size: 0.8rem; font-weight: 500; color: var(--nd-text); }
+.nd-menu-groups-empty { margin: 0; font-size: 0.74rem; color: var(--nd-text-muted); }
+.nd-menu-group { padding: 10px; border: 1px solid var(--nd-card-border); border-radius: 8px; margin-bottom: 8px; }
+.nd-menu-group-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.nd-menu-group-head .nd-input { flex: 1; min-width: 0; height: 32px; }
+.nd-menu-group-pages { display: flex; flex-wrap: wrap; gap: 6px; }
+.nd-menu-group-page {
+  padding: 4px 10px; border: 1px solid var(--nd-card-border); border-radius: 999px; background: transparent;
+  color: var(--nd-text-muted); font: inherit; font-size: 0.74rem; cursor: pointer;
+}
+.nd-menu-group-page[aria-pressed="true"] { border-color: color-mix(in srgb, var(--nd-accent) 60%, transparent); background: color-mix(in srgb, var(--nd-accent) 14%, transparent); color: var(--nd-text); }

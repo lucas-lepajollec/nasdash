@@ -31,16 +31,24 @@ function usesHorizontalMovement(target: EventTarget | null, root: HTMLElement): 
   return false;
 }
 
+/** How the page leaves, then how the next one arrives (see .nd-page-enter in mobile.css). */
+const LEAVE_MS = 150;
+const EASE = 'cubic-bezier(0.22, 0.9, 0.25, 1)';
+
 /**
  * On a phone, a horizontal swipe on the page reaches the next or previous page.
- * The page follows the finger a little, then `onStep` decides: it returns false at the first or last page.
+ * The page follows the finger exactly (with some give at the first and last
+ * page), then leaves on the side it was pushed to while the next one arrives
+ * from the other side. `canStep` says whether there is a page that way,
+ * `onStep` goes there.
  */
 export function usePageSwipe(
   root: HTMLElement | null,
-  { enabled, onStep }: { enabled: boolean; onStep: (direction: 1 | -1) => boolean },
+  { enabled, canStep, onStep }: { enabled: boolean; canStep: (direction: 1 | -1) => boolean; onStep: (direction: 1 | -1) => void },
 ) {
   const step = useRef(onStep);
-  useEffect(() => { step.current = onStep; });
+  const can = useRef(canStep);
+  useEffect(() => { step.current = onStep; can.current = canStep; });
 
   useEffect(() => {
     if (!root || !enabled) return;
@@ -48,12 +56,23 @@ export function usePageSwipe(
     let start: { x: number; y: number; time: number } | null = null;
     let horizontal = false;
     let page: HTMLElement | null = null;
+    let frame = 0;
+    let leaving = false;
 
+    const clear = (element: HTMLElement) => {
+      element.style.transition = '';
+      element.style.transform = '';
+      element.style.opacity = '';
+      element.style.willChange = '';
+    };
+    // Back in place, on a spring-like curve.
     const release = (element: HTMLElement | null, animate: boolean) => {
       if (!element) return;
-      element.style.transition = animate ? 'transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)' : '';
+      if (!animate) { clear(element); return; }
+      element.style.transition = `transform 260ms ${EASE}, opacity 260ms ${EASE}`;
       element.style.transform = '';
-      if (animate) element.addEventListener('transitionend', () => { element.style.transition = ''; }, { once: true });
+      element.style.opacity = '';
+      element.addEventListener('transitionend', () => clear(element), { once: true });
     };
 
     const onStart = (event: TouchEvent) => {
@@ -61,7 +80,7 @@ export function usePageSwipe(
       horizontal = false;
       if (!media.matches || event.touches.length !== 1) return;
       const touch = event.touches[0];
-      if (touch.clientX < EDGE || touch.clientX > window.innerWidth - EDGE) return;
+      if (leaving || touch.clientX < EDGE || touch.clientX > window.innerWidth - EDGE) return;
       if (usesHorizontalMovement(event.target, root)) return;
       start = { x: touch.clientX, y: touch.clientY, time: event.timeStamp };
     };
@@ -77,9 +96,18 @@ export function usePageSwipe(
         if (Math.abs(dx) < Math.abs(dy) * 1.3) { start = null; return; }
         horizontal = true;
         page = root.querySelector<HTMLElement>(':scope > [data-active="true"]');
-        if (page) page.style.transition = '';
+        if (page) { page.style.transition = ''; page.style.willChange = 'transform, opacity'; }
       }
-      if (page) page.style.transform = `translateX(${dx * 0.35}px)`;
+      const element = page;
+      if (!element) return;
+      // One update per frame; past the first or last page the page only gives a little.
+      const shift = can.current(dx < 0 ? 1 : -1) ? dx : dx * 0.3;
+      const fade = 1 - Math.min(0.35, Math.abs(shift) / window.innerWidth * 0.5);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        element.style.transform = `translate3d(${shift}px, 0, 0)`;
+        element.style.opacity = String(fade);
+      });
     };
 
     const onEnd = (event: TouchEvent) => {
@@ -93,14 +121,29 @@ export function usePageSwipe(
       const moved = Math.abs(dx) >= DISTANCE || (Math.abs(dx) >= FLICK_DISTANCE && speed >= FLICK_SPEED);
       const element = page;
       page = null;
+      cancelAnimationFrame(frame);
       // Finger to the left shows the next page, like turning a page.
-      const switched = moved && step.current(dx < 0 ? 1 : -1);
-      release(element, !switched);
+      const direction = dx < 0 ? 1 : -1;
+      if (!moved || !element || !can.current(direction)) { release(element, true); return; }
+      // The page carries on the way it was pushed, faster with a flick, then the next one comes in.
+      leaving = true;
+      const width = window.innerWidth;
+      const duration = Math.max(90, Math.min(LEAVE_MS, (width - Math.abs(dx)) / Math.max(speed, 1.2)));
+      element.style.transition = `transform ${duration}ms ${EASE}, opacity ${duration}ms ${EASE}`;
+      element.style.transform = `translate3d(${-direction * width * 0.45}px, 0, 0)`;
+      element.style.opacity = '0';
+      window.setTimeout(() => {
+        leaving = false;
+        step.current(direction);
+        // Hidden by now (another page is shown): back to normal for next time.
+        clear(element);
+      }, duration);
     };
 
     const onCancel = () => {
       start = null;
       horizontal = false;
+      cancelAnimationFrame(frame);
       release(page, true);
       page = null;
     };
@@ -114,6 +157,7 @@ export function usePageSwipe(
       root.removeEventListener('touchmove', onMove);
       root.removeEventListener('touchend', onEnd);
       root.removeEventListener('touchcancel', onCancel);
+      cancelAnimationFrame(frame);
       release(page, false);
     };
   }, [root, enabled]);

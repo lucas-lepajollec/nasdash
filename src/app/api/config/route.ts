@@ -446,7 +446,7 @@ async function handlePUT(req: NextRequest) {
     if (body.hideHeaderSearch !== undefined) config.settings.hideHeaderSearch = body.hideHeaderSearch;
     if (body.hideHeaderMenu !== undefined) config.settings.hideHeaderMenu = body.hideHeaderMenu;
     if (body.showHeaderMenuIcons !== undefined) config.settings.showHeaderMenuIcons = body.showHeaderMenuIcons;
-    if (body.menuStyle !== undefined) config.settings.menuStyle = body.menuStyle;
+    if (body.pageMenu !== undefined) config.settings.pageMenu = body.pageMenu;
     if (body.showPingDetails !== undefined) config.settings.showPingDetails = body.showPingDetails;
     if (body.networkGraphStats !== undefined) config.settings.networkGraphStats = body.networkGraphStats;
     if (body.pingIndicatorMode !== undefined) config.settings.pingIndicatorMode = body.pingIndicatorMode;

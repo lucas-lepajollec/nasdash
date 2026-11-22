@@ -5,7 +5,7 @@ import { MobileHeader } from '@/components/layout/MobileHeader';
 import { ShellControlsContext, type ShellControls } from '@/components/layout/ShellControls';
 import DemoExperience from '@/components/demo/DemoExperience';
 import TabDock from '@/components/layout/TabDock';
-import { PageDots, usePageSwipe } from '@/components/layout/MobilePager';
+import { MOBILE_QUERY, PageDots, usePageSwipe } from '@/components/layout/MobilePager';
 import { useTabs } from '@/hooks/useTabs';
 import { useConfig } from '@/hooks/useConfig';
 import SettingsModal from '@/components/modals/SettingsModal';
@@ -118,13 +118,24 @@ export default function Shell() {
   const [tabView, setTabView] = useState<HTMLDivElement | null>(null);
   usePageSwipe(tabView, {
     enabled: !editMode && pagerTabs.length > 1,
+    canStep: direction => !!pagerTabs[pagerTabs.findIndex(tab => tab.id === activeTab) + direction],
     onStep: direction => {
       const next = pagerTabs[pagerTabs.findIndex(tab => tab.id === activeTab) + direction];
-      if (!next) return false;
-      switchTab(next.id);
-      return true;
+      if (next) switchTab(next.id);
     },
   });
+  // Phones: the pages on either side are mounted (hidden) ahead of time, so a
+  // swipe shows one that has already loaded instead of an empty page.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_QUERY);
+    const update = () => setPhone(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  const activeIndex = pagerTabs.findIndex(tab => tab.id === activeTab);
+  const neighbours = phone && activeIndex >= 0 ? [pagerTabs[activeIndex - 1]?.id, pagerTabs[activeIndex + 1]?.id] : [];
   // The page that appears slides in from the side it comes from (phones only, see mobile.css).
   const [pageEntry, setPageEntry] = useState<{ tab: string; direction: number }>({ tab: activeTab, direction: 0 });
   if (pageEntry.tab !== activeTab) {
@@ -210,7 +221,7 @@ export default function Shell() {
         {/* Every page, official or custom, is rendered by the same engine.
             Visited pages stay mounted (hidden) to preserve their state. */}
         <div className="nd-tab-view" ref={setTabView}>
-          {tabs.filter(tab => tab.id === activeTab || visitedPages.includes(tab.id)).map(tab => (
+          {tabs.filter(tab => tab.id === activeTab || visitedPages.includes(tab.id) || neighbours.includes(tab.id)).map(tab => (
             <div
               key={tab.id}
               data-active={activeTab === tab.id}

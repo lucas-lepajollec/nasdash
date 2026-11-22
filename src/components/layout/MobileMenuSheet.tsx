@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Eye, EyeOff, LogIn, LogOut, Pencil, Settings } from 'lucide-react';
+import { Eye, EyeOff, Info, LogIn, LogOut, Pencil, RotateCcw, Settings } from 'lucide-react';
 import type { TabDef, TabId } from '@/hooks/useTabs';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -22,6 +22,13 @@ interface MobileMenuSheetProps {
   onToggleSecret?: () => void;
   username?: string;
   onLogout: () => void;
+  /** The public demo: its welcome and reset live here on phones (no floating chip over the page). */
+  demo?: boolean;
+}
+
+/** Asks the demo (src/components/demo/DemoExperience.tsx) to show its welcome or to reset. */
+export function requestDemo(action: 'about' | 'reset') {
+  window.dispatchEvent(new CustomEvent('nasdash:demo', { detail: action }));
 }
 
 /** Pulling the sheet down this far closes it. */
@@ -140,6 +147,18 @@ export function MobileMenuSheet(props: MobileMenuSheetProps) {
             </a>
           )}
         </div>
+        {props.demo && (
+          <div className="nd-sheet-actions nd-sheet-demo">
+            <button type="button" className="nd-sheet-action" onClick={() => { onClose(); requestDemo('about'); }}>
+              <Info size={18} aria-hidden="true" />
+              <span>{t('demo.info')}</span>
+            </button>
+            <button type="button" className="nd-sheet-action" onClick={() => { onClose(); requestDemo('reset'); }}>
+              <RotateCcw size={18} aria-hidden="true" />
+              <span>{t('demo.resetAria')}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

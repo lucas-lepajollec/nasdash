@@ -2457,6 +2457,8 @@ div[id^="group-box-"]:hover .nd-anchor-plus {
 .nd-page-grid--placing {
   visibility: hidden;
 }
+/* Phones read one plain column, laid out by the browser: nothing to hide. */
+.nd-page-grid--narrow:not(.nd-page-grid--tablet).nd-page-grid--placing { visibility: visible; }
 
 /* While resizing: the widget itself shows the new width, nothing else. */
 /* Controls of a widget in edit mode, inside its top-right corner, next to

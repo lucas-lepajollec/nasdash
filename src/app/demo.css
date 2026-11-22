@@ -66,3 +66,9 @@ body.light .nd-demo-chip { border-color: rgb(255 255 255 / 0.6); box-shadow: 0 1
   .nd-demo-actions { width: 100%; }
   .nd-demo-actions .nd-btn { flex: 1; }
 }
+
+/* Phones and tablets: the chip would cover the page dots and the edit bar;
+   the welcome and the reset are in the menu sheet (⋯) instead. */
+@media (max-width: 960px) {
+  .nd-demo-chip { display: none; }
+}

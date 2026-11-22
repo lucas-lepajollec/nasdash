@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { HeaderAlign } from '@/lib/pages/header';
+import { MENU_LIMITS, MENU_STYLES, menuItems, type MenuGroup, type MenuSettings, type MenuStyle } from '@/lib/pages/menu';
+import type { TabDef } from '@/hooks/useTabs';
 import { WidgetHeaderActions } from '@/components/widgets/WidgetHeaderActions';
 import { CalmeDialog } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
@@ -11,47 +13,28 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { useConfig } from '@/hooks/useConfig';
 import { DialogPortal } from '../devices/ColorDialog';
 
-/**
- * Menu looks: underlined tabs (the original), a soft capsule on the page
- * shown, a segmented control (one track, the page shown raised in it) and
- * icons over their names, like a dock.
- */
-export type MenuStyle = 'tabs' | 'pill' | 'segmented' | 'icons';
-export const MENU_STYLES: MenuStyle[] = ['tabs', 'pill', 'segmented', 'icons'];
 export type MenuPart = 'all' | 'first' | 'second';
 
 export function readAlign(settings: WidgetSettings, fallback: HeaderAlign): HeaderAlign {
   return settings.align === 'start' || settings.align === 'center' || settings.align === 'end' ? settings.align : fallback;
 }
-/** The look of every menu: one setting for the whole dashboard (`settings.menuStyle`). */
-export function readMenuStyle(value: unknown): MenuStyle {
-  return MENU_STYLES.includes(value as MenuStyle) ? value as MenuStyle : 'tabs';
-}
 export function readMenuPart(settings: WidgetSettings): MenuPart {
   return settings.part === 'first' || settings.part === 'second' ? settings.part : 'all';
 }
-/** Pages on each line of the menu; undefined: as many as fit. */
-export function readMenuPerRow(settings: WidgetSettings): number | undefined {
-  const perRow = settings.perRow;
-  return typeof perRow === 'number' && Number.isFinite(perRow) && perRow >= 1 ? Math.floor(perRow) : undefined;
-}
-/** How many pages the menu shows before its last button; undefined: all of them. */
-export function readMenuLimit(settings: WidgetSettings): number | undefined {
-  const limit = settings.maxPages;
-  return typeof limit === 'number' && Number.isFinite(limit) && limit >= 1 ? Math.floor(limit) : undefined;
-}
 
 /**
- * Edit mode: the ✎ of a menu widget and its dialog. The look (style, icons)
- * is the same for every menu of the dashboard; pages per line, how many pages
- * show before the "Others" button and alignment belong to this widget. (A
- * menu split in two halves only comes from an upgraded header; see `readMenuPart`.)
+ * Edit mode: the ✎ of a menu widget and its dialog. The settings are those
+ * of every menu of the dashboard, unless "This menu only" keeps this widget's
+ * own. (A menu split in two halves only comes from an upgraded header; see
+ * `readMenuPart`.)
  */
-export function MenuWidgetSettings({ title, settings, pageCount, onSave }: {
+export function MenuWidgetSettings({ title, settings, resolved, tabs, onSave }: {
   title: string;
   settings: WidgetSettings;
-  /** Pages in this menu's part, the most the slider offers. */
-  pageCount: number;
+  /** What the menu uses now (shared or its own). */
+  resolved: MenuSettings;
+  /** The pages of this menu, in order. */
+  tabs: TabDef[];
   onSave: (settings: WidgetSettings) => void;
 }) {
   const { t } = useI18n();
@@ -62,41 +45,45 @@ export function MenuWidgetSettings({ title, settings, pageCount, onSave }: {
       <button type="button" className="nd-action-icon accent" onClick={event => { event.stopPropagation(); setOpen(true); }} title={label} aria-label={label}>
         <Pencil size={13} />
       </button>
-      {open && <Dialog label={label} settings={settings} pageCount={pageCount} onSave={onSave} onClose={() => setOpen(false)} />}
+      {open && <Dialog label={label} own={settings.ownSettings === true} resolved={resolved} tabs={tabs} onSave={onSave} onClose={() => setOpen(false)} />}
     </WidgetHeaderActions>
   );
 }
 
-function Dialog({ label, settings, pageCount, onSave, onClose }: {
+function Dialog({ label, own: initiallyOwn, resolved, tabs, onSave, onClose }: {
   label: string;
-  settings: WidgetSettings;
-  pageCount: number;
+  own: boolean;
+  resolved: MenuSettings;
+  tabs: TabDef[];
   onSave: (settings: WidgetSettings) => void;
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const { config, updateConfig } = useConfig();
-  const [draft, setDraft] = useState<WidgetSettings>(settings);
-  const change = (patch: WidgetSettings) => setDraft(current => ({ ...current, ...patch }));
-  // Shared by every menu: saved in the dashboard settings.
-  const [look, setLook] = useState(() => ({
-    style: readMenuStyle(config?.settings?.menuStyle),
-    icons: config?.settings?.showHeaderMenuIcons === true,
-  }));
-  const style = look.style;
+  const { updateConfig } = useConfig();
+  const [own, setOwn] = useState(initiallyOwn);
+  const [draft, setDraft] = useState<MenuSettings>(resolved);
+  const change = (patch: Partial<MenuSettings>) => setDraft(current => ({ ...current, ...patch }));
+  const itemCount = menuItems(tabs, draft.groups).length;
+  const shown = Math.min(draft.maxPages ?? itemCount, itemCount);
+  // Pages per line count the "Others" button as one.
+  const perRowMax = Math.max(1, shown < itemCount ? shown + 1 : itemCount);
+  const perRow = Math.min(draft.perRow ?? 0, perRowMax);
   const save = () => {
-    onSave(draft);
-    if (look.style !== readMenuStyle(config?.settings?.menuStyle) || look.icons !== (config?.settings?.showHeaderMenuIcons === true)) {
-      void updateConfig({ menuStyle: look.style, showHeaderMenuIcons: look.icons });
+    // 0 stands for "all" / "as many as fit", saved so that it wins.
+    const values = {
+      style: draft.style, icons: draft.icons, align: draft.align,
+      perRow: draft.perRow ?? 0, maxPages: draft.maxPages ?? 0,
+      groups: draft.groups
+        .map(group => ({ ...group, name: group.name.trim() || t('pages.header.groupUntitled') }))
+        .filter(group => group.pages.length > 0),
+    };
+    if (own) onSave({ ownSettings: true, ...values });
+    else {
+      onSave({ ownSettings: false });
+      void updateConfig({ pageMenu: values });
     }
     onClose();
   };
-  const shown = Math.min(readMenuLimit(draft) ?? pageCount, pageCount);
-  // At the top of the slider every page shows, the ones added later too.
-  const setShown = (value: number) => change({ maxPages: value >= pageCount ? 0 : value });
-  // Pages per line count the "Others" button as one.
-  const perRowMax = Math.max(1, shown < pageCount ? shown + 1 : pageCount);
-  const perRow = Math.min(readMenuPerRow(draft) ?? 0, perRowMax);
   return (
     <DialogPortal onClose={onClose}>
       {ref => (
@@ -110,24 +97,26 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
             <button type="button" className="nd-btn nd-btn-accent" onClick={save}>{t('Enregistrer')}</button>
           </>}
         >
-          <p className="nd-menu-styles-note">{t('pages.header.styleShared')}</p>
-          <MenuStylePicker value={style} onChange={value => setLook(current => ({ ...current, style: value }))} />
-          {style !== 'icons' && (
+          <CalmeRow label={t('pages.header.ownSettings')} info={t('pages.header.ownSettingsInfo')}>
+            <CalmeSwitch label={t('pages.header.ownSettings')} checked={own} onChange={setOwn} />
+          </CalmeRow>
+          <MenuStylePicker value={draft.style} onChange={style => change({ style })} />
+          {draft.style !== 'icons' && (
             <CalmeRow label={t('settings.calme.tabIcons')}>
-              <CalmeSwitch label={t('settings.calme.tabIcons')} checked={look.icons} onChange={value => setLook(current => ({ ...current, icons: value }))} />
+              <CalmeSwitch label={t('settings.calme.tabIcons')} checked={draft.icons} onChange={icons => change({ icons })} />
             </CalmeRow>
           )}
-          {pageCount > 1 && (
+          {itemCount > 1 && (
             <CalmeRow label={t('pages.header.shown')} info={t('pages.header.shownInfo')}>
               <CalmeSlider
                 label={t('pages.header.shown')}
                 value={shown}
                 min={1}
-                max={pageCount}
+                max={itemCount}
                 step={1}
-                onChange={setShown}
-                onCommit={setShown}
-                format={value => value >= pageCount ? t('pages.header.shownAll') : String(value)}
+                onChange={value => change({ maxPages: value >= itemCount ? undefined : value })}
+                onCommit={value => change({ maxPages: value >= itemCount ? undefined : value })}
+                format={value => value >= itemCount ? t('pages.header.shownAll') : String(value)}
               />
             </CalmeRow>
           )}
@@ -139,8 +128,8 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
                 min={0}
                 max={perRowMax}
                 step={1}
-                onChange={value => change({ perRow: value })}
-                onCommit={value => change({ perRow: value })}
+                onChange={value => change({ perRow: value < 1 ? undefined : value })}
+                onCommit={value => change({ perRow: value < 1 ? undefined : value })}
                 format={value => value < 1 ? t('pages.header.perRowAuto') : String(value)}
               />
             </CalmeRow>
@@ -148,18 +137,69 @@ function Dialog({ label, settings, pageCount, onSave, onClose }: {
           <CalmeRow label={t('pages.header.align')}>
             <CalmeSegmented
               label={t('pages.header.align')}
-              value={readAlign(draft, 'center')}
+              value={draft.align}
               options={[
                 { value: 'start', label: t('pages.header.alignStart') },
                 { value: 'center', label: t('pages.header.alignCenter') },
                 { value: 'end', label: t('pages.header.alignEnd') },
               ]}
-              onChange={value => change({ align: value })}
+              onChange={align => change({ align })}
             />
           </CalmeRow>
+          <GroupsEditor tabs={tabs} groups={draft.groups} onChange={groups => change({ groups })} />
         </CalmeDialog>
       )}
     </DialogPortal>
+  );
+}
+
+/**
+ * Sub-menus: a name and the pages it gathers. A page belongs to one sub-menu
+ * at most; choosing it in another moves it there.
+ */
+function GroupsEditor({ tabs, groups, onChange }: { tabs: TabDef[]; groups: MenuGroup[]; onChange: (groups: MenuGroup[]) => void }) {
+  const { t } = useI18n();
+  const update = (id: string, patch: Partial<MenuGroup>) => onChange(groups.map(group => group.id === id ? { ...group, ...patch } : group));
+  const toggle = (id: string, page: string) => onChange(groups.map(group => {
+    if (group.id === id) return { ...group, pages: group.pages.includes(page) ? group.pages.filter(candidate => candidate !== page) : [...group.pages, page] };
+    return { ...group, pages: group.pages.filter(candidate => candidate !== page) };
+  }));
+  const add = () => onChange([...groups, { id: `g${Date.now().toString(36)}`, name: '', pages: [] }]);
+  return (
+    <section className="nd-menu-groups">
+      <div className="nd-menu-groups-head">
+        <span className="nd-menu-groups-title">{t('pages.header.groups')}</span>
+        {groups.length < MENU_LIMITS.groups && (
+          <button type="button" className="ndc-text-button" onClick={add}><Plus size={12} aria-hidden="true" /> {t('pages.header.groupAdd')}</button>
+        )}
+      </div>
+      {groups.length === 0 && <p className="nd-menu-groups-empty">{t('pages.header.groupsInfo')}</p>}
+      {groups.map(group => (
+        <div key={group.id} className="nd-menu-group">
+          <div className="nd-menu-group-head">
+            <input
+              className="nd-input"
+              value={group.name}
+              maxLength={MENU_LIMITS.groupName}
+              placeholder={t('pages.header.groupName')}
+              aria-label={t('pages.header.groupName')}
+              onChange={event => update(group.id, { name: event.target.value })}
+            />
+            <button type="button" className="ndc-icon-button" onClick={() => onChange(groups.filter(candidate => candidate.id !== group.id))}
+              aria-label={t('pages.header.groupRemove')} title={t('pages.header.groupRemove')}>
+              <Trash2 size={13} />
+            </button>
+          </div>
+          <div className="nd-menu-group-pages" role="group" aria-label={group.name || t('pages.header.groupName')}>
+            {tabs.map(tab => (
+              <button key={tab.id} type="button" aria-pressed={group.pages.includes(tab.id)} className="nd-menu-group-page" onClick={() => toggle(group.id, tab.id)}>
+                {t(tab.name)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
   );
 }
 

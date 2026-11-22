@@ -91,7 +91,7 @@ export function WidgetLibraryModal({ target, onClose }: { target: LibraryTarget;
   );
   /** A widget allowed once can be picked once: a second one of its kind waits until the first is unpicked. */
   const blocked = (key: string, entry: WidgetCatalogEntry) => !isPicked(key) && (!!unavailable(entry)
-    || (entry.maxInstances !== undefined && picked.some(item => item.entry.type === entry.type)));
+    || ((entry.maxInstances !== undefined || entry.maxPerPage !== undefined) && picked.some(item => item.entry.type === entry.type)));
 
 
   const categoryEntry = WIDGET_CATALOG.find(entry => entry.type === 'service-category')!;

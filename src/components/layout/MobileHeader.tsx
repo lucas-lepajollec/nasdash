@@ -92,6 +92,7 @@ export function MobileHeader({ pageTabs }: {
           onToggleSecret={shell.toggleSensitive}
           username={user && !user.isAnonymous ? user.username : undefined}
           onLogout={() => logout()}
+          demo={config?.demoMode === true}
         />
       )}
     </header>

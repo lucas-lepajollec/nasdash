@@ -2496,7 +2496,15 @@ const en: Dictionary = {
   'pages.header.perRow': "Pages per line",
   'pages.header.perRowInfo': "The pages go to a new line after this many (the “Others” button counts as one). Auto: as many as the widget holds.",
   'pages.header.perRowAuto': "Auto",
-  'pages.header.styleShared': "The look is the same for every menu of the dashboard.",
+  'pages.header.ownSettings': "This menu only",
+  'pages.header.ownSettingsInfo': "Off, every menu of the dashboard shares these settings: a change here changes them all. On, this menu keeps its own.",
+  'pages.header.groups': "Sub-menus",
+  'pages.header.groupsInfo': "Gather pages under a name: the menu shows the name and unfolds them.",
+  'pages.header.groupAdd': "Add a sub-menu",
+  'pages.header.groupName': "Sub-menu name",
+  'pages.header.groupRemove': "Remove the sub-menu",
+  'pages.header.groupUntitled': "Sub-menu",
+  'Library': "Library",
 };
 
 const fr: Dictionary = {
@@ -4979,7 +4987,15 @@ const fr: Dictionary = {
   'pages.header.perRow': "Pages par ligne",
   'pages.header.perRowInfo': "Les pages passent à la ligne après ce nombre (le bouton « Autres » compte pour une). Auto : autant que le widget en contient.",
   'pages.header.perRowAuto': "Auto",
-  'pages.header.styleShared': "L’apparence est la même pour tous les menus du tableau de bord.",
+  'pages.header.ownSettings': "Ce menu uniquement",
+  'pages.header.ownSettingsInfo': "Désactivé, tous les menus du tableau de bord partagent ces réglages : un changement ici les change tous. Activé, ce menu garde les siens.",
+  'pages.header.groups': "Sous-menus",
+  'pages.header.groupsInfo': "Rassemblez des pages sous un nom : le menu affiche le nom et les déroule.",
+  'pages.header.groupAdd': "Ajouter un sous-menu",
+  'pages.header.groupName': "Nom du sous-menu",
+  'pages.header.groupRemove': "Supprimer le sous-menu",
+  'pages.header.groupUntitled': "Sous-menu",
+  'Library': "Bibliothèque",
 };
 
 const es: Dictionary = {
@@ -7462,7 +7478,15 @@ const es: Dictionary = {
   'pages.header.perRow': "Páginas por línea",
   'pages.header.perRowInfo': "Las páginas pasan a una nueva línea tras este número (el botón «Otras» cuenta como una). Auto: tantas como quepan en el widget.",
   'pages.header.perRowAuto': "Auto",
-  'pages.header.styleShared': "El aspecto es el mismo para todos los menús del panel.",
+  'pages.header.ownSettings': "Solo este menú",
+  'pages.header.ownSettingsInfo': "Desactivado, todos los menús del panel comparten estos ajustes: un cambio aquí los cambia todos. Activado, este menú conserva los suyos.",
+  'pages.header.groups': "Submenús",
+  'pages.header.groupsInfo': "Agrupe páginas bajo un nombre: el menú muestra el nombre y las despliega.",
+  'pages.header.groupAdd': "Añadir un submenú",
+  'pages.header.groupName': "Nombre del submenú",
+  'pages.header.groupRemove': "Quitar el submenú",
+  'pages.header.groupUntitled': "Submenú",
+  'Library': "Biblioteca",
 };
 
 const de: Dictionary = {
@@ -9945,7 +9969,15 @@ const de: Dictionary = {
   'pages.header.perRow': "Seiten pro Zeile",
   'pages.header.perRowInfo': "Nach dieser Anzahl beginnen die Seiten eine neue Zeile (die Schaltfläche „Weitere“ zählt als eine). Auto: so viele, wie das Widget fasst.",
   'pages.header.perRowAuto': "Auto",
-  'pages.header.styleShared': "Das Aussehen ist für alle Menüs des Dashboards gleich.",
+  'pages.header.ownSettings': "Nur dieses Menü",
+  'pages.header.ownSettingsInfo': "Aus: Alle Menüs des Dashboards teilen diese Einstellungen, eine Änderung hier ändert sie alle. An: Dieses Menü behält seine eigenen.",
+  'pages.header.groups': "Untermenüs",
+  'pages.header.groupsInfo': "Fassen Sie Seiten unter einem Namen zusammen: Das Menü zeigt den Namen und klappt sie auf.",
+  'pages.header.groupAdd': "Untermenü hinzufügen",
+  'pages.header.groupName': "Name des Untermenüs",
+  'pages.header.groupRemove': "Untermenü entfernen",
+  'pages.header.groupUntitled': "Untermenü",
+  'Library': "Bibliothek",
 };
 
 const it: Dictionary = {
@@ -12427,7 +12459,15 @@ const it: Dictionary = {
   'pages.header.perRow': "Pagine per riga",
   'pages.header.perRowInfo': "Dopo questo numero le pagine vanno a capo (il pulsante «Altre» conta come una). Auto: quante ne entrano nel widget.",
   'pages.header.perRowAuto': "Auto",
-  'pages.header.styleShared': "L’aspetto è lo stesso per tutti i menu della dashboard.",
+  'pages.header.ownSettings': "Solo questo menu",
+  'pages.header.ownSettingsInfo': "Disattivato, tutti i menu della dashboard condividono queste impostazioni: una modifica qui le cambia tutte. Attivato, questo menu mantiene le sue.",
+  'pages.header.groups': "Sottomenu",
+  'pages.header.groupsInfo': "Raggruppa pagine sotto un nome: il menu mostra il nome e le apre.",
+  'pages.header.groupAdd': "Aggiungi un sottomenu",
+  'pages.header.groupName': "Nome del sottomenu",
+  'pages.header.groupRemove': "Rimuovi il sottomenu",
+  'pages.header.groupUntitled': "Sottomenu",
+  'Library': "Libreria",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

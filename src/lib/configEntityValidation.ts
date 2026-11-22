@@ -1,4 +1,5 @@
 import { validateCalendarDates } from './calendarDates';
+import { MENU_LIMITS, MENU_STYLES } from './pages/menu';
 import {
   JsonObject,
   RequestValidationError,
@@ -143,6 +144,31 @@ function validateStringRecord(value: unknown, label: string, maxEntries: number,
     if (typeof entryValue !== 'string' || entryValue.length > maxValueLength) {
       throw new RequestValidationError(`Le champ « ${label} » contient une valeur invalide.`);
     }
+  }
+}
+
+/** The settings shared by every page menu widget (src/lib/pages/menu.ts). */
+function validatePageMenu(body: JsonObject): void {
+  const menu = readObject(body, 'pageMenu');
+  if (!menu) return;
+  readEnum(menu, 'style', MENU_STYLES);
+  readBoolean(menu, 'icons');
+  readEnum(menu, 'align', ['start', 'center', 'end'] as const);
+  for (const key of ['perRow', 'maxPages']) {
+    const value = menu[key];
+    if (value !== undefined && value !== null && (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 200)) {
+      throw new RequestValidationError(`Le champ « ${key} » contient une valeur invalide.`);
+    }
+  }
+  if (menu.groups === undefined || menu.groups === null) return;
+  if (!Array.isArray(menu.groups) || menu.groups.length > MENU_LIMITS.groups) {
+    throw new RequestValidationError('Le champ « groups » contient une valeur invalide.');
+  }
+  for (const entry of menu.groups) {
+    const group = requireObject(entry, 'groups');
+    assertSafeIdentifier(readString(group, 'id', { required: true, maxLength: 128 }) ?? '');
+    readString(group, 'name', { required: true, maxLength: MENU_LIMITS.groupName });
+    for (const page of readStringArray(group, 'pages', { maxItems: MENU_LIMITS.groupPages, maxItemLength: 128 }) ?? []) assertSafeIdentifier(page);
   }
 }
 
@@ -406,7 +432,6 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   }
   readEnum(body, 'dockPosition', ['left', 'right'] as const);
   readEnum(body, 'categoryTitlePosition', ['inside', 'above'] as const);
-  readEnum(body, 'menuStyle', ['tabs', 'pill', 'segmented', 'icons'] as const);
   readEnum(body, 'clockDesign', ['default', 'minimal', 'glow', 'split'] as const);
   readEnum(body, 'weatherWidgetStyle', ['default', 'currentOnly', 'minimal', 'extended'] as const);
   readEnum(body, 'dockerContainersStyle', ['standard', 'extended', 'minimalist', 'grid'] as const);
@@ -457,6 +482,7 @@ function validateSettingsPayload(body: JsonObject, allowProfiles = true): void {
   if (body.homeWidgets !== undefined) validateHomeWidgets(body.homeWidgets);
   if (body.networkTopology !== undefined) validateNetworkTopology(body.networkTopology);
   validateHeaderLayouts(body);
+  validatePageMenu(body);
 
   if (body.weatherLocation !== undefined) validateWeatherLocation(body.weatherLocation, false, 'weatherLocation');
   if (body.weatherLocations !== undefined) {

@@ -41,6 +41,12 @@ function assertInstanceLimits(document: PagesDocument, page: Page) {
       throw new RequestValidationError(`Le widget « ${type} » ne peut exister qu’une fois.`, 409);
     }
   }
+  for (const widget of page.widgets) {
+    const perPage = getWidgetCatalogEntry(widget.type)?.maxPerPage;
+    if (perPage !== undefined && page.widgets.filter(candidate => candidate.type === widget.type).length > perPage) {
+      throw new RequestValidationError(`Le widget « ${widget.type} » ne peut exister qu’une fois par page.`, 409);
+    }
+  }
 }
 
 async function handleGET(req: NextRequest) {

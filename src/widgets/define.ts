@@ -28,6 +28,8 @@ export interface WidgetDefinition {
   sizes: { formats: readonly number[]; default: number; minPx: number; h: number };
   /** Maximum instances across all pages (e.g. the editable topology). */
   maxInstances?: number;
+  /** At most this many on one page (the page buttons: one per page). */
+  maxPerPage?: number;
   /**
    * Visibility for non-admin users: a historical per-user widget permission,
    * a page read requirement, or `null` for anyone who can open the page.
