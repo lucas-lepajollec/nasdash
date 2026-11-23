@@ -3602,21 +3602,22 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .nd-mobile-order { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding-bottom: 120px; }
 .nd-mobile-order-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .nd-mobile-order-title { display: inline-flex; align-items: center; gap: 2px; min-width: 0; white-space: nowrap; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-muted); }
-.nd-mobile-order-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ndc-surface-line, var(--nd-card-border)); border-radius: 8px; background: var(--ndc-surface, var(--nd-card-bg)); overflow: hidden; }
-.nd-mobile-order-row { display: flex; align-items: center; gap: 6px; min-height: 52px; padding: 4px 4px 4px 0; background: var(--ndc-surface, var(--nd-card-bg)); touch-action: manipulation; }
-.nd-mobile-order-row + .nd-mobile-order-row { border-top: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
-.nd-mobile-order-row.is-dragging { position: relative; z-index: 2; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); border-radius: 8px; }
-.nd-mobile-order-row.is-hidden .nd-mobile-order-icon, .nd-mobile-order-row.is-hidden .nd-mobile-order-name > span:first-child { opacity: 0.45; }
-.nd-mobile-order-handle { all: unset; display: grid; place-items: center; width: 32px; height: 44px; color: var(--nd-text-dimmed); cursor: grab; touch-action: none; flex-shrink: 0; }
-.nd-mobile-order-handle:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: -2px; border-radius: 6px; }
-.nd-mobile-order-pos { width: 18px; font-size: 0.66rem; color: var(--nd-text-dimmed); text-align: right; flex-shrink: 0; }
-.nd-mobile-order-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 6px; background: var(--nd-icon-bg); flex-shrink: 0; font-size: 0.9rem; }
-.nd-mobile-order-name { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; font-size: 0.8rem; color: var(--nd-text); }
+.nd-mobile-order-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--ndc-surface-line, var(--nd-card-border)); border-radius: var(--nd-card-radius); background: var(--ndc-surface, var(--nd-card-bg)); overflow: hidden; }
+body[data-blur="on"] .nd-mobile-order-list { -webkit-backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); }
+body[data-outlines="off"] .nd-mobile-order-list { border-color: transparent; }
+/* A phone's own reorder list: icon and name, then the eye, then the handle. */
+.nd-mobile-order-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 4px 0 14px; background: var(--ndc-surface, var(--nd-card-bg)); touch-action: pan-y; }
+.nd-mobile-order-row + .nd-mobile-order-row { border-top: 1px solid color-mix(in srgb, var(--nd-text) 7%, transparent); }
+.nd-mobile-order-row.is-dragging { position: relative; z-index: 2; border-radius: var(--nd-nested-radius); background: color-mix(in srgb, var(--nd-text) 6%, var(--nd-bg-surface)); }
+.nd-mobile-order-row.is-hidden .nd-mobile-order-icon, .nd-mobile-order-row.is-hidden .nd-mobile-order-name > span:first-child { opacity: 0.4; }
+.nd-mobile-order-handle { all: unset; display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; color: var(--nd-text-dimmed); cursor: grab; touch-action: none; }
+.nd-mobile-order-handle:focus-visible, .nd-mobile-order-eye:focus-visible { outline: 2px solid var(--nd-accent); outline-offset: -4px; border-radius: 10px; }
+.nd-mobile-order-eye { all: unset; display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; color: var(--nd-text-muted); cursor: pointer; }
+.nd-mobile-order-eye.is-off { color: var(--nd-text-dimmed); }
+.nd-mobile-order-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: min(var(--nd-field-radius), 9px); background: var(--nd-icon-bg); flex-shrink: 0; font-size: 1rem; }
+.nd-mobile-order-name { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; font-size: 0.92rem; color: var(--nd-text); }
 .nd-mobile-order-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nd-mobile-order-state { font-size: 0.62rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.nd-mobile-order-actions { display: inline-flex; gap: 0; flex-shrink: 0; }
-.nd-mobile-order-actions .ndc-icon-button { width: 34px; height: 36px; }
-.nd-mobile-order-actions .ndc-icon-button:disabled { opacity: 0.25; }
+.nd-mobile-order-state { font-size: 0.72rem; color: var(--nd-text-dimmed); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ======================================================================
    Phones: settings take the whole screen, dialogs rise from the bottom as
@@ -3690,7 +3691,15 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 }
 .nd-page-grid > .grid-stack-item.nd-page-item--mobile-dimmed .nd-page-widget > :not(.nd-page-widget-actions) { opacity: 0.4; }
 .nd-page-grid--compact-editing .nd-page-widget-actions { opacity: 1 !important; visibility: visible !important; }
-.nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { width: 32px; height: 32px; }
+.nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { width: 34px; height: 34px; }
+/* Phones and tablets: a widget's tools are separate buttons on the widgets'
+   surface (following Appearance), not a dark box. */
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions { gap: 6px; padding: 0; background: transparent; border: none; }
+body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon {
+  border-radius: var(--nd-field-radius); background: var(--ndc-surface); border: 1px solid var(--ndc-surface-line);
+}
+body[data-blur="on"][data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { -webkit-backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); }
+body[data-outlines="off"][data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { border-color: transparent; }
 /* Phones and tablets (controls always shown): on the title's line, against
    the right edge, with the title's note just before them, while the line
    holds them all (measured in WidgetFrame); otherwise on their own line

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowDown, ArrowUp, ChevronsUp, Eye, EyeOff, GripVertical, RotateCcw } from 'lucide-react';
+import { Eye, EyeOff, GripHorizontal, RotateCcw } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -15,9 +15,9 @@ import { Emoji } from '@/components/shared/Emoji';
 
 /**
  * Edit mode on phones and tablets: the widgets of the page as a list, in
- * their phone order. Each one moves with its handle (dragged within the
- * list) or its arrows, and can be hidden on phones and tablets. The desktop
- * layout is never touched.
+ * their phone order, like a phone's own reorder lists: each one moves with
+ * the handle on its right (dragged, or Space then the arrow keys), and its
+ * eye hides it on phones and tablets. The desktop layout is never touched.
  */
 export function MobileOrderEditor({ page, edit, nameOf }: {
   page: Page;
@@ -65,12 +65,7 @@ export function MobileOrderEditor({ page, edit, nameOf }: {
                 widget={widget}
                 name={nameOf(widget)}
                 position={index + 1}
-                first={index === 0}
-                last={index === widgets.length - 1}
                 hidden={isHiddenOnMobile(page, widget.id)}
-                onUp={() => move(widget.id, index - 1)}
-                onDown={() => move(widget.id, index + 1)}
-                onTop={() => move(widget.id, 0)}
                 onToggle={() => edit(current => setHiddenOnMobile(current, widget.id, !isHiddenOnMobile(current, widget.id)))}
               />
             ))}
@@ -81,16 +76,11 @@ export function MobileOrderEditor({ page, edit, nameOf }: {
   );
 }
 
-function Row({ widget, name, position, first, last, hidden, onUp, onDown, onTop, onToggle }: {
+function Row({ widget, name, position, hidden, onToggle }: {
   widget: WidgetInstance;
   name: string;
   position: number;
-  first: boolean;
-  last: boolean;
   hidden: boolean;
-  onUp: () => void;
-  onDown: () => void;
-  onTop: () => void;
   onToggle: () => void;
 }) {
   const { t } = useI18n();
@@ -104,22 +94,17 @@ function Row({ widget, name, position, first, last, hidden, onUp, onDown, onTop,
       style={{ transform: CSS.Transform.toString(transform), transition }}
       aria-label={t('pages.mobile.position', { position, name })}
     >
-      <button type="button" className="nd-mobile-order-handle" {...attributes} {...listeners} aria-label={label('pages.mobile.drag')}>
-        <GripVertical size={15} />
-      </button>
       <span className="nd-mobile-order-icon" aria-hidden="true"><Emoji emoji={entry?.icon ?? '🧩'} /></span>
       <span className="nd-mobile-order-name">
         <span title={name}>{name}</span>
         {hidden && <span className="nd-mobile-order-state">{t('pages.mobile.hidden')}</span>}
       </span>
-      <span className="nd-mobile-order-actions">
-        {!first && <button type="button" className="ndc-icon-button" onClick={onTop} aria-label={label('pages.mobile.top')} title={t('pages.mobile.top')}><ChevronsUp size={15} /></button>}
-        <button type="button" className="ndc-icon-button" onClick={onUp} disabled={first} aria-label={label('pages.mobile.up')}><ArrowUp size={15} /></button>
-        <button type="button" className="ndc-icon-button" onClick={onDown} disabled={last} aria-label={label('pages.mobile.down')}><ArrowDown size={15} /></button>
-        <button type="button" className="ndc-icon-button" onClick={onToggle} aria-pressed={hidden} aria-label={label(hidden ? 'pages.mobile.show' : 'pages.mobile.hide')} title={t(hidden ? 'pages.mobile.show' : 'pages.mobile.hide')}>
-          {hidden ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
-      </span>
+      <button type="button" className={`nd-mobile-order-eye ${hidden ? 'is-off' : ''}`} onClick={onToggle} aria-pressed={hidden} aria-label={label(hidden ? 'pages.mobile.show' : 'pages.mobile.hide')} title={t(hidden ? 'pages.mobile.show' : 'pages.mobile.hide')}>
+        {hidden ? <EyeOff size={17} /> : <Eye size={17} />}
+      </button>
+      <button type="button" className="nd-mobile-order-handle" {...attributes} {...listeners} aria-label={label('pages.mobile.drag')}>
+        <GripHorizontal size={18} />
+      </button>
     </li>
   );
 }
