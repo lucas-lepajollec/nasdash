@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- macOS: rows of long dialogs (settings pages such as Integrations and Widgets) could still vanish and come back while scrolling. Dialogs are their own stacking context, their scrolling areas get their own layer, and the settings no longer make the browser re-blur the page behind them.
+
 ## [0.4.0] - 2026-11-23
 
 ### Upgrading from 0.3.10
