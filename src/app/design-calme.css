@@ -2280,6 +2280,19 @@ body[data-design="calme"] .nd-modal-overlay {
 body[data-design="calme"] .nd-modal-overlay { --nd-overlay-blur: blur(2px); }
 .light .nd-modal-overlay { --nd-overlay-blur: blur(12px) !important; }
 
+/* macOS (Retina, WebKit): rows of a long dialog still vanished and came back
+   while it scrolled. The dialog is a rounded box clipping its content, which
+   WebKit composites badly unless it is its own stacking context; its
+   scrolling area gets its own layer up front; and the settings, which cover
+   the page anyway, no longer make the browser re-blur the whole page behind
+   them (on a Retina screen that blur is four times the work). */
+.nd-modal, .nd-settings-modal { isolation: isolate; }
+.nd-modal, .nd-settings-content, .ndc-settings-nav-groups { will-change: scroll-position; }
+.nd-modal-overlay:has(> .nd-settings-modal)::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 body[data-blur="on"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
