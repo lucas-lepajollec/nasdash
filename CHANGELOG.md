@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-23
+
 ### Upgrading from 0.3.10
 
 - Pull and recreate NasDash with the same data mount. On first start, the header becomes widgets on every page: the search, the page menu and the buttons are placed where your header showed them, and the rest of each page moves down by the header's height, so your pages look the same. The previous pages file is kept as `pages.v5.json` next to `pages.json`. Roll back by recreating the recorded `0.3.10` image and putting `pages.v5.json` back as `pages.json`.
@@ -711,7 +713,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.10...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.10...v0.4.0
 [0.3.10]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.7...v0.3.8
