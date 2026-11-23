@@ -252,12 +252,10 @@ async function closeSettings(page) {
 async function startFreshInstall() {
   const freshPort = port + 1;
   const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'nasdash-capture-fresh-'));
-  // Seed only this throwaway installation, without reading the checkout's runtime data.
-  await fs.writeFile(path.join(dataDirectory, 'config.json'), JSON.stringify({
-    version: 1,
-    settings: { setupPending: true, securityMode: 'private', title: 'NasDash', theme: 'nasdash', mode: 'dark', uiLanguage: 'en', hideDock: true },
-    devices: [], categories: [], localEvents: [],
-  }));
+  // The tracked examples only (`*.example.json`), as a new installation starts.
+  for (const entry of await fs.readdir(path.join(projectDirectory, 'data'))) {
+    if (entry.endsWith('.example.json')) await fs.copyFile(path.join(projectDirectory, 'data', entry), path.join(dataDirectory, entry));
+  }
   let log = '';
   const child = spawn(process.execPath, [nextEntryPoint, 'dev', '-H', '127.0.0.1', '-p', String(freshPort)], {
     cwd: projectDirectory,

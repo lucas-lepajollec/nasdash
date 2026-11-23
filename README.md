@@ -22,7 +22,7 @@
 
 NasDash brings services, machines, Docker, the network, media, downloads, music and photos into one calm, self-hosted dashboard. Each page is a free grid with 61 selectable widget types (64 registered), from service categories and machine telemetry to Jellyfin, the *arr apps, DNS blocking, VPN and UPS.
 
-In 0.4.0, Search, Page menu and Buttons are widgets placed on each page. Move and resize them in edit mode; the dashboard title is no longer displayed and Header settings have been removed. Page menus share four styles (tabs, capsule, segmented and icons), alignment, pages per line, an “Others” limit and sub-menus, with an optional override for one menu. Search looks through every widget on the page, and each widget can show or hide its own title.
+The page header is made of widgets too: Search, Page menu and Buttons sit on each page, moved and resized in edit mode like the others. Page menus share four styles (tabs, capsule, segmented and icons), alignment, pages per line, an “Others” limit and sub-menus, with an optional override for one menu. Search looks through every widget on the page, and each widget can show or hide its own title.
 
 Configuration stays on your own server in a persistent Docker volume or bind-mounted directory. A new installation starts private, asks for a setup code printed in the container log, and walks you through a short guide. Integrations are optional: the dashboard remains useful as a service cockpit while deeper infrastructure capabilities can be enabled deliberately.
 
