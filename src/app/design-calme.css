@@ -2252,10 +2252,33 @@ body[data-outlines="off"] .ndc-theme[aria-checked="true"] .ndc-theme-mini { bord
 
 /* Blur what is behind translucent surfaces (visible with a wallpaper and a
    card opacity below 100 %). */
-body[data-blur="on"] :is(.ndc-box, .nd-card, .nd-sidebar-card, .nd-modal, .nd-settings-modal) {
+body[data-blur="on"] :is(.ndc-box, .nd-card, .nd-sidebar-card) {
   -webkit-backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%) !important;
   backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%) !important;
 }
+
+/* Dialogs scroll inside themselves, and Chrome drops parts of a scrolled
+   subtree under a backdrop-filter (long settings pages: rows vanished and
+   came back while scrolling). So no dialog blurs its own backdrop (their
+   surface is opaque, the blur never showed), and the overlay's blur sits on
+   a layer behind the dialog rather than on its ancestor. */
+.nd-modal-overlay,
+.light .nd-modal-overlay,
+body[data-design="calme"] .nd-modal-overlay {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.nd-modal-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-backdrop-filter: var(--nd-overlay-blur, blur(6px));
+  backdrop-filter: var(--nd-overlay-blur, blur(6px));
+}
+body[data-design="calme"] .nd-modal-overlay { --nd-overlay-blur: blur(2px); }
+.light .nd-modal-overlay { --nd-overlay-blur: blur(12px) !important; }
 
 body[data-blur="on"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card .nd-sidebar-card) {
   -webkit-backdrop-filter: none !important;

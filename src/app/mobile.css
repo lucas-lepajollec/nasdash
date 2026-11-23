@@ -155,6 +155,25 @@
   background: rgba(255, 255, 255, 0.78);
 }
 
+/* Its page list scrolls inside it: the blur goes on a layer behind the
+   content, as Chrome drops parts of a scrolled subtree under a
+   backdrop-filter (see the dialogs in design-calme.css). */
+.nd-sheet.nd-glass {
+  isolation: isolate;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.nd-sheet.nd-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
 @keyframes nd-sheet-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -556,15 +575,17 @@ body[data-soft-edges="on"][data-design="calme"] .nd-mhead .nd-search input {
     border: none !important;
     border-radius: 0 !important;
   }
+  /* The side margins sit inside the scrolling list, so its scroll bar runs
+     along the screen's edge instead of over the rows. */
   .ndc-settings .ndc-settings-nav {
-    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 0 0 !important;
     gap: 4px !important;
   }
-  .ndc-settings-nav-top { gap: 8px; }
+  .ndc-settings-nav-top { gap: 8px; padding: 0 16px; }
   .ndc-settings .ndc-settings-search { height: 44px; border-radius: var(--nd-phone-control-radius); }
   .ndc-settings .ndc-settings-search input { font-size: 16px; }
   .ndc-settings :is(.nd-settings-sidebar-close-btn, .ndc-settings-close) { width: 44px; height: 44px; }
-  .ndc-settings-nav-groups { margin: 0; padding: 0; }
+  .ndc-settings .ndc-settings-nav-groups { margin: 0; padding: 0 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
   .ndc-settings-nav-label { margin: 22px 4px 8px; padding: 0; font-size: 0.7rem; }
   .ndc-settings .ndc-settings-nav-item,
   .ndc-settings .ndc-settings-nav-item.is-active {
