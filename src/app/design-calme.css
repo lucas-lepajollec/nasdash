@@ -2598,8 +2598,8 @@ body[data-design="calme"] .nd-container-card:hover { background: color-mix(in sr
 body[data-design="calme"] .nd-docker-tabs { background: var(--ndc-surface); border: 1px solid var(--ndc-surface-line); padding: 3px; }
 body[data-design="calme"] .nd-docker-tab--active { background: color-mix(in srgb, var(--nd-text) 7%, transparent); }
 
-/* Header controls: the same surface as the widgets. */
-body[data-design="calme"] .nd-header :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-search input),
+/* Header controls (the header widgets too): the same surface as the widgets. */
+body[data-design="calme"] :is(.nd-header, .nd-hw) :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-search input, .nd-hw-user, .nd-hw-menu--segmented .nd-header-menu),
 body[data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
   background: var(--ndc-surface) !important;
   border-color: var(--ndc-surface-line) !important;
@@ -2616,7 +2616,7 @@ body[data-design="calme"] .nd-page-editor-bar {
 
 /* Blur: every surface (header controls and edit bar included). */
 body[data-blur="on"][data-design="calme"] :is(.nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-container-card, .nd-page-editor-bar, .nd-docker-tabs),
-body[data-blur="on"][data-design="calme"] .nd-header :is(.nd-btn, .nd-search input),
+body[data-blur="on"][data-design="calme"] :is(.nd-header, .nd-hw) :is(.nd-btn, .nd-search input, .nd-hw-user, .nd-hw-menu--segmented .nd-header-menu),
 body[data-blur="on"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
   -webkit-backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%) !important;
   backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%) !important;
@@ -2624,7 +2624,7 @@ body[data-blur="on"][data-design="calme"] .nd-header .nd-header-actions div[styl
 
 /* No outlines: everywhere, header controls and edit bar included. */
 body[data-outlines="off"] :is(.nd-docker-detail, .nd-terminal, .nd-topology-canvas, .nd-container-card, .nd-page-editor-bar, .nd-docker-tabs, .nd-page-editor-alert, .ndc-dialog),
-body[data-outlines="off"] .nd-header :is(.nd-btn, .nd-search input),
+body[data-outlines="off"] :is(.nd-header, .nd-hw) :is(.nd-btn, .nd-search input, .nd-hw-user, .nd-hw-menu--segmented .nd-header-menu),
 body[data-outlines="off"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
   border-color: transparent !important;
 }
@@ -3006,7 +3006,7 @@ body[data-soft-edges="on"] .nd-page-widget .nd-sidebar-card:not(.nd-sidebar-card
 }
 
 /* Header controls: the same fade, half as wide (they are small). */
-body[data-soft-edges="on"][data-design="calme"] .nd-header :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-search input),
+body[data-soft-edges="on"][data-design="calme"] :is(.nd-header, .nd-hw) :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-search input, .nd-hw-user, .nd-hw-menu--segmented .nd-header-menu),
 body[data-soft-edges="on"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
   border-color: transparent !important;
   box-shadow: 0 0 calc(var(--nd-soft-edge) * 0.5) calc(var(--nd-soft-edge) * 0.2) var(--ndc-surface) !important;
@@ -3396,7 +3396,7 @@ body[data-design="calme"] .nd-terminal { color: var(--nd-text); }
 body[data-design="calme"] .nd-docker-stat-label { color: var(--nd-text-muted); }
 
 /* Header controls follow the corner setting like the cards (6 px by default). */
-body[data-design="calme"] .nd-header :is(.nd-btn, .nd-search input) {
+body[data-design="calme"] :is(.nd-header, .nd-hw) :is(.nd-btn, .nd-search input, .nd-hw-user, .nd-hw-menu--segmented .nd-header-menu) {
   border-radius: var(--nd-field-radius) !important;
 }
 
@@ -3447,7 +3447,7 @@ body[data-design="calme"] .nd-modal .nd-input,
 
 /* No outlines, header too: as specific as the header surface rule above
    (its :not() chain otherwise wins and keeps the border). */
-body[data-outlines="off"][data-design="calme"] .nd-header :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-btn, .nd-search input),
+body[data-outlines="off"][data-design="calme"] :is(.nd-header, .nd-hw) :is(.nd-btn:not(.nd-btn-active):not(.nd-btn-accent), .nd-btn, .nd-search input, .nd-hw-user, .nd-hw-menu--segmented .nd-header-menu),
 body[data-outlines="off"][data-design="calme"] .nd-header .nd-header-actions div[style*="backdrop-filter"] {
   border-color: transparent !important;
 }
@@ -3946,6 +3946,8 @@ body[data-design="calme"][data-blur="on"].light {
 .nd-hw--end { justify-content: flex-end; }
 .nd-hw-search { position: relative; flex: 1; max-width: none; min-width: 0; }
 .nd-hw-search input::-webkit-search-cancel-button { display: none; }
+/* Above the field, whose blurred surface would otherwise cover them. */
+.nd-hw-search :is(.nd-search-icon, .nd-hw-search-clear) { z-index: 1; }
 .nd-hw-search-clear {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   display: inline-flex; padding: 2px; border: none; background: none; color: var(--nd-text-dimmed); cursor: pointer;
@@ -3973,6 +3975,8 @@ body[data-design="calme"] .nd-hw .nd-btn { border-radius: var(--nd-field-radius)
 }
 .nd-hw-user svg { color: var(--nd-accent); flex-shrink: 0; }
 .nd-hw-user-name { min-width: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Too narrow for the whole name: the icon alone (the name stays measured, see useShortName). */
+.nd-hw-user.is-short .nd-hw-user-name { flex: 0 0 0; width: 0; margin-left: -6px; }
 .nd-hw-logout, .nd-hw-login { min-width: 0; padding: 6px; justify-content: center; text-decoration: none; }
 
 /* Edit mode: the eye next to a title shows or hides it outside edit mode, for that widget. */
@@ -4053,7 +4057,7 @@ body[data-design="calme"] .nd-hw-menu--segmented .nd-header-menu {
 }
 .nd-hw-menu--segmented .nd-header-tab-link { margin: 0; padding: 6px 14px; border-bottom: none; border-radius: max(2px, calc(var(--nd-field-radius) - 3px)); transition: background 0.15s ease, color 0.15s ease; }
 .nd-hw-menu--segmented .nd-header-tab-link:hover { color: var(--nd-text); }
-.nd-hw-menu--segmented .nd-header-tab-link.is-active { color: var(--nd-text); background: color-mix(in srgb, var(--nd-text) 11%, transparent); }
+.nd-hw-menu--segmented .nd-header-tab-link.is-active { color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 16%, transparent); }
 
 /* Icons: each page an icon over its name, like a dock. */
 body[data-design="calme"] .nd-hw-menu--icons .nd-header-menu { gap: 4px !important; }

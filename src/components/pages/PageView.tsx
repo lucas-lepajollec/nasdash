@@ -403,18 +403,20 @@ function PageGrid({ page, widgets, editMode, edit, onRevealed, ...props }: PageG
 
   // Widgets that fit their content take just the columns it needs at this
   // screen width, on the side they are aligned to; never more than stored.
-  // A page menu beside them takes the columns they leave.
+  // A page menu beside them takes the columns they leave, except in edit
+  // mode, where widths are the ones resized and saved.
   const fitted = useMemo(() => {
     const column = gridWidth / GRID_COLUMNS;
     if (!column) return widgets;
-    return growMenusIntoFreedColumns(widgets, widgets.map(widget => {
+    const shown = widgets.map(widget => {
       const px = fitPx[widget.id];
       if (!px) return widget;
       const w = Math.max(1, Math.ceil((px + GRID_MARGIN * 2) / column));
       if (w >= widget.w) return widget;
       return { ...widget, w, x: widget.x + fitShift(widget, widget.w - w) };
-    }));
-  }, [fitPx, gridWidth, widgets]);
+    });
+    return editMode ? shown : growMenusIntoFreedColumns(widgets, shown);
+  }, [editMode, fitPx, gridWidth, widgets]);
   const fittedRef = useRef(fitted);
   useEffect(() => { fittedRef.current = fitted; }, [fitted]);
   // What is saved keeps the stored width of those widgets, at the place shown.
@@ -429,8 +431,16 @@ function PageGrid({ page, widgets, editMode, edit, onRevealed, ...props }: PageG
         return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, placement.x + widget.x - was.x)) };
       }
       if (!widget || was?.w === widget.w || placement.w >= widget.w) return placement;
-      const x = placement.x - fitShift(widget, widget.w - placement.w);
-      return { ...placement, w: widget.w, x: Math.max(0, Math.min(GRID_COLUMNS - widget.w, x)) };
+      const x = Math.max(0, Math.min(GRID_COLUMNS - widget.w, placement.x - fitShift(widget, widget.w - placement.w)));
+      // Its stored width never takes columns a neighbour now uses (a menu
+      // widened into the room the buttons left): it gives up what it must.
+      let left = x, right = x + widget.w;
+      for (const other of placements) {
+        if (other.id === placement.id || other.y >= placement.y + placement.h || placement.y >= other.y + other.h) continue;
+        if (other.x + other.w <= placement.x) left = Math.max(left, other.x + other.w);
+        else if (other.x >= placement.x + placement.w) right = Math.min(right, other.x);
+      }
+      return { ...placement, x: left, w: right - left };
     });
   }, []);
   useEffect(() => { unfitRef.current = unfit; }, [unfit]);

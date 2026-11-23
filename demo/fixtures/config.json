@@ -6,17 +6,17 @@
       { "id": "feed-selfhost", "url": "https://selfhost.example/rss", "title": "Self-host Weekly" }
     ],
     "bookmarks": [
-      { "id": "bookmark-homelab", "kind": "folder", "title": "Homelab", "icon": "lucide:Server", "color": "#38bdf8" },
-      { "id": "bookmark-atlas", "kind": "link", "title": "Atlas NAS", "url": "https://atlas.demo.invalid", "parentId": "bookmark-homelab", "description": "Storage and backups" },
-      { "id": "bookmark-status", "kind": "link", "title": "Lab status", "url": "https://status.demo.invalid", "parentId": "bookmark-homelab" },
-      { "id": "bookmark-photos", "kind": "link", "title": "Photo library", "url": "https://photos.demo.invalid", "parentId": "bookmark-homelab" },
-      { "id": "bookmark-dev", "kind": "folder", "title": "Dev", "icon": "lucide:Code", "color": "#a78bfa" },
-      { "id": "bookmark-forge", "kind": "link", "title": "Code forge", "url": "https://forge.example", "parentId": "bookmark-dev" },
-      { "id": "bookmark-builds", "kind": "link", "title": "Build dashboard", "url": "https://builds.example", "parentId": "bookmark-dev" },
-      { "id": "bookmark-docs", "kind": "folder", "title": "Docs", "parentId": "bookmark-dev", "icon": "lucide:BookOpen", "color": "#34d399" },
-      { "id": "bookmark-handbook", "kind": "link", "title": "Team handbook", "url": "https://handbook.example", "parentId": "bookmark-docs" },
-      { "id": "bookmark-api", "kind": "link", "title": "API reference", "url": "https://api.example/docs", "parentId": "bookmark-docs" },
-      { "id": "bookmark-gazette", "kind": "link", "title": "Homelab Gazette", "url": "https://news.example" }
+      {"id": "bookmark-knowledge", "kind": "folder", "title": "Knowledge", "icon": "lucide:BookOpen", "color": "#38bdf8"},
+      {"id": "bookmark-archive", "kind": "link", "title": "Internet Archive", "url": "https://archive.org", "parentId": "bookmark-knowledge", "description": "Books, films and the Wayback Machine"},
+      {"id": "bookmark-osm", "kind": "link", "title": "OpenStreetMap", "url": "https://www.openstreetmap.org", "parentId": "bookmark-knowledge", "description": "The map made by its users"},
+      {"id": "bookmark-open-source", "kind": "folder", "title": "Open source", "icon": "lucide:Code", "color": "#a78bfa"},
+      {"id": "bookmark-debian", "kind": "link", "title": "Debian", "url": "https://www.debian.org", "parentId": "bookmark-open-source", "description": "The universal operating system"},
+      {"id": "bookmark-kde", "kind": "link", "title": "KDE", "url": "https://kde.org", "parentId": "bookmark-open-source"},
+      {"id": "bookmark-fdroid", "kind": "link", "title": "F-Droid", "url": "https://f-droid.org", "parentId": "bookmark-open-source", "description": "Free apps for Android"},
+      {"id": "bookmark-open-web", "kind": "folder", "title": "Open web", "parentId": "bookmark-open-source", "icon": "lucide:Globe", "color": "#34d399"},
+      {"id": "bookmark-mozilla", "kind": "link", "title": "Mozilla", "url": "https://www.mozilla.org", "parentId": "bookmark-open-web"},
+      {"id": "bookmark-eff", "kind": "link", "title": "EFF", "url": "https://www.eff.org", "parentId": "bookmark-open-web", "description": "Defending digital freedom"},
+      {"id": "bookmark-wikipedia", "kind": "link", "title": "Wikipedia", "url": "https://en.wikipedia.org"}
     ],
     "marketSymbols": [
       { "id": "symbol-demo", "symbol": "DEMO" },

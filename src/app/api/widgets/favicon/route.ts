@@ -3,6 +3,7 @@ import { resolveWidgetSettings } from '@/lib/widgetData/resolve';
 import { httpUrl } from '@/lib/widgetData/outbound';
 import { loadFavicon } from '@/lib/widgetData/favicon';
 import { isDemoMode } from '@/lib/demoMode';
+import { demoSiteIcon } from '@/lib/demo/siteIcons';
 import { resolveAccessPrincipal } from '@/lib/access';
 import { readConfig } from '@/lib/config';
 import { widgetFeeds } from '@/lib/widgetData/sources';
@@ -18,7 +19,14 @@ export async function GET(request: NextRequest) {
   const library = type === 'bookmarks' && resolveAccessPrincipal(request)?.role === 'admin';
   const resolved = library ? null : resolveWidgetSettings(request, params.get('widgetId'), type, undefined);
   if (resolved && !resolved.ok) return NextResponse.json({ error: resolved.error }, { status: resolved.status, headers });
-  if (isDemoMode()) return new NextResponse(null, { status: 404, headers });
+  if (isDemoMode()) {
+    // The demo's bookmarks are real sites whose icons ship with it (relative
+    // address: the demo may sit behind any host).
+    const bundled = demoSiteIcon(params.get('url'));
+    return bundled
+      ? new NextResponse(null, { status: 307, headers: { ...headers, Location: bundled } })
+      : new NextResponse(null, { status: 404, headers });
+  }
   let requested: string;
   try { requested = httpUrl(params.get('url') ?? '').origin; }
   catch { return NextResponse.json({ error: 'widgets.error.parse' }, { status: 400, headers }); }
