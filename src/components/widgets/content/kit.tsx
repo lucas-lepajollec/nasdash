@@ -244,9 +244,11 @@ export function useBoxWidth<T extends HTMLElement>(): [React.RefObject<T | null>
  * staying empty. (A CSS `auto-fill, 1fr` grid keeps adding empty columns, so its
  * items shrink and grow again with every column gained.)
  */
-export function stableColumns(width: number, count: number, min: number, max: number, gap: number): string | undefined {
+export function stableColumns(width: number, count: number, min: number, max: number, gap: number, fill = false): string | undefined {
   if (!width || count < 1) return undefined;
   const columns = Math.max(1, Math.floor((width + gap) / (min + gap)));
+  // `fill` (phones, where a widget spans the screen): a short line still spans it.
+  if (columns >= count && fill) return `repeat(${count}, minmax(0, 1fr))`;
   if (columns >= count) return `repeat(${count}, ${Math.floor(Math.min(max, (width - (count - 1) * gap) / count) * 10) / 10}px)`;
   return `repeat(${columns}, minmax(0, 1fr))`;
 }

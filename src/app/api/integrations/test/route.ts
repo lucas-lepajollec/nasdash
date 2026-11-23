@@ -34,6 +34,7 @@ import { piwigoRequest } from '@/integrations/piwigo/collect';
 import { librephotosRequest } from '@/integrations/librephotos/collect';
 import { photoprismHeaders } from '@/integrations/photoprism/collect';
 import { boundedJson, ServiceError, serviceFailure, serviceJson } from '@/lib/widgetData/services';
+import { serviceFieldShown } from '@/integrations/types';
 import { customApiRequest } from '@/lib/widgetData/customApi';
 import { CUSTOM_API_TYPES, DNS_TYPES, PHOTO_STATS_TYPES, MUSIC_SERVER_TYPES, ARR_TYPES, DOWNLOAD_CLIENT_TYPES, UPS_TYPES, VPN_TUNNEL_TYPES } from '@/lib/widgetData/contracts';
 
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
       } else if (settingsInput && field.id in settingsInput) settings[field.id] = text(settingsInput[field.id]);
     }
     if (reusesSecretElsewhere(sameType, settings, fresh)) return NextResponse.json({ ok: false, message: 'integrations.secretRequired' });
-    if (service.fields.some(field => field.required && !(field.kind === 'secret' ? secrets[field.id] : settings[field.id]))) return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
+    // Only the fields of the chosen mode are required (qBittorrent: a login or an API key, not both).
+    if (service.fields.some(field => field.required && serviceFieldShown(field, settings) && !(field.kind === 'secret' ? secrets[field.id] : settings[field.id]))) return NextResponse.json({ ok: false, message: 'integrations.error.invalidRequest' }, { status: 400 });
     const instance: IntegrationInstance = { id: sameType?.id ?? 'draft', type, name: sameType?.name ?? service.name, settings, secrets };
     try {
       // Kit integrations read what their widget needs (`kitServer.ts`).

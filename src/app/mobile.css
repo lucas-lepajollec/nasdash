@@ -646,3 +646,13 @@ body[data-soft-edges="on"][data-design="calme"] .nd-mhead .nd-search input {
   .ndc-settings .ndc-swatch { width: 34px; height: 34px; }
   .ndc-settings .ndc-switch-button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: flex-end; }
 }
+
+/* Phones and tablets: logo-only service tiles are square and as wide as
+   their column (CategoryCard fills the line), so the logos span the line
+   instead of sitting small in wide columns. */
+@media (max-width: 960px) {
+  body[data-design="calme"] :is(.nd-service--bento-logo-large, .nd-service--bento-logo-medium, .nd-service--bento-logo-small) {
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+}

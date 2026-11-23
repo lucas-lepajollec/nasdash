@@ -1,11 +1,20 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import type { TabDef, TabId } from '@/hooks/useTabs';
 import { useI18n } from '@/i18n/I18nProvider';
 
 /** Screens where the header becomes the phone header: large page title, search and menu buttons. */
 export const MOBILE_QUERY = '(max-width: 960px)';
+
+/** Whether the screen is a phone or tablet one (MOBILE_QUERY), following resizes. */
+export function useMobileLayout(): boolean {
+  return useSyncExternalStore(
+    change => { const media = window.matchMedia(MOBILE_QUERY); media.addEventListener('change', change); return () => media.removeEventListener('change', change); },
+    () => window.matchMedia(MOBILE_QUERY).matches,
+    () => false,
+  );
+}
 
 /** Touches this close to a screen edge belong to the system (Safari's back gesture). */
 const EDGE = 24;
