@@ -49,6 +49,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.
 - Resizing the page menu beside the buttons: in edit mode the menu shows its own width (the columns the buttons leave are taken only outside edit mode), so what is resized is what is saved, and the buttons never keep columns the menu was widened into.
 - First-run guide: a music server (Navidrome…) offers the music widgets instead of the video ones; every integration now belongs to a family of the guide, checked by a test.
+- Long dialogs (settings pages such as Integrations and Widgets) no longer lose rows that vanish and come back while scrolling: dialogs no longer blur their own backdrop (their surface is opaque), and the overlay's blur and the phone menu sheet's sit on a layer behind their content. On phones, the settings list's scroll bar runs along the screen's edge instead of over the rows.
 
 ### Removed
 
