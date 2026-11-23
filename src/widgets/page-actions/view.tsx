@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, LogIn, LogOut, Pencil, Settings, User } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -23,6 +24,7 @@ export default function PageActionsView({ instance, editMode }: WidgetViewProps)
   const title = t('widget.page-actions.name');
   const isAdmin = user?.role === 'admin';
   const { row, shrinking } = useFitWidth<HTMLDivElement, HTMLSpanElement>();
+  const short = useShortName(shrinking);
   return (
     <CalmeWidget title={title} editMode={editMode} bare hideTitle>
       <div className={`nd-hw nd-hw--${align} nd-hw-actions`}>
@@ -67,7 +69,7 @@ export default function PageActionsView({ instance, editMode }: WidgetViewProps)
           <span className="nd-hw-divider" aria-hidden="true" />
           {user && !user.isAnonymous ? (
             <span className="nd-hw-account">
-              <span className="nd-hw-user">
+              <span className={`nd-hw-user ${short ? 'is-short' : ''}`} title={user.username}>
                 <User size={13} aria-hidden="true" />
                 <span ref={shrinking} className="nd-hw-user-name">{user.username}</span>
               </span>
@@ -84,4 +86,30 @@ export default function PageActionsView({ instance, editMode }: WidgetViewProps)
       </div>
     </CalmeWidget>
   );
+}
+
+/**
+ * The account shows its icon alone when its name would not fit whole (a name
+ * cut to one letter says nothing); the name comes back as soon as it fits.
+ */
+function useShortName(name: React.RefObject<HTMLSpanElement | null>): boolean {
+  const [short, setShort] = useState(false);
+  const shortRef = useRef(short);
+  useLayoutEffect(() => {
+    const text = name.current;
+    const chip = text?.parentElement;
+    if (!text || !chip) return;
+    const check = () => {
+      const style = getComputedStyle(chip);
+      const icon = chip.querySelector('svg')?.getBoundingClientRect().width ?? 0;
+      const needed = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + icon + (parseFloat(style.columnGap) || 0) + text.scrollWidth;
+      const next = chip.clientWidth + 0.5 < needed;
+      if (next !== shortRef.current) { shortRef.current = next; setShort(next); }
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(chip);
+    return () => observer.disconnect();
+  }, [name]);
+  return short;
 }

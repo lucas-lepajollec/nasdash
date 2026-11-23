@@ -37,14 +37,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Public demo: the films, series, soundtracks, books, comics and photos are real, freely licensed works with their real posters, covers and pictures (Blender Studio open movies, Standard Ebooks, Pepper&Carrot, NASA; credits in `public/demo/art/CREDITS.md`) instead of invented titles and drawn placeholders.
 
 - Entering edit mode moves the page less: title rows keep their height (the widget controls show over their corner when the pointer is on a widget), and only hidden titles, shown in edit mode, make room for themselves.
+- Header widgets look like the other widgets: the search field, the buttons, the account and the segmented menu's track take the widgets' surface and follow Appearance (opacity, blur, outlines, soft edges); the segmented menu shows the page in the accent colour, like the other styles; the account shows its icon alone when the name would not fit whole.
+- Public demo: the bookmarks are real sites (Wikipedia, Internet Archive, OpenStreetMap, Debian, KDE, F-Droid, Mozilla, EFF) with their own icons, shipped with the demo.
 
 ### Fixed
 
 - Network map on phones: it opens as a map, as on a computer, instead of switching to the list by itself, and is laid out for the phone's width (narrower cards, two per row in each group, thinner margins) so it no longer overflows or needs sideways scrolling; its list and zoom buttons sit above it instead of over its first heading. Computers keep the same map.
 - Network map: links no longer run along the map's very edge, where the last few pixels of their path (bottom or right) were cut.
-
 - Ticking several tasks quickly (or changing any widget outside edit mode while a save was on its way) could undo the latest change at once: saves of a page now follow one another and keep what was changed meanwhile.
 - Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.
+- Resizing the page menu beside the buttons: in edit mode the menu shows its own width (the columns the buttons leave are taken only outside edit mode), so what is resized is what is saved, and the buttons never keep columns the menu was widened into.
+- First-run guide: a music server (Navidrome…) offers the music widgets instead of the video ones; every integration now belongs to a family of the guide, checked by a test.
 
 ### Removed
 

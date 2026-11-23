@@ -12,6 +12,12 @@ in `src/lib/demo/art.ts`, credits in `CREDITS.md` there) and are linked
 directly; a test checks every work has its picture and credit. Nothing is
 fetched online.
 
+The bookmarks are real public sites (Wikipedia, Internet Archive, Debian…).
+Their own icons ship in `public/demo/sites/<host>.png` (notes in `CREDITS.md`
+there); in the demo the site-icon route answers with these files, for the
+hosts listed in `src/lib/demo/siteIcons.ts` only, and a test checks every
+bookmark has its icon.
+
 `npm run demo` starts the isolated demo with hot reload on
 <http://localhost:2505> without building an image or copying files into
 `data/`. It remains loopback-only unless `npm run demo:lan` is used.
