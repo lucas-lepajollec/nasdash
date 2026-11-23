@@ -6,8 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-23
+
+### Upgrading from 0.4.0
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.4.0` image.
+
 ### Fixed
 
+- Adding NasDash to a home screen or dock shows the NasDash logo with every browser: besides the manifest icons and the linked Apple icon, the conventional `/apple-touch-icon.png`, `/apple-touch-icon-precomposed.png` and `/favicon.ico` now exist (they answered 404). A web app added before 0.4.0 keeps its old picture until it is removed and added again.
 - Testing a qBittorrent connection in the settings always failed with "invalid request" while the widget worked: the test required the fields of both sign-in modes (user and password, and an API key); it now requires only those of the chosen mode.
 - Service categories in the bento and logo layouts: tiles had grown too large in narrow widgets (a 250 px widget held two bento tiles or medium logos per line). The smallest tile is smaller, so such a widget holds four small logos, three medium logos or bento tiles, and two large logos; a short line keeps its size.
 - Phones and tablets: service categories in the logo layouts (small, medium, large) span the whole line again (square tiles as wide as their column, about 5, 4 and 3 to a phone's line); the Widgets / Order switch in edit mode follows Appearance (surface, blur, outlines, soft edges, corners) and the widget tools above each widget are rounded like the rest (concentric with the widget corners).
@@ -720,7 +727,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.10...v0.4.0
 [0.3.10]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...v0.3.9

@@ -34,7 +34,7 @@ export function generateMetadata(): Metadata {
   return {
     title: messages.en['meta.title'],
     description: messages.en['meta.description'],
-    icons: { icon: '/logo.svg', apple: '/icons/apple-touch-icon.png' },
+    icons: { icon: [{ url: '/logo.svg', type: 'image/svg+xml' }, { url: '/favicon.ico', sizes: '48x48' }], apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }] },
     // Opened from the home screen: full screen, the page drawn under the status bar.
     appleWebApp: { capable: true, title: 'NasDash', statusBarStyle: 'black-translucent' },
     robots: demoMode
