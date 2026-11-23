@@ -2801,6 +2801,12 @@ body[data-design="calme"] .ndc-slider input[type="range"]::-webkit-slider-thumb 
 
 /* Only sideways overflow: the wheel keeps scrolling the page over the map. */
 .ndc-map-viewport { overflow-x: auto; overflow-y: hidden; max-width: 100%; min-height: 200px; }
+/* Laid out for a phone (see PHONE_LAYOUT_PX): the tools take a line of their
+   own above the map instead of covering its first heading. */
+.nd-topology-canvas { container-type: inline-size; }
+@container (max-width: 520px) {
+  .ndc-map-tools { position: static; align-self: flex-end; margin-bottom: 6px; }
+}
 .ndc-map-sizer { position: relative; margin: 0 auto; }
 .ndc-map-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 
@@ -3990,6 +3996,10 @@ body[data-design="calme"] .nd-hw .nd-btn { border-radius: var(--nd-field-radius)
 }
 /* Edit mode: machines are dragged into order (the order of the machines everywhere). */
 .ndc-fleet-sortable.is-sortable { cursor: grab; }
+/* The grip sits in the list's side margin, beside the name, so rows keep their place. */
+.ndc-fleet-sortable .ndc-fleet-id { position: relative; }
+.ndc-fleet-grip { position: absolute; left: -18px; top: 50%; display: flex; transform: translateY(-50%); color: var(--nd-text-dimmed); pointer-events: none; }
+.ndc-fleet-sortable:hover .ndc-fleet-grip { color: var(--nd-text-muted); }
 .ndc-fleet-sortable.is-dragging { position: relative; z-index: 2; opacity: 0.7; }
 
 /* Menu widget with a page limit: the last button unfolds the other pages. */

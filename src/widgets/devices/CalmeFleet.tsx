@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SetupGuide } from '@/components/integrations/SetupGuide';
-import { Plus } from 'lucide-react';
+import { GripVertical, Plus } from 'lucide-react';
 import type { Device } from '@/lib/types';
 import type { WidgetSettings } from '@/lib/pages/types';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -94,7 +94,7 @@ export default function CalmeFleet({ devices, settings, editMode, isVisible, onU
           <div className={`ndc-fleet ${stacked ? 'is-stacked' : ''}`}>
             {shown.map(device => {
               const entry = data[device.id] ?? {};
-              const row = <FleetRow device={device} snapshot={entry.data} state={stateOf(entry)} look={look} metrics={metrics} stacked={stacked} />;
+              const row = <FleetRow device={device} snapshot={entry.data} state={stateOf(entry)} look={look} metrics={metrics} stacked={stacked} grip={editMode} />;
               return editMode ? (
                 <SortableItem key={device.id} id={device.id} className="ndc-fleet-sortable" title={t('devices.calme.reorderHint')}>
                   <button type="button" className="ndc-fleet-edit" onClick={() => setDeviceModal({ open: true, device })} title={t('devices.calme.edit')}>{row}</button>
@@ -123,7 +123,7 @@ function rowReading(snapshot: DeviceSnapshot | undefined, metric: MetricId, t: (
   return { ...reading, label };
 }
 
-function FleetRow({ device, snapshot, state, look, metrics, stacked }: { device: Device; snapshot?: DeviceSnapshot; state: DeviceState; look: WidgetLook; metrics: MetricId[]; stacked: boolean }) {
+function FleetRow({ device, snapshot, state, look, metrics, stacked, grip }: { device: Device; snapshot?: DeviceSnapshot; state: DeviceState; look: WidgetLook; metrics: MetricId[]; stacked: boolean; grip: boolean }) {
   const { t, language } = useI18n();
   const uptime = uptimeText(snapshot?.vitals.uptimeSeconds, t);
   const sub = state === 'offline' ? t('devices.calme.offline') : [device.system, uptime].filter(Boolean).join(' · ');
@@ -134,6 +134,8 @@ function FleetRow({ device, snapshot, state, look, metrics, stacked }: { device:
   return (
     <div className={`ndc-fleet-row ${state === 'offline' ? 'is-offline' : ''}`}>
       <span className="ndc-fleet-id">
+        {/* Edit mode: says the machines can be dragged into order. */}
+        {grip && <span className="ndc-fleet-grip" aria-hidden="true"><GripVertical size={13} /></span>}
         <span className={`ndc-dot ndc-dev-state--${state}`} style={alarm ? { background: look.dangerColor } : undefined} aria-hidden="true" />
         <span className="ndc-fleet-text">
           <span className="ndc-fleet-name" title={device.name}>{device.name}</span>

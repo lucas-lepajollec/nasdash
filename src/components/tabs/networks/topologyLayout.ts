@@ -27,6 +27,8 @@ export const CARD_SIZES: Record<TopologyCardSize, { width: number; height: numbe
 };
 
 const PAD = 24;
+/** Below this width the map is laid out for a phone. */
+export const PHONE_LAYOUT_PX = 480;
 const HEADING = 48;
 const SECTION_GAP = 44;
 /** The corridor between the network column and the applications, where links run. */
@@ -37,6 +39,8 @@ const GROUP_GAP = 40;
 const GROUP_PAD = { top: 34, side: 12, bottom: 12 };
 /** Cards may shrink this much below their size so the applications keep their columns. */
 const CARD_SHRINK = 28;
+/** Narrowest card on a phone, still showing an icon and a short name. */
+const MIN_CARD_WIDTH = 104;
 const CELL = 8;
 
 export interface Point { x: number; y: number }
@@ -101,8 +105,11 @@ function place(topology: NetworkTopology, width: number, size: TopologyCardSize)
   const groupIds = new Set(topology.groups.map(group => group.id));
   const membersOf = (group: NetworkGroup) => topology.nodes.filter(node => node.groupId === group.id);
   const looseOf = (type: NodeType) => topology.nodes.filter(node => node.type === type && (!node.groupId || !groupIds.has(node.groupId)));
-  const inner = Math.max(0, width - 2 * PAD);
-  const side = GROUP_PAD.side;
+  // Phones: thinner margins, so two cards per row stay readable.
+  const phone = width < PHONE_LAYOUT_PX;
+  const pad = phone ? 16 : PAD;
+  const inner = Math.max(0, width - 2 * pad);
+  const side = phone ? 8 : GROUP_PAD.side;
 
   // Widest cards that let the network column (one card per row), the
   // corridor and `columns` application columns (two cards per row) fit; the
@@ -118,6 +125,9 @@ function place(topology: NetworkTopology, width: number, size: TopologyCardSize)
       break;
     }
   }
+  // Too narrow for a corridor (phones): the cards narrow so that groups keep
+  // two per row within the width, rather than the map overflowing it.
+  if (!columns) cardWidth = Math.max(MIN_CARD_WIDTH, Math.min(preset.width, Math.floor((inner - 2 * side - CARD_GAP) / 2)));
   const card = { width: cardWidth, height: preset.height };
   const widthOf = (perRow: number) => perRow * card.width + (perRow - 1) * CARD_GAP + 2 * side;
   const membersOfRows = (group: NetworkGroup, perRow: number) => Math.max(1, Math.ceil(membersOf(group).length / perRow));
@@ -156,30 +166,30 @@ function place(topology: NetworkTopology, width: number, size: TopologyCardSize)
     return cursor - y;
   };
 
-  let leftBottom = PAD;
-  let rightBottom = PAD;
+  let leftBottom = pad;
+  let rightBottom = pad;
   const columnWidth = widthOf(1);
   if (columns) {
     // Left: the three network layers; then the corridor; right: the applications.
     for (const type of ['infra', 'device', 'netsvc'] as const) {
-      const height = section(type, PAD, leftBottom, 1, 1);
+      const height = section(type, pad, leftBottom, 1, 1);
       if (height) leftBottom += height + SECTION_GAP;
     }
     const appsWidth = columns * widthOf(2) + (columns - 1) * GROUP_GAP;
     const corridor = Math.min(CORRIDOR_MAX, inner - columnWidth - appsWidth);
-    rightBottom += section('stdsvc', PAD + columnWidth + corridor, PAD, columns, 2) + SECTION_GAP;
+    rightBottom += section('stdsvc', pad + columnWidth + corridor, pad, columns, 2) + SECTION_GAP;
   } else {
     // Too narrow for a corridor: every layer under the previous one.
     const stacked = Math.max(1, Math.floor((inner + GROUP_GAP) / (widthOf(2) + GROUP_GAP)));
     for (const type of LAYER_ORDER) {
-      const height = section(type, PAD, leftBottom, stacked, 2);
+      const height = section(type, pad, leftBottom, stacked, 2);
       if (height) leftBottom += height + SECTION_GAP;
     }
   }
-  const right = Math.max(...[...nodes, ...groups].map(box => box.x + box.width), PAD);
-  const height = Math.max(leftBottom, rightBottom) - SECTION_GAP + PAD;
-  const column = columns ? { x: PAD, y: 0, width: columnWidth, height } : undefined;
-  return { nodes, groups, layers, width: Math.max(width, right + PAD), height, ...(column ? { column } : {}) };
+  const right = Math.max(...[...nodes, ...groups].map(box => box.x + box.width), pad);
+  const height = Math.max(leftBottom, rightBottom) - SECTION_GAP + pad;
+  const column = columns ? { x: pad, y: 0, width: columnWidth, height } : undefined;
+  return { nodes, groups, layers, width: Math.max(width, right + pad), height, ...(column ? { column } : {}) };
 }
 
 // ------------------------------------------------------------------ routing
@@ -423,6 +433,11 @@ function routeAll(topology: NetworkTopology, placement: Placement): PlacedEdge[]
   // Layer headings: a dot and a short uppercase word, kept clear of links.
   const headings: PlacedBox[] = placement.layers.map(layer => ({ id: layer.type, x: layer.x, y: layer.y, width: 150, height: 18 }));
   const grid = buildGrid(placement.width, placement.height, placement.nodes, placement.groups, headings, placement.column);
+  // Links keep off the map's very edge, where they would be cut.
+  const onRim = (cell: number) => {
+    const x = (cell % grid.cols) * CELL, y = Math.floor(cell / grid.cols) * CELL;
+    return x < 4 || y < 4 || x > placement.width - 4 || y > placement.height - 4;
+  };
   const groupIndex = new Map(placement.groups.map((box, index) => [box.id, index + 1]));
 
   // Sides first, so links sharing a side are spread along it.
@@ -547,11 +562,11 @@ function routeAll(topology: NetworkTopology, placement: Placement): PlacedEdge[]
       groupIndex.get(groupOfNode.get(connection.fromId) ?? ''), groupIndex.get(groupOfNode.get(connection.toId) ?? ''),
     ].filter(Boolean) as number[]);
     const strict = (cell: number) => {
-      if (grid.card[cell] || grid.title[cell]) return false;
+      if (grid.card[cell] || grid.title[cell] || onRim(cell)) return false;
       const g = grid.group[cell];
       return !g || openGroups.has(g);
     };
-    const loose = (cell: number) => !grid.card[cell];
+    const loose = (cell: number) => !grid.card[cell] && !onRim(cell);
 
     // Every sensible pair of sides is tried and the cheapest path wins
     // (length, bends, crossing other lanes; reusing the own trunk is cheap).
@@ -715,5 +730,13 @@ export function roundedPath(points: Point[], radius = 8): string {
 /** Places and routes a topology for a block `width` pixels wide. */
 export function layoutTopology(topology: NetworkTopology, width: number, size: TopologyCardSize): TopologyLayout {
   const placement = place(topology, width, size);
-  return { ...placement, edges: routeAll(topology, placement) };
+  const edges = routeAll(topology, placement);
+  // A link drawn anyway (no way around) may still reach past the edge: the
+  // map grows to hold it rather than cut it.
+  let right = placement.width, bottom = placement.height;
+  for (const edge of edges) {
+    for (const point of edge.points) { right = Math.max(right, point.x + 6); bottom = Math.max(bottom, point.y + 6); }
+    if (edge.label) { right = Math.max(right, edge.label.x + edge.label.width); bottom = Math.max(bottom, edge.label.y + edge.label.height); }
+  }
+  return { ...placement, width: Math.ceil(right), height: Math.ceil(bottom), edges };
 }
