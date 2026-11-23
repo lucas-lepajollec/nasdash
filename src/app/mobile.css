@@ -51,7 +51,7 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--nd-phone-control-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +79,7 @@
 
 .nd-mhead .nd-search input {
   height: 44px;
-  border-radius: 22px;
+  border-radius: var(--nd-phone-control-radius);
   padding-right: 40px;
 }
 
@@ -345,7 +345,7 @@
     align-items: center;
     max-width: calc(100vw - 120px);
     padding: 0 6px;
-    border-radius: 999px;
+    border-radius: min(var(--nd-card-radius), 14px);
   }
 
   .nd-page-dot {
@@ -398,14 +398,22 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* The edit bar: one glass capsule at the bottom, like the phone header.
+/* Corners (Appearance) shape the floating controls too, up to a capsule:
+   the phone header's search and menu buttons and its search field (44 px),
+   the edit bar (and its buttons, concentric), the page dots' outline. */
+body {
+  --nd-phone-control-radius: min(var(--nd-card-radius), 22px);
+  --nd-bar-radius: var(--nd-card-radius);
+}
+
+/* The edit bar: one glass bar at the bottom, like the phone header.
    On a computer it keeps its words; on phones and tablets the state is a dot
    and cancel an icon. */
 body[data-design="calme"] .nd-page-editor-bar {
   bottom: max(18px, env(safe-area-inset-bottom));
   gap: 4px;
   padding: 5px;
-  border-radius: 999px;
+  border-radius: var(--nd-bar-radius);
   border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
   background: color-mix(in srgb, var(--nd-bg-surface) 60%, transparent);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -417,7 +425,7 @@ body[data-design="calme"] .nd-page-editor-bar > * + *::before { display: none; }
 body[data-design="calme"] .nd-page-editor-status { padding: 0 10px 0 12px; }
 body[data-design="calme"] .nd-page-editor-group { display: inline-flex; gap: 2px; }
 body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button,
-body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 36px; min-width: 36px; border-radius: 999px; justify-content: center; }
+body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 36px; min-width: 36px; border-radius: max(0px, calc(var(--nd-bar-radius) - 5px)); justify-content: center; }
 body[data-design="calme"] .nd-page-editor-bar .nd-btn:not(.nd-btn-accent) { padding: 0 14px; }
 body[data-design="calme"] .nd-page-editor-bar .nd-btn-accent { padding: 0 18px; }
 body[data-design="calme"] .nd-page-editor-dot { width: 7px; height: 7px; }
@@ -481,7 +489,7 @@ body[data-design="calme"] .nd-mhead .nd-search input {
   height: 44px;
   padding: 0 44px 0 42px;
   border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent) !important;
-  border-radius: 22px !important;
+  border-radius: var(--nd-phone-control-radius) !important;
   background: color-mix(in srgb, var(--nd-bg-surface) 55%, transparent) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
@@ -490,5 +498,5 @@ body[data-design="calme"] .nd-mhead .nd-search input {
 }
 body[data-design="calme"] .nd-mhead .nd-search input:focus { border-color: color-mix(in srgb, var(--nd-text) 22%, transparent) !important; }
 .nd-mhead .nd-search .nd-search-icon { left: 16px; width: 17px; height: 17px; color: var(--nd-text-muted); }
-.nd-mhead-clear { right: 4px; border-radius: 50%; color: var(--nd-text-muted); }
+.nd-mhead-clear { right: 4px; border-radius: max(0px, calc(var(--nd-phone-control-radius) - 4px)); color: var(--nd-text-muted); }
 .nd-mhead-cancel { padding: 0 6px; color: var(--nd-text); font-weight: 500; }

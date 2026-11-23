@@ -19,12 +19,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Each widget can show or hide its own title, whatever the general setting: the eye next to its title in edit mode. Header widgets hide theirs by default.
 - Phones: a new header with the page's name in large type and round glass buttons for the search and the menu; the menu opens as a glass sheet from the bottom with the pages and the actions. Swipe left or right to change page; dots at the bottom show where you are (seven at most, sliding with the page shown). Narrower side margins.
 - NasDash can be installed on a phone's home screen (Safari: Share, Add to Home Screen) and opens full screen.
-- Machines widget: in edit mode, drag the machines into the order you want (#167).
+- Devices widget: in edit mode, a grip beside each machine's name shows it can be dragged; drag the machines into the order you want (#167).
 
 ### Changed
 
 - The edit bar is one glass capsule (state, undo, redo, add, cancel, save); on phones and tablets it keeps only icons, and the Widgets / Order switch is a segmented control across the line with its explanation behind an ⓘ.
-- Corners (Appearance) now shape the edges of widgets, including the header widgets (search field, buttons, account, menu highlight), the Docker containers and tabs; what sits against an edge follows it concentrically, while the rest inside widgets and the interface around them (dialogs, menus, settings, dock) keep their own corners.
+- Corners (Appearance) now shape the edges of widgets, including the header widgets (search field, buttons, account, menu highlight), the Docker containers and tabs, and the floating controls: the phone header's search and menu buttons and its search field, the edit bar and its buttons, the page dots' outline (sizes and places unchanged); what sits against an edge follows it concentrically, while the rest inside widgets and the interface around them (dialogs, menus, settings, dock) keep their own corners.
 - Phone menu: after nine pages, the page list scrolls inside the sheet.
 - Opening a page for the first time no longer shows an empty page for a moment: the previous page stays until the new one is placed.
 - Phones and tablets in edit mode: a widget's controls sit on its title's line, against the right edge, with the title's note just before them, and move to a line of their own above only when the line is too short; the widget library opens as a full-width sheet.
