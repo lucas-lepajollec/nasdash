@@ -6,7 +6,7 @@ import type { NetworkConnection, NetworkGroup, NetworkNode, NetworkTopology } fr
 import { useI18n } from '@/i18n/I18nProvider';
 import { Emoji } from '../../shared/Emoji';
 import {
-  autoCardSize, layoutTopology, roundedPath,
+  autoCardSize, layoutTopology, PHONE_LAYOUT_PX, roundedPath,
   type TopologyCardSize,
 } from './topologyLayout';
 
@@ -17,12 +17,10 @@ const LAYER_LABEL: Record<NetworkNode['type'], string> = {
   stdsvc: 'topology.calme.layerApps',
 };
 
-/** Below this width the list view is shown first (phones, narrow widgets). */
-const LIST_BELOW_PX = 760;
 /** The map is never shrunk below this: past it, it is panned instead. */
 const MIN_FIT_SCALE = 0.85;
 /** Narrowest block the map is laid out for (a phone then pans it). */
-const MIN_LAYOUT_PX = 420;
+const MIN_LAYOUT_PX = 280;
 
 export interface TopologyCanvasProps {
   topology: NetworkTopology;
@@ -66,15 +64,18 @@ export function TopologyCanvas({ topology, serviceUrls, editMode, searchQuery = 
     return () => observer.disconnect();
   }, []);
 
-  // Narrow blocks show a list first instead.
-  const narrow = width > 0 && width < LIST_BELOW_PX;
-  const [view, setView] = useState<'map' | 'list' | null>(null);
-  const shownView = view ?? (narrow ? 'list' : 'map');
-  const size = cardSize === 'auto' ? autoCardSize(topology.nodes.length) : cardSize;
+  // The map everywhere (phones too: it is laid out for their width); the list
+  // is a choice.
+  const [shownView, setView] = useState<'map' | 'list'>('map');
+  // Auto: smaller cards on bigger maps, and never the largest on a phone.
+  const auto = autoCardSize(topology.nodes.length);
+  const size = cardSize !== 'auto' ? cardSize : width > 0 && width < PHONE_LAYOUT_PX && auto === 'standard' ? 'compact' : auto;
 
   // Laid out for the block width (the application groups fill it), by 20 px
   // steps so a resize does not re-route on every pixel.
-  const layoutWidth = width ? Math.max(MIN_LAYOUT_PX, Math.floor(width / 20) * 20) : 0;
+  // (A phone uses all its width: it is not resized.)
+  const step = width < PHONE_LAYOUT_PX ? 2 : 20;
+  const layoutWidth = width ? Math.max(MIN_LAYOUT_PX, Math.floor(width / step) * step) : 0;
   const layout = useMemo(() => (layoutWidth ? layoutTopology(topology, layoutWidth, size) : null), [topology, layoutWidth, size]);
 
   // Fitted to the width unless the user zoomed, but never below a readable

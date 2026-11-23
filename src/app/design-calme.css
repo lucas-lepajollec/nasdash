@@ -2801,6 +2801,12 @@ body[data-design="calme"] .ndc-slider input[type="range"]::-webkit-slider-thumb 
 
 /* Only sideways overflow: the wheel keeps scrolling the page over the map. */
 .ndc-map-viewport { overflow-x: auto; overflow-y: hidden; max-width: 100%; min-height: 200px; }
+/* Laid out for a phone (see PHONE_LAYOUT_PX): the tools take a line of their
+   own above the map instead of covering its first heading. */
+.nd-topology-canvas { container-type: inline-size; }
+@container (max-width: 520px) {
+  .ndc-map-tools { position: static; align-self: flex-end; margin-bottom: 6px; }
+}
 .ndc-map-sizer { position: relative; margin: 0 auto; }
 .ndc-map-stage { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 

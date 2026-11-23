@@ -24,7 +24,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Changed
 
 - The edit bar is one glass capsule (state, undo, redo, add, cancel, save); on phones and tablets it keeps only icons, and the Widgets / Order switch is a segmented control across the line with its explanation behind an ⓘ.
-- Corners (Appearance) now shape the edges of widgets, including the header widgets (search field, buttons, account, menu highlight), the Docker containers and tabs, and the floating controls: the phone header's search and menu buttons and its search field, the edit bar and its buttons, the page dots' outline (sizes and places unchanged); what sits against an edge follows it concentrically, while the rest inside widgets and the interface around them (dialogs, menus, settings, dock) keep their own corners.
+- Corners (Appearance) now shape the edges of widgets, including the header widgets (search field, buttons, account, menu highlight), the Docker containers and tabs, and the floating controls: the phone header's search and menu buttons and its search field, the edit bar and its buttons (rounded like the header buttons), the page dots' outline (sizes and places unchanged); what sits against an edge follows it concentrically, while the rest inside widgets and the interface around them (dialogs, menus, settings, dock) keep their own corners.
 - Phone menu: after nine pages, the page list scrolls inside the sheet.
 - Opening a page for the first time no longer shows an empty page for a moment: the previous page stays until the new one is placed.
 - Phones and tablets in edit mode: a widget's controls sit on its title's line, against the right edge, with the title's note just before them, and move to a line of their own above only when the line is too short; the widget library opens as a full-width sheet.
@@ -39,6 +39,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Entering edit mode moves the page less: title rows keep their height (the widget controls show over their corner when the pointer is on a widget), and only hidden titles, shown in edit mode, make room for themselves.
 
 ### Fixed
+
+- Network map on phones: it opens as a map, as on a computer, instead of switching to the list by itself, and is laid out for the phone's width (narrower cards, two per row in each group, thinner margins) so it no longer overflows or needs sideways scrolling; its list and zoom buttons sit above it instead of over its first heading. Computers keep the same map.
 
 - Ticking several tasks quickly (or changing any widget outside edit mode while a save was on its way) could undo the latest change at once: saves of a page now follow one another and keep what was changed meanwhile.
 - Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.

@@ -400,7 +400,7 @@
 
 /* Corners (Appearance) shape the floating controls too, up to a capsule:
    the phone header's search and menu buttons and its search field (44 px),
-   the edit bar (and its buttons, concentric), the page dots' outline. */
+   the edit bar (its buttons like the header buttons), the page dots' outline. */
 body {
   --nd-phone-control-radius: min(var(--nd-card-radius), 22px);
   --nd-bar-radius: var(--nd-card-radius);
@@ -425,7 +425,7 @@ body[data-design="calme"] .nd-page-editor-bar > * + *::before { display: none; }
 body[data-design="calme"] .nd-page-editor-status { padding: 0 10px 0 12px; }
 body[data-design="calme"] .nd-page-editor-group { display: inline-flex; gap: 2px; }
 body[data-design="calme"] .nd-page-editor-bar .nd-page-icon-button,
-body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 36px; min-width: 36px; border-radius: max(0px, calc(var(--nd-bar-radius) - 5px)); justify-content: center; }
+body[data-design="calme"] .nd-page-editor-bar .nd-btn { height: 36px; min-width: 36px; border-radius: var(--nd-field-radius); justify-content: center; }
 body[data-design="calme"] .nd-page-editor-bar .nd-btn:not(.nd-btn-accent) { padding: 0 14px; }
 body[data-design="calme"] .nd-page-editor-bar .nd-btn-accent { padding: 0 18px; }
 body[data-design="calme"] .nd-page-editor-dot { width: 7px; height: 7px; }
