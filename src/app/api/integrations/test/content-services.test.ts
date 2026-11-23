@@ -154,3 +154,14 @@ it('tests Gluetun on the status route, NUT on its UPS list and apcupsd on its st
   vi.mocked(collectApcupsd).mockResolvedValue({ provider: 'apcupsd', name: 'x', power: 'mains', fetchedAt: 1 });
   expect((await (await POST(request({ type: 'apcupsd', settings: { host: 'nas.example.com' } }))).json()).ok).toBe(true);
 });
+
+it.each([
+  ['login', { url: 'http://service.example.com', auth: 'login', username: 'admin' }, { password: 'fake-password' }, ['/api/v2/auth/login', '/api/v2/app/version']],
+  ['apikey', { url: 'http://service.example.com', auth: 'apikey' }, { apiKey: 'fake-key' }, ['/api/v2/app/version']],
+] as const)('tests qBittorrent with only the fields of its %s mode', async (_mode, settings, secrets, paths) => {
+  const { clearQbittorrentSessions } = await import('@/integrations/qbittorrent/collect'); clearQbittorrentSessions();
+  vi.mocked(serviceBytes).mockImplementation(async (_instance, path) => ({ bytes: Buffer.from(path.endsWith('/auth/login') ? 'Ok.' : 'v5.2.0'), status: 200, contentType: 'text/plain', headers: { 'set-cookie': ['SID=fictional-session; Path=/'] } }));
+  const response = await POST(request({ type: 'qbittorrent', settings, secrets }));
+  expect(await response.json()).toEqual({ ok: true, message: 'integrations.test.ok', count: 1 });
+  expect(vi.mocked(serviceBytes).mock.calls.map(([, path]) => path)).toEqual(paths);
+});

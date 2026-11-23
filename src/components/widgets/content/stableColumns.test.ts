@@ -24,4 +24,9 @@ describe('posterWidth', () => {
     expect(posterWidth(1600, 120)).toBe(120);
     expect(posterWidth(90, 120)).toBe(90);
   });
+  it('spans the whole width with a short line when asked to fill (phones)', () => {
+    expect(stableColumns(500, 4, 62, 74, 4, true)).toBe('repeat(4, minmax(0, 1fr))');
+    expect(stableColumns(500, 4, 62, 74, 4)).toBe('repeat(4, 74px)');
+    expect(stableColumns(300, 10, 62, 74, 4, true)).toBe('repeat(4, minmax(0, 1fr))');
+  });
 });

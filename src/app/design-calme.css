@@ -3706,17 +3706,21 @@ body[data-outlines="off"] .nd-mobile-order-list { border-color: transparent; }
 /* Phones and tablets in edit mode: the widgets keep their controls; moves
    (arrows) and hiding only change the phone order. */
 /* Phones and tablets in edit mode: widgets or the order list, a segmented
-   control in the glass of the phone header; what it does is in the ⓘ. */
+   control on the widgets' surface like the phone header's buttons (Appearance:
+   opacity, blur, outlines, soft edges, corners); what it does is in the ⓘ. */
 .nd-page-mobile-bar { display: flex; align-items: center; margin-bottom: 16px; }
 .nd-page-mobile-switch {
-  display: flex; flex: 1; gap: 2px; padding: 3px; border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--nd-text) 12%, transparent);
-  background: color-mix(in srgb, var(--nd-bg-surface) 55%, transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+  --nd-switch-radius: min(var(--nd-card-radius), 21px);
+  display: flex; flex: 1; gap: 2px; padding: 3px; border-radius: var(--nd-switch-radius);
+  border: 1px solid var(--ndc-surface-line, var(--nd-card-border));
+  background: var(--ndc-surface, var(--nd-card-bg));
 }
+body[data-blur="on"] .nd-page-mobile-switch { -webkit-backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); }
+body[data-outlines="off"] .nd-page-mobile-switch { border-color: transparent; }
+body[data-soft-edges="on"] .nd-page-mobile-switch { border-color: transparent; box-shadow: 0 0 calc(var(--nd-soft-edge) * 0.5) calc(var(--nd-soft-edge) * 0.2) var(--ndc-surface); }
 .nd-page-mobile-switch button {
   flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; padding: 0 12px;
-  border: none; border-radius: 999px; background: transparent; color: var(--nd-text-muted);
+  border: none; border-radius: max(0px, calc(var(--nd-switch-radius) - 3px)); background: transparent; color: var(--nd-text-muted);
   font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
 }
 .nd-page-mobile-switch button[aria-pressed="true"] { background: color-mix(in srgb, var(--nd-text) 12%, transparent); color: var(--nd-text); }
@@ -3732,7 +3736,7 @@ body[data-outlines="off"] .nd-mobile-order-list { border-color: transparent; }
    surface (following Appearance), not a dark box. */
 body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions { gap: 6px; padding: 0; background: transparent; border: none; }
 body[data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon {
-  border-radius: var(--nd-field-radius); background: var(--ndc-surface); border: 1px solid var(--ndc-surface-line);
+  border-radius: var(--nd-nested-radius); background: var(--ndc-surface); border: 1px solid var(--ndc-surface-line);
 }
 body[data-blur="on"][data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { -webkit-backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); backdrop-filter: blur(var(--nd-surface-blur)) saturate(160%); }
 body[data-outlines="off"][data-design="calme"] .nd-page-grid--compact-editing .nd-page-widget-actions .nd-action-icon { border-color: transparent; }

@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useConfig } from '@/hooks/useConfig';
 import { useI18n } from '@/i18n/I18nProvider';
 import { getServiceIntegration } from '@/integrations/registry';
+import { serviceFieldShown } from '@/integrations/types';
 import { MASKED_SECRET } from '@/integrations/instances';
 import { CalmeDialog, CalmeField } from '@/components/shared/CalmeDialog';
 import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
@@ -84,7 +85,7 @@ export function ServiceConnectionDialog({ type, instance: chosen, onClose, onSav
                 <input id="service-name" className="nd-input" value={name} maxLength={60} onChange={event => setName(event.target.value)} required />
               </CalmeField>
             )}
-            {manifest.fields.filter(field => (!field.showWhen || field.showWhen.values.includes(values[field.showWhen.field] ?? ''))).map(field => field.kind === 'select' ? (
+            {manifest.fields.filter(field => serviceFieldShown(field, values)).map(field => field.kind === 'select' ? (
               <CalmeField key={field.id} label={t(field.label)}>
                 <CustomSelect
                   ariaLabel={t(field.label)}

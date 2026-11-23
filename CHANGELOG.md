@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Fixed
 
+- Testing a qBittorrent connection in the settings always failed with "invalid request" while the widget worked: the test required the fields of both sign-in modes (user and password, and an API key); it now requires only those of the chosen mode.
+- Phones and tablets: service categories in the logo layouts (small, medium, large) span the whole line again (square tiles as wide as their column, about 5, 4 and 3 to a phone's line); the Widgets / Order switch in edit mode follows Appearance (surface, blur, outlines, soft edges, corners) and the widget tools above each widget are rounded like the rest (concentric with the widget corners).
 - macOS: rows of long dialogs (settings pages such as Integrations and Widgets) could still vanish and come back while scrolling. Dialogs are their own stacking context, their scrolling areas get their own layer, and the settings no longer make the browser re-blur the page behind them.
 
 ## [0.4.0] - 2026-11-23

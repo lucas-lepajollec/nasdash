@@ -184,6 +184,11 @@ export interface ServiceField {
   required?: boolean;
 }
 
+/** Whether a field applies to these settings (its `showWhen` field has one of its values; empty counts as ''). */
+export function serviceFieldShown(field: Pick<ServiceField, 'showWhen'>, settings: Record<string, string | undefined>): boolean {
+  return !field.showWhen || field.showWhen.values.includes(settings[field.showWhen.field] ?? '');
+}
+
 /** Browser-safe description of a service integration (one saved connection per instance). */
 export interface ServiceIntegrationManifest {
   /** Optional settings category for saved service connections. */
