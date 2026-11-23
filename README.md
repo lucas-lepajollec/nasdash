@@ -20,7 +20,9 @@
 
 ## Overview
 
-NasDash brings services, machines, Docker, the network, media, downloads, music and photos into one calm, self-hosted dashboard. Each page is a free grid of widgets: 47 of them, from service categories and machine telemetry to Jellyfin, the *arr apps, DNS blocking, VPN and UPS.
+NasDash brings services, machines, Docker, the network, media, downloads, music and photos into one calm, self-hosted dashboard. Each page is a free grid with 61 selectable widget types (64 registered), from service categories and machine telemetry to Jellyfin, the *arr apps, DNS blocking, VPN and UPS.
+
+In 0.4.0, Search, Page menu and Buttons are widgets placed on each page. Move and resize them in edit mode; the dashboard title is no longer displayed and Header settings have been removed. Page menus share four styles (tabs, capsule, segmented and icons), alignment, pages per line, an “Others” limit and sub-menus, with an optional override for one menu. Search looks through every widget on the page, and each widget can show or hide its own title.
 
 Configuration stays on your own server in a persistent Docker volume or bind-mounted directory. A new installation starts private, asks for a setup code printed in the container log, and walks you through a short guide. Integrations are optional: the dashboard remains useful as a service cockpit while deeper infrastructure capabilities can be enabled deliberately.
 
@@ -91,6 +93,7 @@ Theme, wallpaper, and glass are first-class product surfaces, not a single defau
 - Docker containers, logs, images, volumes, and guarded actions through Portainer, Dockhand, an optional socket proxy, or a Docker-compatible API/socket. Search, filter and sort resource lists, paginate them, inspect tags and linked containers, and confirm selected unused resources before removal. Page selection stays in the table header on desktop and mobile; usage counts sit beside Refresh.
 - Network topology editor with groups, links, and service/device associations.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
+- Phone navigation: a large page name, round search and ⋯ buttons, a menu sheet, swiping between pages and page dots. Settings fill the screen with grouped rows; the Order list in edit mode changes widget order and visibility for phones and tablets.
 - Custom API connections for JSON endpoints, fetched on the server with configurable authentication; widgets receive selected values while connection addresses and credentials stay private.
 - Sonarr, Radarr and Lidarr calendars and queues, *arr health, Prowlarr indexers, and qBittorrent, Transmission, Deluge, SABnzbd and NZBGet download status. Administrators can pause or resume an item or a whole client; demo controls stay offline. *arr disk readings come from media root folders, with only folder names returned. Multiple saved sources share a widget; credentials stay on the server.
 - Coming soon combines *arr calendars, library follow-ups, and public catalogue watchlists or discovery (TVMaze, Kitsu, optional AniList, and TMDB with a saved API key). Catalogue searches are administrator-only; public posters use allowlisted catalogue CDNs. It can follow series in a Jellyfin, Emby or Plex library through TVMaze: only provider IDs leave the server. Empty calendars show the next releases, empty queues show recent imports, downloads include available session totals and completions, and indexers include hourly search activity.
@@ -247,6 +250,8 @@ See [TESTING.md](TESTING.md) and [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for 
 ## Public demo
 
 The [public demo](https://demo.nasdash.lucas-homelab.fr) uses deterministic fictional services, addresses, metrics, logs, and actions. Modifications are temporary and no private Docker host, Tailscale account, or personal infrastructure is reachable. See [demo mode](https://docs.nasdash.lucas-homelab.fr/en/docs/operations/demo-mode).
+
+Films, series, music, books, comics and photos in the demo are real, freely licensed works; bookmarks link to real public sites. Artwork credits are included in [public/demo/art/CREDITS.md](public/demo/art/CREDITS.md).
 
 The public demo uses Vercel Web Analytics for visitor and page-view counts only when hosted on Vercel with `NASDASH_DEMO_MODE=true`. Analytics is disabled in normal self-hosted installations and local demo runs.
 

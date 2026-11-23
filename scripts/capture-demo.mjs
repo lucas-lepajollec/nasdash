@@ -196,19 +196,30 @@ async function capture(page, name, fullPage = name.startsWith('nasdash-demo-home
 }
 
 async function selectDesktopTab(page, name) {
-  await page.locator('.nd-header-desktop').getByRole('button', { name, exact: true }).click();
+  const tab = page.getByRole('button', { name, exact: true }).and(page.locator('.nd-header-tab-link')).filter({ visible: true }).first();
+  if (!(await tab.count())) {
+    const group = ['Machines', 'Docker', 'Network'].includes(name) ? 'Infrastructure' : 'Library';
+    await page.locator('.nd-hw-menu').filter({ visible: true }).first().getByRole('button', { name: new RegExp(`^${group}`) }).click();
+  }
+  await tab.click();
 }
 
 async function applySettings(page, updates) {
-  const result = await page.evaluate(async (body) => {
-    const response = await fetch('/api/config', {
-      method: 'PUT',
+  await page.evaluate(async (body) => {
+    // The demo restores the browser workspace on reload, not a direct /api/config edit.
+    const key = 'nasdash-demo-workspace-v1';
+    const workspace = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (workspace?.config?.demoMode !== true) throw new Error('Missing isolated demo workspace.');
+    const response = await fetch('/api/demo/workspace', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'settings', ...body }),
+      body: JSON.stringify({ path: '/api/config', method: 'PUT', body: { type: 'settings', ...body }, workspace }),
     });
-    return { ok: response.ok, status: response.status, text: await response.text() };
+    if (!response.ok) throw new Error(`Demo settings request failed (${response.status}).`);
+    const answer = await response.json();
+    if (answer.result.status >= 400) throw new Error(`Settings update failed (${answer.result.status}).`);
+    sessionStorage.setItem(key, JSON.stringify(answer.workspace));
   }, updates);
-  if (!result.ok) throw new Error(`Settings update failed (${result.status}): ${result.text}`);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await waitForHomeData(page);
   await dismissDemoChrome(page);
@@ -219,10 +230,13 @@ async function applyTheme(page, theme) {
     theme,
     mode: LIGHT_THEMES.has(theme) ? 'light' : 'dark',
   });
+  await page.waitForFunction(expected => expected === 'nasdash'
+    ? ![...document.body.classList].some(name => name.startsWith('theme-'))
+    : document.body.classList.contains(`theme-${expected}`), theme);
 }
 
 async function openSettings(page) {
-  await page.locator('.nd-header-desktop').getByTitle('Global Settings').click();
+  await page.locator('.nd-hw-actions').filter({ visible: true }).first().getByTitle('Global Settings').click();
   await page.getByRole('dialog', { name: 'NasDash Settings' }).waitFor();
 }
 
@@ -238,9 +252,12 @@ async function closeSettings(page) {
 async function startFreshInstall() {
   const freshPort = port + 1;
   const dataDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'nasdash-capture-fresh-'));
-  for (const entry of await fs.readdir(path.join(projectDirectory, 'data'))) {
-    if (entry.endsWith('.example.json')) await fs.copyFile(path.join(projectDirectory, 'data', entry), path.join(dataDirectory, entry));
-  }
+  // Seed only this throwaway installation, without reading the checkout's runtime data.
+  await fs.writeFile(path.join(dataDirectory, 'config.json'), JSON.stringify({
+    version: 1,
+    settings: { setupPending: true, securityMode: 'private', title: 'NasDash', theme: 'nasdash', mode: 'dark', uiLanguage: 'en', hideDock: true },
+    devices: [], categories: [], localEvents: [],
+  }));
   let log = '';
   const child = spawn(process.execPath, [nextEntryPoint, 'dev', '-H', '127.0.0.1', '-p', String(freshPort)], {
     cwd: projectDirectory,
@@ -324,7 +341,7 @@ try {
   await closeSettings(desktopPage);
 
   await selectDesktopTab(desktopPage, 'Home');
-  await desktopPage.locator('.nd-header-desktop').getByTitle('Edit Mode').click();
+  await desktopPage.locator('.nd-hw-actions').filter({ visible: true }).first().getByTitle('Edit Mode').click();
   await capture(desktopPage, 'nasdash-demo-editor');
   await desktopPage.getByRole('button', { name: 'Add a widget', exact: true }).click();
   await desktopPage.getByRole('dialog', { name: 'Add a widget' }).waitFor();
@@ -365,7 +382,7 @@ try {
   await dismissDemoChrome(mobilePage);
   await capture(mobilePage, 'nasdash-demo-mobile-home');
   await mobilePage.getByRole('button', { name: 'Open menu' }).click();
-  await mobilePage.locator('.nd-mobile-menu-content').getByRole('button', { name: 'Docker', exact: true }).click();
+  await mobilePage.getByRole('dialog', { name: 'Menu', exact: true }).getByRole('button', { name: 'Docker', exact: true }).click();
   await waitForDockerDetail(mobilePage);
   await capture(mobilePage, 'nasdash-demo-mobile-docker');
   await mobile.close();
