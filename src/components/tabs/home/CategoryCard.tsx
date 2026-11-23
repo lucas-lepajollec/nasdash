@@ -14,8 +14,17 @@ import { useMobileLayout } from '../../layout/MobilePager';
 import { WidgetTitleContext, WidgetTitleVisibility } from '@/widgets/calme';
 import { prepareSearchText, searchTerms, textMatches } from '@/lib/search/match';
 
-/** Tile grids (with names, or logos only): smallest tile and gap, in px, for steady columns. */
-const TILE_GRIDS: Record<string, { min: number; gap: number }> = { bento: { min: 92, gap: 6 }, 'bento-logo-large': { min: 104, gap: 8 }, 'bento-logo-medium': { min: 88, gap: 6 }, 'bento-logo-small': { min: 62, gap: 4 } };
+/**
+ * Tile grids (with names, or logos only): smallest tile (sets the column
+ * count), largest tile (a short line stops growing there) and gap, in px.
+ * At 250 px: four small logos, three medium logos or bento tiles, two large.
+ */
+const TILE_GRIDS: Record<string, { min: number; max: number; gap: number }> = {
+  bento: { min: 74, max: 110, gap: 6 },
+  'bento-logo-large': { min: 104, max: 125, gap: 8 },
+  'bento-logo-medium': { min: 72, max: 106, gap: 6 },
+  'bento-logo-small': { min: 54, max: 74, gap: 4 },
+};
 /** Phones and tablets: logos are square tiles across the line, about 3, 4 and 5 to a phone's line by size. */
 const PHONE_LOGO_MIN: Record<string, number> = { 'bento-logo-large': 96, 'bento-logo-medium': 72, 'bento-logo-small': 56 };
 
@@ -66,6 +75,7 @@ export default function CategoryCard({
   const tileGrid = TILE_GRIDS[category.layout || ''];
   const mobileLayout = useMobileLayout();
   const tileMin = (mobileLayout && PHONE_LOGO_MIN[category.layout || '']) || tileGrid?.min || 0;
+  const tileMax = Math.max(tileMin, tileGrid?.max ?? 0);
   const gridNode = React.useRef<HTMLElement | null>(null);
   const [gridWidth, setGridWidth] = React.useState(0);
   React.useLayoutEffect(() => {
@@ -137,7 +147,7 @@ export default function CategoryCard({
           minHeight: filteredServices.length === 0 ? 40 : undefined,
           // Tiles fill the line, then keep their size as the widget widens (no breathing, no drifting apart);
           // on phones and tablets a short line spans the whole width too.
-          ...(tileGrid && gridWidth && filteredServices.length ? { gridTemplateColumns: stableColumns(gridWidth, filteredServices.length, tileMin, Math.round(tileMin * 1.2), tileGrid.gap, mobileLayout) } : {}),
+          ...(tileGrid && gridWidth && filteredServices.length ? { gridTemplateColumns: stableColumns(gridWidth, filteredServices.length, tileMin, tileMax, tileGrid.gap, mobileLayout) } : {}),
           ...(isCategoryOver ? { background: 'var(--nd-accent-glow)', borderRadius: 12, outline: '2px dashed var(--nd-accent)' } : {})
         }}
       >
