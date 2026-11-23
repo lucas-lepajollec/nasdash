@@ -6,6 +6,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-23
+
+### Upgrading from 0.4.0
+
+- Pull and recreate NasDash with the same data mount; nothing to migrate. Roll back by recreating the recorded `0.4.0` image.
+
 ### Fixed
 
 - Testing a qBittorrent connection in the settings always failed with "invalid request" while the widget worked: the test required the fields of both sign-in modes (user and password, and an API key); it now requires only those of the chosen mode.
@@ -720,7 +726,8 @@ The first release of the new NasDash: every page is a free grid of widgets, the 
 
 Earlier development remains available in Git history; this changelog does not invent releases that were never deliberately published.
 
-[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/lucas-lepajollec/nasdash/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.10...v0.4.0
 [0.3.10]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/lucas-lepajollec/nasdash/compare/v0.3.8...v0.3.9
