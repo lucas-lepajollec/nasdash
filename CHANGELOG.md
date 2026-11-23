@@ -41,6 +41,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 
 - Network map on phones: it opens as a map, as on a computer, instead of switching to the list by itself, and is laid out for the phone's width (narrower cards, two per row in each group, thinner margins) so it no longer overflows or needs sideways scrolling; its list and zoom buttons sit above it instead of over its first heading. Computers keep the same map.
+- Network map: links no longer run along the map's very edge, where the last few pixels of their path (bottom or right) were cut.
 
 - Ticking several tasks quickly (or changing any widget outside edit mode while a save was on its way) could undo the latest change at once: saves of a page now follow one another and keep what was changed meanwhile.
 - Phones followed the theme's card opacity, radius and font instead of the ones set in Appearance when their own phone values had never been changed.

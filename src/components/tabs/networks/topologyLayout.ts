@@ -433,6 +433,11 @@ function routeAll(topology: NetworkTopology, placement: Placement): PlacedEdge[]
   // Layer headings: a dot and a short uppercase word, kept clear of links.
   const headings: PlacedBox[] = placement.layers.map(layer => ({ id: layer.type, x: layer.x, y: layer.y, width: 150, height: 18 }));
   const grid = buildGrid(placement.width, placement.height, placement.nodes, placement.groups, headings, placement.column);
+  // Links keep off the map's very edge, where they would be cut.
+  const onRim = (cell: number) => {
+    const x = (cell % grid.cols) * CELL, y = Math.floor(cell / grid.cols) * CELL;
+    return x < 4 || y < 4 || x > placement.width - 4 || y > placement.height - 4;
+  };
   const groupIndex = new Map(placement.groups.map((box, index) => [box.id, index + 1]));
 
   // Sides first, so links sharing a side are spread along it.
@@ -557,11 +562,11 @@ function routeAll(topology: NetworkTopology, placement: Placement): PlacedEdge[]
       groupIndex.get(groupOfNode.get(connection.fromId) ?? ''), groupIndex.get(groupOfNode.get(connection.toId) ?? ''),
     ].filter(Boolean) as number[]);
     const strict = (cell: number) => {
-      if (grid.card[cell] || grid.title[cell]) return false;
+      if (grid.card[cell] || grid.title[cell] || onRim(cell)) return false;
       const g = grid.group[cell];
       return !g || openGroups.has(g);
     };
-    const loose = (cell: number) => !grid.card[cell];
+    const loose = (cell: number) => !grid.card[cell] && !onRim(cell);
 
     // Every sensible pair of sides is tried and the cheapest path wins
     // (length, bends, crossing other lanes; reusing the own trunk is cheap).
@@ -725,5 +730,13 @@ export function roundedPath(points: Point[], radius = 8): string {
 /** Places and routes a topology for a block `width` pixels wide. */
 export function layoutTopology(topology: NetworkTopology, width: number, size: TopologyCardSize): TopologyLayout {
   const placement = place(topology, width, size);
-  return { ...placement, edges: routeAll(topology, placement) };
+  const edges = routeAll(topology, placement);
+  // A link drawn anyway (no way around) may still reach past the edge: the
+  // map grows to hold it rather than cut it.
+  let right = placement.width, bottom = placement.height;
+  for (const edge of edges) {
+    for (const point of edge.points) { right = Math.max(right, point.x + 6); bottom = Math.max(bottom, point.y + 6); }
+    if (edge.label) { right = Math.max(right, edge.label.x + edge.label.width); bottom = Math.max(bottom, edge.label.y + edge.label.height); }
+  }
+  return { ...placement, width: Math.ceil(right), height: Math.ceil(bottom), edges };
 }
