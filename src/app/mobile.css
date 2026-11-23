@@ -533,6 +533,21 @@ body[data-soft-edges="on"][data-design="calme"] .nd-mhead .nd-search input {
    finger size, fields at 16 px (smaller ones make iOS zoom in). */
 @media (max-width: 700px) {
   .nd-modal-overlay:has(> .nd-settings-modal) { padding: 0 !important; align-items: stretch !important; }
+  /* Touch scrolling stays in the dialog: the page behind is held still; in
+     the settings, the fixed parts (search, back, title) pass no swipe on,
+     and each list keeps its scroll at its ends instead of handing it on. */
+  html:has(.nd-modal-overlay), body:has(.nd-modal-overlay) { overflow: hidden !important; overscroll-behavior: none; }
+  .nd-modal-overlay { overscroll-behavior: contain; }
+  .nd-modal-overlay:has(> .nd-settings-modal) { touch-action: none; overscroll-behavior: contain; }
+  .ndc-settings .ndc-settings-nav { overflow: hidden !important; min-height: 0; }
+  .ndc-settings :is(.ndc-settings-nav-groups, .nd-settings-content) {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
   body .nd-settings-modal.ndc-settings {
     width: 100vw !important;
     max-width: 100vw !important;
