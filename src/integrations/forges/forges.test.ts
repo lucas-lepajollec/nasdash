@@ -5,7 +5,10 @@ import { serviceBytes, ServiceError } from '@/lib/widgetData/services';
 import { forgejoKit } from '../forgejo/collect';
 import { githubKit, runState } from '../github/collect';
 import { gitlabKit, pipelineState } from '../gitlab/collect';
-import { actionsState, totalCount } from './shared';
+import { actionsState, commitOf, localDay, toActivity, totalCount } from './shared';
+import { giteaActivity } from './gitea';
+import { githubActivity } from '../github/collect';
+import { gitlabActivity } from '../gitlab/collect';
 import gitea from './samples/gitea.json';
 
 const bytes = vi.mocked(serviceBytes);
@@ -22,7 +25,11 @@ beforeEach(() => vi.resetAllMocks());
 
 describe('Forgejo and Gitea', () => {
   it('reads the repositories, their checks and release, and what waits for the account', async () => {
+    // The sample heatmap is dated: read it on its day.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-26T12:00:00Z'));
     answer({
+      '/api/v1/users/homelab/heatmap': { body: gitea.heatmap },
       '/api/v1/user': { body: gitea.user },
       '/api/v1/repos/search': { body: gitea.search },
       '/api/v1/repos/issues/search?type=pulls': { body: [{}], headers: { 'x-total-count': '2' } },
@@ -30,18 +37,24 @@ describe('Forgejo and Gitea', () => {
       '/api/v1/notifications/new': { body: gitea.notifications },
       '/api/v1/repos/homelab/dashboard/actions/tasks': { body: gitea.tasks },
       '/api/v1/repos/homelab/dashboard/releases/latest': { body: gitea.release },
+      '/api/v1/repos/homelab/dashboard/commits': { body: gitea.commits },
     });
     const summary = await forgejoKit.collect(source('forgejo'));
     expect(summary).toMatchObject({ provider: 'forgejo', account: 'homelab', reviewRequests: 2, assignedIssues: 3, notifications: 5 });
     expect(summary.repositories).toEqual([
       { id: '31', name: 'homelab/dashboard', url: 'https://forge.example.com/homelab/dashboard', stars: 12, openIssues: 3, openPullRequests: 1, updatedAt: Date.parse('2026-11-26T08:00:00Z'),
         checks: { state: 'running', name: 'ci.yml', branch: 'main', url: 'https://forge.example.com/homelab/dashboard/actions/runs/40', at: Date.parse('2026-11-26T08:01:00Z') },
-        release: { tag: 'v2.4.0', url: 'https://forge.example.com/homelab/dashboard/releases/tag/v2.4.0', at: Date.parse('2026-11-20T10:00:00Z') } },
+        release: { tag: 'v2.4.0', url: 'https://forge.example.com/homelab/dashboard/releases/tag/v2.4.0', at: Date.parse('2026-11-20T10:00:00Z') },
+        lastCommit: { message: 'Add a compact layout to the calendar', author: 'alex', at: Date.parse('2026-11-26T07:58:00Z') } },
       { id: '33', name: 'homelab/infra', url: 'https://forge.example.com/homelab/infra', private: true, mirror: true, stars: 0, openIssues: 0, openPullRequests: 0, updatedAt: Date.parse('2026-11-25T08:00:00Z') },
     ]);
     for (const [, , options] of bytes.mock.calls) expect(options?.headers).toMatchObject({ Authorization: 'token fake-token' });
-    // Archived repositories and those without Actions or releases are not asked about.
-    expect(bytes.mock.calls.map(([, path]) => path).filter(path => path.includes('/infra/') || path.includes('/old-scripts'))).toEqual([]);
+    expect(summary.activity?.days).toHaveLength(371);
+    expect(summary.activity?.days.reduce((sum, count) => sum + count, 0)).toBe(7);
+    // Archived repositories are not asked about; those without Actions or releases only for their latest commit.
+    expect(bytes.mock.calls.map(([, path]) => path).filter(path => path.includes('/old-scripts'))).toEqual([]);
+    expect(bytes.mock.calls.map(([, path]) => path).filter(path => path.includes('/infra/'))).toEqual(['/api/v1/repos/homelab/infra/commits?limit=1&stat=false&verification=false&files=false']);
+    vi.useRealTimers();
   });
   it('fails clearly with a refused token', async () => {
     answer({ '/api/v1/user': { body: { message: 'token is required' }, status: 401 } });
@@ -107,5 +120,26 @@ describe('forges, shared', () => {
     expect(totalCount({}, [{}, {}])).toBe(2);
     expect(actionsState('blocked')).toBe('pending');
     expect(actionsState('failure')).toBe('failure');
+  });
+});
+
+describe('forges, activity and latest commit', () => {
+  const now = new Date(2026, 10, 26, 12).getTime();
+  it('sums quarter-hour heatmap entries per day (Forgejo, Gitea)', () => {
+    const activity = giteaActivity([{ timestamp: new Date(2026, 10, 26, 9).getTime() / 1000, contributions: 2 }, { timestamp: new Date(2026, 10, 26, 9, 15).getTime() / 1000, contributions: 1 }, { timestamp: new Date(2026, 10, 24, 20).getTime() / 1000, contributions: 4 }, { timestamp: 'x', contributions: 9 }], now);
+    expect(activity?.end).toBe('2026-11-26');
+    expect(activity?.days.slice(-3)).toEqual([4, 0, 3]);
+    expect(giteaActivity([], now)).toBeUndefined();
+  });
+  it('reads the GitHub contribution calendar and the GitLab profile calendar', () => {
+    const calendar = { data: { viewer: { contributionsCollection: { contributionCalendar: { weeks: [{ contributionDays: [{ date: '2026-11-25', contributionCount: 5 }, { date: '2026-11-26', contributionCount: 1 }, { date: 'soon', contributionCount: 3 }] }] } } } } };
+    expect(githubActivity(calendar, now)?.days.slice(-2)).toEqual([5, 1]);
+    expect(gitlabActivity({ '2026-11-26': 2, '2025-01-01': 9, nope: 1 }, now)?.days.at(-1)).toBe(2);
+    // A whole year, oldest first, ending today.
+    expect(toActivity(new Map([[localDay(now), 1]]), now)?.days).toHaveLength(371);
+  });
+  it('keeps the first line of a commit message', () => {
+    expect(commitOf('Fix the login\n\nLong body', 'alex', '2026-11-26T08:00:00Z')).toEqual({ message: 'Fix the login', author: 'alex', at: Date.parse('2026-11-26T08:00:00Z') });
+    expect(commitOf('', 'alex', undefined)).toBeUndefined();
   });
 });

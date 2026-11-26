@@ -2,7 +2,7 @@ import type { IntegrationInstance } from '@/lib/types';
 import type { ForgeRepository, RepositoriesSummary } from '@/lib/widgetData/contracts';
 import { array, date, number, object, string, ServiceError } from '@/lib/widgetData/services';
 import type { KitServer } from '../kitServer';
-import { demoRepositories, forgeJson, optional, REPOSITORY_LIMIT, safeUrl, totalCount, type ChecksState } from '../forges/shared';
+import { commitOf, demoRepositories, forgeJson, optional, quietly, REPOSITORY_LIMIT, safeUrl, toActivity, totalCount, type ChecksState } from '../forges/shared';
 
 /**
  * GitLab REST API v4 (docs.gitlab.com/api, checked 2026-11-26): a personal
@@ -16,7 +16,11 @@ import { demoRepositories, forgeJson, optional, REPOSITORY_LIMIT, safeUrl, total
  * release `GET …/releases?per_page=1`. What waits for the account:
  * `GET /api/v4/merge_requests?scope=reviews_for_me&state=opened`,
  * `GET /api/v4/issues?scope=assigned_to_me&state=opened` and pending to-dos
- * `GET /api/v4/todos?state=pending` (`x-total`).
+ * `GET /api/v4/todos?state=pending` (`x-total`). The latest commit
+ * `GET …/repository/commits?per_page=1` (`title`, `author_name`,
+ * `committed_date`); the account's activity from its profile calendar
+ * `GET /users/{username}/calendar.json` (`{ "YYYY-MM-DD": count }`, a page of
+ * GitLab itself rather than the API: shown when GitLab answers it).
  */
 const withApi = (instance: IntegrationInstance): IntegrationInstance => (instance.settings.url ?? '').trim() ? instance : { ...instance, settings: { ...instance.settings, url: 'https://gitlab.com' } };
 const auth = (instance: IntegrationInstance) => ({ 'PRIVATE-TOKEN': instance.secrets?.apiKey ?? '' });
@@ -36,11 +40,14 @@ async function project(instance: IntegrationInstance, raw: Record<string, unknow
   const id = number(raw.id), fullName = string(raw.path_with_namespace);
   if (!id || !fullName) return undefined;
   const path = `/api/v4/projects/${id}`;
-  const [merges, pipelines, releases] = await Promise.all([
+  const [merges, pipelines, releases, commits] = await Promise.all([
     optional(() => forgeJson(instance, `${path}/merge_requests?state=opened&per_page=1`, auth(instance))),
     optional(() => forgeJson(instance, `${path}/pipelines?per_page=1`, auth(instance))),
     optional(() => forgeJson(instance, `${path}/releases?per_page=1`, auth(instance))),
+    raw.empty_repo === true ? undefined : quietly(() => forgeJson(instance, `${path}/repository/commits?per_page=1`, auth(instance))),
   ]);
+  const head = object(array(commits?.body)[0]);
+  const lastCommit = commitOf(head.title ?? head.message, head.author_name, head.committed_date ?? head.created_at);
   const pipeline = object(array(pipelines?.body)[0]);
   const latest = object(array(releases?.body)[0]);
   return {
@@ -52,18 +59,26 @@ async function project(instance: IntegrationInstance, raw: Record<string, unknow
     ...(date(raw.last_activity_at) ? { updatedAt: date(raw.last_activity_at) } : {}),
     ...(pipeline.status ? { checks: { state: pipelineState(pipeline.status), ...(string(pipeline.ref) ? { branch: string(pipeline.ref).slice(0, 80) } : {}), ...(safeUrl(pipeline.web_url) ? { url: safeUrl(pipeline.web_url) } : {}), ...(date(pipeline.updated_at) ? { at: date(pipeline.updated_at) } : {}) } } : {}),
     ...(string(latest.tag_name) ? { release: { tag: string(latest.tag_name).slice(0, 60), ...(safeUrl(object(latest._links).self) ? { url: safeUrl(object(latest._links).self) } : {}), ...(date(latest.released_at) ? { at: date(latest.released_at) } : {}) } } : {}),
+    ...(lastCommit ? { lastCommit } : {}),
   };
+}
+
+export function gitlabActivity(calendar: unknown, now = Date.now()) {
+  const byDay = new Map<string, number>();
+  for (const [day, count] of Object.entries(object(calendar))) if (/^\d{4}-\d{2}-\d{2}$/.test(day)) byDay.set(day, number(count));
+  return toActivity(byDay, now);
 }
 
 export async function collectGitlab(source: IntegrationInstance): Promise<RepositoriesSummary> {
   const instance = withApi(source);
   const user = object((await forgeJson(instance, '/api/v4/user', auth(instance))).body);
   if (!string(user.username)) throw new ServiceError('widgets.error.parse');
-  const [projects, reviews, assigned, todos] = await Promise.all([
+  const [projects, reviews, assigned, todos, calendar] = await Promise.all([
     forgeJson(instance, `/api/v4/projects?membership=true&archived=false&order_by=last_activity_at&sort=desc&per_page=${REPOSITORY_LIMIT * 2}`, auth(instance)),
     optional(() => forgeJson(instance, '/api/v4/merge_requests?scope=reviews_for_me&state=opened&per_page=1', auth(instance))),
     optional(() => forgeJson(instance, '/api/v4/issues?scope=assigned_to_me&state=opened&per_page=1', auth(instance))),
     optional(() => forgeJson(instance, '/api/v4/todos?state=pending&per_page=1', auth(instance))),
+    quietly(() => forgeJson(instance, `/users/${encodeURIComponent(string(user.username))}/calendar.json`, auth(instance))),
   ]);
   if (!Array.isArray(projects.body)) throw new ServiceError('widgets.error.parse');
   const repositories = (await Promise.all(array(projects.body).map(object).filter(raw => raw.archived !== true).slice(0, REPOSITORY_LIMIT).map(raw => project(instance, raw)))).filter((repo): repo is ForgeRepository => !!repo);
@@ -73,6 +88,7 @@ export async function collectGitlab(source: IntegrationInstance): Promise<Reposi
     ...(assigned ? { assignedIssues: totalCount(assigned.headers, assigned.body) } : {}),
     ...(todos ? { notifications: totalCount(todos.headers, todos.body) } : {}),
     repositories, fetchedAt: Date.now(),
+    ...(calendar && gitlabActivity(calendar.body) ? { activity: gitlabActivity(calendar.body) } : {}),
   };
 }
 

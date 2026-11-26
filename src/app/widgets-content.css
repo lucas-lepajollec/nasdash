@@ -1625,37 +1625,43 @@ button.ndw-music-next-row:hover .ndw-music-next-title { color: var(--nd-accent);
 }
 
 /* ---------- Repositories (Forgejo, Gitea, GitHub, GitLab): what waits, then one line per repository ---------- */
-.ndw-repo { container-type: inline-size; }
-.ndw-repo-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
-.ndw-repo-head > .ndw-media-sub { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ndw-repo-count { display: inline-flex; flex-shrink: 0; align-items: center; gap: 5px; color: var(--nd-text-dimmed); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
-.ndw-repo-count.is-on { color: var(--nd-text); }
-.ndw-repo-count.is-on > svg { color: var(--nd-accent); }
-.ndw-repo-count-word { color: var(--nd-text-muted); }
-.ndw-repo-list { display: flex; flex-direction: column; margin: 0 -6px; padding: 0; list-style: none; }
-.ndw-repo-row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 6px; border-radius: 9px; transition: background 0.15s ease; }
-.ndw-repo-row:hover { background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
-.ndw-repo-dot-link { display: inline-flex; flex-shrink: 0; }
-.ndw-repo-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--nd-text) 18%, transparent); }
-.ndw-repo-dot.is-success { background: var(--nd-green); }
-.ndw-repo-dot.is-failure { background: var(--nd-red); }
-.ndw-repo-dot.is-running, .ndw-repo-dot.is-pending { background: var(--nd-yellow); }
-.ndw-repo-dot.is-cancelled, .ndw-repo-dot.is-skipped { background: var(--nd-text-dimmed); }
-.ndw-repo-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
-.ndw-repo-name { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--nd-text); font-size: 0.8rem; }
-.ndw-repo-name > a, .ndw-repo-name > span:first-child { min-width: 4ch; overflow: hidden; color: inherit; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
-.ndw-repo-name > a:hover { color: var(--nd-accent); }
-.ndw-repo-owner { color: var(--nd-text-dimmed); }
-.ndw-repo-flag { flex-shrink: 0; color: var(--nd-text-dimmed); }
-.ndw-repo-sub { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--nd-text-dimmed); font-size: 0.66rem; }
-.ndw-repo-release { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; color: var(--nd-text-muted); font-family: var(--font-geist-mono), ui-monospace, monospace; text-decoration: none; }
-a.ndw-repo-release:hover { color: var(--nd-accent); }
-.ndw-repo-when { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ndw-repo-side { display: inline-flex; flex-shrink: 0; align-items: center; gap: 10px; }
-.ndw-repo-stat { display: inline-flex; align-items: center; gap: 4px; color: var(--nd-text); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
-.ndw-repo-stat > svg { color: var(--nd-text-dimmed); }
-.ndw-repo-stat.is-zero { color: var(--nd-text-dimmed); }
-@container (max-width: 320px) {
-  .ndw-repo-count-word, .ndw-repo-owner, .ndw-repo-when { display: none; }
-  .ndw-repo-side { gap: 7px; }
+.ndw-repo { container-type: inline-size; gap: 16px; }
+/* Activity: the account's days as squares in the theme's accent, stronger on busier days. */
+.ndw-repo-activity { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ndw-repo-activity-head { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 0; color: var(--nd-text-muted); font-size: 0.72rem; }
+.ndw-repo-activity-head > span:first-child { color: var(--nd-text); }
+.ndw-repo-activity-streak { color: var(--nd-text-muted); }
+.ndw-repo-activity-streak::before { content: '·'; margin-right: 8px; }
+.ndw-repo-months { position: relative; height: 12px; color: var(--nd-text-dimmed); font-size: 0.6rem; line-height: 12px; }
+.ndw-repo-months > span { position: absolute; top: 0; white-space: nowrap; }
+.ndw-repo-grid { display: grid; grid-auto-columns: 10px; grid-auto-flow: column; grid-template-rows: repeat(7, 10px); gap: 3px; }
+.ndw-repo-day { border-radius: 2px; background: color-mix(in srgb, var(--nd-text) 8%, transparent); }
+.ndw-repo-day.is-l1 { background: color-mix(in srgb, var(--nd-accent) 30%, transparent); }
+.ndw-repo-day.is-l2 { background: color-mix(in srgb, var(--nd-accent) 52%, transparent); }
+.ndw-repo-day.is-l3 { background: color-mix(in srgb, var(--nd-accent) 76%, transparent); }
+.ndw-repo-day.is-l4 { background: var(--nd-accent); }
+/* What waits for the account: three figures, in the accent when there is something. */
+.ndw-repo-waiting { display: flex; flex-wrap: wrap; gap: 8px 26px; }
+.ndw-repo-waiting-item { display: flex; flex-direction: column; gap: 3px; }
+.ndw-repo-waiting-number { color: var(--nd-text-dimmed); font-size: 1.3rem; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.ndw-repo-waiting-item.is-on .ndw-repo-waiting-number { color: var(--nd-accent); }
+.ndw-repo-waiting-label { color: var(--nd-text-muted); font-size: 0.66rem; }
+/* Repositories: name and open counts, then CI state, release and the latest commit, all as text. */
+.ndw-repo-list { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ndw-repo-row { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ndw-repo-line { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.ndw-repo-name { flex: 1; min-width: 0; overflow: hidden; color: var(--nd-text); font-size: 0.8rem; font-weight: 500; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+a.ndw-repo-name:hover { color: var(--nd-accent); }
+.ndw-repo-owner { color: var(--nd-text-muted); font-weight: 400; }
+.ndw-repo-counts { flex-shrink: 0; color: var(--nd-text-muted); font-size: 0.68rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ndw-repo-sub { display: flex; align-items: baseline; min-width: 0; color: var(--nd-text-muted); font-size: 0.68rem; white-space: nowrap; }
+.ndw-repo-sub > * + *::before { content: '·'; margin: 0 6px; color: var(--nd-text-dimmed); }
+.ndw-repo-state { flex-shrink: 0; color: var(--nd-text); font-weight: 500; text-decoration: none; }
+.ndw-repo-state.is-failure { color: var(--nd-red); }
+.ndw-repo-release { flex-shrink: 0; color: var(--nd-accent); text-decoration: none; }
+a.ndw-repo-state:hover, a.ndw-repo-release:hover { text-decoration: underline; }
+.ndw-repo-detail { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@container (max-width: 300px) {
+  .ndw-repo-owner, .ndw-repo-counts { display: none; }
+  .ndw-repo-waiting { gap: 8px 18px; }
 }

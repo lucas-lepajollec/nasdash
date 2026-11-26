@@ -257,7 +257,13 @@ Kit services, checked against their documentation and source (2026-11-08):
   `/projects?membership=true&order_by=last_activity_at`, per project
   `merge_requests` (`x-total`), `pipelines?per_page=1`, `releases?per_page=1`,
   then `merge_requests?scope=reviews_for_me`, `issues?scope=assigned_to_me`,
-  `todos?state=pending`. Twelve repositories, read every five minutes.
+  `todos?state=pending`. Twelve repositories, read every five minutes. Per
+  repository the latest commit (`commits?limit=1` on Forgejo / Gitea,
+  `commits?per_page=1` on GitHub, `repository/commits?per_page=1` on GitLab);
+  the account's activity from `/api/v1/users/{login}/heatmap` (Forgejo, Gitea),
+  the GraphQL `viewer.contributionsCollection.contributionCalendar` (GitHub) or
+  the profile page `/users/{username}/calendar.json` (GitLab). Both are extras:
+  a forge that refuses them only hides them.
 
 ## Trying an integration without installing it
 

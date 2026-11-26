@@ -1057,6 +1057,14 @@ export interface RepositoriesSummary extends KitSummaryBase {
   /** Unread notifications (not offered by every forge or token). */
   notifications?: number;
   repositories: ForgeRepository[];
+  /** The account's contributions per day, oldest first, the last one being `end` (the forge's own heatmap / calendar). */
+  activity?: ForgeActivity;
+}
+export interface ForgeActivity {
+  /** Local date (YYYY-MM-DD) of the last day in `days`. */
+  end: string;
+  /** Contributions per day, at most 371 (53 weeks), oldest first. */
+  days: number[];
 }
 export interface ForgeRepository {
   id: string;
@@ -1075,4 +1083,6 @@ export interface ForgeRepository {
   checks?: { state: 'success' | 'failure' | 'running' | 'pending' | 'cancelled' | 'skipped'; name?: string; branch?: string; url?: string; at?: number };
   /** Latest published release. */
   release?: { tag: string; url?: string; at?: number };
+  /** Latest commit on the default branch: first line of its message, its author. */
+  lastCommit?: { message: string; author?: string; at?: number };
 }
