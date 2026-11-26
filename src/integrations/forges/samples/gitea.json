@@ -1,0 +1,11 @@
+{
+  "user": { "id": 7, "login": "homelab", "full_name": "Homelab" },
+  "search": { "ok": true, "data": [
+    { "id": 31, "full_name": "homelab/dashboard", "html_url": "https://forge.example.com/homelab/dashboard", "updated_at": "2026-11-26T08:00:00Z", "stars_count": 12, "open_issues_count": 3, "open_pr_counter": 1, "release_counter": 4, "private": false, "fork": false, "mirror": false, "archived": false, "has_actions": true },
+    { "id": 32, "full_name": "homelab/old-scripts", "html_url": "https://forge.example.com/homelab/old-scripts", "updated_at": "2025-01-01T08:00:00Z", "archived": true },
+    { "id": 33, "full_name": "homelab/infra", "html_url": "https://forge.example.com/homelab/infra", "updated_at": "2026-11-25T08:00:00Z", "stars_count": 0, "open_issues_count": 0, "open_pr_counter": 0, "release_counter": 0, "private": true, "mirror": true, "has_actions": false }
+  ] },
+  "tasks": { "total_count": 40, "workflow_runs": [{ "id": 901, "name": "ci.yml", "head_branch": "main", "status": "running", "url": "https://forge.example.com/homelab/dashboard/actions/runs/40", "updated_at": "2026-11-26T08:01:00Z" }] },
+  "release": { "tag_name": "v2.4.0", "html_url": "https://forge.example.com/homelab/dashboard/releases/tag/v2.4.0", "published_at": "2026-11-20T10:00:00Z" },
+  "notifications": { "new": 5 }
+}

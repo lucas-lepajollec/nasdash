@@ -29,6 +29,9 @@ const FAMILIES = [
   { section: 'requests', widget: 'media-requests', types: ['seerr'], guide: 'media' },
   { section: 'notifications', widget: 'notifications', types: ['ntfy', 'gotify'], guide: 'network' },
   { section: 'reading', widget: 'reading', types: ['audiobookshelf', 'kavita', 'komga'], guide: 'media' },
+  { section: 'games', widget: 'game-servers', types: ['crafty', 'minecraft'], guide: 'media' },
+  { section: 'retro', widget: 'retro-library', types: ['romm'], guide: 'media' },
+  { section: 'forges', widget: 'repositories', types: ['forgejo', 'gitea', 'github', 'gitlab'], guide: 'docker' },
   // new:integration families
 ] as const satisfies readonly KitFamily[];
 

@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "status": "ok",
+    "data": [
+      { "server_id": "6c7d0a2e-8f1b-4d3a-9e5c-1b2a3c4d5e6f", "server_name": "Survival", "type": "minecraft-java", "server_ip": "127.0.0.1", "server_port": 25565 },
+      { "server_id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d", "server_name": "Creative", "type": "minecraft-java", "server_ip": "127.0.0.1", "server_port": 25566 }
+    ]
+  },
+  "stats": {
+    "6c7d0a2e-8f1b-4d3a-9e5c-1b2a3c4d5e6f": {
+      "status": "ok",
+      "data": { "stats_id": 812, "created": "2026-11-26T09:12:05", "server_id": { "server_id": "6c7d0a2e-8f1b-4d3a-9e5c-1b2a3c4d5e6f", "server_name": "Survival" }, "started": "2026-11-26 08:00:11", "running": true, "cpu": 12.4, "mem": "2.1GB", "mem_percent": 26.3, "world_name": "world", "world_size": "1.4GB", "server_port": 25565, "int_ping_results": "True", "online": 2, "max": 20, "players": "['Alex', 'Sam']", "desc": "§aA §lfictional§r world", "icon": "", "version": "1.21.4", "updating": false, "waiting_start": false, "crashed": false, "importing": false }
+    },
+    "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d": {
+      "status": "ok",
+      "data": { "stats_id": 813, "created": "2026-11-26T09:12:05", "server_id": { "server_id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d" }, "started": "", "running": false, "cpu": 0, "mem": 0, "mem_percent": 0, "world_name": "", "world_size": "", "server_port": 25566, "int_ping_results": "", "online": 0, "max": 0, "players": "", "desc": "Unable to Connect", "icon": "", "version": "", "updating": false, "waiting_start": false, "crashed": false, "importing": false }
+    }
+  }
+}

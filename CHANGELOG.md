@@ -6,6 +6,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- **Game servers** widget: Crafty Controller (API key; every server with its state, version, message of the day, players, CPU and memory, and, for administrators, start, stop and restart, the last two after a confirmation) or a Minecraft Java server asked directly like the game does (no account; its version, message, players and latency, the SRV record followed when no port is given; a server that does not answer is shown offline).
+- **Retro library** widget: RomM (client API token or account): how many games on how many platforms, the biggest platforms as bars, and the games added last as covers or a list.
+- **Repositories** widget: Forgejo, Gitea, GitHub (or GitHub Enterprise) and GitLab (or a self-managed one) with an access token: what waits for you (reviews asked, issues assigned, unread notifications or GitLab to-dos), then your repositories by latest activity with the state of their latest CI run, open pull requests and issues, and latest release; forks and mirrors can be hidden.
+- Public demo: a Crafty Controller with two fictional servers, a RomM library of free games and homebrew, and a forge with fictional repositories.
+
 ## [0.4.1] - 2026-11-23
 
 ### Upgrading from 0.4.0

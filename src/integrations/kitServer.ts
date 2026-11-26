@@ -15,6 +15,13 @@ import { audiobookshelfKit } from './audiobookshelf/collect';
 import { gotifyKit } from './gotify/collect';
 import { kavitaKit } from './kavita/collect';
 import { komgaKit } from './komga/collect';
+import { craftyKit } from './crafty/collect';
+import { minecraftKit } from './minecraft/collect';
+import { rommKit } from './romm/collect';
+import { forgejoKit } from './forgejo/collect';
+import { giteaKit } from './gitea/collect';
+import { githubKit } from './github/collect';
+import { gitlabKit } from './gitlab/collect';
 // new:integration imports
 
 export interface KitAction {
@@ -55,6 +62,13 @@ const SERVERS: Record<string, KitServer> = {
   gotify: gotifyKit,
   kavita: kavitaKit,
   komga: komgaKit,
+  crafty: craftyKit,
+  minecraft: minecraftKit,
+  romm: rommKit,
+  forgejo: forgejoKit,
+  gitea: giteaKit,
+  github: githubKit,
+  gitlab: gitlabKit,
   // new:integration servers
 };
 

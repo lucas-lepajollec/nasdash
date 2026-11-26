@@ -849,6 +849,17 @@
           "y": 232,
           "w": 6,
           "h": 60
+        },
+        {
+          "id": "docker-repositories",
+          "type": "repositories",
+          "settings": {
+            "integrationId": "forgejo-demo"
+          },
+          "x": 0,
+          "w": 12,
+          "h": 80,
+          "y": 292
         }
       ]
     },
@@ -1160,6 +1171,29 @@
           "y": 466,
           "w": 12,
           "h": 80
+        },
+        {
+          "id": "media-game-servers",
+          "type": "game-servers",
+          "settings": {
+            "integrationId": "crafty-demo"
+          },
+          "x": 0,
+          "w": 12,
+          "h": 70,
+          "y": 546
+        },
+        {
+          "id": "media-retro-library",
+          "type": "retro-library",
+          "settings": {
+            "integrationId": "romm-demo",
+            "display": "list"
+          },
+          "x": 12,
+          "y": 546,
+          "w": 12,
+          "h": 90
         }
       ]
     },

@@ -60,6 +60,9 @@ import uptimekumaView from './uptime/view';
 import seerrView from './media-requests/view';
 import ntfyView from './notifications/view';
 import audiobookshelfView from './reading/view';
+import craftyView from './game-servers/view';
+import rommView from './retro-library/view';
+import forgejoView from './repositories/view';
 // new:integration views
 import pageSearch from './page-search/view';
 import pageMenu from './page-menu/view';
@@ -108,6 +111,9 @@ export const WIDGET_VIEWS: Readonly<Record<string, ComponentType<WidgetViewProps
   'media-requests': seerrView,
   'notifications': ntfyView,
   'reading': audiobookshelfView,
+  'game-servers': craftyView,
+  'retro-library': rommView,
+  'repositories': forgejoView,
   // new:integration view entries
   'rss': rss,
   'markets': markets,
