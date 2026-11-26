@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- Home Screen app on iPhone: no more blur over the top of the screen. The deprecated
+  `black-translucent` status bar style made iOS 26 and later blur the top of installed apps;
+  NasDash now uses the default style, an opaque status bar in the theme colour with the app
+  right below it. Remove NasDash from the Home Screen and add it again: iOS only reads this
+  setting when the app is added.
+
 ## [0.4.1] - 2026-11-23
 
 ### Upgrading from 0.4.0
