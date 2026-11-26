@@ -35,8 +35,9 @@ export function generateMetadata(): Metadata {
     title: messages.en['meta.title'],
     description: messages.en['meta.description'],
     icons: { icon: [{ url: '/logo.svg', type: 'image/svg+xml' }, { url: '/favicon.ico', sizes: '48x48' }], apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }] },
-    // Opened from the home screen: full screen, the page drawn under the status bar.
-    appleWebApp: { capable: true, title: 'NasDash', statusBarStyle: 'black-translucent' },
+    // Opened from the home screen. No black-translucent status bar: on iOS 26 and later it makes
+    // the system blur the top of the app (WebKit bug 317153). The bar is opaque in theme-color.
+    appleWebApp: { capable: true, title: 'NasDash' },
     robots: demoMode
       ? {
           index: false,
