@@ -408,6 +408,30 @@
       }
     },
     {
+      "id": "crafty-demo",
+      "type": "crafty",
+      "name": "Crafty Controller",
+      "settings": {
+        "url": "https://crafty.demo.invalid:8443"
+      }
+    },
+    {
+      "id": "romm-demo",
+      "type": "romm",
+      "name": "RomM",
+      "settings": {
+        "url": "https://romm.demo.invalid"
+      }
+    },
+    {
+      "id": "forgejo-demo",
+      "type": "forgejo",
+      "name": "Forgejo",
+      "settings": {
+        "url": "https://forge.demo.invalid"
+      }
+    },
+    {
       "id": "uptimekuma-demo",
       "type": "uptimekuma",
       "name": "Uptime Kuma",

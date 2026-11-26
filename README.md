@@ -20,7 +20,7 @@
 
 ## Overview
 
-NasDash brings services, machines, Docker, the network, media, downloads, music and photos into one calm, self-hosted dashboard. Each page is a free grid with 61 selectable widget types (64 registered), from service categories and machine telemetry to Jellyfin, the *arr apps, DNS blocking, VPN and UPS.
+NasDash brings services, machines, Docker, the network, media, downloads, music and photos into one calm, self-hosted dashboard. Each page is a free grid with 64 selectable widget types (67 registered), from service categories and machine telemetry to Jellyfin, the *arr apps, DNS blocking, VPN and UPS.
 
 The page header is made of widgets too: Search, Page menu and Buttons sit on each page, moved and resized in edit mode like the others. Page menus share four styles (tabs, capsule, segmented and icons), alignment, pages per line, an “Others” limit and sub-menus, with an optional override for one menu. Search looks through every widget on the page, and each widget can show or hide its own title.
 
@@ -92,6 +92,7 @@ Theme, wallpaper, and glass are first-class product surfaces, not a single defau
 - Storage volumes grouped by host by default, with optional fullest-first or manual order. Reorder metric readings with handles in page edit mode, then save the page.
 - Docker containers, logs, images, volumes, and guarded actions through Portainer, Dockhand, an optional socket proxy, or a Docker-compatible API/socket. Search, filter and sort resource lists, paginate them, inspect tags and linked containers, and confirm selected unused resources before removal. Page selection stays in the table header on desktop and mobile; usage counts sit beside Refresh.
 - Network topology editor with groups, links, and service/device associations.
+- Game servers (Crafty Controller with start, stop and restart, or a Minecraft server pinged directly), a RomM retro library, and repositories from Forgejo, Gitea, GitHub or GitLab with their CI state, releases, and the reviews and issues waiting for you.
 - Composable pages: every page is a free grid of widgets you can move, resize and add from a library, with ready-made official pages and appearance profiles.
 - Phone navigation: a large page name, round search and ⋯ buttons, a menu sheet, swiping between pages and page dots. Settings fill the screen with grouped rows; the Order list in edit mode changes widget order and visibility for phones and tablets.
 - Custom API connections for JSON endpoints, fetched on the server with configurable authentication; widgets receive selected values while connection addresses and credentials stay private.

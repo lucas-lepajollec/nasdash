@@ -41,6 +41,13 @@ import { audiobookshelfManifest } from './audiobookshelf/manifest';
 import { gotifyManifest } from './gotify/manifest';
 import { kavitaManifest } from './kavita/manifest';
 import { komgaManifest } from './komga/manifest';
+import { craftyManifest } from './crafty/manifest';
+import { minecraftManifest } from './minecraft/manifest';
+import { rommManifest } from './romm/manifest';
+import { forgejoManifest } from './forgejo/manifest';
+import { giteaManifest } from './gitea/manifest';
+import { githubManifest } from './github/manifest';
+import { gitlabManifest } from './gitlab/manifest';
 // new:integration manifests
 import type { DeviceIntegrationManifest, ServiceIntegrationManifest } from './types';
 
@@ -87,7 +94,7 @@ export const DEVICE_INTEGRATION_IDS = DEVICE_INTEGRATIONS.map(integration => int
  * widgets, instead of a device to monitor. Adding one: `<id>/manifest.ts`
  * (fields), server code reading it, then list the manifest here.
  */
-export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tmdbManifest, tailscaleManifest, headscaleManifest, gluetunManifest, nutManifest, apcupsdManifest, syncthingManifest, speedtestManifest, wudManifest, uptimekumaManifest, seerrManifest, ntfyManifest, audiobookshelfManifest, gotifyManifest, kavitaManifest, komgaManifest, /* new:integration list */ piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest, piwigoManifest, librephotosManifest, customapiManifest, jellyfinManifest, embyManifest, plexManifest, navidromeManifest, sonarrManifest, radarrManifest, lidarrManifest, prowlarrManifest, qbittorrentManifest, transmissionManifest, delugeManifest, sabnzbdManifest, nzbgetManifest];
+export const SERVICE_INTEGRATIONS: readonly ServiceIntegrationManifest[] = [tmdbManifest, tailscaleManifest, headscaleManifest, gluetunManifest, nutManifest, apcupsdManifest, syncthingManifest, speedtestManifest, wudManifest, uptimekumaManifest, seerrManifest, ntfyManifest, audiobookshelfManifest, gotifyManifest, kavitaManifest, komgaManifest, craftyManifest, minecraftManifest, rommManifest, forgejoManifest, giteaManifest, githubManifest, gitlabManifest, /* new:integration list */ piholeManifest, adguardManifest, technitiumManifest, immichManifest, photoprismManifest, piwigoManifest, librephotosManifest, customapiManifest, jellyfinManifest, embyManifest, plexManifest, navidromeManifest, sonarrManifest, radarrManifest, lidarrManifest, prowlarrManifest, qbittorrentManifest, transmissionManifest, delugeManifest, sabnzbdManifest, nzbgetManifest];
 
 export function getServiceIntegration(id: string | undefined): ServiceIntegrationManifest | undefined {
   return SERVICE_INTEGRATIONS.find(integration => integration.id === id);

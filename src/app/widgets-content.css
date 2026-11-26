@@ -1576,3 +1576,86 @@ button.ndw-music-next-row:hover .ndw-music-next-title { color: var(--nd-accent);
   .ndw-mx-stat-value { font-size: 1.25rem; }
   .ndw-mx-statrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---------- Game servers (Crafty Controller, Minecraft): one line per server ---------- */
+.ndw-game { container-type: inline-size; }
+.ndw-game-list { display: flex; flex-direction: column; margin: 0 -6px; padding: 0; list-style: none; }
+.ndw-game-row { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 8px 6px; border-radius: 9px; transition: background 0.15s ease; }
+.ndw-game-row:hover { background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
+.ndw-game-dot { flex-shrink: 0; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--nd-text-dimmed); }
+.ndw-game-row.is-online .ndw-game-dot { background: var(--nd-green); }
+.ndw-game-row.is-starting .ndw-game-dot, .ndw-game-row.is-updating .ndw-game-dot { background: var(--nd-yellow); }
+.ndw-game-row.is-crashed .ndw-game-dot { background: var(--nd-red); }
+.ndw-game-row.is-offline .ndw-game-main { opacity: 0.65; }
+.ndw-game-main { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.ndw-game-name { display: flex; align-items: baseline; gap: 7px; min-width: 0; color: var(--nd-text); font-size: 0.8rem; }
+.ndw-game-name > span:first-child { min-width: 4ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-game-version { flex-shrink: 0; color: var(--nd-text-dimmed); font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 0.64rem; }
+.ndw-game-sub { min-width: 0; overflow: hidden; color: var(--nd-text-muted); font-size: 0.68rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-game-row.is-crashed .ndw-game-sub { color: var(--nd-red); }
+.ndw-game-names { min-width: 0; overflow: hidden; color: var(--nd-text-dimmed); font-size: 0.66rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-game-side { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; }
+.ndw-game-players { display: inline-flex; align-items: center; gap: 4px; margin-right: 2px; color: var(--nd-text); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+.ndw-game-players > svg { color: var(--nd-text-dimmed); }
+@container (max-width: 300px) {
+  .ndw-game-version, .ndw-game-names { display: none; }
+}
+
+/* ---------- Retro library (RomM): totals, platforms as bars, the latest games ---------- */
+.ndw-retro { container-type: inline-size; }
+.ndw-retro-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ndw-retro-platforms { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ndw-retro-platform { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; font-size: 0.72rem; }
+.ndw-retro-platform-name { overflow: hidden; color: var(--nd-text); text-overflow: ellipsis; white-space: nowrap; }
+.ndw-retro-bar { height: 5px; overflow: hidden; border-radius: 3px; background: var(--nd-progress-bg, color-mix(in srgb, var(--nd-text) 10%, transparent)); }
+.ndw-retro-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--nd-accent); }
+.ndw-retro-platform-count { min-width: 3ch; color: var(--nd-text-muted); text-align: right; font-variant-numeric: tabular-nums; }
+.ndw-retro-shelf { display: grid; gap: 12px 10px; margin: 0; padding: 0; list-style: none; }
+.ndw-retro-game { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ndw-retro-cover { display: flex; align-items: center; justify-content: center; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--nd-content-radius); background: color-mix(in srgb, var(--nd-text) 7%, transparent); color: var(--nd-text-dimmed); }
+.ndw-retro-cover > img { width: 100%; height: 100%; object-fit: cover; }
+.ndw-retro-game-name { overflow: hidden; color: var(--nd-text); font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-retro-game-platform { overflow: hidden; color: var(--nd-text-dimmed); font-size: 0.62rem; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-retro-list { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.ndw-retro-row { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ndw-retro-row-name { overflow: hidden; color: var(--nd-text); font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 300px) {
+  .ndw-retro-platform { grid-template-columns: minmax(0, 1fr) auto; }
+  .ndw-retro-bar { display: none; }
+}
+
+/* ---------- Repositories (Forgejo, Gitea, GitHub, GitLab): what waits, then one line per repository ---------- */
+.ndw-repo { container-type: inline-size; }
+.ndw-repo-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
+.ndw-repo-head > .ndw-media-sub { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-repo-count { display: inline-flex; flex-shrink: 0; align-items: center; gap: 5px; color: var(--nd-text-dimmed); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.ndw-repo-count.is-on { color: var(--nd-text); }
+.ndw-repo-count.is-on > svg { color: var(--nd-accent); }
+.ndw-repo-count-word { color: var(--nd-text-muted); }
+.ndw-repo-list { display: flex; flex-direction: column; margin: 0 -6px; padding: 0; list-style: none; }
+.ndw-repo-row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 6px; border-radius: 9px; transition: background 0.15s ease; }
+.ndw-repo-row:hover { background: color-mix(in srgb, var(--nd-text) 4%, transparent); }
+.ndw-repo-dot-link { display: inline-flex; flex-shrink: 0; }
+.ndw-repo-dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--nd-text) 18%, transparent); }
+.ndw-repo-dot.is-success { background: var(--nd-green); }
+.ndw-repo-dot.is-failure { background: var(--nd-red); }
+.ndw-repo-dot.is-running, .ndw-repo-dot.is-pending { background: var(--nd-yellow); }
+.ndw-repo-dot.is-cancelled, .ndw-repo-dot.is-skipped { background: var(--nd-text-dimmed); }
+.ndw-repo-main { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.ndw-repo-name { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--nd-text); font-size: 0.8rem; }
+.ndw-repo-name > a, .ndw-repo-name > span:first-child { min-width: 4ch; overflow: hidden; color: inherit; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-repo-name > a:hover { color: var(--nd-accent); }
+.ndw-repo-owner { color: var(--nd-text-dimmed); }
+.ndw-repo-flag { flex-shrink: 0; color: var(--nd-text-dimmed); }
+.ndw-repo-sub { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--nd-text-dimmed); font-size: 0.66rem; }
+.ndw-repo-release { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; color: var(--nd-text-muted); font-family: var(--font-geist-mono), ui-monospace, monospace; text-decoration: none; }
+a.ndw-repo-release:hover { color: var(--nd-accent); }
+.ndw-repo-when { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-repo-side { display: inline-flex; flex-shrink: 0; align-items: center; gap: 10px; }
+.ndw-repo-stat { display: inline-flex; align-items: center; gap: 4px; color: var(--nd-text); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+.ndw-repo-stat > svg { color: var(--nd-text-dimmed); }
+.ndw-repo-stat.is-zero { color: var(--nd-text-dimmed); }
+@container (max-width: 320px) {
+  .ndw-repo-count-word, .ndw-repo-owner, .ndw-repo-when { display: none; }
+  .ndw-repo-side { gap: 7px; }
+}

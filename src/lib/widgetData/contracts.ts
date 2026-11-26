@@ -1002,3 +1002,77 @@ export interface ReadingItem {
   /** A cover served by `GET /api/widgets/kit/image` (the integration's own image, behind NasDash). */
   cover?: string;
 }
+
+/** Crafty Controller or a Minecraft server pinged directly: the game servers, their players and load. */
+export interface GameServersSummary extends KitSummaryBase {
+  provider: 'crafty' | 'minecraft';
+  servers: GameServer[];
+}
+export interface GameServer {
+  id: string;
+  name: string;
+  state: 'online' | 'offline' | 'starting' | 'crashed' | 'updating';
+  /** Message of the day, plain text. */
+  motd?: string;
+  version?: string;
+  players?: number;
+  maxPlayers?: number;
+  /** Player names, when the server lists them. */
+  playerNames?: string[];
+  /** Crafty: process load (0–100) and memory. */
+  cpuPercent?: number;
+  memoryPercent?: number;
+  memoryBytes?: number;
+  /** Direct ping: round trip, in milliseconds. */
+  latencyMs?: number;
+  /** Crafty: the server can be started, stopped and restarted from the widget (administrators). */
+  controllable?: boolean;
+}
+
+/** RomM: the retro game library, its platforms and what was added last. */
+export interface RetroLibrarySummary extends KitSummaryBase {
+  provider: 'romm';
+  totals: { platforms: number; games: number; saves?: number; states?: number; screenshots?: number; sizeBytes?: number };
+  platforms: { id: string; name: string; games: number }[];
+  recent: RetroGame[];
+}
+export interface RetroGame {
+  id: string;
+  name: string;
+  platform: string;
+  /** A cover served by `GET /api/widgets/kit/image` (the integration's own image, behind NasDash). */
+  cover?: string;
+  addedAt?: number;
+}
+
+/** Forgejo, Gitea, GitHub or GitLab: the repositories of the account, their activity and checks, and what waits for the account. */
+export interface RepositoriesSummary extends KitSummaryBase {
+  provider: 'forgejo' | 'gitea' | 'github' | 'gitlab';
+  /** The account the token belongs to. */
+  account?: string;
+  /** Open pull or merge requests awaiting the account's review. */
+  reviewRequests?: number;
+  /** Open issues assigned to the account. */
+  assignedIssues?: number;
+  /** Unread notifications (not offered by every forge or token). */
+  notifications?: number;
+  repositories: ForgeRepository[];
+}
+export interface ForgeRepository {
+  id: string;
+  /** owner/name */
+  name: string;
+  url: string;
+  private?: boolean;
+  fork?: boolean;
+  mirror?: boolean;
+  stars?: number;
+  openIssues?: number;
+  openPullRequests?: number;
+  /** Last push or activity. */
+  updatedAt?: number;
+  /** Latest run of its CI (Actions, pipelines) on any branch. */
+  checks?: { state: 'success' | 'failure' | 'running' | 'pending' | 'cancelled' | 'skipped'; name?: string; branch?: string; url?: string; at?: number };
+  /** Latest published release. */
+  release?: { tag: string; url?: string; at?: number };
+}

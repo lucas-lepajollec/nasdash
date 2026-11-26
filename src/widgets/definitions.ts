@@ -62,6 +62,9 @@ import uptimekumaWidget from './uptime/definition';
 import seerrWidget from './media-requests/definition';
 import ntfyWidget from './notifications/definition';
 import audiobookshelfWidget from './reading/definition';
+import craftyWidget from './game-servers/definition';
+import rommWidget from './retro-library/definition';
+import forgejoWidget from './repositories/definition';
 // new:integration definitions
 import type { WidgetDefinition } from './define';
 
@@ -92,6 +95,9 @@ export const WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
   seerrWidget,
   ntfyWidget,
   audiobookshelfWidget,
+  craftyWidget,
+  rommWidget,
+  forgejoWidget,
   // new:integration widgets
   // Layout: the page header (search, menu, buttons), then the historical spacer
   pageSearch, pageMenu, pageActions,

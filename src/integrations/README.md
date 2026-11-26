@@ -229,6 +229,35 @@ Kit services, checked against their documentation and source (2026-11-08):
   `/books/ondeck`, `/books/latest`). Covers go through
   `GET /api/widgets/kit/image` (`KitServer.image`), which serves only ids the
   integration listed in its own answers (`reading/shared.ts`).
+- Crafty Controller 4 (OpenAPI spec and `app/classes/web/routes/api/servers`,
+  checked 2026-11-26): an API key or login token as `Authorization: Bearer`;
+  `GET /api/v2/servers`, `GET /api/v2/servers/{id}/stats` (`data`: `running`,
+  `crashed`, `updating`, `waiting_start`, `cpu`, `mem`, `mem_percent`,
+  `online`, `max`, `players` as text, `desc`, `version`) and
+  `POST /api/v2/servers/{id}/action/{start_server|stop_server|restart_server}`
+  (Commands permission) for an id it listed.
+- Minecraft Java Server List Ping (minecraft.wiki › Java Edition protocol):
+  handshake and status request over TCP (`ups/socket.ts`, 6 s, 256 KiB), the
+  JSON status (`version.name`, `players`, `description`); the
+  `_minecraft._tcp` SRV record when no port is saved; no answer = offline.
+- RomM (`backend/endpoints`, docs.romm.app): a client API token (`rmm_…`,
+  Bearer) or Basic; `GET /api/stats`, `/api/platforms` (`rom_count`),
+  `/api/roms?order_by=created_at&order_dir=desc&limit=` (`items[]`); covers are
+  files under `/assets/romm/resources/` served by RomM's nginx, only those its
+  answers listed.
+- Forges (`forges/`): Forgejo and Gitea API v1 (their `swagger.v1.json`,
+  Forgejo 15 and Gitea 1.25+) with `Authorization: token`: `/api/v1/user`,
+  `/repos/search?uid=&sort=updated`, `…/actions/tasks?limit=1`,
+  `…/releases/latest`, `/repos/issues/search` (`review_requested`, `assigned`,
+  `x-total-count`), `/notifications/new`. GitHub (`Bearer`,
+  `X-GitHub-Api-Version: 2022-11-28`): `/user/repos?sort=pushed`, per
+  repository `pulls?per_page=1` (`Link` last page), `actions/runs?per_page=1`,
+  `releases/latest`, the search `review-requested:@me` / `assignee:@me` and
+  `/notifications` (classic tokens). GitLab v4 (`PRIVATE-TOKEN`):
+  `/projects?membership=true&order_by=last_activity_at`, per project
+  `merge_requests` (`x-total`), `pipelines?per_page=1`, `releases?per_page=1`,
+  then `merge_requests?scope=reviews_for_me`, `issues?scope=assigned_to_me`,
+  `todos?state=pending`. Twelve repositories, read every five minutes.
 
 ## Trying an integration without installing it
 

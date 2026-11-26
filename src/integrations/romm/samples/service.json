@@ -1,0 +1,17 @@
+{
+  "stats": { "PLATFORMS": 3, "ROMS": 128, "SAVES": 14, "STATES": 5, "SCREENSHOTS": 22, "TOTAL_FILESIZE_BYTES": 9126805504 },
+  "platforms": [
+    { "id": 1, "slug": "gb", "fs_slug": "gb", "name": "Game Boy", "custom_name": null, "rom_count": 54, "url_logo": null },
+    { "id": 2, "slug": "nes", "fs_slug": "nes", "name": "Nintendo Entertainment System", "custom_name": "NES", "rom_count": 70, "url_logo": null },
+    { "id": 3, "slug": "n64", "fs_slug": "n64", "name": "Nintendo 64", "custom_name": null, "rom_count": 4, "url_logo": null },
+    { "id": 4, "slug": "psx", "fs_slug": "psx", "name": "PlayStation", "custom_name": null, "rom_count": 0, "url_logo": null }
+  ],
+  "roms": {
+    "items": [
+      { "id": 812, "name": "Micro Mages", "fs_name": "Micro Mages (World).nes", "platform_display_name": "NES", "path_cover_small": "roms/2/812/cover/small.png?ts=2026-11-20 10:11:12", "path_cover_large": "roms/2/812/cover/big.png?ts=2026-11-20 10:11:12", "created_at": "2026-11-20T10:11:12Z" },
+      { "id": 811, "name": null, "fs_name": "Tobu Tobu Girl.gb", "platform_display_name": "Game Boy", "path_cover_small": "", "path_cover_large": "", "created_at": "2026-11-19T08:00:00Z" },
+      { "id": 810, "name": "Odd path", "fs_name": "odd.nes", "platform_display_name": "NES", "path_cover_small": "../../etc/passwd", "created_at": "2026-11-18T08:00:00Z" }
+    ],
+    "total": 128, "limit": 24, "offset": 0
+  }
+}
