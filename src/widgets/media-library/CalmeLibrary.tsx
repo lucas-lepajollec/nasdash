@@ -10,7 +10,7 @@ import { DialogPortal } from '@/widgets/devices/ColorDialog';
 import { CalmeRow, CalmeSegmented, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { CalmeWidget } from '../calme';
 import { DataError, pick, useBoxWidth, useWidgetData, WidgetSettingsButton } from '@/components/widgets/content/kit';
-import { Backdrop, Figure } from '@/components/widgets/media/visual';
+import { Backdrop, Fan, Figure } from '@/components/widgets/media/visual';
 import { MediaConnectionField, MediaSetup, useMediaConnection } from '@/components/widgets/media/shared';
 
 type Count = keyof MediaCounts;
@@ -126,18 +126,6 @@ function Shelf({ library, own, offset, active, number }: { library: MediaLibrary
   );
 }
 
-/** One fanned trio; faded in once its pictures have loaded. */
-function Fan({ urls, under }: { urls: string[]; under?: boolean }) {
-  const [loaded, setLoaded] = useState(0);
-  return (
-    <span className={`ndw-mx-fan-set ${under ? 'is-under' : ''} ${loaded >= urls.length ? 'is-loaded' : ''}`}>
-      {urls.map((url, position) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={`${url}-${position}`} className={`is-${urls.length === 3 ? position : 1}`} src={url} alt="" decoding="async" onLoad={() => setLoaded(value => value + 1)} onError={() => setLoaded(value => value + 1)} />
-      ))}
-    </span>
-  );
-}
 
 /** Music, books, or any library shown as text: its figures in a row. */
 function PlainLibrary({ library, number }: { library: MediaLibrary; number: Intl.NumberFormat }) {

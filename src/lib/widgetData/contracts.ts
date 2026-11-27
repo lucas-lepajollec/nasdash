@@ -1033,7 +1033,8 @@ export interface GameServer {
 export interface RetroLibrarySummary extends KitSummaryBase {
   provider: 'romm';
   totals: { platforms: number; games: number; saves?: number; states?: number; screenshots?: number; sizeBytes?: number };
-  platforms: { id: string; name: string; games: number }[];
+  /** By number of games; the biggest ones carry a few of their latest covers. */
+  platforms: { id: string; name: string; games: number; covers?: string[] }[];
   recent: RetroGame[];
 }
 export interface RetroGame {

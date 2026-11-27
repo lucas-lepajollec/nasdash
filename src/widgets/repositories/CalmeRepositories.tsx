@@ -7,11 +7,12 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import { KitWidget } from '@/components/widgets/content/KitWidget';
 import { bounded, pick, useBoxWidth, useRelativeTime, useShowMore } from '@/components/widgets/content/kit';
+import { Stat } from '@/components/widgets/media/visual';
 
 export const ROWS = { min: 2, max: 12, default: 6 } as const;
 const SHOWS = ['both', 'activity', 'repositories'] as const;
-/** Activity squares and the gap between them, in px. */
-const CELL = 10, GAP = 3;
+/** Activity squares: between 9 and 14 px, 3 px apart; the grid spans the widget's width. */
+const CELL = 9, MAX_CELL = 14, GAP = 3;
 
 /** The repositories a widget lists: forks and mirrors only when asked. */
 export function shownRepositories(repositories: ForgeRepository[], settings: WidgetSettings): ForgeRepository[] {
@@ -21,6 +22,10 @@ export function shownRepositories(repositories: ForgeRepository[], settings: Wid
 /** How many whole weeks fit a width, between two months and a year. */
 export function weeksThatFit(width: number): number {
   return Math.max(8, Math.min(53, Math.floor((width + GAP) / (CELL + GAP))));
+}
+/** The square size that makes those weeks span the width. */
+export function cellSize(width: number, weeks: number): number {
+  return Math.max(CELL, Math.min(MAX_CELL, Math.floor((width - (weeks - 1) * GAP) / weeks)));
 }
 
 /**
@@ -106,18 +111,13 @@ function Repositories({ data, settings }: { data: RepositoriesSummary; settings:
         ? <Activity activity={data.activity} />
         : show === 'activity' && <span className="ndw-media-sub is-quiet">{t('widgets.repos.noActivity')}</span>)}
       {show !== 'activity' && settings.waiting !== false && waiting.length > 0 && (
-        <div className="ndw-repo-waiting">
-          {waiting.map(([id, count]) => (
-            <span key={id} className={`ndw-repo-waiting-item ${count ? 'is-on' : ''}`} title={t(`widgets.repos.${id}`, { count })}>
-              <span className="ndw-repo-waiting-number">{count}</span>
-              <span className="ndw-repo-waiting-label">{t(`widgets.repos.${id}Short`)}</span>
-            </span>
-          ))}
+        <div className="ndw-mx-statrow">
+          {waiting.map(([id, count]) => <Stat key={id} value={count} label={t(`widgets.repos.${id}Short`)} tone={count ? undefined : 'muted'} />)}
         </div>
       )}
       {show !== 'activity' && (shown.length === 0
         ? <span className="ndw-media-sub is-quiet">{t('widgets.repos.none')}</span>
-        : <ul className="ndw-repo-list">{shown.map(repo => <Repository key={repo.id} repo={repo} account={data.account} commits={settings.commits !== false} />)}</ul>)}
+        : <ul className="ndw-kit-list ndw-repo-list">{shown.map(repo => <Repository key={repo.id} repo={repo} account={data.account} commits={settings.commits !== false} />)}</ul>)}
       {show !== 'activity' && more}
     </div>
   );
@@ -145,20 +145,21 @@ function Activity({ activity }: { activity: ForgeActivity }) {
   }, [cells, locale]);
   const day = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' });
   const number = new Intl.NumberFormat(locale);
-  const summary = weeks >= 52
+  const summary = weeks >= 50
     ? t('widgets.repos.activityYear', { count: number.format(total) })
     : t('widgets.repos.activityMonths', { count: number.format(total), months: Math.max(2, Math.round(weeks / 4.35)) });
+  const size = cellSize(width, weeks);
   return (
-    <section className="ndw-repo-activity" ref={ref}>
-      <p className="ndw-repo-activity-head">
-        <span>{summary}</span>
-        {streak >= 2 && <span className="ndw-repo-activity-streak">{t('widgets.repos.streak', { count: streak })}</span>}
-      </p>
+    <section className="ndw-repo-activity" ref={ref} style={{ '--ndw-repo-cell': `${size}px` } as React.CSSProperties}>
+      <span className="ndw-kit-row-head">
+        <span className="ndw-kit-row-name">{summary}</span>
+        {streak >= 2 && <span className="ndw-kit-row-value">{t('widgets.repos.streak', { count: streak })}</span>}
+      </span>
       {width > 0 && (
         <>
           {weeks >= 12 && (
             <div className="ndw-repo-months" aria-hidden="true">
-              {months.map(month => <span key={month.column} style={{ left: month.column * (CELL + GAP) }}>{month.label}</span>)}
+              {months.map(month => <span key={month.column} style={{ left: month.column * (size + GAP) }}>{month.label}</span>)}
             </div>
           )}
           <div className="ndw-repo-grid" role="img" aria-label={summary}>
@@ -172,7 +173,11 @@ function Activity({ activity }: { activity: ForgeActivity }) {
   );
 }
 
-/** The owner is named only when it is not the account itself (an organisation, someone else's repository). */
+/**
+ * One repository in two lines: its name (and owner when not the account's own)
+ * with its release beside it and, on the right, a CI run going wrong or still
+ * going, else its open pull requests and issues; under it the latest commit.
+ */
 function Repository({ repo, account, commits }: { repo: ForgeRepository; account?: string; commits: boolean }) {
   const { t } = useI18n();
   const ago = useRelativeTime();
@@ -190,21 +195,23 @@ function Repository({ repo, account, commits }: { repo: ForgeRepository; account
   const detail = commit
     ? [commit.message, commit.author, ago(commit.at ?? repo.updatedAt)].filter(Boolean).join(' · ')
     : [...flags, ago(repo.updatedAt)].filter(Boolean).join(' · ');
+  const side = state
+    ? (state.url
+      ? <a className={`ndw-kit-row-value ndw-repo-state is-${state.state}`} href={state.url} target="_blank" rel="noreferrer noopener" title={stateTitle}>{t(`widgets.repos.checks.${state.state}`)}</a>
+      : <span className={`ndw-kit-row-value ndw-repo-state is-${state.state}`} title={stateTitle}>{t(`widgets.repos.checks.${state.state}`)}</span>)
+    : counts ? <span className="ndw-kit-row-value">{counts}</span> : null;
   return (
-    <li className="ndw-repo-row">
-      <span className="ndw-repo-line">
-        {repo.url ? <a className="ndw-repo-name" href={repo.url} target="_blank" rel="noreferrer noopener" title={repo.name}>{label}</a> : <span className="ndw-repo-name" title={repo.name}>{label}</span>}
-        {counts && <span className="ndw-repo-counts">{counts}</span>}
+    <li className="ndw-kit-row ndw-repo-row">
+      <span className="ndw-kit-row-head">
+        <span className="ndw-repo-title">
+          {repo.url ? <a className="ndw-kit-row-name" href={repo.url} target="_blank" rel="noreferrer noopener" title={repo.name}>{label}</a> : <span className="ndw-kit-row-name" title={repo.name}>{label}</span>}
+          {repo.release && (repo.release.url
+            ? <a className="ndw-repo-release" href={repo.release.url} target="_blank" rel="noreferrer noopener">{repo.release.tag}</a>
+            : <span className="ndw-repo-release">{repo.release.tag}</span>)}
+        </span>
+        {side}
       </span>
-      <span className="ndw-repo-sub">
-        {state && (state.url
-          ? <a className={`ndw-repo-state is-${state.state}`} href={state.url} target="_blank" rel="noreferrer noopener" title={stateTitle}>{t(`widgets.repos.checks.${state.state}`)}</a>
-          : <span className={`ndw-repo-state is-${state.state}`} title={stateTitle}>{t(`widgets.repos.checks.${state.state}`)}</span>)}
-        {repo.release && (repo.release.url
-          ? <a className="ndw-repo-release" href={repo.release.url} target="_blank" rel="noreferrer noopener">{repo.release.tag}</a>
-          : <span className="ndw-repo-release">{repo.release.tag}</span>)}
-        {detail && <span className="ndw-repo-detail" title={commit ? commit.message : undefined}>{detail}</span>}
-      </span>
+      {detail && <span className="ndw-media-sub" title={commit ? commit.message : undefined}>{detail}</span>}
     </li>
   );
 }

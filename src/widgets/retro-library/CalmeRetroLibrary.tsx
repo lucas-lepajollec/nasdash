@@ -5,15 +5,18 @@ import { Gamepad2 } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { RetroGame, RetroLibrarySummary } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useConfig } from '@/hooks/useConfig';
 import { formatBytes } from '@/components/widgets/deviceReadings';
 import { CalmeRow, CalmeSegmented, CalmeSlider } from '@/components/modals/settings/shared/CalmeControls';
 import { KitWidget } from '@/components/widgets/content/KitWidget';
-import { bounded, pick, useRelativeTime, useStableGrid } from '@/components/widgets/content/kit';
+import { bounded, pick, useBoxWidth, useRelativeTime, useStableGrid } from '@/components/widgets/content/kit';
+import { Backdrop, Fan, Figure } from '@/components/widgets/media/visual';
 
 const SHOWS = ['both', 'recent', 'platforms'] as const;
 const DISPLAYS = ['covers', 'list'] as const;
 export const RECENT = { min: 2, max: 24, default: 6 } as const;
-const PLATFORMS = 6;
+/** Platforms shown as shelves with their covers; the others follow as text. */
+const SHELVES = 4;
 
 /** A cover through NasDash (an administrator's unsaved settings travel with it, like other widget images). */
 function coverUrl(widgetId: string, cover: string, draft?: WidgetSettings): string {
@@ -23,13 +26,14 @@ function coverUrl(widgetId: string, cover: string, draft?: WidgetSettings): stri
 }
 
 /**
- * RomM: how many games on how many platforms, the biggest platforms as bars,
- * then the games added last, as covers or a list.
+ * RomM, laid out like the media library: the totals as figures, the biggest
+ * platforms as shelves of their latest covers (the others as text), then the
+ * games added last as covers or a list, like the reading widget.
  */
 export default function CalmeRetroLibrary(props: { widgetId: string; settings: WidgetSettings; editMode: boolean; isVisible: boolean; onUpdateSettings: (settings: WidgetSettings) => void }) {
   const { t } = useI18n();
   return (
-    <KitWidget<RetroLibrarySummary> widget="retro-library" refreshMs={300_000} skeleton={[36, 60, 120]} {...props}
+    <KitWidget<RetroLibrarySummary> widget="retro-library" refreshMs={300_000} skeleton={[40, 160, 120]} {...props}
       extraSettings={(draft, change) => (
         <>
           <CalmeRow label={t('widgets.retro.show')}>
@@ -51,24 +55,50 @@ export default function CalmeRetroLibrary(props: { widgetId: string; settings: W
 
 function Library({ data, widgetId, settings }: { data: RetroLibrarySummary; widgetId: string; settings: WidgetSettings }) {
   const { t, language } = useI18n();
+  const { user } = useConfig();
+  const [box, width] = useBoxWidth<HTMLDivElement>();
+  const number = new Intl.NumberFormat(language);
   const show = pick(settings.show, SHOWS, 'both');
+  const covers = pick(settings.display, DISPLAYS, 'covers') === 'covers';
   const recent = data.recent.slice(0, bounded(settings.recent, RECENT.min, RECENT.max, RECENT.default));
-  const biggest = data.platforms.slice(0, PLATFORMS);
-  const top = Math.max(1, ...biggest.map(platform => platform.games));
-  const sub = [t('widgets.retro.platforms', { count: data.totals.platforms }), data.totals.sizeBytes ? formatBytes(data.totals.sizeBytes, language) : '', data.totals.saves ? t('widgets.retro.saves', { count: data.totals.saves }) : ''].filter(Boolean).join(' · ');
+  const url = (cover: string) => coverUrl(widgetId, cover, user?.role === 'admin' ? settings : undefined);
+  const columns = Math.max(1, Math.min(SHELVES, Math.floor((width + 12) / 190)));
+  // Whole rows of shelves only: a lone shelf on a second line goes to the text list instead.
+  // One shelf per line (a phone): two of them, the rest as text.
+  const withCovers = covers ? data.platforms.filter(platform => platform.covers?.length).slice(0, columns === 1 ? 2 : SHELVES) : [];
+  const pictured = withCovers.length > columns ? withCovers.slice(0, withCovers.length - (withCovers.length % columns)) : withCovers;
+  const plain = data.platforms.filter(platform => !pictured.includes(platform)).slice(0, 12);
   return (
-    <div className="ndw-kit ndw-retro">
-      <div className="ndw-retro-head">
-        <span className="ndw-upd-number">{new Intl.NumberFormat(language).format(data.totals.games)}</span>
-        <span className="ndw-upd-label"><span className="ndw-upd-label-main">{t('widgets.retro.games', { count: data.totals.games })}</span><span className="ndw-media-sub">{sub}</span></span>
+    <div className="ndw-kit ndw-retro" ref={box}>
+      <div className="ndw-mx-figures is-wrap">
+        <Figure size="large" value={number.format(data.totals.games)} unit={t('widgets.retro.games')} />
+        <Figure size="large" value={number.format(data.totals.platforms)} unit={t('widgets.retro.platformsUnit')} />
+        {data.totals.saves ? <Figure size="large" value={number.format(data.totals.saves)} unit={t('widgets.retro.savesUnit')} /> : null}
+        {data.totals.sizeBytes ? <span className="ndw-mx-figures-end"><span className="ndw-mx-meta">{formatBytes(data.totals.sizeBytes, language)}</span></span> : null}
       </div>
-      {show !== 'recent' && biggest.length > 0 && (
-        <ul className="ndw-retro-platforms">
-          {biggest.map(platform => (
-            <li key={platform.id} className="ndw-retro-platform">
-              <span className="ndw-retro-platform-name" title={platform.name}>{platform.name}</span>
-              <span className="ndw-retro-bar" aria-hidden="true"><span style={{ width: `${Math.max(3, platform.games / top * 100)}%` }} /></span>
-              <span className="ndw-retro-platform-count">{platform.games}</span>
+      {show !== 'recent' && pictured.length > 0 && (
+        <div className="ndw-mx-shelves is-small" style={{ '--ndw-cols': Math.min(columns, pictured.length) } as React.CSSProperties}>
+          {pictured.map(platform => {
+            const urls = platform.covers!.map(url);
+            return (
+              <div key={platform.id} className="ndw-mx-shelf">
+                <Backdrop src={urls[urls.length === 3 ? 1 : 0]} blur />
+                <span className="ndw-mx-fan" aria-hidden="true"><Fan urls={urls} /></span>
+                <span className="ndw-mx-shelf-foot">
+                  <span className="ndw-media-row-text"><span className="ndw-mx-title">{platform.name}</span></span>
+                  <span className="ndw-mx-shelf-count">{number.format(platform.games)}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {show !== 'recent' && plain.length > 0 && (
+        <ul className="ndw-retro-platforms" style={{ '--ndw-cols': Math.max(1, Math.min(3, Math.floor((width + 24) / 180))) } as React.CSSProperties}>
+          {plain.map(platform => (
+            <li key={platform.id} className="ndw-kit-row-head">
+              <span className="ndw-kit-row-name" title={platform.name}>{platform.name}</span>
+              <span className="ndw-kit-row-value">{number.format(platform.games)}</span>
             </li>
           ))}
         </ul>
@@ -76,42 +106,54 @@ function Library({ data, widgetId, settings }: { data: RetroLibrarySummary; widg
       {show !== 'platforms' && recent.length > 0 && (
         <section className="ndw-read-section">
           <span className="ndw-mx-label">{t('widgets.retro.recent')}</span>
-          {pick(settings.display, DISPLAYS, 'covers') === 'list'
-            ? <ul className="ndw-retro-list">{recent.map(game => <ListGame key={game.id} game={game} />)}</ul>
-            : <Shelf games={recent} widgetId={widgetId} settings={settings} />}
+          {covers
+            ? <Shelf games={recent} url={url} />
+            : <ul className="ndw-read-list">{recent.map(game => <ListGame key={game.id} game={game} url={url} />)}</ul>}
         </section>
       )}
     </div>
   );
 }
 
-function Shelf({ games, widgetId, settings }: { games: RetroGame[]; widgetId: string; settings: WidgetSettings }) {
-  const [ref, style] = useStableGrid<HTMLUListElement>(games.length, 72, 104, 10);
-  return <ul ref={ref} className="ndw-retro-shelf" style={style}>{games.map(game => <Cover key={game.id} game={game} widgetId={widgetId} settings={settings} />)}</ul>;
+/** Covers that fill the line while they do not all fit, then keep their size (as in the reading widget). */
+function Shelf({ games, url }: { games: RetroGame[]; url: (cover: string) => string }) {
+  const [ref, style] = useStableGrid<HTMLUListElement>(games.length, 76, 112, 10);
+  return <ul ref={ref} className="ndw-read-shelf" style={style}>{games.map(game => <Cover key={game.id} game={game} url={url} />)}</ul>;
 }
 
-function Cover({ game, widgetId, settings }: { game: RetroGame; widgetId: string; settings: WidgetSettings }) {
+function Art({ game, url }: { game: RetroGame; url: (cover: string) => string }) {
   const [failed, setFailed] = useState(false);
   return (
-    <li className="ndw-retro-game" title={[game.name, game.platform].filter(Boolean).join(' · ')}>
-      <span className="ndw-retro-cover">
-        {game.cover && !failed
-          // eslint-disable-next-line @next/next/no-img-element -- a cover relayed by NasDash, with a fallback
-          ? <img src={coverUrl(widgetId, game.cover, settings)} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />
-          : <Gamepad2 size={22} aria-hidden="true" />}
+    <span className="ndw-read-cover" aria-hidden="true">
+      {game.cover && !failed
+        // eslint-disable-next-line @next/next/no-img-element -- a cover relayed by NasDash, with a fallback
+        ? <img src={url(game.cover)} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />
+        : <Gamepad2 size={16} />}
+    </span>
+  );
+}
+
+function Cover({ game, url }: { game: RetroGame; url: (cover: string) => string }) {
+  return (
+    <li className="ndw-read-item" title={[game.name, game.platform].filter(Boolean).join(' · ')}>
+      <Art game={game} url={url} />
+      <span className="ndw-read-text">
+        <span className="ndw-read-title">{game.name}</span>
+        {game.platform && <span className="ndw-media-sub">{game.platform}</span>}
       </span>
-      <span className="ndw-retro-game-name">{game.name}</span>
-      <span className="ndw-retro-game-platform">{game.platform}</span>
     </li>
   );
 }
 
-function ListGame({ game }: { game: RetroGame }) {
+function ListGame({ game, url }: { game: RetroGame; url: (cover: string) => string }) {
   const ago = useRelativeTime();
   return (
-    <li className="ndw-retro-row">
-      <span className="ndw-retro-row-name" title={game.name}>{game.name}</span>
-      <span className="ndw-media-sub">{[game.platform, ago(game.addedAt)].filter(Boolean).join(' · ')}</span>
+    <li className="ndw-read-item" title={[game.name, game.platform].filter(Boolean).join(' · ')}>
+      <Art game={game} url={url} />
+      <span className="ndw-read-text">
+        <span className="ndw-read-title">{game.name}</span>
+        <span className="ndw-media-sub">{[game.platform, ago(game.addedAt)].filter(Boolean).join(' · ')}</span>
+      </span>
     </li>
   );
 }

@@ -116,3 +116,16 @@ export function Stat({ value, label, tone }: { value: React.ReactNode; label: Re
     </span>
   );
 }
+
+/** One fanned trio; faded in once its pictures have loaded. */
+export function Fan({ urls, under }: { urls: string[]; under?: boolean }) {
+  const [loaded, setLoaded] = useState(0);
+  return (
+    <span className={`ndw-mx-fan-set ${under ? 'is-under' : ''} ${loaded >= urls.length ? 'is-loaded' : ''}`}>
+      {urls.map((url, position) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={`${url}-${position}`} className={`is-${urls.length === 3 ? position : 1}`} src={url} alt="" decoding="async" onLoad={() => setLoaded(value => value + 1)} onError={() => setLoaded(value => value + 1)} />
+      ))}
+    </span>
+  );
+}

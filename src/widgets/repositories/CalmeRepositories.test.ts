@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { activityGrid, activityStreak, shownRepositories, weeksThatFit } from './CalmeRepositories';
+import { activityGrid, activityStreak, cellSize, shownRepositories, weeksThatFit } from './CalmeRepositories';
 
 describe('repositories widget', () => {
   it('fits whole weeks between two months and a year', () => {
     expect(weeksThatFit(0)).toBe(8);
-    expect(weeksThatFit(13 * 20 - 3)).toBe(20);
+    expect(weeksThatFit(12 * 20 - 3)).toBe(20);
     expect(weeksThatFit(5000)).toBe(53);
+    // A wide widget grows the squares (up to 14 px) so the year spans it.
+    expect(cellSize(53 * 12 + 52 * 3, 53)).toBe(12);
+    expect(cellSize(5000, 53)).toBe(14);
   });
   it('lays the days out Monday first, ending on the last day, with four intensities', () => {
     // 2026-11-26 is a Thursday: the last column holds Monday to Thursday.

@@ -1187,8 +1187,7 @@
           "id": "media-retro-library",
           "type": "retro-library",
           "settings": {
-            "integrationId": "romm-demo",
-            "display": "list"
+            "integrationId": "romm-demo"
           },
           "x": 12,
           "y": 546,

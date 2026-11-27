@@ -9,14 +9,16 @@ const json = vi.mocked(serviceJson);
 const source: IntegrationInstance = { id: 'romm-1', type: 'romm', name: 'RomM', settings: { url: 'https://romm.example.com' }, secrets: { apiKey: 'rmm_fake' } };
 beforeEach(() => {
   vi.resetAllMocks();
-  json.mockImplementation(async (_instance, path) => (path === '/api/stats' ? sample.stats : path === '/api/platforms' ? sample.platforms : sample.roms) as never);
+  // A platform's own page (`platform_ids=`) holds its games only; the NES has the one cover of the sample.
+  json.mockImplementation(async (_instance, path) => (path === '/api/stats' ? sample.stats : path === '/api/platforms' ? sample.platforms : path.includes('platform_ids=2&') ? { items: sample.roms.items.filter(rom => rom.platform_display_name === 'NES') } : path.includes('platform_ids=') ? { items: [] } : sample.roms) as never);
 });
 
 describe('RomM', () => {
   it('maps the library, its platforms and the latest games', async () => {
     const summary = await rommKit.collect(source);
     expect(summary.totals).toEqual({ platforms: 3, games: 128, saves: 14, states: 5, screenshots: 22, sizeBytes: 9126805504 });
-    expect(summary.platforms).toEqual([{ id: '2', name: 'NES', games: 70 }, { id: '1', name: 'Game Boy', games: 54 }, { id: '3', name: 'Nintendo 64', games: 4 }]);
+    expect(summary.platforms).toEqual([{ id: '2', name: 'NES', games: 70, covers: ['romm-812'] }, { id: '1', name: 'Game Boy', games: 54 }, { id: '3', name: 'Nintendo 64', games: 4 }]);
+    expect(json.mock.calls.map(([, path]) => path).filter(path => path.includes('platform_ids='))).toHaveLength(3);
     expect(summary.recent.map(game => [game.name, game.platform, game.cover])).toEqual([['Micro Mages', 'NES', 'romm-812'], ['Tobu Tobu Girl.gb', 'Game Boy', undefined], ['Odd path', 'NES', undefined]]);
     expect(json.mock.calls[0][2]?.headers).toEqual({ Authorization: 'Bearer rmm_fake' });
   });

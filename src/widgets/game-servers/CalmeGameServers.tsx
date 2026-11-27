@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Play, RotateCw, Square, Users } from 'lucide-react';
+import { Play, RotateCw, Square } from 'lucide-react';
 import type { WidgetSettings } from '@/lib/pages/types';
 import type { GameServer, GameServersSummary } from '@/lib/widgetData/contracts';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -9,6 +9,7 @@ import { formatBytes } from '@/components/widgets/deviceReadings';
 import { CalmeRow, CalmeSwitch } from '@/components/modals/settings/shared/CalmeControls';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { KitWidget, type KitTools } from '@/components/widgets/content/KitWidget';
+import { Stat } from '@/components/widgets/media/visual';
 
 type ServerAction = 'start' | 'stop' | 'restart';
 /** Every few seconds while a server starts or updates, then every half minute. */
@@ -55,9 +56,12 @@ function Servers({ data, tools, settings }: { data: GameServersSummary; tools: K
   return (
     <div className="ndw-kit ndw-game">
       {data.servers.length > 1 && (
-        <span className="ndw-media-sub">{[t('widgets.games.online', { count: online, total: data.servers.length }), online ? t('widgets.games.players', { count: players }) : ''].filter(Boolean).join(' · ')}</span>
+        <div className="ndw-mx-statrow">
+          <Stat value={<>{online}<span className="ndw-mx-stat-of">/{data.servers.length}</span></>} label={t('widgets.games.onlineLabel')} tone={online ? undefined : 'muted'} />
+          <Stat value={players} label={t('widgets.games.playersLabel')} tone={players ? undefined : 'muted'} />
+        </div>
       )}
-      <ul className="ndw-game-list">
+      <ul className="ndw-kit-list ndw-game-list">
         {data.servers.map(server => (
           <Server key={server.id} server={server} settings={settings} control={data.canControl === true && server.controllable === true}
             busy={tools.busy?.endsWith(`:${server.id}`) === true} onAction={action => act(server, action)} />
@@ -76,45 +80,47 @@ function Servers({ data, tools, settings }: { data: GameServersSummary; tools: K
   );
 }
 
+/**
+ * One server as a kit row: its name and version, its players (or state) on the
+ * right, then its message of the day, its load and who is playing. The
+ * controls appear beside the state when the row is hovered or focused.
+ */
 function Server({ server, settings, control, busy, onAction }: { server: GameServer; settings: WidgetSettings; control: boolean; busy: boolean; onAction: (action: ServerAction) => void }) {
   const { t, language } = useI18n();
   const online = server.state === 'online';
   const load = [
-    server.cpuPercent !== undefined ? `CPU ${Math.round(server.cpuPercent)} %` : '',
-    server.memoryBytes ? `RAM ${formatBytes(server.memoryBytes, language)}` : server.memoryPercent !== undefined ? `RAM ${Math.round(server.memoryPercent)} %` : '',
-    server.latencyMs !== undefined ? `${server.latencyMs} ms` : '',
+    server.cpuPercent !== undefined ? t('widgets.games.cpu', { value: Math.round(server.cpuPercent) }) : '',
+    server.memoryBytes ? t('widgets.games.memory', { value: formatBytes(server.memoryBytes, language) }) : server.memoryPercent !== undefined ? t('widgets.games.memory', { value: `${Math.round(server.memoryPercent)} %` }) : '',
+    server.latencyMs !== undefined ? t('widgets.games.latency', { value: server.latencyMs }) : '',
   ].filter(Boolean).join(' · ');
+  const names = online && settings.players !== false && server.playerNames?.length ? server.playerNames.join(', ') : '';
+  const value = online
+    ? (server.players !== undefined ? (server.maxPlayers ? t('widgets.games.playersOf', { count: server.players, max: server.maxPlayers }) : t('widgets.games.players', { count: server.players })) : t('widgets.games.state.online'))
+    : t(`widgets.games.state.${server.state}`);
   const button = (action: ServerAction, icon: React.ReactNode) => (
     <button type="button" className="ndc-icon-button" disabled={busy} onClick={() => onAction(action)}
       aria-label={t(`widgets.games.actionOf.${action}`, { name: server.name })} title={t(`widgets.games.actionOf.${action}`, { name: server.name })}>{icon}</button>
   );
   return (
-    <li className={`ndw-game-row is-${server.state}`}>
-      <span className="ndw-game-dot" aria-hidden="true" />
-      <span className="ndw-game-main">
-        <span className="ndw-game-name">
-          <span title={server.name}>{server.name}</span>
+    <li className="ndw-kit-row ndw-game-row">
+      <span className="ndw-kit-row-head">
+        <span className="ndw-game-title">
+          <span className="ndw-kit-row-name" title={server.name}>{server.name}</span>
           {server.version && <span className="ndw-game-version">{server.version}</span>}
         </span>
-        <span className="ndw-game-sub">
-          {online ? (settings.motd !== false && server.motd ? server.motd : load) : t(`widgets.games.state.${server.state}`)}
+        <span className="ndw-game-side">
+          {control && !busy && (
+            <span className="ndw-game-actions">
+              {(server.state === 'offline' || server.state === 'crashed') && button('start', <Play size={12} />)}
+              {online && <>{button('restart', <RotateCw size={12} />)}{button('stop', <Square size={11} />)}</>}
+            </span>
+          )}
+          {busy && <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" />}
+          <span className={`ndw-kit-row-value ${server.state === 'crashed' ? 'is-bad' : online || server.state === 'starting' || server.state === 'updating' ? '' : 'is-quiet'}`}>{value}</span>
         </span>
-        {online && settings.motd !== false && server.motd && load && <span className="ndw-game-sub">{load}</span>}
-        {online && settings.players !== false && server.playerNames && server.playerNames.length > 0 && (
-          <span className="ndw-game-names" title={server.playerNames.join(', ')}>{server.playerNames.join(', ')}</span>
-        )}
       </span>
-      <span className="ndw-game-side">
-        {online && server.players !== undefined && (
-          <span className="ndw-game-players" title={t('widgets.games.players', { count: server.players })}>
-            <Users size={12} aria-hidden="true" />{server.maxPlayers ? t('widgets.games.playersOf', { count: server.players, max: server.maxPlayers }) : server.players}
-          </span>
-        )}
-        {busy && <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" />}
-        {control && !busy && (server.state === 'offline' || server.state === 'crashed') && button('start', <Play size={13} />)}
-        {control && !busy && online && <>{button('restart', <RotateCw size={13} />)}{button('stop', <Square size={12} />)}</>}
-      </span>
-      <span className="sr-only">{t(`widgets.games.state.${server.state}`)}</span>
+      {online && settings.motd !== false && server.motd && <span className="ndw-media-sub">{server.motd}</span>}
+      {online && (load || names) && <span className="ndw-media-sub">{[names, load].filter(Boolean).join(' · ')}</span>}
     </li>
   );
 }
