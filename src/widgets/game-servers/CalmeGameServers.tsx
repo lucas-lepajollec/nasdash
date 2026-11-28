@@ -112,7 +112,7 @@ function Meter({ label, value, percent }: { label: string; value: string; percen
  * One server: its icon, name, version, how long it has run and its world; its
  * message of the day; its players, processor and memory as bars; who is
  * playing. A server that is not running is dimmed, with its state in words.
- * The controls appear beside the name when the server is hovered or focused.
+ * Its controls sit beside its name, always visible.
  */
 function Server({ server, settings, iconUrl, control, busy, onAction }: { server: GameServer; settings: WidgetSettings; iconUrl: (icon: string) => string; control: boolean; busy: boolean; onAction: (action: ServerAction) => void }) {
   const { t, language } = useI18n();
@@ -129,7 +129,7 @@ function Server({ server, settings, iconUrl, control, busy, onAction }: { server
   const meters = [server.players !== undefined, server.cpuPercent !== undefined, !!memory].filter(Boolean).length;
   const names = settings.players !== false && server.playerNames?.length ? server.playerNames.join(', ') : '';
   const button = (action: ServerAction, icon: React.ReactNode) => (
-    <button type="button" className="ndc-icon-button" disabled={busy} onClick={() => onAction(action)}
+    <button type="button" className={`ndw-act ${action === 'stop' ? 'is-danger' : ''}`} disabled={busy} onClick={() => onAction(action)}
       aria-label={t(`widgets.games.actionOf.${action}`, { name: server.name })} title={t(`widgets.games.actionOf.${action}`, { name: server.name })}>{icon}</button>
   );
   return (
@@ -143,7 +143,7 @@ function Server({ server, settings, iconUrl, control, busy, onAction }: { server
               {sub.map((part, index) => (
                 <React.Fragment key={index}>
                   {index > 0 && ' · '}
-                  {index === 0 && server.state === 'crashed' ? <span className="ndw-game-crashed">{part}</span> : part}
+                  <span className={index === 0 && server.state === 'crashed' ? 'ndw-game-part ndw-game-crashed' : 'ndw-game-part'}>{part}</span>
                 </React.Fragment>
               ))}
             </span>
@@ -153,8 +153,8 @@ function Server({ server, settings, iconUrl, control, busy, onAction }: { server
           ? <span className="nd-spinner" style={{ width: 11, height: 11 }} aria-hidden="true" />
           : control && (
             <span className="ndw-game-actions">
-              {(server.state === 'offline' || server.state === 'crashed') && button('start', <Play size={12} />)}
-              {online && <>{button('restart', <RotateCw size={12} />)}{button('stop', <Square size={11} />)}</>}
+              {(server.state === 'offline' || server.state === 'crashed') && button('start', <Play size={13} />)}
+              {online && <>{button('restart', <RotateCw size={13} />)}{button('stop', <Square size={12} />)}</>}
             </span>
           )}
       </span>

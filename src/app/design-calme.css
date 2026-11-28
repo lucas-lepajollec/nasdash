@@ -168,6 +168,11 @@ body[data-design="calme"] .nd-action-icon:hover {
   border-color: transparent;
 }
 
+/* Start, update and stop say what they do with their icon, not with a tint. */
+body[data-design="calme"] .nd-action-icon:is(.success, .accent, .danger) { color: var(--nd-text-muted); border-color: transparent; }
+body[data-design="calme"] .nd-action-icon:is(.success, .accent):hover { background: var(--nd-subcard-bg); border-color: transparent; color: var(--nd-text); }
+body[data-design="calme"] .nd-action-icon.danger:hover { background: var(--nd-subcard-bg); border-color: transparent; color: var(--nd-red); }
+
 /* Fields */
 body[data-design="calme"] .nd-input {
   border-radius: 6px;
@@ -3370,9 +3375,9 @@ body.light {
 .ndc-int { border: 1px solid var(--nd-card-border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 .ndc-int.is-set { border-color: color-mix(in srgb, var(--nd-accent) 28%, var(--nd-card-border)); }
 
-.ndc-test { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 0.76rem; line-height: 1.4; }
-.ndc-test.is-ok { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 9%, transparent); }
-.ndc-test.is-error { color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 9%, transparent); }
+.ndc-test { display: flex; align-items: flex-start; gap: 8px; font-size: 0.76rem; line-height: 1.4; }
+.ndc-test.is-ok { color: var(--nd-text-muted); }
+.ndc-test.is-error { color: var(--nd-red); }
 .ndc-test svg { flex-shrink: 0; margin-top: 1px; }
 
 .ndc-callout { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border-radius: 10px; border: 1px dashed color-mix(in srgb, var(--nd-accent) 45%, var(--nd-card-border)); background: color-mix(in srgb, var(--nd-accent) 5%, transparent); }
@@ -3399,10 +3404,10 @@ body.light {
 .ndc-int-row-name { font-size: 0.84rem; color: var(--nd-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ndc-int-row-details { font-size: 0.72rem; color: var(--nd-text-dimmed); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ndc-int-row-error { font-size: 0.7rem; color: var(--nd-red); line-height: 1.4; }
-.ndc-int-state { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 3px 9px; border-radius: 999px; font-size: 0.68rem; color: var(--nd-text-dimmed); background: color-mix(in srgb, var(--nd-text) 5%, transparent); }
-.ndc-int-state-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.ndc-int-state.is-ok { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 10%, transparent); }
-.ndc-int-state.is-error { color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 10%, transparent); }
+.ndc-int-state { display: inline-flex; align-items: center; flex-shrink: 0; font-size: 0.7rem; color: var(--nd-text-dimmed); }
+.ndc-int-state-dot { display: none; }
+.ndc-int-state.is-ok { color: var(--nd-text-muted); }
+.ndc-int-state.is-error { color: var(--nd-red); }
 .ndc-int-row-actions { display: flex; gap: 2px; flex-shrink: 0; }
 .ndc-int-empty { font-size: 0.76rem; color: var(--nd-text-dimmed); padding: 12px; border: 1px dashed var(--nd-card-border); border-radius: 10px; }
 .ndc-int-add-label { margin-top: 4px; font-size: 0.64rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nd-text-dimmed); }
@@ -3413,7 +3418,7 @@ body.light {
 .ndc-int-tile-name { font-size: 0.8rem; color: var(--nd-text); }
 .ndc-int-tile-desc { font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @media (max-width: 520px) { .ndc-int-state { display: none; } }
-.ndc-dlg-missing { margin-left: 8px; padding: 1px 6px; border-radius: 999px; font-size: 0.64rem; color: var(--nd-text-dimmed); background: color-mix(in srgb, var(--nd-text) 6%, transparent); }
+.ndc-dlg-missing { margin-left: 8px; font-size: 0.68rem; color: var(--nd-text-dimmed); }
 
 /* Docker explorer: stats and logs sit in a recessed well, darker than the
    card, so these key readings stand out (lighter touch on light themes). */
@@ -3587,7 +3592,7 @@ body[data-design="calme"] .nd-service-tooltip-arrow { color: var(--nd-text-dimme
 .ndc-task-state { grid-area: state; justify-self: end; }
 .ndc-task-meta { grid-area: meta; display: flex; flex-direction: column; gap: 2px; font-size: 0.7rem; color: var(--nd-text-muted); min-width: 0; }
 .ndc-task-note { color: var(--nd-text-dimmed); }
-.ndc-int-state.is-partial { color: var(--nd-orange); background: color-mix(in srgb, var(--nd-orange) 12%, transparent); }
+.ndc-int-state.is-partial { color: var(--nd-text-muted); }
 .ndc-task-rhythm { grid-area: rhythm; justify-self: end; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px 14px; }
 .ndc-task-select { display: inline-flex; align-items: center; gap: 8px; font-size: 0.7rem; color: var(--nd-text-muted); }
 .ndc-task-select > span { white-space: nowrap; }
@@ -3844,9 +3849,9 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
 .nd-docker-resource-name strong { display: block; font-weight: 500; font-size: 0.8rem; line-height: 1.5; overflow-wrap: anywhere; }
 .nd-docker-resource-subline { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 5px; font-size: 0.68rem; color: var(--nd-text-dimmed); line-height: 1.5; }
 .nd-docker-resource-subline code { font: inherit; font-family: ui-monospace, monospace; }
-.nd-docker-resource-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 7px; border-radius: 4px; color: var(--nd-red); background: color-mix(in srgb, var(--nd-red) 8%, transparent); font-size: 0.68rem; line-height: 1.5; }
-.nd-docker-resource-badge.is-used { color: var(--nd-green); background: color-mix(in srgb, var(--nd-green) 8%, transparent); }
-.nd-docker-resource-badge > span { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.nd-docker-resource-badge { display: inline-flex; align-items: center; color: var(--nd-text-dimmed); font-size: 0.7rem; line-height: 1.5; }
+.nd-docker-resource-badge.is-used { color: var(--nd-text-muted); }
+.nd-docker-resource-badge > span { display: none; }
 .nd-docker-resource-status > small, .nd-docker-resource-meta > small { display: block; margin-top: 6px; font-size: 0.66rem; color: var(--nd-text-dimmed); line-height: 1.5; }
 .nd-docker-resource-meta { font-variant-numeric: tabular-nums; color: var(--nd-text-muted); }
 .nd-docker-resource-actions { white-space: nowrap; }
@@ -3898,7 +3903,7 @@ button.nd-page-signature.is-revealed { opacity: 1; color: var(--nd-accent); }
   .nd-docker-resource-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; line-height: 1.4; }
   .nd-docker-resource-subline { margin-top: 2px; gap: 2px 8px; }
   .nd-docker-resource-status { grid-column: 2; grid-row: 2; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
-  .nd-docker-resource-badge { padding: 2px 6px; }
+  .nd-docker-resource-badge { padding: 0; }
   .nd-docker-resource-meta { grid-column: 3; grid-row: 2; display: flex; gap: 4px 10px; flex-wrap: wrap; align-items: center; font-size: 0.7rem; }
   .nd-docker-resource-meta > small, .nd-docker-resource-status > small { margin: 0; }
   .nd-docker-resource-actions { grid-column: 4; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: 4px; align-self: center; }

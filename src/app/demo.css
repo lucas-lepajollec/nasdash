@@ -21,7 +21,7 @@ body.light .nd-demo-dialog::backdrop { background: rgb(15 23 42 / 0.16); }
 .nd-demo-inner { display: flex; flex-direction: column; gap: 20px; padding: 26px 28px 22px; }
 .nd-demo-brand { display: flex; align-items: center; gap: 9px; font-size: 0.86rem; font-weight: 500; }
 .nd-demo-brand img { display: block; width: 18px; height: 18px; }
-.nd-demo-badge { margin-left: auto; padding: 3px 9px; border-radius: 999px; font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nd-accent); background: color-mix(in srgb, var(--nd-accent) 12%, transparent); }
+.nd-demo-badge { margin-left: auto; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nd-text-dimmed); }
 .nd-demo-title { margin: 6px 0 0; font-family: var(--font-geist), system-ui, sans-serif; font-size: 1.7rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1.15; outline: none; }
 .nd-demo-lead { margin: -8px 0 0; font-size: 0.8rem; line-height: 1.6; color: var(--nd-text-muted); }
 

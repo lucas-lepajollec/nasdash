@@ -108,8 +108,8 @@ function Request({ request, posters, control, tools, onDecide }: { request: Medi
       </span>
       {control && request.status === 'pending' ? (
         <span className="ndw-req-actions">
-          <button type="button" className="ndw-req-decide is-ok" disabled={busy} onClick={() => onDecide('approve')} aria-label={t('widgets.requests.approve', { title: request.title })} title={t('widgets.requests.approve', { title: request.title })}><Check size={13} /></button>
-          <button type="button" className="ndw-req-decide is-no" disabled={busy} onClick={() => onDecide('decline')} aria-label={t('widgets.requests.decline', { title: request.title })} title={t('widgets.requests.decline', { title: request.title })}><X size={13} /></button>
+          <button type="button" className="ndw-act" disabled={busy} onClick={() => onDecide('approve')} aria-label={t('widgets.requests.approve', { title: request.title })} title={t('widgets.requests.approve', { title: request.title })}><Check size={13} /></button>
+          <button type="button" className="ndw-act is-danger" disabled={busy} onClick={() => onDecide('decline')} aria-label={t('widgets.requests.decline', { title: request.title })} title={t('widgets.requests.decline', { title: request.title })}><X size={13} /></button>
         </span>
       ) : <span className={`ndw-req-status is-${request.status}`}>{t(`widgets.requests.status.${request.status}`)}</span>}
     </li>

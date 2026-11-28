@@ -148,7 +148,7 @@ function Row({ update, icons, control, busy, onUpdate }: { update: ContainerUpda
       <span className="ndw-upd-main">
         <span className="ndw-upd-name">
           <span title={update.image}>{update.name}</span>
-          {/* On a narrow widget the badge becomes a coloured dot; its word stays for screen readers and in the tooltip. */}
+          {/* The level as a plain word; on a narrow widget only a major one stays. */}
           {update.level && <span className={`ndw-upd-level is-${update.level}`} title={t(`widgets.updates.level.${update.level}`)}><span>{t(`widgets.updates.level.${update.level}`)}</span></span>}
           {update.kind === 'digest' && <span className="ndw-upd-level" title={t('widgets.updates.rebuilt')}><span>{t('widgets.updates.rebuilt')}</span></span>}
           {update.link && (
@@ -172,7 +172,7 @@ function Row({ update, icons, control, busy, onUpdate }: { update: ContainerUpda
               </span>
             )
               : control && update.updatable && update.id
-                ? <button type="button" className="ndc-icon-button ndw-upd-go" onClick={onUpdate} aria-label={t('widgets.updates.updateOne', { name: update.name })} title={t('widgets.updates.updateOne', { name: update.name })}><ArrowUpCircle size={14} /></button>
+                ? <button type="button" className="ndw-act" onClick={onUpdate} aria-label={t('widgets.updates.updateOne', { name: update.name })} title={t('widgets.updates.updateOne', { name: update.name })}><ArrowUpCircle size={14} /></button>
                 : null}
       </span>
     </li>
