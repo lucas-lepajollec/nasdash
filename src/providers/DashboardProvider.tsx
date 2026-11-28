@@ -9,6 +9,7 @@ import { AuthContext } from './AuthProvider';
 import { fetchPingBatches } from '@/lib/pingBatches';
 import { taskSettings } from '@/lib/tasks';
 import { LIGHT_THEMES } from '@/lib/themes';
+import { resolveWallpaper } from '@/lib/wallpapers';
 import { useI18n } from '@/i18n/I18nProvider';
 import { activateDemoTransport, demoFetch } from '@/lib/demoTransport';
 
@@ -176,7 +177,9 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     const activeRadius = phoneFirst(config.settings?.mobileBorderRadius, config.settings?.borderRadius, 12);
     const activeOpacity = phoneFirst(config.settings?.mobileCardOpacity, config.settings?.cardOpacity, 0.8);
     const activeFont = phoneFirst(config.settings?.mobileGlobalFont, config.settings?.globalFont, 'Outfit');
-    const activeBg = (isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || '');
+    // The wallpaper that follows the theme becomes that theme's picture (light or dark for NasDash's own theme).
+    const activeBg = resolveWallpaper((isMobile && config.settings?.mobileWallpaper) ? config.settings.mobileWallpaper : (config.settings?.backgroundImage || ''),
+      activeTheme, isMobile, (config.settings?.mode || 'dark') === 'light');
     
     setActiveBgUrl(activeBg);
     if (!activeBg) document.documentElement.style.removeProperty('--nd-boot-wallpaper');

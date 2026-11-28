@@ -2622,6 +2622,7 @@ const en: Dictionary = {
   'widgets.games.meter.players': "Players",
   'widgets.games.meter.cpu': "CPU",
   'widgets.games.meter.memory': "Memory",
+  'wallpaper.theme': "Follows the theme",
 };
 
 const fr: Dictionary = {
@@ -5230,6 +5231,7 @@ const fr: Dictionary = {
   'widgets.games.meter.players': "Joueurs",
   'widgets.games.meter.cpu': "CPU",
   'widgets.games.meter.memory': "Mémoire",
+  'wallpaper.theme': "Suit le thème",
 };
 
 const es: Dictionary = {
@@ -7838,6 +7840,7 @@ const es: Dictionary = {
   'widgets.games.meter.players': "Jugadores",
   'widgets.games.meter.cpu': "CPU",
   'widgets.games.meter.memory': "Memoria",
+  'wallpaper.theme': "Sigue el tema",
 };
 
 const de: Dictionary = {
@@ -10446,6 +10449,7 @@ const de: Dictionary = {
   'widgets.games.meter.players': "Spieler",
   'widgets.games.meter.cpu': "CPU",
   'widgets.games.meter.memory': "Speicher",
+  'wallpaper.theme': "Folgt dem Design",
 };
 
 const it: Dictionary = {
@@ -13053,6 +13057,7 @@ const it: Dictionary = {
   'widgets.games.meter.players': "Giocatori",
   'widgets.games.meter.cpu': "CPU",
   'widgets.games.meter.memory': "Memoria",
+  'wallpaper.theme': "Segue il tema",
 };
 
 export const messages: Record<UiLanguage, Dictionary> = {

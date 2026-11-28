@@ -11,7 +11,7 @@ import CustomSelect from '../../../shared/CustomSelect';
 import { Emoji } from '../../../shared/Emoji';
 import { THEME_GALLERY } from '../../ThemeGalleryView';
 import { CalmeHeading, CalmeRow, CalmeSegmented, CalmeSlider, CalmeSwitch } from '../shared/CalmeControls';
-import { BUNDLED_WALLPAPERS } from '@/lib/wallpapers';
+import { BUNDLED_WALLPAPERS, resolveWallpaper } from '@/lib/wallpapers';
 
 /** Themes shown as thumbnails; the others are one click away in the gallery. */
 const FEATURED_THEMES = ['nasdash', 'nord', 'everforest-dark', 'rose-pine-dawn'];
@@ -310,6 +310,8 @@ function Wallpaper(props: CalmeAppearanceProps) {
   const { t } = useI18n();
   const { config } = useConfig();
   const demoMode = config?.demoMode === true;
+  // The wallpaper that follows the theme shows the current theme's picture.
+  const tileTheme = config?.settings?.theme || 'nasdash', tileLight = config?.settings?.mode === 'light';
   return (
     <div className="ndc-set-page">
       <section className="ndc-set-block">
@@ -343,7 +345,7 @@ function Wallpaper(props: CalmeAppearanceProps) {
               aria-pressed={props.backgroundImage === item.src}
               aria-label={t(`wallpaper.${item.id}`)}
               className="ndc-wallpaper"
-              style={{ backgroundImage: `url("${item.src}")` }}
+              style={{ backgroundImage: `url("${resolveWallpaper(item.src, tileTheme, false, tileLight)}")` }}
               title={t(`wallpaper.${item.id}`)}
               onClick={() => props.onPickBackground(item.src)}
               onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); props.onPickBackground(item.src); } }}

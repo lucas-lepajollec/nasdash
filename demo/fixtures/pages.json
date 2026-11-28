@@ -6,7 +6,7 @@
       "name": "Home",
       "icon": "lucide:House",
       "description": "Services & monitoring",
-      "revision": 7,
+      "revision": 11,
       "widgets": [
         {
           "id": "page-search-dashboard",
@@ -44,7 +44,7 @@
           "type": "clock",
           "settings": {},
           "x": 0,
-          "y": 57,
+          "y": 14,
           "w": 6,
           "h": 45
         },
@@ -53,7 +53,7 @@
           "type": "weather",
           "settings": {},
           "x": 0,
-          "y": 102,
+          "y": 59,
           "w": 6,
           "h": 91
         },
@@ -98,18 +98,18 @@
             ]
           },
           "x": 6,
-          "y": 57,
-          "w": 4,
-          "h": 130
+          "y": 14,
+          "w": 10,
+          "h": 45
         },
         {
           "id": "home-quotes",
           "type": "quotes",
           "settings": {},
           "x": 0,
-          "y": 14,
-          "w": 16,
-          "h": 43
+          "y": 246,
+          "w": 24,
+          "h": 40
         },
         {
           "id": "home-calendar",
@@ -118,7 +118,7 @@
           "x": 16,
           "y": 14,
           "w": 8,
-          "h": 83
+          "h": 130
         },
         {
           "id": "home-cat-media",
@@ -126,10 +126,10 @@
           "settings": {
             "categoryId": "category-media"
           },
-          "x": 16,
-          "y": 97,
-          "w": 8,
-          "h": 70
+          "x": 6,
+          "y": 149,
+          "w": 10,
+          "h": 45
         },
         {
           "id": "home-cat-infrastructure",
@@ -137,19 +137,19 @@
           "settings": {
             "categoryId": "category-infrastructure"
           },
-          "x": 10,
-          "y": 57,
-          "w": 6,
-          "h": 94
+          "x": 6,
+          "y": 59,
+          "w": 10,
+          "h": 90
         },
         {
           "id": "w-i8nhrw68qub",
           "type": "ups",
           "settings": {},
-          "x": 16,
-          "y": 167,
-          "w": 8,
-          "h": 66
+          "x": 0,
+          "y": 150,
+          "w": 6,
+          "h": 70
         },
         {
           "id": "w-w49vlhe7qkn",
@@ -157,10 +157,10 @@
           "settings": {
             "integrationId": "navidrome-demo"
           },
-          "x": 10,
-          "y": 151,
-          "w": 6,
-          "h": 82
+          "x": 16,
+          "y": 144,
+          "w": 8,
+          "h": 80
         },
         {
           "id": "w-32cgyhj9h4n",
@@ -169,18 +169,18 @@
             "display": "icons"
           },
           "x": 6,
-          "y": 187,
-          "w": 4,
-          "h": 40
+          "y": 194,
+          "w": 10,
+          "h": 30
         },
         {
           "id": "w-xf3947cntb",
           "type": "networkgraph",
           "settings": {},
           "x": 0,
-          "y": 193,
+          "y": 220,
           "w": 6,
-          "h": 63
+          "h": 40
         }
       ]
     },
@@ -189,7 +189,7 @@
       "name": "Services",
       "icon": "lucide:LayoutGrid",
       "description": "Every self-hosted service",
-      "revision": 2,
+      "revision": 3,
       "widgets": [
         {
           "id": "page-search-services",
@@ -331,8 +331,8 @@
           "settings": {
             "display": "tree"
           },
-          "x": 12,
-          "y": 93,
+          "x": 18,
+          "y": 115,
           "w": 6,
           "h": 46
         },
@@ -361,7 +361,7 @@
       "name": "Machines",
       "icon": "lucide:Server",
       "description": "Every machine, its measures and its history",
-      "revision": 3,
+      "revision": 4,
       "widgets": [
         {
           "id": "page-search-machines",
@@ -735,7 +735,7 @@
           "settings": {},
           "x": 0,
           "y": 255,
-          "w": 8,
+          "w": 12,
           "h": 71
         },
         {
@@ -744,9 +744,9 @@
           "settings": {
             "integrationId": "syncthing-demo"
           },
-          "x": 8,
+          "x": 12,
           "y": 255,
-          "w": 8,
+          "w": 12,
           "h": 70
         }
       ]

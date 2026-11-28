@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LIGHT_THEMES } from '@/lib/themes';
+import { resolveWallpaper } from '@/lib/wallpapers';
 
 /** How the dashboard's surfaces look (Appearance), so the screens before it look the same. */
 export interface SetupGlass { opacity: number; blur: number; dim: number }
@@ -65,7 +66,7 @@ export function WelcomeShell({ wallpaper, mobileWallpaper, theme, mode, glass = 
     query.addEventListener('change', update);
     return () => query.removeEventListener('change', update);
   }, []);
-  const image = (phone && mobileWallpaper) || wallpaper;
+  const image = resolveWallpaper((phone && mobileWallpaper) || wallpaper, theme, phone, mode === 'light') || null;
   // Before signing in the dashboard's settings are not readable: its theme, light or dark and wallpaper come from
   // /api/setup. They are also kept for the loading screen that follows signing in.
   useEffect(() => {

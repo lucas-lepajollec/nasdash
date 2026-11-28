@@ -13,6 +13,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Repositories** widget: Forgejo, Gitea, GitHub (or GitHub Enterprise) and GitLab (or a self-managed one) with an access token: the account's activity as a grid of days in the theme's accent (up to a year, as wide as the widget), what waits for you (reviews asked, issues assigned, unread notifications or GitLab to-dos), then your repositories by latest activity with their latest commit, CI state when it is running or failing, open pull requests and issues, and latest release. Show the activity, the repositories or both; forks, mirrors and commits can be hidden.
 - Public demo: a Crafty Controller with two fictional servers, a RomM library of free games and homebrew, and a forge with fictional repositories.
 
+### Changed
+
+- **Wallpaper that follows the theme**, now the first of the shipped wallpapers and the default of new installations: the same soft folds, re-tinted for each of the 26 themes (a portrait picture on phones; NasDash's own theme takes the light picture in light mode). Wallpapers already chosen stay as they are.
+- **No more tinted pills**: update levels, request states, market changes, integration states, connection test results, Docker resource use and setup alerts are plain words; only what needs attention takes the theme's red. Approve, decline, update and game server controls are one neutral tile, visible at rest, and Docker's start, update and stop buttons are no longer tinted.
+- The public demo uses the new wallpaper and a calmer arrangement of its Home, Services and Machines pages.
+
 ## [0.4.1] - 2026-11-23
 
 ### Upgrading from 0.4.0

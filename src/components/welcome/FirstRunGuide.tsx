@@ -7,7 +7,7 @@ import { usePages } from '@/providers/PagesProvider';
 import { useI18n } from '@/i18n/I18nProvider';
 import { UI_LANGUAGES, type UiLanguage } from '@/i18n/messages';
 import { demoFetch } from '@/lib/demoTransport';
-import { BUNDLED_WALLPAPERS, isBundledWallpaper } from '@/lib/wallpapers';
+import { BUNDLED_WALLPAPERS, isBundledWallpaper, resolveWallpaper } from '@/lib/wallpapers';
 import { ALWAYS, connectedFamilies, familyWidgetConnected, guideFamilyKinds, PRESELECTED, SUGGESTIONS } from '@/lib/welcome/guideFamilies';
 import { getServiceIntegration, selectableDeviceIntegrations } from '@/integrations/registry';
 import { isKitType } from '@/integrations/kit';
@@ -184,6 +184,8 @@ function AppearanceStep({ index, error, nav, onNext, wallpaper, language, mode, 
   index: number; error: string | null; nav: GuideNav; onNext: () => void; wallpaper: string; language: UiLanguage; mode: 'light' | 'dark'; onLanguage: (value: UiLanguage) => void; onMode: (value: 'light' | 'dark') => void; onWallpaper: (value: string) => void;
 }) {
   const { t } = useI18n();
+  // The wallpaper that follows the theme shows the picture of NasDash's own theme, light or dark as chosen here.
+  const tileTheme = 'nasdash', tileLight = mode === 'light';
   return (
     <StepFrame index={index} step="appearance" error={error} footer={<GuideFooter nav={nav} primary={<Primary busy={nav.busy} onClick={onNext}>{t('welcome.continue')}</Primary>} />}>
       <section className="ndc-set-block">
@@ -207,7 +209,7 @@ function AppearanceStep({ index, error, nav, onNext, wallpaper, language, mode, 
         <div className="ndc-wallpapers" role="group" aria-label={t('welcome.appearance.wallpaper')}>
           {BUNDLED_WALLPAPERS.map(item => (
             <button key={item.id} type="button" aria-pressed={wallpaper === item.src} aria-label={t(`wallpaper.${item.id}`)} title={t(`wallpaper.${item.id}`)}
-              className="ndc-wallpaper" style={{ backgroundImage: `url("${item.src}")` }} onClick={() => onWallpaper(item.src)} />
+              className="ndc-wallpaper" style={{ backgroundImage: `url("${resolveWallpaper(item.src, tileTheme, false, tileLight)}")` }} onClick={() => onWallpaper(item.src)} />
           ))}
         </div>
       </section>
