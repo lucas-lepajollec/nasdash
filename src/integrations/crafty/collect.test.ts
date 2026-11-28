@@ -22,9 +22,15 @@ describe('Crafty Controller', () => {
   it('maps the servers and their live statistics', async () => {
     const summary = await craftyKit.collect(source);
     expect(summary.servers).toEqual([
-      { id: SURVIVAL, name: 'Survival', state: 'online', motd: 'A fictional world', version: '1.21.4', players: 2, maxPlayers: 20, playerNames: ['Alex', 'Sam'], cpuPercent: 12.4, memoryPercent: 26.3, memoryBytes: Math.round(2.1 * 1024 ** 3), controllable: true },
+      {
+        id: SURVIVAL, name: 'Survival', state: 'online', motd: 'A fictional world', version: '1.21.4', players: 2, maxPlayers: 20, playerNames: ['Alex', 'Sam'],
+        cpuPercent: 12.4, memoryPercent: 26.3, memoryBytes: Math.round(2.1 * 1024 ** 3), icon: expect.stringMatching(/^icon-6c7d0a2e-[\w-]+$/),
+        startedAt: new Date(2026, 10, 26, 8, 0, 11).getTime(), worldBytes: Math.round(1.4 * 1024 ** 3), controllable: true,
+      },
       { id: '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d', name: 'Creative', state: 'offline', controllable: true },
     ]);
+    expect((await craftyKit.image!(source, summary.servers[0].icon!)).bytes.subarray(1, 4).toString()).toBe('PNG');
+    await expect(craftyKit.image!({ ...source, id: 'crafty-2' }, summary.servers[0].icon!)).rejects.toThrow(ServiceError);
     expect(json.mock.calls[0][2]?.headers).toEqual({ Authorization: 'Bearer fake-key' });
   });
   it('fails clearly on an answer that is not Crafty', async () => {

@@ -1025,6 +1025,11 @@ export interface GameServer {
   memoryBytes?: number;
   /** Direct ping: round trip, in milliseconds. */
   latencyMs?: number;
+  /** The server's own icon (its `server-icon.png`), an image id for the kit image route. */
+  icon?: string;
+  /** Crafty: when the server process started (ms since the epoch) and the size of its world. */
+  startedAt?: number;
+  worldBytes?: number;
   /** Crafty: the server can be started, stopped and restarted from the widget (administrators). */
   controllable?: boolean;
 }

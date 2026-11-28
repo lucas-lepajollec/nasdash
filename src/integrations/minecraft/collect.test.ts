@@ -25,6 +25,11 @@ describe('Minecraft server', () => {
     const summary = await minecraftKit.collect(instance(await fakeServer(sample)));
     expect(summary.servers[0]).toMatchObject({ id: 'server', name: 'Survival', state: 'online', motd: 'A fictional world', version: 'Paper 1.21.4', players: 2, maxPlayers: 20, playerNames: ['Alex', 'Sam'] });
     expect(summary.servers[0].latencyMs).toBeGreaterThanOrEqual(0);
+    // Its icon is served from what the server sent, and only that.
+    const icon = summary.servers[0].icon!;
+    expect(icon).toMatch(/^icon-server-[0-9a-f]{12}$/);
+    expect((await minecraftKit.image!(instance(1), icon)).contentType).toBe('image/png');
+    await expect(minecraftKit.image!(instance(1), 'icon-server-000000000000')).rejects.toThrow();
   });
   it('shows a server that does not answer as offline', async () => {
     const closed = net.createServer(); await new Promise<void>(resolve => closed.listen(0, '127.0.0.1', resolve));

@@ -26,7 +26,7 @@ export interface KitTools {
  * connection in its settings, the setup guide until one is saved, loading,
  * errors and actions. The widget itself only draws its data.
  */
-export function KitWidget<T extends KitSummaryBase>({ widget, widgetId, settings, editMode, isVisible, onUpdateSettings, refreshMs, skeleton = [40, 36], extraSettings, children }: {
+export function KitWidget<T extends KitSummaryBase>({ widget, widgetId, settings, editMode, isVisible, onUpdateSettings, refreshMs, skeleton = [40, 36], extraSettings, aside, children }: {
   widget: string;
   widgetId: string;
   settings: WidgetSettings;
@@ -39,6 +39,8 @@ export function KitWidget<T extends KitSummaryBase>({ widget, widgetId, settings
   skeleton?: number[];
   /** The widget's own settings, under the connection; `data` is the last answer, when there is one (folder names…). */
   extraSettings?: (draft: WidgetSettings, change: (patch: WidgetSettings) => void, data: T | undefined) => React.ReactNode;
+  /** A short note beside the title, from the last answer ("1/2 online"). */
+  aside?: (data: T) => React.ReactNode;
   children: (data: T, tools: KitTools) => React.ReactNode;
 }) {
   const { t } = useI18n();
@@ -71,7 +73,7 @@ export function KitWidget<T extends KitSummaryBase>({ widget, widgetId, settings
   };
 
   return (
-    <CalmeWidget title={title} editMode={editMode}>
+    <CalmeWidget title={title} editMode={editMode} aside={data && aside ? aside(data) : undefined}>
       {editMode && (
         <WidgetSettingsButton title={t('widgets.settingsOf', { name: title })} settings={settings} onSave={onUpdateSettings}>
           {(draft, change) => (

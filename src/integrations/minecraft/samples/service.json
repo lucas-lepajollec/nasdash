@@ -2,5 +2,6 @@
   "version": { "name": "Paper 1.21.4", "protocol": 769 },
   "players": { "max": 20, "online": 2, "sample": [{ "name": "Alex", "id": "4566e69f-c907-48ee-8d71-d7ba5aa00d20" }, { "name": "Sam", "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d" }] },
   "description": { "text": "", "extra": [{ "text": "A ", "color": "green" }, { "text": "fictional", "bold": true }, { "text": " world" }] },
+  "favicon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
   "enforcesSecureChat": true
 }

@@ -4,7 +4,7 @@ import type { GameServersSummary } from '@/lib/widgetData/contracts';
 import { array, number, object, string, ServiceError } from '@/lib/widgetData/services';
 import type { KitServer } from '../kitServer';
 import { tcpExchange } from '../ups/socket';
-import { demoGameServers, plainMotd } from '../crafty/collect';
+import { demoGameServers, iconImage, plainMotd, rememberIcon } from '../crafty/collect';
 
 /**
  * A Minecraft Java server asked directly, without any panel: the "Server List
@@ -12,8 +12,9 @@ import { demoGameServers, plainMotd } from '../crafty/collect';
  * protocol › Server List Ping", checked 2026-11-26). Handshake (packet 0x00:
  * protocol version, address, port, next state 1) then status request (0x00);
  * the answer is one packet holding a JSON status: `version.name`,
- * `players.online|max|sample[].name` and `description` (text or a chat
- * component). No account; a server that does not answer is shown offline.
+ * `players.online|max|sample[].name`, `description` (text or a chat
+ * component) and `favicon` (a PNG data URL). No account; a server that does
+ * not answer is shown offline.
  * With no port saved, the `_minecraft._tcp` SRV record is followed, like the game.
  */
 const DEFAULT_PORT = 25565;
@@ -79,6 +80,7 @@ export function toMinecraft(instance: IntegrationInstance, status: unknown, late
   if (!('players' in body) && !('version' in body)) throw new ServiceError('widgets.error.parse');
   const names = array(players.sample).map(item => string(object(item).name).slice(0, 40)).filter(name => name && !/§/.test(name)).slice(0, 50);
   const motd = plainMotd(chatText(body.description));
+  const icon = rememberIcon(instance, 'server', body.favicon);
   return {
     provider: 'minecraft', name: instance.name,
     servers: [{
@@ -88,6 +90,7 @@ export function toMinecraft(instance: IntegrationInstance, status: unknown, late
       players: number(players.online), maxPlayers: number(players.max),
       ...(names.length ? { playerNames: names } : {}),
       latencyMs: Math.round(latencyMs),
+      ...(icon ? { icon } : {}),
     }],
     fetchedAt: Date.now(),
   };
@@ -113,4 +116,5 @@ export const minecraftKit: KitServer<GameServersSummary> = {
   }),
   test: async instance => { await ping(instance); },
   demo: instance => demoGameServers(instance, 'minecraft'),
+  image: iconImage,
 };

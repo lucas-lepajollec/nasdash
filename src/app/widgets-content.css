@@ -1578,14 +1578,38 @@ button.ndw-music-next-row:hover .ndw-music-next-title { color: var(--nd-accent);
 }
 
 /* ---------- Game servers (Crafty Controller, Minecraft): kit name / value rows, controls on hover ---------- */
-.ndw-game-list { gap: 12px; }
-.ndw-game-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.ndw-game-version { flex-shrink: 0; color: var(--nd-text-dimmed); font-size: 0.7rem; }
-.ndw-game-side { display: inline-flex; flex-shrink: 0; align-items: center; gap: 8px; }
-.ndw-game-actions { display: inline-flex; gap: 2px; opacity: 0; transition: opacity 0.15s ease; }
-.ndw-game-row:hover .ndw-game-actions, .ndw-game-row:focus-within .ndw-game-actions { opacity: 1; }
+.ndw-game-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.ndw-game-server { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 12px; row-gap: 8px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--ndc-surface-line, var(--nd-card-border)); }
+.ndw-game-server:first-child { padding-top: 2px; }
+.ndw-game-server:last-child { padding-bottom: 2px; border-bottom: none; }
+.ndw-game-server > :not(.ndw-game-icon) { grid-column: 2; min-width: 0; }
+.ndw-game-icon { grid-row: 1; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; overflow: hidden; border-radius: 9px; background: var(--nd-subcard-bg); color: var(--nd-text-muted); font-size: 1rem; font-weight: 500; }
+.ndw-game-icon img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.ndw-game-head { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+.ndw-game-text { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
+.ndw-game-name { overflow: hidden; color: var(--nd-text); font-size: 0.86rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ndw-game-sub { color: var(--nd-text-dimmed); font-size: 0.7rem; line-height: 1.4; overflow-wrap: anywhere; }
+.ndw-game-crashed { color: var(--nd-red); }
+.ndw-game-server.is-off .ndw-game-icon, .ndw-game-server.is-off .ndw-game-text { opacity: 0.55; }
+.ndw-game-motd { color: var(--nd-text-muted); font-size: 0.76rem; line-height: 1.4; overflow-wrap: anywhere; }
+.ndw-game-meters { display: grid; grid-template-columns: repeat(var(--ndw-meters, 3), minmax(0, 1fr)); gap: 8px 14px; max-width: 520px; }
+.ndw-game-meters .ndc-m-head { flex-wrap: nowrap; }
+.ndw-game-meters .ndc-m-label { flex: 1 1 auto; overflow: hidden; font-size: 0.6rem; }
+.ndw-game-meters .ndc-m-value { font-size: 0.74rem; }
+.ndw-game-players { color: var(--nd-text-dimmed); font-size: 0.7rem; line-height: 1.4; }
+.ndw-game-actions { display: inline-flex; flex-shrink: 0; gap: 2px; opacity: 0; transition: opacity 0.15s ease; }
+.ndw-game-server:hover .ndw-game-actions, .ndw-game-server:focus-within .ndw-game-actions { opacity: 1; }
 @media (hover: none) { .ndw-game-actions { opacity: 1; } }
-@container (max-width: 280px) { .ndw-game-version { display: none; } }
+@container (max-width: 300px) {
+  .ndw-game-server { grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; }
+  .ndw-game-icon { width: 32px; height: 32px; border-radius: 7px; }
+  .ndw-game-head { min-height: 32px; }
+}
+/* Narrow: each measure's name over its value, so neither is cut. */
+@container (max-width: 380px) {
+  .ndw-game-meters .ndc-m-head { flex-direction: column; align-items: flex-start; gap: 0; }
+  .ndw-game-meters .ndc-m-head .ndc-m-value { margin-left: 0; }
+}
 
 /* ---------- Retro library (RomM): figures, platform shelves, the latest games (media library and reading pieces) ---------- */
 .ndw-retro-platforms { display: grid; grid-template-columns: repeat(var(--ndw-cols, 1), minmax(0, 1fr)); gap: 8px 24px; margin: 0; padding: 0; list-style: none; }

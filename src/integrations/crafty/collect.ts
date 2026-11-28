@@ -1,5 +1,6 @@
 import type { IntegrationInstance } from '@/lib/types';
 import type { GameServer, GameServersSummary } from '@/lib/widgetData/contracts';
+import { createHash } from 'node:crypto';
 import { array, assertStatus, number, object, serviceBytes, serviceJson, string, ServiceError } from '@/lib/widgetData/services';
 import type { KitServer } from '../kitServer';
 
@@ -10,7 +11,8 @@ import type { KitServer } from '../kitServer';
  * `GET /api/v2/servers` (`data[]`: `server_id`, `server_name`, `type`), their
  * latest statistics `GET /api/v2/servers/{id}/stats` (`data`: `running`,
  * `crashed`, `updating`, `waiting_start`, `cpu`, `mem`, `mem_percent`,
- * `online`, `max`, `players`, `desc`, `version`). Start, stop and restart:
+ * `online`, `max`, `players`, `desc`, `version`, `started`, `world_size`, and
+ * `icon`, the server's `server-icon.png` in base64). Start, stop and restart:
  * `POST /api/v2/servers/{id}/action/{start_server|stop_server|restart_server}`,
  * which needs the Commands permission on that server.
  */
@@ -48,7 +50,37 @@ export const plainMotd = (value: unknown) => string(value).replace(/§[0-9a-fk-o
 const SERVER_ID = /^[A-Za-z0-9-]{1,64}$/;
 const known = new Map<string, Set<string>>();
 
-export function toGameServer(server: unknown, stats: unknown): GameServer | undefined {
+/**
+ * Server icons (`server-icon.png`, 64×64), kept per connection so the image
+ * route serves only what the server itself sent; the id changes with the picture.
+ */
+const icons = new Map<string, Buffer>();
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+export function rememberIcon(instance: IntegrationInstance, server: string, value: unknown): string | undefined {
+  const base64 = string(value).replace(/^data:image\/png;base64,/, '').replace(/\s+/g, '');
+  if (!base64 || base64.length > 90_000 || !/^[A-Za-z0-9+/]+=*$/.test(base64)) return undefined;
+  const bytes = Buffer.from(base64, 'base64');
+  if (!bytes.subarray(0, 8).equals(PNG)) return undefined;
+  const id = `icon-${server}-${createHash('sha256').update(bytes).digest('hex').slice(0, 12)}`;
+  icons.delete(`${instance.id}:${id}`);
+  icons.set(`${instance.id}:${id}`, bytes);
+  while (icons.size > 500) icons.delete(icons.keys().next().value!);
+  return id;
+}
+export async function iconImage(instance: IntegrationInstance, id: string) {
+  const bytes = icons.get(`${instance.id}:${id}`);
+  if (!bytes) throw new ServiceError('widgets.error.notFound', 404);
+  return { bytes, contentType: 'image/png' };
+}
+/** Crafty writes when a server started as local time (`2026-11-26 08:00:11`). */
+function startedAt(value: unknown, now: number): number | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(string(value));
+  if (!match) return undefined;
+  const time = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6])).getTime();
+  return Number.isFinite(time) && time <= now + 60_000 ? Math.min(time, now) : undefined;
+}
+
+export function toGameServer(server: unknown, stats: unknown, instance?: IntegrationInstance, now = Date.now()): GameServer | undefined {
   const item = object(server), live = object(stats);
   const id = String(item.server_id ?? '');
   if (!SERVER_ID.test(id)) return undefined;
@@ -56,6 +88,9 @@ export function toGameServer(server: unknown, stats: unknown): GameServer | unde
   const online = state === 'online';
   const names = online ? playerNames(live.players) : [];
   const motd = online ? plainMotd(live.desc) : '';
+  const icon = instance ? rememberIcon(instance, id, live.icon) : undefined;
+  const started = online ? startedAt(live.started, now) : undefined;
+  const world = memoryBytes(live.world_size);
   return {
     id, name: string(item.server_name).slice(0, 120) || id, state,
     ...(motd && motd !== 'Unable to Connect' ? { motd } : {}),
@@ -65,6 +100,9 @@ export function toGameServer(server: unknown, stats: unknown): GameServer | unde
     ...(online && percent(live.cpu) !== undefined ? { cpuPercent: percent(live.cpu) } : {}),
     ...(online && percent(live.mem_percent) !== undefined ? { memoryPercent: percent(live.mem_percent) } : {}),
     ...(online && memoryBytes(live.mem) ? { memoryBytes: memoryBytes(live.mem) } : {}),
+    ...(icon ? { icon } : {}),
+    ...(started ? { startedAt: started } : {}),
+    ...(world ? { worldBytes: world } : {}),
     controllable: true,
   };
 }
@@ -77,7 +115,7 @@ export async function collectCrafty(instance: IntegrationInstance): Promise<Game
     const id = String(object(server).server_id ?? '');
     return SERVER_ID.test(id) ? craftyRequest(instance, `/api/v2/servers/${encodeURIComponent(id)}/stats`).then(data).catch(() => undefined) : undefined;
   }));
-  const mapped = servers.map((server, index) => toGameServer(server, stats[index])).filter((server): server is GameServer => !!server);
+  const mapped = servers.map((server, index) => toGameServer(server, stats[index], instance)).filter((server): server is GameServer => !!server);
   known.set(instance.id, new Set(mapped.map(server => server.id)));
   return { provider: 'crafty', name: instance.name, servers: mapped, fetchedAt: Date.now() };
 }
@@ -98,11 +136,14 @@ export function demoGameServers(instance: IntegrationInstance, provider: GameSer
   const players = ['Alex', 'Sam', 'Robin', 'Charlie'].slice(0, 2 + (minute % 3));
   const survival: GameServer = {
     id: 'survival', name: provider === 'minecraft' ? instance.name : 'Survival', state: demoState('survival', 'online'),
-    motd: 'A fictional world for the NasDash demo', version: '1.21.4', players: players.length, maxPlayers: 20, playerNames: players,
-    ...(provider === 'crafty' ? { cpuPercent: 18 + (minute % 7), memoryPercent: 42, memoryBytes: 3.4 * 1024 ** 3, controllable: true } : { latencyMs: 24 + (minute % 9) }),
+    motd: 'A fictional world for the NasDash demo', version: '1.21.4', players: players.length, maxPlayers: 20, playerNames: players, icon: 'icon-demo-survival',
+    ...(provider === 'crafty'
+      ? { cpuPercent: 18 + (minute % 7), memoryPercent: 42, memoryBytes: 3.4 * 1024 ** 3, startedAt: (minute - 197) * 60_000, worldBytes: 1.4 * 1024 ** 3, controllable: true }
+      : { latencyMs: 24 + (minute % 9) }),
   };
-  const creative: GameServer = { id: 'creative', name: 'Creative', state: demoState('creative', 'offline'), version: '1.21.4', controllable: true };
-  for (const server of [survival, creative]) if (server.state !== 'online') { delete server.players; delete server.playerNames; delete server.cpuPercent; delete server.memoryPercent; delete server.memoryBytes; delete server.motd; }
+  const creative: GameServer = { id: 'creative', name: 'Creative', state: demoState('creative', 'offline'), version: '1.21.4', icon: 'icon-demo-creative', worldBytes: 380 * 1024 ** 2, controllable: true };
+  if (creative.state === 'online') Object.assign(creative, { players: 0, maxPlayers: 10, cpuPercent: 4, memoryPercent: 18, memoryBytes: 1.5 * 1024 ** 3, startedAt: Date.now() - 30_000 });
+  for (const server of [survival, creative]) if (server.state !== 'online') { delete server.players; delete server.playerNames; delete server.cpuPercent; delete server.memoryPercent; delete server.memoryBytes; delete server.motd; delete server.startedAt; }
   return { provider, name: instance.name, servers: provider === 'crafty' ? [survival, creative] : [survival], fetchedAt: Date.now() };
 }
 const demoAction = (state: GameServer['state']) => (_instance: IntegrationInstance, target?: string) => { if (target === 'survival' || target === 'creative') demoStates.set(target, { state, until: Date.now() + 60_000 }); };
@@ -112,6 +153,7 @@ export const craftyKit: KitServer<GameServersSummary> = {
   collect: collectCrafty,
   test: async instance => { const list = data(await craftyRequest(instance, '/api/v2/servers')); if (!Array.isArray(list)) throw new ServiceError('widgets.error.parse'); },
   demo: instance => demoGameServers(instance, 'crafty'),
+  image: iconImage,
   actions: {
     start: { run: (instance, target) => serverAction(instance, target, 'start_server'), demo: demoAction('online') },
     stop: { run: (instance, target) => serverAction(instance, target, 'stop_server'), demo: demoAction('offline') },
